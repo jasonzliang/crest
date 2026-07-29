@@ -1,0 +1,29 @@
+# CREST judge panel configuration.
+# Multi-vendor + >=1 open-weight; leave-one-family-out is enforced in score.py.
+# Pin dated model snapshots for reproducibility (record exact IDs at run time).
+
+threshold_all_three: 6.0        # min per-axis score for "creative" (all three required)
+blind: true                     # judges never see agent identity
+randomize_answer_order: true    # position-bias control
+
+judges:
+  - id: judge_anthropic
+    model: claude-opus-4-8-YYYYMMDD     # pin exact dated snapshot
+    family: anthropic
+  - id: judge_google
+    model: gemini-3-pro-YYYYMMDD
+    family: google
+  - id: judge_openai
+    model: gpt-5.2-YYYYMMDD              # dropped under LOFO when the entrant is OpenAI-family (e.g., Caesar)
+    family: openai
+  - id: judge_open_weight
+    model: <open-weight-judge>-YYYYMMDD  # required: fewer shared blind spots than the frontier trio
+    family: open_weight
+
+reliability:
+  report: [krippendorff_alpha, icc]     # inter-judge; thresholds per Koo & Li 2016
+  human_validation_required_categories: [C1, C2, C3, C4, C5]   # human panel validates all; primary on C1/C5
+
+grounding_gate:
+  metric: fact_precision                # citation-faithfulness (DeepResearch Bench FACT / ALCE / AIS)
+  threshold: 0.8                        # below => creativity score = 0

@@ -1,0 +1,35 @@
+\section{Limitations}
+\label{sec:limitations}
+
+We state the residual risks this hybrid framing carries, several of which are more acute here than
+for a benchmark-only paper.
+
+\paragraph{Overlap with the companion preprint.} The exploration agent and an early version of the
+category taxonomy appear in a prior preprint by (anonymized) authors \citep{caesar2026}. The new
+contributions of \emph{this} paper are the benchmark as a released artifact, the human-validated
+judge, and the confirmed, pre-registered task-dependence finding at scale---not the agent. We are
+transparent that a reviewer may view the agent-centric framing as incremental over that preprint;
+\S\ref{sec:crest} and \S\ref{sec:experiments} are written to stand on the benchmark and finding
+alone.
+
+\paragraph{Single-agent mechanism evidence.} The ablation (mechanism) evidence comes from one
+agent. We test the \emph{task-dependence pattern} across several agents, but the causal
+component-level claim is agent-specific; we scope it accordingly and do not generalize the
+mechanism beyond the tested system.
+
+\paragraph{Judge$\leftrightarrow$human gap on 2 of 5 task types.} The automated judge disagrees
+with human experts on the C1/C5 (loss) types. We anchor C1/C5 conclusions on human scores, freeze
+judge settings before touching the questions, and report the disagreement rather than tuning it
+away. The mechanism (ablation) result still relies on the judge, which is why we re-run it under
+the human-validated settings.
+
+\paragraph{Describing the agent may be constrained.} Full architectural detail of the exploration
+agent lives in the cited preprint and may be subject to third-party constraints; this paper is
+written so that no claim depends on disclosure beyond what \S\ref{sec:caesar} states.
+
+\paragraph{Snapshot staleness and closed-model drift.} Closed frontier agents are pinned by dated
+model IDs; their CREST results are time-indexed snapshots. The open-weight entrant on the frozen
+index is the permanently reproducible core.
+
+\paragraph{Cost.} The human study is the slow, expensive component ($\sim$\$1--3k); we start it
+first and release its protocol.

@@ -1,0 +1,30 @@
+% CREST + Caesar HYBRID (P3): benchmark + the task-dependence finding + Caesar as co-hero.
+% Follows the original caesar_iclr2027_outline.md / _paper_plan.md structure.
+% Using the ICLR 2026 style kit as a stand-in (the ICLR 2027 kit is not yet released as of this
+% draft). When the 2027 kit ships, swap iclr2026_conference -> iclr2027_conference in the two
+% lines below (and copy the new .sty/.bst into this dir); nothing else changes.
+\documentclass{article}
+\usepackage{iclr2026_conference,times}
+\usepackage{graphicx,booktabs,amsmath,amssymb,url,hyperref,xcolor,multirow}
+\renewcommand{\ttdefault}{cmtt}  % use CM Typewriter for \texttt (avoids missing Courier pcrr7t on basic TeX installs)
+
+\title{When Does Web Search Make a Research Agent Creative?\\ Introducing CREST}
+\author{Anonymous authors \\ Paper under double-blind review}
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_crest_benchmark}
+\input{sections/04_caesar_agent}
+\input{sections/05_experiments}
+\input{sections/06_grounding_sanitycheck}
+\input{sections/07_limitations}
+\input{sections/08_conclusion}
+
+\bibliography{references}
+\bibliographystyle{iclr2026_conference}
+
+\end{document}

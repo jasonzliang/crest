@@ -1,0 +1,12 @@
+\section{The Judge and Its Validation}
+\label{sec:judge}
+
+A creativity benchmark is only as credible as its scorer, and the failure mode is specific: the \emph{novelty mirage}---LLM judges systematically over-rate machine-generated novelty and prefer model outputs over human ones, while domain experts disagree \citep{sinhahajari2026mirage}. CREST is designed against this threat with four countermeasures, and we report the judge's validity as a first-class result.
+
+\paragraph{Panel + leave-one-family-out.} Scores are the \emph{median} across a multi-vendor panel---Anthropic, OpenAI, and Google, plus an open-weight fourth judge in the full protocol---run from dated, pinned model snapshots for reproducibility. Because a model over-scores outputs from its own family \citep{panickssery2024own,ye2024justice}, the default reported number is \emph{leave-one-family-out}: no judge ever scores an entrant from its own model family. Judging is blind to agent identity and answer-order-randomized \citep{zheng2023mtbench}.
+
+\paragraph{Human validation.} We validate the panel against a human-expert consensus panel across all five categories, in the manner of Amabile's Consensual Assessment Technique \citep{amabile1982cat}, reporting judge--human agreement against the human--human ceiling \citep{zheng2023mtbench} and inter-rater reliability (Krippendorff's $\alpha$ / ICC with interpretive thresholds) \citep{hayes2007alpha,koo2016icc}. Humans own the \emph{New} and \emph{Surprising} axes.
+
+\paragraph{Bounded scope (honest).} The panel is reliable on C2/C3/C4 but \emph{not} on C1/C5. We therefore report \emph{validity-stratified} results: on the categories where judge--human agreement is below threshold, the human panel is the primary scorer and LLM-judge scores are reported only as secondary and flagged ``measurement inconclusive.'' This directly prevents the confound in which the predicted nulls (C1/C5) coincide with the categories the judge cannot measure.
+
+\paragraph{Discriminant validity.} We report the inter-axis correlation matrix and a factor analysis to test that \emph{Surprising} carries variance beyond \emph{New}, and we show creativity scores are discriminant from mere accuracy and from output length. If N and S prove collinear we report the construct as two-factor rather than overclaim three.

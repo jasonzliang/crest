@@ -1,0 +1,39 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Deep-research agent benchmarks measure correctness, not creativity.}
+GAIA \citep{mialon2023gaia}, BrowseComp \citep{wei2025browsecomp}, DeepResearch Bench
+\citep{du2025deepresearchbench}, LiveResearchBench \citep{liveresearchbench2025},
+DeepScholar-Bench \citep{deepscholarbench2025}, and ResearcherBench \citep{researcherbench2025}
+score factuality, citation faithfulness, retrieval quality, or report quality. None score whether
+a report is creative in the New/Useful/Surprising sense. CREST is complementary: it adds the
+missing axis and reuses their citation-faithfulness metrics as a \emph{separate} grounding
+check (\S\ref{sec:grounding}), never folding grounding into the creativity score.
+
+\paragraph{Creativity metrics and ideation benchmarks exist, but not for research agents.}
+Prior work evaluates LLM idea generation \citep{si2024novel,ruan2024liveideabench}, cross-domain
+creativity \citep{houcreativityprism2025}, output diversity \citep{zhang2025noveltybench}, and
+linguistic novelty \citep{lu2024creativityindex}. We are careful \emph{not} to claim ``no
+creativity test exists.'' Our differentiation is precise: CREST is the first to (i) target
+\emph{deep-research agents} that browse and cite, (ii) score the \emph{full} New/Useful/Surprising
+triad rather than novelty alone, (iii) organize by \emph{task type} to expose task-dependence, and
+(iv) anchor ``new'' to per-item dated known-answers (backed by a frozen shared retrieval index for
+the reproducible core) so it reflects synthesis relative to what is already known, not merely
+fresher retrieval.
+Crucially, we avoid n-gram or embedding ``novelty'' metrics that reward text merely for being
+unlike anything online; such metrics reward fabrication \citep{saakyan2026death,lu2024creativityindex}.
+
+\paragraph{LLM-as-judge reliability.} LLM judges exhibit self-preference
+\citep{panickssery2024own}, assorted biases \citep{ye2024justice}, and can inflate leaderboards
+\citep{singh2025leaderboard}; ``novelty'' judgments are especially fragile
+\citep{sinhahajari2026mirage}. We adopt the mitigations that the LLM-judge literature prescribes
+\citep{zheng2023mtbench}: a multi-vendor, leave-one-family-out, blind, order-randomized panel;
+inter-judge reliability reporting \citep{hayes2007alpha,koo2016icc}; and, decisively, human
+validation on all five task types---reporting the two types where judge and human disagree rather
+than hiding them.
+
+\paragraph{Accepted benchmark papers set the bar we target.} Gorilla, ToolLLM, MT-Bench
+\citep{zheng2023mtbench}, DeepScholar-Bench \citep{deepscholarbench2025}, and MLR-Bench
+\citep{chen2025mlrbench} were accepted by releasing everything, validating the judge against
+humans, running many systems head-to-head, and leaving the benchmark unsolved. CREST follows the
+same template and additionally shows the task types where its own author's system loses.

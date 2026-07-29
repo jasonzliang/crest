@@ -1,0 +1,23 @@
+\section{The Exploration Agent Under Study}
+\label{sec:caesar}
+
+One of the entrants is an exploration-based deep-research agent whose full architecture is
+described in a companion preprint that we cite in the third person to preserve double-blind review
+\citep{caesar2026}. We summarize only the properties needed to interpret the ablations in
+\S\ref{sec:experiments}; we make no architectural contribution here and claim no privilege for
+this agent on the leaderboard.
+
+At a high level the agent (i) maintains an explicit, branching \emph{exploration} over candidate
+lines of inquiry rather than a single linear chain, and (ii) performs an iterative
+\emph{refinement} pass that revises a working answer against retrieved evidence. Our
+\emph{mechanistic hypothesis}---pre-registered---is that these two components map onto two of the
+task types: the exploration/structure-mapping component should drive \textbf{cross-domain} (C3)
+gains, and the refinement-over-a-causal-model component should drive \textbf{counterfactual} (C2)
+gains, while neither should help \textbf{constrained} (C1) or \textbf{open-ended} (C5) tasks. This
+hypothesis is what the component ablations in \S\ref{sec:experiments} test.
+
+The agent is included as \emph{one entrant among many}. Every headline claim about CREST is
+required to hold with this agent removed from the board, and the benchmark is explicitly designed
+so that its author's system loses on 2 of the 5 core task types (\S\ref{sec:experiments}). We note
+for transparency that this agent shares a model family with one judge vendor; that judge is
+therefore excluded when scoring this agent under the leave-one-family-out rule.

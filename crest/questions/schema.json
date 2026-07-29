@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CREST challenge",
+  "type": "object",
+  "required": [
+    "id",
+    "category",
+    "domain",
+    "query",
+    "axis_isolated",
+    "time_sensitivity",
+    "known_answers",
+    "expert_baseline",
+    "predicted_direction",
+    "rationale"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "category": {
+      "enum": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "description": "C1 Constrained, C2 Counterfactual, C3 Cross-Domain, C4 Meta-Creativity, C5 Open-Ended"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string",
+      "description": "the challenge prompt; must require multi-source web synthesis"
+    },
+    "axis_isolated": {
+      "enum": [
+        "novelty",
+        "usefulness",
+        "surprise",
+        "balanced"
+      ]
+    },
+    "time_sensitivity": {
+      "enum": [
+        "pre_cutoff",
+        "post_cutoff",
+        "timeless"
+      ]
+    },
+    "known_answers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "dated list of already-known answers; baseline for New"
+    },
+    "hard_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "checkable constraints (esp. constrained category)"
+    },
+    "expert_baseline": {
+      "type": "string",
+      "description": "expected expert answer; baseline for Surprising"
+    },
+    "predicted_direction": {
+      "enum": [
+        "caesar_win",
+        "parity",
+        "predicted_null"
+      ]
+    },
+    "rationale": {
+      "type": "string"
+    }
+  }
+}

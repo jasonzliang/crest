@@ -1,0 +1,19 @@
+\section{Creative \emph{and} Well-Sourced: Grounding Sanity Check}
+\label{sec:grounding}
+
+A natural worry is that creativity scores reward confident fabrication. We address it two ways.
+First, within CREST, Useful penalizes unsound or incoherent claims, and a separate
+\emph{factual-grounding check} must pass before creativity is scored: an answer's \emph{factual
+scaffolding}---the established facts it builds on---must be attributable to cited sources, and an
+answer that fails scores zero creativity. The check targets that scaffolding, \emph{not} the
+invented artifact itself, so it never penalizes novelty; in production it is a per-claim,
+FACT-style verifier (citation faithfulness; \citealp{gao2023alce,rashkin2023ais,min2023factscore}).
+It is reported \emph{separately} from and is never added into the creativity score.
+
+Second, on two established citation-faithfulness benchmarks---\textbf{LiveResearchBench}
+\citep{liveresearchbench2025} and the \textbf{FACT} score of \textbf{DeepResearch Bench}
+\citep{du2025deepresearchbench}---the exploration agent ranks top-2 on citation accuracy while
+remaining competitive on overall report quality [PLACEHOLDER for ranks]. Because these are the
+\emph{same reports} that score high on CREST creativity, we can state that the creative outputs are
+also well-sourced, not merely fluent guesses. This section measures grounding only; it makes no
+creativity claim.

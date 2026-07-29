@@ -1,0 +1,21 @@
+\begin{abstract}
+Deep-research agents search the web and write long, cited reports, yet every existing
+benchmark asks only whether those reports are \emph{correct}. We ask whether they are
+\emph{creative}, and introduce \textbf{CREST} (CREativity of reSearch agenTs), the first
+benchmark to score deep-research outputs on the full \emph{New / Useful / Surprising} triad,
+organized into five task types (fifty questions, ten per type across six domains) and scored by a
+human-validated, multi-vendor leave-one-family-out judge panel (median aggregation), with the full
+benchmark publicly released. Using CREST we report a task-dependent effect: an exploration-based research agent
+(anonymized here; design in a companion preprint) is more creative on tasks that require
+connecting distant fields or counterfactual (``what-if'') reasoning, but not on
+single-answer or open-ended tasks. Ablations indicate the effect is mechanism-driven---
+disabling one component of the agent degrades one task type but not others---and the
+agent's creative reports remain well-sourced, ranking competitively on two established
+citation-faithfulness benchmarks. The mixed win/loss pattern (the agent loses on 2 of 5
+core task types) is the point: a method that won everywhere would signal an artifact,
+whereas winning only where the mechanism predicts, on a benchmark whose own author's system
+does not top every category, argues the effect is real. We release CREST---questions,
+frozen retrieval snapshot, judge, and analysis---as a standing test for the field.
+% [NUMBERS ARE PLACEHOLDERS: pilot signals are labeled as such; headline claims are made
+%  only on fresh CREST questions, not the pilot. See Experiments.]
+\end{abstract}

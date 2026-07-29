@@ -1,0 +1,23 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Deep-research / agent evaluation.} GAIA \citep{mialon2023gaia} and BrowseComp \citep{wei2025browsecomp} score exact-match accuracy on verifiable answers; DeepResearch Bench \citep{du2025deepresearchbench}, LiveResearchBench \citep{liveresearchbench2025}, DeepScholar-Bench \citep{deepscholarbench2025}, and ResearcherBench \citep{researcherbench2025} score report comprehensiveness, coverage, and citation faithfulness---the last against a gold reference, which penalizes divergence. None scores creativity of the grounded output. We \emph{borrow} their citation-faithfulness metric (FACT) as a factual-grounding check and use their report-quality dimensions as capability \emph{covariates}, never as the creativity target.
+
+\paragraph{Creativity / novelty / ideation.} LLM-ideation studies show models can produce ideas rated novel by experts \citep{si2024novel}, and benchmarks score divergent thinking \citep{ruan2024liveideabench} or cross-domain creativity \citep{houcreativityprism2025}---but for a \emph{single model's response to a prompt}, with no web grounding. The one agentic neighbor, MLR-Bench \citep{chen2025mlrbench}, is ML-research-and-code specific and treats novelty as 1 of 9 judge dimensions; it also reports that $\sim$80\% of agent experimental results are fabricated---the canonical evidence that novelty without a grounding check rewards confabulation.
+
+\paragraph{Novelty metrics and why CREST inverts them.} Corpus-overlap metrics (Creativity Index \citep{lu2024creativityindex}), atomic-fact-vs-prior-docs (NovAScore), training-data n-gram novelty (RAVEN), and perplexity all define novelty as \emph{distance from a reference}, so a correctly quoted, cited passage looks un-novel while an off-distribution fabrication looks novel; intra-model diversity \citep{zhang2025noveltybench} \emph{zeroes out} an agent that reliably returns the right grounded answer. \citet{saakyan2026death} show n-gram novelty anti-correlates with judged creativity. CREST's construct---\emph{Useful} gates \emph{New}, and \emph{Surprising} is a validated low-prior finding \emph{conditioned on correctness}---structurally inverts these failure modes.
+
+\begin{table}[t]\centering\small
+\caption{CREST vs.\ prior work. Only CREST occupies the web-grounded $\times$ creativity-scored $\times$ cross-agent cell.}
+\begin{tabular}{lccccc}
+\toprule
+Benchmark & web-grounded & multi-domain & creativity-scored & cross-agent & released \\
+\midrule
+GAIA / BrowseComp & \checkmark & \checkmark & & \checkmark & \checkmark \\
+DeepResearch/Live/Scholar & \checkmark & \checkmark & (ref-anchored) & \checkmark & \checkmark \\
+Si et al.\ / LiveIdeaBench & & \checkmark & \checkmark & & partial \\
+MLR-Bench & \checkmark & (ML only) & 1-of-9 dim & \checkmark & \checkmark \\
+\textbf{CREST (ours)} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,66 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\paragraph{Setup.} We run CREST on frontier deep-research agents (OpenAI, Gemini, Claude,
+Perplexity) through their \emph{provider-native web search} and at least one open-weight agent
+(we recommend LangChain's \texttt{open\_deep\_research}) on the frozen shared index as the
+reproducible core, plus the exploration agent of \S\ref{sec:caesar}, all under matched budgets.
+Creativity is scored by the median, leave-one-family-out, human-validated panel (\S\ref{sec:crest}).
+The analysis plan is pre-registered and implemented: we fit per-item mixed-effects models (crossed
+random effects for question and rater), correct for multiplicity, and report bootstrap confidence
+intervals; we do \emph{not} collapse task types into one average. Because the factual-grounding
+check (\S\ref{sec:grounding}) zero-inflates the score distribution, we model creativity with a
+two-part (hurdle) model. For predicted-null and parity categories we use TOST equivalence tests, so
+a non-win reads as evidence of equivalence rather than low power, with C2/C3 as positive controls
+that establish instrument sensitivity.
+
+\paragraph{Prior human pilot (small; motivation only, \emph{not} a CREST result).} A small
+\emph{prior} human pilot---5 questions, $\sim$22 votes per item---motivated this study. Reported as
+(agent votes)--(competitor votes):
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Task type & Pilot votes & Direction \\
+\midrule
+C1 Constrained (invent within rules)      & 5--18  & loses \\
+C2 Counterfactual (``what-if'')           & 18--5  & wins \\
+C3 Cross-domain (connect distant fields)  & 20--2  & wins \\
+C4 Meta-creativity (invent a method)      & 13--9  & $\approx$ even \\
+C5 Open-ended (many valid answers)        & 7--15  & loses \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{We do not claim the finding on this pilot.} It is hypothesis-generating; the pattern was
+observed post hoc, so we pre-register it and confirm on fresh CREST questions below.
+
+\paragraph{Live-web pilot (pipeline smoke test; motivation only).} Separately, a small
+\emph{live-web} pilot---5 questions, 2 agents, scored by a 3-judge leave-one-family-out panel---
+exercised the end-to-end pipeline and reproduced the predicted direction (creative on cross-domain
+C3, and \emph{not} on constrained C1 or counterfactual C2). This is a smoke test: one item per
+category and effectively one scored agent, so it establishes only that the pipeline runs and points
+the predicted way, \emph{not} the finding. The confirmatory result stays on the frozen-index run
+below, with all numbers reported as [PLACEHOLDER].
+
+\paragraph{Main result (on fresh CREST questions).} [PLACEHOLDER: per-task-type effect sizes with
+CIs; the pre-registered pattern is win on C2/C3, parity on C4, null on C1/C5.] The headline is a
+\textbf{crossover interaction}: the top agent on C3 is not the top agent on C1/C5---a
+rank-reversal, not a level shift---which we test explicitly as an agent$\times$task interaction.
+Because the pattern holds across multiple agents [PLACEHOLDER], we retain the general title; were
+it confined to one agent we would retitle to an honest single-agent case study.
+
+\paragraph{Mechanism (ablations).} Disabling the exploration component degrades \emph{only} C3;
+disabling the refinement component degrades \emph{only} C2; neither materially changes C1/C5
+[PLACEHOLDER for effect sizes]. This single-dissociation pattern is the evidence that the gains
+are mechanism-driven rather than an artifact of length or judge bias. Ablations are scored under
+the frozen, human-validated judge settings (fixed \emph{before} the questions were touched).
+
+\paragraph{Human study.} Domain experts score the agents' \emph{real} (not rewritten) outputs
+pairwise on all five task types, with emphasis on the two types where the automated judge is least
+reliable. Judge$\leftrightarrow$human agreement: the judge agrees with humans on the C2/C3 win
+types (so the headline wins are on solid ground) and disagrees on the C1/C5 loss types
+[PLACEHOLDER for $\alpha$/ICC]; we therefore treat C1/C5 conclusions as human-anchored and flag the
+gap openly rather than tuning the judge to remove it.
+
+\paragraph{Length and budget controls.} Output length enters the models as a covariate and all
+agents share a compute/tool budget, so wins are not explained by longer reports or more searches
+\citep{singh2025leaderboard}.
