@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Compile a CREST paper to PDF.
-#   ./compile.sh            # compile both paper/ (P2) and paper2/ (P3)
-#   ./compile.sh paper      # compile only paper/  (P2, benchmark-only)
-#   ./compile.sh paper2     # compile only paper2/ (P3, CREST+Caesar hybrid)
+# Compile a CREST paper to PDF (this script lives in crest/paper/).
+#   ./compile.sh            # compile both p2_benchmark_only/ and p3_caesar_hybrid/
+#   ./compile.sh paper      # compile only p2_benchmark_only/ (chosen, benchmark-only)
+#   ./compile.sh paper2     # compile only p3_caesar_hybrid/ (CREST+Caesar hybrid, IP-gated)
 #   ./compile.sh clean      # remove LaTeX build artifacts
 #
 # Uses pdflatex+bibtex (pdflatex -> bibtex -> pdflatex x2). Falls back to tectonic
-# if pdflatex is unavailable. Run from the crest/ directory.
+# if pdflatex is unavailable. Runnable from anywhere (cd's to its own dir).
 set -euo pipefail
 cd "$(dirname "$0")"
 MAIN="main"
@@ -35,8 +35,8 @@ build_dir() {
   echo "  -> $d/$MAIN.pdf ($(cd "$d" && du -h "$MAIN.pdf" 2>/dev/null | cut -f1))"
 }
 
-P2=paper_p2_benchmark_only     # the chosen benchmark-only paper
-P3=paper_p3_caesar_hybrid      # the CREST+Caesar hybrid (IP-gated upgrade path)
+P2=p2_benchmark_only     # the chosen benchmark-only paper
+P3=p3_caesar_hybrid      # the CREST+Caesar hybrid (IP-gated upgrade path)
 case "${1:-both}" in
   clean)  clean_dir "$P2"; clean_dir "$P3"; echo "cleaned."; exit 0 ;;
   paper)  build_dir "$P2" ;;

@@ -70,7 +70,7 @@
     },
     "predicted_direction": {
       "enum": [
-        "caesar_win",
+        "favored",
         "parity",
         "predicted_null"
       ]

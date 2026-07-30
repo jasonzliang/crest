@@ -17,7 +17,7 @@ mechanism and defuse "self-serving benchmark."
 - **5 categories** (C1–C5) as the failure-mode axes (see README table).
 - **≥6 domains**: biology/medicine, materials/chemistry, economics/business,
   law/policy, engineering, arts/humanities.
-- **~30 challenges** (20 min), ~5–6 per category so per-cell n ≥ 5 supports
+- **50 challenges** (10 per category) so per-cell n = 10 supports
   mixed-effects (challenge as random effect), retiring n=5 Cliff's-Delta.
 - **Dual-label** every item: isolated N/U/S axis, domain, pre/post-training-cutoff.
 - Include **axis-isolating** items (novelty-dominant, usefulness-dominant,

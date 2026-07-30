@@ -1,23 +1,24 @@
-"""CREST evaluation harness (orchestration).
+"""CREST evaluation core.
 
-Runs each deep-research agent on every CREST challenge over a FROZEN, SHARED
-search index (contamination control + reproducibility), applies the citation-
-faithfulness grounding gate, scores creativity with a leave-one-family-out judge
-panel, and writes per-(challenge, agent) records for statistical analysis.
+Runs each entrant agent on the CREST challenges via LIVE provider-native web search (a frozen
+shared index for a contamination-controlled run is future work; see agents.FrozenIndex), applies
+the factual-grounding check, scores creativity with a leave-one-family-out judge panel, and writes
+an immutable per-run result directory (records.jsonl + transcripts.jsonl + manifest + summary; see
+harness/results.py).
 
-Design references: DESIGN.md, paper/reviewer_objections.md (objection owners).
-Usage:
-    python -m crest.harness.run_crest \
-        --challenges crest/questions/crest_challenges.jsonl \
-        --agents openai_dr gemini_dr claude_dr perplexity_dr oss_dr caesar \
-        --index crest/snapshots/frozen_index \
-        --out crest/result/run_2026xxxx.jsonl
+`evaluate()` is the reusable core; both this module's CLI and the top-level `run_eval.py`
+config-driven entry point call it.
+
+CLI (single ad-hoc run):
+    python -m crest.harness.run_crest --agents claude_dr openai_dr gemini_dr --subset adhoc
+For config-driven, multi-agent runs, prefer:  python crest/run_eval.py
 """
 from __future__ import annotations
 import argparse, json, dataclasses
 from pathlib import Path
 
 from crest.harness.agents import build_agent, FrozenIndex
+from crest.harness import results as R
 from crest.judge.score import JudgePanel, grounding_gate
 
 
@@ -39,7 +40,10 @@ def load_challenges(path: str) -> list[Challenge]:
     return [Challenge.from_json(json.loads(l)) for l in open(path) if l.strip()]
 
 
-def _subset(challenges, per_category, limit):
+def subset(challenges, per_category=None, limit=None, categories=None):
+    """Balanced/limited slice for cheap pilots. categories: keep only these (e.g. ['C2','C3'])."""
+    if categories:
+        challenges = [c for c in challenges if c.category in set(categories)]
     if per_category:
         seen, sub = {}, []
         for ch in challenges:
@@ -49,67 +53,118 @@ def _subset(challenges, per_category, limit):
     return challenges[:limit] if limit else challenges
 
 
-def run(args) -> None:
-    challenges = _subset(load_challenges(args.challenges), args.per_category, args.limit)
-    # LIVE mode (default): index=None => agents use provider-native web search. Pass --index
-    # to use the frozen shared corpus (fair, reproducible run; future work).
-    index = FrozenIndex(args.index) if args.index else None
-    agents = {name: build_agent(name, index=index, budget=args.budget) for name in args.agents}
-    panel = JudgePanel.from_config(args.judge_config)   # leave-one-family-out enforced inside
+def _judges_list(per_judge: dict) -> list:
+    """per_judge {judge_id: {new,useful,surprising,...}} -> list-of-objects (LOFO-safe; ready for a
+    rater random effect via json_normalize(record_path=['creativity','judges']))."""
+    return [{"judge_id": jid, **vals} for jid, vals in per_judge.items()]
 
-    out = Path(args.out); out.parent.mkdir(parents=True, exist_ok=True)
-    print(f"running {len(challenges)} challenges x {len(agents)} agents "
-          f"({'LIVE web' if index is None else 'frozen index'}); out={out}")
-    with out.open("w") as fo:
+
+def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, verbose=True) -> list:
+    """Core loop. Writes run_dir/records.jsonl (analysis-grade) + run_dir/transcripts.jsonl (heavy
+    output text + citations, keyed by record_id). Returns the list of record dicts."""
+    run_dir = Path(run_dir)
+    if verbose:
+        print(f"running {len(challenges)} challenges x {len(agents)} agents (LIVE web); dir={run_dir}")
+    records = []
+    with (run_dir / "records.jsonl").open("w") as fo, (run_dir / "transcripts.jsonl").open("w") as ft:
         for ch in challenges:
             for name, agent in agents.items():
+                rid = f"{run_id}:{ch.id}:{name}"
                 try:
-                    report = agent.run(ch.query, seeds=args.seeds)  # AgentOutput: text + citations
+                    report = agent.run(ch.query)
                 except Exception as e:
                     print(f"  [{ch.id}/{name}] AGENT FAILED: {type(e).__name__}: {str(e)[:140]}")
                     continue
-                gate = grounding_gate(report, ch)                   # factual-grounding check; fail => creativity 0
-                scores = panel.score(
-                    challenge=dataclasses.asdict(ch), report=report,
-                    exclude_family=agent.model_family, blind=True, randomize_order=True,
-                ) if gate.passed else None
-                if scores is None:
-                    print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_claims}) -> creativity 0")
-                else:
-                    print(f"  [{ch.id}/{name}] cites={gate.n_claims} tok={report.n_tokens} "
-                          f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
-                          f"creative={scores.creative_all_three} judges={scores.n_judges}")
-                fo.write(json.dumps({
+                gate = grounding_gate(report, ch)
+                scores = panel.score(dataclasses.asdict(ch), report,
+                                     exclude_family=agent.model_family) if gate.passed else None
+                if verbose:
+                    if scores is None:
+                        print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> creativity 0")
+                    else:
+                        print(f"  [{ch.id}/{name}] cites={gate.n_citations} tok={report.n_tokens} "
+                              f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
+                              f"creative={scores.creative_all_three} judges={scores.n_judges}")
+                rec = {
+                    "schema_version": R.RECORD_SCHEMA_VERSION,
+                    "record_id": rid, "run_id": run_id,
                     "challenge_id": ch.id, "category": ch.category, "domain": ch.domain,
                     "axis": ch.axis_isolated, "predicted_direction": ch.predicted_direction,
-                    "agent": name, "model_family": agent.model_family,
-                    "output_len_tokens": report.n_tokens,          # length covariate (O8)
-                    "n_searches": report.n_searches,
-                    "grounding": dataclasses.asdict(gate),         # gate pass + FACT precision/recall
-                    "creativity": None if scores is None else {    # per-axis + composite (profile, not one number)
+                    "agent": name, "model": agent.model, "model_family": agent.model_family,
+                    "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
+                    "grounding": dataclasses.asdict(gate),
+                    "creativity": None if scores is None else {
                         "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
                         "creative_all_three": scores.creative_all_three,
-                        "per_judge": scores.per_judge, "n_judges": scores.n_judges,
+                        "n_judges": scores.n_judges, "judges": _judges_list(scores.per_judge),
                     },
-                }, ensure_ascii=False) + "\n")
-    print(f"wrote {out}  ({len(challenges)} challenges x {len(agents)} agents)")
-    print("next: python -m crest.analysis.stats --run", out)
+                }
+                records.append(rec)
+                fo.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                ft.write(json.dumps({"record_id": rid, "challenge_id": ch.id, "agent": name,
+                                     "output_text": report.text, "citations": report.citations},
+                                    ensure_ascii=False) + "\n")
+    print(f"wrote {run_dir}/records.jsonl  ({len(records)} records)")
+    return records
+
+
+def make_manifest(run_id, created_at, benchmark, agents: dict, panel, budget, config_desc=None) -> dict:
+    """Provenance manifest (finalize_run augments it with totals/env/outputs)."""
+    return {
+        "run_id": run_id, "created_at": created_at, "status": "completed",
+        "code": R.git_info(Path(__file__).resolve().parents[2]),
+        "config": config_desc or {"source": "cli"},
+        "benchmark": benchmark,
+        "execution_mode": {
+            "retrieval_mode": "live_web", "contamination_controlled": False,
+            "effective_corpus_date": created_at[:10],
+            "contamination_caveat": ("Agents used LIVE web search; the open web may contain material "
+                                     "about these challenges, so scores are NOT contamination-controlled. "
+                                     "A frozen, date-bounded index is future work."),
+        },
+        "agents": [{"key": k, "model": a.model, "family": a.model_family,
+                    "budget": budget, "model_id_note": "alias; pin a dated snapshot for camera-ready"}
+                   for k, a in agents.items()],
+        "judges": [{"id": j["id"], "model": j["model"], "family": j["family"]} for j in panel.judges],
+        "judge_protocol": "leave-one-family-out; blind; median aggregation",
+    }
+
+
+def run(args) -> None:
+    from datetime import datetime, timezone
+    challenges = subset(load_challenges(args.challenges), args.per_category, args.limit, args.categories)
+    if args.index:
+        FrozenIndex(args.index)   # raises (future work)
+    agents = {name: build_agent(name, budget=args.budget) for name in args.agents}
+    panel = JudgePanel.from_config(args.judge_config)
+    repo_root = Path(__file__).resolve().parents[2]
+    run_id, run_dir = R.new_run(args.out_root, args.subset, repo_root)
+    created_at = datetime.now(timezone.utc).isoformat()
+    recs = evaluate(challenges, agents, panel, run_dir, run_id)
+    manifest = make_manifest(run_id, created_at,
+                             {"name": "crest", "challenges_file": args.challenges,
+                              "item_count": len(challenges), "subset": args.subset,
+                              "categories": sorted({c.category for c in challenges})},
+                             agents, panel, args.budget)
+    R.finalize_run(args.out_root, run_dir, run_id, recs, manifest)
+    print(f"run dir: {run_dir}")
+    print("next: python -m crest.analysis.stats --run", run_dir / "records.jsonl")
 
 
 def main():
-    p = argparse.ArgumentParser(description="Run the CREST creativity benchmark.")
+    p = argparse.ArgumentParser(description="Run the CREST creativity benchmark (ad-hoc CLI).")
     p.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
     p.add_argument("--agents", nargs="+", required=True)
     p.add_argument("--index", default=None,
-                   help="frozen dated corpus + shared search index (contamination control). "
-                        "Omit for LIVE mode: agents use provider-native web search.")
+                   help="frozen shared index (contamination-controlled run). FUTURE WORK: raises. "
+                        "Omit for LIVE provider-web-search mode.")
     p.add_argument("--judge_config", default="crest/judge/judge_config.live.yaml")
-    p.add_argument("--budget", type=int, default=6, help="matched web-search-call cap per agent (fairness, O15)")
-    p.add_argument("--seeds", type=int, default=1, help="runs per (challenge, agent) for variance")
-    p.add_argument("--per-category", type=int, default=None, dest="per_category",
-                   help="run only the first N challenges per category (balanced subset for a pilot)")
-    p.add_argument("--limit", type=int, default=None, help="run only the first N challenges total")
-    p.add_argument("--out", required=True)
+    p.add_argument("--budget", type=int, default=6, help="per-agent web-search cap (where the provider supports it)")
+    p.add_argument("--per-category", type=int, default=None, dest="per_category")
+    p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--categories", nargs="+", default=None, help="keep only these categories, e.g. C2 C3")
+    p.add_argument("--subset", default="adhoc", help="label for the run_id (e.g. pilot5cat, full50)")
+    p.add_argument("--out-root", dest="out_root", default="crest/result")
     run(p.parse_args())
 
 

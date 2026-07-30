@@ -19,13 +19,13 @@ are answered here.
   case study is gated on that entrant *not* being rank-1.
 
 ## 2. Composition
-- **Instances.** 30 expert-authored research challenges (initial release). Each is a natural-language
+- **Instances.** 50 expert-authored research challenges (10 per category). Each is a natural-language
   research query plus metadata (see `questions/schema.json`): `id`, `category` (C1–C5), `domain`,
   `axis_isolated`, `time_sensitivity`, `known_answers[]` (dated), `hard_rules[]`, `expert_baseline`,
   `predicted_direction`, `rationale`.
-- **Balance.** 6 per category × 5 categories; 5 per domain × 6 domains (biology/medicine,
+- **Balance.** 10 per category × 5 categories; 8–9 per domain × 6 domains (biology/medicine,
   materials/chemistry, economics/business, law/policy, engineering, arts/humanities). Predicted
-  directions: 12 predicted-null, 12 agent-favored, 6 parity (used only for pre-registration).
+  directions: 20 predicted-null, 20 favored, 10 parity (used only for pre-registration).
 - **Labels/ground truth.** There is no single correct answer (by design). Each item ships the three
   scoring anchors (known-answers list, hard rules, expert baseline). Scores are produced at
   evaluation time by the judge panel + human validation, not stored as fixed labels.
@@ -36,7 +36,7 @@ are answered here.
 
 ## 3. Collection process
 - Challenges were authored/adapted by domain-aware authors, seeded from the five reference
-  categories, then expanded to 30 with per-item metadata. Each item requires multi-source synthesis
+  categories, then expanded to 50 with per-item metadata. Each item requires multi-source synthesis
   (never a single lookup), verified during vetting.
 - **Adversarial item-vetting log (§ appended below).** Every item passed an ICLR-reviewer-style
   red-team for: (i) contamination risk, (ii) synthesis-required (no single-source answer),

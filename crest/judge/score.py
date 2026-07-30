@@ -18,9 +18,8 @@ import dataclasses, json, re, sys, yaml
 @dataclasses.dataclass
 class GroundingResult:
     passed: bool
-    fact_precision: float = 0.0     # share of load-bearing claims supported by cited sources (proxy in pilot)
-    fact_recall: float = 0.0
-    n_claims: int = 0
+    citation_density: float = 0.0   # citations per ~600 chars (a proxy, NOT FACT precision); see docstring
+    n_citations: int = 0            # count of source URLs found (structured + inline)
 
 @dataclasses.dataclass
 class CreativityScore:
@@ -89,7 +88,7 @@ def grounding_gate(report, challenge: dict, threshold: float = 0.8, min_citation
     grounded = n >= 1                                   # >=1 real source URL backs the scaffolding
     pure_invention = n_factual <= _MAX_UNCITED_CLAIMS   # few external facts to cite
     passed = substantive and (grounded or pure_invention)
-    return GroundingResult(passed=passed, fact_precision=round(density, 3), fact_recall=0.0, n_claims=n)
+    return GroundingResult(passed=passed, citation_density=round(density, 3), n_citations=n)
 
 
 # ---------------- judge panel ----------------

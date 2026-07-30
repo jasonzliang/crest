@@ -1,0 +1,27 @@
+# CREST evaluation config.
+# Run:  python crest/run_eval.py                       (uses this file)
+#   or: python crest/run_eval.py --config <path>
+# Results land in an immutable run dir: <out_root>/runs/<run_id>/  (see crest/result/readme.md)
+
+# Which benchmark(s) to evaluate. Each entry = a challenges JSONL + optional subset filters.
+# (One benchmark today: CREST. The list makes adding more trivial.)
+benchmarks:
+  - name: crest
+    challenges: crest/questions/crest_challenges.jsonl
+    # Subset filters for a cheap pilot (omit / null = run all 50):
+    per_category: null      # e.g. 2 -> first 2 items per category (balanced 10-item pilot)
+    limit: null             # e.g. 5 -> first 5 items total
+    categories: null        # e.g. [C2, C3] -> only these categories
+
+# Entrants to evaluate. Keys resolve to pinned model IDs in crest/harness/agents.py:
+agents:
+  - claude_dr               # claude-sonnet-5              + web_search
+  - openai_dr               # gpt-5.6                      + web_search
+  - gemini_dr               # gemini-3.1-pro-preview       + google_search grounding
+  - openai_deepresearch     # o3-deep-research             (OpenAI Deep Research API)
+  # - openai_deepresearch_mini   # o4-mini-deep-research   (faster / cheaper DR)
+  # - gemini_deepresearch        # grounded gemini-3.1-pro (Gemini has no separate DR model; == gemini_dr)
+
+judge_config: crest/judge/judge_config.live.yaml   # multi-vendor leave-one-family-out panel
+budget: 6                    # per-agent web-search cap (enforced where the provider supports it)
+out_root: crest/result
