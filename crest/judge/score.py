@@ -13,6 +13,7 @@ Two pieces:
 """
 from __future__ import annotations
 import dataclasses, json, re, sys, yaml
+from concurrent.futures import ThreadPoolExecutor
 
 
 @dataclasses.dataclass
@@ -215,21 +216,23 @@ class JudgePanel:
             raise ValueError(f"LOFO removed all judges for family={exclude_family}; add another vendor")
         return active
 
-    def _judge_one(self, judge: dict, challenge: dict, report, blind: bool) -> dict:
+    def _judge_one(self, judge: dict, challenge: dict, report) -> dict:
         return _call_judge(judge["family"], judge["model"], _judge_prompt(challenge, getattr(report, "text", "")))
 
-    def score(self, challenge, report, exclude_family=None, blind=True, randomize_order=True) -> CreativityScore:
-        # `randomize_order` is RESERVED for a future comparative mode (pairwise A/B judging,
-        # where answer position must be randomized to control position bias). CREST scores
-        # ONE answer per prompt today, so answer ordering is a no-op; the flag is kept for
-        # API stability (run_crest passes it) and will light up unchanged when that mode lands.
+    def score(self, challenge, report, exclude_family=None) -> CreativityScore:
+        """Score with the active (leave-one-family-out) panel. Judges are independent, so they run
+        CONCURRENTLY; a failing judge is dropped so the panel stays robust. Author identity is
+        withheld by construction (the prompt carries no agent name)."""
         active = self._active(exclude_family)
         per = {}
-        for j in active:
-            try:
-                per[j["id"]] = self._judge_one(j, challenge, report, blind)
-            except Exception as e:                 # keep the panel robust; drop a failing judge
-                print(f"  [judge {j['id']} failed: {type(e).__name__}: {str(e)[:120]}]", file=sys.stderr)
+        with ThreadPoolExecutor(max_workers=max(1, len(active))) as ex:
+            futs = {ex.submit(self._judge_one, j, challenge, report): j for j in active}
+            for fut in futs:
+                j = futs[fut]
+                try:
+                    per[j["id"]] = fut.result()
+                except Exception as e:             # keep the panel robust; drop a failing judge
+                    print(f"  [judge {j['id']} failed: {type(e).__name__}: {str(e)[:120]}]", file=sys.stderr)
         if not per:
             return CreativityScore(0.0, 0.0, 0.0, False, {}, 0)
         agg = {ax: _median([v[ax] for v in per.values()]) for ax in ("new", "useful", "surprising")}

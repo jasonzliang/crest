@@ -20,7 +20,7 @@ and ready for a rater random effect); a run is immutable — a re-run is a NEW r
 mutation; record the live-web contamination caveat + effective corpus date as first-class fields.
 """
 from __future__ import annotations
-import json, subprocess, sys, platform, collections, statistics
+import json, subprocess, sys, platform, collections, statistics, secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -54,10 +54,10 @@ def new_run(result_root, subset: str, repo_root) -> tuple[str, Path]:
     """Create result/runs/<run_id>/ and return (run_id, run_dir). run_id is sortable + provenance-encoding."""
     ts = _utc_now().strftime("%Y-%m-%dT%H%M%SZ")
     sha = git_info(repo_root)["git_commit"] or "nogit"
-    nonce = f"{abs(hash((ts, subset))) % 100000:05d}"
+    nonce = secrets.token_hex(3)   # real entropy: distinct even for same-second, same-subset runs
     run_id = f"{ts}__crest__{subset}__git{sha}__{nonce}"
     run_dir = Path(result_root) / "runs" / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
+    run_dir.mkdir(parents=True, exist_ok=False)   # fail loudly on the (now vanishingly rare) collision
     return run_id, run_dir
 
 

@@ -60,7 +60,7 @@ def main():
             continue
         run_id, run_dir = R.new_run(out_root, label, REPO)
         created = datetime.now(timezone.utc).isoformat()
-        recs = evaluate(chs, agents, panel, run_dir, run_id)
+        recs = evaluate(chs, agents, panel, run_dir, run_id, concurrency=cfg.get("concurrency", 4))
         manifest = make_manifest(run_id, created,
             {"name": bench["name"], "challenges_file": bench["challenges"],
              "item_count": len(chs), "subset": label,

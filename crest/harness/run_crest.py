@@ -14,7 +14,8 @@ CLI (single ad-hoc run):
 For config-driven, multi-agent runs, prefer:  python crest/run_eval.py
 """
 from __future__ import annotations
-import argparse, json, dataclasses
+import argparse, json, dataclasses, threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from crest.harness.agents import build_agent, FrozenIndex
@@ -59,25 +60,58 @@ def _judges_list(per_judge: dict) -> list:
     return [{"judge_id": jid, **vals} for jid, vals in per_judge.items()]
 
 
-def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, verbose=True) -> list:
-    """Core loop. Writes run_dir/records.jsonl (analysis-grade) + run_dir/transcripts.jsonl (heavy
-    output text + citations, keyed by record_id). Returns the list of record dicts."""
+def _one_task(ch, name, agent, panel, run_id):
+    """Run one (challenge, agent): agent -> grounding check -> LOFO judge panel. Returns
+    (record, transcript). Judges run concurrently inside panel.score()."""
+    rid = f"{run_id}:{ch.id}:{name}"
+    report = agent.run(ch.query)                              # may raise -> handled by caller
+    gate = grounding_gate(report, ch)
+    scores = panel.score(dataclasses.asdict(ch), report,
+                         exclude_family=agent.model_family) if gate.passed else None
+    rec = {
+        "schema_version": R.RECORD_SCHEMA_VERSION,
+        "record_id": rid, "run_id": run_id,
+        "challenge_id": ch.id, "category": ch.category, "domain": ch.domain,
+        "axis": ch.axis_isolated, "predicted_direction": ch.predicted_direction,
+        "agent": name, "model": agent.model, "model_family": agent.model_family,
+        "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
+        "grounding": dataclasses.asdict(gate),
+        "creativity": None if scores is None else {
+            "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
+            "creative_all_three": scores.creative_all_three,
+            "n_judges": scores.n_judges, "judges": _judges_list(scores.per_judge),
+        },
+    }
+    tr = {"record_id": rid, "challenge_id": ch.id, "agent": name,
+          "output_text": report.text, "citations": report.citations}
+    return rec, tr, gate, scores, report
+
+
+def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concurrency=4, verbose=True) -> list:
+    """Core loop. Generation runs CONCURRENTLY across independent (challenge, agent) tasks (bounded
+    by `concurrency`); each task's judge panel also scores concurrently. Writes run_dir/records.jsonl
+    (analysis-grade) + run_dir/transcripts.jsonl (heavy output text + citations). Returns records."""
     run_dir = Path(run_dir)
+    tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
     if verbose:
-        print(f"running {len(challenges)} challenges x {len(agents)} agents (LIVE web); dir={run_dir}")
-    records = []
+        print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
+              f"(LIVE web, concurrency={concurrency}); dir={run_dir}")
+    records, lock = [], threading.Lock()
     with (run_dir / "records.jsonl").open("w") as fo, (run_dir / "transcripts.jsonl").open("w") as ft:
-        for ch in challenges:
-            for name, agent in agents.items():
-                rid = f"{run_id}:{ch.id}:{name}"
+        with ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
+            futs = {ex.submit(_one_task, ch, name, agent, panel, run_id): (ch, name)
+                    for (ch, name, agent) in tasks}
+            for fut in as_completed(futs):
+                ch, name = futs[fut]
                 try:
-                    report = agent.run(ch.query)
+                    rec, tr, gate, scores, report = fut.result()
                 except Exception as e:
                     print(f"  [{ch.id}/{name}] AGENT FAILED: {type(e).__name__}: {str(e)[:140]}")
                     continue
-                gate = grounding_gate(report, ch)
-                scores = panel.score(dataclasses.asdict(ch), report,
-                                     exclude_family=agent.model_family) if gate.passed else None
+                with lock:                                    # thread-safe append (crash-safe JSONL)
+                    fo.write(json.dumps(rec, ensure_ascii=False) + "\n"); fo.flush()
+                    ft.write(json.dumps(tr, ensure_ascii=False) + "\n"); ft.flush()
+                    records.append(rec)
                 if verbose:
                     if scores is None:
                         print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> creativity 0")
@@ -85,25 +119,6 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, verbo
                         print(f"  [{ch.id}/{name}] cites={gate.n_citations} tok={report.n_tokens} "
                               f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
                               f"creative={scores.creative_all_three} judges={scores.n_judges}")
-                rec = {
-                    "schema_version": R.RECORD_SCHEMA_VERSION,
-                    "record_id": rid, "run_id": run_id,
-                    "challenge_id": ch.id, "category": ch.category, "domain": ch.domain,
-                    "axis": ch.axis_isolated, "predicted_direction": ch.predicted_direction,
-                    "agent": name, "model": agent.model, "model_family": agent.model_family,
-                    "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
-                    "grounding": dataclasses.asdict(gate),
-                    "creativity": None if scores is None else {
-                        "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
-                        "creative_all_three": scores.creative_all_three,
-                        "n_judges": scores.n_judges, "judges": _judges_list(scores.per_judge),
-                    },
-                }
-                records.append(rec)
-                fo.write(json.dumps(rec, ensure_ascii=False) + "\n")
-                ft.write(json.dumps({"record_id": rid, "challenge_id": ch.id, "agent": name,
-                                     "output_text": report.text, "citations": report.citations},
-                                    ensure_ascii=False) + "\n")
     print(f"wrote {run_dir}/records.jsonl  ({len(records)} records)")
     return records
 
@@ -140,7 +155,7 @@ def run(args) -> None:
     repo_root = Path(__file__).resolve().parents[2]
     run_id, run_dir = R.new_run(args.out_root, args.subset, repo_root)
     created_at = datetime.now(timezone.utc).isoformat()
-    recs = evaluate(challenges, agents, panel, run_dir, run_id)
+    recs = evaluate(challenges, agents, panel, run_dir, run_id, concurrency=args.concurrency)
     manifest = make_manifest(run_id, created_at,
                              {"name": "crest", "challenges_file": args.challenges,
                               "item_count": len(challenges), "subset": args.subset,
@@ -160,6 +175,7 @@ def main():
                         "Omit for LIVE provider-web-search mode.")
     p.add_argument("--judge_config", default="crest/judge/judge_config.live.yaml")
     p.add_argument("--budget", type=int, default=6, help="per-agent web-search cap (where the provider supports it)")
+    p.add_argument("--concurrency", type=int, default=4, help="parallel (challenge, agent) tasks")
     p.add_argument("--per-category", type=int, default=None, dest="per_category")
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--categories", nargs="+", default=None, help="keep only these categories, e.g. C2 C3")

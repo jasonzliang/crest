@@ -24,4 +24,5 @@ agents:
 
 judge_config: crest/judge/judge_config.live.yaml   # multi-vendor leave-one-family-out panel
 budget: 6                    # per-agent web-search cap (enforced where the provider supports it)
+concurrency: 4               # parallel (challenge, agent) tasks; judges within each also run in parallel
 out_root: crest/result
