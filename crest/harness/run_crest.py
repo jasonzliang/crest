@@ -96,7 +96,8 @@ def _one_task(ch, name, agent, panel, run_id, cb):
     return rec, tr, gate, scores, report, status
 
 
-def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concurrency=4, verbose=True) -> list:
+def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concurrency=4,
+             resume=False, verbose=True) -> list:
     """Core loop. Generation runs CONCURRENTLY across independent (challenge, agent) tasks (bounded
     by `concurrency`); each task's judge panel also scores concurrently. Degrades gracefully:
       - a failed task is logged to errors.jsonl (not silently dropped) and skipped;
@@ -104,16 +105,21 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
         creativity=null -- NEVER a fake 0 folded into results;
       - after >=3 auth/quota ('out of money') failures for an agent it is circuit-broken so a dead
         provider stops burning the rest of the task list.
-    Writes records.jsonl + transcripts.jsonl + errors.jsonl. Returns the scored/attempted records."""
+    resume=True: skip (challenge, agent) pairs already in records.jsonl and APPEND (don't re-pay);
+    errored/unattempted pairs are retried. Writes records/transcripts/errors.jsonl. Returns records."""
     run_dir = Path(run_dir)
-    tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
+    done = R.completed_pairs(run_dir) if resume else set()
+    all_tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
+    tasks = [t for t in all_tasks if (t[0].id, t[1]) not in done]
+    records = [json.loads(l) for l in (run_dir / "records.jsonl").open() if l.strip()] if done else []
+    mode = "a" if done else "w"
     if verbose:
-        print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
-              f"(LIVE web, concurrency={concurrency}); dir={run_dir}")
+        print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(all_tasks)} tasks "
+              f"({len(done)} already done, {len(tasks)} to run; resume={resume}, concurrency={concurrency}); dir={run_dir}")
     cb = {"lock": threading.Lock(), "fails": collections.Counter(), "dead": set()}
-    records, n_err, wlock = [], 0, threading.Lock()
-    with (run_dir / "records.jsonl").open("w") as fo, (run_dir / "transcripts.jsonl").open("w") as ft, \
-         (run_dir / "errors.jsonl").open("w") as fe:
+    n_err, wlock = 0, threading.Lock()
+    with (run_dir / "records.jsonl").open(mode) as fo, (run_dir / "transcripts.jsonl").open(mode) as ft, \
+         (run_dir / "errors.jsonl").open(mode) as fe:
         with ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
             futs = {ex.submit(_one_task, ch, name, agent, panel, run_id, cb): (ch, name)
                     for (ch, name, agent) in tasks}
@@ -186,9 +192,15 @@ def run(args) -> None:
     agents = {name: build_agent(name, budget=args.budget) for name in args.agents}
     panel = JudgePanel.from_config(args.judge_config)
     repo_root = Path(__file__).resolve().parents[2]
-    run_id, run_dir = R.new_run(args.out_root, args.subset, repo_root)
+    resumable = None if args.no_resume else R.find_resumable(args.out_root, args.subset)
+    if resumable:
+        run_id, run_dir = resumable
+        print(f"resuming interrupted run {run_id} ({len(R.completed_pairs(run_dir))} pairs done)")
+    else:
+        run_id, run_dir = R.new_run(args.out_root, args.subset, repo_root)
     created_at = datetime.now(timezone.utc).isoformat()
-    recs = evaluate(challenges, agents, panel, run_dir, run_id, concurrency=args.concurrency)
+    recs = evaluate(challenges, agents, panel, run_dir, run_id,
+                    concurrency=args.concurrency, resume=bool(resumable))
     manifest = make_manifest(run_id, created_at,
                              {"name": "crest", "challenges_file": args.challenges,
                               "item_count": len(challenges), "subset": args.subset,
@@ -213,6 +225,7 @@ def main():
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--categories", nargs="+", default=None, help="keep only these categories, e.g. C2 C3")
     p.add_argument("--subset", default="adhoc", help="label for the run_id (e.g. pilot5cat, full50)")
+    p.add_argument("--no-resume", action="store_true", help="ignore any interrupted run and start fresh")
     p.add_argument("--out-root", dest="out_root", default="crest/result")
     run(p.parse_args())
 

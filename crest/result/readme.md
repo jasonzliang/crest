@@ -1,6 +1,10 @@
 # crest/result — run outputs
 
-Each evaluation writes an **immutable** run directory. A re-run is a new `run_id`, never a mutation.
+Each evaluation writes a run directory. Re-running the same config **resumes an interrupted run by
+default** — it reopens the run that has `records.jsonl` but no `run_manifest.json` (a crash/kill left
+it unfinalized), skips already-completed `(challenge, agent)` pairs, and appends the rest so you
+don't re-pay (`--no-resume` forces a fresh run). A **completed** run (manifest present) is immutable:
+re-running it starts a new `run_id`.
 
 ```
 result/

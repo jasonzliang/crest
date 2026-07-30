@@ -61,6 +61,34 @@ def new_run(result_root, subset: str, repo_root) -> tuple[str, Path]:
     return run_id, run_dir
 
 
+def completed_pairs(run_dir) -> set:
+    """(challenge_id, agent) pairs already recorded in this run's records.jsonl (any status).
+    Used by --resume to skip work already done; errored-but-unrecorded pairs are retried."""
+    f = Path(run_dir) / "records.jsonl"
+    done = set()
+    if f.exists():
+        for line in f.open():
+            if line.strip():
+                r = json.loads(line); done.add((r["challenge_id"], r["agent"]))
+    return done
+
+
+def find_resumable(result_root, subset_label):
+    """Most-recent INTERRUPTED run for this subset -- has records.jsonl but no run_manifest.json
+    (finalize writes the manifest last, so its absence marks a crashed/killed run). Returns
+    (run_id, run_dir) or None. Completed runs are never resumed (immutability)."""
+    runs = Path(result_root) / "runs"
+    if not runs.exists():
+        return None
+    cands = sorted(d for d in runs.iterdir()
+                   if d.is_dir() and f"__crest__{subset_label}__" in d.name
+                   and (d / "records.jsonl").exists() and not (d / "run_manifest.json").exists())
+    if not cands:
+        return None
+    d = cands[-1]                      # latest (sortable UTC-timestamp prefix)
+    return d.name, d
+
+
 def compute_summary(records: list) -> dict:
     """Cheap aggregates for a leaderboard (per agent, and per agent x category). Inferential stats
     (mixed-effects, TOST, Krippendorff alpha / ICC) are left to crest.analysis.stats on records.jsonl."""

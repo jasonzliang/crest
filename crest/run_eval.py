@@ -74,6 +74,7 @@ def main():
     ap.add_argument("--config", default=str(REPO / "crest/config/eval_config.yaml"))
     ap.add_argument("--dry-run", action="store_true", help="resolve config/agents/challenges + preflight; no model calls")
     ap.add_argument("--yes", action="store_true", help="confirm a large or deep-research-API (costly) run")
+    ap.add_argument("--no-resume", action="store_true", help="ignore any interrupted run and start fresh")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(_p(args.config)))
@@ -102,10 +103,16 @@ def main():
         if args.dry_run:
             print("  [dry-run] would evaluate; no model calls made.")
             continue
-        run_id, run_dir = R.new_run(out_root, label, REPO)
+        resumable = None if args.no_resume else R.find_resumable(out_root, label)
+        if resumable:
+            run_id, run_dir = resumable
+            print(f"  resuming interrupted run {run_id} ({len(R.completed_pairs(run_dir))} pairs done)")
+        else:
+            run_id, run_dir = R.new_run(out_root, label, REPO)
         shutil.copy(_p(args.config), run_dir / "config.snapshot.yaml")   # literal config as-run
         created = datetime.now(timezone.utc).isoformat()
-        recs = evaluate(chs, agents, panel, run_dir, run_id, concurrency=cfg.get("concurrency", 4))
+        recs = evaluate(chs, agents, panel, run_dir, run_id,
+                        concurrency=cfg.get("concurrency", 4), resume=bool(resumable))
         manifest = make_manifest(run_id, created,
             {"name": bench["name"], "challenges_file": bench["challenges"],
              "item_count": len(chs), "subset": label,
