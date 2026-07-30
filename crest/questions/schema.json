@@ -11,12 +11,12 @@
     "time_sensitivity",
     "known_answers",
     "expert_baseline",
-    "predicted_direction",
-    "rationale"
+    "hard_rules"
   ],
   "properties": {
     "id": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^C[1-5]_[a-z_]+_[0-9]{2}$"
     },
     "category": {
       "enum": [
@@ -29,11 +29,19 @@
       "description": "C1 Constrained, C2 Counterfactual, C3 Cross-Domain, C4 Meta-Creativity, C5 Open-Ended"
     },
     "domain": {
-      "type": "string"
+      "enum": [
+        "arts_humanities",
+        "biology_medicine",
+        "economics_business",
+        "engineering",
+        "law_policy",
+        "materials_chemistry"
+      ]
     },
     "query": {
       "type": "string",
-      "description": "the challenge prompt; must require multi-source web synthesis"
+      "description": "the challenge prompt; must require multi-source web synthesis",
+      "minLength": 120
     },
     "axis_isolated": {
       "enum": [
@@ -55,28 +63,33 @@
       "items": {
         "type": "string"
       },
-      "description": "dated list of already-known answers; baseline for New"
+      "description": "dated list of already-known answers; baseline for New",
+      "minItems": 3
     },
     "hard_rules": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "checkable constraints (esp. constrained category)"
+      "description": "checkable constraints (esp. constrained category)",
+      "minItems": 3
     },
     "expert_baseline": {
       "type": "string",
-      "description": "expected expert answer; baseline for Surprising"
-    },
-    "predicted_direction": {
-      "enum": [
-        "favored",
-        "parity",
-        "predicted_null"
-      ]
+      "minLength": 200,
+      "description": "expected expert answer; baseline for Surprising. minLength guards against the placeholder stub that once shipped in C2_law_policy_09."
     },
     "rationale": {
-      "type": "string"
+      "type": "string",
+      "description": "designer notes. Read by NO code at runtime (verified). Slated to move to a sidecar item_design.jsonl; no longer required here."
+    },
+    "author_expected_surprises": {
+      "type": "string",
+      "description": "JUDGE-HIDDEN. Author-written enumeration of the surprises the baseline is not supposed to anticipate, plus any rubric directives that were embedded in expert_baseline. Split out because piping it to the judge made Surprising into graded recall against an author-written key: an answer containing the listed content scored high by construction, and a different genuine surprise earned nothing. NOT read by judge/score.py::_judge_prompt -- keep it that way."
     }
-  }
+  },
+  "$id": "https://github.com/.../crest/questions/schema.json",
+  "version": "crest-challenge/2.1.0",
+  "description": "Validated on load by harness.run_crest.load_challenges. Previously this file was never applied: no jsonschema import existed anywhere in the repo, so `required` was decorative and category_name (present in all 50 items) validated silently because additionalProperties was unset. v2.0.0 removed `predicted_direction` (moved to analysis/preregistration.yaml; it was a 5-row lookup on `category` and, living in editable data, could not evidence ordering) and `category_name` (derivable from `category`; one item shipped a long-form value so groupby yielded 6 categories).",
+  "additionalProperties": false
 }

@@ -1,0 +1,45 @@
+# Items EXCLUDED from evaluation because a known defect makes their scores uninterpretable.
+#
+# Why a quarantine file rather than deleting the items or loosening the schema: a single defective
+# item should not make the whole benchmark unloadable (it briefly did), but it must not be silently
+# scored either. Quarantined items are dropped from the run with a loud notice, counted in the run
+# manifest, and block a public release until resolved. Loosening the schema to accommodate a bad item
+# would hide exactly the defect the schema exists to catch.
+#
+# Each entry states the defect, why scores would be uninterpretable, and what resolves it. Removing an
+# entry re-admits the item, so the schema must pass for it first.
+
+quarantined:
+
+  C2_biology_medicine_34:
+    reason: >
+      expert_baseline is 156 chars and fails schema minLength(200). Splitting the answer key out of
+      the field revealed that 64% of it WAS the key ("the baseline would not anticipate that
+      erythrocyte apoptosis machinery could reshape Plasmodium virulence evolution, that stiffer
+      cells force a different splenic filtration architecture, ...") leaving a single sentence of
+      genuine baseline. Surprising for this item was therefore graded recall against an
+      author-written list, not expectation-violation against an expert prior.
+    why_scores_are_uninterpretable: >
+      With no substantive baseline there is nothing for Surprising to be measured against, so any
+      Surprising score on this item is uninterpretable rather than merely noisy.
+    resolution: >
+      A physiologist must write a genuine convergent-expectation baseline (>=200 chars) describing
+      what an expert WOULD predict for non-enucleated mammalian erythrocytes, without enumerating the
+      intended surprises. Deliberately not auto-generated: authoring the baseline that then serves as
+      the scoring reference is the author-bias problem currently under review.
+    flagged: "2026-07-30"
+    blocks_release: true
+
+# Watch-list — NOT quarantined (they pass schema) but same defect class, thinner than they look.
+# Recorded so a reviewer sees they were considered rather than missed.
+watch_list:
+  C2_law_policy_37:        "59% of expert_baseline was answer key; 210 chars remain"
+  C2_economics_business_36: "58% of expert_baseline was answer key; 230 chars remain"
+  C4_engineering_45: >
+    Not a baseline-length problem: its gate is INVERTED. A hard rule offers "a software-lock/
+    parts-pairing penalty as a hard multiplier" as its example of a genuinely NEW mechanism, but
+    iFixit -- in the item's own known_answers -- already applies a global parts-pairing penalty
+    (verified against iFixit's published methodology). An agent following the item's own hint
+    reproduces published prior art and is scored as novel, and the baseline would lead a judge to
+    confirm rather than catch it. The C4/C5 auditor's verdict was "do not release this item".
+    Consider quarantining once the release decision is made.
