@@ -92,15 +92,21 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
     result_root = Path(result_root)
     summary = compute_summary(records)
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
+    errf = run_dir / "errors.jsonl"
+    n_task_errors = sum(1 for _ in open(errf)) if errf.exists() else 0
     manifest = {**manifest,
                 "completed_at": _utc_now().isoformat(),
+                "status": "completed" if records else "failed",   # empty run is a FAILED run, not a clean one
                 "record_schema_version": RECORD_SCHEMA_VERSION,
                 "totals": {"n_records": len(records),
                            "n_scored": sum(1 for r in records if r.get("creativity")),
-                           "n_grounding_fail": sum(1 for r in records if not r.get("grounding", {}).get("passed"))},
+                           "n_judge_error": sum(1 for r in records if r.get("scoring_status") == "judge_error"),
+                           "n_grounding_fail": sum(1 for r in records if r.get("scoring_status") == "grounding_fail"),
+                           "n_task_errors": n_task_errors},
                 "environment": {"python": sys.version.split()[0], "platform": platform.platform(),
                                 "packages": pkg_versions()},
-                "outputs": {"records": "records.jsonl", "transcripts": "transcripts.jsonl", "summary": "summary.json"}}
+                "outputs": {"records": "records.jsonl", "transcripts": "transcripts.jsonl",
+                            "errors": "errors.jsonl", "summary": "summary.json"}}
     (run_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
     # discovery registry
     top = manifest.get("agents", [])
@@ -111,11 +117,12 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
                              "mode": manifest.get("execution_mode", {}).get("retrieval_mode"),
                              "n_records": len(records), "canonical": False,
                              "summary": f"runs/{run_id}/summary.json"}, ensure_ascii=False) + "\n")
-    # latest symlink (only mutable pointer in the tree)
-    latest = result_root / "latest"
-    try:
-        if latest.is_symlink() or latest.exists():
-            latest.unlink()
-        latest.symlink_to(Path("runs") / run_id)
-    except OSError:
-        pass
+    # latest symlink (only mutable pointer in the tree) -- don't repoint at an all-failed/empty run
+    if records:
+        latest = result_root / "latest"
+        try:
+            if latest.is_symlink() or latest.exists():
+                latest.unlink()
+            latest.symlink_to(Path("runs") / run_id)
+        except OSError:
+            pass

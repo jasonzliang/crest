@@ -163,18 +163,20 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
     """One raw judge call; returns the response text (possibly empty)."""
     if family == "anthropic":
         import anthropic
-        r = anthropic.Anthropic().messages.create(
+        r = anthropic.Anthropic(timeout=300).messages.create(
             model=model, max_tokens=2000, messages=[{"role": "user", "content": prompt}])
         return "".join(b.text for b in r.content if b.type == "text")
     elif family in ("openai", "open_weight"):
         from openai import OpenAI
-        r = OpenAI().responses.create(
+        r = OpenAI(timeout=300).responses.create(
             model=model, input=prompt, reasoning={"effort": "low"}, max_output_tokens=2500)
         return r.output_text or ""
     elif family == "google":
         import os
         from google import genai
-        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))  # keep a ref (temporary gets GC'd -> "client closed")
+        from google.genai import types as gt
+        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"),   # keep a ref (temporary gets GC'd)
+                              http_options=gt.HttpOptions(timeout=300_000))  # ms
         r = client.models.generate_content(model=model, contents=prompt)
         return r.text or ""
     else:
@@ -218,7 +220,7 @@ class JudgePanel:
     def _judge_one(self, judge: dict, challenge: dict, report) -> dict:
         return _call_judge(judge["family"], judge["model"], _judge_prompt(challenge, getattr(report, "text", "")))
 
-    def score(self, challenge, report, exclude_family=None) -> CreativityScore:
+    def score(self, challenge, report, exclude_family=None) -> "CreativityScore | None":
         """Score with the active (leave-one-family-out) panel. Judges are independent, so they run
         CONCURRENTLY; a failing judge is dropped so the panel stays robust. Author identity is
         withheld by construction (the prompt carries no agent name)."""
@@ -233,7 +235,8 @@ class JudgePanel:
                 except Exception as e:             # keep the panel robust; drop a failing judge
                     print(f"  [judge {j['id']} failed: {type(e).__name__}: {str(e)[:120]}]", file=sys.stderr)
         if not per:
-            return CreativityScore(0.0, 0.0, 0.0, False, {}, 0)
+            return None   # NO judge succeeded (e.g. judges out of quota) -> UNSCORED, not a real 0.
+                          # Caller must record this as a judge error, not fold a fake 0 into results.
         agg = {ax: _median([v[ax] for v in per.values()]) for ax in ("new", "useful", "surprising")}
         all_three = all(agg[ax] >= self.threshold for ax in ("new", "useful", "surprising"))
         return CreativityScore(agg["new"], agg["useful"], agg["surprising"], all_three, per, len(per))

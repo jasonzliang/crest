@@ -65,7 +65,7 @@ class ClaudeDeepResearch(Agent):
     model = "claude-sonnet-5"
     def run(self, query: str) -> AgentOutput:
         import anthropic
-        client = anthropic.Anthropic()
+        client = anthropic.Anthropic(timeout=600)
         r = client.messages.create(
             model=self.model, max_tokens=9000, system=_DR_SYSTEM,
             tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": self.budget}],
@@ -110,7 +110,7 @@ class OpenAIDeepResearch(Agent):
     model = "gpt-5.6"
     def run(self, query: str) -> AgentOutput:
         from openai import OpenAI
-        r = OpenAI().responses.create(
+        r = OpenAI(timeout=600).responses.create(
             model=self.model, tools=[{"type": "web_search"}],
             instructions=_DR_SYSTEM, input=query,
             reasoning={"effort": "low"}, max_output_tokens=9000,
@@ -142,7 +142,8 @@ class GeminiDeepResearch(Agent):
     def run(self, query: str) -> AgentOutput:
         from google import genai
         from google.genai import types
-        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))  # keep a ref (temporary gets GC'd)
+        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"),   # keep a ref (temporary gets GC'd)
+                              http_options=types.HttpOptions(timeout=600_000))  # ms
         r = client.models.generate_content(
             model=self.model, contents=f"{_DR_SYSTEM}\n\nTASK:\n{query}",
             config=types.GenerateContentConfig(tools=[types.Tool(google_search=types.GoogleSearch())]),

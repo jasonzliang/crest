@@ -14,7 +14,7 @@ CLI (single ad-hoc run):
 For config-driven, multi-agent runs, prefer:  python crest/run_eval.py
 """
 from __future__ import annotations
-import argparse, json, dataclasses, threading
+import argparse, json, dataclasses, threading, collections
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -60,14 +60,22 @@ def _judges_list(per_judge: dict) -> list:
     return [{"judge_id": jid, **vals} for jid, vals in per_judge.items()]
 
 
-def _one_task(ch, name, agent, panel, run_id):
-    """Run one (challenge, agent): agent -> grounding check -> LOFO judge panel. Returns
-    (record, transcript). Judges run concurrently inside panel.score()."""
+_TERMINAL_ERR = ("insufficient_quota", "invalid_api_key", "authentication", "permission",
+                 "credit balance", "quota", " 401", " 403", "billing")
+
+
+def _one_task(ch, name, agent, panel, run_id, cb):
+    """Run one (challenge, agent): circuit-breaker check -> agent -> grounding check -> LOFO panel.
+    Judges score concurrently inside panel.score(). Returns (record, transcript, gate, scores,
+    report, status). Raises to the caller on agent failure (or if the agent is circuit-broken)."""
+    if name in cb["dead"]:                                    # provider already disabled -> skip cheaply
+        raise RuntimeError(f"circuit_open:{name}")
     rid = f"{run_id}:{ch.id}:{name}"
     report = agent.run(ch.query)                              # may raise -> handled by caller
     gate = grounding_gate(report, ch)
     scores = panel.score(dataclasses.asdict(ch), report,
                          exclude_family=agent.model_family) if gate.passed else None
+    status = "scored" if scores is not None else ("grounding_fail" if not gate.passed else "judge_error")
     rec = {
         "schema_version": R.RECORD_SCHEMA_VERSION,
         "record_id": rid, "run_id": run_id,
@@ -75,8 +83,9 @@ def _one_task(ch, name, agent, panel, run_id):
         "axis": ch.axis_isolated, "predicted_direction": ch.predicted_direction,
         "agent": name, "model": agent.model, "model_family": agent.model_family,
         "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
+        "scoring_status": status,                             # scored | grounding_fail | judge_error
         "grounding": dataclasses.asdict(gate),
-        "creativity": None if scores is None else {
+        "creativity": None if scores is None else {           # null on BOTH fail paths (never a fake 0)
             "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
             "creative_all_three": scores.creative_all_three,
             "n_judges": scores.n_judges, "judges": _judges_list(scores.per_judge),
@@ -84,42 +93,66 @@ def _one_task(ch, name, agent, panel, run_id):
     }
     tr = {"record_id": rid, "challenge_id": ch.id, "agent": name,
           "output_text": report.text, "citations": report.citations}
-    return rec, tr, gate, scores, report
+    return rec, tr, gate, scores, report, status
 
 
 def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concurrency=4, verbose=True) -> list:
     """Core loop. Generation runs CONCURRENTLY across independent (challenge, agent) tasks (bounded
-    by `concurrency`); each task's judge panel also scores concurrently. Writes run_dir/records.jsonl
-    (analysis-grade) + run_dir/transcripts.jsonl (heavy output text + citations). Returns records."""
+    by `concurrency`); each task's judge panel also scores concurrently. Degrades gracefully:
+      - a failed task is logged to errors.jsonl (not silently dropped) and skipped;
+      - a total judge-panel failure (e.g. judges out of quota) -> scoring_status='judge_error',
+        creativity=null -- NEVER a fake 0 folded into results;
+      - after >=3 auth/quota ('out of money') failures for an agent it is circuit-broken so a dead
+        provider stops burning the rest of the task list.
+    Writes records.jsonl + transcripts.jsonl + errors.jsonl. Returns the scored/attempted records."""
     run_dir = Path(run_dir)
     tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
     if verbose:
         print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
               f"(LIVE web, concurrency={concurrency}); dir={run_dir}")
-    records, lock = [], threading.Lock()
-    with (run_dir / "records.jsonl").open("w") as fo, (run_dir / "transcripts.jsonl").open("w") as ft:
+    cb = {"lock": threading.Lock(), "fails": collections.Counter(), "dead": set()}
+    records, n_err, wlock = [], 0, threading.Lock()
+    with (run_dir / "records.jsonl").open("w") as fo, (run_dir / "transcripts.jsonl").open("w") as ft, \
+         (run_dir / "errors.jsonl").open("w") as fe:
         with ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
-            futs = {ex.submit(_one_task, ch, name, agent, panel, run_id): (ch, name)
+            futs = {ex.submit(_one_task, ch, name, agent, panel, run_id, cb): (ch, name)
                     for (ch, name, agent) in tasks}
             for fut in as_completed(futs):
                 ch, name = futs[fut]
                 try:
-                    rec, tr, gate, scores, report = fut.result()
+                    rec, tr, gate, scores, report, status = fut.result()
                 except Exception as e:
-                    print(f"  [{ch.id}/{name}] AGENT FAILED: {type(e).__name__}: {str(e)[:140]}")
+                    msg = str(e)
+                    if msg.startswith("circuit_open"):
+                        continue                              # agent already disabled; skip quietly
+                    with cb["lock"]:
+                        cb["fails"][name] += 1
+                        if any(k in msg.lower() for k in _TERMINAL_ERR) and cb["fails"][name] >= 3 \
+                                and name not in cb["dead"]:
+                            cb["dead"].add(name)
+                            print(f"  [circuit] disabling '{name}' after repeated auth/quota failures")
+                    with wlock:
+                        fe.write(json.dumps({"record_id": f"{run_id}:{ch.id}:{name}", "challenge_id": ch.id,
+                                             "agent": name, "status": "agent_error",
+                                             "error_type": type(e).__name__, "error": msg[:200]},
+                                            ensure_ascii=False) + "\n"); fe.flush()
+                        n_err += 1
+                    print(f"  [{ch.id}/{name}] AGENT FAILED: {type(e).__name__}: {msg[:120]}")
                     continue
-                with lock:                                    # thread-safe append (crash-safe JSONL)
+                with wlock:                                   # thread-safe append (crash-safe JSONL)
                     fo.write(json.dumps(rec, ensure_ascii=False) + "\n"); fo.flush()
                     ft.write(json.dumps(tr, ensure_ascii=False) + "\n"); ft.flush()
                     records.append(rec)
                 if verbose:
-                    if scores is None:
-                        print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> creativity 0")
-                    else:
+                    if status == "scored":
                         print(f"  [{ch.id}/{name}] cites={gate.n_citations} tok={report.n_tokens} "
                               f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
                               f"creative={scores.creative_all_three} judges={scores.n_judges}")
-    print(f"wrote {run_dir}/records.jsonl  ({len(records)} records)")
+                    elif status == "judge_error":
+                        print(f"  [{ch.id}/{name}] JUDGE ERROR (all judges failed) -> unscored")
+                    else:
+                        print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> unscored")
+    print(f"wrote {run_dir}/records.jsonl  ({len(records)} records, {n_err} task errors)")
     return records
 
 

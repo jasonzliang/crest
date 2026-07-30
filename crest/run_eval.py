@@ -9,7 +9,7 @@ judge panel. Each benchmark produces an immutable run directory under <out_root>
 (records.jsonl + transcripts.jsonl + run_manifest.json + summary.json); see crest/result/readme.md.
 Runnable from any cwd.
 """
-import argparse, sys, shutil
+import argparse, sys, shutil, os
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -35,10 +35,45 @@ def _label(bench, n) -> str:
     return f"full{n}"
 
 
+FAMILY_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY",
+              "google": "GOOGLE_API_KEY", "open_weight": "OPENAI_API_KEY"}
+DR_KEYS = {"openai_deepresearch", "openai_deepresearch_mini"}   # slow + $$ per call
+
+
+def preflight(agents, panel, enforce=True):
+    """Verify the API keys for every family in use are present BEFORE spending. Aborts a real run
+    on a missing key (in --dry-run, warns instead) so a run can't quietly burn money and die."""
+    fams = {a.model_family for a in agents.values()} | {j["family"] for j in panel.judges}
+    missing = sorted({FAMILY_ENV.get(f, f"?({f})") for f in fams
+                      if not (FAMILY_ENV.get(f) and os.environ.get(FAMILY_ENV[f]))})
+    if missing:
+        print(f"PREFLIGHT: missing API keys for families in use: {missing}")
+        if enforce:
+            sys.exit(1)
+        print("  (--dry-run: a real run would abort here)")
+    else:
+        print(f"preflight OK: keys present for {sorted(fams)}")
+
+
+def confirm_cost(total_tasks, agent_keys, yes):
+    """Guard against accidental large / deep-research-API spend."""
+    expensive = bool(DR_KEYS & set(agent_keys))
+    if not (expensive or total_tasks > 40):
+        return
+    why = "includes the OpenAI Deep Research API (minutes + $$ per call)" if expensive else f"{total_tasks} tasks"
+    if yes:
+        print(f"cost-guard: proceeding ({why}); --yes given.")
+        return
+    print(f"COST GUARD: large/expensive run ({why}). Re-run with --yes to proceed, or set a subset "
+          f"(per_category / limit / categories) in the config to pilot first.")
+    sys.exit(2)
+
+
 def main():
     ap = argparse.ArgumentParser(description="Run CREST from a config file.")
     ap.add_argument("--config", default=str(REPO / "crest/config/eval_config.yaml"))
-    ap.add_argument("--dry-run", action="store_true", help="resolve config + agents + challenges, but do not call any model")
+    ap.add_argument("--dry-run", action="store_true", help="resolve config/agents/challenges + preflight; no model calls")
+    ap.add_argument("--yes", action="store_true", help="confirm a large or deep-research-API (costly) run")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(_p(args.config)))
@@ -50,10 +85,19 @@ def main():
     print(f"agents: {[(k, a.model) for k, a in agents.items()]}")
     print(f"judges: {[(j['id'], j['model']) for j in panel.judges]}")
 
+    preflight(agents, panel, enforce=not args.dry_run)
+
+    plan = []   # resolve all benchmark subsets up front (cheap) so the cost guard sees the true total
     for bench in cfg["benchmarks"]:
         chs = subset(load_challenges(str(_p(bench["challenges"]))),
                      bench.get("per_category"), bench.get("limit"), bench.get("categories"))
-        label = bench.get("subset_label") or _label(bench, len(chs))
+        plan.append((bench, chs, bench.get("subset_label") or _label(bench, len(chs))))
+    total = sum(len(chs) for _, chs, _ in plan) * len(agents)
+    print(f"planned: {total} tasks across {len(plan)} benchmark(s) x {len(agents)} agents")
+    if not args.dry_run:
+        confirm_cost(total, cfg["agents"], args.yes)
+
+    for bench, chs, label in plan:
         print(f"\n=== benchmark '{bench['name']}': {len(chs)} challenges x {len(agents)} agents (subset={label})")
         if args.dry_run:
             print("  [dry-run] would evaluate; no model calls made.")
