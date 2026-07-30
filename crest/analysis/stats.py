@@ -44,15 +44,129 @@ def _axis_col(axis: str) -> str:
     return f"creativity.{axis}"
 
 
+def mean_composite(df: pd.DataFrame) -> pd.Series:
+    """OLD endpoint (mean of the three axes), retained for comparability."""
+    cols = [f"creativity.{a}" for a in AXES if f"creativity.{a}" in df.columns]
+    if not cols:
+        return pd.Series(np.nan, index=df.index)
+    return df[cols].mean(axis=1)
+
+
 def _composite(df: pd.DataFrame) -> pd.Series:
-    """Composite creativity = mean of the three axes (per row).
+    """PRIMARY ENDPOINT: min(New, Useful, Surprising) per row -- the graded form of "creative on
+    all three". Replaces the mean (which lets a strong axis mask a failing one) and the thresholded
+    all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7).
 
     All-null creativity rows (e.g. grounding-gated agents) become NaN.
     """
     cols = [f"creativity.{a}" for a in AXES if f"creativity.{a}" in df.columns]
     if not cols:
         return pd.Series(np.nan, index=df.index)
-    return df[cols].mean(axis=1)  # skipna: all-NaN row -> NaN
+    return df[cols].min(axis=1)   # PRIMARY = min(N,U,S); see mean_composite() for the old mean
+
+
+# --------------------------------------------------------------------------- #
+# Judge reliability: ICC + Krippendorff alpha + per-judge severity
+#
+# judge/judge_config.yaml has always specified `report: [krippendorff_alpha, icc]` with thresholds
+# per Koo & Li 2016, and this module contained ZERO references to either -- a mandated control that
+# was never computed. Per-judge scores ARE persisted (creativity.judges[]), so it is computable
+# directly from any run's records.jsonl.
+#
+# Why severity matters as much as agreement: on this project's data judge severity varied by 2-3
+# points on a 1-10 scale, which exceeded the entire between-agent spread. Reporting alpha/ICC
+# WITHOUT per-judge means would hide the effect that actually decided the leaderboard.
+# --------------------------------------------------------------------------- #
+def judge_ratings(records_path: str) -> dict:
+    """{axis: [[ratings for record 1], [record 2], ...]} plus per-judge means, from raw JSONL.
+
+    Read from the file rather than the flattened frame because `creativity.judges` is a nested list
+    and json_normalize leaves it as an object column."""
+    rows = [json.loads(l) for l in open(records_path) if l.strip()]
+    out = {ax: [] for ax in AXES}
+    by_judge = {ax: {} for ax in AXES}
+    for r in rows:
+        c = r.get("creativity")
+        if not c or not c.get("judges"):
+            continue
+        for ax in AXES:
+            vals = [j[ax] for j in c["judges"] if j.get(ax) is not None]
+            if len(vals) >= 2:                       # a unit needs >=2 raters to inform agreement
+                out[ax].append(vals)
+            for j in c["judges"]:
+                if j.get(ax) is not None:
+                    by_judge[ax].setdefault(j["judge_id"], []).append(j[ax])
+    return {"units": out, "by_judge": by_judge, "n_records": len(rows)}
+
+
+def icc_oneway(units: list[list[float]]) -> dict:
+    """ICC(1,1) and ICC(1,k) from a one-way random-effects ANOVA on ragged rater groups.
+
+    ICC(1,1) = reliability of a SINGLE judge; ICC(1,k) = reliability of the k-judge mean actually
+    used (Spearman-Brown). judge_config's 0.80 bar applies to ICC(1,k), not ICC(1,1) -- conflating
+    them overstates how badly the panel misses. Also returns judges_needed: how many raters ICC(k)
+    >= 0.80 would require at the measured single-rater reliability."""
+    units = [u for u in units if len(u) >= 2]
+    if len(units) < 3:
+        raise InsufficientData("need >=3 units with >=2 ratings for ICC")
+    n = len(units)
+    all_v = [v for u in units for v in u]
+    grand = float(np.mean(all_v))
+    k_bar = float(np.mean([len(u) for u in units]))
+    ss_b = sum(len(u) * (np.mean(u) - grand) ** 2 for u in units)
+    ss_w = sum(sum((v - np.mean(u)) ** 2 for v in u) for u in units)
+    df_b, df_w = n - 1, len(all_v) - n
+    if df_w <= 0:
+        raise InsufficientData("no within-unit variance available for ICC")
+    ms_b, ms_w = ss_b / df_b, ss_w / df_w
+    icc1 = (ms_b - ms_w) / (ms_b + (k_bar - 1) * ms_w) if (ms_b + (k_bar - 1) * ms_w) else float("nan")
+    icc1 = max(0.0, min(1.0, icc1))
+    icck = (k_bar * icc1) / (1 + (k_bar - 1) * icc1) if icc1 > 0 else 0.0
+    need = float("inf")
+    if 0 < icc1 < 1:
+        need = 0.80 * (1 - icc1) / (icc1 * (1 - 0.80))
+    return {"icc_1_1": round(icc1, 3), "icc_1_k": round(icck, 3), "k_bar": round(k_bar, 2),
+            "n_units": n, "judges_needed_for_0.80": (None if need == float("inf") else round(need, 1))}
+
+
+def krippendorff_alpha_interval(units: list[list[float]]) -> float:
+    """Krippendorff's alpha with the INTERVAL difference function, for 1-10 rating scales.
+
+    alpha = 1 - Do/De, Do computed over within-unit rater pairs and De over all value pairs, so
+    missing/ragged ratings are handled natively. Interval (not ordinal) metric: a defensible choice
+    for an equal-appearing 1-10 scale and the simpler claim to defend; ordinal alpha is a refinement.
+    alpha <= 0 means agreement no better than chance."""
+    units = [u for u in units if len(u) >= 2]
+    if len(units) < 3:
+        raise InsufficientData("need >=3 units with >=2 ratings for alpha")
+    n_total = sum(len(u) for u in units)
+    do = sum((1.0 / (len(u) - 1)) * sum((a - b) ** 2 for i, a in enumerate(u) for b in u[i + 1:])
+             for u in units) * (2.0 / n_total)
+    vals = [v for u in units for v in u]
+    de = sum((a - b) ** 2 for i, a in enumerate(vals) for b in vals[i + 1:]) * 2.0 / (n_total * (n_total - 1))
+    return float("nan") if de == 0 else round(1 - do / de, 3)
+
+
+def reliability_report(records_path: str) -> dict:
+    """Everything judge_config.yaml asked for, plus the severity table that explains the rest."""
+    r = judge_ratings(records_path)
+    rep = {}
+    for ax in AXES:
+        entry = {}
+        try:
+            entry.update(icc_oneway(r["units"][ax]))
+        except InsufficientData as e:
+            entry["icc_error"] = str(e)
+        try:
+            entry["krippendorff_alpha_interval"] = krippendorff_alpha_interval(r["units"][ax])
+        except InsufficientData as e:
+            entry["alpha_error"] = str(e)
+        entry["per_judge_mean"] = {j: round(float(np.mean(v)), 2) for j, v in sorted(r["by_judge"][ax].items())}
+        sev = entry["per_judge_mean"]
+        if len(sev) >= 2:
+            entry["severity_spread"] = round(max(sev.values()) - min(sev.values()), 2)
+        rep[ax] = entry
+    return rep
 
 
 def _prep(df: pd.DataFrame, axis: str | None = None, composite: bool = False) -> pd.DataFrame:
@@ -393,6 +507,30 @@ def bootstrap_ci(values, stat=np.mean, n: int = 10000):
 # --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
+def load_prereg(path: str) -> dict:
+    """Read the registration. Returns {} and says so if absent -- an analysis that silently proceeds
+    without its stated plan is how `--prereg` came to be a flag pointing at a missing file."""
+    try:
+        import yaml
+        d = yaml.safe_load(open(path)) or {}
+    except FileNotFoundError:
+        print(f"  [WARNING: no pre-registration at {path}; predictions/bounds NOT loaded]")
+        return {}
+    except Exception as e:
+        print(f"  [WARNING: could not parse {path}: {type(e).__name__}]")
+        return {}
+    reg, plan = d.get("registration", {}), d.get("analysis_plan", {})
+    print(f"  pre-registration: created {reg.get('created_at','?')}, "
+          f"externally_timestamped={reg.get('externally_timestamped')}")
+    if not reg.get("externally_timestamped"):
+        print("  [CAVEAT: NOT externally timestamped -- these are the authors' stated prior "
+              "expectations, recorded in-repo. Do not describe them as pre-registered.]")
+    print(f"  predictions: {d.get('predictions', {})}")
+    print(f"  primary endpoint: {plan.get('primary_endpoint','?')}  "
+          f"| TOST bounds: {plan.get('tost_equivalence_bounds','?')}")
+    return d
+
+
 def _run(label: str, fn):
     """Run one analysis, degrading gracefully. Returns the result or None."""
     try:
@@ -412,10 +550,15 @@ def main():
     p = argparse.ArgumentParser(description="Analyze a CREST run.")
     p.add_argument("--run", required=True)
     p.add_argument("--prereg", default="crest/analysis/preregistration.yaml",
-                   help="frozen predictions + equivalence bounds, timestamped pre-scoring (O1/O11)")
+                   help="frozen predictions + equivalence bounds. NOW ACTUALLY READ: this flag "
+                        "previously defaulted to a nonexistent file and was never opened.")
     args = p.parse_args()
 
     warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+    prereg = load_prereg(args.prereg)          # stated plan, printed up front
+    _bounds = tuple((prereg.get("analysis_plan", {}) or {})
+                    .get("tost_equivalence_bounds", (-1.0, 1.0)))
 
     df = load_run(args.run)
     agents = sorted(df["agent"].dropna().astype(str).unique())

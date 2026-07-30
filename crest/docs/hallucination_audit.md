@@ -1,3 +1,11 @@
+> **SUPERSEDED (2026-07-30).** This pass was *knowledge-based triage* — it says so in its own
+> method note: live web search was unavailable. A subsequent live-web audit of all 50 items
+> (~610 claims, `docs/notes/audit_live_*.md`) found this pass produced **both a false positive and a
+> false negative**: it wrongly flagged Hart's inversor (1874-5 is correct) and wrongly suspected the
+> Cs2TiI6 band gap was ~1.0-1.5 eV (measured ~1.56 eV). Its 11 applied corrections stand and are
+> retained below for provenance, but its *conclusions* — including "no fabricated sources" — cannot
+> be relied on, because that finding is not obtainable without web access. Use the live reports.
+
 # CREST hallucination audit (queries + judge-side metadata)
 
 Fact-check of every factual claim in `query`, `known_answers`, and `expert_baseline` across all 50

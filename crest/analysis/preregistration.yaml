@@ -1,0 +1,54 @@
+# CREST pre-registration of per-category predictions and the analysis plan.
+#
+# WHY THIS FILE EXISTS, AND WHAT IT IS NOT.
+# The per-category directions previously lived in `predicted_direction` inside
+# questions/crest_challenges.jsonl — one value per category, transcribed across all 50 items, so it
+# carried zero item-level information. Worse, it could not evidence ordering: the field sat in an
+# editable data file, its original enum value was literally `caesar_win` on the 20 C2/C3 items, and
+# it was renamed to `favored` fourteen hours later in a commit titled "honesty fixes". A prediction
+# you can `sed` after seeing results is not a pre-registration, and `git log -S caesar_win`
+# demonstrates that in one command.
+#
+# This file is therefore an HONEST INTERMEDIATE, not a fix:
+#   * it separates the predictions from the data they predict, so the item file no longer implies a
+#     registration it cannot support;
+#   * it records what was predicted and when this record was created;
+#   * it does NOT establish that the predictions preceded the results. That requires an EXTERNAL
+#     timestamped registration (OSF / AsPredicted / a Zenodo-DOI'd signed hash) created before the
+#     next run. Until that exists, papers must describe these as "the authors' stated prior
+#     expectation, recorded in the repository; not externally timestamped" — never as pre-registered.
+#
+# stats.py reads this file (it previously accepted a --prereg flag, defaulted it to a path that did
+# not exist, and never opened it).
+
+registration:
+  created_at: "2026-07-30"
+  git_commit_at_creation: "84f7a96"
+  externally_timestamped: false        # <- the load-bearing admission
+  registry_url: null                   # populate when an OSF/AsPredicted record exists
+  supersedes: "predicted_direction field in questions/crest_challenges.jsonl (removed 2026-07-30)"
+
+# Mechanistic account being tested: an architecture that improves relational grounding plus
+# convergent refinement should help where structure-mapping (Gentner 1983) and counterfactual
+# reasoning (Byrne 2005) are the binding constraint, and should NOT help on parametric/convergent
+# tasks. Note only C2/C3 are entailed by that theory; parity on C4 and nulls on C1/C5 are free
+# parameters, which is a real weakness of the account and should be stated as such.
+predictions:
+  C1: predicted_null      # Constrained Synthesis — parametric/convergent; no mechanism advantage
+  C2: favored             # Counterfactual Reasoning — Byrne rational imagination
+  C3: favored             # Cross-Domain Synthesis — Gentner structure-mapping
+  C4: parity              # Meta-Creativity — not entailed by the account
+  C5: predicted_null      # Open-Ended Synthesis — not entailed by the account
+
+analysis_plan:
+  primary_endpoint: "min(New, Useful, Surprising)"   # replaces the thresholded all-three indicator,
+                                                     # whose rate swung 5.4-36.1% across thresholds 5..7
+  secondary_endpoints: ["New", "Useful"]             # Surprising is EXPLORATORY: ablating
+                                                     # expert_baseline moved it by -0.02 and
+                                                     # r(New, Surprising) ~ 0.93
+  judge_protocol: "full panel; same_family as a covariate; leave-one-family-out as robustness check"
+  tost_equivalence_bounds: [-1.0, 1.0]               # on the 1-10 scale, for reading nulls as
+                                                     # evidence-for-equivalence rather than absent power
+  reliability_reported: ["icc_1_1", "icc_1_k", "krippendorff_alpha", "per_judge_severity"]
+  ranking_claims: none                               # judge severity exceeded the between-agent
+                                                     # spread; no leaderboard claim is made
