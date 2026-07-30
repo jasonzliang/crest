@@ -31,7 +31,9 @@ are answered here.
   evaluation time by the judge panel + human validation, not stored as fixed labels.
 - **Splits.** Items are tagged pre/post training-cutoff; a rolling held-out set is added each cycle
   and is not published until after its evaluation window.
-- **External data.** Retrieval is served from a frozen, dated corpus snapshot (see §4); the snapshot
+- **External data.** [NOT IMPLEMENTED] Retrieval is **live provider web search**; `FrozenIndex`
+  raises `NotImplementedError`, so no snapshot exists and no run is contamination-controlled.
+  Intended design: a frozen, dated corpus snapshot (see §4); that snapshot
   manifest ships as URLs + timestamps + SHA-256 hashes, not raw content.
 
 ## 3. Collection process
@@ -48,7 +50,9 @@ are answered here.
 - **Frozen shared index.** All agents retrieve from one dated snapshot through a common search API
   with matched tool/compute budget, so "New/Surprising" reflect synthesis rather than fresher
   retrieval, and runs reproduce. Released as a manifest (URL + timestamp + SHA-256 per document).
-- **Canaries.** Each item embeds a canary string enabling post-hoc detection in future model
+- **Canaries.** [NOT IMPLEMENTED] **Zero of the 50 items currently embed a canary string**
+  (`grep -ci canary` over the item file returns 0). Planned, not shipped; the release/licensing
+  argument in §5 must not rely on it. Would enable post-hoc detection in future model
   training corpora.
 
 ## 5. Uses
