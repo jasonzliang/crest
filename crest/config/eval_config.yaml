@@ -13,16 +13,30 @@ benchmarks:
     limit: null             # e.g. 5 -> first 5 items total
     categories: null        # e.g. [C2, C3] -> only these categories
 
-# Entrants to evaluate. Keys resolve to pinned model IDs in crest/harness/agents.py:
+# Entrants to evaluate. Keys resolve to pinned model IDs in crest/harness/agents.py.
+# TWO ARMS (see docs/notes/deep_research_apis.md):
+#   *_shallow       = chat model + native web search, ONE turn, few searches   (cents/task)
+#   *_deepresearch* = managed multi-step background research loop              (minutes + $$/task)
 agents:
-  - claude_dr               # claude-sonnet-5              + web_search
-  - openai_dr               # gpt-5.6                      + web_search
-  - gemini_dr               # gemini-3.1-pro-preview       + google_search grounding
-  - openai_deepresearch     # o3-deep-research             (OpenAI Deep Research API)
-  # - openai_deepresearch_mini   # o4-mini-deep-research   (faster / cheaper DR)
-  # (Gemini has no separate Deep Research model API; gemini_dr = grounded Pro IS the DR equivalent.)
+  # -- shallow arm (search-augmented chat; NOT deep research) --
+  - claude_shallow            # claude-sonnet-5             + web_search (max_uses=budget)
+  - openai_shallow            # gpt-5.6                     + Responses web_search
+  - gemini_shallow            # gemini-3.1-pro-preview      + google_search grounding
+  # -- deep arm (depth dialed to ~$10/task) --
+  - openai_deepresearch       # gpt-5.6-sol, effort=high, max_tool_calls=40   ~$9/task
+  - gemini_deepresearch_max   # deep-research-max-preview-04-2026, ~160 searches  ~$6/task
+  # Cheaper deep alternatives: openai_deepresearch_mini (~$2-4), gemini_deepresearch (std, ~$2.6).
+  # NB o3-deep-research / o4-mini-deep-research were SHUT DOWN 2026-07-23 (they still appear in
+  # models.list() but every call 404s). Anthropic ships no turnkey DR API, so the deep arm has no
+  # Anthropic entrant -- an asymmetry to disclose, not a null result for Claude.
 
 judge_config: crest/judge/judge_config.live.yaml   # multi-vendor leave-one-family-out panel
 budget: 6                    # per-agent web-search cap (enforced where the provider supports it)
-concurrency: 4               # parallel (challenge, agent) tasks; judges within each also run in parallel
+concurrency: 8               # parallel (challenge, agent) tasks; judges within each also run in parallel.
+                             # NB judge_anthropic fires on 4/5 entrants, so 16 overran the Anthropic
+                             # spend-rate cap and silently degraded panels to a single judge.
+use_cache: true              # reuse agent generations from ANY prior run, keyed by
+                             # (challenge text, agent, model). Editing a question's wording
+                             # changes its hash and correctly invalidates its cached answers.
+                             # Override per-run with: python crest/run_eval.py --override-cache
 out_root: crest/result

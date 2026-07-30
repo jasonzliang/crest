@@ -6,4 +6,4 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from crest.eval._common import run_one
 
 if __name__ == "__main__":
-    run_one("openai_dr")          # e.g. run_one("openai_dr", per_category=2)
+    run_one("openai_shallow")          # e.g. run_one("openai_shallow", per_category=2)

@@ -6,10 +6,12 @@ Two pieces:
      any creativity score -- otherwise a model could win New/Surprising just by making things
      up (novelty-by-hallucination). "Grounding" = the standard term for whether generated
      claims are attributable to their cited sources (ALCE, AIS, FActScore). Fail => creativity 0.
-  2. JUDGE PANEL (`JudgePanel`): scores New/Useful/Surprising 1-10, blind to agent identity,
-     order-randomized, and LEAVE-ONE-FAMILY-OUT -- a model never judges an entrant of its own
-     model family, which defuses self-preference bias (O7). Per-axis scores are returned
-     separately (a profile, not one number).
+  2. JUDGE PANEL (`JudgePanel`): scores New/Useful/Surprising 1-10, blind to agent identity
+     (the prompt carries no agent name) and optionally LEAVE-ONE-FAMILY-OUT. Per-axis scores are
+     returned separately (a profile, not one number).
+     NB there is NO answer-order randomization: scoring is single-answer, not pairwise, so there is
+     no order to randomize. Earlier docs and judge_config.yaml claimed this control; the claim was
+     vacuous and has been removed rather than left as an unimplemented assertion.
 """
 from __future__ import annotations
 import dataclasses, json, re, sys, yaml
@@ -93,18 +95,57 @@ def grounding_gate(report, challenge: dict) -> GroundingResult:
 
 # ---------------- judge panel ----------------
 
-def _judge_prompt(ch: dict, report_text: str) -> str:
-    ka = "\n".join(f"- {a}" for a in (ch.get("known_answers") or [])[:40]) or "(none provided)"
+# The judge must see the WHOLE answer. A previous 12,000-char cap silently discarded a mean 18k
+# chars from 66% of answers -- the judge saw a median 43% of a long answer while seeing 100% of the
+# (never-truncated) known_answers. Hard rules demanding terminal content ("state every oxidation
+# state", "supply a worked example") are satisfied precisely in the discarded tail, so the cap
+# manufactured violations, and violations cap Useful <=3. This ceiling is a runaway guard only: the
+# longest answer observed is 57,282 chars, so it should never fire -- and if it does, it says so
+# loudly rather than truncating in silence.
+_JUDGE_MAX_ANSWER_CHARS = 400_000
+
+# Cap on prior-art entries shown to the judge. Raised from 40 to 200 because the audit identified
+# 21+ missing prior-art families for C5_materials_chemistry_25 (33 entries) and ~60 for
+# C5_arts_humanities_49 (21 entries) -- adding them crosses 40, and a silent cut would have kept the
+# instruction header (entry 0 in 20 items) while discarding real prior art. This is now a runaway
+# guard only, and it warns rather than truncating in silence.
+_MAX_KNOWN_ANSWERS = 200
+
+
+def _fit_answer(text: str) -> str:
+    text = text or ""
+    if len(text) <= _JUDGE_MAX_ANSWER_CHARS:
+        return text
+    print(f"  [WARNING: answer of {len(text)} chars exceeds the judge ceiling "
+          f"({_JUDGE_MAX_ANSWER_CHARS}); scoring a truncated answer]", file=sys.stderr)
+    return text[:_JUDGE_MAX_ANSWER_CHARS]
+
+
+def _judge_prompt(ch: dict, report_text: str, ablate=frozenset()) -> str:
+    """`ablate` omits judge-side fields so their causal effect on scores can be MEASURED rather
+    than assumed. Neither `known_answers` nor `expert_baseline` had ever been ablated, so there was
+    no evidence either moved a score -- and the only dose-response measured for known_answers ran
+    the wrong way (more prior-art entries -> HIGHER novelty awards)."""
+    _ka = ch.get("known_answers") or []
+    if len(_ka) > _MAX_KNOWN_ANSWERS:          # loud, not silent: see _MAX_KNOWN_ANSWERS
+        print(f"  [WARNING: {ch.get('id')} has {len(_ka)} known_answers; only the first "
+              f"{_MAX_KNOWN_ANSWERS} reach the judge -- the novelty baseline is being truncated]",
+              file=sys.stderr)
+    ka = "\n".join(f"- {a}" for a in _ka[:_MAX_KNOWN_ANSWERS]) or "(none provided)"
+    if "known_answers" in ablate:
+        ka = "(ABLATED: no novelty baseline supplied for this run)"
+    eb = ch.get("expert_baseline")
+    if "expert_baseline" in ablate:
+        eb = "(ABLATED: no expert baseline supplied for this run)"
     hr = "\n".join(f"- {r}" for r in (ch.get("hard_rules") or [])) or "(none)"
     return f"""You are an expert judge scoring the CREATIVITY of a deep-research answer. Score three axes 1-10:
-- New: novelty vs the DATED KNOWN ANSWERS below. Restating anything already known => 1-3; recombination with minor extension => 4-6; a genuinely new synthesis/connection not in the list => 7-10.
+- New: novelty vs the DATED KNOWN ANSWERS below. Judge ONLY against that list, NOT against the web or your own background knowledge -- an idea absent from the list is new FOR THIS BENCHMARK even if you believe you have seen it, and an idea present in the list is not new even if it looks fresh. Restating anything in the list => 1-3; recombination with minor extension => 4-6; a genuinely new synthesis/connection not in the list => 7-10.
 - Useful: is the idea sound, workable, and appropriate? Every HARD RULE must be satisfied; a violated hard rule caps Useful at <=3. Judge on merit, not on how many citations there are.
 - Surprising: expectation-violation vs the EXPERT BASELINE, CONDITIONED ON CORRECTNESS. Merely reproducing the expected expert answer => low; a correct-but-non-obvious result that violates a well-calibrated prior => high. Do NOT reward nonsense.
 
 Return ONLY a JSON object, no prose:
 {{"new": <int 1-10>, "useful": <int 1-10>, "surprising": <int 1-10>, "hard_rules_violated": [<strings>], "rationale": "<=40 words"}}
 
-TASK CATEGORY: {ch.get('category')} (isolated axis: {ch.get('axis_isolated')})
 TASK:
 {ch.get('query')}
 
@@ -115,10 +156,10 @@ HARD RULES (usefulness gate):
 {hr}
 
 EXPERT BASELINE (surprise baseline):
-{ch.get('expert_baseline')}
+{eb}
 
 ANSWER TO SCORE (author identity withheld):
-{report_text[:12000]}
+{_fit_answer(report_text)}
 """
 
 
@@ -159,17 +200,34 @@ def _parse_json(s: str) -> dict:
     raise ValueError("no JSON object found in judge response")
 
 
+# Token budget for a judge call. Must cover the model's THINKING plus the JSON verdict; a budget
+# that only covers the verdict yields an empty response on long prompts (see _judge_completion).
+_JUDGE_MAX_TOKENS = 8000
+
+
 def _judge_completion(family: str, model: str, prompt: str) -> str:
     """One raw judge call; returns the response text (possibly empty)."""
     if family == "anthropic":
         import anthropic
-        r = anthropic.Anthropic(timeout=300).messages.create(
-            model=model, max_tokens=2000, messages=[{"role": "user", "content": prompt}])
+        from crest.harness.keys import call_anthropic
+        # Pooled: judge_anthropic is the hottest path in a run (LOFO excludes it only for the
+        # Anthropic entrant), so it trips this account's spend-rate cap first. Spread across every
+        # funded key before giving up and losing the judge.
+        # max_tokens must leave room for BOTH the thinking block and the JSON verdict. These are
+        # reasoning models: on a long judge prompt (known_answers can run to 33 entries, ~15k chars)
+        # a 2000-token budget was fully consumed by thinking, returning stop_reason='max_tokens'
+        # with NO text block -- an "empty judge response" that silently dropped this judge. Because
+        # it failed on the LONGEST prompts, the panel thinned preferentially on the most complex
+        # items, biasing which records kept a full panel.
+        r = call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=300).messages.create(
+            model=model, max_tokens=_JUDGE_MAX_TOKENS,
+            messages=[{"role": "user", "content": prompt}]), "judge")
         return "".join(b.text for b in r.content if b.type == "text")
     elif family in ("openai", "open_weight"):
         from openai import OpenAI
         r = OpenAI(timeout=300).responses.create(
-            model=model, input=prompt, reasoning={"effort": "low"}, max_output_tokens=2500)
+            model=model, input=prompt, reasoning={"effort": "low"},
+            max_output_tokens=_JUDGE_MAX_TOKENS)      # same reasoning-budget trap as above
         return r.output_text or ""
     elif family == "google":
         import os
@@ -187,8 +245,11 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
     """Call a judge and parse its JSON verdict. Retries up to 2 attempts when the response
     text is empty or JSON parsing fails (a known intermittent failure that otherwise drops
     the judge); only raises -- letting JudgePanel drop the judge -- after both are exhausted."""
+    import time
     last_err: Exception = RuntimeError("judge produced no result")
-    for _ in range(2):
+    for attempt in range(4):
+        if attempt:
+            time.sleep(4.0 * (2 ** (attempt - 1)))   # 4s, 8s, 16s: ride out a provider spend-rate cap
         try:
             d = _parse_json(_judge_completion(family, model, prompt))
             return {"new": float(d["new"]), "useful": float(d["useful"]),
@@ -201,24 +262,57 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
 
 
 class JudgePanel:
-    def __init__(self, judges: list, threshold_all_three: float = 6.0):
+    def __init__(self, judges: list, threshold_all_three: float = 6.0, min_judges: int = 2,
+                 lofo: bool = True, ablate=frozenset()):
         self.judges = judges                      # [{"id","model","family"}]
         self.threshold = threshold_all_three
+        # LOFO (leave-one-family-out) drops the judge sharing the entrant's family. Defensible as a
+        # self-preference control, but with only 3 vendors it has real costs: judge identity becomes
+        # perfectly CONFOUNDED with entrant family (each entrant is scored by a different pair, so
+        # cross-entrant comparisons carry a judge-severity confound), n drops 3->2, and median-of-2
+        # degenerates to the mean (no outlier robustness).
+        #
+        # It is also not uniformly warranted. In the source paper's own bias table the same-family
+        # effect was judge-specific and SIGN-INCONSISTENT: Gemini +2.47/+0.78/+0.67, GPT
+        # +0.35/+0.02/+0.47, Claude +0.30/-1.78/-1.57. For the OpenAI judge LOFO spends a whole
+        # judge to remove a ~0.0-0.5 effect; for the Anthropic judge it removes a judge that was
+        # HARSHER on its own family, which pushes Anthropic entrants up.
+        #
+        # lofo=False scores every entrant with the full panel, keeping the instrument constant and
+        # letting same-family enter the model as a covariate (analysis/stats.py runs MixedLM), so the
+        # bias is MEASURED per run rather than assumed. LOFO then remains available post-hoc as a
+        # robustness check by filtering same-family rows.
+        self.lofo = lofo
+        self.ablate = frozenset(ablate)   # judge-side fields withheld (ablation arms)
+        # A single surviving judge is NOT a panel: median-of-one, no cross-family diversity, and
+        # the self-preference defence that LOFO exists to provide is gone. Scores below this many
+        # judges are recorded but flagged 'judge_degraded' so they can be excluded from headline
+        # numbers instead of silently diluting them (this fires when a vendor is down or unfunded).
+        self.min_judges = min_judges
 
     @classmethod
     def from_config(cls, path: str) -> "JudgePanel":
         cfg = yaml.safe_load(open(path))
-        return cls(cfg["judges"], cfg.get("threshold_all_three", 6.0))
+        return cls(cfg["judges"], cfg.get("threshold_all_three", 6.0), cfg.get("min_judges", 2),
+                   cfg.get("leave_one_family_out", True))
+
+    @property
+    def protocol(self) -> str:
+        return "leave-one-family-out" if self.lofo else "full-panel (same-family as covariate)"
 
     def _active(self, exclude_family: str | None) -> list:
-        """Leave-one-family-out: drop any judge sharing the entrant's model family."""
+        """Judges that will score this entrant. Under LOFO, drop any sharing its model family;
+        otherwise use the full panel and let the analysis adjust for same-family scoring."""
+        if not self.lofo:
+            return list(self.judges)
         active = [j for j in self.judges if j["family"] != exclude_family]
         if not active:
             raise ValueError(f"LOFO removed all judges for family={exclude_family}; add another vendor")
         return active
 
     def _judge_one(self, judge: dict, challenge: dict, report) -> dict:
-        return _call_judge(judge["family"], judge["model"], _judge_prompt(challenge, getattr(report, "text", "")))
+        return _call_judge(judge["family"], judge["model"],
+                           _judge_prompt(challenge, getattr(report, "text", ""), self.ablate))
 
     def score(self, challenge, report, exclude_family=None) -> "CreativityScore | None":
         """Score with the active (leave-one-family-out) panel. Judges are independent, so they run

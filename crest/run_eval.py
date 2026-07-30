@@ -21,6 +21,7 @@ from crest.harness.run_crest import load_challenges, subset, evaluate, make_mani
 from crest.harness.agents import build_agent
 from crest.harness import results as R
 from crest.judge.score import JudgePanel
+from crest.harness.cache import GenerationCache
 
 
 def _p(path) -> Path:
@@ -74,17 +75,24 @@ def main():
     ap.add_argument("--config", default=str(REPO / "crest/config/eval_config.yaml"))
     ap.add_argument("--dry-run", action="store_true", help="resolve config/agents/challenges + preflight; no model calls")
     ap.add_argument("--yes", action="store_true", help="confirm a large or deep-research-API (costly) run")
-    ap.add_argument("--no-resume", action="store_true", help="ignore any interrupted run and start fresh")
+    ap.add_argument("--override-cache", action="store_true",
+                    help="ignore cached generations from prior runs and re-generate them (RE-PAYS "
+                         "for every agent call; use when you want fresh answers, not fresh scores)")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(_p(args.config)))
     budget = cfg.get("budget", 6)
     out_root = _p(cfg.get("out_root", "crest/result"))
     panel = JudgePanel.from_config(str(_p(cfg["judge_config"])))
+    # Generation cache is ON by default: an agent answer is paid for once per distinct
+    # (challenge text, agent, model) across ALL runs. --override-cache / use_cache:false overrides.
+    use_cache = cfg.get("use_cache", True) and not args.override_cache
+    cache = GenerationCache(out_root, enabled=use_cache)
     agents = {k: build_agent(k, budget=budget) for k in cfg["agents"]}
     print(f"config: {args.config}")
     print(f"agents: {[(k, a.model) for k, a in agents.items()]}")
-    print(f"judges: {[(j['id'], j['model']) for j in panel.judges]}")
+    print(f"judges: {[(j['id'], j['model']) for j in panel.judges]} (min_judges={panel.min_judges})")
+    print(f"cache: {'ON (reusing prior generations)' if use_cache else 'OFF (--override-cache: re-generating)'}")
 
     preflight(agents, panel, enforce=not args.dry_run)
 
@@ -103,16 +111,14 @@ def main():
         if args.dry_run:
             print("  [dry-run] would evaluate; no model calls made.")
             continue
-        resumable = None if args.no_resume else R.find_resumable(out_root, label)
-        if resumable:
-            run_id, run_dir = resumable
-            print(f"  resuming interrupted run {run_id} ({len(R.completed_pairs(run_dir))} pairs done)")
-        else:
-            run_id, run_dir = R.new_run(out_root, label, REPO)
+        # Every run gets a fresh run_id (runs are immutable). Prior work is not "resumed" -- the
+        # generation cache serves already-paid-for agent answers from ANY previous run, so a re-run
+        # costs only judging. This replaced --resume, which reused work from an interrupted run only.
+        run_id, run_dir = R.new_run(out_root, label, REPO)
         shutil.copy(_p(args.config), run_dir / "config.snapshot.yaml")   # literal config as-run
         created = datetime.now(timezone.utc).isoformat()
         recs = evaluate(chs, agents, panel, run_dir, run_id,
-                        concurrency=cfg.get("concurrency", 4), resume=bool(resumable))
+                        concurrency=cfg.get("concurrency", 4), cache=cache)
         manifest = make_manifest(run_id, created,
             {"name": bench["name"], "challenges_file": bench["challenges"],
              "item_count": len(chs), "subset": label,

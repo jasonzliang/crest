@@ -18,3 +18,17 @@
 _new_*.jsonl
 _refactor_*.jsonl
 _fix_*.jsonl
+
+# Run outputs: 16M of records+transcripts per session. Kept on disk (they are the generation cache
+# and the evidence base) but out of git, matching how this repo already treats benchmark/result,
+# caesar/*result and test/result. result/readme.md stays tracked.
+result/runs/
+result/index.jsonl
+result/latest
+result/.stall_state.json
+
+# Dataset working copies. git is the diff trail once committed; every audit correction is also
+# recorded old->new in docs/notes/hallucination_audit_live_log.jsonl.
+questions/*.bak_*
+questions/crest_challenges.pre_audit.jsonl
+questions/crest_challenges.audit.jsonl

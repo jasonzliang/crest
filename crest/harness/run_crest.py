@@ -10,7 +10,7 @@ harness/results.py).
 config-driven entry point call it.
 
 CLI (single ad-hoc run):
-    python -m crest.harness.run_crest --agents claude_dr openai_dr gemini_dr --subset adhoc
+    python -m crest.harness.run_crest --agents claude_shallow openai_shallow gemini_shallow --subset adhoc
 For config-driven, multi-agent runs, prefer:  python crest/run_eval.py
 """
 from __future__ import annotations
@@ -21,6 +21,7 @@ from pathlib import Path
 from crest.harness.agents import build_agent, FrozenIndex
 from crest.harness import results as R
 from crest.judge.score import JudgePanel, grounding_gate
+from crest.harness.cache import GenerationCache, query_sha
 
 
 @dataclasses.dataclass
@@ -28,17 +29,95 @@ class Challenge:
     id: str; category: str; domain: str; query: str
     axis_isolated: str; time_sensitivity: str
     known_answers: list; hard_rules: list; expert_baseline: str
-    predicted_direction: str; rationale: str = ""
+    predicted_direction: str | None; rationale: str = ""
 
     @staticmethod
     def from_json(d: dict) -> "Challenge":
+        """Build a Challenge, FAILING LOUDLY on missing judge-side machinery.
+
+        Previously every field came from `d.get(k)`, so a missing `known_answers` became None and the
+        judge silently received "(none provided)" as the novelty baseline -- the two fields the design
+        calls load-bearing were the two that failed silently, with no error and no scoring_status
+        flag. An item that cannot be scored must not be scored."""
+        missing = [k for k in ("id", "query", "known_answers", "expert_baseline") if not d.get(k)]
+        if missing:
+            raise ValueError(f"challenge {d.get('id', '<no id>')!r} is missing required "
+                             f"scoring machinery: {missing}. Refusing to score it.")
         f = {k: d.get(k) for k in Challenge.__dataclass_fields__}
         f["hard_rules"] = d.get("hard_rules") or []
         return Challenge(**f)
 
 
-def load_challenges(path: str) -> list[Challenge]:
-    return [Challenge.from_json(json.loads(l)) for l in open(path) if l.strip()]
+_SCHEMA = Path(__file__).resolve().parents[1] / "questions/schema.json"
+_PREREG = Path(__file__).resolve().parents[1] / "analysis/preregistration.yaml"
+_QUARANTINE = Path(__file__).resolve().parents[1] / "questions/quarantine.yaml"
+
+
+def _quarantined() -> dict:
+    """{item_id: reason} for items excluded because a known defect makes their scores
+    uninterpretable. See questions/quarantine.yaml for why this exists rather than deleting the items
+    or loosening the schema."""
+    try:
+        import yaml
+        return (yaml.safe_load(_QUARANTINE.read_text()) or {}).get("quarantined", {}) or {}
+    except FileNotFoundError:
+        return {}
+    except Exception as e:
+        print(f"  [WARNING: could not read {_QUARANTINE.name} ({type(e).__name__}); "
+              f"NO items quarantined this run]")
+        return {}
+
+
+def _prereg_directions() -> dict:
+    """Per-category predicted directions, read from analysis/preregistration.yaml.
+
+    They used to be a `predicted_direction` field on every item -- one value per category copied 50
+    times, in an editable file, so it could evidence nothing about ordering. Records still carry the
+    direction (so downstream analysis is unchanged) but it is now sourced from the registration."""
+    try:
+        import yaml
+        return (yaml.safe_load(_PREREG.read_text()) or {}).get("predictions", {}) or {}
+    except Exception as e:
+        print(f"  [WARNING: could not read {_PREREG.name} ({type(e).__name__}); "
+              f"predicted_direction will be null]")
+        return {}
+
+
+def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
+    """Load and (by default) VALIDATE against questions/schema.json.
+
+    The schema shipped for months without ever being applied -- `grep -rn jsonschema` returned
+    nothing -- so its `required` list was decorative and undeclared fields passed silently. Wiring it
+    in here means a malformed item fails at load, not at score time. Soft-fails with a warning if
+    jsonschema is not installed, so validation is never silently skipped without saying so."""
+    raw = [json.loads(l) for l in open(path) if l.strip()]
+    quar = _quarantined()
+    if quar:
+        dropped = [d["id"] for d in raw if d.get("id") in quar]
+        raw = [d for d in raw if d.get("id") not in quar]
+        if dropped:
+            print(f"  [QUARANTINE: excluding {len(dropped)} item(s) with known defects: {dropped}. "
+                  f"See questions/quarantine.yaml. These block a public release.]")
+    if validate:
+        try:
+            import jsonschema
+            schema = json.loads(_SCHEMA.read_text())
+            v = jsonschema.Draft202012Validator(schema)
+            errs = [f"{d.get('id','<no id>')}: {'/'.join(str(x) for x in e.path) or '<root>'}: {e.message}"
+                    for d in raw for e in v.iter_errors(d)]
+            if errs:
+                raise ValueError(f"{len(errs)} schema violation(s) in {path}:\n  "
+                                 + "\n  ".join(errs[:12])
+                                 + (f"\n  ... and {len(errs)-12} more" if len(errs) > 12 else ""))
+        except ImportError:
+            print(f"  [WARNING: jsonschema not installed -- {_SCHEMA.name} NOT enforced this run]")
+    directions = _prereg_directions()
+    out = []
+    for d in raw:
+        ch = Challenge.from_json(d)
+        ch.predicted_direction = directions.get(ch.category)   # from the registration, not the item
+        out.append(ch)
+    return out
 
 
 def subset(challenges, per_category=None, limit=None, categories=None):
@@ -54,41 +133,66 @@ def subset(challenges, per_category=None, limit=None, categories=None):
     return challenges[:limit] if limit else challenges
 
 
-def _judges_list(per_judge: dict) -> list:
-    """per_judge {judge_id: {new,useful,surprising,...}} -> list-of-objects (LOFO-safe; ready for a
-    rater random effect via json_normalize(record_path=['creativity','judges']))."""
-    return [{"judge_id": jid, **vals} for jid, vals in per_judge.items()]
+def _judges_list(per_judge: dict, panel=None, entrant_family: str | None = None) -> list:
+    """per_judge {judge_id: {new,useful,surprising,...}} -> list-of-objects (ready for a rater random
+    effect via json_normalize(record_path=['creativity','judges'])).
+
+    Stamps `same_family` per judge so self-preference can be modelled as a COVARIATE instead of
+    being excluded by fiat. Under LOFO this is always False (those judges were dropped); with the
+    full panel it marks exactly the rows LOFO would have removed, which is what makes the two
+    protocols directly comparable on one dataset."""
+    fam = {j["id"]: j["family"] for j in (panel.judges if panel else [])}
+    return [{"judge_id": jid, "same_family": bool(entrant_family and fam.get(jid) == entrant_family),
+             **vals} for jid, vals in per_judge.items()]
 
 
 _TERMINAL_ERR = ("insufficient_quota", "invalid_api_key", "authentication", "permission",
                  "credit balance", "quota", " 401", " 403", "billing")
 
 
-def _one_task(ch, name, agent, panel, run_id, cb):
-    """Run one (challenge, agent): circuit-breaker check -> agent -> grounding check -> LOFO panel.
-    Judges score concurrently inside panel.score(). Returns (record, transcript, gate, scores,
-    report, status). Raises to the caller on agent failure (or if the agent is circuit-broken)."""
-    if name in cb["dead"]:                                    # provider already disabled -> skip cheaply
-        raise RuntimeError(f"circuit_open:{name}")
+def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
+    """Run one (challenge, agent): cache lookup -> circuit-breaker check -> agent -> grounding check
+    -> LOFO panel. Judges score concurrently inside panel.score(). Returns (record, transcript,
+    gate, scores, report, status). Raises to the caller on agent failure (or if circuit-broken).
+
+    A cache HIT reuses a stored generation from any prior run keyed by (challenge text, agent,
+    model), so re-scoring never re-pays for generation. Judging always runs fresh -- the panel or
+    rubric may have changed since, and judge calls are the cheap part."""
     rid = f"{run_id}:{ch.id}:{name}"
-    report = agent.run(ch.query)                              # may raise -> handled by caller
+    q_sha = query_sha(ch.query)
+    report = cache.get(ch.id, name, agent.model, q_sha) if cache else None
+    cached = report is not None
+    if not cached:
+        if name in cb["dead"]:                                # provider disabled -> skip cheaply
+            raise RuntimeError(f"circuit_open:{name}")
+        report = agent.run(ch.query)                          # may raise -> handled by caller
     gate = grounding_gate(report, ch)
     scores = panel.score(dataclasses.asdict(ch), report,
                          exclude_family=agent.model_family) if gate.passed else None
-    status = "scored" if scores is not None else ("grounding_fail" if not gate.passed else "judge_error")
+    if scores is None:
+        status = "grounding_fail" if not gate.passed else "judge_error"
+    elif scores.n_judges < getattr(panel, "min_judges", 2):
+        status = "judge_degraded"      # scored, but by too few judges to be a real LOFO panel
+    else:
+        status = "scored"
     rec = {
         "schema_version": R.RECORD_SCHEMA_VERSION,
         "record_id": rid, "run_id": run_id,
         "challenge_id": ch.id, "category": ch.category, "domain": ch.domain,
         "axis": ch.axis_isolated, "predicted_direction": ch.predicted_direction,
         "agent": name, "model": agent.model, "model_family": agent.model_family,
+        "query_sha": q_sha,                    # content address: invalidates if the prompt is edited
+        "generation_cached": cached,           # True => generation reused, not re-paid for
+        "cache_source_run": getattr(report, "source_run", None) if cached else None,
         "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
-        "scoring_status": status,                             # scored | grounding_fail | judge_error
+        "scoring_status": status,          # scored | judge_degraded | grounding_fail | judge_error
         "grounding": dataclasses.asdict(gate),
         "creativity": None if scores is None else {           # null on BOTH fail paths (never a fake 0)
             "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
             "creative_all_three": scores.creative_all_three,
-            "n_judges": scores.n_judges, "judges": _judges_list(scores.per_judge),
+            "n_judges": scores.n_judges,
+            "judge_protocol": panel.protocol,
+            "judges": _judges_list(scores.per_judge, panel, agent.model_family),
         },
     }
     tr = {"record_id": rid, "challenge_id": ch.id, "agent": name,
@@ -97,7 +201,7 @@ def _one_task(ch, name, agent, panel, run_id, cb):
 
 
 def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concurrency=4,
-             resume=False, verbose=True) -> list:
+             verbose=True, cache=None) -> list:
     """Core loop. Generation runs CONCURRENTLY across independent (challenge, agent) tasks (bounded
     by `concurrency`); each task's judge panel also scores concurrently. Degrades gracefully:
       - a failed task is logged to errors.jsonl (not silently dropped) and skipped;
@@ -105,23 +209,24 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
         creativity=null -- NEVER a fake 0 folded into results;
       - after >=3 auth/quota ('out of money') failures for an agent it is circuit-broken so a dead
         provider stops burning the rest of the task list.
-    resume=True: skip (challenge, agent) pairs already in records.jsonl and APPEND (don't re-pay);
-    errored/unattempted pairs are retried. Writes records/transcripts/errors.jsonl. Returns records."""
+    Cost control is the generation CACHE, not resumption: a task whose (challenge text, agent,
+    model) was generated in any earlier run reuses that stored answer instead of re-paying, so every
+    run is a complete, self-contained, immutable run_id. Writes records/transcripts/errors.jsonl."""
     run_dir = Path(run_dir)
-    done = R.completed_pairs(run_dir) if resume else set()
-    all_tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
-    tasks = [t for t in all_tasks if (t[0].id, t[1]) not in done]
-    records = [json.loads(l) for l in (run_dir / "records.jsonl").open() if l.strip()] if done else []
-    mode = "a" if done else "w"
+    tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
+    records, mode = [], "w"
     if verbose:
-        print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(all_tasks)} tasks "
-              f"({len(done)} already done, {len(tasks)} to run; resume={resume}, concurrency={concurrency}); dir={run_dir}")
+        n_cached = sum(1 for ch, name, a in tasks
+                       if cache and cache.get(ch.id, name, a.model, query_sha(ch.query))) if cache else 0
+        print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
+              f"({n_cached} served from cache, {len(tasks)-n_cached} to generate; "
+              f"concurrency={concurrency}); dir={run_dir}")
     cb = {"lock": threading.Lock(), "fails": collections.Counter(), "dead": set()}
     n_err, wlock = 0, threading.Lock()
     with (run_dir / "records.jsonl").open(mode) as fo, (run_dir / "transcripts.jsonl").open(mode) as ft, \
          (run_dir / "errors.jsonl").open(mode) as fe:
         with ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
-            futs = {ex.submit(_one_task, ch, name, agent, panel, run_id, cb): (ch, name)
+            futs = {ex.submit(_one_task, ch, name, agent, panel, run_id, cb, cache): (ch, name)
                     for (ch, name, agent) in tasks}
             for fut in as_completed(futs):
                 ch, name = futs[fut]
@@ -150,10 +255,14 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                     ft.write(json.dumps(tr, ensure_ascii=False) + "\n"); ft.flush()
                     records.append(rec)
                 if verbose:
+                    tag = " CACHED" if rec.get("generation_cached") else ""
                     if status == "scored":
-                        print(f"  [{ch.id}/{name}] cites={gate.n_citations} tok={report.n_tokens} "
+                        print(f"  [{ch.id}/{name}]{tag} cites={gate.n_citations} tok={report.n_tokens} "
                               f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
                               f"creative={scores.creative_all_three} judges={scores.n_judges}")
+                    elif status == "judge_degraded":
+                        print(f"  [{ch.id}/{name}] JUDGE DEGRADED: only {scores.n_judges} judge(s) "
+                              f"survived (< min_judges) -> flagged, excluded from headline numbers")
                     elif status == "judge_error":
                         print(f"  [{ch.id}/{name}] JUDGE ERROR (all judges failed) -> unscored")
                     else:
@@ -177,8 +286,22 @@ def make_manifest(run_id, created_at, benchmark, agents: dict, panel, budget, co
                                      "A frozen, date-bounded index is future work."),
         },
         "agents": [{"key": k, "model": a.model, "family": a.model_family,
-                    "budget": budget, "model_id_note": "alias; pin a dated snapshot for camera-ready"}
+                    "arm": "deep" if "deepresearch" in k else "shallow",
+                    # Record the depth knob that ACTUALLY applies to this entrant. The global
+                    # `budget` is the shallow-arm search cap (Anthropic max_uses) and is meaningless
+                    # for the deep entrants -- reporting it for them would misstate how much search
+                    # each agent was allowed, which is a live confound in cross-arm comparisons.
+                    "depth": ({"reasoning_effort": a.effort, "max_tool_calls": a.max_tool_calls}
+                              if hasattr(a, "max_tool_calls") else
+                              {"managed_agent": a.model, "search_budget": "provider-managed (not cappable)"}
+                              if "deepresearch" in k else
+                              {"search_budget": budget}),
+                    "model_id_note": "alias; pin a dated snapshot for camera-ready"}
                    for k, a in agents.items()],
+        "depth_caveat": ("Deep- and shallow-arm entrants were NOT given equal search budgets (the "
+                         "providers expose different, partly uncappable dials), so a cross-arm "
+                         "difference confounds agent quality with evidence volume. Compare within "
+                         "arm; treat depth as a factor, not as noise."),
         "judges": [{"id": j["id"], "model": j["model"], "family": j["family"]} for j in panel.judges],
         "judge_protocol": "leave-one-family-out; blind; median aggregation",
     }
@@ -192,15 +315,11 @@ def run(args) -> None:
     agents = {name: build_agent(name, budget=args.budget) for name in args.agents}
     panel = JudgePanel.from_config(args.judge_config)
     repo_root = Path(__file__).resolve().parents[2]
-    resumable = None if args.no_resume else R.find_resumable(args.out_root, args.subset)
-    if resumable:
-        run_id, run_dir = resumable
-        print(f"resuming interrupted run {run_id} ({len(R.completed_pairs(run_dir))} pairs done)")
-    else:
-        run_id, run_dir = R.new_run(args.out_root, args.subset, repo_root)
+    run_id, run_dir = R.new_run(args.out_root, args.subset, repo_root)
     created_at = datetime.now(timezone.utc).isoformat()
+    cache = GenerationCache(args.out_root, enabled=not args.override_cache)
     recs = evaluate(challenges, agents, panel, run_dir, run_id,
-                    concurrency=args.concurrency, resume=bool(resumable))
+                    concurrency=args.concurrency, cache=cache)
     manifest = make_manifest(run_id, created_at,
                              {"name": "crest", "challenges_file": args.challenges,
                               "item_count": len(challenges), "subset": args.subset,
@@ -225,7 +344,8 @@ def main():
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--categories", nargs="+", default=None, help="keep only these categories, e.g. C2 C3")
     p.add_argument("--subset", default="adhoc", help="label for the run_id (e.g. pilot5cat, full50)")
-    p.add_argument("--no-resume", action="store_true", help="ignore any interrupted run and start fresh")
+    p.add_argument("--override-cache", action="store_true",
+                   help="ignore cached generations from prior runs and re-generate them (RE-PAYS)")
     p.add_argument("--out-root", dest="out_root", default="crest/result")
     run(p.parse_args())
 

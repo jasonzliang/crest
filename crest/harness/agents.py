@@ -1,14 +1,34 @@
 """Agent adapters for CREST entrants.
 
-Run mode: LIVE provider-native web search — Anthropic's `web_search` tool, OpenAI's Responses
-`web_search` / Deep Research API, and Gemini's `google_search` grounding — so a real run needs
-only the model API keys (no Tavily/SerpAPI). This mirrors the native-search mode of
-langchain-ai/open_deep_research. NB: live web search is NOT contamination-controlled; results are
-time-indexed snapshots. A frozen shared index (fair, reproducible run) is future work — see
-`FrozenIndex`, which deliberately raises until it is built.
+TWO DISTINCT ARMS — do not conflate them:
 
-Search-call budget: enforced where the provider exposes a cap (Anthropic `max_uses`); OpenAI and
-Gemini native search are not directly cappable, so `budget` is advisory for them (report n_searches).
+  1. SHALLOW research (`*_shallow`): a chat model + provider-native web search in ONE turn
+     (Anthropic `web_search`, OpenAI Responses `web_search`, Gemini `google_search` grounding).
+     A handful of searches, no managed research loop. These are NOT deep-research agents, which
+     is why they are named `shallow` — an earlier `*_dr` naming overstated what they do.
+  2. DEEP research (`*_deepresearch*`): a managed, multi-step, background research loop —
+     Google's turnkey Deep Research agent on the Interactions API, and OpenAI's current
+     deep-research *pattern* (general reasoning model + web_search + background, dialed by
+     reasoning effort / max_tool_calls). Minutes and dollars per call, tens of searches.
+
+Provider landscape as of 2026-07-30 (re-verify; it moves fast):
+  * OpenAI's dedicated `o3-deep-research` / `o4-mini-deep-research` were deprecated 2026-04-22 and
+    SHUT DOWN 2026-07-23. They still appear in `models.list()` but every Responses call 404s, so
+    deep research is now the general-model pattern above (`gpt-5.6-sol`).
+  * Google DOES ship a turnkey deep-research agent (`deep-research-preview-04-2026` /
+    `-max-preview-04-2026`), correcting this repo's earlier claim that grounded Gemini-Pro was the
+    only Gemini equivalent. Interactions API only, `background=True` required.
+  * Anthropic ships NO turnkey deep-research endpoint — a deep arm for Claude would be DIY
+    (agent loop over `web_search`/`web_fetch`); `claude_shallow` is therefore shallow-only, and
+    the deep arm is intentionally OpenAI+Google until that loop is built.
+
+Run mode is LIVE provider search, so a real run needs only the model API keys (no Tavily/SerpAPI).
+NB: live web search is NOT contamination-controlled; results are time-indexed snapshots. A frozen
+shared index (fair, reproducible run) is future work — see `FrozenIndex`, which deliberately raises.
+
+Search-call budget: enforced where the provider exposes a cap (Anthropic `max_uses`, OpenAI
+`max_tool_calls`); Gemini native search is not directly cappable, so `budget` is advisory there
+(we report n_searches).
 
 Model IDs are pinned per entrant in `_REGISTRY`. The authors' own entrant (cited prior work) is
 one entrant among many; it must not be privileged and all findings must hold with it removed.
@@ -16,8 +36,8 @@ one entrant among many; it must not be privileged and all findings must hold wit
 from __future__ import annotations
 import dataclasses, os, re
 
-_DR_SYSTEM = (
-    "You are a deep-research agent. Before writing, do REAL web search: issue at least TWO "
+_RESEARCH_SYSTEM = (
+    "You are a research agent. Before writing, do REAL web search: issue at least TWO "
     "distinct search queries to gather current, primary evidence. Do this on EVERY task, "
     "INCLUDING invention/design tasks -- there you must still ground the FACTUAL SCAFFOLDING "
     "(definitions, prior work, data, constraints) with sources even though the core idea is "
@@ -47,6 +67,33 @@ class FrozenIndex:
             "frozen-index mode is future work; omit --index to run in LIVE provider-web-search mode")
 
 
+_TRANSIENT = ("rate limit", "rate_limit", "429", "500", "502", "503", "504", "overloaded",
+              "timeout", "timed out", "connection", "temporarily",
+              # Anthropic's spend-rate cap: "You have reached your specified API usage limits.
+              # You will regain access on <date>". Despite the wording this recovers in minutes
+              # under load, so back off and retry rather than losing the task.
+              "usage limits", "regain access")
+
+def _retry(fn, what: str, attempts: int = 4, base_sleep: float = 5.0):
+    """Retry `fn` on TRANSIENT failures only (429 / 5xx / connection), with exponential backoff.
+
+    Deliberately narrow: auth, quota-exhausted and 404-model errors are NOT transient and must fail
+    fast so the caller's circuit breaker can disable a dead provider instead of retrying into the
+    void. Used ONLY around job *creation* and *polling* — never around a whole deep-research run,
+    because re-running a completed background job would pay for it twice."""
+    import time
+    for i in range(attempts):
+        try:
+            return fn()
+        except Exception as e:
+            msg = str(e).lower()
+            if i == attempts - 1 or not any(k in msg for k in _TRANSIENT):
+                raise
+            sleep = base_sleep * (2 ** i)
+            print(f"  [retry {i+1}/{attempts-1} {what} in {sleep:.0f}s: {type(e).__name__}: {str(e)[:90]}]")
+            time.sleep(sleep)
+
+
 class Agent:
     model_family: str = "unknown"     # used for leave-one-family-out judging
     model: str = ""
@@ -59,18 +106,19 @@ class Agent:
 
 
 # ---------------- Anthropic ----------------
-class ClaudeDeepResearch(Agent):
-    """Claude + server-side web_search tool."""
+class ClaudeShallowResearch(Agent):
+    """Claude + server-side web_search tool in one turn -- the SHALLOW arm, not deep research."""
     model_family = "anthropic"
     model = "claude-sonnet-5"
     def run(self, query: str) -> AgentOutput:
         import anthropic
-        client = anthropic.Anthropic(timeout=600)
-        r = client.messages.create(
-            model=self.model, max_tokens=9000, system=_DR_SYSTEM,
-            tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": self.budget}],
-            messages=[{"role": "user", "content": query}],
-        )
+        from crest.harness.keys import call_anthropic
+        r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
+            .messages.create(
+                model=self.model, max_tokens=9000, system=_RESEARCH_SYSTEM,
+                tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": self.budget}],
+                messages=[{"role": "user", "content": query}],
+            ), "entrant"), f"anthropic entrant ({self.model})")
         text, cites, n_search = [], [], 0
         for b in r.content:
             if b.type == "text":
@@ -104,39 +152,73 @@ def _parse_openai(r) -> AgentOutput:
     return AgentOutput(full, _merge_inline_urls(_dedup(cites), full), n_tokens=n_tok, n_searches=n_search)
 
 
-class OpenAIDeepResearch(Agent):
-    """GPT (chat) + Responses `web_search` tool -- a lightweight deep-research config."""
+class OpenAIShallowResearch(Agent):
+    """GPT (chat) + Responses `web_search` tool in one turn -- the SHALLOW arm, not deep research."""
     model_family = "openai"
     model = "gpt-5.6"
     def run(self, query: str) -> AgentOutput:
         from openai import OpenAI
         r = OpenAI(timeout=600).responses.create(
             model=self.model, tools=[{"type": "web_search"}],
-            instructions=_DR_SYSTEM, input=query,
+            instructions=_RESEARCH_SYSTEM, input=query,
             reasoning={"effort": "low"}, max_output_tokens=9000,
         )
         return _parse_openai(r)
 
 
 class OpenAIDeepResearchAPI(Agent):
-    """OpenAI Deep Research API (o3-deep-research / o4-mini-deep-research) via the Responses API:
-    a purpose-built, multi-step research agent (web_search_preview is required). Long-running --
-    minutes per query -- so the client timeout is raised."""
+    """OpenAI deep research as the CURRENT PATTERN, not a dedicated SKU.
+
+    The purpose-built `o3-deep-research` / `o4-mini-deep-research` models were deprecated
+    2026-04-22 and SHUT DOWN 2026-07-23 (verified: they still appear in `models.list()` but every
+    Responses call 404s "Model not found"). OpenAI folded deep research into the general models, so
+    the supported configuration is now: a general reasoning model + >=1 data-source tool +
+    `background=True`, with depth dialed by `reasoning.effort` and `max_tool_calls`.
+
+    Notes: the tool string is `web_search` (`web_search_preview` is the retired-era name);
+    `background=True` is required in practice because these runs take minutes, so we poll to
+    completion. Depth (effort / max_tool_calls) is the cost dial -- see
+    docs/notes/deep_research_apis.md."""
     model_family = "openai"
-    model = "o3-deep-research"
+    model = "gpt-5.6-sol"
+    effort = "high"
+    max_tool_calls = 40
+    POLL_S, MAX_WAIT_S = 10, 3600
+
     def run(self, query: str) -> AgentOutput:
+        import time
         from openai import OpenAI
-        r = OpenAI(timeout=1800).responses.create(
-            model=self.model, tools=[{"type": "web_search_preview"}],
-            instructions=_DR_SYSTEM, input=query, max_output_tokens=12000,
-        )
+        client = OpenAI(timeout=1800)
+        r = _retry(lambda: client.responses.create(
+            model=self.model, tools=[{"type": "web_search"}],
+            instructions=_RESEARCH_SYSTEM, input=query,
+            reasoning={"effort": self.effort},
+            max_tool_calls=self.max_tool_calls,
+            background=True,
+        ), f"openai-dr create ({self.model})")
+        terminal, waited = {"completed", "failed", "incomplete", "cancelled"}, 0
+        while r.status not in terminal:
+            if waited >= self.MAX_WAIT_S:
+                raise TimeoutError(f"openai deep research still {r.status} after {waited}s (id={r.id})")
+            time.sleep(self.POLL_S); waited += self.POLL_S
+            r = _retry(lambda: client.responses.retrieve(r.id), f"openai-dr poll ({r.id[:16]})")
+        if r.status != "completed":
+            raise RuntimeError(f"openai deep research ended status={r.status} (id={r.id})")
         return _parse_openai(r)
 
 
+class OpenAIDeepResearchMini(OpenAIDeepResearchAPI):
+    """Cheaper/faster depth setting of the same pattern (the o4-mini-DR replacement)."""
+    model = "gpt-5.6-sol"
+    effort = "medium"
+    max_tool_calls = 15
+
+
 # ---------------- Google ----------------
-class GeminiDeepResearch(Agent):
-    """Gemini + google_search grounding. Gemini exposes no separate Deep Research *model* (Deep
-    Research is an app feature), so grounded Gemini-Pro is the API deep-research equivalent."""
+class GeminiShallowResearch(Agent):
+    """Gemini + google_search grounding: the lightweight `chat + native search` arm, matching
+    claude_shallow / openai_shallow. NB this is NOT Google's deep-research agent -- that is a real,
+    separate turnkey API (see GeminiDeepResearchAPI below); keep both as distinct entrants."""
     model_family = "google"
     model = "gemini-3.1-pro-preview"
     def run(self, query: str) -> AgentOutput:
@@ -145,7 +227,7 @@ class GeminiDeepResearch(Agent):
         client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"),   # keep a ref (temporary gets GC'd)
                               http_options=types.HttpOptions(timeout=600_000))  # ms
         r = client.models.generate_content(
-            model=self.model, contents=f"{_DR_SYSTEM}\n\nTASK:\n{query}",
+            model=self.model, contents=f"{_RESEARCH_SYSTEM}\n\nTASK:\n{query}",
             config=types.GenerateContentConfig(tools=[types.Tool(google_search=types.GoogleSearch())]),
         )
         cites, n_search = [], 0
@@ -162,6 +244,89 @@ class GeminiDeepResearch(Agent):
         n_tok = getattr(getattr(r, "usage_metadata", None), "candidates_token_count", 0) or 0
         return AgentOutput(text, _merge_inline_urls(_dedup(cites), text),
                            n_tokens=n_tok, n_searches=n_search or len(cites))
+
+
+class GeminiDeepResearchAPI(Agent):
+    """Google's TURNKEY Deep Research agent (Interactions API) -- a managed multi-step research
+    loop in one call, the closest thing any vendor ships to a 'deep research API'.
+
+    Agents: `deep-research-preview-04-2026` (fast/standard) and `deep-research-max-preview-04-2026`
+    (max: ~160 searches, up to ~30 min). Deep Research is available ONLY on the Interactions API
+    and REQUIRES background=True, so we poll to completion. Citations arrive as `url_citation`
+    annotations on `model_output` steps (char offsets, title often absent -- read defensively).
+
+    This corrects an earlier assumption in this repo that Gemini had no deep-research API and that
+    grounded Gemini-Pro was its equivalent; both now run as separate entrants."""
+    model_family = "google"
+    model = "deep-research-preview-04-2026"
+    # 5400s not 3900s: one task in the full50 run timed out at 3900s while still
+    # 'in_progress'. Google documents a 60-min hard cap on the RUN, so queue delay stacks on
+    # top of it; 90min absorbs that without masking a genuine runaway.
+    POLL_S, MAX_WAIT_S = 15, 5400
+
+    def run(self, query: str) -> AgentOutput:
+        import time
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"),
+                              http_options=types.HttpOptions(timeout=600_000))   # ms
+        it = _retry(lambda: client.interactions.create(
+            agent=self.model,
+            # The deep-research agents REJECT `system_instruction` (400: "not supported for the
+            # deep-research-* agent"), even though the field exists on interactions.create for
+            # ordinary models. So the shared prompt is prepended to the input instead. Safe: the
+            # parser reads `model_output` steps only, so the echoed prompt in the `user_input`
+            # step never reaches the grounding check or the judges.
+            input=f"{_RESEARCH_SYSTEM}\n\nTASK:\n{query}",
+            agent_config={"type": "deep-research", "thinking_summaries": "auto",
+                          "collaborative_planning": False},   # never block on a plan approval
+            background=True,                                  # REQUIRED for agents
+        ), f"gemini-dr create ({self.model})")
+        iid, waited = it.id, 0
+        while True:
+            it = _retry(lambda: client.interactions.get(iid),  # positional id; no .name on Interaction
+                        f"gemini-dr poll ({iid[:16]})")
+            st = str(getattr(it, "status", "")).lower()
+            if "complet" in st:
+                break
+            if any(k in st for k in ("fail", "cancel", "budget_exceeded", "error")):
+                raise RuntimeError(f"gemini deep research {st}")
+            if waited >= self.MAX_WAIT_S:
+                raise TimeoutError(f"gemini deep research still {st} after {waited}s")
+            time.sleep(self.POLL_S); waited += self.POLL_S
+        return _parse_gemini_interaction(it)
+
+
+def _parse_gemini_interaction(it) -> AgentOutput:
+    """Pull report text, citations and counters off a completed Interaction.
+
+    Verified against a live completed interaction (google-genai 2.2.0, 2026-07-30):
+      * there is NO `output_text` convenience accessor on this SDK version (it is None) -- the
+        report must be assembled from steps;
+      * `steps` contains the ECHOED PROMPT as a `user_input` step alongside `model_output`, so we
+        take text from `model_output` ONLY. Reading every text item would prepend our own system
+        prompt to the answer and corrupt both the grounding check and the judges' view;
+      * counters live on `it.usage`: `total_output_tokens` and `grounding_tool_count`
+        ([GroundingToolCount(count=N, type='google_search')]), not on `usage_metadata`.
+    Still defensive: this surface is preview and field presence varies."""
+    parts, cites = [], []
+    for step in (getattr(it, "steps", None) or []):
+        if str(getattr(step, "type", "")) != "model_output":
+            continue                                    # skip user_input echo & tool-trace steps
+        for item in (getattr(step, "content", None) or []):
+            if str(getattr(item, "type", "")) == "text":
+                parts.append(getattr(item, "text", "") or "")
+            for ann in (getattr(item, "annotations", None) or []):
+                if str(getattr(ann, "type", "")) == "url_citation" and getattr(ann, "url", None):
+                    cites.append({"url": ann.url, "title": getattr(ann, "title", "") or ""})
+    text = "".join(parts) or (getattr(it, "output_text", None) or "")
+    u = getattr(it, "usage", None) or getattr(it, "usage_metadata", None)
+    n_tok = (getattr(u, "total_output_tokens", None) or getattr(u, "output_tokens", None)
+             or getattr(u, "candidates_token_count", None) or 0)
+    n_search = sum(getattr(g, "count", 0) or 0
+                   for g in (getattr(u, "grounding_tool_count", None) or []))
+    return AgentOutput(text, _merge_inline_urls(_dedup(cites), text),
+                       n_tokens=n_tok, n_searches=n_search or len(cites))
 
 
 # ---------------- future entrants (documented, not yet wired) ----------------
@@ -201,13 +366,16 @@ def _merge_inline_urls(cites: list, text: str) -> list:
 # name -> (adapter class, pinned default model id)
 _REGISTRY = {
     # frontier chat + native web search
-    "claude_dr":                (ClaudeDeepResearch, "claude-sonnet-5"),
-    "openai_dr":                (OpenAIDeepResearch, "gpt-5.6"),
-    "gemini_dr":                (GeminiDeepResearch, "gemini-3.1-pro-preview"),
-    # purpose-built deep-research APIs
-    "openai_deepresearch":      (OpenAIDeepResearchAPI, "o3-deep-research"),
-    "openai_deepresearch_mini": (OpenAIDeepResearchAPI, "o4-mini-deep-research"),
-    # (Gemini has no separate Deep Research model; `gemini_dr` = grounded Pro IS the DR equivalent.)
+    "claude_shallow":           (ClaudeShallowResearch, "claude-sonnet-5"),
+    "openai_shallow":           (OpenAIShallowResearch, "gpt-5.6"),
+    "gemini_shallow":           (GeminiShallowResearch, "gemini-3.1-pro-preview"),
+    # deep-research agents (background/managed multi-step loops; minutes + $$ per call)
+    # NB o3-deep-research / o4-mini-deep-research were SHUT DOWN 2026-07-23 -- OpenAI deep research
+    # is now the general-model pattern below, dialed by reasoning effort + max_tool_calls.
+    "openai_deepresearch":      (OpenAIDeepResearchAPI, "gpt-5.6-sol"),          # effort=high, 40 calls
+    "openai_deepresearch_mini": (OpenAIDeepResearchMini, "gpt-5.6-sol"),         # effort=medium, 15 calls
+    "gemini_deepresearch":      (GeminiDeepResearchAPI, "deep-research-preview-04-2026"),
+    "gemini_deepresearch_max":  (GeminiDeepResearchAPI, "deep-research-max-preview-04-2026"),
     # future entrants
     "oss_dr":                   (OpenSourceAgent, ""),
     "author_entrant":           (AuthorEntrant, ""),
