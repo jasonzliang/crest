@@ -9,7 +9,7 @@ judge panel. Each benchmark produces an immutable run directory under <out_root>
 (records.jsonl + transcripts.jsonl + run_manifest.json + summary.json); see crest/result/readme.md.
 Runnable from any cwd.
 """
-import argparse, sys
+import argparse, sys, shutil
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -59,6 +59,7 @@ def main():
             print("  [dry-run] would evaluate; no model calls made.")
             continue
         run_id, run_dir = R.new_run(out_root, label, REPO)
+        shutil.copy(_p(args.config), run_dir / "config.snapshot.yaml")   # literal config as-run
         created = datetime.now(timezone.utc).isoformat()
         recs = evaluate(chs, agents, panel, run_dir, run_id, concurrency=cfg.get("concurrency", 4))
         manifest = make_manifest(run_id, created,

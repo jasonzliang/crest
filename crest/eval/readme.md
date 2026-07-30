@@ -13,7 +13,9 @@ Run from the repo root (the parent of `crest/`):
 | `eval_gemini3pro.py` | `gemini_dr` | `gemini-3.1-pro-preview` | chat + `google_search` grounding |
 | `eval_openai_deepresearch.py` | `openai_deepresearch` | `o3-deep-research` | **OpenAI Deep Research API** |
 | `eval_openai_deepresearch_mini.py` | `openai_deepresearch_mini` | `o4-mini-deep-research` | OpenAI Deep Research API (mini) |
-| `eval_gemini_deepresearch.py` | `gemini_deepresearch` | `gemini-3.1-pro-preview` | grounded Pro = Gemini's DR equivalent |
+
+Gemini has **no separate Deep Research model** in the API, so its DR-equivalent is grounded Pro —
+i.e. `eval_gemini3pro.py` itself (no separate script).
 
 ```bash
 python crest/eval/eval_claude_sonnet.py            # full 50-item run for one model

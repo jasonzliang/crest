@@ -1,10 +1,9 @@
-# CREST judge panel — LIVE config with real, current model IDs (used for the pilot run).
-# 3 vendors so leave-one-family-out always leaves >=2 judges when scoring an Anthropic or
-# OpenAI entrant. (The full protocol adds a 4th, open-weight judge; see judge_config.yaml.)
+# CREST judge panel — LIVE config (used for runs).
+# Only `judges` and `threshold_all_three` are read by JudgePanel.from_config. 3 vendors so
+# leave-one-family-out always leaves >=2 judges when scoring an Anthropic or OpenAI entrant.
+# The full protocol (open-weight 4th judge + reliability/human-validation intent) is documented
+# in judge_config.yaml.
 threshold_all_three: 6.0
-blind: true
-randomize_answer_order: true
-
 judges:
   - id: judge_anthropic
     model: claude-sonnet-5
@@ -15,6 +14,3 @@ judges:
   - id: judge_google
     model: gemini-2.5-pro
     family: google
-
-grounding_gate:
-  min_citations: 2

@@ -21,6 +21,8 @@ build_dir() {
   echo "==> building $d/$MAIN.tex"
   if [ ! -f "$d/$MAIN.tex" ]; then echo "  ! no $d/$MAIN.tex, skipping"; return 0; fi
   ( cd "$d"
+    export TEXINPUTS=".:../_shared:${TEXINPUTS:-}"   # find the shared iclr .sty / fancyhdr / natbib / math_commands
+    export BSTINPUTS=".:../_shared:${BSTINPUTS:-}"   # find the shared iclr .bst (references.bib stays per-paper)
     if command -v pdflatex >/dev/null 2>&1; then
       pdflatex -interaction=nonstopmode -halt-on-error "$MAIN" >/dev/null
       bibtex "$MAIN" >/dev/null || echo "  (bibtex warnings; continuing)"

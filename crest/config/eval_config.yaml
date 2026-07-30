@@ -20,7 +20,7 @@ agents:
   - gemini_dr               # gemini-3.1-pro-preview       + google_search grounding
   - openai_deepresearch     # o3-deep-research             (OpenAI Deep Research API)
   # - openai_deepresearch_mini   # o4-mini-deep-research   (faster / cheaper DR)
-  # - gemini_deepresearch        # grounded gemini-3.1-pro (Gemini has no separate DR model; == gemini_dr)
+  # (Gemini has no separate Deep Research model API; gemini_dr = grounded Pro IS the DR equivalent.)
 
 judge_config: crest/judge/judge_config.live.yaml   # multi-vendor leave-one-family-out panel
 budget: 6                    # per-agent web-search cap (enforced where the provider supports it)

@@ -60,7 +60,7 @@ def _count_factual_claims(text: str) -> int:
     return sum(1 for s in _SENT_SPLIT_RE.split(text) if _FACT_CUE_RE.search(s))
 
 
-def grounding_gate(report, challenge: dict, threshold: float = 0.8, min_citations: int = 2) -> GroundingResult:
+def grounding_gate(report, challenge: dict) -> GroundingResult:
     """Factual-grounding check (see module docstring). PILOT implementation: a lightweight
     proxy that targets an answer's FACTUAL SCAFFOLDING, not its creative proposal. We
     estimate how many verifiable external factual claims the answer makes (dated facts,
@@ -75,9 +75,8 @@ def grounding_gate(report, challenge: dict, threshold: float = 0.8, min_citation
         obvious fabrication cannot earn creativity by construction.
 
     Honest-proxy limits: this counts citation-worthy *cues*, not atomic facts, and does not
-    verify that a citation actually supports a given claim. `min_citations` is retained for
-    backward compatibility but is no longer a blanket floor. The PRODUCTION version swaps
-    this for a per-claim FACT verifier -- the stronger check `threshold` is reserved for.
+    verify that a citation actually supports a given claim. The PRODUCTION version swaps this
+    for a per-claim FACT verifier (decompose -> verify each against its cited source).
     Fail => the answer scores 0 creativity."""
     cites = getattr(report, "citations", []) or []
     n = len(cites)

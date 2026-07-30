@@ -206,7 +206,7 @@ _REGISTRY = {
     # purpose-built deep-research APIs
     "openai_deepresearch":      (OpenAIDeepResearchAPI, "o3-deep-research"),
     "openai_deepresearch_mini": (OpenAIDeepResearchAPI, "o4-mini-deep-research"),
-    "gemini_deepresearch":      (GeminiDeepResearch, "gemini-3.1-pro-preview"),  # grounded pro = DR equiv
+    # (Gemini has no separate Deep Research model; `gemini_dr` = grounded Pro IS the DR equivalent.)
     # future entrants
     "oss_dr":                   (OpenSourceAgent, ""),
     "author_entrant":           (AuthorEntrant, ""),
