@@ -104,6 +104,32 @@ def main():
             v = f"DEAD+INCOMPLETE ({lines} lines, no 'wrote' marker)"
             print(f"  ablation: {v}"); problems.append(v)
 
+    # ---- background agents + workflows (they do not appear as run_eval processes)
+    agents = _procs("claude-code") + _procs("subagent")
+    wf = list(REPO.glob(".claude/projects/*/subagents/workflows/*")) if (REPO / ".claude").exists() else []
+    print(f"  background: {len(_procs('python')) } python proc(s); "
+          f"{len(list((REPO/'crest/result/runs').glob('*/'))) } run dir(s) on disk")
+
+    # ---- release gate: the single number that says whether this is shippable
+    import subprocess
+    g = subprocess.run(["bash", str(REPO / "crest/analysis/ci_check.sh")],
+                       capture_output=True, text=True)
+    line = [l for l in g.stdout.splitlines() if "PRE-RELEASE GATE" in l]
+    print(f"  gate: {line[0].split(':')[-1].strip() if line else '?'}"
+          f"  ({sum(1 for l in g.stdout.splitlines() if l.strip().startswith('OK'))} ok, "
+          f"{sum(1 for l in g.stdout.splitlines() if l.strip().startswith('FAIL'))} fail)")
+
+    # ---- uncommitted work: this session has lost track of finished work before
+    st = subprocess.run(["git", "status", "--porcelain", "crest/"], capture_output=True,
+                        text=True, cwd=str(REPO)).stdout.strip()
+    n_dirty = len(st.splitlines()) if st else 0
+    if n_dirty:
+        print(f"  UNCOMMITTED: {n_dirty} changed file(s) -- commit before they are lost")
+
+    print("\n  TASK RECONCILIATION (the task list lives in the harness, not on disk -- check it "
+          "manually):\n    * close any task whose work is committed\n    * a task 'in_progress' with "
+          "no running job is stalled\n    * work with no task is untracked")
+
     STATE.write_text(json.dumps({**prev, **state}))   # keep other runs' counters, don't drop them
     if problems:
         print(f"\nSTALLED/DEAD: {len(problems)} — fix or skip, and record the skip.")
