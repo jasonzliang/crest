@@ -26,6 +26,12 @@ result/runs/
 result/index.jsonl
 result/latest
 result/.stall_state.json
+# Aborted runs are archived out of runs/ so the cache and the health checks stop seeing them, but
+# their records are the same 100s-of-KB payload and must stay out of git for the same reason.
+# The readme is NOT ignored: it is the only record of why each was aborted and what its records
+# cannot be used for, which is worth versioning even though the data behind it is not.
+result/aborted/*/
+!result/aborted/readme.md
 
 # Dataset working copies. git is the diff trail once committed; every audit correction is also
 # recorded old->new in docs/notes/hallucination_audit_live_log.jsonl.
