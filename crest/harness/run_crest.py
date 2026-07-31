@@ -21,7 +21,7 @@ from pathlib import Path
 from crest.harness.agents import build_agent, FrozenIndex
 from crest.harness import results as R
 from crest.judge.score import JudgePanel, grounding_gate
-from crest.harness.cache import GenerationCache, query_sha
+from crest.harness.cache import GenerationCache, query_sha, adapter_fingerprint
 
 
 @dataclasses.dataclass
@@ -160,7 +160,8 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
     rubric may have changed since, and judge calls are the cheap part."""
     rid = f"{run_id}:{ch.id}:{name}"
     q_sha = query_sha(ch.query)
-    report = cache.get(ch.id, name, agent.model, q_sha) if cache else None
+    fp = adapter_fingerprint(agent)
+    report = cache.get(ch.id, name, agent.model, q_sha, fp) if cache else None
     cached = report is not None
     if not cached:
         if name in cb["dead"]:                                # provider disabled -> skip cheaply
@@ -187,6 +188,8 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
                                                    # even in principle from records.jsonl
         "agent": name, "model": agent.model, "model_family": agent.model_family,
         "query_sha": q_sha,                    # content address: invalidates if the prompt is edited
+        "adapter_fp": fp,                      # code identity: invalidates if the ADAPTER changes
+                                               # (max_tokens, effort, tool caps, system prompt)
         "generation_cached": cached,           # True => generation reused, not re-paid for
         "cache_source_run": getattr(report, "source_run", None) if cached else None,
         # NB output_len_tokens is the provider's BILLED output count, which for reasoning models

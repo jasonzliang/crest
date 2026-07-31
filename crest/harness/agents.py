@@ -184,6 +184,12 @@ class ClaudeShallowResearch(Agent):
 
 # ---------------- OpenAI ----------------
 def _parse_openai(r) -> AgentOutput:
+    # A truncated answer must not pass silently as a finished one: 5 of 49 shallow records sat at
+    # exactly max_output_tokens=9000 with 4 ending mid-sentence, and were scored as complete.
+    if getattr(r, "status", None) == "incomplete":
+        why = getattr(getattr(r, "incomplete_details", None), "reason", "?")
+        print(f"  [WARNING: OpenAI response INCOMPLETE (reason={why}); the answer is truncated "
+              f"and will be scored as if finished -- raise max_output_tokens]")
     cites, n_search = [], 0
     for item in (r.output or []):
         itype = getattr(item, "type", "")
@@ -286,9 +292,16 @@ class GeminiShallowResearch(Agent):
                 w = getattr(ch, "web", None)
                 if w and getattr(w, "uri", None):
                     cites.append({"url": w.uri, "title": getattr(w, "title", "") or ""})
-        except Exception:
-            pass
+        except Exception as e:
+            # was a bare `except: pass`. With no log, a zero-search record could mean the model
+            # chose not to search OR the grounding-metadata parse blew up -- indistinguishable, and
+            # 39 of 49 records in the 2026-07-31 run were zero-search.
+            print(f"  [WARNING: {self.model} grounding-metadata parse failed "
+                  f"({type(e).__name__}: {str(e)[:80]}); n_searches/citations may be undercounted]")
         text = r.text or ""
+        if n_search == 0:
+            print(f"  [NOTE: {self.model} reported ZERO web searches; any citations below are "
+                  f"scraped from the answer text and are NOT verified grounding chunks]")
         n_tok = getattr(getattr(r, "usage_metadata", None), "candidates_token_count", 0) or 0
         return AgentOutput(text, _merge_inline_urls(_dedup(cites), text),
                            n_tokens=n_tok, n_searches=n_search or len(cites))

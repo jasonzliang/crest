@@ -91,7 +91,8 @@ def main():
     # Generation cache is ON by default: an agent answer is paid for once per distinct
     # (challenge text, agent, model) across ALL runs. --override-cache / use_cache:false overrides.
     use_cache = cfg.get("use_cache", True) and not args.override_cache
-    cache = GenerationCache(out_root, enabled=use_cache)
+    cache = GenerationCache(out_root, enabled=use_cache,
+                            trust_legacy=cfg.get("trust_legacy_cache", False))
     if args.override_cache_agents:
         _stale = set(args.override_cache_agents)
         _get = cache.get
