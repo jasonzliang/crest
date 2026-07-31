@@ -111,7 +111,6 @@ def main():
           f"{len(list((REPO/'crest/result/runs').glob('*/'))) } run dir(s) on disk")
 
     # ---- release gate: the single number that says whether this is shippable
-    import subprocess
     g = subprocess.run(["bash", str(REPO / "crest/analysis/ci_check.sh")],
                        capture_output=True, text=True)
     line = [l for l in g.stdout.splitlines() if "PRE-RELEASE GATE" in l]

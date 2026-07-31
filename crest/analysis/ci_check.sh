@@ -72,8 +72,17 @@ print(sum(1 for r in rows if 'canary' in json.dumps(r).lower()), len(rows))
 set -- $n_canary; have=$1; total=$2
 if [ "$have" = "$total" ] && [ "$have" != "0" ]; then echo "  OK canaries present in all $total items";
 else
-  if grep -rqiE "canar(y|ies)" crest/docs/datasheet.md crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
-     && ! grep -rqi "NOT IMPLEMENTED" crest/docs/datasheet.md; then
+  # The disclosure check must be scoped to the CANARY LINES themselves. A whole-file grep for
+  # "NOT IMPLEMENTED" passed because datasheet.md carries 13 unrelated [NOT IMPLEMENTED] markers,
+  # so this FAIL branch was unreachable no matter what the docs claimed -- the same "gate green for
+  # the wrong reason" defect the check above exists to catch.
+  # Qualifier cues that make a canary mention honest. This is a cue list, not a parser: it accepts
+  # any line that carries a disclaimer and flags the rest, so a NEW affirmative claim fails loudly
+  # while the existing disclosure text passes. "unqualified" is here because the datasheet sentence
+  # describing THIS CHECK ("...if any doc makes an unqualified canary claim") is, by construction,
+  # not itself a canary claim.
+  if grep -rhiE "canar(y|ies)" crest/docs/datasheet.md crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
+     | grep -qivE "NOT IMPLEMENTED|no canar|zero of|0/50|not present|not shipped|would be|planned|unqualified"; then
     echo "  FAIL canary claimed in docs but only $have/$total items contain one"; fail=1
   else echo "  OK no unqualified canary claim (0/50 items, correctly disclosed)"; fi
 fi

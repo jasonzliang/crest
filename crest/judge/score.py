@@ -21,10 +21,15 @@ from concurrent.futures import ThreadPoolExecutor
 @dataclasses.dataclass
 class GroundingResult:
     passed: bool
-    empty_answer: bool = False      # distinguishes "the agent produced nothing" (an ADAPTER problem)
-                                    # from "the agent fabricated" (a GROUNDING problem). Conflating
-                                    # them mislabelled a 22% Anthropic adapter failure as Claude
-                                    # being ungrounded.
+    empty_answer: bool = False      # LITERALLY nothing: the agent returned "". Distinguishes an
+                                    # ADAPTER problem from "the agent fabricated" (a GROUNDING
+                                    # problem) -- conflating them mislabelled a 22% Anthropic
+                                    # adapter failure as Claude being ungrounded.
+    too_short: bool = False         # non-empty but below _MIN_SUBSTANTIVE_CHARS. Kept SEPARATE from
+                                    # empty_answer, which briefly meant "under 1000 chars" -- so the
+                                    # console printed "empty answer" for 470-char preambles and
+                                    # n_empty_answer counted them. Same adapter root cause, but the
+                                    # threshold is a judgement call and the emptiness is not.
     citation_density: float = 0.0   # citations per ~600 chars (a proxy, NOT FACT precision); see docstring
     n_citations: int = 0            # count of source URLs found (structured + inline)
 
@@ -73,13 +78,13 @@ def _count_factual_claims(text: str) -> int:
     return sum(1 for s in _SENT_SPLIT_RE.split(text) if _FACT_CUE_RE.search(s))
 
 
-def grounding_gate(report, challenge: dict | None = None) -> GroundingResult:
+def grounding_gate(report) -> GroundingResult:
     """Factual-grounding check (see module docstring). PILOT implementation: a lightweight
     proxy that targets an answer's FACTUAL SCAFFOLDING, not its creative proposal. We
     estimate how many verifiable external factual claims the answer makes (dated facts,
     statistics, named sources) and require that they be backed:
 
-      * an empty / near-empty answer FAILS (no substantive content);
+      * an empty answer FAILS as `empty_answer`, a sub-1000-char one as `too_short`;
       * an answer carrying >=1 real source URL PASSES (its scaffolding is attributable);
       * a pure-invention answer that makes few verifiable external factual claims PASSES
         even with zero citations -- a creative artifact is not punished for lacking
@@ -91,8 +96,10 @@ def grounding_gate(report, challenge: dict | None = None) -> GroundingResult:
     verify that a citation actually supports a given claim. The PRODUCTION version swaps this
     for a per-claim FACT verifier (decompose -> verify each against its cited source).
 
-    MEASURED CONTRIBUTION (2026-07-31, 245 records): the anti-fabrication clause fired ZERO times.
-    234 answers passed; all 11 rejections were EMPTY strings, not unsourced prose. Of 10 substantive
+    MEASURED CONTRIBUTION (2026-07-31, 245 records, measured when the floor was 40 chars): the
+    anti-fabrication clause fired ZERO times. 234 answers passed; all 11 rejections were EMPTY
+    strings, not unsourced prose. Raising the floor to 1000 adds a `too_short` class that would have
+    caught 10 more, all from the same truncating adapter and all now fixed. Of 10 substantive
     zero-citation answers, none exceeded the uncited-claim tolerance. Every entrant except
     claude_shallow had no uncited records at all (median citations 6-52). So on THIS field of
     entrants -- all using provider-native web search -- the gate contributes nothing beyond an
@@ -110,7 +117,8 @@ def grounding_gate(report, challenge: dict | None = None) -> GroundingResult:
     pure_invention = n_factual <= _MAX_UNCITED_CLAIMS   # few external facts to cite
     passed = substantive and (grounded or pure_invention)
     return GroundingResult(passed=passed, citation_density=round(density, 3), n_citations=n,
-                           empty_answer=not substantive)
+                           empty_answer=not text.strip(),
+                           too_short=bool(text.strip()) and not substantive)
 
 
 # ---------------- judge panel ----------------

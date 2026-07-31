@@ -13,6 +13,7 @@ Requires: statsmodels, scipy, numpy, pandas (see pyproject/requirements).
 """
 from __future__ import annotations
 import argparse, json, warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -51,6 +52,11 @@ def load_run(path: str):
     """Tolerate a partially-written final line: analysing a LIVE run is the normal case, and an
     uncaught JSONDecodeError there is a crash for no reason."""
     import pandas as pd
+    # Accept a run DIRECTORY as well as a records.jsonl. rejudge and ablate_fields both take --run
+    # as a directory; only this one took a file, so the obvious invocation died on IsADirectoryError.
+    p = Path(path)
+    if p.is_dir():
+        path = str(p / "records.jsonl")
     rows, bad = [], 0
     for line in open(path):
         if not line.strip():
@@ -608,13 +614,19 @@ def main():
     cats = sorted(df["category"].dropna().astype(str).unique())
     print(f"loaded {len(df)} records; agents={agents}; categories={cats}")
 
-    comp = _composite(df)
-    scored = df.assign(_composite=comp.to_numpy())
-    scored_rows = scored.dropna(subset=["_composite"])
-    scored_agents = sorted(scored_rows["agent"].astype(str).unique())
-    print(f"scored items: {len(scored_rows)}/{len(df)}; "
-          f"agents with scores={scored_agents}; "
-          f"scored categories={sorted(scored_rows['category'].astype(str).unique())}")
+    # Wrapped like every other analysis: _composite now RAISES on a missing axis, and this was the
+    # one caller outside _run. A live run's first minutes (or a fully grounding-gated agent) have no
+    # creativity columns at all, so an unwrapped call tracebacks -- contradicting InsufficientData's
+    # own contract that main() prints and continues.
+    comp = _run("composite", lambda: _composite(df))
+    scored_rows = df.iloc[0:0]
+    if comp is not None:
+        scored = df.assign(_composite=comp.to_numpy())
+        scored_rows = scored.dropna(subset=["_composite"])
+        scored_agents = sorted(scored_rows["agent"].astype(str).unique())
+        print(f"scored items: {len(scored_rows)}/{len(df)}; "
+              f"agents with scores={scored_agents}; "
+              f"scored categories={sorted(scored_rows['category'].astype(str).unique())}")
 
     # Descriptive: per-agent composite mean.
     if len(scored_rows):

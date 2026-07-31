@@ -165,10 +165,13 @@ class ClaudeShallowResearch(Agent):
                 print(f"  [WARNING: {self.model} still pause_turn after {guard} continuations; "
                       f"returning what it produced so far]")
                 break
-            # replace, don't append: appending yields [user, assistant, assistant, ...] which
-            # is non-conformant (roles must alternate) and re-bills every prior partial turn
-            msgs = [{"role": "user", "content": query},
-                    {"role": "assistant", "content": r.content}]
+            # APPEND, don't replace. Replacing keeps only the latest turn's content, so from the
+            # second pause_turn on the model no longer sees its own earlier web_search results or
+            # prose -- while `blocks.extend` above still concatenates all of them into the recorded
+            # answer, which can therefore contain restarted or duplicated sections the model never
+            # meant as one document. The guard allows 8 continuations, so this is reachable.
+            # Consecutive same-role turns are explicitly permitted ("combined into a single turn").
+            msgs = msgs + [{"role": "assistant", "content": r.content}]
         text, cites, n_search = [], [], 0
         for b in blocks:
             if b.type == "text":

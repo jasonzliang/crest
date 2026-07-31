@@ -45,6 +45,17 @@ class Challenge:
         if missing:
             raise ValueError(f"challenge {d.get('id', '<no id>')!r} is missing required "
                              f"scoring machinery: {missing}. Refusing to score it.")
+        # Every OTHER non-defaulted field (domain, category, axis_isolated, time_sensitivity) must
+        # also be present. Checked separately, and for PRESENCE rather than truthiness, so a
+        # legitimately False/0 value passes. Without this the dict comprehension below raised a bare
+        # `TypeError: __init__() missing 1 required positional argument` instead of the intended
+        # ValueError naming the item and the field.
+        absent = [f.name for f in dataclasses.fields(Challenge)
+                  if f.default is dataclasses.MISSING
+                  and f.default_factory is dataclasses.MISSING and f.name not in d]
+        if absent:
+            raise ValueError(f"challenge {d.get('id', '<no id>')!r} is missing required "
+                             f"field(s): {absent}. Refusing to score it.")
         f = {k: d[k] for k in Challenge.__dataclass_fields__ if k in d}  # preserve defaults
         f["hard_rules"] = d.get("hard_rules") or []
         return Challenge(**f)
@@ -169,7 +180,7 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         if name in cb["dead"]:                                # provider disabled -> skip cheaply
             raise RuntimeError(f"circuit_open:{name}")
         report = agent.run(ch.query)                          # may raise -> handled by caller
-    gate = grounding_gate(report, ch)
+    gate = grounding_gate(report)
     # Judge failures must NEVER reach the agent circuit breaker. panel.score() swallows per-judge
     # errors, but anything else it raises (LOFO leaving no judges, a client construction error, a
     # vendor outage) propagated into the agent-failure handler: the run then logged agent_error and
@@ -183,8 +194,9 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
                   f"{type(e).__name__}: {str(e)[:110]}")
             scores = None
     if scores is None:
-        # empty_answer is an ADAPTER failure, not a grounding failure -- keep them distinguishable
+        # empty/too-short are ADAPTER failures, not grounding failures -- keep all three distinct
         status = ("empty_answer" if getattr(gate, "empty_answer", False)
+                  else "too_short" if getattr(gate, "too_short", False)
                   else "grounding_fail") if not gate.passed else "judge_error"
     elif scores.n_judges < getattr(panel, "min_judges", 2):
         status = "judge_degraded"      # scored, but by too few judges to be a real LOFO panel
@@ -214,7 +226,7 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         "truncated": bool(getattr(report, "truncated", False)),
         "answer_chars": len(report.text or ""),
         "answer_words": len((report.text or "").split()),
-        "scoring_status": status,   # scored | judge_degraded | empty_answer | grounding_fail | judge_error
+        "scoring_status": status,   # scored | judge_degraded | empty_answer | too_short | grounding_fail | judge_error
         "grounding": dataclasses.asdict(gate),
         "creativity": None if scores is None else {           # null on BOTH fail paths (never a fake 0)
             "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,

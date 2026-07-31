@@ -7,7 +7,8 @@
 threshold_all_three: 6.0        # retained for backwards comparability; NOT the primary endpoint --
                                 # it is unpre-registered and the creative rate swings 5.4-36.1%
                                 # across t=5..7, with ~26% of records sitting exactly on 6.00.
-                                # Report min(New, Useful) as primary instead -- TWO axes; Surprising is exploratory.
+                                # Report min(New, Useful, Surprising) as primary instead: graded,
+                                # on the 1-10 scale, all three NUS axes.
 
 min_judges: 2                   # below this a record is flagged `judge_degraded`, not silently
                                 # averaged: a single surviving judge is not a panel.

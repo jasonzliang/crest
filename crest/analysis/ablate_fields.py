@@ -10,11 +10,11 @@ It is nearly free because generation is already paid for: a finalized run's `tra
 holds every agent answer, so each ablation arm costs judge calls only, and the FULL arm is not
 re-run at all -- it is read from the run's existing records.
 
-Arms:
-  full            (baseline; read from the run, not re-scored)
-  no_known        known_answers withheld from the judge
-  no_expert       expert_baseline withheld
-  neither         both withheld
+Arms (the judge's CURRENT default is: known_answers shown, expert_baseline withheld):
+  full                  (baseline; read from the run, not re-scored)
+  no_known              known_answers also withheld
+  with_expert           expert_baseline restored
+  no_known_with_expert  both flipped
 
 Interpretation:
   * If New does not drop when `known_answers` is withheld, the novelty baseline is not doing the
@@ -35,13 +35,24 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
 from crest.harness.run_crest import load_challenges          # noqa: E402
-from crest.judge.score import JudgePanel                     # noqa: E402
+from crest.judge.score import JudgePanel, _ABLATABLE          # noqa: E402
 from crest.harness.rejudge import StoredReport, _load_jsonl   # noqa: E402
 
-ARMS = {"no_known": {"known_answers"},
-        "no_expert": {"expert_baseline"},
-        "neither": {"known_answers", "expert_baseline"}}
+# NOTE the INVERTED semantics. This script's own first run proved expert_baseline does not anchor
+# Surprising (-0.02), so score.py now withholds it BY DEFAULT and `restore_expert_baseline` is the
+# key that adds it back. The old arms ("no_expert"/"neither", keyed on `expert_baseline`) named a
+# key that no longer exists.
+ARMS = {"no_known": {"known_answers"},                                 # withhold prior art
+        "with_expert": {"restore_expert_baseline"},                    # add the baseline back
+        "no_known_with_expert": {"known_answers", "restore_expert_baseline"}}
 AXES = ("new", "useful", "surprising")
+
+# Fail at import, before a single judge call. _judge_prompt raises on an unknown ablate key, but it
+# raises inside a worker whose exception JudgePanel.score swallows per-judge -- so a stale key here
+# dropped every judge, returned None for every record, and crashed on `mean([])` AFTER paying in
+# full for the preceding arm. A typo in this dict must cost $0, not one arm's worth of judge calls.
+_bad = set().union(*ARMS.values()) - _ABLATABLE
+assert not _bad, f"ARMS references ablate key(s) score.py does not accept: {sorted(_bad)}"
 
 
 def _balanced(records: list, per_category: int) -> list:

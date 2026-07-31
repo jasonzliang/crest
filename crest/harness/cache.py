@@ -37,25 +37,36 @@ def adapter_fingerprint(agent) -> str:
     run that meant 45 of 49 records per agent came from a run whose manifest records git_dirty=true
     at a commit predating every committed adapter change -- 80% of the deep arm produced by code
     that cannot be reconstructed. Fingerprint the knobs that change the OUTPUT."""
-    import hashlib, inspect
+    import hashlib
     from crest.harness import agents as A
-    # Hash the ADAPTER'S OWN SOURCE rather than a hand-listed set of attributes. The hand-listed
-    # version missed every knob that is a literal inside run() instead of a class attribute --
-    # OpenAIShallowResearch hardcodes max_output_tokens=9000 and effort="low", so raising that
-    # ceiling would NOT have changed the key and the truncated answers would have been served from
-    # cache forever. Source-hashing captures any change that can alter the output, by construction.
-    try:
-        body = inspect.getsource(type(agent))
-    except (OSError, TypeError):
-        body = type(agent).__name__
     parts = [type(agent).__name__, getattr(agent, "model", ""), str(getattr(agent, "budget", "")),
-             hashlib.sha256(body.encode()).hexdigest()[:12],
-             hashlib.sha256(A._RESEARCH_SYSTEM.encode()).hexdigest()[:8]]
-    # per-family only: reading the Anthropic ceiling for EVERY agent meant bumping it re-paid for
-    # the entire deep arm (~$450) -- the exact cost this cache exists to avoid
-    if getattr(agent, "model_family", "") == "anthropic":
-        parts.append(str(getattr(A, "_ANTHROPIC_MAX_TOKENS", "")))
+             _module_code_hash(A)]
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:10]
+
+
+def _module_code_hash(mod) -> str:
+    """Hash of the adapter MODULE's source, comments and blank lines stripped.
+
+    Hashing each adapter class on its own (`inspect.getsource(type(agent))`) was unsound in two ways
+    that both bit in practice. It captured neither INHERITED methods -- OpenAIDeepResearchMini
+    defines no `run` at all, so editing the parent's body left the child's key untouched -- nor
+    MODULE-LEVEL helpers, and `_parse_openai` (gained `truncated=`) and `_parse_gemini_interaction`
+    (lost a fabricated `n_searches` fallback) are exactly where two of the three adapter fixes
+    landed. Measured across that fix commit, 5 of 7 adapters kept an unchanged fingerprint and would
+    have served pre-fix generations forever, under a docstring claiming the opposite.
+
+    Module scope is sound by construction: no adapter output depends on code outside this module
+    that isn't already in the key. It over-invalidates -- any edit to agents.py re-pays generation --
+    which is the honest trade, and it is why comments are stripped: that module is deliberately
+    comment-heavy, and a rationale edit must not cost ~$450."""
+    import hashlib, inspect
+    try:
+        src = inspect.getsource(mod)
+    except (OSError, TypeError):
+        return "nosource"
+    body = "\n".join(l for l in (ln.rstrip() for ln in src.splitlines())
+                     if l.strip() and not l.lstrip().startswith("#"))
+    return hashlib.sha256(body.encode()).hexdigest()[:12]
 
 
 def query_sha(query: str) -> str:
@@ -69,10 +80,14 @@ def cache_key(challenge_id: str, agent_key: str, model: str, q_sha: str, fp: str
 
 class CachedOutput:
     """Reconstructed agent output. Mirrors AgentOutput's read surface."""
-    __slots__ = ("text", "citations", "n_tokens", "n_searches", "trace", "source_run")
-    def __init__(self, text, citations, n_tokens, n_searches, source_run):
+    # `truncated` must be here: run_crest records it via getattr(report, "truncated", False), so
+    # omitting it silently wrote 0 for every CACHE HIT -- and cache hits are the normal path on a
+    # re-run, so the metric read 0 exactly when it mattered.
+    __slots__ = ("text", "citations", "n_tokens", "n_searches", "truncated", "trace", "source_run")
+    def __init__(self, text, citations, n_tokens, n_searches, source_run, truncated=False):
         self.text, self.citations = text, citations
         self.n_tokens, self.n_searches = n_tokens, n_searches
+        self.truncated = bool(truncated)
         self.trace, self.source_run = {}, source_run
 
 
@@ -127,6 +142,7 @@ class GenerationCache:
                     "text": tr["output_text"], "citations": tr.get("citations") or [],
                     "n_tokens": r.get("output_len_tokens", 0) or 0,
                     "n_searches": r.get("n_searches", 0) or 0,
+                    "truncated": bool(r.get("truncated", False)),
                     "source_run": r.get("run_id") or run_dir.name,
                 })
         if verbose:
@@ -147,7 +163,8 @@ class GenerationCache:
         if hit is None:
             return None
         return CachedOutput(hit["text"], hit["citations"], hit["n_tokens"],
-                            hit["n_searches"], hit["source_run"])
+                            hit["n_searches"], hit["source_run"],
+                            truncated=hit.get("truncated", False))
 
     def __len__(self) -> int:
         return len(self._idx)

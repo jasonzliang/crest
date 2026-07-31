@@ -61,6 +61,29 @@ def new_run(result_root, subset: str, repo_root) -> tuple[str, Path]:
     return run_id, run_dir
 
 
+def is_scored(r: dict) -> bool:
+    """THE definition of a scored record. Three competing ones used to coexist -- `scoring_status ==
+    "scored"` here, `r.get("creativity")` in finalize_run's totals, and `creativity.notna()` in
+    stats.py -- and they disagreed: repairing one judge_degraded row via rejudge made the manifest's
+    n_scored DROP from 100 to 91, because finalize_run had counted degraded rows as scored and
+    rejudge did not. Both conditions are required: the status is authoritative, and the dict must
+    actually be there (rejudge and hand-imported records can desync the two)."""
+    return r.get("scoring_status") == "scored" and bool(r.get("creativity"))
+
+
+def manifest_totals(records: list) -> dict:
+    """The manifest `totals` block. Shared so a repair recomputes ALL of it -- rejudge used to
+    refresh three keys and leave n_grounding_fail / n_empty_answer / n_truncated / n_judge_error
+    stale, which is the same 'derived artifacts left inconsistent' defect rejudge exists to fix."""
+    st = lambda s: sum(1 for r in records if r.get("scoring_status") == s)
+    return {"n_records": len(records),
+            "n_scored": sum(1 for r in records if is_scored(r)),
+            "n_judge_error": st("judge_error"), "n_judge_degraded": st("judge_degraded"),
+            "n_grounding_fail": st("grounding_fail"), "n_empty_answer": st("empty_answer"),
+            "n_too_short": st("too_short"),
+            "n_truncated": sum(1 for r in records if r.get("truncated"))}
+
+
 def compute_summary(records: list) -> dict:
     """Cheap aggregates for a leaderboard (per agent, and per agent x category). Inferential stats
     (mixed-effects, TOST, Krippendorff alpha / ICC) are left to crest.analysis.stats on records.jsonl."""
@@ -69,7 +92,7 @@ def compute_summary(records: list) -> dict:
         # `if r.get("creativity")` swept it into the headline means -- while the console printed
         # "excluded from headline numbers" for that very record. summary.json is what gets promoted
         # to leaderboard.json, so the contradiction shipped downstream.
-        scored = [r for r in rows if r.get("scoring_status") == "scored"]
+        scored = [r for r in rows if is_scored(r)]
         degraded = [r for r in rows if r.get("scoring_status") == "judge_degraded"]
         n = len(rows)
         gpass = sum(1 for r in rows if r.get("grounding", {}).get("passed"))
@@ -147,14 +170,7 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
                 "completed_at": _utc_now().isoformat(),
                 "status": "completed" if records else "failed",   # empty run is a FAILED run, not a clean one
                 "record_schema_version": RECORD_SCHEMA_VERSION,
-                "totals": {"n_records": len(records),
-                           "n_scored": sum(1 for r in records if r.get("creativity")),
-                           "n_judge_error": sum(1 for r in records if r.get("scoring_status") == "judge_error"),
-                           "n_judge_degraded": sum(1 for r in records if r.get("scoring_status") == "judge_degraded"),
-                           "n_grounding_fail": sum(1 for r in records if r.get("scoring_status") == "grounding_fail"),
-                           "n_empty_answer": sum(1 for r in records if r.get("scoring_status") == "empty_answer"),
-                           "n_truncated": sum(1 for r in records if r.get("truncated")),
-                           "n_task_errors": n_task_errors},
+                "totals": {**manifest_totals(records), "n_task_errors": n_task_errors},
                 "environment": {"python": sys.version.split()[0], "platform": platform.platform(),
                                 "packages": pkg_versions()},
                 # describe each output by WHO PRODUCED IT and WHAT IS IN IT. The bare filenames are

@@ -50,9 +50,10 @@ entrant's answer are all withheld.** The judge returns one JSON object —
 
 ## Primary endpoint
 
-**`min(New, Useful)` — two axes, on the 1–10 scale, not a threshold on all three.**
+**`min(New, Useful, Surprising)` — graded, on the 1–10 scale, not a threshold.**
 This is now the definition in code (`analysis/stats.py::_composite`) and in
-`analysis/preregistration.yaml`; `min3()` is retained for comparability with earlier numbers.
+`analysis/preregistration.yaml`. Surprising binds alone in 20% of records, so it is not a
+redundant axis. `stats.py::min2()` reports the New/Useful pair as a robustness check only.
 Surprising is deliberately **excluded** from the endpoint: including a demoted, unanchored axis in a
 `min` smuggles it back in as a binding constraint (a 9/7/2 record would score 2, not 7), and it is
 the sole binding axis in roughly 1 record in 147.

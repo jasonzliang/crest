@@ -152,16 +152,15 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
     _atomic_write_jsonl(run_dir / "records.jsonl", records)
     # keep the derived artifacts consistent: a repair that leaves summary.json reporting the OLD
     # means and the manifest the OLD n_judge_degraded is worse than no repair
-    from crest.harness.results import compute_summary
+    from crest.harness.results import compute_summary, manifest_totals
     (run_dir / "summary.json").write_text(json.dumps(compute_summary(records), indent=2,
                                                      ensure_ascii=False))
     mf = run_dir / "run_manifest.json"
     if mf.exists():
         m = json.loads(mf.read_text())
-        m.setdefault("totals", {}).update({
-            "n_records": len(records),
-            "n_scored": sum(1 for r in records if r.get("scoring_status") == "scored"),
-            "n_judge_degraded": sum(1 for r in records if r.get("scoring_status") == "judge_degraded")})
+        # recompute the WHOLE totals block from the same function finalize_run uses; refreshing a
+        # hand-picked subset left the other counters describing the pre-repair records
+        m.setdefault("totals", {}).update(manifest_totals(records))
         m["repaired_at"] = __import__("datetime").datetime.now(
             __import__("datetime").timezone.utc).isoformat()
         mf.write_text(json.dumps(m, indent=2, ensure_ascii=False))

@@ -3,8 +3,13 @@
 Each `eval_*.py` script is a thin wrapper that evaluates ONE entrant on CREST (handy for running
 a single model, or a cheap per-category pilot of it) and writes an immutable run dir under
 crest/result/runs/<run_id>/. For a multi-agent run driven by a config file, use crest/run_eval.py.
+
+Every script goes through `cli()`, which gives it the SAME front door as run_eval.py: --dry-run,
+--yes, key preflight and the cost guard. Without it these were five zero-argument scripts that went
+straight from import to spending -- `eval_claude_sonnet.py --help` silently started a real 50-item
+run and ignored the flag.
 """
-import sys
+import argparse, sys
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -46,3 +51,36 @@ def run_one(agent_key, per_category=None, limit=None, categories=None, budget=6,
         agents, panel, budget))
     print(f"run dir: {run_dir}")
     return run_dir
+
+
+def cli(agent_key: str, **defaults):
+    """Argument-parsing front door for a single-entrant eval script. Runs the same preflight and
+    cost guard as run_eval.py before anything is spent."""
+    from crest.run_eval import preflight, confirm_cost           # same guards, one definition
+    ap = argparse.ArgumentParser(description=f"Evaluate {agent_key} on CREST.")
+    ap.add_argument("--per-category", type=int, default=defaults.get("per_category"),
+                    help="N challenges per category (cheap balanced pilot)")
+    ap.add_argument("--limit", type=int, default=defaults.get("limit"))
+    ap.add_argument("--categories", nargs="+", default=defaults.get("categories"))
+    ap.add_argument("--budget", type=int, default=defaults.get("budget", 6))
+    ap.add_argument("--concurrency", type=int, default=defaults.get("concurrency", 4))
+    ap.add_argument("--override-cache", action="store_true",
+                    help="re-generate instead of reusing prior runs' answers (RE-PAYS)")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="resolve challenges + preflight keys; make no model calls")
+    ap.add_argument("--yes", action="store_true", help="confirm a large or costly run")
+    a = ap.parse_args()
+
+    challenges = subset(load_challenges(str(REPO / "crest/questions/crest_challenges.jsonl")),
+                        a.per_category, a.limit, a.categories)
+    panel = JudgePanel.from_config(str(REPO / "crest/judge/judge_config.live.yaml"))
+    agents = {agent_key: build_agent(agent_key, budget=a.budget)}
+    preflight(agents, panel, enforce=not a.dry_run)
+    print(f"{agent_key} ({agents[agent_key].model}) x {len(challenges)} challenges "
+          f"x {len(panel.judges)} judges")
+    if a.dry_run:
+        print("[dry-run] nothing spent")
+        return None
+    confirm_cost(len(challenges), [agent_key], a.yes)
+    return run_one(agent_key, per_category=a.per_category, limit=a.limit, categories=a.categories,
+                   budget=a.budget, concurrency=a.concurrency, override_cache=a.override_cache)

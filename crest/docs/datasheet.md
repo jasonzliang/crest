@@ -110,7 +110,8 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
   "novelty/Surprising" reflect synthesis rather than fresher retrieval, and runs reproduce; it
   would be released as a manifest (URL + timestamp + SHA-256 per document). **None of this exists.**
   `harness/agents.py::FrozenIndex` raises on construction specifically to stop a live run being
-  mislabeled as contamination-controlled, and the `--index` CLI flag is documented as future work.
+  mislabeled as contamination-controlled. No `--index` CLI flag exists -- the plumbing was removed
+  rather than left as a stub implying a mode the harness cannot enter.
   Search budgets are also **not** matched across entrants: the shallow arm is capped where the
   provider exposes a cap and the deep arm's budget is provider-managed and uncappable, which each
   run manifest discloses as a live confound.

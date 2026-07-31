@@ -41,14 +41,25 @@ predictions:
   C5: predicted_null      # Open-Ended Synthesis — not entailed by the account
 
 analysis_plan:
-  primary_endpoint: "min(New, Useful, Surprising)"    # TWO axes. Surprising excluded: ablation moved
-                                                     # it by -0.02, r~0.95 with novelty, and
-                                                     # it is sole-binding in ~1 record of 147.
-                                                     # Replaces the thresholded all-three indicator
-                                                     # (rate swung 5.4-36.1% across thresholds 5..7).
-  secondary_endpoints: ["New", "Useful"]             # Surprising is EXPLORATORY: ablating
-                                                     # expert_baseline moved it by -0.02 and
-                                                     # r(New, Surprising) ~ 0.93
+  primary_endpoint: "min(New, Useful, Surprising)"    # ALL THREE axes -- the NUS construct as
+                                                     # Torrance/Boden define it. Surprising was
+                                                     # briefly dropped on the argument that it is
+                                                     # near-redundant; that argument was wrong on
+                                                     # its own numbers. Surprising is the SOLE
+                                                     # binding axis in 51 of 250 records (20%), not
+                                                     # ~1 in 147 as previously stated here, so
+                                                     # dropping it changes the endpoint for a fifth
+                                                     # of the data. Replaces the thresholded
+                                                     # all-three indicator (rate swung 5.4-36.1%
+                                                     # across thresholds 5..7).
+  secondary_endpoints: ["New", "Useful", "Surprising"]   # each axis reported on its own as well.
+                                                     # Caveat kept, since it is real and cuts the
+                                                     # other way: ablating expert_baseline moved
+                                                     # Surprising by only -0.02, so the axis is not
+                                                     # anchored by the judge-visible baseline, and
+                                                     # r(New, Surprising) ~ 0.93. It is retained on
+                                                     # construct grounds and because it binds,
+                                                     # not because it is independent.
   judge_protocol: "full panel; same_family as a covariate; leave-one-family-out as robustness check"
   tost_equivalence_bounds: [-1.0, 1.0]               # on the 1-10 scale, for reading nulls as
                                                      # evidence-for-equivalence rather than absent power
