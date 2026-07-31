@@ -81,6 +81,20 @@ for pat in "human-validated" "human-expert consensus panel" "human panel is the 
   if [ "$hits" != "0" ]; then echo "  FAIL '$pat' asserted (not negated) x$hits"; fail=1;
   else echo "  OK '$pat' absent or negated"; fi
 done
+echo "== compiled PDFs are not stale"
+# The papers' PDFs sat two days behind their sources while every honesty correction landed in the
+# .tex files. The PDF is what circulates, so a stale one silently re-asserts withdrawn claims.
+for d in crest/paper/p2_benchmark_only crest/paper/p3_caesar_hybrid; do
+  pdf="$d/main.pdf"
+  if [ ! -f "$pdf" ]; then echo "  OK $d has no PDF (nothing to go stale)"; continue; fi
+  newest=$(find "$d" crest/paper/_shared -name '*.tex' -o -name '*.bib' 2>/dev/null | xargs ls -t 2>/dev/null | head -1)
+  if [ -n "$newest" ] && [ "$newest" -nt "$pdf" ]; then
+    echo "  FAIL $pdf is older than $newest -- recompile (crest/paper/compile.sh) before release"; fail=1
+  else
+    echo "  OK $(basename $d)/main.pdf is newer than its sources"
+  fi
+done
+
 echo "== judge prompt stamp vs prompt"
 # The prompt version is a hand-bumped literal, checked HERE rather than auto-computed at import.
 # Three auto-invalidating designs were each wrong in a different way (source hash under- and

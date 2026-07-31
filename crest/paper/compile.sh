@@ -16,9 +16,29 @@ clean_dir() {
   ( cd "$d" && rm -f "$MAIN".{aux,bbl,blg,log,out,toc,fdb_latexmk,fls} ) 2>/dev/null || true
 }
 
+# Staleness guard. Both PDFs sat two days behind their sources while every honesty correction landed
+# in the .tex files -- so the compiled artifact, which is what actually circulates, still asserted a
+# frozen index, a human-validated judge and an evaluated author agent, and carried none of the
+# withdrawals. A reviewer reading the PDF would have seen the pre-correction paper.
+check_stale() {
+  local d="$1"
+  [ -f "$d/$MAIN.pdf" ] || return 0
+  # `|| true` throughout: this is an advisory notice, and under `set -euo pipefail` a find/xargs
+  # failure here would abort the build it is meant to annotate. It did exactly that -- the path was
+  # _shared relative to the wrong directory, so the whole compile died silently before pdflatex ran.
+  local newest
+  newest=$(find "$d" "$(dirname "$0")/_shared" -name '*.tex' -o -name '*.bib' 2>/dev/null \
+           | xargs ls -t 2>/dev/null | head -1) || true
+  if [ -n "${newest:-}" ] && [ "$newest" -nt "$d/$MAIN.pdf" ]; then
+    echo "  ! $d/$MAIN.pdf was STALE (older than $newest) -- rebuilding"
+  fi
+  return 0
+}
+
 build_dir() {
   local d="$1"
   echo "==> building $d/$MAIN.tex"
+  check_stale "$d"
   if [ ! -f "$d/$MAIN.tex" ]; then echo "  ! no $d/$MAIN.tex, skipping"; return 0; fi
   ( cd "$d"
     export TEXINPUTS=".:../_shared:${TEXINPUTS:-}"   # find the shared iclr .sty / fancyhdr / natbib / math_commands
