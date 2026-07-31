@@ -42,8 +42,14 @@ but by fewer than `min_judges` — excluded from headline numbers) · `empty_ans
 returned no text; an ADAPTER failure, deliberately distinguished from fabrication) ·
 `too_short` (non-empty but under the substantive-length floor -- same adapter root cause as
 `empty_answer`, but kept separate because the threshold is a judgement call) · `grounding_fail` ·
-`judge_error` (no judge survived). `creativity` is `null` on every failure path —
-never a fake 0. Each record also carries `query_sha` + `adapter_fp` (the cache's content address)
+`judge_error` (no judge survived). `creativity` is `null` on every UNSCORED path — never a fake 0 —
+but **`judge_degraded` is the exception: it carries a full `creativity` dict** scored by too few
+judges, which is why `results.py::is_scored` requires BOTH `scoring_status == "scored"` and a
+non-empty dict (three disagreeing definitions of "scored" once made a repair drop the headline count
+from 100 to 91). Records written by `run_crest` carry `query_sha` + `adapter_fp` (the cache's
+content address); **the shipped run 040653Z predates `adapter_fp`, `truncated`, `answer_chars` and
+`answer_words` — 0 of its 250 records have them**, so the cache indexes none of it and answer-length
+covariates cannot be computed from that release. Also
 and `generation_cached` / `cache_source_run` so a reused answer is visible in the data.
 
 Per-judge scores are a list under `creativity.judges`, each row stamped with `same_family`, so

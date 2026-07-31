@@ -80,8 +80,10 @@ multi-source web synthesis**, never a single-fact lookup.
   LOFO is **demoted to a robustness check**: every judge row is stamped
   `same_family`, so the LOFO subset is recoverable post-hoc and self-preference
   enters the model as a covariate (`analysis/stats.py` MixedLM).
-- **Primary endpoint: `min(New, Useful)`.** Surprising is reported but
-  EXPLORATORY (r ≈ 0.95 with novelty; its anchor field moved it by −0.02).
+- **Primary endpoint: `min(New, Useful, Surprising)`** — all three axes. Surprising was briefly
+  demoted; the demotion did not survive re-measurement (it is the sole binding axis in 51/250
+  records, 20%). It remains WEAKLY ANCHORED: its judge-visible anchor field moved it by −0.02 when
+  ablated, and r(New, Surprising) = 0.883 at record level on run 040653Z (0.946 pooled). NB the v1 judge prompt itself told the judge "Surprising correlates with non-redundancy at r~0.95", so this correlation is CONTAMINATED by the rubric and must not be used as evidence that the axes are inseparable until a v2 re-judge exists (see JUDGE_PROMPT_VERSION in judge/score.py).
   The thresholded "all three ≥ 6" indicator is retained only for backward
   comparability — its rate swings 5.4–36.1% across thresholds 5–7.
 - Report **inter-judge agreement** (Krippendorff α / ICC, implemented in

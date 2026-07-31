@@ -81,8 +81,10 @@ def _module_source(mod) -> str:
     except (OSError, TypeError) as e:
         raise RuntimeError(
             f"cannot read source of {getattr(mod, '__name__', mod)!r} ({type(e).__name__}), so an "
-            f"answer cannot be attributed to the code that produced it. Run from a source checkout, "
-            f"or disable the cache explicitly with --override-cache.") from e
+            f"answer cannot be attributed to the code that produced it. Run from a source "
+            f"checkout. (--override-cache does NOT avoid this: adapter_fp is stamped into every "
+            f"record for provenance, so the fingerprint is computed whether or not the cache is "
+            f"read.)") from e
 
 
 def query_sha(query: str) -> str:

@@ -26,7 +26,9 @@ PRIMARY_AXES = ("new", "useful", "surprising")
 # axis in 51/250 records (20%), so a conjunctive endpoint that omits it is not measuring the gate the
 # benchmark claims to apply.
 #
-# It is still nearly redundant with New (r ~ 0.95): including it lowers every agent by 0.06-0.38 and
+# It is still highly correlated with New (0.883 at record level; the r~0.95 this line used to give
+# was the pooled per-judge figure AND was stated in the v1 judge prompt, so it is contaminated --
+# see JUDGE_PROMPT_VERSION). Including it lowers every agent by 0.06-0.38 and
 # changes no ranking (corr(min2, min3) = 0.989). So the choice costs nothing in conclusions and buys
 # consistency with the stated three-axis design. Use min2() for the two-axis variant.
 #
@@ -179,7 +181,17 @@ def icc_oneway(units: list[list[float]], judge_ids: list[tuple] | None = None) -
     used (Spearman-Brown). judge_config's 0.80 bar applies to ICC(1,k), not ICC(1,1) -- conflating
     them overstates how badly the panel misses. Also returns judges_needed: how many raters ICC(k)
     >= 0.80 would require at the measured single-rater reliability."""
-    units = [u for u in units if len(u) >= 2]
+    # Filter BOTH lists in lockstep. Filtering units alone left judge_ids misaligned, so a
+    # genuinely fixed panel with one 1-rating unit reported "rater set varies (2 distinct panels)"
+    # and silently skipped ICC(3,*). Unreachable today only because judge_ratings pre-filters --
+    # i.e. two parallel lists where only one is filtered, in the function that just gained the second.
+    if judge_ids is not None and len(judge_ids) == len(units):
+        pairs = [(u, i) for u, i in zip(units, judge_ids) if len(u) >= 2]
+        units = [u for u, _ in pairs]
+        judge_ids = [i for _, i in pairs]
+    else:
+        units = [u for u in units if len(u) >= 2]
+        judge_ids = None
     if len(units) < 3:
         raise InsufficientData("need >=3 units with >=2 ratings for ICC")
     n = len(units)

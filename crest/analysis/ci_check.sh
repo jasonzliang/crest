@@ -99,17 +99,23 @@ else
   # made the list's own absence fail OPEN: a rename, a path typo or a sparse checkout silently
   # disabled the entire control. Fail closed instead. (An EMPTY file already fails closed, and a
   # blank line inside it is harmless: -x anchors the empty pattern to empty lines only.)
-  if [ ! -s "$allow" ]; then
+  if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    # git ls-files prints nothing outside a repo, BSD xargs then skips grep entirely, n_bad=0, and
+    # the gate printed OK. Fail closed: the file list IS the gate's coverage.
+    echo "  FAIL not a git repository -- cannot enumerate docs, so the canary gate cannot run"; fail=1
+  elif [ ! -s "$allow" ]; then
     echo "  FAIL $allow is missing or empty -- the canary gate cannot run"; fail=1
   else
-  n_bad=$(git ls-files -z 'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
+  n_bad=$(git ls-files -z --cached --others --exclude-standard \
+            'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
           | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
           | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u \
           | grep -vxFf "$allow" | wc -l | tr -d ' ')
   if [ "${n_bad:-0}" != "0" ]; then
     echo "  FAIL $n_bad canary line(s) not in $allow, and only $have/$total items carry one."
     echo "       Re-read each, then add it verbatim to the allow file if it is honest:"
-    git ls-files -z 'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
+    git ls-files -z --cached --others --exclude-standard \
+            'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
       | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
       | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u | grep -vxFf "$allow" \
       | cut -c1-110 | sed 's/^/         /'

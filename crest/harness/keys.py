@@ -28,6 +28,10 @@ import os, re, threading, time
 
 # Errors meaning "this key is temporarily unusable, try another" (as opposed to a bad request that
 # would fail identically on every key).
+# Per-KEY auth failures. Distinct from _KEY_EXHAUSTED because they are permanent for that key
+# rather than transient, but identical in the action they require: drop this key, try the next.
+_KEY_INVALID = ("invalid_api_key", "invalid x-api-key", "authentication_error", "authentication",
+                "permission_error", "unauthorized", "401", "403")
 _KEY_EXHAUSTED = ("usage limits", "regain access", "rate limit", "rate_limit", "429",
                   "credit balance", "insufficient_quota", "quota")
 
@@ -94,7 +98,12 @@ def call_anthropic(fn, what: str = "anthropic"):
             return fn(key)
         except Exception as e:
             msg = str(e).lower()
-            if not any(k in msg for k in _KEY_EXHAUSTED):
+            # A per-KEY auth failure (revoked, wrong project, disabled) is not "the same on every
+            # key" -- it is the one case where failover is exactly right. Without these terms a
+            # single revoked key raised immediately, was never tripped out of the pool, and its
+            # message matched run_crest's _TERMINAL_ERR, so three rotations circuit-broke a
+            # perfectly healthy entrant. Measured with 1 bad key of 3: 20 of 60 hard failures.
+            if not any(k in msg for k in _KEY_EXHAUSTED + _KEY_INVALID):
                 raise                       # genuine error -- same on every key
             _POOL.trip(key)
             last = e

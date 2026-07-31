@@ -28,6 +28,11 @@ Safety properties:
 
 Usage:
     python -m crest.harness.rejudge --run crest/result/runs/<run_id>
+
+  To migrate a run to a NEW JUDGE PROMPT VERSION -- the case score.py prescribes -- the default
+  invocation does nothing: it targets only judge_degraded/judge_error rows, and a finalized run is
+  refused outright. Both doors were documented and neither worked. The one that works:
+    python -m crest.harness.rejudge --run <dir> --status scored --force
     python -m crest.harness.rejudge --run <dir> --status judge_degraded judge_error --concurrency 4
     python -m crest.harness.rejudge --run <dir> --dry-run
 """
@@ -69,7 +74,8 @@ def _atomic_write_jsonl(path: Path, rows: list) -> None:
 
 def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
             statuses=("judge_degraded", "judge_error"), concurrency: int = 4,
-            dry_run: bool = False, force: bool = False) -> dict:
+            dry_run: bool = False, force: bool = False,
+            allow_downgrade: bool = False) -> dict:
     run_dir = Path(run_dir)
     if (run_dir / "run_manifest.json").exists() and not force:
         raise SystemExit(f"{run_dir.name} is FINALIZED (run_manifest.json present). A completed run "
@@ -106,7 +112,8 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                              exclude_family=rec.get("model_family"))
         return rec, scores, None
 
-    upgraded = unchanged = 0
+    upgraded = unchanged = downgraded = 0   # three outcomes need three counters: one shared
+                                            # counter reported a destructive downgrade as an upgrade
     by_id = {r["record_id"]: r for r in records}
     with ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
         futs = {ex.submit(one, r): r for r in todo}
@@ -139,9 +146,22 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                 unchanged += 1
                 continue
             if scores.n_judges < before:
-                print(f"  [{rec['challenge_id']}/{rec['agent']}] FEWER judges "
-                      f"({before} -> {scores.n_judges}) but prompt {before_ver} -> "
-                      f"{JUDGE_PROMPT_VERSION}; taking the new score for comparability")
+                # A judge outage during the prescribed v1->v2 migration would otherwise overwrite
+                # good full-panel scores with degraded ones, atomically and with no backup, and count
+                # each as "upgraded". Measured: 6/6 records went scored(3) -> judge_degraded(1),
+                # manifest n_scored 250 -> 0, summary said "6 upgraded, 0 unchanged". Refuse by
+                # default -- a capped vendor is the likeliest cause, and it is transient.
+                if not allow_downgrade:
+                    print(f"  [{rec['challenge_id']}/{rec['agent']}] REFUSING downgrade "
+                          f"({before} -> {scores.n_judges} judges); a judge is probably capped. "
+                          f"Re-run when the panel is healthy, or pass --allow-downgrade.")
+                    unchanged += 1
+                    continue
+                print(f"  [{rec['challenge_id']}/{rec['agent']}] DOWNGRADE accepted "
+                      f"({before} -> {scores.n_judges} judges) for prompt {before_ver} -> "
+                      f"{JUDGE_PROMPT_VERSION}")
+                downgraded += 1
+                by_id[rec["record_id"]]["_downgraded"] = True
             live = by_id[rec["record_id"]]
             live["creativity"] = {
                 "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
@@ -164,12 +184,19 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
             print(f"  [{rec['challenge_id']}/{rec['agent']}] {before} -> {scores.n_judges} judges, "
                   f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
                   f"-> {live['scoring_status']}")
-            upgraded += 1
+            upgraded += 0 if by_id[rec['record_id']].pop('_downgraded', False) else 1
 
     if not upgraded:
         print("\nno records upgraded; leaving the run untouched")
         return {"n_targets": len(targets), "n_upgraded": 0,
                 "n_unchanged": unchanged, "n_missing": len(missing)}
+    # Back up before an in-place overwrite. The write is atomic, so it cannot truncate -- but atomic
+    # replacement of good data with bad data is still data loss, and this tool is invoked with --force
+    # on runs whose numbers ship.
+    bak = run_dir / "records.jsonl.bak"
+    if not bak.exists():
+        bak.write_bytes((run_dir / "records.jsonl").read_bytes())
+        print(f"  backup: {bak.name}")
     _atomic_write_jsonl(run_dir / "records.jsonl", records)
     # keep the derived artifacts consistent: a repair that leaves summary.json reporting the OLD
     # means and the manifest the OLD n_judge_degraded is worse than no repair
@@ -202,10 +229,10 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
         # repair".
         from crest.harness.results import _write_run_readme
         _write_run_readme(run_dir, m)
-    print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {unchanged} unchanged, "
-          f"{len(missing)} un-repairable")
+    print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {downgraded} DOWNGRADED, "
+          f"{unchanged} unchanged, {len(missing)} un-repairable")
     print("status now: " + str(dict(collections.Counter(r.get("scoring_status") for r in records))))
-    return {"n_targets": len(targets), "n_upgraded": upgraded,
+    return {"n_targets": len(targets), "n_upgraded": upgraded, "n_downgraded": downgraded,
             "n_unchanged": unchanged, "n_missing": len(missing)}
 
 
@@ -221,12 +248,15 @@ def main():
                          "keep modest so a provider spend-rate cap is not re-tripped")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force", action="store_true", help="allow repairing a FINALIZED run in place")
+    ap.add_argument("--allow-downgrade", action="store_true",
+                    help="accept a re-judge that returns FEWER judges (default: refuse -- a capped "
+                         "vendor would otherwise overwrite good full-panel scores)")
     a = ap.parse_args()
     _p = lambda s: Path(s) if Path(s).is_absolute() else REPO / s
     panel = JudgePanel.from_config(str(_p(a.judge_config)))
     print(f"judges: {[(j['id'], j['model']) for j in panel.judges]} (min_judges={panel.min_judges})")
     rejudge(_p(a.run), panel, str(_p(a.challenges)), tuple(a.status),
-            a.concurrency, a.dry_run, a.force)
+            a.concurrency, a.dry_run, a.force, a.allow_downgrade)
 
 
 if __name__ == "__main__":

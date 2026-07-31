@@ -24,7 +24,10 @@ import json, subprocess, sys, platform, collections, statistics, secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
-RECORD_SCHEMA_VERSION = "crest-record/1.0.0"
+# Bumped to 1.1.0: four fields were added to every record (adapter_fp, truncated, answer_chars,
+# answer_words) while the version string stayed at 1.0.0, so one version denoted two incompatible
+# shapes -- the shipped run has 0/250 of them and a consumer had no way to tell.
+RECORD_SCHEMA_VERSION = "crest-record/1.1.0"
 
 
 def _utc_now():
@@ -36,10 +39,22 @@ def _git(args, cwd) -> str:
     except Exception:
         return ""
 
+_GIT_CACHE: dict = {}
+
+
 def git_info(repo_root) -> dict:
-    sha = _git(["rev-parse", "--short", "HEAD"], repo_root)
-    dirty = bool(_git(["status", "--porcelain"], repo_root))
-    return {"git_commit": sha, "git_dirty": dirty}
+    """Read git ONCE per process. new_run stamps the commit into the run_id and make_manifest read it
+    again ~45 minutes later, after the run finished -- and HEAD had moved in between, so the shipped
+    run dir says `gitb0cdbe7` while its own manifest says `754d005` (a commit that touched
+    judge/score.py and did not exist when generation started). The two provenance records for one run
+    disagreed about which code produced it. Caching makes them agree by construction, without
+    threading the value through four call sites."""
+    k = str(repo_root)
+    if k not in _GIT_CACHE:
+        sha = _git(["rev-parse", "--short", "HEAD"], repo_root)
+        dirty = bool(_git(["status", "--porcelain"], repo_root))
+        _GIT_CACHE[k] = {"git_commit": sha, "git_dirty": dirty}
+    return dict(_GIT_CACHE[k])
 
 def pkg_versions() -> dict:
     import importlib.metadata as m

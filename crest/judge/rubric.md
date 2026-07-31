@@ -110,7 +110,7 @@ and the reference set is published so any omission can be contested.
   `min` endpoint, not a clause in the prompt. The prompt's only anti-nonsense instruction is "Do
   NOT reward nonsense", attached to Surprising.
 
-## Surprising — 1–10, EXPLORATORY, NOT a primary endpoint
+## Surprising — 1–10, a PRIMARY axis (weakly anchored)
 - Non-obviousness conditioned on correctness, judged against the judge's own sense of expert
   expectation. **Deliberately unanchored:** `expert_baseline` was supplied here until 2026-07-30 and
   an ablation showed it moved this axis by −0.02. In 7 items it also carried the author's enumeration

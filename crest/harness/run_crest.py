@@ -23,6 +23,19 @@ from crest.harness import results as R
 from crest.judge.score import JudgePanel, grounding_gate, JUDGE_PROMPT_VERSION
 from crest.harness.cache import GenerationCache, query_sha, adapter_fingerprint
 
+_FP_CACHE: dict = {}
+
+
+def _fingerprint_for(agent) -> str:
+    """adapter_fingerprint, memoized per (class, model, budget).
+
+    It hashes two whole source modules, so calling it once per task meant 500 `getsource` calls per
+    run to produce five constant values."""
+    k = (type(agent).__name__, getattr(agent, "model", ""), getattr(agent, "budget", None))
+    if k not in _FP_CACHE:
+        _FP_CACHE[k] = adapter_fingerprint(agent)
+    return _FP_CACHE[k]
+
 
 @dataclasses.dataclass
 class Challenge:
@@ -191,7 +204,13 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
     rubric may have changed since, and judge calls are the cheap part."""
     rid = f"{run_id}:{ch.id}:{name}"
     q_sha = query_sha(ch.query)
-    fp = adapter_fingerprint(agent)
+    # Memoized, and it must be: this runs per task (250x per run, 500 getsource calls) even with the
+    # cache off, because adapter_fp is stamped into every record for provenance. When
+    # _module_source began raising, that raise landed inside the per-task try/except and was recorded
+    # as an AGENT failure -- so a harness fault was charged to the entrant, counted toward its
+    # circuit breaker, and the run finished with 0 records and 250 "task errors" instead of failing
+    # fast. See _fingerprint_for below.
+    fp = _fingerprint_for(agent)
     report = cache.get(ch.id, name, agent.model, q_sha, fp) if cache else None
     cached = report is not None
     if not cached:
@@ -273,6 +292,13 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
     model) was generated in any earlier run reuses that stored answer instead of re-paying, so every
     run is a complete, self-contained, immutable run_id. Writes records/transcripts/errors.jsonl."""
     run_dir = Path(run_dir)
+    # Fingerprint every adapter BEFORE any money moves. adapter_fingerprint can now raise (unreadable
+    # source means an answer cannot be attributed to the code that produced it), and inside the
+    # per-task try/except that raise was recorded as an AGENT failure: charged to the entrant, counted
+    # toward its circuit breaker, and the run completed with 0 records rather than failing fast.
+    # Doing it here also warms the memo, so it costs one getsource pair per adapter, not per task.
+    for _a in agents.values():
+        _fingerprint_for(_a)
     tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
     records = []
     if verbose:

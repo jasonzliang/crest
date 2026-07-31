@@ -57,7 +57,12 @@ analysis_plan:
                                                      # other way: ablating expert_baseline moved
                                                      # Surprising by only -0.02, so the axis is not
                                                      # anchored by the judge-visible baseline, and
-                                                     # r(New, Surprising) ~ 0.93. It is retained on
+                                                     # r(New, Surprising) = 0.883 at record level
+                                                     # (0.946 pooled) -- and that correlation is
+                                                     # CONTAMINATED: the v1 prompt told the judge
+                                                     # the axes correlate at r~0.95, so it cannot
+                                                     # evidence inseparability until a v2
+                                                     # re-judge. It is retained on
                                                      # construct grounds and because it binds,
                                                      # not because it is independent.
   judge_protocol: "full panel; same_family as a covariate; leave-one-family-out as robustness check"
