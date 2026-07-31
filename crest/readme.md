@@ -57,9 +57,14 @@ See `eval/readme.md` and `docs/notes/deep_research_apis.md`.
 | C4 | Meta-Creativity | invent a method, not an answer | parity |
 | C5 | Open-Ended Synthesis | many valid answers | predicted null |
 
-Each challenge ships with a **dated known-answers list** (baseline for New), **hard rules** (Useful),
-and an **expert baseline** (Surprising), plus labels (category, domain, isolated axis, pre/post-cutoff).
-The agent sees only a short, open prompt; that judge-side machinery is never shown to it.
+Each challenge ships with a **dated known-answers list** (the prior-art set non-redundancy is scored
+against) and **hard rules** (Useful), plus labels (category, domain, isolated axis, pre/post-cutoff).
+`expert_baseline` and `author_expected_surprises` are retained for provenance but are **judge-hidden**
+since 2026-07-30: ablating the baseline moved Surprising by −0.02, and in 7 items it doubled as an
+answer key. `predicted_direction` moved to `analysis/preregistration.yaml`, `rationale` to
+`questions/item_design.jsonl`, and `category_name` was dropped; `questions/schema.json` is now
+actually enforced on load (it never was before). The agent sees only a short, open prompt; that
+judge-side machinery is never shown to it.
 
 ## Layout
 ```
@@ -67,12 +72,16 @@ crest/
   readme.md            you are here
   run_eval.py          MAIN entry point (config-driven)
   config/              eval_config.yaml — choose benchmark(s), agents, judges
-  questions/           crest_challenges.jsonl (50) + schema.json
+  questions/           crest_challenges.jsonl (50) · schema.json (enforced on load)
+                       item_design.jsonl (per-item rationale) · quarantine.yaml
   harness/             agents.py (entrants) · run_crest.py (core loop) · results.py (run-dir writer)
-  judge/               score.py (LOFO panel + grounding check) · rubric.md · judge_config*.yaml
-  analysis/            stats.py (mixed-effects, TOST, crossover, bootstrap)
-  eval/                per-model eval scripts + readme
-  result/              run outputs (runs/<run_id>/…); see result/readme.md
+                       cache.py (cross-run generation cache) · keys.py (key pooling) · rejudge.py
+  judge/               score.py (judge panel + grounding check) · rubric.md · judge_config*.yaml
+  analysis/            stats.py (mixed-effects, TOST, crossover, bootstrap, ICC/α)
+                       preregistration.yaml · ci_check.sh (pre-release gate) · validate_items.py
+                       ablate_fields.py · apply_audit_fixes.py · stall_check.py
+  eval/                per-entrant eval scripts + readme (BROKEN — see eval/readme.md)
+  result/              run outputs (runs/<run_id>/…), gitignored; see result/readme.md
   docs/                design.md · datasheet.md · related_work.md · analysis notes
   paper/               p2_benchmark_only/ (chosen) · p3_caesar_hybrid/ (IP-gated upgrade) · compile.sh
 ```
@@ -85,10 +94,17 @@ per-agent creativity numbers yet**, for three reasons:
    (judge_google is +2.0 to +3.2 points more lenient than the others), and the earlier
    leave-one-family-out protocol assigned judge panels *by entrant family*, which made the
    leaderboard unidentifiable. Scoring is now full-panel; LOFO is a robustness check.
-2. **New and Surprising are not separable** (r ~ 0.93). Ablating `expert_baseline` moves Surprising
-   by -0.02, so the primary endpoint is `min(New, Useful, Surprising)` over two real axes, not three.
-3. **The gate is red.** `analysis/ci_check.sh` fails on 1 quarantined item and 4 items whose own
-   rules contradict each other. `questions/quarantine.yaml` lists what is excluded and why.
+2. **Non-redundancy and Surprising are not separable** (r ~ 0.95 on the full-panel run). Ablating
+   `expert_baseline` moves Surprising by -0.02, so it is no longer sent to the judge and Surprising
+   is demoted to EXPLORATORY: the primary endpoint is `min(non-redundancy, Useful)` — two axes, not
+   three. (Known inconsistency: `analysis/stats.py::_composite` and the `primary_endpoint` line in
+   `analysis/preregistration.yaml` still minimize over all three. Reconcile before citing numbers.)
+3. **The gate is red.** `analysis/ci_check.sh` passes schema, sidecar-bijection and quarantine, but
+   still fails item self-consistency: 4 mechanical contradictions across 3 items
+   (`C1_materials_chemistry_01` ×2, `C2_materials_chemistry_07`, `C4_materials_chemistry_43`).
+   The quarantine is now **empty** — the one quarantined item was released 2026-07-31 with a
+   redrafted baseline that is model-drafted, *not* expert-written, and still needs a physiologist's
+   review; `questions/quarantine.yaml` keeps that record plus a watch-list of same-class items.
 
 Live web search is **not** contamination-controlled (`FrozenIndex` raises; a frozen shared index is
 future work) and the judge panel is **not** human-validated. What the run *does* support is a

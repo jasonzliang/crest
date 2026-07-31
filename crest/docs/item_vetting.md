@@ -1,16 +1,48 @@
 # CREST Item Vetting — Adversarial Red-Team
 
+> ## ⚠ PARTLY SUPERSEDED (2026-07-29 pass; annotated 2026-07-31)
+>
+> This was a **desk review**: every grade below was assigned by reading the item, with **no web
+> access and no execution**. Two later passes contradict it, and where they do, **they win**:
+>
+> 1. **Live-web citation audit of all 50 items** (~610 claims, `docs/notes/audit_live_*.md`,
+>    2026-07-30). It found real defects in items this pass graded PASS, and it **overturns the
+>    headline G5 finding**: the claim below that "all `known_answers` are dated & non-empty" is
+>    false. Measured on the shipped file, only **52%** of `known_answers` entries carry an explicit
+>    year — 91% for items `_1x` but **22% (`_3x`)** and **18% (`_4x`)**. Four `_4x` items are at
+>    2/48 = 4.2%, with 17 entries so bare they name no year, author, institution or document number.
+>    The dating error direction is one-sided: prior art is consistently made to look *younger* than
+>    it is, which inflates novelty.
+> 2. **Mechanical self-consistency checking** (`analysis/validate_items.py`, wired into
+>    `analysis/ci_check.sh`). It reports **4 BLOCKING contradictions**, all in items graded PASS/KEEP
+>    below. The pre-release gate currently FAILS on them.
+>
+> **Field drift.** The Method paragraph below describes reading `predicted_direction` and the
+> designer `rationale` on each item. **Neither field exists any more:** `predicted_direction` and
+> `category_name` were removed in schema v2.0.0 (predictions moved to
+> `analysis/preregistration.yaml`), and `rationale` moved to `questions/item_design.jsonl` in v3.0.0.
+> A judge-hidden `author_expected_surprises` field was added. Items now ship ten fields, not twelve.
+>
+> **What still stands.** The per-item table is retained as the historical record of the desk pass;
+> rows contradicted by a later pass are marked inline with **`→ SUPERSEDED`**. The zero-fabrication
+> finding was *confirmed* by the live audit across all five categories. The REVISE dispositions were
+> acted on.
+>
+> **Not re-graded here.** This annotation corrects statements known to be false; it does not re-run
+> the five gates against the current file. Treat an unannotated PASS as "not contradicted yet", not
+> as verified.
+
 ## Method
 
 This is an adversarial item-vetting pass over all 50 CREST challenges in
 `questions/crest_challenges.jsonl` (ids ending `00`–`29` are the 30 original items;
 `30`–`49` are the 20 newly-added items). Each item was read in full — `query`,
-`hard_rules`, `known_answers`, `expert_baseline`, `predicted_direction`, and the
-designer `rationale` — and stress-tested against five gates. The goal is not to
-re-grade a model's answer but to ask whether each *item* actually measures what it
-claims to. Gates are marked **PASS / WEAK / FAIL**; each item gets a disposition
-(**KEEP / REVISE / CUT**) with a one-line reason. This report does **not** modify
-the dataset.
+`hard_rules`, `known_answers`, `expert_baseline`, and (at the time) the per-item
+`predicted_direction` and designer `rationale` — and stress-tested against five gates.
+The goal is not to re-grade a model's answer but to ask whether each *item* actually
+measures what it claims to. Gates are marked **PASS / WEAK / FAIL**; each item gets a
+disposition (**KEEP / REVISE / CUT**) with a one-line reason. This report does **not**
+modify the dataset.
 
 **The five gates:**
 
@@ -18,7 +50,10 @@ the dataset.
    single indexed page (genuinely multi-hop)? All items are invention or
    counterfactual tasks with no canonical published answer, and each `known_answers`
    list deliberately pre-claims the memorizable/first-order content, forcing work
-   beyond recall.
+   beyond recall. *(→ SUPERSEDED in strength: this was judged by reading. The
+   decisive test — a tool-ablation check, scoring a no-web model and cutting anything
+   it answers — has never been run, and runs are live-web, not contamination-controlled.
+   Read every G1 PASS as "no memorizable answer was apparent", not as measured.)*
 2. **G2 Synthesis-required** — does answering truly need multi-source synthesis rather
    than a single lookup?
 3. **G3 Axis-isolation** — does it genuinely exercise its labeled isolated axis
@@ -27,14 +62,16 @@ the dataset.
 4. **G4 Headroom** — is it hard enough not to be saturated by a strong agent
    (not trivially answerable)?
 5. **G5 Metadata** — `known_answers` dated & non-empty, `hard_rules` checkable,
-   `expert_baseline` present.
+   `expert_baseline` present. *(→ SUPERSEDED: the "dated" half of this gate was graded
+   by inspection and is wrong at file scale — see the header. Every G5 PASS below should
+   be read as "non-empty and present", never as "dated".)*
 
 ## Per-item assessment
 
 | id | cat | domain | G1 | G2 | G3 | G4 | G5 | disp. | reason |
 |----|-----|--------|----|----|----|----|----|-------|--------|
-| C1_biology_medicine_00 | C1 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | CRAB novel-MOA; 7 checkable rules + falsifiable experiment cleanly isolate usefulness |
-| C1_materials_chemistry_01 | C1 | mat_chem | PASS | PASS | PASS | PASS | WEAK | KEEP | Perovskite top-cell; 12 parametric rules isolate usefulness; KA band-gaps self-flagged unverified |
+| C1_biology_medicine_00 | C1 | bio_med | PASS | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | KEEP | CRAB novel-MOA; 7 checkable rules + falsifiable experiment cleanly isolate usefulness. **Live audit: 2 WRONG `known_answers` entries** ("dynobactin N" does not exist — it is dynobactin A; "RG6114" is inavolisib, not the LepB inhibitor G0775). Both corrected in the shipped file 2026-07-30 |
+| C1_materials_chemistry_01 | C1 | mat_chem | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | WEAK | **REVISE** | Perovskite top-cell; 12 parametric rules isolate usefulness; KA band-gaps self-flagged unverified. **2 BLOCKING self-contradictions** (`validate_items.py`): R4 requires mu ∈ [0.40, 0.90] but the item's own `expert_baseline` reports mu ≈ 0.39; R6 permits a chalcogenide (S, Se) while R9 bans Se. The rules exclude the class they were written to admit |
 | C1_economics_business_02 | C1 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | GPU spot-market mechanism; formal IC/budget-balance rules make usefulness provable |
 | C1_law_policy_03 | C1 | law | PASS | PASS | PASS | PASS | PASS | KEEP | LEO-debris instrument; treaty-article + incentive-compat constraints isolate legal-operability |
 | C1_engineering_04 | C1 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | FDM energy-absorber; strict SEA/plateau/reusability envelope; usefulness fully checkable |
@@ -44,21 +81,21 @@ the dataset.
 | C1_engineering_32 | C1 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Daytime radiative cooler; radiative-balance inequality gives checkable usefulness |
 | C1_arts_humanities_33 | C1 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | Novel tuning; cents-error/pitch-count arithmetic makes usefulness directly checkable |
 | C2_biology_medicine_06 | C2 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | No-adaptive-immunity world; first-order pre-claimed, surprise via cross-field 2nd-order + coherence lock |
-| C2_materials_chemistry_07 | C2 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | No-crystallinity world; six-arena scaffold, surprise via inverted/net-benefit consequences |
+| C2_materials_chemistry_07 | C2 | mat_chem | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | PASS | **REVISE** | No-crystallinity world; six-arena scaffold, surprise via inverted/net-benefit consequences. **1 BLOCKING self-contradiction**: one hard rule permits 'Si' while another bans it |
 | C2_economics_business_08 | C2 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | No limited liability; partial-counterfactual record anchors surprising-but-true cascades |
-| C2_law_policy_09 | C2 | law | PASS | PASS | PASS | PASS | FAIL | REVISE | Statute-of-limitations world; design strong but `expert_baseline` is a placeholder stub ("See ... above.") |
+| C2_law_policy_09 | C2 | law | PASS | PASS | PASS | PASS | ~~FAIL~~ **→ FIXED** | ~~REVISE~~ **KEEP** | Statute-of-limitations world; design strong. The placeholder `expert_baseline` stub was **replaced with the real 818-char convergent-expectation text**; its enumeration of intended surprises was split into the judge-hidden `author_expected_surprises` field |
 | C2_engineering_10 | C2 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | 1.5g world; scaling-law scaffold, surprise via gravity-invariants and direction-reversals |
 | C2_arts_humanities_11 | C2 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | No linear perspective; canon pre-claimed, surprise via distant knock-ons + self-undermining test |
-| C2_biology_medicine_34 | C2 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Non-enucleated RBCs; anti-obvious rule + concrete baseline isolate surprise |
+| C2_biology_medicine_34 | C2 | bio_med | PASS | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | KEEP (conditional) | Non-enucleated RBCs; anti-obvious rule isolates surprise — but the "concrete baseline" was not one. **64% of `expert_baseline` was an answer key**; the residue was 156 chars, failing schema `minLength(200)`, so the item was **quarantined 2026-07-30**. **Restored 2026-07-31** with a 1,478-char baseline that is explicitly **model-drafted, not expert-written, and still needs physiologist review** |
 | C2_materials_chemistry_35 | C2 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | Non-protective Al oxide; industrial-chain 2nd-order beyond substitute-metal baseline |
-| C2_economics_business_36 | C2 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | No shipping container; landed-cost/port-geography 2nd-order surprise |
-| C2_law_policy_37 | C2 | law | PASS | PASS | PASS | PASS | PASS | KEEP | No plea bargaining; prosecutorial-incentive 2nd-order surprise; multi-source rule |
+| C2_economics_business_36 | C2 | econ | PASS | PASS | PASS | PASS | ~~PASS~~ **→ WATCH** | KEEP | No shipping container; landed-cost/port-geography 2nd-order surprise. **58% of `expert_baseline` was answer key** (230 chars remain); on the quarantine watch-list |
+| C2_law_policy_37 | C2 | law | PASS | PASS | PASS | PASS | ~~PASS~~ **→ WATCH** | KEEP | No plea bargaining; prosecutorial-incentive 2nd-order surprise; multi-source rule. **59% of `expert_baseline` was answer key** (210 chars remain); on the quarantine watch-list |
 | C3_biology_medicine_12 | C3 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Category theory→differentiation; novelty gate blocks Rosen/MES; structural-fidelity rules |
 | C3_materials_chemistry_13 | C3 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | Pop-gen→solid-state; trivial mappings banned; novelty on deeper terms + disanalogy |
 | C3_economics_business_14 | C3 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | Knot theory→ownership networks; unoccupied niche; invariance proof required |
-| C3_law_policy_15 | C3 | law | PASS | PASS | PASS | PASS | WEAK | KEEP | RG→federalism; Galam-gated; novelty on competence-allocation dictionary; prior-art self-flagged unverified |
+| C3_law_policy_15 | C3 | law | PASS | PASS | PASS | PASS | ~~WEAK~~ **→ CLEARED** | KEEP | RG→federalism; Galam-gated; novelty on competence-allocation dictionary. **Live audit verified all 13 prior-art entries and the RG mathematics; its central negative claim survived ten independent query forms** — the auditor's best-constructed item in the set. The self-flagged-unverified caveat is discharged |
 | C3_engineering_16 | C3 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Pop-gen→software evolution; Lehman-gated; equation-level correspondences + predictions |
-| C3_arts_humanities_17 | C3 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | Gauge theory→translation; shallow "meaning=invariant" gated; holonomy/curvature layer required |
+| C3_arts_humanities_17 | C3 | arts | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | PASS | PASS | **REVISE** | Gauge theory→translation; shallow "meaning=invariant" gated; holonomy/curvature layer required. **Live audit: the novelty gate is materially wrong, not merely loose.** The item asserts existing work carries "the invariance HEADLINE only — no connection, no curvature, no Wilson loop"; Coda et al., arXiv:2203.08189 (2022) already builds fiber bundles whose fibers are admissible interpretations, motivated by linguistic ambiguity. **Still missing from `known_answers`** — the gate over-rewards |
 | C3_biology_medicine_38 | C3 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Optimal transport→non-transport biology; homonym/trajectory uses gated; novelty on duality/slackness |
 | C3_materials_chemistry_39 | C3 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | Sheaf cohomology→materials; TDA/K-theory gated; H^1 obstruction needs a lab referent |
 | C3_law_policy_40 | C3 | law | PASS | PASS | PASS | PASS | PASS | KEEP | Queueing→non-backlog law; M/M/c gated; variability-amplification/feedback novelty |
@@ -69,10 +106,10 @@ the dataset.
 | C4_law_policy_21 | C4 | law | PASS | PASS | PASS | PASS | PASS | KEEP | Regulator-capture metric; banned-proxy constraint forces balanced invention |
 | C4_engineering_22 | C4 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Cross-domain margin-efficiency index; prior-art + invariance + falsifiability bind all three |
 | C4_arts_humanities_23 | C4 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | Restitution adjudication framework; hard cases + new-mechanism force balance; post-cutoff grounding |
-| C4_biology_medicine_42 | C4 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Preclinical-model selection method; ≥3 traditions + new variable + 2 hard cases bind all three |
-| C4_materials_chemistry_43 | C4 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | Synthesis-route ranking; discriminating hard cases invert green-metrics baseline |
-| C4_economics_business_44 | C4 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | Killer-acquisition screen; below-threshold/zero-overlap hard cases invert concentration-test baseline |
-| C4_engineering_45 | C4 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Reparability/upgradeability index; software-lock inversion hard case; balanced |
+| C4_biology_medicine_42 | C4 | bio_med | PASS | PASS | ~~PASS~~ **→ WEAK** | PASS | ~~PASS~~ **→ FAIL** | **REVISE** | Preclinical-model selection method; ≥3 traditions + new variable + 2 hard cases bind all three. **Live audit: 0/12 `known_answers` entries dated**, and the two literatures that would refute its flagship novelty claim are absent (Belzung & Lemoine 2011 mechanistic/homological validity; Wehling/Wendler translatability scoring, 2009–2017). Milder version of `_45`'s defect |
+| C4_materials_chemistry_43 | C4 | mat_chem | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | PASS | ~~PASS~~ **→ FAIL** | **REVISE** | Synthesis-route ranking; discriminating hard cases invert green-metrics baseline. **1 BLOCKING self-contradiction**: the rules offer 'atom economy' as a genuinely NEW mechanism while it already appears in this item's own `known_answers`. **0/12 entries dated**; four existing aggregators (GREENSCOPE, EATOS, DOZN, Andraos) and the criticality methodology (Graedel 2012) are missing |
+| C4_economics_business_44 | C4 | econ | PASS | PASS | PASS | PASS | ~~PASS~~ **→ WEAK** | KEEP | Killer-acquisition screen; below-threshold/zero-overlap hard cases invert concentration-test baseline. Only 2/12 entries dated (the best of the `_4x` batch); the Art. 22 entry is stale in a way that breaks its own H1 premise |
+| C4_engineering_45 | C4 | eng | PASS | PASS | ~~PASS~~ **→ FAIL** | ~~PASS~~ **→ FAIL** | ~~PASS~~ **→ FAIL** | ~~KEEP~~ **DO NOT RELEASE** | Reparability/upgradeability index. **The novelty gate is INVERTED, not merely loose.** Hard rule (d) offers "a software-lock/parts-pairing penalty as a hard multiplier" as its example of a genuinely NEW mechanism, but `known_answers[1]` is the iFixit Repairability Score, whose published rubric already applies a **global** parts-pairing penalty (up to −100%). `expert_baseline` asserts the opposite ("the convergent baseline rarely penalizes software parts-pairing"), so a judge reading the item would *confirm* the false positive rather than catch it. Also 0/12 entries dated, one flatly wrong attribution (Martin & Ishii — **still unfixed in the shipped file**), and the only operative EU repairability score (Reg (EU) 2023/1669) is absent. On the quarantine watch-list |
 | C5_biology_medicine_24 | C5 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Categorically-new modality; 26-entry KA + undruggable-biology reasoning; high headroom |
 | C5_materials_chemistry_25 | C5 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | New solid-state class; 33-entry KA; single-organizing-principle bar; high headroom |
 | C5_economics_business_26 | C5 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | New market for a missing market; IC argument + buildable-now floor keep it hard |

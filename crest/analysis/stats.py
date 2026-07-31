@@ -53,16 +53,30 @@ def mean_composite(df: pd.DataFrame) -> pd.Series:
 
 
 def _composite(df: pd.DataFrame) -> pd.Series:
-    """PRIMARY ENDPOINT: min(New, Useful, Surprising) per row -- the graded form of "creative on
-    all three". Replaces the mean (which lets a strong axis mask a failing one) and the thresholded
-    all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7).
+    """PRIMARY ENDPOINT: min(non-redundancy, Useful) -- TWO axes, not three.
+
+    Surprising is deliberately EXCLUDED. It is reported as exploratory because ablating
+    expert_baseline moved it by -0.02 (it is not separately anchored), it correlates with
+    non-redundancy at r ~ 0.95, and it is the sole binding axis in roughly 1 record in 147 --
+    so including it in the primary endpoint smuggles the third axis back in while adding no
+    information. This also replaces the mean (which lets a strong axis mask a failing one) and the
+    thresholded all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7).
+    Use min3() if you need the old three-axis minimum for comparability.
 
     All-null creativity rows (e.g. grounding-gated agents) become NaN.
     """
+    cols = [f"creativity.{a}" for a in ("new", "useful") if f"creativity.{a}" in df.columns]
+    if not cols:
+        return pd.Series(np.nan, index=df.index)
+    return df[cols].min(axis=1)
+
+
+def min3(df: pd.DataFrame) -> pd.Series:
+    """The three-axis minimum, retained for comparability with pre-2026-07-31 numbers."""
     cols = [f"creativity.{a}" for a in AXES if f"creativity.{a}" in df.columns]
     if not cols:
         return pd.Series(np.nan, index=df.index)
-    return df[cols].min(axis=1)   # PRIMARY = min(N,U,S); see mean_composite() for the old mean
+    return df[cols].min(axis=1)
 
 
 # --------------------------------------------------------------------------- #

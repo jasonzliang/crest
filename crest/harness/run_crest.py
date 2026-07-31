@@ -233,7 +233,8 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
     records, mode = [], "w"
     if verbose:
         n_cached = sum(1 for ch, name, a in tasks
-                       if cache and cache.get(ch.id, name, a.model, query_sha(ch.query))) if cache else 0
+                       if cache and cache.get(ch.id, name, a.model, query_sha(ch.query),
+                                              adapter_fingerprint(a))) if cache else 0
         print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
               f"({n_cached} served from cache, {len(tasks)-n_cached} to generate; "
               f"concurrency={concurrency}); dir={run_dir}")

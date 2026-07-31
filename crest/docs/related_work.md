@@ -2,8 +2,15 @@
 
 Standalone differentiation doc backing the paper's §Related Work. The one-line thesis:
 **every deep-research benchmark measures correctness; every creativity metric targets short-form
-LLM text — CREST is the first to measure the full New/Useful/Surprising creativity of
-browsing-and-citing research agents, organized by task type, on a frozen shared index.**
+LLM text — CREST is the first to measure the Non-redundancy/Useful/Surprising creativity of
+browsing-and-citing research agents, organized by task type, against a dated per-item prior-art
+set.**
+
+> Two claims that appeared in earlier drafts of this doc are **not true of the released system** and
+> must not be made: retrieval is **live provider-native web search, not a frozen shared index**
+> (`harness/agents.FrozenIndex` raises; runs are not contamination-controlled), and the judge panel
+> is **not human-validated** (no human study has been run). `analysis/ci_check.sh` fails the build if
+> either is asserted un-negated in the paper body.
 
 ## 1. Deep-research / agent benchmarks — measure correctness, not creativity
 | Benchmark | Measures | Not measured |
@@ -16,9 +23,12 @@ browsing-and-citing research agents, organized by task type, on a frozen shared 
 | ResearcherBench (2025) | frontier-question research quality | creativity |
 | MLR-Bench (2025) | open-ended ML research task success | creativity (N/U/S) |
 
-**CREST relation:** complementary. CREST adds the missing *creativity* axis and reuses these
-benchmarks' citation-faithfulness metrics as a **separate grounding check** (never folded into the
-creativity score), so "creative AND well-sourced" is shown on the same reports.
+**CREST relation:** complementary. CREST adds the missing *creativity* axis and borrows these
+benchmarks' citation-faithfulness framing for a **separate grounding check** (never folded into the
+creativity score), so "creative AND well-sourced" is shown on the same reports. Honest scope: the
+shipped gate (`judge/score.py::grounding_gate`) is a **regex cue-counter pilot proxy, not FACT**, and
+on the current entrant field — all using provider-native search — it measurably contributes nothing
+beyond an empty-answer check. A per-claim FACT verifier is the production version.
 
 ## 2. Creativity / novelty metrics & ideation benchmarks — not for research agents
 | Work | Target | Gap vs CREST |
@@ -31,20 +41,30 @@ creativity score), so "creative AND well-sourced" is shown on the same reports.
 | Death of the Novel(ty) (Saakyan 2026) | critique of n-gram novelty | motivates *why* CREST avoids n-gram novelty |
 
 **CREST relation:** we do **not** claim "no creativity test exists." Our precise deltas:
-(i) target deep-research agents that *browse and cite*; (ii) score the **full N/U/S triad**
-(all three required), not novelty alone; (iii) organize by **task type** to expose
-task-dependence; (iv) use a **frozen shared retrieval index** so "New" means new-vs-known, not
-unlike-the-web; (v) **avoid** embedding/n-gram novelty metrics that reward fabrication.
+(i) target deep-research agents that *browse and cite*; (ii) score **non-redundancy AND usefulness
+jointly** — primary endpoint `min(non-redundancy, Useful)`, with Surprising reported as an
+exploratory third axis — not novelty alone; (iii) organize by **task type** to expose
+task-dependence; (iv) anchor the first axis to a **dated, published, per-item prior-art set** so it
+means not-reducible-to-known-work rather than unlike-the-web (a *frozen shared retrieval index* is
+the intended contamination control and is **future work**, not a released property); (v) **avoid**
+embedding/n-gram novelty metrics that reward fabrication.
 
 ## 3. LLM-as-judge methodology — the validity backbone
 | Work | Contribution | How CREST uses it |
 |---|---|---|
 | MT-Bench / Chatbot Arena (Zheng 2023) | LLM-as-judge feasibility + protocol | baseline judging protocol |
-| Panickssery 2024 | judges favor their own generations | motivates **leave-one-family-out** |
-| Ye 2024 (Justice or Prejudice) | catalog of judge biases | blind + order-randomization |
+| Panickssery 2024 | judges favor their own generations | motivates the `same_family` covariate; **leave-one-family-out** kept as a robustness check (see below) |
+| Ye 2024 (Justice or Prejudice) | catalog of judge biases | blind judging (the prompt carries no agent name). *Not* order randomization: scoring is single-answer, not pairwise, so there is no order to randomize |
 | The Leaderboard Illusion (2025) | leaderboard/style confounds | length covariate, budget parity |
-| "novelty mirage" (2026) | LLM judges over-rate novelty | human-validation + validity-stratified reporting |
-| Krippendorff α (Hayes 2007); ICC (Koo 2016) | reliability estimators | required reporting |
+| "novelty mirage" (2026) | LLM judges over-rate novelty | reproduced in our own ablation (+0.98 when the prior-art set is withheld) ⇒ the axis is anchored and renamed non-redundancy; human validation is future work |
+| Krippendorff α (Hayes 2007); ICC (Koo 2016) | reliability estimators | reported (`analysis/stats.py::reliability_report`), alongside **per-judge severity** — severity spread exceeded the between-agent spread here, so agreement alone would have hidden the effect that decided the leaderboard |
+
+**On leave-one-family-out.** CREST ran LOFO as the default protocol until 2026-07-30 and then
+reversed it: with three vendors it makes judge identity perfectly confounded with entrant family
+(one judge was +2.0 to +3.2 points more lenient than the others and was dropped for exactly the
+entrants of its own family), which makes the leaderboard unidentifiable. The full panel now scores
+every entrant, `same_family` is stamped per judge row and modelled as a covariate, and LOFO is
+recoverable post-hoc as a robustness filter. That reversal is itself one of the paper's findings.
 
 ## 4. Construct grounding (creativity theory)
 Runco & Jaeger 2012 (standard definition) + Boden 2004 (surprise, exploratory/transformational);
@@ -55,11 +75,15 @@ of any evaluated agent** — the property reviewers most need to see.
 
 ## 5. Dataset documentation & release
 Gebru 2021 (Datasheets), Pushkarna 2022 (Data Cards), Mitchell 2019 (Model Cards),
-Croissant 2024 (+ Croissant-RAI). CREST ships all of these (see `datasheet.md`), matching the
-release rigor of accepted D&B-track benchmark papers.
+Croissant 2024 (+ Croissant-RAI). CREST ships the datasheet today (`docs/datasheet.md`) and targets
+the rest at release — the Croissant / Croissant-RAI records (`croissant.json`) are **not generated
+yet**, so do not cite them as shipped.
 
 ## The one-sentence gap
-CREST is the first benchmark to score the **full New/Useful/Surprising creativity** of
-**deep-research agents**, **by task type**, on a **frozen shared index**, with a **human-validated
-leave-one-family-out judge** and a **separate** citation-grounding check — turning "is this report
-creative?" from an unmeasured question into a released, reproducible instrument.
+CREST is the first benchmark to score the **non-redundancy and usefulness** (plus exploratory
+surprise) of **deep-research agents**, **by task type**, against a **dated per-item prior-art set**,
+with a **multi-vendor full panel** whose self-preference is measured rather than assumed, and a
+**separate** citation-grounding check — turning "is this report creative?" from an unmeasured
+question into a released, reproducible instrument. A frozen shared index and human validation of the
+judge are the two named gaps, both future work; the released instrument is honest about that rather
+than claiming either.

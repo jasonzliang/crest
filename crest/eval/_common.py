@@ -14,10 +14,12 @@ sys.path.insert(0, str(REPO))
 from crest.harness.run_crest import load_challenges, subset, evaluate, make_manifest
 from crest.harness.agents import build_agent
 from crest.harness import results as R
+from crest.harness.cache import GenerationCache
 from crest.judge.score import JudgePanel
 
 
-def run_one(agent_key, per_category=None, limit=None, categories=None, budget=6, concurrency=4, resume=True):
+def run_one(agent_key, per_category=None, limit=None, categories=None, budget=6, concurrency=4,
+            override_cache=False):
     """Evaluate a single entrant on CREST (optionally a subset). Resumes an interrupted run for the
     same entrant by default (skip already-done pairs). Returns the run dir Path."""
     challenges = subset(load_challenges(str(REPO / "crest/questions/crest_challenges.jsonl")),
@@ -25,15 +27,17 @@ def run_one(agent_key, per_category=None, limit=None, categories=None, budget=6,
     panel = JudgePanel.from_config(str(REPO / "crest/judge/judge_config.live.yaml"))
     agents = {agent_key: build_agent(agent_key, budget=budget)}
     out_root = REPO / "crest/result"
-    resumable = R.find_resumable(out_root, agent_key) if resume else None
-    if resumable:
-        run_id, run_dir = resumable
-        print(f"resuming interrupted run {run_id} ({len(R.completed_pairs(run_dir))} pairs done)")
-    else:
-        run_id, run_dir = R.new_run(out_root, agent_key, REPO)
+    # --resume was removed: a run is immutable and prior work is reused through the cross-run
+    # GENERATION CACHE instead (keyed on challenge text + agent + model + adapter fingerprint), so
+    # every run mints a fresh run_id. These scripts previously called R.find_resumable /
+    # R.completed_pairs, which no longer exist -- so all five eval/*.py entry points raised
+    # AttributeError before making a single API call.
+    run_id, run_dir = R.new_run(out_root, agent_key, repo_root)
     created = datetime.now(timezone.utc).isoformat()
     print(f"evaluating {agent_key} ({agents[agent_key].model}) on {len(challenges)} challenges -> {run_dir}")
-    recs = evaluate(challenges, agents, panel, run_dir, run_id, concurrency=concurrency, resume=bool(resumable))
+    cache = GenerationCache(out_root, enabled=not override_cache)
+    recs = evaluate(challenges, agents, panel, run_dir, run_id, concurrency=concurrency,
+                    cache=cache)
     R.finalize_run(out_root, run_dir, run_id, recs, make_manifest(
         run_id, created,
         {"name": "crest", "challenges_file": "crest/questions/crest_challenges.jsonl",

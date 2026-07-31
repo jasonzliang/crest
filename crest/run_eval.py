@@ -98,7 +98,8 @@ def main():
         _get = cache.get
         # wrap rather than subclass: a cache MISS for these agents forces fresh generation while
         # every other entrant is still served for free
-        cache.get = lambda cid, agent, model, qsha: None if agent in _stale else _get(cid, agent, model, qsha)
+        cache.get = (lambda cid, agent, model, qsha, fp="":
+                     None if agent in _stale else _get(cid, agent, model, qsha, fp))
         print(f"cache: forcing re-generation for {sorted(_stale)} (all other agents served from cache)")
     agents = {k: build_agent(k, budget=budget) for k in cfg["agents"]}
     print(f"config: {args.config}")

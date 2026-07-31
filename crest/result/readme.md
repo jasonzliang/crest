@@ -1,33 +1,58 @@
 # crest/result — run outputs
 
-Each evaluation writes a run directory. Re-running the same config **resumes an interrupted run by
-default** — it reopens the run that has `records.jsonl` but no `run_manifest.json` (a crash/kill left
-it unfinalized), skips already-completed `(challenge, agent)` pairs, and appends the rest so you
-don't re-pay (`--no-resume` forces a fresh run). A **completed** run (manifest present) is immutable:
-re-running it starts a new `run_id`.
+Each evaluation writes a run directory. Runs are **immutable**: every invocation mints a new
+`run_id` and nothing is ever resumed into an existing one. There is no `--resume` / `--no-resume`.
+What stops you re-paying is the **cross-run generation cache** (`harness/cache.py`, on by default):
+an agent answer already stored in *any* previous run is served for free, keyed by
+(challenge text, agent, model, adapter fingerprint), so a re-run costs judge calls only. Disable it
+with `--override-cache` (all entrants) or `--override-cache-agents <keys>` (just the named ones), or
+`use_cache: false` in the config. To repair judge failures in place without minting a new run, use
+`python -m crest.harness.rejudge --run <run_dir>`.
 
 ```
 result/
-  readme.md                     this file
-  index.jsonl                   append-only registry: one line per run (discovery)
-  latest -> runs/<run_id>       symlink to the newest run (convenience, NOT canonical)
-  leaderboard.json              promoted canonical numbers cited in the paper (created by hand)
-  runs/<run_id>/
+  readme.md                     this file (the only tracked thing in here)
+  index.jsonl                   append-only registry: one line per run (discovery)   [gitignored]
+  latest -> runs/<run_id>       symlink to the newest run (convenience, NOT canonical) [gitignored]
+  leaderboard.json              promoted canonical numbers cited in the paper (by hand; NOT YET
+                                 CREATED — no ranking claim is currently supportable)
+  runs/<run_id>/                                                                     [gitignored]
     records.jsonl               analysis-grade, one line per (challenge, agent); no heavy text
     transcripts.jsonl           heavy: full agent output text + citations, keyed by record_id
+    errors.jsonl                one line per failed task (agent error / circuit-broken provider)
+    config.snapshot.yaml        literal copy of the config as-run (run_eval.py only)
     run_manifest.json           provenance: git commit, config, pinned models, judge panel,
                                  live-vs-frozen mode + contamination caveat, totals, env
     summary.json                aggregates per agent × category (grounding/creative rates, means)
+    ablation.json               written only by `analysis/ablate_fields.py`
 ```
 
 `run_id = <UTC-timestamp>__crest__<subset>__git<sha>__<nonce>` — sortable and provenance-encoding.
+Run outputs are ~16 MB per session, so `runs/`, `index.jsonl` and `latest` are **gitignored** and
+live on disk only; they are both the generation cache and the evidence base, so do not delete them.
 
 - **"the numbers in the paper"** → `leaderboard.json` (hand-promoted, pins source run ids).
 - **"the latest run"** → `latest`.
 - **"what runs exist"** → `index.jsonl`.
-- Analyze a run: `python -m crest.analysis.stats --run runs/<run_id>/records.jsonl`.
+- Analyze a run: `python -m crest.analysis.stats --run crest/result/runs/<run_id>/records.jsonl`.
+- Is a long run still alive? `python -m crest.analysis.stall_check`.
 
-Records are `crest-record/1.0.0`. Per-judge scores are a list under `creativity.judges` so
+Records are `crest-record/1.0.0`. `scoring_status` is one of `scored` · `judge_degraded` (scored,
+but by fewer than `min_judges` — excluded from headline numbers) · `empty_answer` (the adapter
+returned no text; an ADAPTER failure, deliberately distinguished from fabrication) ·
+`grounding_fail` · `judge_error` (no judge survived). `creativity` is `null` on every failure path —
+never a fake 0. Each record also carries `query_sha` + `adapter_fp` (the cache's content address)
+and `generation_cached` / `cache_source_run` so a reused answer is visible in the data.
+
+Per-judge scores are a list under `creativity.judges`, each row stamped with `same_family`, so
 `pandas.json_normalize(record_path=["creativity","judges"], meta=[...])` yields a rater-level frame
-for the mixed-effects model. Reliability (Krippendorff α / ICC) and inferential stats live in
-`crest/analysis/stats.py`, not in `summary.json`.
+for the mixed-effects model and the leave-one-family-out subset is recoverable post-hoc by filtering
+`same_family == True`. `creativity.judge_protocol` records which protocol produced the row
+(`full-panel (same-family as covariate)` by default).
+
+Reliability (Krippendorff α / ICC) and inferential stats live in `crest/analysis/stats.py`, not in
+`summary.json`.
+
+> **Known defect:** `run_manifest.json` hardcodes `"judge_protocol": "leave-one-family-out; blind;
+> median aggregation"` in `harness/run_crest.py::make_manifest`, even on full-panel runs. Trust the
+> per-record `creativity.judge_protocol`, not the manifest, until that is fixed.
