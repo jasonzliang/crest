@@ -30,13 +30,20 @@
     },
     "domain": {
       "enum": [
+        "alignment_safety",
+        "architectures_training",
         "arts_humanities",
         "biology_medicine",
         "economics_business",
         "engineering",
+        "evaluation_benchmarking",
         "law_policy",
-        "materials_chemistry"
-      ]
+        "materials_chemistry",
+        "multimodal_agents",
+        "systems_efficiency",
+        "theory_learning"
+      ],
+      "$comment": "Union of two datasets' vocabularies: the six original science domains (crest_challenges.jsonl) and the six AI/ML domains (crest_aiml_challenges.jsonl). One schema rather than two because everything else about the item format is identical; the enum still catches typos, since a misspelling is in neither set. It no longer catches a science item using an AI/ML domain or vice versa -- the datasets are separate files, so that is not a confusion the loader can make."
     },
     "query": {
       "type": "string",
