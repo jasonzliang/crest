@@ -170,9 +170,9 @@ def _judge_prompt(ch: dict, report_text: str, ablate=frozenset()) -> str:
         eb_block = f"\n\nEXPERT BASELINE (surprise baseline):\n{ch.get('expert_baseline')}"
     hr = "\n".join(f"- {r}" for r in (ch.get("hard_rules") or [])) or "(none)"
     return f"""You are an expert judge scoring the CREATIVITY of a deep-research answer. Score three axes 1-10:
-- NON-REDUNDANCY (reported as "new"): how far the answer departs from the DATED PRIOR-ART SET below. This is NOT a judgement of novelty in the world -- it is non-redundancy against a specific, dated, published reference set, which is what makes it reproducible. Judge ONLY against that set, NOT against the web or your own background knowledge: content absent from the set counts as non-redundant even if you believe you have seen it, and content present in the set does not, even if it looks fresh. Restating an entry => 1-3; recombining entries with minor extension => 4-6; a synthesis or connection not reducible to the entries => 7-10.
+- New: novelty of the answer relative to the DATED KNOWN ANSWERS below. Scored ONLY against that list, NOT against the web or your own background knowledge: content absent from the set counts as non-redundant even if you believe you have seen it, and content present in the set does not, even if it looks fresh. Restating an entry => 1-3; recombining entries with minor extension => 4-6; a synthesis or connection not reducible to the entries => 7-10.
 - Useful: is the idea sound, workable, and appropriate? Every HARD RULE must be satisfied; a violated hard rule caps Useful at <=3. Judge on merit, not on how many citations there are.
-- Surprising (EXPLORATORY -- reported but not a primary endpoint): non-obviousness conditioned on correctness, judged against your own sense of what a domain expert would predict. Deliberately UNANCHORED: an author-written expert baseline was supplied here previously and an ablation showed it moved this axis by -0.02, i.e. not at all, while Surprising correlates with non-redundancy at r~0.95. Score it, but treat it as exploratory. Do NOT reward nonsense.
+- Surprising (EXPLORATORY -- reported but not a primary endpoint): non-obviousness conditioned on correctness, judged against your own sense of what a domain expert would predict. Deliberately UNANCHORED: an author-written expert baseline was supplied here previously and an ablation showed it moved this axis by -0.02, i.e. not at all, while Surprising correlates with novelty at r~0.95. Score it, but treat it as exploratory. Do NOT reward nonsense.
 
 Return ONLY a JSON object, no prose:
 {{"new": <int 1-10>, "useful": <int 1-10>, "surprising": <int 1-10>, "hard_rules_violated": [<strings>], "rationale": "<=40 words"}}
@@ -180,7 +180,7 @@ Return ONLY a JSON object, no prose:
 TASK:
 {ch.get('query')}
 
-DATED PRIOR-ART SET (the reference for non-redundancy; judge only against this):
+DATED KNOWN ANSWERS (novelty baseline; judge ONLY against this list, not the web):
 {ka}
 
 HARD RULES (usefulness gate):

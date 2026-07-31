@@ -1,13 +1,13 @@
 # CREST — Creativity of deep-Research agenTs
 
-A benchmark for the **creativity** (Non-redundancy / Useful / Surprising) of deep-research web agents.
+A benchmark for the **creativity** (New / Useful / Surprising) of deep-research web agents.
 50 expert-authored challenges, 10 per category (C1 Constrained, C2 Counterfactual, C3 Cross-Domain,
 C4 Meta-Creativity, C5 Open-Ended) across 6 domains (8–9 each). Each item is scored 1–10 on
-**NON-REDUNDANCY** (the axis reported as `new` — departure from a dated prior-art set, not novelty
+**New** (the axis reported as `new` — departure from a dated prior-art set, not novelty
 in the world), **Useful**, and **Surprising** (exploratory) by a multi-vendor judge panel, after a
 factual-grounding check. The **full panel scores every entrant** and `same_family` is stamped on
 each judge row; leave-one-family-out is a post-hoc robustness filter, not the protocol. Primary
-endpoint is `min(non-redundancy, Useful)` — see `judge/rubric.md`.
+endpoint is `min(New, Useful)` — see `judge/rubric.md`.
 
 ## The finding CREST is built to test
 Agent creativity is **task-dependent**: predicted strong on cross-domain (C3) and counterfactual
@@ -57,7 +57,7 @@ See `eval/readme.md` and `docs/notes/deep_research_apis.md`.
 | C4 | Meta-Creativity | invent a method, not an answer | parity |
 | C5 | Open-Ended Synthesis | many valid answers | predicted null |
 
-Each challenge ships with a **dated known-answers list** (the prior-art set non-redundancy is scored
+Each challenge ships with a **dated known-answers list** (the prior-art set novelty is scored
 against) and **hard rules** (Useful), plus labels (category, domain, isolated axis, pre/post-cutoff).
 `expert_baseline` and `author_expected_surprises` are retained for provenance but are **judge-hidden**
 since 2026-07-30: ablating the baseline moved Surprising by −0.02, and in 7 items it doubled as an
@@ -94,9 +94,9 @@ per-agent creativity numbers yet**, for three reasons:
    (judge_google is +2.0 to +3.2 points more lenient than the others), and the earlier
    leave-one-family-out protocol assigned judge panels *by entrant family*, which made the
    leaderboard unidentifiable. Scoring is now full-panel; LOFO is a robustness check.
-2. **Non-redundancy and Surprising are not separable** (r ~ 0.95 on the full-panel run). Ablating
+2. **New and Surprising are not separable** (r ~ 0.95 on the full-panel run). Ablating
    `expert_baseline` moves Surprising by -0.02, so it is no longer sent to the judge and Surprising
-   is demoted to EXPLORATORY: the primary endpoint is `min(non-redundancy, Useful)` — two axes, not
+   is demoted to EXPLORATORY: the primary endpoint is `min(New, Useful)` — two axes, not
    three. (Known inconsistency: `analysis/stats.py::_composite` and the `primary_endpoint` line in
    `analysis/preregistration.yaml` still minimize over all three. Reconcile before citing numbers.)
 3. **The gate is red.** `analysis/ci_check.sh` passes schema, sidecar-bijection and quarantine, but

@@ -1,4 +1,4 @@
-# CREST Judge Rubric — Non-redundancy / Useful / (Surprising, exploratory)
+# CREST Judge Rubric — New / Useful / (Surprising, exploratory)
 
 > **This file is the human-readable mirror of the deployed prompt, `judge/score.py::_judge_prompt`.**
 > It has drifted before — it specified a "judge against the dated set, not the web" *anti-web clause*
@@ -12,7 +12,7 @@
 > `ablation.json`): withholding the prior-art set moved the first axis by **+0.98** (it is
 > load-bearing), while withholding `expert_baseline` moved Surprising by **−0.02** (it anchored
 > nothing). `expert_baseline` is therefore no longer sent to the judge. Surprising is still scored
-> and reported, but is **exploratory and unanchored**, and correlates with non-redundancy at
+> and reported, but is **exploratory and unanchored**, and correlates with novelty at
 > **r = 0.94** (n = 234 scored records, 2026-07-31 full run; the deployed prompt rounds this to
 > "r~0.95").
 
@@ -50,7 +50,7 @@ entrant's answer are all withheld.** The judge returns one JSON object —
 
 ## Primary endpoint
 
-**`min(non-redundancy, Useful)` — two axes, on the 1–10 scale, not a threshold on all three.**
+**`min(New, Useful)` — two axes, on the 1–10 scale, not a threshold on all three.**
 This is now the definition in code (`analysis/stats.py::_composite`) and in
 `analysis/preregistration.yaml`; `min3()` is retained for comparability with earlier numbers.
 Surprising is deliberately **excluded** from the endpoint: including a demoted, unanchored axis in a
@@ -69,8 +69,8 @@ Humans do **not** currently own any axis: **no human validation study has been r
 
 For each output, given the challenge's `known_answers` (dated) and `hard_rules`:
 
-## Non-redundancy (reported as `new`) — 1–10
-This is **not** a claim about novelty in the world. It is non-redundancy against a specific, dated,
+## New — 1–10
+This is **not** a claim about novelty in the world. It is novelty against a specific, dated,
 published reference set — which is precisely what makes it reproducible, and what an unanchored
 novelty rating is not: LLM judges rate generated content as highly novel while domain experts
 conclude the opposite (the "novelty mirage"), and our own ablation reproduces that at +0.98.
@@ -110,7 +110,7 @@ and the reference set is published so any omission can be contested.
   against a key rather than expectation-violation. That enumeration now lives in the judge-hidden
   `author_expected_surprises` field.
 - It is reported for continuity and because Boden's surprise criterion motivates the design, but
-  r(non-redundancy, Surprising) = 0.94 and adding it to a two-axis gate eliminates 0 of 234 records
+  r(New, Surprising) = 0.94 and adding it to a two-axis gate eliminates 0 of 234 records
   at t = 6. **Do not treat it as independent evidence.**
 
 ## Grounding gate (applied before scoring, not part of the axes)

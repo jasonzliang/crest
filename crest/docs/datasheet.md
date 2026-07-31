@@ -14,7 +14,7 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
 > `croissant.json` in the repo — so the Croissant desk-reject gate is not cleared either.
 
 ## 1. Motivation
-- **Purpose.** Measure the *creativity* (non-redundancy / Useful / Surprising) of deep-research web
+- **Purpose.** Measure the *creativity* (novelty / Useful / Surprising) of deep-research web
   agents, organized by task type, to fill the gap left by correctness-only benchmarks
   (GAIA, BrowseComp, DeepResearch Bench, LiveResearchBench). CREST is the evaluation artifact;
   it is not a training set.
@@ -107,7 +107,7 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
 ## 4. Preprocessing / frozen index
 - **Frozen shared index.** `[NOT IMPLEMENTED]` The intended design is that all agents retrieve from
   one dated snapshot through a common search API with matched tool/compute budget, so
-  "non-redundancy/Surprising" reflect synthesis rather than fresher retrieval, and runs reproduce; it
+  "novelty/Surprising" reflect synthesis rather than fresher retrieval, and runs reproduce; it
   would be released as a manifest (URL + timestamp + SHA-256 per document). **None of this exists.**
   `harness/agents.py::FrozenIndex` raises on construction specifically to stop a live run being
   mislabeled as contamination-controlled, and the `--index` CLI flag is documented as future work.

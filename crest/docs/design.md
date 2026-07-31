@@ -33,7 +33,7 @@ the mechanistic account; parity on C4 and nulls on C1/C5 are free parameters.
 
 ## 3. Per-item contents
 Each challenge ships with: dated **known-answers** list (the prior-art set
-**non-redundancy** is scored against — the axis formerly called "New") and
+**novelty** is scored against — the axis formerly called "New") and
 **hard rules** to check (constrained items). Every query must require **deep
 multi-source web synthesis**, never a single-fact lookup.
 - **`expert_baseline` is JUDGE-HIDDEN since 2026-07-30.** It was the "Surprising"
@@ -80,8 +80,8 @@ multi-source web synthesis**, never a single-fact lookup.
   LOFO is **demoted to a robustness check**: every judge row is stamped
   `same_family`, so the LOFO subset is recoverable post-hoc and self-preference
   enters the model as a covariate (`analysis/stats.py` MixedLM).
-- **Primary endpoint: `min(non-redundancy, Useful)`.** Surprising is reported but
-  EXPLORATORY (r ≈ 0.95 with non-redundancy; its anchor field moved it by −0.02).
+- **Primary endpoint: `min(New, Useful)`.** Surprising is reported but
+  EXPLORATORY (r ≈ 0.95 with novelty; its anchor field moved it by −0.02).
   The thresholded "all three ≥ 6" indicator is retained only for backward
   comparability — its rate swings 5.4–36.1% across thresholds 5–7.
 - Report **inter-judge agreement** (Krippendorff α / ICC, implemented in

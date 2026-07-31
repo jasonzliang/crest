@@ -19,7 +19,7 @@ import pandas as pd
 
 ALL_AXES = ("new", "useful", "surprising")
 PRIMARY_AXES = ("new", "useful")     # Surprising is EXPLORATORY: ablation moved it by -0.02, it
-                                     # correlates with non-redundancy at r~0.95, and it is the sole
+                                     # correlates with novelty at r~0.95, and it is the sole
                                      # binding axis in ~1 record in 147. Single source of truth --
                                      # four separate copies of the axis tuple caused the drift that
                                      # left the primary endpoint defined three different ways.
@@ -65,11 +65,11 @@ def _axis_col(axis: str) -> str:
 
 
 def _composite(df: pd.DataFrame) -> pd.Series:
-    """PRIMARY ENDPOINT: min(non-redundancy, Useful) -- TWO axes, not three.
+    """PRIMARY ENDPOINT: min(New, Useful) -- TWO axes, not three.
 
     Surprising is deliberately EXCLUDED. It is reported as exploratory because ablating
     expert_baseline moved it by -0.02 (it is not separately anchored), it correlates with
-    non-redundancy at r ~ 0.95, and it is the sole binding axis in roughly 1 record in 147 --
+    novelty at r ~ 0.95, and it is the sole binding axis in roughly 1 record in 147 --
     so including it in the primary endpoint smuggles the third axis back in while adding no
     information. This also replaces the mean (which lets a strong axis mask a failing one) and the
     thresholded all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7).

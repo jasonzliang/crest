@@ -41,8 +41,8 @@ predictions:
   C5: predicted_null      # Open-Ended Synthesis — not entailed by the account
 
 analysis_plan:
-  primary_endpoint: "min(non-redundancy, Useful)"    # TWO axes. Surprising excluded: ablation moved
-                                                     # it by -0.02, r~0.95 with non-redundancy, and
+  primary_endpoint: "min(New, Useful)"    # TWO axes. Surprising excluded: ablation moved
+                                                     # it by -0.02, r~0.95 with novelty, and
                                                      # it is sole-binding in ~1 record of 147.
                                                      # Replaces the thresholded all-three indicator
                                                      # (rate swung 5.4-36.1% across thresholds 5..7).

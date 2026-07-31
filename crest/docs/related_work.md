@@ -2,7 +2,7 @@
 
 Standalone differentiation doc backing the paper's §Related Work. The one-line thesis:
 **every deep-research benchmark measures correctness; every creativity metric targets short-form
-LLM text — CREST is the first to measure the Non-redundancy/Useful/Surprising creativity of
+LLM text — CREST is the first to measure the New/Useful/Surprising creativity of
 browsing-and-citing research agents, organized by task type, against a dated per-item prior-art
 set.**
 
@@ -41,8 +41,8 @@ beyond an empty-answer check. A per-claim FACT verifier is the production versio
 | Death of the Novel(ty) (Saakyan 2026) | critique of n-gram novelty | motivates *why* CREST avoids n-gram novelty |
 
 **CREST relation:** we do **not** claim "no creativity test exists." Our precise deltas:
-(i) target deep-research agents that *browse and cite*; (ii) score **non-redundancy AND usefulness
-jointly** — primary endpoint `min(non-redundancy, Useful)`, with Surprising reported as an
+(i) target deep-research agents that *browse and cite*; (ii) score **novelty AND usefulness
+jointly** — primary endpoint `min(New, Useful)`, with Surprising reported as an
 exploratory third axis — not novelty alone; (iii) organize by **task type** to expose
 task-dependence; (iv) anchor the first axis to a **dated, published, per-item prior-art set** so it
 means not-reducible-to-known-work rather than unlike-the-web (a *frozen shared retrieval index* is
@@ -56,7 +56,7 @@ embedding/n-gram novelty metrics that reward fabrication.
 | Panickssery 2024 | judges favor their own generations | motivates the `same_family` covariate; **leave-one-family-out** kept as a robustness check (see below) |
 | Ye 2024 (Justice or Prejudice) | catalog of judge biases | blind judging (the prompt carries no agent name). *Not* order randomization: scoring is single-answer, not pairwise, so there is no order to randomize |
 | The Leaderboard Illusion (2025) | leaderboard/style confounds | length covariate, budget parity |
-| "novelty mirage" (2026) | LLM judges over-rate novelty | reproduced in our own ablation (+0.98 when the prior-art set is withheld) ⇒ the axis is anchored and renamed non-redundancy; human validation is future work |
+| "novelty mirage" (2026) | LLM judges over-rate novelty | reproduced in our own ablation (+0.98 when the prior-art set is withheld) ⇒ the axis is anchored and renamed novelty; human validation is future work |
 | Krippendorff α (Hayes 2007); ICC (Koo 2016) | reliability estimators | reported (`analysis/stats.py::reliability_report`), alongside **per-judge severity** — severity spread exceeded the between-agent spread here, so agreement alone would have hidden the effect that decided the leaderboard |
 
 **On leave-one-family-out.** CREST ran LOFO as the default protocol until 2026-07-30 and then
@@ -80,7 +80,7 @@ the rest at release — the Croissant / Croissant-RAI records (`croissant.json`)
 yet**, so do not cite them as shipped.
 
 ## The one-sentence gap
-CREST is the first benchmark to score the **non-redundancy and usefulness** (plus exploratory
+CREST is the first benchmark to score the **novelty and usefulness** (plus exploratory
 surprise) of **deep-research agents**, **by task type**, against a **dated per-item prior-art set**,
 with a **multi-vendor full panel** whose self-preference is measured rather than assumed, and a
 **separate** citation-grounding check — turning "is this report creative?" from an unmeasured
