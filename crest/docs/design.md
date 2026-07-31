@@ -21,7 +21,7 @@ mechanism and defuse "self-serving benchmark."
   mixed-effects (challenge as random effect), retiring n=5 Cliff's-Delta.
 - **Dual-label** every item: isolated N/U/S axis, domain, pre/post-training-cutoff.
 - Include **axis-isolating** items (novelty-dominant, usefulness-dominant,
-  surprise-dominant) so the aggregate cannot hide a weak axis.
+  surprise-dominant) so the aggregate cannot hide a weak axis (MEASURED 2026-07-30: this holds for C1/usefulness only -- 56% binding vs 33% chance; the novelty label is wrong-signed at 21%, i.e. those items are novelty-EASY, and surprise is 15%. Narrow the claim accordingly.).
 
 ## 3. Per-item contents
 Each challenge ships with: dated **known-answers** list (baseline for "New"),

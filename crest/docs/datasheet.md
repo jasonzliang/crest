@@ -22,7 +22,7 @@ are answered here.
 - **Instances.** 50 expert-authored research challenges (10 per category). Each is a natural-language
   research query plus metadata (see `questions/schema.json`): `id`, `category` (C1–C5), `domain`,
   `axis_isolated`, `time_sensitivity`, `known_answers[]` (dated), `hard_rules[]`, `expert_baseline`,
-  `predicted_direction`, `rationale`.
+  `predicted_direction`, `rationale`.  [REMOVED 2026-07-30 -> analysis/preregistration.yaml]
 - **Balance.** 10 per category × 5 categories; 8–9 per domain × 6 domains (biology/medicine,
   materials/chemistry, economics/business, law/policy, engineering, arts/humanities). Predicted
   directions: 20 predicted-null, 20 favored, 10 parity (used only for pre-registration).

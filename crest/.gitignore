@@ -32,3 +32,6 @@ result/.stall_state.json
 questions/*.bak_*
 questions/crest_challenges.pre_audit.jsonl
 questions/crest_challenges.audit.jsonl
+
+# LaTeX output PDFs are build artifacts (regenerate with paper/compile.sh)
+**/main.pdf

@@ -1,3 +1,7 @@
+> **HISTORICAL (pre-2026-07-30).** Refers to entrant keys (`*_dr`) and item fields
+> (`predicted_direction`, `category_name`) that no longer exist. Retained for the
+> reasoning, not as a description of the current artifact.
+
 # CREST question audit — do the questions, count, and detail make sense?
 
 Audit of `questions/crest_challenges.jsonl` against the CREST design, the related-work research,

@@ -1,3 +1,7 @@
+> **HISTORICAL (pre-2026-07-30).** Refers to entrant keys (`*_dr`) and item fields
+> (`predicted_direction`, `category_name`) that no longer exist. Retained for the
+> reasoning, not as a description of the current artifact.
+
 # How to scale CREST from 6 → 10 items per category
 
 Goal: grow the scored set from **30 (6/category)** to **50 (10/category)** — i.e. author

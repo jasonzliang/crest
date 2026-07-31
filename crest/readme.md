@@ -20,10 +20,20 @@ python -m crest.analysis.stats --run crest/result/latest/records.jsonl
 ```
 Requires `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`.
 
-## Entrants (pinned in `harness/agents.py`)
-`claude_dr` claude-sonnet-5 · `openai_dr` gpt-5.6 · `gemini_dr` gemini-3.1-pro-preview · plus the
-OpenAI Deep Research API (`openai_deepresearch` = o3-deep-research, `..._mini` = o4-mini-deep-research).
-All use provider-native web search. See `eval/readme.md`.
+## Entrants (pinned in `harness/agents.py`) — TWO DISTINCT ARMS
+**Shallow** (chat model + provider-native web search, ONE turn — *not* deep research):
+`claude_shallow` claude-sonnet-5 · `openai_shallow` gpt-5.6 · `gemini_shallow` gemini-3.1-pro-preview.
+
+**Deep** (managed multi-step background research loop; minutes and dollars per call):
+`openai_deepresearch` gpt-5.6-sol (effort=high, max_tool_calls=40) · `gemini_deepresearch_max`
+deep-research-max-preview-04-2026 (Interactions API).
+
+The `*_dr` keys were renamed `*_shallow` because they are single-turn search-augmented chat, and the
+old name overstated them. `o3-deep-research` / `o4-mini-deep-research` were **shut down 2026-07-23**
+(they still appear in `models.list()` but every call 404s), so OpenAI deep research is now a pattern
+on a general model. Anthropic ships no turnkey deep-research endpoint, so the deep arm has no
+Anthropic entrant — an asymmetry to disclose, not a null result for Claude.
+See `eval/readme.md` and `docs/notes/deep_research_apis.md`.
 
 ## The five categories
 | ID | Category | What it tests | Predicted direction |
@@ -55,7 +65,19 @@ crest/
 ```
 
 ## Status (honest)
-Scaffolding + a small live-web pilot only. **No headline results yet** — the papers carry
-`[PLACEHOLDER]`s until a powered run + the human-validation study are done. Live web search is
-**not** contamination-controlled (a frozen shared index is future work). Do not cite creativity
-numbers until the judge is human-validated. See `docs/design.md` and `docs/datasheet.md`.
+A full 250-task run exists (50 items x 5 entrants, all three judges per record). **Do not cite
+per-agent creativity numbers yet**, for three reasons:
+
+1. **No ranking claim is supportable.** Judge severity exceeds the between-agent spread
+   (judge_google is +2.0 to +3.2 points more lenient than the others), and the earlier
+   leave-one-family-out protocol assigned judge panels *by entrant family*, which made the
+   leaderboard unidentifiable. Scoring is now full-panel; LOFO is a robustness check.
+2. **New and Surprising are not separable** (r ~ 0.93). Ablating `expert_baseline` moves Surprising
+   by -0.02, so the primary endpoint is `min(New, Useful, Surprising)` over two real axes, not three.
+3. **The gate is red.** `analysis/ci_check.sh` fails on 1 quarantined item and 4 items whose own
+   rules contradict each other. `questions/quarantine.yaml` lists what is excluded and why.
+
+Live web search is **not** contamination-controlled (`FrozenIndex` raises; a frozen shared index is
+future work) and the judge panel is **not** human-validated. What the run *does* support is a
+methodological finding: LOFO over a three-vendor panel makes an LLM-judge leaderboard
+unidentifiable. See `docs/notes/iclr_metareview.md` and `docs/notes/field_justification.md`.
