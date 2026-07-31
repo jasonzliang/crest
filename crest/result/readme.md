@@ -14,9 +14,11 @@ result/
   readme.md                     this file (the only tracked thing in here)
   index.jsonl                   append-only registry: one line per run (discovery)   [gitignored]
   latest -> runs/<run_id>       symlink to the newest run (convenience, NOT canonical) [gitignored]
+  superseded_runs.json          provenance for DELETED run dirs: what each showed, why superseded
   leaderboard.json              promoted canonical numbers cited in the paper (by hand; NOT YET
                                  CREATED — no ranking claim is currently supportable)
   runs/<run_id>/                                                                     [gitignored]
+    README.md                   per-run orientation + the records↔transcripts join recipe
     records.jsonl               analysis-grade, one line per (challenge, agent); no heavy text
     transcripts.jsonl           heavy: full agent output text + citations, keyed by record_id
     errors.jsonl                one line per failed task (agent error / circuit-broken provider)
@@ -37,7 +39,9 @@ live on disk only; they are both the generation cache and the evidence base, so 
 - Analyze a run: `python -m crest.analysis.stats --run crest/result/runs/<run_id>/records.jsonl`.
 - Is a long run still alive? `python -m crest.analysis.stall_check`.
 
-Records are `crest-record/1.1.0`. `scoring_status` is one of `scored` · `judge_degraded` (scored,
+`RECORD_SCHEMA_VERSION` in `harness/results.py` is now `crest-record/1.1.0`; the shipped run 040653Z
+was written under the previous version and all 250 of its records — and its manifest — stamp
+`crest-record/1.0.0`. `scoring_status` is one of `scored` · `judge_degraded` (scored,
 but by fewer than `min_judges` — excluded from headline numbers) · `empty_answer` (the adapter
 returned no text; an ADAPTER failure, deliberately distinguished from fabrication) ·
 `too_short` (non-empty but under the substantive-length floor -- same adapter root cause as
@@ -54,15 +58,14 @@ covariates cannot be computed from that release. Records also carry `generation_
 
 Per-judge scores are a list under `creativity.judges`, each row stamped with `same_family`, so
 `pandas.json_normalize(record_path=["creativity","judges"], meta=[...])` yields a rater-level frame
-for the mixed-effects model and the leave-one-family-out subset is recoverable post-hoc by filtering
-`same_family == True`. `creativity.judge_protocol` records which protocol produced the row
-(`full-panel (same-family as covariate)` by default).
+for the mixed-effects model (750 rows on run 040653Z). The leave-one-family-out subset is the rows
+with **`same_family == False`** — LOFO *drops* the same-family judge, so keeping `== True` selects
+the exact complement (500 vs 250 rows on that run). `creativity.judge_protocol` records which
+protocol produced the row (`full-panel (same-family as covariate)` by default).
 
 Reliability (Krippendorff α / ICC) and inferential stats live in `crest/analysis/stats.py`, not in
 `summary.json`.
 
-> **Fixed.** `make_manifest` used to hardcode `"judge_protocol": "leave-one-family-out; blind;
-> median aggregation"` even on full-panel runs. It now reads `panel.protocol`, so the manifest and
-> the per-record `creativity.judge_protocol` agree; the shipped run records
-> `"full-panel (same-family as covariate); blind; median aggregation"` and carries a
-> `judge_protocol_note` recording the correction.
+`make_manifest` derives `judge_protocol` from `panel.protocol`, so it agrees with the per-record
+`creativity.judge_protocol`. Run 040653Z's manifest was written before that fix and hand-corrected;
+its `judge_protocol_note` records exactly that.

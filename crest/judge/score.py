@@ -5,13 +5,12 @@ Two pieces:
      sources, or is it confident fabrication?" An answer must PASS this before it can earn
      any creativity score -- otherwise a model could win New/Surprising just by making things
      up (novelty-by-hallucination). "Grounding" = the standard term for whether generated
-     claims are attributable to their cited sources (ALCE, AIS, FActScore). Fail => creativity 0.
+     claims are attributable to their cited sources (ALCE, AIS, FActScore). Fail => UNSCORED
+     (the harness writes creativity=null, never a fake 0).
   2. JUDGE PANEL (`JudgePanel`): scores New/Useful/Surprising 1-10, blind to agent identity
      (the prompt carries no agent name) and optionally LEAVE-ONE-FAMILY-OUT. Per-axis scores are
-     returned separately (a profile, not one number).
-     NB there is NO answer-order randomization: scoring is single-answer, not pairwise, so there is
-     no order to randomize. Earlier docs and judge_config.yaml claimed this control; the claim was
-     vacuous and has been removed rather than left as an unimplemented assertion.
+     returned separately (a profile, not one number). There is NO answer-order randomization:
+     scoring is single-answer, not pairwise, so there is no order to randomize.
 """
 from __future__ import annotations
 import dataclasses, json, re, statistics, sys, yaml
@@ -21,15 +20,13 @@ from concurrent.futures import ThreadPoolExecutor
 @dataclasses.dataclass
 class GroundingResult:
     passed: bool
-    empty_answer: bool = False      # LITERALLY nothing: the agent returned "". Distinguishes an
-                                    # ADAPTER problem from "the agent fabricated" (a GROUNDING
-                                    # problem) -- conflating them mislabelled a 22% Anthropic
-                                    # adapter failure as Claude being ungrounded.
-    too_short: bool = False         # non-empty but below _MIN_SUBSTANTIVE_CHARS. Kept SEPARATE from
-                                    # empty_answer, which briefly meant "under 1000 chars" -- so the
-                                    # console printed "empty answer" for 470-char preambles and
-                                    # n_empty_answer counted them. Same adapter root cause, but the
-                                    # threshold is a judgement call and the emptiness is not.
+    empty_answer: bool = False      # LITERALLY nothing: the agent returned "". An ADAPTER problem,
+                                    # not fabrication (a GROUNDING problem); conflating the two
+                                    # mislabelled a 22% Anthropic adapter failure as Claude being
+                                    # ungrounded.
+    too_short: bool = False         # non-empty but below _MIN_SUBSTANTIVE_CHARS. SEPARATE from
+                                    # empty_answer: same adapter root cause, but this threshold is a
+                                    # judgement call and emptiness is not.
     citation_density: float = 0.0   # citations per ~600 chars (a proxy, NOT FACT precision); see docstring
     n_citations: int = 0            # count of source URLs found (structured + inline)
 
@@ -55,14 +52,14 @@ _FACT_CUE_RE = re.compile(
     r"benchmark|patent(?:ed)?|acquired|census|GDP|documented|measured|recorded)\b",
     re.IGNORECASE,
 )
-# Sentence terminators, Latin AND CJK. Without the CJK set a 2,542-char Chinese answer holding 40 dated
-# statistics split into ONE sentence, so _count_factual_claims returned 1 where the same content in
-# English returned 40 -- ratio 1.0, passes. That was survivable while the count was one branch of an OR;
-# it is not now that the count is the numerator of the grounding verdict. Still English-CALIBRATED: the
-# cue regex below matches English keywords, so a non-English answer is under-counted regardless.
-_SENT_SPLIT_RE = re.compile(r"[.!?\n\u3002\uff01\uff1f]+")   # fullwidth ; EXCLUDED: it is a
-                            # clause separator, so including it over-split CJK relative to Latin,
-                            # where ASCII ";" is likewise not a terminator.
+# Sentence terminators, Latin AND CJK. The count is the numerator of the grounding verdict, so the CJK
+# set is load-bearing: without it a 2,542-char Chinese answer holding 40 dated statistics split into ONE
+# sentence, counting 1 where the same content in English counts 40 (ratio 1.0, passes). Still
+# English-CALIBRATED regardless: the cue regex above matches English keywords, so a non-English answer
+# is under-counted.
+_SENT_SPLIT_RE = re.compile(r"[.!?\n\u3002\uff01\uff1f]+")   # fullwidth ; EXCLUDED as a clause
+                            # separator: including it over-split CJK relative to Latin, where ASCII
+                            # ";" is likewise not a terminator.
 
 # A pure-invention answer may still drop a couple of incidental facts; tolerate this many
 # UNCITED verifiable-factual-claim sentences before demanding a source. Beyond it, zero
@@ -83,10 +80,10 @@ _MIN_SUBSTANTIVE_CHARS = 1000
 
 
 def _count_factual_claims(text: str) -> int:
-    """Lightweight proxy for the number of *verifiable external factual claims* an answer
-    makes -- sentences referencing a dated fact, statistic, named source, or study. A
-    pure-invention creative artifact scores near 0; a report piling up external facts
-    scores high. A cue counter, not a fact extractor."""
+    """Lightweight proxy for the number of *verifiable external factual claims* an answer makes --
+    sentences referencing a dated fact, statistic, named source, or study. A pure-invention creative
+    artifact scores near 0, a report piling up external facts scores high. A cue counter, not a
+    fact extractor."""
     return sum(1 for s in _SENT_SPLIT_RE.split(text) if _FACT_CUE_RE.search(s))
 
 
@@ -97,21 +94,17 @@ def grounding_gate(report) -> GroundingResult:
     statistics, named sources) and require that they be backed:
 
       * an empty answer FAILS as `empty_answer`, a sub-1000-char one as `too_short`;
-      * an answer carrying >=1 real source URL PASSES (its scaffolding is attributable);
-      * a pure-invention answer that makes few verifiable external factual claims PASSES
-        even with zero citations -- a creative artifact is not punished for lacking
-        sources (the old `>= min_citations` floor wrongly zeroed the invent tasks C1/C5);
-      * an answer whose dated/statistical claims outnumber its citations by more than
-        _MAX_CLAIMS_PER_CITATION FAILS. This is a RATIO, deliberately: the earlier form OR'd
-        "has >=1 citation" against the uncited-claim tolerance, so a single unverified URL let 60
-        fabricated dated statistics through, and the previous version of this bullet claimed
-        fabrication "cannot earn creativity by construction" -- which was false as implemented.
-        It is still only a proxy: the ratio says nothing about whether a citation SUPPORTS the
-        claim beside it, so a fabricator who also emits plausible URLs defeats it.
+      * an answer making at most _MAX_UNCITED_CLAIMS verifiable external factual claims PASSES even
+        with zero citations -- a pure-invention creative artifact is not punished for lacking sources
+        (the old `>= min_citations` floor wrongly zeroed the invent tasks C1/C5);
+      * otherwise it PASSES only if its dated/statistical claims outnumber its citations by no more
+        than _MAX_CLAIMS_PER_CITATION. A RATIO deliberately: OR'ing "has >=1 citation" against the
+        uncited-claim tolerance let one unverified URL carry 60 fabricated dated statistics, so >=1
+        citation is NOT a free pass. Still only a proxy -- the ratio says nothing about whether a
+        citation SUPPORTS the claim beside it, so a fabricator who also emits plausible URLs beats it.
 
-    Honest-proxy limits: this counts citation-worthy *cues*, not atomic facts, and does not
-    verify that a citation actually supports a given claim. The PRODUCTION version swaps this
-    for a per-claim FACT verifier (decompose -> verify each against its cited source).
+    Honest-proxy limits: it counts citation-worthy *cues*, not atomic facts. The PRODUCTION version
+    swaps this for a per-claim FACT verifier (decompose -> verify each against its cited source).
 
     MEASURED CONTRIBUTION (2026-07-31, 245 records, measured when the floor was 40 chars): the
     anti-fabrication clause fired ZERO times. 234 answers passed; all 11 rejections were EMPTY
@@ -130,26 +123,19 @@ def grounding_gate(report) -> GroundingResult:
     density = min(1.0, n / max(1.0, len(text) / 600.0)) if text else 0.0
     n_factual = _count_factual_claims(text)
     substantive = len(text.strip()) >= _MIN_SUBSTANTIVE_CHARS
-    # The old form was `substantive and (n >= 1 or n_factual <= _MAX_UNCITED_CLAIMS)` -- an OR, so the
-    # uncited-claim test was consulted ONLY at zero citations. Measured: 3,109 chars containing 60
-    # fabricated dated statistics failed at 0 citations and PASSED at 1, with that citation never
-    # checked for reachability, relevance or support. So the docstring's "obvious fabrication cannot
-    # earn creativity by construction" was false as implemented.
-    #
-    # The obvious fix -- an allowance of _MAX_UNCITED_CLAIMS per citation -- is WORSE than the bug: it
-    # newly gates 32 of the 250 shipped records, including a 38k-char report with 26 citations and 140
-    # dated claims. Long, genuinely-sourced reports restate and elaborate each source many times, so a
-    # linear per-citation budget punishes thoroughness.
-    #
-    # A RATIO gate separates the two cleanly. Measured over all 250 substantive shipped answers,
-    # claims-per-citation runs median 0.8, p95 3.8, max 8.0; the fabrication probe sits at 60. The
-    # threshold below is 2.5x above the worst real answer and 3x below the probe, and flips 0 of 250.
-    # Honest limits: 20 is calibrated on ONE run's distribution, not derived, and the ratio still says
-    # nothing about whether a citation supports the claim it sits near -- see the docstring.
-    # `n >= 1 and` rather than `max(1, n)`: the guard is the CONDITION, not arithmetic. With max(1, n)
-    # a zero-citation answer was divided by 1 and so allowed 20 dated claims instead of 2 -- a 10x
-    # loosening of exactly the case the ratio gate exists to catch, in the one branch the 250-record
-    # calibration could not test (0 of 250 have zero citations).
+    # Do NOT collapse to `n >= 1 or n_factual <= _MAX_UNCITED_CLAIMS`. That OR consults the
+    # uncited-claim test only at ZERO citations, so a 3,109-char probe of 60 fabricated dated
+    # statistics failed at 0 citations and PASSED at 1, that URL never checked for reachability,
+    # relevance or support. Re-measured 2026-07-31 over all 250 shipped records: the collapsed form
+    # flips 0 of them, but the ratio clause is the DECIDING clause for 234/250 (those with
+    # n_factual > _MAX_UNCITED_CLAIMS) and still rejects the probe the collapsed form admits -- so
+    # "has never fired" is not "unreachable", and dropping it restores a measured defect.
+    # A per-citation ALLOWANCE (_MAX_UNCITED_CLAIMS x n) is worse than either: it newly gates 32 of
+    # the 250, incl. a 38k-char report with 26 citations and 140 dated claims. Long sourced reports
+    # restate each source many times, so a linear budget punishes thoroughness; a ratio does not.
+    # `n >= 1 and` rather than `max(1, n)`: the guard is the CONDITION, not arithmetic. max(1, n)
+    # divides a zero-citation answer by 1, allowing 20 dated claims instead of 2 -- a 10x loosening
+    # of the one branch the 250-record calibration cannot test (0 of 250 have zero citations).
     passed = substantive and (n_factual <= _MAX_UNCITED_CLAIMS
                              or (n >= 1 and n_factual / n <= _MAX_CLAIMS_PER_CITATION))
     return GroundingResult(passed=passed, citation_density=round(density, 3), n_citations=n,
@@ -159,57 +145,35 @@ def grounding_gate(report) -> GroundingResult:
 
 # ---------------- judge panel ----------------
 
-# The judge must see the WHOLE answer. A previous 12,000-char cap silently discarded a mean 18k
-# chars from 66% of answers -- the judge saw a median 43% of a long answer while seeing 100% of the
-# (never-truncated) known_answers. Hard rules demanding terminal content ("state every oxidation
-# state", "supply a worked example") are satisfied precisely in the discarded tail, so the cap
-# manufactured violations, and violations cap Useful <=3. This ceiling is a runaway guard only: the
-# longest answer observed is 57,282 chars, so it should never fire -- and if it does, it says so
-# loudly rather than truncating in silence.
+# The judge must see the WHOLE answer. A previous 12,000-char cap silently discarded a mean 18k chars
+# from 66% of answers (the judge saw a median 43% of a long answer, but 100% of the never-truncated
+# known_answers); hard rules demanding terminal content ("state every oxidation state", "supply a
+# worked example") are satisfied precisely in the discarded tail, so the cap manufactured violations,
+# and a violation caps Useful <=3. A runaway guard only: the longest answer observed is 57,282 chars,
+# so it should never fire -- and warns loudly rather than truncating in silence if it does.
 _JUDGE_MAX_ANSWER_CHARS = 400_000
 
-# Cap on prior-art entries shown to the judge. Raised from 40 to 200 because the audit identified
-# 21+ missing prior-art families for C5_materials_chemistry_25 (33 entries) and ~60 for
-# C5_arts_humanities_49 (21 entries) -- adding them crosses 40, and a silent cut would have kept the
-# instruction header (entry 0 in 20 items) while discarding real prior art. This is now a runaway
-# guard only, and it warns rather than truncating in silence.
+# Cap on prior-art entries shown to the judge. Raised 40 -> 200: the audit found 21+ missing prior-art
+# families for C5_materials_chemistry_25 (33 entries) and ~60 for C5_arts_humanities_49 (21) -- adding
+# them crosses 40, and a silent cut would have kept the instruction header (entry 0 in 20 items) while
+# discarding real prior art. A runaway guard only; warns rather than truncating in silence.
 _MAX_KNOWN_ANSWERS = 200
 
-# keys `ablate` accepts; an unrecognised key used to be silently ignored
+# keys `ablate` accepts; validated in _judge_prompt (ablate_fields.py imports this to check its ARMS)
 _ABLATABLE = frozenset({"known_answers", "restore_expert_baseline"})
 
-# Bump whenever _judge_prompt's WORDING changes. Stamped into every record so a scored run can be
-# matched to the rubric text that produced it -- the entrant side has had `adapter_fp` since gen/2,
-# but the judge side had nothing, so a prompt edit silently made old and new scores incomparable.
-#   v1  the original rubric.
-#   v2  2026-07-31. Three changes to the Surprising instruction, all of which move scores:
-#       (a) dropped "EXPLORATORY -- reported but not a primary endpoint" (it IS a primary axis);
-#       (b) dropped "an ablation showed it moved this axis by -0.02" and "correlates with novelty at
-#           r~0.95" -- telling a rater that two axes it is about to score are redundant, and then
-#           citing the resulting correlation as evidence about those axes, is circular;
-#       (c) the instruction now matches whether an expert baseline is actually supplied, so the
-#           restore_expert_baseline arm can reproduce the pre-withdrawal condition it measures.
-# Run 2026-07-31T040653Z predates this stamp entirely: all 250 of its records store
-# judge_prompt_version=None, as does its manifest. So ablate_fields already aborts on it and rejudge
-# already treats every one of its records as an upgrade. Its numbers are NOT comparable and must
-# not be mixed with them; re-judge from stored transcripts (harness/rejudge.py) before quoting any
-# New-vs-Surprising correlation, which is the figure (b) contaminated.
+
 def render_prompt_for_fingerprint() -> str:
     """The judge prompt rendered over fixed inputs, for the CI staleness gate in analysis/ci_check.sh.
 
-    NOT called at import, and NOT hashed into the version automatically. Three attempts at an
-    auto-invalidating stamp were each wrong in a different way:
-      1. hashing _judge_prompt's SOURCE missed _MAX_KNOWN_ANSWERS and _JUDGE_MAX_ANSWER_CHARS (read
-         inside the function, declared outside it), and fired on comment-only edits;
-      2. hashing the RENDERED prompt on an over-limit dummy was blind to _fit_answer's early-return
-         branch -- which 250 of 250 real answers take, the longest being 57,282 chars against a
-         400,000 ceiling -- while firing on ceilings that never bind and on an unrelated grounding
-         constant, either of which would have triggered 750 unnecessary paid judge calls;
-      3. either version, computed at import, made `import crest.judge.score` depend on _judge_prompt
-         succeeding. Adding one required-field access bricked six modules, argparse and --help
-         included.
-    Each fix moved the failure rather than removing it. The only property actually needed is "if the
-    prompt changed, do not mix records", and a build-time comparison gets exactly that.
+    Deliberately NOT called at import and NOT auto-hashed into the version. Three auto-invalidating
+    designs were each wrong in a different way: a SOURCE hash missed _MAX_KNOWN_ANSWERS and
+    _JUDGE_MAX_ANSWER_CHARS (read inside _judge_prompt, declared outside it) and fired on comment-only
+    edits; a RENDERED hash taken on an over-limit dummy was blind to the _fit_answer early return that
+    250/250 real answers take, while firing on ceilings that never bind -- 750 needless paid judge
+    calls; and either one computed at import made six modules unimportable whenever _judge_prompt
+    raised. The only property needed is "if the prompt changed, do not mix records", which a
+    build-time comparison gets with no import-time risk.
 
     Two dummies: one shaped like the real distribution (short answer, few known answers, populated
     lists), covering the branches every run takes; one over both ceilings, covering truncation."""
@@ -225,8 +189,11 @@ def render_prompt_for_fingerprint() -> str:
             for ab in (frozenset(), frozenset({"restore_expert_baseline"}),
                        frozenset({"known_answers"})):
                 parts.append(_judge_prompt(ch, ans, ablate=ab))
-    parts.append(repr((_JUDGE_EFFORT, sorted(_JUDGE_THINKING.items()),
-                       _JUDGE_THINKING_BUDGET, _JUDGE_MAX_TOKENS)))
+    # Shape PINNED as (openai, anthropic-sorted, google, max_tokens): the hash must stay stable across
+    # a pure refactor of these constants, since a spurious bump makes rejudge treat all 250 records as
+    # an upgrade and re-buys the panel. Append new settings; never reorder.
+    parts.append(repr((_JUDGE_REASONING["openai"], sorted(_JUDGE_REASONING["anthropic"].items()),
+                       _JUDGE_REASONING["google"], _JUDGE_MAX_TOKENS)))
     return "\x00".join(parts)
 
 
@@ -235,10 +202,24 @@ def prompt_hash() -> str:
     return hashlib.sha256(render_prompt_for_fingerprint().encode()).hexdigest()[:8]
 
 
+# Bump BOTH of these whenever _judge_prompt's WORDING or the reasoning settings change. Stamped into
+# every record so a scored run can be matched to the rubric text that produced it (the entrant side has
+# had `adapter_fp` since gen/2; the judge side had nothing, so a prompt edit silently made old and new
+# scores incomparable). ci_check.sh recomputes prompt_hash() and fails the build on disagreement, so
+# the bump cannot be forgotten -- a build-time check, not an import-time computation.
+#   v1  the original rubric.
+#   v2  2026-07-31. Three changes to the Surprising instruction, all of which move scores:
+#       (a) dropped "EXPLORATORY -- reported but not a primary endpoint" (it IS a primary axis);
+#       (b) dropped "an ablation showed it moved this axis by -0.02" and "correlates with novelty at
+#           r~0.95" -- telling a rater that two axes it is about to score are redundant, and then
+#           citing the resulting correlation as evidence about those axes, is circular;
+#       (c) the instruction now matches whether an expert baseline is actually supplied, so the
+#           restore_expert_baseline arm can reproduce the pre-withdrawal condition it measures.
+# Run 2026-07-31T040653Z predates the stamp: all 250 records and its manifest store
+# judge_prompt_version=None, so ablate_fields already aborts on it and rejudge already treats every
+# record as an upgrade. Its numbers must NOT be mixed with v2; re-judge from stored transcripts
+# (harness/rejudge.py) before quoting any New-vs-Surprising correlation -- the figure (b) contaminated.
 JUDGE_PROMPT_VERSION = "v2"
-# Bump BOTH when the prompt or the reasoning settings change. ci_check.sh recomputes
-# prompt_hash() and fails the build if it disagrees, so the bump cannot be forgotten --
-# but it is a build-time check, not an import-time computation.
 JUDGE_PROMPT_VERSION_HASH = "e2ce119c"
 
 
@@ -256,6 +237,9 @@ def _judge_prompt(ch: dict, report_text: str, ablate=frozenset()) -> str:
     than assumed. Neither `known_answers` nor `expert_baseline` had ever been ablated, so there was
     no evidence either moved a score -- and the only dose-response measured for known_answers ran
     the wrong way (more prior-art entries -> HIGHER novelty awards)."""
+    unknown = set(ablate) - _ABLATABLE      # fail before doing any work; used to be silently ignored
+    if unknown:
+        raise ValueError(f"unknown ablate key(s) {sorted(unknown)}; valid: {sorted(_ABLATABLE)}")
     _ka = ch.get("known_answers") or []
     if len(_ka) > _MAX_KNOWN_ANSWERS:          # loud, not silent: see _MAX_KNOWN_ANSWERS
         print(f"  [WARNING: {ch.get('id')} has {len(_ka)} known_answers; only the first "
@@ -264,18 +248,14 @@ def _judge_prompt(ch: dict, report_text: str, ablate=frozenset()) -> str:
     ka = "\n".join(f"- {a}" for a in _ka[:_MAX_KNOWN_ANSWERS]) or "(none provided)"
     if "known_answers" in ablate:
         ka = "(ABLATED: no novelty baseline supplied for this run)"
-    # expert_baseline is NOT sent to the judge by default (ablation: withholding it moved Surprising
-    # by -0.02, and in 7 items it carried the author's enumeration of the intended surprises). Set
-    # "restore_expert_baseline" in `ablate` to reproduce the OLD behaviour -- previously this was a
-    # `_ = ablate` no-op, which silently made two of ablate_fields.py's four arms duplicates of the
-    # other two while the tool reported them as independent measurements.
-    unknown = set(ablate) - _ABLATABLE
-    if unknown:
-        raise ValueError(f"unknown ablate key(s) {sorted(unknown)}; valid: {sorted(_ABLATABLE)}")
-    # The Surprising instruction must MATCH whether a baseline is actually supplied. It previously
-    # said "a baseline was supplied here previously" unconditionally, so under the restore arm the
-    # judge was told the baseline was absent while reading it -- meaning that arm could not
-    # reproduce the pre-withdrawal condition it exists to measure.
+    # expert_baseline is NOT sent to the judge by default (ablation: withholding it moved Surprising by
+    # -0.02, and in 7 items it carried the author's enumeration of the intended surprises).
+    # "restore_expert_baseline" reproduces the OLD behaviour; it used to be a `_ = ablate` no-op, which
+    # silently made two of ablate_fields.py's four arms duplicates of the other two while the tool
+    # reported them as independent measurements.
+    # The Surprising instruction must MATCH whether a baseline is actually supplied: an unconditional
+    # "a baseline was supplied here previously" told the restore arm's judge the baseline was absent
+    # while it was reading it, so that arm could not reproduce the condition it exists to measure.
     eb_block = ""
     if "restore_expert_baseline" in ablate:
         eb_block = f"\n\nEXPERT BASELINE (surprise baseline):\n{ch.get('expert_baseline')}"
@@ -311,27 +291,24 @@ ANSWER TO SCORE (author identity withheld):
 
 
 def _parse_json(s: str) -> dict:
-    """Harden JSON extraction from a judge reply: reject empty text, strip ```json fences,
-    then pull out the first balanced {...} object (brace-matched, string-aware) before
-    parsing. Raises on empty / unparseable input so the caller can retry."""
+    """Harden JSON extraction from a judge reply: reject empty text, strip ```json fences, then return
+    the first balanced {...} object (brace-matched, string-aware) that parses AND carries the three
+    axes. Raises on empty / unparseable / axis-less input so the caller can retry."""
     if not s or not s.strip():
         raise ValueError("empty judge response")
     t = s.strip()
     if t.startswith("```"):                        # strip ```json ... ``` (or bare ```) fences
         t = re.sub(r"^```(?:json)?\s*", "", t)
         t = re.sub(r"\s*```$", "", t).strip()
-    # NO bare `json.loads(t)` fast path. It returned any parseable object without checking for the
-    # three axes, so a wrapped verdict {"scores": {...}} returned the OUTER dict and KeyError'd in
-    # _call_judge four paid calls and 28s of backoff later -- while the SAME payload preceded by one
-    # word of prose parsed on the first try, because the fast path failed and the scan below unwrapped
-    # it. Whether a model wraps its verdict is a per-model habit, so the panel thinned by JUDGE
-    # IDENTITY. The scan handles the bare case too (start=0, balanced, has the axes).
     # Scan EVERY balanced {...} and return the first that parses AND carries the three axes.
-    # Committing to the first one lost real verdicts: a reply opening with "<thinking>hmm {maybe}"
-    # raised JSONDecodeError, and one opening with a scratch object returned that object, whose
-    # missing "new" key surfaced four attempts and 28s of backoff later as a dropped judge. Both
-    # fire on VERBOSE replies, so the panel thinned non-randomly -- the same bias shape as the
-    # max_tokens bug this module already documents.
+    # NO bare `json.loads(t)` fast path: it returned any parseable object unchecked, so a wrapped
+    # verdict {"scores": {...}} yielded the OUTER dict and KeyError'd in _call_judge 4 paid calls and
+    # 28s of backoff later -- while the SAME payload behind one word of prose parsed first try, the
+    # fast path having failed and this scan unwrapped it. And NOT committing to the first brace: a
+    # reply opening "<thinking>hmm {maybe}" raised JSONDecodeError, one opening with a scratch object
+    # returned it axis-less. All three failures track per-model wrapping/verbosity habits, so the
+    # panel thinned by JUDGE IDENTITY rather than at random. The scan subsumes the bare case
+    # (start=0, balanced, has the axes).
     for start in (i for i, c in enumerate(t) if c == "{"):
         depth, in_str, esc = 0, False, False
         for i in range(start, len(t)):
@@ -357,10 +334,8 @@ def _parse_json(s: str) -> dict:
                     if isinstance(obj, dict) and all(k in obj for k in ("new", "useful", "surprising")):
                         return obj
                     break
-    # No "best effort" fallback. Returning the first dict that merely PARSED was dead as a feature:
-    # _call_judge immediately does float(d["new"]), so an axis-less dict raised a bare KeyError one
-    # frame later -- the exact path this scan was written to remove, with a worse error message and
-    # the same four retries. Failing here names the actual problem.
+    # No "best effort" fallback: returning a merely-PARSEABLE dict only moved the failure to
+    # _call_judge's float(d["new"]) one frame later, as a bare KeyError with the same four retries.
     raise ValueError("no JSON object with new/useful/surprising found in judge response")
 
 
@@ -368,30 +343,29 @@ def _parse_json(s: str) -> dict:
 # that only covers the verdict yields an empty response on long prompts (see _judge_completion).
 _JUDGE_MAX_TOKENS = 8000
 
-# Reasoning budget, set as low as each vendor ALLOWS -- not to a single shared value. They previously ran at three different ones:
-# anthropic omitted `thinking` entirely, so claude-sonnet-5 used ADAPTIVE thinking at its default
-# effort "high"; openai was pinned to effort "low"; google had no token cap and no thinking config at
-# all. judge_config.live.yaml argues at length that judge severity is the dominant measured confound
-# and that the design now leans on the full panel as a CONSTANT instrument -- but one judge was
-# deliberating hard, one minimally, and one was unconfigured, so part of the reported severity spread
-# was a configuration artefact rather than a property of the models. Scoring a JSON verdict against an
-# explicit rubric does not need deep deliberation, so each arm is pinned as low as its vendor permits.
+# Reasoning budget, pinned as low as each vendor ALLOWS -- one dict keyed by family, because these are
+# three DIFFERENT vendor knobs, not three copies of one setting, which is exactly why the values are NOT
+# interchangeable. Unpinned they ran at three levels: anthropic omitted `thinking`, so claude-sonnet-5
+# used ADAPTIVE thinking at default effort "high"; openai was pinned "low"; google had no token cap and
+# no thinking config at all. judge_config.live.yaml calls judge severity the dominant measured confound
+# and leans on the full panel as a CONSTANT instrument -- but with one judge deliberating hard, one
+# minimally and one unconfigured, part of the reported spread was a configuration artefact rather than a
+# property of the models. Scoring a JSON verdict against an explicit rubric needs no deliberation.
 #
-# LITERAL PARITY IS NOT ACHIEVABLE, and pretending otherwise cost a judge. gemini-2.5-pro CANNOT have
-# thinking disabled: the accepted range is 128-32768, or -1 for dynamic. Setting 0 (to match
-# Anthropic's "disabled") passes google-genai's client, which does no range validation, and then 400s
-# SERVER-SIDE on every call. The failure is near-invisible: _call_judge burns 4 retries and 28s of
-# backoff per record, the panel silently drops to 2 judges, n_judges=2 >= min_judges=2 so the record is
-# still labelled "scored", and "invalid_argument"/"400" are absent from run_crest's _TERMINAL_ERR so the
-# circuit breaker never fires. A run would complete, report 250/250 scored, and have computed every
-# score WITHOUT judge_google -- the documented severity outlier and the only Google-family judge, whose
-# absence also voids the same_family covariate that replaced LOFO.
-# So: 128 is Pro's floor, not "off". The three arms are APPROXIMATELY comparable, no more.
-# NB changing these changes scores: they are folded into the prompt fingerprint below, so a run scored
-# under the old settings is not silently compared with a new one.
-_JUDGE_EFFORT = "low"                  # openai only: reasoning.effort
-_JUDGE_THINKING = {"type": "disabled"} # anthropic only: verified accepted on claude-sonnet-5
-_JUDGE_THINKING_BUDGET = 128           # google only: Pro's MINIMUM; 0 is rejected server-side
+# LITERAL PARITY IS NOT ACHIEVABLE, and "harmonising" these cost a judge. gemini-2.5-pro CANNOT disable
+# thinking (accepted range 128-32768, or -1 for dynamic). Setting 0, to match Anthropic's "disabled",
+# passes google-genai's client -- which does no range validation -- then 400s SERVER-SIDE on every call,
+# near-invisibly: _call_judge burns 4 retries and 28s of backoff per record, the panel drops to 2
+# judges, n_judges=2 >= min_judges=2 so the record is still labelled "scored", and
+# "invalid_argument"/"400" are absent from run_crest's _TERMINAL_ERR so the circuit breaker never fires.
+# The run completes reporting 250/250 scored, having computed every score WITHOUT judge_google -- the
+# documented severity outlier, the only Google-family judge, and the same_family covariate that replaced
+# LOFO. So 128 is Pro's FLOOR, not "off"; the three arms are APPROXIMATELY comparable, no more.
+# NB changing any value changes scores: each is folded into the prompt fingerprint above, so a run
+# scored under the old settings is not silently compared with a new one.
+_JUDGE_REASONING = {"anthropic": {"type": "disabled"},  # thinking=       accepted on claude-sonnet-5
+                    "openai": "low",                    # reasoning.effort
+                    "google": 128}                      # thinking_budget; 0 rejected server-side
 
 
 def _judge_completion(family: str, model: str, prompt: str) -> str:
@@ -400,35 +374,32 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
         import anthropic
         from crest.harness.keys import call_anthropic
         # Pooled: judge_anthropic is the hottest path in a run (LOFO excludes it only for the
-        # Anthropic entrant), so it trips this account's spend-rate cap first. Spread across every
-        # funded key before giving up and losing the judge.
-        # max_tokens must leave room for BOTH the thinking block and the JSON verdict. These are
-        # reasoning models: on a long judge prompt (known_answers can run to 33 entries, ~15k chars)
-        # a 2000-token budget was fully consumed by thinking, returning stop_reason='max_tokens'
-        # with NO text block -- an "empty judge response" that silently dropped this judge. Because
-        # it failed on the LONGEST prompts, the panel thinned preferentially on the most complex
-        # items, biasing which records kept a full panel.
+        # Anthropic entrant), so it trips this account's spend-rate cap first -- spread across every
+        # funded key before losing the judge.
+        # max_tokens must cover BOTH the thinking block and the JSON verdict: on a long judge prompt
+        # (known_answers runs to 33 entries, ~15k chars) a 2000-token budget was fully consumed by
+        # thinking, returning stop_reason='max_tokens' with NO text block -- an "empty judge response"
+        # that silently dropped this judge on the LONGEST prompts, so the panel thinned preferentially
+        # on the most complex items.
         r = call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=300).messages.create(
-            model=model, max_tokens=_JUDGE_MAX_TOKENS, thinking=_JUDGE_THINKING,
+            model=model, max_tokens=_JUDGE_MAX_TOKENS, thinking=_JUDGE_REASONING["anthropic"],
             messages=[{"role": "user", "content": prompt}]), "judge")
         txt = "".join(b.text for b in r.content if b.type == "text")
-        # DISTINGUISH exhaustion from an outage. Raising the budget to 8000 treated the symptom while
-        # leaving both failures byte-identical: a budget-exhausted reply is a thinking block with an
-        # empty text block, so `txt` is "" and _parse_json raised the same "empty judge response" a
-        # real vendor outage produces -- and because the prompt is built once and passed by value,
-        # all four retries re-sent identical bytes, burning 4 paid calls and 28s on a deterministic
-        # failure before dropping the judge.
+        # DISTINGUISH exhaustion from an outage; raising the budget alone left the two failures
+        # byte-identical. A budget-exhausted reply is a thinking block with an empty text block, so
+        # `txt` is "" and _parse_json raises the same "empty judge response" a real outage produces --
+        # and the prompt is built once, so all four retries re-sent identical bytes, burning 4 paid
+        # calls and 28s on a deterministic failure before dropping the judge.
         if not txt and getattr(r, "stop_reason", None) == "max_tokens":
             raise RuntimeError(
                 f"judge {model} spent the whole max_tokens={_JUDGE_MAX_TOKENS} budget without "
                 f"emitting text (prompt {len(prompt)} chars). This is NOT an outage and retrying is "
-                f"futile: raise _JUDGE_MAX_TOKENS or shorten the prompt. (_JUDGE_EFFORT does NOT apply "
-                f"to this arm -- it is openai's reasoning.effort; anthropic uses _JUDGE_THINKING.)")
+                f"futile: raise _JUDGE_MAX_TOKENS or shorten the prompt.")
         return txt
     elif family in ("openai", "open_weight"):
         from openai import OpenAI
         r = OpenAI(timeout=300).responses.create(
-            model=model, input=prompt, reasoning={"effort": _JUDGE_EFFORT},
+            model=model, input=prompt, reasoning={"effort": _JUDGE_REASONING["openai"]},
             max_output_tokens=_JUDGE_MAX_TOKENS)
         if not (r.output_text or "") and getattr(r, "status", None) == "incomplete":
             raise RuntimeError(f"judge {model} returned incomplete (likely max_output_tokens="
@@ -444,30 +415,29 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
             model=model, contents=prompt,
             config=gt.GenerateContentConfig(max_output_tokens=_JUDGE_MAX_TOKENS,
                                             thinking_config=gt.ThinkingConfig(
-                                                thinking_budget=_JUDGE_THINKING_BUDGET)))
-        # Same exhaustion check as the other two arms. GenerateContentResponse.text is Optional and is
-        # None for a thoughts-only candidate, so without this a budget-exhausted reply became an
-        # "empty judge response" -- indistinguishable from an outage, retried 4x, judge dropped. This
-        # arm needs it MOST: it is the one model whose thinking cannot be turned off.
+                                                thinking_budget=_JUDGE_REASONING["google"])))
+        # Same exhaustion check as the other two arms, and this arm needs it MOST: it is the one model
+        # whose thinking cannot be turned off. GenerateContentResponse.text is Optional and None for a
+        # thoughts-only candidate, so without this a budget-exhausted reply is indistinguishable from
+        # an outage -- retried 4x, judge dropped.
         if not (r.text or ""):
-            # FIRST candidate, to match r.text. The loop kept the LAST one, so candidates
-            # [MAX_TOKENS, STOP] yielded STOP, the check never fired, and the caller burned 4 retries
-            # on an empty reply -- exactly the failure this check exists to prevent.
+            # FIRST candidate, to match r.text: keeping the LAST one turned candidates
+            # [MAX_TOKENS, STOP] into STOP, so the check never fired and the caller burned 4 retries.
             cands = getattr(r, "candidates", None) or []
             fr = getattr(cands[0], "finish_reason", None) if cands else None
             if fr is not None and "MAX_TOKENS" in str(fr).upper():
                 raise RuntimeError(
                     f"judge {model} hit max_output_tokens={_JUDGE_MAX_TOKENS} with thinking_budget="
-                    f"{_JUDGE_THINKING_BUDGET} and emitted no text; retrying is futile.")
+                    f"{_JUDGE_REASONING['google']} and emitted no text; retrying is futile.")
         return r.text or ""
     else:
         raise ValueError(f"unknown judge family {family}")
 
 
 def _call_judge(family: str, model: str, prompt: str) -> dict:
-    """Call a judge and parse its JSON verdict. Retries up to 2 attempts when the response
-    text is empty or JSON parsing fails (a known intermittent failure that otherwise drops
-    the judge); only raises -- letting JudgePanel drop the judge -- after both are exhausted."""
+    """Call a judge and parse its JSON verdict. Up to 4 attempts when the response text is empty,
+    unparseable, or out of range (known intermittent failures that otherwise drop the judge); only
+    raises -- letting JudgePanel drop the judge -- once all four are exhausted."""
     import time
     last_err: Exception = RuntimeError("judge produced no result")
     for attempt in range(4):
@@ -499,37 +469,32 @@ class JudgePanel:
                  lofo: bool = True, ablate=frozenset()):
         self.judges = judges                      # [{"id","model","family"}]
         self.threshold = threshold_all_three
-        # LOFO (leave-one-family-out) drops the judge sharing the entrant's family. Defensible as a
-        # self-preference control, but with only 3 vendors it has real costs: judge identity becomes
-        # perfectly CONFOUNDED with entrant family (each entrant is scored by a different pair, so
-        # cross-entrant comparisons carry a judge-severity confound), n drops 3->2, and median-of-2
-        # degenerates to the mean (no outlier robustness).
-        #
-        # It is also not uniformly warranted. In the source paper's own bias table the same-family
-        # effect was judge-specific and SIGN-INCONSISTENT: Gemini +2.47/+0.78/+0.67, GPT
-        # +0.35/+0.02/+0.47, Claude +0.30/-1.78/-1.57. For the OpenAI judge LOFO spends a whole
-        # judge to remove a ~0.0-0.5 effect; for the Anthropic judge it removes a judge that was
-        # HARSHER on its own family, which pushes Anthropic entrants up.
-        #
-        # lofo=False scores every entrant with the full panel, keeping the instrument constant and
-        # letting same-family enter the model as a covariate (analysis/stats.py runs MixedLM), so the
-        # bias is MEASURED per run rather than assumed. LOFO then remains available post-hoc as a
-        # robustness check by filtering same-family rows.
+        # LOFO (leave-one-family-out) drops the judge sharing the entrant's family -- defensible as a
+        # self-preference control, but with only 3 vendors it CONFOUNDS judge identity with entrant
+        # family (each entrant is scored by a different pair, so cross-entrant comparisons carry a
+        # judge-severity confound), drops n 3->2, and degenerates median-of-2 to the mean.
+        # Nor is it uniformly warranted: in the source paper's own bias table the same-family effect
+        # was judge-specific and SIGN-INCONSISTENT (Gemini +2.47/+0.78/+0.67, GPT +0.35/+0.02/+0.47,
+        # Claude +0.30/-1.78/-1.57), so for the OpenAI judge LOFO spends a whole judge to remove a
+        # ~0.0-0.5 effect, and for the Anthropic judge it removes a judge that was HARSHER on its own
+        # family, pushing Anthropic entrants up.
+        # lofo=False scores everyone with the full panel, keeping the instrument constant and letting
+        # same-family enter as a covariate (analysis/stats.py runs MixedLM), so the bias is MEASURED
+        # per run rather than assumed; LOFO stays available post-hoc by filtering same-family rows.
         self.lofo = lofo
         self.ablate = frozenset(ablate)   # judge-side fields withheld (ablation arms)
-        # A single surviving judge is NOT a panel: median-of-one, no cross-family diversity, and
-        # the self-preference defence that LOFO exists to provide is gone. Scores below this many
-        # judges are recorded but flagged 'judge_degraded' so they can be excluded from headline
-        # numbers instead of silently diluting them (this fires when a vendor is down or unfunded).
-        # Validate HERE, in __init__, because from_config runs in main() before any money moves.
-        # A present-but-EMPTY `min_judges:` in the YAML yields None -- .get's default only fires when
-        # the key is absent -- and the resulting `scores.n_judges < None` TypeError is raised at
-        # run_crest.py's status branch, which sits AFTER the "JUDGE PANEL ERROR (agent was fine)"
-        # guard. So it was logged as an agent_error and the record discarded, on every task, after
-        # generation AND all judge calls were paid: 250 fully-paid tasks, 0 records, 250 rows blaming
-        # healthy entrants. The message is not auth/quota, so the circuit breaker never fired and the
-        # run burned to completion. bool is excluded explicitly: it is an int subclass, so `True`
-        # would otherwise pass as min_judges=1.
+        # A single surviving judge is NOT a panel: median-of-one, no cross-family diversity, and the
+        # self-preference defence LOFO exists to provide is gone. Records below this many judges are
+        # kept but flagged 'judge_degraded' so they can be excluded from headline numbers instead of
+        # silently diluting them (fires when a vendor is down or unfunded).
+        # Validate HERE, in __init__, because from_config runs in main() before any money moves: a
+        # present-but-EMPTY `min_judges:` in the YAML yields None (.get's default fires only on an
+        # ABSENT key), and the resulting `scores.n_judges < None` TypeError lands in run_crest.py's
+        # status branch, DOWNSTREAM of its "JUDGE PANEL ERROR (agent was fine)" guard. So every task
+        # was logged as an agent_error and discarded after generation AND all judge calls were paid:
+        # 250 fully-paid tasks, 0 records, 250 rows blaming healthy entrants -- and the message is not
+        # auth/quota, so the circuit breaker never fired and the run burned to completion. bool is
+        # excluded explicitly: it is an int subclass, so `True` would otherwise pass as min_judges=1.
         if isinstance(min_judges, bool) or not isinstance(min_judges, int) or min_judges < 1:
             raise ValueError(f"min_judges must be a positive int, got {min_judges!r} "
                              f"(a blank `min_judges:` in the YAML parses as None)")

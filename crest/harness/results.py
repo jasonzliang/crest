@@ -24,9 +24,8 @@ import json, subprocess, sys, platform, collections, statistics, secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Bumped to 1.1.0: four fields were added to every record (adapter_fp, truncated, answer_chars,
-# answer_words) while the version string stayed at 1.0.0, so one version denoted two incompatible
-# shapes -- the shipped run has 0/250 of them and a consumer had no way to tell.
+# 1.1.0: adapter_fp/truncated/answer_chars/answer_words were added to every record while the version
+# stayed 1.0.0 -- one version string denoting two shapes, and the shipped run has 0/250 of them.
 RECORD_SCHEMA_VERSION = "crest-record/1.1.0"
 
 
@@ -44,11 +43,10 @@ _GIT_CACHE: dict = {}
 
 def git_info(repo_root) -> dict:
     """Read git ONCE per process. new_run stamps the commit into the run_id and make_manifest read it
-    again ~45 minutes later, after the run finished -- and HEAD had moved in between, so the shipped
-    run dir says `gitb0cdbe7` while its own manifest says `754d005` (a commit that touched
-    judge/score.py and did not exist when generation started). The two provenance records for one run
-    disagreed about which code produced it. Caching makes them agree by construction, without
-    threading the value through four call sites."""
+    again ~45 minutes later, after HEAD had moved: the shipped run dir says `gitb0cdbe7` while its own
+    manifest says `754d005` (a commit that touched judge/score.py and did not exist when generation
+    started), so one run's two provenance records disagreed about which code produced it. Caching
+    makes them agree by construction, without threading the value through four call sites."""
     k = str(repo_root)
     if k not in _GIT_CACHE:
         sha = _git(["rev-parse", "--short", "HEAD"], repo_root)
@@ -77,23 +75,21 @@ def new_run(result_root, subset: str, repo_root) -> tuple[str, Path]:
 
 
 def is_scored(r: dict) -> bool:
-    """THE definition of a scored record. Three competing ones used to coexist -- `scoring_status ==
-    "scored"` here, `r.get("creativity")` in finalize_run's totals, and `creativity.notna()` in
-    stats.py -- and they disagreed: repairing one judge_degraded row via rejudge made the manifest's
-    n_scored DROP from 100 to 91, because finalize_run had counted degraded rows as scored and
-    rejudge did not. Both conditions are required: the status is authoritative, and the dict must
-    actually be there (rejudge and hand-imported records can desync the two)."""
+    """THE definition of a scored record. Three competing ones used to coexist (this status check,
+    `r.get("creativity")` in finalize_run's totals, `creativity.notna()` in stats.py) and they
+    disagreed: repairing one judge_degraded row via rejudge made the manifest's n_scored DROP from
+    100 to 91, because finalize_run counted degraded rows as scored and rejudge did not. BOTH
+    conditions are required: the status is authoritative, and the dict must actually be there
+    (rejudge and hand-imported records can desync the two)."""
     return r.get("scoring_status") == "scored" and bool(r.get("creativity"))
 
 
 def manifest_totals(records: list) -> dict:
     """The manifest `totals` block. Shared so a repair recomputes ALL of it -- rejudge used to
     refresh three keys and leave n_grounding_fail / n_empty_answer / n_truncated / n_judge_error
-    stale, which is the same 'derived artifacts left inconsistent' defect rejudge exists to fix.
-
-    Counting is driven by the statuses PRESENT in the data rather than a hand-listed set of keys.
-    The hand-listed version is what went stale when `too_short` was added -- a new status silently
-    counted nowhere, which is the same staleness this function was written to prevent."""
+    stale, the same 'derived artifacts left inconsistent' defect rejudge exists to fix. Counting is
+    driven by the statuses PRESENT in the data, not a hand-listed set of keys: the hand-listed
+    version silently counted `too_short` nowhere when that status was added."""
     counts = collections.Counter(r.get("scoring_status") or "unset" for r in records)
     out = {"n_records": len(records), "n_scored": sum(1 for r in records if is_scored(r)),
            "n_truncated": sum(1 for r in records if r.get("truncated"))}
@@ -108,9 +104,9 @@ def compute_summary(records: list) -> dict:
     (mixed-effects, TOST, Krippendorff alpha / ICC) are left to crest.analysis.stats on records.jsonl."""
     def agg(rows):
         # ONLY status=="scored". A judge_degraded row carries a creativity dict, so the old
-        # `if r.get("creativity")` swept it into the headline means -- while the console printed
-        # "excluded from headline numbers" for that very record. summary.json is what gets promoted
-        # to leaderboard.json, so the contradiction shipped downstream.
+        # `if r.get("creativity")` swept it into the headline means while the console printed
+        # "excluded from headline numbers" for that very record -- and summary.json is what gets
+        # promoted to leaderboard.json, so the contradiction shipped downstream.
         scored = [r for r in rows if is_scored(r)]
         degraded = [r for r in rows if r.get("scoring_status") == "judge_degraded"]
         n = len(rows)
@@ -197,9 +193,9 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
                 "totals": {**manifest_totals(records), "n_task_errors": n_task_errors},
                 "environment": {"python": sys.version.split()[0], "platform": platform.platform(),
                                 "packages": pkg_versions()},
-                # describe each output by WHO PRODUCED IT and WHAT IS IN IT. The bare filenames are
-                # historical and opaque -- "records" is the judge scores and "transcripts" is the
-                # agent answers, which is the opposite of what most readers assume.
+                # describe each output by WHO PRODUCED IT: the bare filenames are historical and
+                # opaque -- "records" is the judge scores and "transcripts" the agent answers, the
+                # opposite of what most readers assume.
                 "outputs": {
                     "records.jsonl": "JUDGE EVALUATIONS + metadata, one line per (challenge, agent). "
                                      "Analysis-grade: per-axis scores, per-judge breakdown with "

@@ -1,14 +1,16 @@
 """CREST statistical analysis.
 
-Implements the analysis plan that answers the methodology objections:
-  - O5 power: per-item MIXED-EFFECTS models (crossed random effects: challenge + rater),
-    effect sizes with bootstrap CIs, MDE/power curves; TOST EQUIVALENCE tests so
-    'nulls/parity' read as evidence-for-equivalence, not absence of power.
+What this module actually computes (claims here must match the code below -- nothing else in the
+repo is checked against it):
+  - O5 power: per-item MIXED-EFFECTS models (random intercept for challenge_id) with effect sizes
+    and deterministic bootstrap CIs; TOST EQUIVALENCE tests so 'nulls/parity' read as
+    evidence-for-equivalence rather than absence of power.
   - O11 finding: the agent x category CROSSOVER (rank-reversal) interaction test.
-  - O8 length: output length as a covariate (not just bins).
   - O16 grounding: a two-part (hurdle) model for the gate-zero-inflated score.
-  - validity-stratified: C1/C5 analyzed on human scores; judge-valid cells (C2/C3/C4)
-    on the panel (see judge/score.py).
+  - judge reliability: ICC(1,*), ICC(3,*), Krippendorff's alpha, per-judge severity.
+NOT here (do not cite this file for them): MDE/power curves, a rater random effect, and the
+output-length covariate -- none are implemented. Validity stratification (which cells are scored by
+panel vs human) happens upstream in judge/score.py; this module analyses whatever it emitted.
 Requires: statsmodels, scipy, numpy, pandas (see pyproject/requirements).
 """
 from __future__ import annotations
@@ -18,25 +20,26 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ALL_AXES = ("new", "useful", "surprising")
-PRIMARY_AXES = ("new", "useful", "surprising")
-# All THREE axes. An earlier revision dropped Surprising on the grounds that it was "the sole binding
-# axis in ~1 record in 147" -- that figure was threshold-based on a smaller LOFO run and did not
-# survive re-measurement. On the clean 250-record full-panel run Surprising is UNIQUELY the lowest
-# axis in 51/250 records (20%), so a conjunctive endpoint that omits it is not measuring the gate the
-# benchmark claims to apply.
+AXES = ("new", "useful", "surprising")
+# AXES is the single source of truth -- for the axis set (scattered copies of this tuple once left the
+# primary endpoint defined three different ways) and for the New-vs-Surprising argument below, which
+# _composite() and min2() defer to instead of restating. Three copies of that argument are what let
+# one copy claim Surprising was "deliberately EXCLUDED" while the code included it.
 #
-# It is still highly correlated with New (0.883 at record level; the r~0.95 this line used to give
-# was the pooled per-judge figure AND was stated in the v1 judge prompt, so it is contaminated --
-# see JUDGE_PROMPT_VERSION). Including it lowers every agent by 0.06-0.38 and
-# changes no ranking (corr(min2, min3) = 0.989). So the choice costs nothing in conclusions and buys
-# consistency with the stated three-axis design. Use min2() for the two-axis variant.
+# All THREE axes are in the primary endpoint. On the clean 250-record full-panel run Surprising is
+# UNIQUELY the lowest axis in 51/250 records (20%), so a conjunctive endpoint that omits it is not
+# measuring the gate the benchmark claims to apply. (The "sole binding axis in ~1 record in 147"
+# figure that once justified dropping it was threshold-based on a smaller LOFO run and did not survive
+# re-measurement.) Including it lowers every agent by 0.06-0.38 and changes no ranking
+# (corr(min2, min3) = 0.989), so it costs nothing in conclusions and buys consistency with the stated
+# three-axis design.
 #
-# Caveat to carry into the paper: Surprising is UNANCHORED since expert_baseline was withdrawn from
-# the judge prompt, so 20% of primary-endpoint values now rest on an unanchored judgement.
-# Single source of truth -- four scattered copies of this tuple caused the drift that once left the
-# primary endpoint defined three different ways.
-AXES = ALL_AXES                      # back-compat alias
+# Two caveats to carry into the paper:
+#   - r(New, Surprising) = 0.883 at record level. The r~0.95 once quoted here was the pooled per-judge
+#     figure AND was stated in the v1 judge prompt, so it is contaminated -- see JUDGE_PROMPT_VERSION.
+#   - Surprising is UNANCHORED since expert_baseline was withdrawn from the judge prompt (ablating it
+#     moved the axis by -0.02), so 20% of primary-endpoint values rest on an unanchored judgement.
+#     min2() is the two-axis variant for when that caveat matters.
 
 
 class InsufficientData(Exception):
@@ -53,10 +56,9 @@ class InsufficientData(Exception):
 def resolve_records_path(path: str) -> str:
     """Accept a run DIRECTORY as well as a records.jsonl, and resolve it ONCE.
 
-    rejudge and ablate_fields both take --run as a directory; only stats took a file, so the obvious
-    invocation died on IsADirectoryError. Resolving inside load_run alone was not enough: main() also
-    hands the raw argument to reliability_report, which opens it directly -- so a directory argument
-    loaded fine and then silently produced no reliability table at all."""
+    rejudge and ablate_fields both take --run as a directory, so stats must too. Resolving inside
+    load_run alone is not enough: main() also hands the path to reliability_report, which opens it
+    directly -- a directory would load fine and then silently produce no reliability table."""
     p = Path(path)
     if p.is_dir():
         f = p / "records.jsonl"
@@ -69,12 +71,10 @@ def resolve_records_path(path: str) -> str:
 def load_run(path: str):
     """Tolerate a partially-written final line: analysing a LIVE run is the normal case, and an
     uncaught JSONDecodeError there is a crash for no reason."""
-    import pandas as pd
     path = resolve_records_path(path)
     rows, bad = [], 0
-    for line in open(path, encoding="utf-8"):   # records.jsonl is written UTF-8; reading it under
-        # the platform default is the same bug pointing the other way -- this is load_run, the
-        # primary analysis entry point, and it was missed while judge_ratings in this file was pinned.
+    for line in open(path, encoding="utf-8"):   # records.jsonl is written UTF-8; the platform
+        # default is not it. Pin every reader in this module, not just judge_ratings.
         if not line.strip():
             continue
         try:
@@ -94,28 +94,19 @@ def _axis_col(axis: str) -> str:
     return f"creativity.{axis}"
 
 
-
-
 def _composite(df: pd.DataFrame) -> pd.Series:
     """PRIMARY ENDPOINT: min(New, Useful, Surprising) -- the graded form of "creative on all three".
 
-    Surprising is INCLUDED, and this docstring used to say the opposite while the code below already
-    read all three. The case for dropping it was that ablating expert_baseline moved it by -0.02, it
-    correlates with novelty, and it was "the sole binding axis in roughly 1 record in 147". That last
-    figure was wrong by an order of magnitude: recomputed on the shipped run, Surprising binds alone
-    in 51 of 250 records (20%), so dropping it changes the endpoint for a fifth of the data. The two
-    real caveats stand and are reported as limitations -- the axis is not anchored by anything the
-    judge sees, and r(New, Surprising) = 0.883 at record level -- but neither justifies excluding an
-    axis the NUS construct is defined by.
+    All three axes are INCLUDED; see the AXES note at the top of this module for why, and for the two
+    caveats that come with Surprising. min2() is the New/Useful robustness check.
 
-    This replaces the mean (which lets a strong axis mask a failing one) and the thresholded
+    min() replaces the mean (which lets a strong axis mask a failing one) and the thresholded
     all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7 ON THE PILOT, and
-    46.4-56.0% on the canonical run 040653Z). min2() reports the
-    New/Useful pair as a robustness check.
+    46.4-56.0% on the canonical run 040653Z).
 
     All-null creativity rows (e.g. grounding-gated agents) become NaN.
     """
-    cols = [f"creativity.{a}" for a in PRIMARY_AXES]
+    cols = [f"creativity.{a}" for a in AXES]
     missing = [c for c in cols if c not in df.columns]
     if missing:
         # HARD ERROR, not silent degradation. Dropping a missing axis turned min(new, useful) into
@@ -126,8 +117,8 @@ def _composite(df: pd.DataFrame) -> pd.Series:
 
 
 def min2(df: pd.DataFrame) -> pd.Series:
-    """Two-axis variant, min(New, Useful) -- Surprising excluded. Retained because Surprising is
-    unanchored; report alongside the primary when that caveat matters."""
+    """Two-axis ROBUSTNESS variant, min(New, Useful) -- Surprising excluded because it is unanchored
+    (see the AXES note). Report alongside the primary endpoint when that caveat matters."""
     cols = [f"creativity.{a}" for a in ("new", "useful")]
     missing = [c for c in cols if c not in df.columns]
     if missing:
@@ -135,18 +126,17 @@ def min2(df: pd.DataFrame) -> pd.Series:
     return df[cols].min(axis=1, skipna=False)
 
 
-
 # --------------------------------------------------------------------------- #
 # Judge reliability: ICC + Krippendorff alpha + per-judge severity
 #
-# judge/judge_config.yaml has always specified `report: [krippendorff_alpha, icc]` with thresholds
-# per Koo & Li 2016, and this module contained ZERO references to either -- a mandated control that
-# was never computed. Per-judge scores ARE persisted (creativity.judges[]), so it is computable
-# directly from any run's records.jsonl.
+# docs/judge_protocol_intent.md (the retired judge_config.yaml's content) mandates
+# `report: [krippendorff_alpha, icc]` with thresholds per Koo & Li
+# 2016; per-judge scores are persisted in creativity.judges[], so all of it is computable from any
+# run's records.jsonl.
 #
-# Why severity matters as much as agreement: on this project's data judge severity varied by 2-3
-# points on a 1-10 scale, which exceeded the entire between-agent spread. Reporting alpha/ICC
-# WITHOUT per-judge means would hide the effect that actually decided the leaderboard.
+# Severity is reported beside agreement because on this data judge severity varied by 3.2-3.7 points
+# on a 1-10 scale, exceeding the entire between-agent spread. Reporting alpha/ICC WITHOUT per-judge
+# means would hide the effect that actually decided the leaderboard.
 # --------------------------------------------------------------------------- #
 def judge_ratings(records_path: str) -> dict:
     """{axis: [[ratings for record 1], [record 2], ...]} plus per-judge means, from raw JSONL.
@@ -166,10 +156,9 @@ def judge_ratings(records_path: str) -> dict:
             if len(rated) >= 2:                      # a unit needs >=2 raters to inform agreement
                 out[ax].append([j[ax] for j in rated])
                 # Track WHICH judges, not just how many. ICC(1,*) and alpha are rater-agnostic so
-                # positional lists are fine for them, but ICC(3,*) treats column position AS rater
-                # identity. Under leave_one_family_out every unit has the same COUNT from a
-                # different PAIR, so a count-only balance check passed and the two-way model was
-                # computed on a matrix whose columns mixed judges -- reporting it as valid.
+                # positional lists suffice for them, but ICC(3,*) treats column position AS rater
+                # identity. Under leave_one_family_out every unit has the same COUNT from a different
+                # PAIR, so a count-only balance check passes on a matrix whose columns mix judges.
                 ids[ax].append(tuple(j.get("judge_id") for j in rated))
             for j in c["judges"]:
                 if j.get(ax) is not None:
@@ -184,19 +173,17 @@ def icc_oneway(units: list[list[float]], judge_ids: list[tuple] | None = None) -
     used (Spearman-Brown). judge_config's 0.80 bar applies to ICC(1,k), not ICC(1,1) -- conflating
     them overstates how badly the panel misses. Also returns judges_needed: how many raters ICC(k)
     >= 0.80 would require at the measured single-rater reliability."""
-    # Filter BOTH lists in lockstep. Filtering units alone left judge_ids misaligned, so a
-    # genuinely fixed panel with one 1-rating unit reported "rater set varies (2 distinct panels)"
-    # and silently skipped ICC(3,*). Unreachable today only because judge_ratings pre-filters --
-    # i.e. two parallel lists where only one is filtered, in the function that just gained the second.
+    # Filter BOTH lists in lockstep: filtering units alone misaligns judge_ids, which makes a
+    # genuinely fixed panel with one 1-rating unit report "rater set varies (2 distinct panels)" and
+    # silently skip ICC(3,*). Unreachable today only because judge_ratings pre-filters.
     if judge_ids is not None and len(judge_ids) == len(units):
         pairs = [(u, i) for u, i in zip(units, judge_ids) if len(u) >= 2]
         units = [u for u, _ in pairs]
         judge_ids = [i for _, i in pairs]
     elif judge_ids is not None:
-        # RAISE, do not discard. Setting judge_ids = None here stripped _icc_twoway's fixed-panel
-        # guard, so a length mismatch produced ICC(3,1)=1.0 on columns that mix judges -- reported as
-        # valid. The pre-fix code gave a false SKIP (conservative); discarding gave a false NUMBER.
-        # The comment four lines above names this exact hazard class and then recreated it.
+        # RAISE, do not discard. Setting judge_ids = None here strips _icc_twoway's fixed-panel guard,
+        # so a length mismatch yields ICC(3,1)=1.0 on columns that mix judges -- a false NUMBER, where
+        # skipping is merely a conservative false SKIP.
         raise InsufficientData(f"judge_ids ({len(judge_ids)}) and units ({len(units)}) are not "
                                f"parallel; refusing to compute ICC(3,*) on an unverifiable panel")
     else:
@@ -214,11 +201,10 @@ def icc_oneway(units: list[list[float]], judge_ids: list[tuple] | None = None) -
         raise InsufficientData("no within-unit variance available for ICC")
     ms_b, ms_w = ss_b / df_b, ss_w / df_w
     icc1 = (ms_b - ms_w) / (ms_b + (k_bar - 1) * ms_w) if (ms_b + (k_bar - 1) * ms_w) else float("nan")
-    # Report the RAW value alongside the clamped one. Clamping to [0,1] while printing alpha raw made
-    # two numbers on the same line look like independent corroboration -- but for interval data
-    # ICC(1,1) and Krippendorff's alpha are the same statistic, and unclamped they agree to 3dp. A
-    # reader seeing "ICC(1,1)=0.0  alpha=-0.042" reasonably concludes two controls agree; they are
-    # one control printed twice, once with the negative sign hidden.
+    # Report the RAW value alongside the clamped one. For interval data ICC(1,1) and Krippendorff's
+    # alpha are the SAME statistic and unclamped they agree to 3dp, so clamping only one of them makes
+    # "ICC(1,1)=0.0  alpha=-0.042" read as two controls corroborating each other -- it is one control
+    # printed twice, once with the negative sign hidden.
     icc1_raw = icc1
     icc1 = max(0.0, min(1.0, icc1))
     icck = (k_bar * icc1) / (1 + (k_bar - 1) * icc1) if icc1 > 0 else 0.0
@@ -235,23 +221,22 @@ def icc_oneway(units: list[list[float]], judge_ids: list[tuple] | None = None) -
 def _icc_twoway(units: list[list[float]], judge_ids: list[tuple] | None = None) -> dict:
     """ICC(3,1) / ICC(3,k): two-way MIXED model, judge main effect removed (Shrout & Fleiss 1979).
 
-    Why this is reported next to the one-way figures rather than instead of them. ICC(1,*) treats
-    raters as interchangeable and pushes any systematic rater severity into the error term. This
-    panel's severity spread is 3.2-3.7 points on a 1-10 scale, which is enormous, so the one-way
-    numbers collapse to ~0 and read as "the judges agree on nothing". That is the correct answer to
-    "can I trust ONE randomly-chosen judge in absolute terms?" -- and the wrong answer to "do the
-    judges RANK answers the same way?", which is what a leaderboard actually rests on. Both belong
-    in the report; quoting either alone misleads in a different direction.
+    Reported NEXT TO the one-way figures, not instead of them. ICC(1,*) treats raters as
+    interchangeable and pushes systematic severity into the error term; this panel's severity spread
+    is 3.2-3.7 points on a 1-10 scale, so the one-way numbers collapse to ~0 and read as "the judges
+    agree on nothing". That is the correct answer to "can I trust ONE randomly-chosen judge in
+    absolute terms?" and the wrong answer to "do the judges RANK answers the same way?", which is what
+    a leaderboard rests on. Quoting either alone misleads in a different direction.
 
     Requires balanced data (every unit rated by the same k). Skipped otherwise rather than
     approximated -- the shipped run is full-panel, so k = 3 exactly."""
     ks = {len(u) for u in units}
     if len(ks) != 1:
         return {"icc_3_note": f"skipped: unbalanced panel (ratings per unit: {sorted(ks)})"}
-    # Equal COUNTS are not a fixed panel. Verified on a LOFO fixture built from the run's real
-    # severities: every unit had k=2, the count check passed, and ICC(3,k) came out 0.789 from a
-    # matrix with three different column patterns whose positional means (6.26, 8.60) matched no
-    # actual judge. The severity effect the two-way model exists to remove was only partly removed.
+    # Equal COUNTS are not a fixed panel. On a LOFO fixture built from the run's real severities every
+    # unit had k=2, the count check passed, and ICC(3,k) came out 0.789 from a matrix with three
+    # different column patterns whose positional means (6.26, 8.60) matched no actual judge -- the
+    # severity effect this model exists to remove was only partly removed.
     if judge_ids is not None:
         distinct = {tuple(t) for t in judge_ids}
         if len(distinct) != 1:
@@ -276,10 +261,10 @@ def _icc_twoway(units: list[list[float]], judge_ids: list[tuple] | None = None) 
     icc31 = (ms_r - ms_e) / (ms_r + (k - 1) * ms_e) if (ms_r + (k - 1) * ms_e) else float("nan")
     icc3k = (ms_r - ms_e) / ms_r
     # Report BOTH shares, and name them for what they are. The SS share understates the judge
-    # contribution because SS_judge carries k-1 df against SS_target's n-1 (2 vs 249 here), so on the
-    # shipped run it reads 0.535/0.215/0.590 where the variance-component share is 0.632/0.290/0.682
-    # -- an understatement of 7.5-9.7pp, in the direction that flatters the panel. The old single key
-    # was printed as "judge share of variance", which is the number a paper would copy.
+    # contribution because SS_judge carries k-1 df against SS_target's n-1 (2 vs 249 here): on the
+    # shipped run it reads 0.535/0.215/0.590 where the variance-component share is 0.632/0.290/0.682,
+    # an understatement of 7.5-9.7pp in the direction that flatters the panel -- and the single key it
+    # replaces was printed as "judge share of variance", the number a paper would copy.
     ms_c = ss_cols / (k - 1) if k > 1 else 0.0
     v_t = max(0.0, (ms_r - ms_e) / k)                 # target variance component
     v_j = max(0.0, (ms_c - ms_e) / len(units))        # judge (column) variance component
@@ -308,7 +293,7 @@ def krippendorff_alpha_interval(units: list[list[float]]) -> float:
 
 
 def reliability_report(records_path: str) -> dict:
-    """Everything judge_config.yaml asked for, plus the severity table that explains the rest."""
+    """Everything docs/judge_protocol_intent.md asks for, plus the severity table explaining the rest."""
     r = judge_ratings(records_path)
     rep = {}
     for ax in AXES:
@@ -323,13 +308,27 @@ def reliability_report(records_path: str) -> dict:
             entry["alpha_error"] = str(e)
         raw_mean = {j: float(np.mean(v)) for j, v in sorted(r["by_judge"][ax].items())}
         entry["per_judge_mean"] = {j: round(m, 2) for j, m in raw_mean.items()}
-        # Spread from the RAW means, not the display-rounded ones. Subtracting rounded values turned a
-        # true 3.7440 into a printed 3.75, which then propagated into five docs as a "3.2-3.7" range
-        # when the measured triple is 3.320 / 3.196 / 3.744, i.e. 3.2-3.7.
+        # Spread from the RAW means, not the display-rounded ones: subtracting rounded values turned a
+        # true 3.7440 into a printed 3.75 that then propagated into five docs. The measured triple is
+        # 3.320 / 3.196 / 3.744.
         if len(raw_mean) >= 2:
             entry["severity_spread"] = round(max(raw_mean.values()) - min(raw_mean.values()), 2)
         rep[ax] = entry
     return rep
+
+
+def _is_scored(df: pd.DataFrame):
+    """Boolean mask matching harness/results.py::is_scored -- status AND a present creativity dict.
+
+    A bare `scoring_status == "scored"` test was used in three places here while the docstring claimed
+    it was "the SAME predicate" as results.is_scored. It wasn't: is_scored also requires the dict, and
+    a judge_degraded row carries one while a desynced row can carry the status without one. That kind
+    of drift is what made a repair report n_scored dropping from 100 to 91."""
+    ok = df["scoring_status"].astype(str) == "scored" if "scoring_status" in df.columns else True
+    axis_cols = [f"creativity.{a}" for a in AXES if f"creativity.{a}" in df.columns]
+    if axis_cols:
+        ok = ok & df[axis_cols].notna().any(axis=1)
+    return ok
 
 
 def _prep(df: pd.DataFrame, axis: str | None = None, composite: bool = False) -> pd.DataFrame:
@@ -338,16 +337,19 @@ def _prep(df: pd.DataFrame, axis: str | None = None, composite: bool = False) ->
     (The raw axis columns are named 'creativity.new' etc. -- the dot breaks
     patsy formulas, so we always model against a renamed 'y'.)
 
-    Rows are dropped unless `scoring_status == "scored"`. This is the SAME predicate
-    harness/results.py::is_scored applies, and it is applied here for the same reason: a
-    judge_degraded row carries a full creativity dict, so keying on non-nullness alone folded rows
-    into every model -- MixedLM, TOST, the crossover interaction, the bootstrap CIs -- that
-    summary.json, the run manifest and run_crest's own console all EXCLUDE from the headline. Two
-    files disagreeing about which records count is how a paper ends up quoting two different n.
+    Rows are dropped unless the record is scored, by the SAME predicate
+    harness/results.py::is_scored applies, for the same reason: a judge_degraded row carries a full
+    creativity dict, so keying on non-nullness alone folds rows into every model (MixedLM, TOST, the
+    crossover interaction, the bootstrap CIs) that summary.json, the run manifest and run_crest's own
+    console all EXCLUDE from the headline. Two files disagreeing about which records count is how a
+    paper ends up quoting two different n.
     """
     y = _composite(df) if composite else df[_axis_col(axis)]
     if "scoring_status" in df.columns:
-        y = y.where(df["scoring_status"].astype(str) == "scored")
+        # BOTH conditions, matching results.is_scored: the status is authoritative AND the
+        # creativity dict must be present. Three files now agree; a bare status check was a
+        # fourth definition of "scored" while claiming to be the same one.
+        y = y.where(_is_scored(df))
     work = pd.DataFrame(
         {
             "y": pd.to_numeric(y, errors="coerce").to_numpy(),
@@ -449,7 +451,7 @@ def mixed_effects_axis(df, axis: str):
 # --------------------------------------------------------------------------- #
 def crossover_interaction(df, axis: str | None = None):
     """OLS creativity ~ C(agent)*C(category) for a chosen axis (default the
-    composite = mean of the three axes). Reports the interaction F-test and the
+    composite = min of the three axes). Reports the interaction F-test and the
     per-category agent ranking, and flags rank reversals (the top agent differs
     across categories) -- the headline O11 finding is a crossover, not a level
     shift.
@@ -563,7 +565,6 @@ def hurdle_model(df, axis: str):
     Returns both fits' summaries. Guarded for tiny data / perfect separation.
     """
     import statsmodels.formula.api as smf
-    from statsmodels.tools.sm_exceptions import PerfectSeparationError
 
     col = _axis_col(axis)
 
@@ -573,12 +574,12 @@ def hurdle_model(df, axis: str):
     else:
         passed = _composite(df) > 0
     y_axis = pd.to_numeric(df.get(col, pd.Series(np.nan, index=df.index)), errors="coerce")
-    # Same scoring_status mask _prep applies. The conditional arm builds its own frame rather than
-    # going through _prep, so it counted judge_degraded rows the rest of the module excludes
-    # (n_obs 250 where the masked count is 210). The GATE arm deliberately keeps every row -- it
-    # models whether a record passed at all, so unscored rows are the outcome, not noise.
+    # Same scoring_status mask _prep applies: the conditional arm builds its own frame rather than
+    # going through _prep, so it counted judge_degraded rows the rest of the module excludes (n_obs 250
+    # where the masked count is 210). The GATE arm deliberately keeps every row -- it models whether a
+    # record passed at all, so unscored rows are the outcome, not noise.
     if "scoring_status" in df.columns:
-        y_axis = y_axis.where(df["scoring_status"].astype(str) == "scored")
+        y_axis = y_axis.where(_is_scored(df))
 
     gate_df = pd.DataFrame(
         {
@@ -603,7 +604,7 @@ def hurdle_model(df, axis: str):
                 gres = smf.logit(gform, gate_df).fit(disp=False)
                 gate = {"status": "ok", "formula": gform,
                         "n_obs": int(gres.nobs), "summary": gres.summary().as_text()}
-        except (PerfectSeparationError, Exception) as e:  # noqa: B014
+        except Exception as e:   # PerfectSeparationError included -- it is a plain Exception subclass
             gate = {"status": "perfect_separation_or_failed",
                     "formula": gform, "error": f"{type(e).__name__}: {e}"}
 
@@ -683,8 +684,8 @@ def bootstrap_ci(values, stat=np.mean, n: int = 10000):
 # CLI
 # --------------------------------------------------------------------------- #
 def load_prereg(path: str) -> dict:
-    """Read the registration. Returns {} and says so if absent -- an analysis that silently proceeds
-    without its stated plan is how `--prereg` came to be a flag pointing at a missing file."""
+    """Read the registration. Returns {} and SAYS SO if absent -- an analysis that silently proceeds
+    without its stated plan is indistinguishable from one that has none."""
     try:
         import yaml
         d = yaml.safe_load(open(path, encoding="utf-8")) or {}
@@ -725,8 +726,7 @@ def main():
     p = argparse.ArgumentParser(description="Analyze a CREST run.")
     p.add_argument("--run", required=True)
     p.add_argument("--prereg", default="crest/analysis/preregistration.yaml",
-                   help="frozen predictions + equivalence bounds. NOW ACTUALLY READ: this flag "
-                        "previously defaulted to a nonexistent file and was never opened.")
+                   help="frozen predictions + equivalence bounds; read and echoed before any fit.")
     args = p.parse_args()
 
     warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -735,9 +735,8 @@ def main():
     _bounds = tuple((prereg.get("analysis_plan", {}) or {})
                     .get("tost_equivalence_bounds", (-1.0, 1.0)))
 
-    # resolve ONCE; every consumer gets the file. Caught here because resolve_records_path is a NEW
-    # raise site and InsufficientData's contract is that main() prints and continues -- an uncaught
-    # traceback for "you pointed me at the wrong directory" contradicts it.
+    # Resolve ONCE; every consumer gets the file. Caught because InsufficientData's contract is that
+    # main() prints and continues -- a traceback for "you pointed me at a directory" contradicts it.
     try:
         records_path = resolve_records_path(args.run)
         df = load_run(records_path)
@@ -748,32 +747,30 @@ def main():
     cats = sorted(df["category"].dropna().astype(str).unique())
     print(f"loaded {len(df)} records; agents={agents}; categories={cats}")
 
-    # Wrapped like every other analysis: _composite now RAISES on a missing axis, and this was the
-    # one caller outside _run. A live run's first minutes (or a fully grounding-gated agent) have no
-    # creativity columns at all, so an unwrapped call tracebacks -- contradicting InsufficientData's
-    # own contract that main() prints and continues.
+    # Wrapped like every other analysis: _composite RAISES on a missing axis, and a live run's first
+    # minutes (or a fully grounding-gated agent) have no creativity columns at all.
     comp = _run("composite", lambda: _composite(df))
     scored_rows = df.iloc[0:0]
     if comp is not None:
         scored = df.assign(_composite=comp.to_numpy())
         if "scoring_status" in scored.columns:     # same predicate as _prep and results.is_scored
-            scored = scored[scored["scoring_status"].astype(str) == "scored"]
+            scored = scored[_is_scored(scored)]
         scored_rows = scored.dropna(subset=["_composite"])
         scored_agents = sorted(scored_rows["agent"].astype(str).unique())
         print(f"scored items: {len(scored_rows)}/{len(df)}; "
               f"agents with scores={scored_agents}; "
               f"scored categories={sorted(scored_rows['category'].astype(str).unique())}")
 
-    # min2 as the stated robustness check. rubric.md, benchmark_best_practices.md and
-    # preregistration.yaml all describe min(New, Useful) as the two-axis robustness comparison, and
-    # min2() existed with a docstring and no caller -- a documented control that was never computed.
+    # min2 as the stated robustness check: rubric.md, benchmark_best_practices.md and
+    # preregistration.yaml all describe min(New, Useful) as the two-axis comparison, so it must be
+    # COMPUTED, not just documented.
     if len(scored_rows):
         m2 = _run("min2", lambda: min2(df))
         if m2 is not None:
             both = pd.DataFrame({"three": scored_rows["_composite"].to_numpy(),
                                  "two": m2.reindex(scored_rows.index).to_numpy()}).dropna()
             if len(both) > 2:
-                print(f"\n-- robustness: min(New,Useful) vs min(New,Useful,Surprising) --")
+                print("\n-- robustness: min(New,Useful) vs min(New,Useful,Surprising) --")
                 print(f"  two-axis mean={both['two'].mean():.3f}  three-axis mean="
                       f"{both['three'].mean():.3f}  delta={both['three'].mean()-both['two'].mean():+.3f}"
                       f"  corr={both['two'].corr(both['three']):.4f}  (n={len(both)})")
@@ -784,17 +781,14 @@ def main():
         for ag, sub in scored_rows.groupby(scored_rows["agent"].astype(str)):
             print(f"  {ag}: mean={sub['_composite'].mean():.3f} (n={len(sub)})")
 
-    # Judge reliability -- previously computed by a function nothing called, while rubric.md,
-    # design.md, related_work.md, benchmark_best_practices.md and preregistration.yaml all stated
-    # reliability was reported.
+    # Judge reliability. rubric.md, design.md, related_work.md, benchmark_best_practices.md and
+    # preregistration.yaml all state this table is reported, and the severity spread is the headline
+    # methodological finding, so it must actually print.
     print("\n-- judge reliability (ICC / Krippendorff alpha / per-judge severity) --")
     try:
-        # `records_path`, NOT args.run: load_run now accepts a directory, and passing the raw
-        # argument here made reliability_report die on IsADirectoryError inside the bare `except`
-        # below -- printing "insufficient data" for a run with 250 records x 3 judges. That silently
-        # withheld the ICC / Krippendorff / per-judge-severity table that judge_config.live.yaml,
-        # preregistration.yaml, rubric.md, design.md and the paper all claim is reported, and the
-        # severity spread is the headline methodological finding.
+        # `records_path`, NOT args.run: reliability_report opens the path directly, so a directory
+        # argument dies on IsADirectoryError inside the bare `except` below and prints "insufficient
+        # data" for a run with 250 records x 3 judges.
         rep = reliability_report(records_path)
         for ax, v in rep.items():
             print(f"  {ax:<12} ICC(1,1)={v.get('icc_1_1','-')} (raw {v.get('icc_1_1_raw','-')})  "
@@ -824,11 +818,10 @@ def main():
         for ax in AXES:
             col = f"creativity.{ax}"
             if col in df.columns:
-                # Through _prep, NOT raw df: these CIs sat directly beneath a correctly-masked
-                # composite CI while silently including judge_degraded rows, contradicting the
-                # "scored items: N/M" line printed 45 lines above. Measured on a fixture with 40 of
-                # 250 rows degraded, the printed New mean moved -1.14 (6.964 at n=250 vs 8.100 at
-                # n=210). Same predicate, same file, missed in the round that added the mask.
+                # Through _prep, NOT raw df: unmasked, these CIs sit directly beneath a correctly-masked
+                # composite CI while including judge_degraded rows, contradicting the "scored items:
+                # N/M" line above. Measured on a fixture with 40 of 250 rows degraded, the printed New
+                # mean moved -1.14 (6.964 at n=250 vs 8.100 at n=210).
                 sub = _run(f"bootstrap[{ax}]", lambda a=ax: _prep(df, axis=a))
                 if sub is not None and len(sub):
                     res = _run(f"bootstrap[{ax}]", lambda s=sub: bootstrap_ci(s["y"].to_numpy()))
@@ -864,10 +857,9 @@ def main():
     # TOST equivalence per category.
     print(f"\n-- TOST equivalence (composite vs 0, bounds {list(_bounds)}) --")
     for cat in cats:
-        # bounds=_bounds: the REGISTERED bounds were read from preregistration.yaml, printed in
-        # the header, and then not passed -- so tost_equivalence silently used its own (-1, 1)
-        # default and one run printed two different bounds. Harmless only while the registered
-        # value happens to equal the default, i.e. editing the registration did nothing.
+        # bounds=_bounds: pass the REGISTERED bounds, don't just print them in the header. Omitted,
+        # tost_equivalence silently falls back to its own (-1, 1) default, so one run can print two
+        # different bounds and editing the registration does nothing.
         res = _run(f"tost_equivalence[{cat}]",
                    lambda c=cat: tost_equivalence(df, c, bounds=_bounds))
         if res is not None:

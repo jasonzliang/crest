@@ -38,10 +38,13 @@ judges:
 
 reliability:
   report: [krippendorff_alpha, icc]     # IMPLEMENTED in analysis/stats.py::
-                                        # reliability_report() -- ICC(1,1), ICC(1,k), Krippendorff
-                                        # alpha (interval) and per-judge severity. Measured on the
-                                        # NB run-specific: ICC(1,k) was .774/.746/.671 on run 111856Z but .527/.631/.445 on a later
-                                        # run -- recompute per run, never quote a fixed figure.
+                                        # reliability_report() -- ICC(1,1), ICC(1,k), ICC(3,1),
+                                        # ICC(3,k), Krippendorff alpha (interval), the judge share
+                                        # of variance and of SS, and per-judge severity.
+                                        # NB strongly RUN-SPECIFIC: ICC(1,k) has come out
+                                        # .774/.746/.671 and .527/.631/.445 on two superseded runs.
+                                        # Recompute per run; the canonical values live in
+                                        # docs/design.md section 0 and nowhere else.
   human_validation_required_categories: [C1, C2, C3, C4, C5]   # human panel validates all; primary on C1/C5
 
 grounding_gate:

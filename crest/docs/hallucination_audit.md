@@ -37,17 +37,24 @@ transcribed here — the count and the table disagree, and the table is the audi
 | C1_engineering_04 | known_answers | Restrepo et al. *Extreme Mechanics Letters* "2016" → "2015" | low-med |
 | C4_biology_medicine_18 | known_answers | ICLAC Register "(2010 onward)" → "(2012 onward)" | low |
 
-## Residual low-confidence notes — web-verify before release (not corrected)
-- C1_materials_chemistry_01: Cs₂TiI₆ band gap "~1.6–2.0 eV" may be overstated (lit often ~1.0–1.5 eV).
-- C1_economics_business_02: Milgrom-Segal deferred-acceptance "2017" (paper 2014 WP / 2020 JPE; 2017 = FCC auction).
-- C1_law_policy_03: PNAS Rao et al. "May 2020" (print issue ≈ June 2020).
-- C2_engineering_10: "Hubble-class payload" descriptor on Hippke's ~400,000 t example (figure/citation sound).
-- C4_arts_humanities_23: CARE Principles "2020" (launched 2019); Dutch "Colonial Collections (2021)" (report 2020); the post-cutoff 2025/2026 restitution events are unverifiable by design (post_cutoff item).
-- C5_economics_business_46: "Case-Shiller (1991)" and "Baltic Dry Index (1985)" are lineage-correct but the brand/name dates differ.
-- C5_law_policy_47: "Kemeny-Young (1959)" compresses Kemeny 1959 + Young's later MLE characterization.
-- C5_engineering_48: "Hart's inversor / A-frame (1874-75)" — A-frame usually dated 1877; Sarrus is a *spatial* linkage listed under a planar-framed query (internal-consistency nit).
+## Residual low-confidence notes — **all but two closed by the live-web pass**
+The live-web audit (`docs/notes/audit_live_*.md`, 2026-07-30) resolved these and the resulting item
+edits are recorded machine-readably in `docs/notes/hallucination_audit_live_log.jsonl` — that file,
+not this list, is the auditable record of what changed. Dispositions:
+
+- **CORRECTED in the item file** (see the log): `C1_economics_business_02` (Milgrom-Segal 2014, not
+  2017), `C1_law_policy_03` (PNAS issue date), `C4_arts_humanities_23` (CARE 2019; Dutch report
+  2020), `C5_economics_business_46` (Case-Shiller / Baltic Dry brand vs lineage dates),
+  `C5_law_policy_47` (Kemeny 1959 + Young's later MLE characterization),
+  `C2_engineering_10` (Hubble-class payload descriptor), `C5_engineering_48` (Sarrus is a *spatial*
+  linkage under a planar-framed query).
+- **THIS PASS WAS WRONG:** `C5_engineering_48`'s Hart's inversor date (1874-5 is correct), and
+  `C1_materials_chemistry_01`'s Cs₂TiI₆ band gap was **not** overstated — 1.56 eV direct measured.
+- **STILL OPEN:** the post-cutoff 2025/2026 restitution events in `C4_arts_humanities_23` are
+  unverifiable by design (it is the file's only `post_cutoff` item).
 
 ## Standing recommendation
-Before public release, run a live-web per-citation pass (the deep-research API agents retain web
-access even when the top-level search budget is exhausted) to confirm the residual notes and every
-"unverifiable" citation, and record per-answer provenance in the datasheet.
+The live-web per-citation pass this section asked for **was run** across all 50 items
+(`docs/notes/audit_live_*.md`, ~610 claims). What it did not deliver, and what release still needs:
+per-answer provenance in the datasheet, and a resolvable DOI per `known_answers` entry — about half
+of them still carry no year at all (`docs/datasheet.md` §2, "Prior-art dating").

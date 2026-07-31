@@ -15,9 +15,8 @@ Provider landscape as of 2026-07-30 (re-verify; it moves fast):
   * OpenAI's dedicated `o3-deep-research` / `o4-mini-deep-research` were deprecated 2026-04-22 and
     SHUT DOWN 2026-07-23. They still appear in `models.list()` but every Responses call 404s, so
     deep research is now the general-model pattern above (`gpt-5.6-sol`).
-  * Google DOES ship a turnkey deep-research agent (`deep-research-preview-04-2026` /
-    `-max-preview-04-2026`), correcting this repo's earlier claim that grounded Gemini-Pro was the
-    only Gemini equivalent. Interactions API only, `background=True` required.
+  * Google ships a turnkey deep-research agent (`deep-research-preview-04-2026` /
+    `-max-preview-04-2026`). Interactions API only, `background=True` required.
   * Anthropic ships NO turnkey deep-research endpoint — a deep arm for Claude would be DIY
     (agent loop over `web_search`/`web_fetch`); `claude_shallow` is therefore shallow-only, and
     the deep arm is intentionally OpenAI+Google until that loop is built.
@@ -70,7 +69,6 @@ class AgentOutput:
     truncated: bool = False     # answer was cut off (max_tokens / incomplete). Recorded, not just
                                 # warned about, so truncated answers are filterable in analysis --
                                 # they were previously scored as if complete.
-    trace: dict = dataclasses.field(default_factory=dict)
 
 
 class FrozenIndex:
@@ -122,11 +120,9 @@ class Agent:
 # Output-token ceiling for the Anthropic entrant. Raised 9000 -> 32000 because 11 of 49 answers in
 # the 2026-07-31 run came back COMPLETELY EMPTY (0 chars) with searches having fired: server-side
 # web_search results plus reasoning consumed the whole budget before the model emitted a single text
-# block, so the response contained tool-use blocks and no prose. Exactly the failure that a
-# max_tokens=2000 ceiling caused on the judge side, where thinking ate the budget and returned
-# stop_reason=max_tokens with no text. Cost is unaffected for normal answers (billing is on tokens
-# actually produced; the median answer is ~3.4k chars); this only removes a ceiling that was
-# truncating to nothing.
+# block, so the response contained tool-use blocks and no prose. Cost is unaffected for normal
+# answers (billing is on tokens actually produced; the median answer is ~3.4k chars); this only
+# removes a ceiling that was truncating to nothing.
 _ANTHROPIC_MAX_TOKENS = 32000
 
 
@@ -145,8 +141,7 @@ class ClaudeShallowResearch(Agent):
         # n_searches averaged 5.3: the model was mid-work and we recorded the fragment as its final
         # answer, then scored it (N/U/S = 1/1/1) and read the result as low creativity.
         msgs = [{"role": "user", "content": query}]
-        blocks, guard, turns_used, tok_total = [], 0, 1, 0
-        guard_exhausted = False
+        blocks, guard, tok_total, guard_exhausted = [], 0, 0, False
         while True:
             r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
                 .messages.create(
@@ -161,7 +156,6 @@ class ClaudeShallowResearch(Agent):
             if getattr(r, "stop_reason", None) != "pause_turn":
                 break
             guard += 1
-            turns_used = guard + 1
             if guard >= 8:                      # bounded: never loop forever on a stuck turn
                 print(f"  [WARNING: {self.model} still pause_turn after {guard} continuations; "
                       f"returning what it produced so far -- marking TRUNCATED]")
@@ -188,17 +182,18 @@ class ClaudeShallowResearch(Agent):
         # Running the continuation guard out is ALSO truncation: the loop exits with
         # stop_reason == "pause_turn", so a max_tokens-only test recorded a cut-off fragment as
         # truncated=false -- indistinguishable in records.jsonl from a complete answer.
-        truncated = getattr(r, "stop_reason", None) == "max_tokens" or guard_exhausted
-        if getattr(r, "stop_reason", None) == "max_tokens":
+        stop = getattr(r, "stop_reason", None)
+        truncated = stop == "max_tokens" or guard_exhausted
+        if stop == "max_tokens":
             print(f"  [WARNING: {self.model} hit max_tokens ({_ANTHROPIC_MAX_TOKENS}); answer is "
                   f"TRUNCATED mid-generation and will be scored as if finished]")
         if not full.strip():
             # never return a silent empty answer: it reads downstream as "the agent had nothing to
             # say" when it actually means the call produced no text block at all.
-            print(f"  [WARNING: {self.model} returned NO TEXT after {turns_used} turn(s), "
-                  f"{n_search} search(es), stop_reason={getattr(r, 'stop_reason', '?')} -- "
+            print(f"  [WARNING: {self.model} returned NO TEXT after {guard + 1} turn(s), "
+                  f"{n_search} search(es), stop_reason={stop} -- "
                   f"raise _ANTHROPIC_MAX_TOKENS or inspect the response]")
-        return AgentOutput(full, _merge_inline_urls(_dedup(cites), full),
+        return AgentOutput(full, _citations(cites, full),
                            n_tokens=tok_total, n_searches=n_search, truncated=truncated)
 
 
@@ -223,7 +218,7 @@ def _parse_openai(r) -> AgentOutput:
                                       "title": getattr(ann, "title", "") or ""})
     n_tok = getattr(getattr(r, "usage", None), "output_tokens", 0) or 0
     full = r.output_text or ""
-    return AgentOutput(full, _merge_inline_urls(_dedup(cites), full), n_tokens=n_tok,
+    return AgentOutput(full, _citations(cites, full), n_tokens=n_tok,
                        n_searches=n_search, truncated=getattr(r, "status", None) == "incomplete")
 
 
@@ -242,18 +237,14 @@ class OpenAIShallowResearch(Agent):
 
 
 class OpenAIDeepResearchAPI(Agent):
-    """OpenAI deep research as the CURRENT PATTERN, not a dedicated SKU.
+    """OpenAI deep research as the CURRENT PATTERN, not a dedicated SKU: the purpose-built
+    `o3-deep-research` / `o4-mini-deep-research` models are shut down (see module docstring), so the
+    supported configuration is a general reasoning model + >=1 data-source tool + `background=True`,
+    with depth dialed by `reasoning.effort` / `max_tool_calls` -- the cost dial, see
+    docs/notes/deep_research_apis.md.
 
-    The purpose-built `o3-deep-research` / `o4-mini-deep-research` models were deprecated
-    2026-04-22 and SHUT DOWN 2026-07-23 (verified: they still appear in `models.list()` but every
-    Responses call 404s "Model not found"). OpenAI folded deep research into the general models, so
-    the supported configuration is now: a general reasoning model + >=1 data-source tool +
-    `background=True`, with depth dialed by `reasoning.effort` and `max_tool_calls`.
-
-    Notes: the tool string is `web_search` (`web_search_preview` is the retired-era name);
-    `background=True` is required in practice because these runs take minutes, so we poll to
-    completion. Depth (effort / max_tool_calls) is the cost dial -- see
-    docs/notes/deep_research_apis.md."""
+    The tool string is `web_search` (`web_search_preview` is the retired-era name); `background=True`
+    is required in practice because these runs take minutes, so we poll to completion."""
     model_family = "openai"
     model = "gpt-5.6-sol"
     effort = "high"
@@ -283,8 +274,8 @@ class OpenAIDeepResearchAPI(Agent):
 
 
 class OpenAIDeepResearchMini(OpenAIDeepResearchAPI):
-    """Cheaper/faster depth setting of the same pattern (the o4-mini-DR replacement)."""
-    model = "gpt-5.6-sol"
+    """Cheaper/faster depth setting of the same pattern (the o4-mini-DR replacement): same model as
+    the parent, only the dials differ."""
     effort = "medium"
     max_tool_calls = 15
 
@@ -324,9 +315,8 @@ class GeminiShallowResearch(Agent):
             print(f"  [NOTE: {self.model} reported ZERO web searches; any citations below are "
                   f"scraped from the answer text and are NOT verified grounding chunks]")
         n_tok = getattr(getattr(r, "usage_metadata", None), "candidates_token_count", 0) or 0
-        return AgentOutput(text, _merge_inline_urls(_dedup(cites), text),
-                           n_tokens=n_tok, n_searches=n_search)   # no `or len(cites)` fallback:
-                       # it fabricated a search count from citations when the counter was absent
+        return AgentOutput(text, _citations(cites, text), n_tokens=n_tok, n_searches=n_search)
+                       # no `or len(cites)` fallback: it fabricated a search count from citations
 
 
 class GeminiDeepResearchAPI(Agent):
@@ -336,10 +326,7 @@ class GeminiDeepResearchAPI(Agent):
     Agents: `deep-research-preview-04-2026` (fast/standard) and `deep-research-max-preview-04-2026`
     (max: ~160 searches, up to ~30 min). Deep Research is available ONLY on the Interactions API
     and REQUIRES background=True, so we poll to completion. Citations arrive as `url_citation`
-    annotations on `model_output` steps (char offsets, title often absent -- read defensively).
-
-    This corrects an earlier assumption in this repo that Gemini had no deep-research API and that
-    grounded Gemini-Pro was its equivalent; both now run as separate entrants."""
+    annotations on `model_output` steps (char offsets, title often absent -- read defensively)."""
     model_family = "google"
     model = "deep-research-preview-04-2026"
     # 5400s not 3900s: one task in the full50 run timed out at 3900s while still
@@ -408,31 +395,25 @@ def _parse_gemini_interaction(it) -> AgentOutput:
              or getattr(u, "candidates_token_count", None) or 0)
     n_search = sum(getattr(g, "count", 0) or 0
                    for g in (getattr(u, "grounding_tool_count", None) or []))
-    return AgentOutput(text, _merge_inline_urls(_dedup(cites), text),
-                       n_tokens=n_tok, n_searches=n_search)   # no `or len(cites)` fallback:
-                       # it fabricated a search count from citations when the counter was absent
-
-
-
-def _dedup(cites: list) -> list:
-    seen, out = set(), []
-    for c in cites:
-        if c["url"] and c["url"] not in seen:
-            seen.add(c["url"]); out.append(c)
-    return out
+    return AgentOutput(text, _citations(cites, text), n_tokens=n_tok, n_searches=n_search)
+                       # no `or len(cites)` fallback: it fabricated a search count from citations
 
 
 _URL_RE = re.compile(r"https?://[^\s\)\]\}<>\"']+")
 
-def _merge_inline_urls(cites: list, text: str) -> list:
-    """Some agents write source URLs inline without emitting structured citations. Capture those
-    too, so grounding isn't fooled by citation-surfacing differences across providers."""
-    have = {c["url"] for c in cites}
+def _citations(cites: list, text: str) -> list:
+    """De-duplicated structured citations, PLUS source URLs written inline in the answer text.
+    Some agents write URLs inline without emitting structured citations, so capturing both keeps
+    grounding from being fooled by citation-surfacing differences across providers."""
+    seen, out = set(), []
+    for c in cites:
+        if c["url"] and c["url"] not in seen:
+            seen.add(c["url"]); out.append(c)
     for u in _URL_RE.findall(text or ""):
         u = u.rstrip(".,;")
-        if u not in have:
-            have.add(u); cites.append({"url": u, "title": ""})
-    return cites
+        if u not in seen:
+            seen.add(u); out.append({"url": u, "title": ""})
+    return out
 
 
 # name -> (adapter class, pinned default model id)
@@ -442,8 +423,6 @@ _REGISTRY = {
     "openai_shallow":           (OpenAIShallowResearch, "gpt-5.6"),
     "gemini_shallow":           (GeminiShallowResearch, "gemini-3.1-pro-preview"),
     # deep-research agents (background/managed multi-step loops; minutes + $$ per call)
-    # NB o3-deep-research / o4-mini-deep-research were SHUT DOWN 2026-07-23 -- OpenAI deep research
-    # is now the general-model pattern below, dialed by reasoning effort + max_tool_calls.
     "openai_deepresearch":      (OpenAIDeepResearchAPI, "gpt-5.6-sol"),          # effort=high, 40 calls
     "openai_deepresearch_mini": (OpenAIDeepResearchMini, "gpt-5.6-sol"),         # effort=medium, 15 calls
     "gemini_deepresearch":      (GeminiDeepResearchAPI, "deep-research-preview-04-2026"),
@@ -454,9 +433,9 @@ _REGISTRY = {
 }
 
 def build_agent(name: str, budget: int = 6, model: str | None = None) -> Agent:
-    # `index=` was removed: FrozenIndex.__init__ raises unconditionally, so the parameter was
-    # provably always None at every call site. The class stays as the documented future-work marker.
+    # No `index=` parameter: FrozenIndex.__init__ raises unconditionally, so it was provably always
+    # None at every call site. The class stays as the documented future-work marker.
     if name not in _REGISTRY:
         raise ValueError(f"unknown agent '{name}'; known: {sorted(_REGISTRY)}")
     cls, default_model = _REGISTRY[name]
-    return cls(budget=budget, model=model or default_model or None)
+    return cls(budget=budget, model=model or default_model)

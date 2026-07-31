@@ -84,7 +84,10 @@ def main():
     _p = lambda s: Path(s) if Path(s).is_absolute() else REPO / s
     run_dir = _p(a.run)
 
-    records = [r for r in _load_jsonl(run_dir / "records.jsonl") if r.get("creativity")]
+    # is_scored, not a bare creativity check: a judge_degraded row carries a full creativity dict, so
+    # filtering on the dict alone let under-judged records into the FULL arm and every delta.
+    from crest.harness.results import is_scored
+    records = [r for r in _load_jsonl(run_dir / "records.jsonl") if is_scored(r)]
     # The FULL arm is read from the run; every other arm is re-scored with the CURRENT prompt. If the
     # rubric has moved since the run, each delta conflates the ablation with the rubric bump -- and
     # the with_expert -> Surprising verdict is precisely the one v2 changed the prompt to enable.

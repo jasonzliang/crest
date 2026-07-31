@@ -8,14 +8,16 @@
 > 1. **Live-web citation audit of all 50 items** (~610 claims, `docs/notes/audit_live_*.md`,
 >    2026-07-30). It found real defects in items this pass graded PASS, and it **overturns the
 >    headline G5 finding**: the claim below that "all `known_answers` are dated & non-empty" is
->    false. Measured on the shipped file, only **52%** of `known_answers` entries carry an explicit
->    year — 91% for items `_1x` but **22% (`_3x`)** and **18% (`_4x`)**. Four `_4x` items are at
->    2/48 = 4.2%, with 17 entries so bare they name no year, author, institution or document number.
->    The dating error direction is one-sided: prior art is consistently made to look *younger* than
->    it is, which inflates novelty.
+>    false — most entries carry no year at all. The measured rates and the counting convention are
+>    in `datasheet.md` §2 ("Prior-art dating"), which is authoritative for them; they are
+>    deliberately not restated here, because they were restated in four files and went stale in
+>    three. The dating error direction is one-sided: prior art is consistently made to look
+>    *younger* than it is, which inflates novelty.
 > 2. **Mechanical self-consistency checking** (`analysis/validate_items.py`, wired into
->    `analysis/ci_check.sh`). It reports **2 BLOCKING contradictions** (an earlier count of 4 included two validator false positives, since fixed), all in items graded PASS/KEEP
->    below. The pre-release gate currently FAILS on them.
+>    `analysis/ci_check.sh`). It reports **2 BLOCKING contradictions, both in
+>    `C1_materials_chemistry_01`** — an earlier count of 4 across 3 items included two validator
+>    false positives, since fixed. The pre-release gate currently FAILS on them. `_01` was graded
+>    REVISE below; the two false positives (`_07`, `_43`) were graded PASS/KEEP.
 >
 > **Field drift.** The Method paragraph below describes reading `predicted_direction` and the
 > designer `rationale` on each item. **Neither field exists any more:** `predicted_direction` and
@@ -63,10 +65,13 @@ modify the dataset.
    (not trivially answerable)?
 5. **G5 Metadata** — `known_answers` dated & non-empty, `hard_rules` checkable,
    `expert_baseline` present. *(→ SUPERSEDED: the "dated" half of this gate was graded
-   by inspection and is wrong at file scale — see the header. Every G5 PASS below should
-   be read as "non-empty and present", never as "dated".)*
+   by inspection and is wrong at file scale — see the header and `datasheet.md` §2. Every G5 PASS
+   below should be read as "non-empty and present", never as "dated".)*
 
 ## Per-item assessment
+
+`n/12`-style dating counts below are over an item's **substantive** `known_answers` entries,
+excluding its leading `Dated as of …` header entry — the same convention as `datasheet.md` §2.
 
 | id | cat | domain | G1 | G2 | G3 | G4 | G5 | disp. | reason |
 |----|-----|--------|----|----|----|----|----|-------|--------|
@@ -81,12 +86,12 @@ modify the dataset.
 | C1_engineering_32 | C1 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Daytime radiative cooler; radiative-balance inequality gives checkable usefulness |
 | C1_arts_humanities_33 | C1 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | Novel tuning; cents-error/pitch-count arithmetic makes usefulness directly checkable |
 | C2_biology_medicine_06 | C2 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | No-adaptive-immunity world; first-order pre-claimed, surprise via cross-field 2nd-order + coherence lock |
-| C2_materials_chemistry_07 | C2 | mat_chem | PASS | PASS | PASS | PASS | ~~PASS~~ **→ FAIL** | **REVISE** | No-crystallinity world; six-arena scaffold, surprise via inverted/net-benefit consequences. **1 BLOCKING self-contradiction**: one hard rule permits 'Si' while another bans it |
+| C2_materials_chemistry_07 | C2 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | No-crystallinity world; six-arena scaffold, surprise via inverted/net-benefit consequences. A "1 BLOCKING self-contradiction: one hard rule permits 'Si' while another bans it" verdict was recorded here and was a **validator FALSE POSITIVE**, since fixed — `validate_items.py` reports nothing against this item |
 | C2_economics_business_08 | C2 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | No limited liability; partial-counterfactual record anchors surprising-but-true cascades |
 | C2_law_policy_09 | C2 | law | PASS | PASS | PASS | PASS | ~~FAIL~~ **→ FIXED** | ~~REVISE~~ **KEEP** | Statute-of-limitations world; design strong. The placeholder `expert_baseline` stub was **replaced with the real 818-char convergent-expectation text**; its enumeration of intended surprises was split into the judge-hidden `author_expected_surprises` field |
 | C2_engineering_10 | C2 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | 1.5g world; scaling-law scaffold, surprise via gravity-invariants and direction-reversals |
 | C2_arts_humanities_11 | C2 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | No linear perspective; canon pre-claimed, surprise via distant knock-ons + self-undermining test |
-| C2_biology_medicine_34 | C2 | bio_med | PASS | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | KEEP (conditional) | Non-enucleated RBCs; anti-obvious rule isolates surprise — but the "concrete baseline" was not one. **64% of `expert_baseline` was an answer key**; the residue was 156 chars, failing schema `minLength(200)`, so the item was **quarantined 2026-07-30**. **Restored 2026-07-31** with a 1,478-char baseline that is explicitly **model-drafted, not expert-written, and still needs physiologist review** |
+| C2_biology_medicine_34 | C2 | bio_med | PASS | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | KEEP (conditional) | Non-enucleated RBCs; anti-obvious rule isolates surprise — but the "concrete baseline" was not one. **64% of `expert_baseline` was an answer key**; the residue was 156 chars, failing schema `minLength(200)`, so the item was **quarantined 2026-07-30**. **Restored 2026-07-31** with a 1,620-char baseline (measured on the shipped file) that is explicitly **model-drafted, not expert-written, and still needs physiologist review** |
 | C2_materials_chemistry_35 | C2 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | Non-protective Al oxide; industrial-chain 2nd-order beyond substitute-metal baseline |
 | C2_economics_business_36 | C2 | econ | PASS | PASS | PASS | PASS | ~~PASS~~ **→ WATCH** | KEEP | No shipping container; landed-cost/port-geography 2nd-order surprise. **58% of `expert_baseline` was answer key** (230 chars remain); on the quarantine watch-list |
 | C2_law_policy_37 | C2 | law | PASS | PASS | PASS | PASS | ~~PASS~~ **→ WATCH** | KEEP | No plea bargaining; prosecutorial-incentive 2nd-order surprise; multi-source rule. **59% of `expert_baseline` was answer key** (210 chars remain); on the quarantine watch-list |
@@ -107,7 +112,7 @@ modify the dataset.
 | C4_engineering_22 | C4 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Cross-domain margin-efficiency index; prior-art + invariance + falsifiability bind all three |
 | C4_arts_humanities_23 | C4 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | Restitution adjudication framework; hard cases + new-mechanism force balance; post-cutoff grounding |
 | C4_biology_medicine_42 | C4 | bio_med | PASS | PASS | ~~PASS~~ **→ WEAK** | PASS | ~~PASS~~ **→ FAIL** | **REVISE** | Preclinical-model selection method; ≥3 traditions + new variable + 2 hard cases bind all three. **Live audit: 0/12 `known_answers` entries dated**, and the two literatures that would refute its flagship novelty claim are absent (Belzung & Lemoine 2011 mechanistic/homological validity; Wehling/Wendler translatability scoring, 2009–2017). Milder version of `_45`'s defect |
-| C4_materials_chemistry_43 | C4 | mat_chem | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | PASS | ~~PASS~~ **→ FAIL** | **REVISE** | Synthesis-route ranking; discriminating hard cases invert green-metrics baseline. **1 BLOCKING self-contradiction**: the rules offer 'atom economy' as a genuinely NEW mechanism while it already appears in this item's own `known_answers`. **0/12 entries dated**; four existing aggregators (GREENSCOPE, EATOS, DOZN, Andraos) and the criticality methodology (Graedel 2012) are missing |
+| C4_materials_chemistry_43 | C4 | mat_chem | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | PASS | ~~PASS~~ **→ FAIL** | **REVISE** | Synthesis-route ranking; discriminating hard cases invert green-metrics baseline. A "1 BLOCKING self-contradiction: the rules offer 'atom economy' as a genuinely NEW mechanism while it already appears in this item's own `known_answers`" verdict was a **validator FALSE POSITIVE**, since fixed. Still standing: **0 of its 12 substantive entries dated**; four existing aggregators (GREENSCOPE, EATOS, DOZN, Andraos) and the criticality methodology (Graedel 2012) are missing |
 | C4_economics_business_44 | C4 | econ | PASS | PASS | PASS | PASS | ~~PASS~~ **→ WEAK** | KEEP | Killer-acquisition screen; below-threshold/zero-overlap hard cases invert concentration-test baseline. Only 2/12 entries dated (the best of the `_4x` batch); the Art. 22 entry is stale in a way that breaks its own H1 premise |
 | C4_engineering_45 | C4 | eng | PASS | PASS | ~~PASS~~ **→ FAIL** | ~~PASS~~ **→ FAIL** | ~~PASS~~ **→ FAIL** | ~~KEEP~~ **DO NOT RELEASE** | Reparability/upgradeability index. **The novelty gate is INVERTED, not merely loose.** Hard rule (d) offers "a software-lock/parts-pairing penalty as a hard multiplier" as its example of a genuinely NEW mechanism, but `known_answers[1]` is the iFixit Repairability Score, whose published rubric already applies a **global** parts-pairing penalty (up to −100%). `expert_baseline` asserts the opposite ("the convergent baseline rarely penalizes software parts-pairing"), so a judge reading the item would *confirm* the false positive rather than catch it. Also 0/12 entries dated, one flatly wrong attribution (Martin & Ishii — **still unfixed in the shipped file**), and the only operative EU repairability score (Reg (EU) 2023/1669) is absent. On the quarantine watch-list |
 | C5_biology_medicine_24 | C5 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Categorically-new modality; 26-entry KA + undruggable-biology reasoning; high headroom |
@@ -132,13 +137,13 @@ the state after later revisions.)*
 
 **→ SUPERSEDED.** After the live-web audit and mechanical validation, the standing count is:
 5 REVISE items **fixed or acted on** (09's baseline restored; 46–49 hardened to 5 rules with
-absence-proof and non-saturation guards), and **8 items newly flagged** that this pass graded
-KEEP — `01` (BLOCKING self-contradictions; `07` and `43` were validator FALSE POSITIVES, since
-fixed -- see readme.md), `00` (2 wrong prior-art entries, since
-corrected), `17` (over-permissive novelty gate, unfixed), `42`/`44` (undated / pruned prior art),
-and `45` (**inverted novelty gate — "do not release"**). Plus `34`, quarantined and then restored on
-a model-drafted baseline. The pre-release gate (`analysis/ci_check.sh`) fails on the two blocking
-contradictions.
+absence-proof and non-saturation guards), and **6 items newly flagged** that this pass graded
+KEEP — `01` (the only item with BLOCKING self-contradictions), `00` (2 wrong prior-art entries,
+since corrected), `17` (over-permissive novelty gate, unfixed), `42`/`44` (undated / pruned prior
+art), and `45` (**inverted novelty gate — "do not release"**). Plus `34`, quarantined and then
+restored on a model-drafted baseline. `07` and `43` were flagged here too and were **validator
+false positives, since fixed** — they are not part of the count. The pre-release gate
+(`analysis/ci_check.sh`) fails on `01`'s two blocking contradictions.
 
 ### REVISE items and the specific fix
 
@@ -189,18 +194,21 @@ contradictions.
     functional/usefulness checks. Only 46–49 are genuinely WEAK (novelty labeled but
     the bar can't separate genuine from arbitrary novelty).
     **→ SUPERSEDED twice over.** (a) The "handled by … expert baselines" mitigation no longer
-    operates: `expert_baseline` is judge-hidden as of 2026-07-30 (ablating it moved Surprising by
-    −0.02), and in the run data **r(New, Surprising) = 0.883 at record level (0.946 pooling per-judge rows) on run 2026-07-31T040653Z** — the axes do not
-    dissociate. (b) The axis labels were measured against judge verdicts and mostly do not bind:
-    the isolated axis is the binding one 56% of the time for C1/usefulness (vs 33% chance), but
-    only 21% for the novelty label — those items are novelty-*easy* — and 15% for surprise.
+    operates: `expert_baseline` is judge-hidden as of 2026-07-30 because ablating it barely moved
+    Surprising, and New and Surprising correlate hard in the run data. That correlation is
+    **CONTAMINATED** — the v1 judge prompt stated it to the judge — so it does **not** license the
+    conclusion "the axes do not dissociate", which an earlier version of this line drew. Figures
+    and caveat: `design.md` §0. (b) The axis labels were measured against judge verdicts and
+    mostly do not bind: valid for C1/usefulness only, wrong-signed for novelty. Rates: `design.md`
+    §0. The 56% / 21% / 15% previously quoted here came from superseded run `111856Z` (n=196).
   - *G4 (headroom):* C1/C3/C4 are the hardest tiers and clearly unsaturated; only
     46–49 are saturable.
   - *G5 (metadata):* ~~all `known_answers` are dated & non-empty~~ **→ FALSE, see header.**
-    `known_answers` is non-empty everywhere (schema `minItems: 3`) and `hard_rules` are checkable
-    (min 5 in the shipped file), but only **52%** of prior-art entries carry a year, and the `_3x`
-    /`_4x` half of the file sits at 22% / 18%. One hard FAIL at the time (09, broken
-    `expert_baseline`) — since fixed; a second (34) was found later by schema enforcement.
+    `known_answers` is non-empty everywhere (8–33 entries per item) and `hard_rules` are checkable
+    (5–12 rules per item in the shipped file), but most prior-art entries carry no year, and the
+    `_3x`/`_4x` half of the file is far worse than the first half — rates in `datasheet.md` §2.
+    One hard FAIL at the time (09, broken `expert_baseline`) — since fixed; a second (34) was
+    found later by schema enforcement.
 - ~~**Missing `category_name` in every new item.**~~ **→ MOOT.** `category_name` was removed from
   *all* 50 items in schema v2.0.0 (it was derivable from `category`, and one item shipped a
   long-form value that made `groupby` yield six categories). There is nothing to backfill.
@@ -214,8 +222,8 @@ contradictions.
   headroom fragile; the originals hold up only because of large `known_answers` sets
   and heavy deliverables. **Strongest = C3** (equation/theorem-level fidelity, highest
   headroom) and ~~**C4**~~ **→ SUPERSEDED on C4.** The live audit rates C4-new the *weakest*
-  block in the file: `_45`'s novelty gate is inverted, `_42`'s is close behind, `_43` contradicts
-  itself, and 46 of 48 prior-art entries across `_42`–`_45` carry no year at all. C3's own
+  block in the file: `_45`'s novelty gate is inverted, `_42`'s is close behind, and 46 of 48
+  substantive prior-art entries across `_42`–`_45` carry no year at all. C3's own
   standing is also qualified — the audit found five mathematical errors in C3 hard rules and one
   materially wrong novelty gate (`_17`), though it confirmed zero fabrications across ~155 checked
   claims.
@@ -228,9 +236,10 @@ originals' isolation logic — checkable feasibility envelopes, anti-obvious coh
 well-anchored expert baselines, novelty gates — and graded them PASS on all five gates. Two things
 that reading could not see turned out to separate the halves of the file:
 
-1. **The citation cliff.** Prior-art dating collapses from 91% (`_1x`) to 22% (`_3x`) and 18%
-   (`_4x`). Whoever wrote the back half of the file stopped citing, and an undated bare name cannot
-   gate novelty at all — a judge cannot ask "absent as of date D" when D is unstated.
+1. **The citation cliff.** Prior-art dating collapses from the `_1x` block to the `_3x`/`_4x`
+   blocks (rates: `datasheet.md` §2). Whoever wrote the back half of the file stopped citing, and
+   an undated bare name cannot gate novelty at all — a judge cannot ask "absent as of date D" when
+   D is unstated.
 2. **Gate inversion.** `_45`'s hard rule offers as its example of a new mechanism something its own
    prior-art list already implements, and its baseline asserts the opposite of the truth, so the
    gate awards novelty for reproducing published prior art. `_42` and `_43` have milder versions.

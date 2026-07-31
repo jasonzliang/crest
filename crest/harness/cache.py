@@ -1,69 +1,60 @@
 """Cross-run generation cache: never pay twice for the same agent answer.
 
-The problem this closes. `--resume` only reuses work from an INTERRUPTED run (records.jsonl present,
-run_manifest.json absent) and only within that one run directory. So the moment a run FINALIZES its
-generations become dead weight: re-running the same benchmark re-paid for all of them -- 250 tasks
-including deep-research entrants at ~$6-9 each. Judge-only changes (a new panel, a fixed rubric, a
-re-scored axis) forced a full re-generation.
+It replaced `--resume`, which reused work only from an INTERRUPTED run (records.jsonl present,
+run_manifest.json absent) and only within that one run directory -- so the moment a run FINALIZED,
+its generations became dead weight and a judge-only change (a new panel, a fixed rubric, a re-scored
+axis) re-paid for all 250 tasks, deep-research entrants included at ~$6-9 each. This cache indexes
+the agent outputs already stored in EVERY run under `<result_root>/runs/` and serves them by
+content-addressed key, so generation is paid once per distinct (challenge text, agent, model) and
+everything downstream is free to re-run.
 
-This cache indexes the agent outputs already stored in EVERY run under `<result_root>/runs/` and
-serves them by content-addressed key, so generation is paid once per distinct
-(challenge text, agent, model) and everything downstream is free to re-run.
-
-Correctness is the whole point, so the key includes a hash of the QUERY TEXT, not just the
-challenge id. Editing a challenge's wording (as happened when 12 items were rewritten to remove
-references to judge-side fields the agent never receives) must invalidate its cached answers --
-otherwise you would silently score answers generated against a prompt that no longer exists.
-Records written before `query_sha` existed are therefore ignored rather than trusted.
-
-Also skipped: empty-text outputs (far more likely a parser bug than a real answer, and caching one
-would make the bug permanent).
+Correctness is the whole point, so the key hashes the QUERY TEXT, not just the challenge id: editing
+a challenge's wording (as happened when 12 items were rewritten to remove references to judge-side
+fields the agent never receives) must invalidate its cached answers -- otherwise you would silently
+score answers generated against a prompt that no longer exists. Records written before `query_sha`
+existed are therefore ignored rather than trusted. Also skipped: empty-text outputs (far more likely
+a parser bug than a real answer, and caching one would make the bug permanent).
 
 Enabled by default; disable with `use_cache: false` in the config or `--override-cache` on the CLI.
 """
 from __future__ import annotations
-import hashlib, json
+import hashlib, inspect, json
 from pathlib import Path
-
-CACHE_KEY_VERSION = "gen/2"   # bumped: gen/1 keys omitted the adapter fingerprint (see below)
 
 
 def adapter_fingerprint(agent) -> str:
     """Identity of the CODE that produced an answer, not just the model name.
 
-    gen/1 keyed on (challenge, agent, model, query_sha) only, so ANY adapter change short of a model
-    rename silently served stale generations: raising Anthropic max_tokens 9k->32k, adding pause_turn
+    Keying on (challenge, agent, model, query_sha) alone let ANY adapter change short of a model
+    rename silently serve stale generations: raising Anthropic max_tokens 9k->32k, adding pause_turn
     handling, or changing reasoning effort all left the key untouched. In the 2026-07-31 run that
     meant 45 of 49 records per agent came from a run whose manifest records git_dirty=true at a
     commit predating every committed adapter change -- 80% of the deep arm produced by code that
     cannot be reconstructed.
 
-    The key is the RAW SOURCE of every module the generation path runs through. Two cleverer schemes
-    were tried and both were unsound in the expensive direction:
+    So the key is the RAW SOURCE, with NO normalization, of every module the generation path runs
+    through. Two cleverer schemes were tried and both were unsound in the expensive direction:
 
       * per-class `inspect.getsource(type(agent))` saw neither inherited methods
         (OpenAIDeepResearchMini defines no `run`) nor module-level helpers -- and `_parse_openai`
         and `_parse_gemini_interaction` are where two of three adapter fixes landed. 5 of 7 adapters
         would have served pre-fix answers forever.
-      * stripping prose so a comment edit stayed free. The line-filter version stripped '#' lines
-        INSIDE string literals, so two system prompts differing by a markdown header collided. The
-        ast+tokenize replacement fixed that and introduced a worse one: it is not stable across
-        Python versions. PEP 701 changed f-string tokenization in 3.12, so identical source hashed
-        2fcc45daca97 on 3.12-3.14 and b9b383d649b4 on 3.9 -- and pyproject declares
-        requires-python >=3.10,<3.14, i.e. the instability sits inside the SUPPORTED range. A minor
-        version bump would have been a 100% cache miss and a full re-generation.
+      * stripping prose so a comment edit stayed free. The line filter stripped '#' lines INSIDE
+        string literals, so two system prompts differing by a markdown header collided; the
+        ast+tokenize replacement fixed that and is not stable across Python versions. PEP 701
+        changed f-string tokenization in 3.12, so identical source hashed 2fcc45daca97 on 3.12-3.14
+        and b9b383d649b4 on 3.9 -- and pyproject declares requires-python >=3.10,<3.14, i.e. the
+        instability sits inside the SUPPORTED range. A minor version bump would have been a 100%
+        cache miss and a full re-generation.
 
-    So: no normalization. A comment edit re-pays generation. That is a real cost and it is the one
-    being chosen deliberately -- the saving was always hypothetical (no run has yet written an
-    adapter_fp, so the cache has served exactly zero entries to date), while both attempts at it
-    produced silent-correctness bugs. Raw source is sound, version-stable, and one line."""
-    import hashlib, inspect
+    The price is that a comment edit re-pays generation. That cost is chosen deliberately: the
+    saving was always hypothetical (no run has yet written an adapter_fp, so the cache has served
+    exactly zero entries to date), while both attempts at it produced silent-correctness bugs. Raw
+    source is sound, version-stable, and one line."""
     from crest.harness import agents as A
     from crest.harness import keys as K
     # keys.py is in the key because ClaudeShallowResearch.run goes through call_anthropic: the pool,
     # its cooldown and its exhaustion handling all affect whether and how a generation completes.
-    # It was extracted from agents.py without revisiting this invariant, leaving the docstring's
-    # "nothing outside this module" claim false.
     src = "".join(_module_source(m) for m in (A, K))
     parts = [type(agent).__name__, getattr(agent, "model", ""), str(getattr(agent, "budget", "")),
              hashlib.sha256(src.encode()).hexdigest()[:12]]
@@ -73,9 +64,8 @@ def adapter_fingerprint(agent) -> str:
 def _module_source(mod) -> str:
     """Raise rather than degrade. Returning a `<nosource:...>` sentinel collapsed the fingerprint to
     a CONSTANT for every adapter -- silently restoring the exact "serve answers from unknown code"
-    failure gen/2 exists to prevent, in the one environment (zipapp, frozen build) where nobody
-    would think to check. If source is unreadable the cache must not be trusted at all."""
-    import inspect
+    failure the fingerprint exists to prevent, in the one environment (zipapp, frozen build) where
+    nobody would think to check. If source is unreadable the cache must not be trusted at all."""
     try:
         return inspect.getsource(mod)
     except (OSError, TypeError) as e:
@@ -93,7 +83,7 @@ def query_sha(query: str) -> str:
 
 
 def cache_key(challenge_id: str, agent_key: str, model: str, q_sha: str, fp: str = "") -> str:
-    return f"{CACHE_KEY_VERSION}|{challenge_id}|{agent_key}|{model}|{q_sha}|{fp}"
+    return f"{challenge_id}|{agent_key}|{model}|{q_sha}|{fp}"
 
 
 class CachedOutput:
@@ -101,14 +91,14 @@ class CachedOutput:
     # `truncated` must be here: run_crest records it via getattr(report, "truncated", False), so
     # omitting it silently wrote 0 for every CACHE HIT -- and cache hits are the normal path on a
     # re-run, so the metric read 0 exactly when it mattered.
-    __slots__ = ("text", "citations", "n_tokens", "n_searches", "truncated", "trace", "source_run")
+    __slots__ = ("text", "citations", "n_tokens", "n_searches", "truncated", "source_run")
     # `truncated` is keyword-only: AgentOutput's 5th positional is `truncated` while this class's is
     # `source_run`, so a positional call would silently swap them between the two duck-typed classes.
     def __init__(self, text, citations, n_tokens, n_searches, source_run, *, truncated=False):
         self.text, self.citations = text, citations
         self.n_tokens, self.n_searches = n_tokens, n_searches
         self.truncated = bool(truncated)
-        self.trace, self.source_run = {}, source_run
+        self.source_run = source_run
 
 
 class GenerationCache:
@@ -116,7 +106,7 @@ class GenerationCache:
 
     def __init__(self, result_root, enabled: bool = True, verbose: bool = True,
                  trust_legacy: bool = False):
-        # trust_legacy: reuse pre-fingerprint (gen/1) generations, matching on
+        # trust_legacy: reuse pre-fingerprint generations, matching on
         # (challenge, agent, model, query_sha) alone. OFF by default because those answers cannot be
         # attributed to a known adapter state -- the run that produced most of them records
         # git_dirty=true at a commit predating every committed adapter fix. Turning it on is a
@@ -133,6 +123,7 @@ class GenerationCache:
         runs = result_root / "runs"
         if not runs.exists():
             return
+        from crest.judge.score import _MIN_SUBSTANTIVE_CHARS
         skipped_no_sha = skipped_legacy = skipped_failed = 0
         for run_dir in sorted(d for d in runs.iterdir() if d.is_dir()):
             recs_f, tr_f = run_dir / "records.jsonl", run_dir / "transcripts.jsonl"
@@ -153,17 +144,15 @@ class GenerationCache:
                 tr = texts.get(r.get("record_id"))
                 if not tr or not (tr.get("output_text") or "").strip():
                     continue                   # no/empty generation: regenerate rather than cache it
-                # A too_short or truncated answer is a FAILED generation, not a cheap one. score.py
+                # A too_short or truncated answer is a FAILED generation, not a cheap one: score.py
                 # calls sub-1000-char answers "the SAME adapter failure as the 0-char answers", so
-                # caching them re-serves the failure forever: the module hash cannot invalidate a
+                # caching them re-serves the failure forever -- the module hash cannot invalidate a
                 # provider-side hiccup, and the only escape would be --override-cache (all-or-
-                # nothing, ~$450) to refresh a handful of records.
-                # Judge on the TEXT IN HAND, not on the label a past run happened to write. Checking
-                # scoring_status alone trusted history: an answer recorded `scored` under the old
-                # 40-char floor is below today's _MIN_SUBSTANTIVE_CHARS, so it was served from cache,
-                # re-failed the gate on arrival, and would be served again forever. Records with no
-                # status at all (the trust_legacy path) bypassed the check entirely.
-                from crest.judge.score import _MIN_SUBSTANTIVE_CHARS
+                # nothing, ~$450) to refresh a handful of records. Judge on the TEXT IN HAND, not on
+                # the label a past run wrote: an answer recorded `scored` under the old 40-char floor
+                # is below today's _MIN_SUBSTANTIVE_CHARS, so a status-only check served it, it
+                # re-failed the gate on arrival, and it would be served again forever -- and records
+                # with no status at all (the trust_legacy path) bypassed that check entirely.
                 if (r.get("scoring_status") in ("empty_answer", "too_short") or r.get("truncated")
                         or len((tr.get("output_text") or "").strip()) < _MIN_SUBSTANTIVE_CHARS):
                     skipped_failed += 1
@@ -205,4 +194,3 @@ class GenerationCache:
 
     def __len__(self) -> int:
         return len(self._idx)
-

@@ -26,10 +26,10 @@ the common path.
 from __future__ import annotations
 import os, re, threading, time
 
-# Errors meaning "this key is temporarily unusable, try another" (as opposed to a bad request that
-# would fail identically on every key).
-# Per-KEY auth failures. Distinct from _KEY_EXHAUSTED because they are permanent for that key
-# rather than transient, but identical in the action they require: drop this key, try the next.
+# Both tuples mean "this key specifically failed, try another" -- as opposed to a bad request that
+# would fail identically on every key. They are kept separate because they take DIFFERENT actions in
+# `call_anthropic`: an INVALID key is permanent for that key and is retired, an EXHAUSTED one is
+# transient and is only cooled.
 _KEY_INVALID = ("invalid_api_key", "invalid x-api-key", "authentication_error", "authentication",
                 "permission_error", "unauthorized", "401", "403")
 _KEY_EXHAUSTED = ("usage limits", "regain access", "rate limit", "rate_limit", "429",

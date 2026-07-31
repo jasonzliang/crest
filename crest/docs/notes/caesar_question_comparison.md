@@ -1,5 +1,21 @@
 # CREST's 50 vs the Caesar paper's 5 — question-set comparison + run-readiness
 
+> **PARTLY SUPERSEDED (annotated 2026-07-31).** This is a **pre-run** note; five of its statements
+> are no longer true of the shipped artifact, and the run it was clearing has since happened:
+> - "Surprise is now anchored" by `expert_baseline` — **reversed.** The field is judge-hidden since
+>   2026-07-30 because ablating it barely moved the axis (`design.md` §0).
+> - "3–12 checkable `hard_rules`" / "≥3 `hard_rules`" — the shipped file is **5–12**.
+> - "`category_name` is backfilled across all 50" — `category_name` was **removed** in schema v2.0.0.
+> - "C2_law_policy_09's `expert_baseline` is now real (1087 chars)" — it is **818 chars** on the
+>   shipped file; its answer-key portion was split into `author_expected_surprises`.
+> - "No inter-judge reliability … `analysis/stats.py` contains zero references to either" —
+>   **implemented**: `stats.py::reliability_report` reports Krippendorff α, ICC(1,·) and ICC(3,·)
+>   plus per-judge severity (values in `design.md` §0).
+>
+> What still stands and is why this note is kept: the comparison against the Caesar paper's five
+> original questions, the "the original 5 didn't require research" argument, the dropped
+> length-control regression, and the 12-items-pointing-at-judge-side-content fix.
+
 Pre-run vetting pass, 2026-07-30. Compares the shipped `questions/crest_challenges.jsonl` against
 (a) the five original challenges in the Caesar paper (arXiv:2604.20855, App. pp.19–20) and (b) the
 design contract in `science_moonshot/documentation/caesar/caesar_creativity_eval_spec.md` (v1,
@@ -74,14 +90,15 @@ Balanced 10/category; domains 8–9 each.
 ### Gaps that bound the claims (NOT run blockers)
 
 Recoverable from this run's `records.jsonl` afterwards:
-* **No inter-judge reliability.** `judge/judge_config.yaml` mandates `[krippendorff_alpha, icc]`;
+* **No inter-judge reliability.** `judge/judge_config.yaml` (since deleted; see
+  `docs/judge_protocol_intent.md`) mandated `[krippendorff_alpha, icc]`;
   `analysis/stats.py` contains zero references to either. Per-judge scores *are* persisted as a
   list-of-objects, so IRR is computable post-hoc — but it is currently unwritten code.
 * **Length covariate** — see above; `output_len_tokens` is recorded.
 
 **Now-or-never** (cannot be fixed after the run):
-* **post-cutoff subset is n=1.** Only `C4_arts_humanities_23` is `post_cutoff` (35 `timeless`,
-  14 `pre_cutoff`). The spec requires a post-cutoff subset and "report results split
+* **post-cutoff subset is n=1.** Only `C4_arts_humanities_23` is `post_cutoff` (full distribution:
+  `datasheet.md` §2, "Splits"). The spec requires a post-cutoff subset and "report results split
   pre/post-cutoff" — impossible at n=1. Combined with `FrozenIndex` still raising
   `NotImplementedError` and the manifest recording `contamination_controlled: false`, **the
   contamination-control leg of the design is unsupported by this run.** Note the p3 abstract already

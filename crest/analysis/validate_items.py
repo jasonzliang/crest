@@ -16,13 +16,16 @@ a judge consulting the baseline would CONFIRM the error rather than catch it.
      global parts-pairing penalty. Novelty is awarded for reproducing published prior art.
 
 WHAT THIS CAN AND CANNOT DO. Full "does the baseline satisfy every rule" is a semantic judgement and
-is NOT mechanically decidable. This checks three DECIDABLE classes. They cover cases 1 and 2. They
-do NOT cover case 4 (C4_engineering_45): the class-3 phrase match requires the offered mechanism to
-be substantially the listed one, and on the live corpus that threshold rejects every candidate
-phrase, so class 3 has zero measured coverage and case 4 is tracked by hand in
-questions/quarantine.yaml. Case 3's family is flagged only where a rule states a numeric/token fact. The semantic residue
-needs an LLM pass (`--llm` is deliberately left unimplemented rather than faked) or human review.
-Treat a clean run as "no mechanical contradiction found", never as "the item is consistent".
+is NOT mechanically decidable. This checks TWO DECIDABLE classes; they cover cases 1 and 2 above.
+Cases 3 and 4 are tracked BY HAND in questions/quarantine.yaml's watch_list. A phrase matcher for
+case 4 shipped and was deleted rather than re-tuned: "the mechanism offered as NEW is already in
+known_answers" is indistinguishable, without semantics, from C4_materials_chemistry_43 legitimately
+offering "a supply-criticality-weighted atom economy" (novel in the weighting; its head noun is
+listed prior art), and the ratio cap that rejected 43 could never fire on 45 -- 4 regex hits on the
+live corpus, offered examples 13-21 words, best phrase/offer ratio 0.25 against a 0.6 cap, so zero of
+19 candidate phrases survived. The semantic residue needs an LLM pass (`--llm` is deliberately left
+unimplemented rather than faked) or human review. Treat a clean run as "no mechanical contradiction
+found", never as "the item is consistent".
 
 Usage:
     python -m crest.analysis.validate_items                       # exits 1 if any violation
@@ -38,20 +41,16 @@ REPO = Path(__file__).resolve().parents[2]
 _RANGE_RE = re.compile(r"\b(mu|tau|t|SEA|Isp|band ?gap|gap)\b[^.\[\]]{0,60}?\[\s*([0-9.]+)\s*,\s*([0-9.]+)\s*\]", re.I)
 # \b on every alternative: without it `bans?` matched inside "band gap", "bank", "DrugBank" and
 # "urban" -- 12 of 79 ban-matches in the live corpus (15%), each opening a bogus 240-char ban clause.
-# No live false positive only because exactly one item has a non-empty permitted set.
-# \b on every alternative: without it `bans?` matched inside "band gap", "bank", "DrugBank" and
-# "urban" -- 12 of 79 ban-matches in the live corpus (15%), each opening a bogus 240-char ban clause.
-# `ban\w*` rather than `bans?`, because the boundary version silently dropped "banning".
-# forbid/forbidden (5 hits in the science corpus's hard_rules) and disallowed (6) were never in the
-# vocabulary at all, so class 2's coverage was materially thinner than this module implied.
+# No live false positive only because exactly one item has a non-empty permitted set. Suffixes are
+# enumerated rather than written `bans?` so that "banned"/"banning" are not silently dropped, and
+# forbid/forbidden (5 hits in the science corpus's hard_rules) and disallowed (6) were missing from
+# the vocabulary entirely, so class 2's coverage was thinner than this module implied.
 _BAN_RE = re.compile(r"\bban(?:s|ned|ning)?\b|\bexclude[ds]?\b|\bexcluding\b|\bdisqualif\w+"
                      r"|\bforbid(?:s|den|ding)?\b|\bdisallow(?:s|ed|ing)?\b"
                      r"|\bmust NOT\b|\bmay not\b", re.I)
 _PERMIT_RE = re.compile(r"may be|is allowed|are allowed|permitted|X may be", re.I)
 # element-ish / short capitalised tokens worth colliding on
 _TOK_RE = re.compile(r"\b(?:[A-Z][a-z]?)\b")
-_NEW_OFFER_RE = re.compile(r"(?:NEW MECHANISM|genuinely new|absent from every listed|absent from all)"
-                           r"[^.]*?\(e\.g\.,?\s*([^)]{10,200})\)", re.I)
 _STOP = {"A", "I", "R", "S", "The", "It", "In", "On", "Of", "To", "And", "Or", "No", "If", "As", "At",
          "Be", "By", "Do", "So", "Up", "We", "An", "Is", "Ce"}
 # formula placeholders, not real species: ABX3 / A2BX6 notation collides spuriously
@@ -96,7 +95,6 @@ def check_item(it: dict) -> list[dict]:
     v = []
     rules = it.get("hard_rules") or []
     eb = it.get("expert_baseline") or ""
-    ka = " ".join(it.get("known_answers") or [])
 
     # --- class 1: a rule states a numeric range; the item's own baseline reports a value outside it
     for rule in rules:
@@ -123,34 +121,6 @@ def check_item(it: dict) -> list[dict]:
     for t in sorted(permitted & banned):
         v.append({"kind": "rules_permit_and_ban_same_token", "severity": "BLOCKING",
                   "detail": f"one hard rule permits '{t}' while another bans it"})
-
-    # --- class 3: the rules offer X as the example of a NEW mechanism, but X is in known_answers
-    for rule in rules:
-        for m in _NEW_OFFER_RE.finditer(rule):
-            offer = m.group(1)
-            # distinctive multiword phrases from the offered example
-            offer_words = len(re.findall(r"[a-z]+", offer.lower()))
-            for phrase in re.findall(r"[a-z]+(?:[- ][a-z]+){1,3}", offer.lower()):
-                if len(phrase) < 12:
-                    continue
-                # The offered mechanism must be SUBSTANTIALLY the listed one, not a component of
-                # it: "a supply-criticality-weighted atom economy" contains "atom economy" but the
-                # novel part is the weighting, and matching the sub-phrase flagged a false
-                # contradiction. MEASURED COVERAGE OF THIS CLASS ON THE LIVE CORPUS: ZERO. There are
-                # 4 _NEW_OFFER_RE hits with offer_words 13-21, so the cap sits at 0.19-0.31 and 0 of
-                # 15 candidate phrases survive it. The cap was added to kill one false positive and
-                # killed the whole class with it -- including C4_engineering_45, the case this
-                # module's docstring cites as motivating the check. Kept rather than deleted because
-                # it costs nothing and would fire on a short offered phrase, but it must NOT be
-                # counted as coverage: C4_engineering_45 is tracked in questions/quarantine.yaml's
-                # watch_list, by hand, because this cannot see it.
-                if len(phrase.split()) / max(1, offer_words) < 0.6:
-                    continue
-                if phrase in ka.lower():
-                    v.append({"kind": "new_mechanism_already_in_known_answers", "severity": "BLOCKING",
-                              "detail": f"rules offer '{phrase}' as a genuinely NEW mechanism, but it "
-                                        f"already appears in this item's own known_answers"})
-                    break
     return v
 
 

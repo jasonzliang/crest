@@ -31,7 +31,8 @@ answer keyed by (challenge text, agent, model, adapter fingerprint) from *any* p
 re-run costs only judging. `--override-cache` re-generates everything; `--override-cache-agents
 <keys>` re-generates only the named entrants. To repair judge failures in an existing run without
 re-paying for generation, use `python -m crest.harness.rejudge --run <run_dir>`.
-**The per-entrant scripts in `eval/` do not currently run** — see `eval/readme.md`.
+The per-entrant scripts in `eval/` work; each goes through `_common.py::cli()`, which applies the
+same key preflight and cost guard as `run_eval.py` — see `eval/readme.md`.
 
 ## Entrants (pinned in `harness/agents.py`) — TWO DISTINCT ARMS
 **Shallow** (chat model + provider-native web search, ONE turn — *not* deep research):
@@ -60,11 +61,13 @@ See `eval/readme.md` and `docs/notes/deep_research_apis.md`.
 Each challenge ships with a **dated known-answers list** (the prior-art set novelty is scored
 against) and **hard rules** (Useful), plus labels (category, domain, isolated axis, pre/post-cutoff).
 `expert_baseline` and `author_expected_surprises` are retained for provenance but are **judge-hidden**
-since 2026-07-30: ablating the baseline moved Surprising by −0.02, and in 7 items it doubled as an
+since 2026-07-30: ablating the baseline barely moved Surprising, and in 7 items it doubled as an
 answer key. `predicted_direction` moved to `analysis/preregistration.yaml`, `rationale` to
 `questions/item_design.jsonl`, and `category_name` was dropped; `questions/schema.json` is now
 actually enforced on load (it never was before). The agent sees only a short, open prompt; that
 judge-side machinery is never shown to it.
+Field list, counts and balance: `docs/datasheet.md` §2. Every measured figure from the shipped
+run: `docs/design.md` §0 — the single source of truth, cited rather than restated everywhere else.
 
 ## Layout
 ```
@@ -74,13 +77,17 @@ crest/
   config/              eval_config.yaml — choose benchmark(s), agents, judges
   questions/           crest_challenges.jsonl (50) · schema.json (enforced on load)
                        item_design.jsonl (per-item rationale) · quarantine.yaml
+                       crest_aiml_challenges.jsonl (a SECOND 50-item AI/ML set, 10/category over 6
+                       AI/ML domains; validates under schema v3.2.0, but it is NOT listed in
+                       config/eval_config.yaml, has NO item_design.jsonl rows, and has never been
+                       run or scored. See docs/notes/aiml_dataset_build.md)
   harness/             agents.py (entrants) · run_crest.py (core loop) · results.py (run-dir writer)
                        cache.py (cross-run generation cache) · keys.py (key pooling) · rejudge.py
   judge/               score.py (judge panel + grounding check) · rubric.md · judge_config*.yaml
   analysis/            stats.py (mixed-effects, TOST, crossover, bootstrap, ICC/α)
                        preregistration.yaml · ci_check.sh (pre-release gate) · validate_items.py
                        ablate_fields.py · apply_audit_fixes.py · stall_check.py
-  eval/                per-entrant eval scripts + readme (BROKEN — see eval/readme.md)
+  eval/                per-entrant eval scripts + readme (one entrant each; --dry-run supported)
   result/              run outputs (runs/<run_id>/…), gitignored; see result/readme.md
   docs/                design.md · datasheet.md · related_work.md · analysis notes
   paper/               p2_benchmark_only/ (chosen) · p3_caesar_hybrid/ (IP-gated upgrade) · compile.sh
@@ -90,30 +97,32 @@ crest/
 A full 250-task run exists (50 items x 5 entrants, all three judges per record). **Do not cite
 per-agent creativity numbers yet**, for three reasons:
 
-1. **No ranking claim is supportable.** Judge severity exceeds the between-agent spread
-   (judge_google is +2.7 to +3.4 points more lenient than the others), and the earlier
-   leave-one-family-out protocol assigned judge panels *by entrant family*, which made the
-   leaderboard unidentifiable. Scoring is now full-panel; LOFO is a robustness check.
-2. **Surprising is weakly anchored, but it binds.** Ablating `expert_baseline` moves Surprising
-   by -0.02, so it is no longer sent to the judge — the axis rests on the judge's own expert prior,
-   which is a limitation to report. It was briefly dropped from the endpoint on the further argument
-   that it is redundant with novelty; that argument does not survive its own numbers. Recomputed on
-   the shipped run, r(New, Surprising) = **0.883** at record level (0.946 pooling per-judge rows,
-   which is the figure previously quoted as "r ~ 0.95"), and Surprising is the **sole binding axis
-   in 51 of 250 records (20%)**. The primary endpoint is `min(New, Useful, Surprising)` — all three
-   axes — consistently across `analysis/stats.py::_composite`, `analysis/preregistration.yaml` and
-   `judge/rubric.md`. `stats.py::min2()` reports the New/Useful pair as a robustness check.
-3. **The gate is red.** `analysis/ci_check.sh` passes schema, sidecar-bijection and quarantine, but
-   still fails item self-consistency: **2** mechanical contradictions, both in
-   `C1_materials_chemistry_01` (a baseline reporting mu=0.39 against its own rule's [0.40, 0.90]
-   range, and one hard rule permitting 'Se' while another bans it). The two previously counted
-   against `C2_materials_chemistry_07` and `C4_materials_chemistry_43` were validator false
-   positives -- a 50% false-positive rate on a blocking gate -- and were fixed.
+1. **No ranking claim is supportable.** Judge severity exceeds the between-entrant spread on every
+   axis, and the earlier leave-one-family-out protocol assigned judge panels *by entrant family*,
+   which made the leaderboard unidentifiable. Scoring is now full-panel; LOFO is a robustness check.
+2. **Surprising is weakly anchored, but it binds.** Ablating `expert_baseline` barely moves
+   Surprising, so it is no longer sent to the judge — the axis rests on the judge's own expert
+   prior, which is a limitation to report. It was briefly dropped from the endpoint on the further
+   argument that it is redundant with novelty; that argument does not survive its own numbers —
+   Surprising is the sole binding axis in a fifth of all records, and the high New/Surprising
+   correlation is **contaminated by the v1 judge prompt**, which stated that correlation *to the
+   judge*, so it cannot be cited as evidence the axes are inseparable. The primary endpoint is
+   `min(New, Useful, Surprising)` — all three axes — consistently across
+   `analysis/stats.py::_composite`, `analysis/preregistration.yaml` and `judge/rubric.md`.
+   `stats.py::min2()` reports the New/Useful pair as a robustness check.
+3. **The gate is red.** `analysis/ci_check.sh` passes schema, sidecar-bijection and quarantine, and
+   still fails item self-consistency on `C1_materials_chemistry_01`. Run the gate for the live
+   failure list rather than trusting a transcript of it; two failures previously counted against
+   `C2_materials_chemistry_07` and `C4_materials_chemistry_43` were validator false positives — a
+   50% false-positive rate on a blocking gate — and were fixed.
    The quarantine is now **empty** — the one quarantined item was released 2026-07-31 with a
    redrafted baseline that is model-drafted, *not* expert-written, and still needs a physiologist's
    review; `questions/quarantine.yaml` keeps that record plus a watch-list of same-class items.
 
+All figures behind points 1 and 2 are in `docs/design.md` §0.
+
 Live web search is **not** contamination-controlled (`FrozenIndex` raises; a frozen shared index is
 future work) and the judge panel is **not** human-validated. What the run *does* support is a
 methodological finding: LOFO over a three-vendor panel makes an LLM-judge leaderboard
-unidentifiable. See `docs/notes/iclr_metareview.md` and `docs/notes/field_justification.md`.
+unidentifiable. See `docs/notes/iclr_metareview.md` and `docs/notes/field_justification.md`
+(both measured on superseded runs — read their headers first).

@@ -12,9 +12,10 @@ benchmarks:
     per_category: null      # e.g. 2 -> first 2 items per category (balanced 10-item pilot)
     limit: null             # e.g. 5 -> first 5 items total
     categories: null        # e.g. [C2, C3] -> only these categories
+    subset_label: null      # override the run_id's auto subset label (full50 / per2cat / first5 / cats-...)
 
 # Entrants to evaluate. Keys resolve to pinned model IDs in crest/harness/agents.py.
-# TWO ARMS (see docs/notes/deep_research_apis.md):
+# TWO ARMS (see crest/docs/notes/deep_research_apis.md):
 #   *_shallow       = chat model + native web search, ONE turn, few searches   (cents/task)
 #   *_deepresearch* = managed multi-step background research loop              (minutes + $$/task)
 agents:
@@ -30,13 +31,20 @@ agents:
   # models.list() but every call 404s). Anthropic ships no turnkey DR API, so the deep arm has no
   # Anthropic entrant -- an asymmetry to disclose, not a null result for Claude.
 
-judge_config: crest/judge/judge_config.live.yaml   # multi-vendor leave-one-family-out panel
+judge_config: crest/judge/judge_config.live.yaml   # 3-vendor panel; leave_one_family_out is FALSE
+                             # there (full panel scores everyone, same_family stamped per judge as an
+                             # analysis covariate) -- the protocol lives in that file, not this one.
 budget: 6                    # per-agent web-search cap (enforced where the provider supports it)
 concurrency: 8               # parallel (challenge, agent) tasks; judges within each also run in parallel.
                              # NB judge_anthropic fires on 4/5 entrants, so 16 overran the Anthropic
                              # spend-rate cap and silently degraded panels to a single judge.
-use_cache: true              # reuse agent generations from ANY prior run, keyed by
-                             # (challenge text, agent, model). Editing a question's wording
+use_cache: true              # reuse agent generations from ANY prior run, keyed by (challenge text,
+                             # agent, model, adapter fingerprint). Editing a question's wording
                              # changes its hash and correctly invalidates its cached answers.
-                             # Override per-run with: python crest/run_eval.py --override-cache
+                             # Per-run overrides: --override-cache (re-generate EVERY entrant, RE-PAYS
+                             # ~$450) or --override-cache-agents A B (re-generate only these).
+trust_legacy_cache: false    # reuse pre-fingerprint generations too, matched without an adapter
+                             # fingerprint. Saves a full re-generation but mixes in answers from
+                             # adapter code that cannot be reconstructed (the run holding most of
+                             # them is git_dirty at a pre-fix commit). Never true for shipped numbers.
 out_root: crest/result

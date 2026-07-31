@@ -66,15 +66,16 @@ literature, and together they were chosen so an agent's creativity can *dissocia
    econ, law, engineering, arts) — that is breadth. Categories are *process types*. Adding domains
    ≠ adding categories.
 
-## Interaction with the count question (see `question_audit.md`)
-The reviewers and the P3 draft both push toward **~10 items/category**. If you scale 5×10 = 50,
-the taxonomy is well-powered as-is. If you also add C6, target 6×10 = 60. Adding C6 without
-scaling (6×5 = 30) would make an already-underpowered design worse — so **couple the C6 decision
-to the scale-up, or not at all.**
+## Interaction with the count question — SETTLED
+The scale-up recommended below happened: the shipped set is 5 categories × 10 items = **50**, and
+C6 was not added. This section is retained as the rationale for the current taxonomy, not as an
+open decision. (The count audit it originally cross-referenced, `question_audit.md`, was a review
+of the earlier 30-item set and has been deleted as spent; `docs/item_vetting.md` and
+`docs/notes/audit_live_*.md` are the per-item record for the shipped 50.)
 
 ## One-line verdict
-Five categories are sufficient and defensible; keep the taxonomy at 5 and spend the budget on
-**scaling to ~10 items/category (50 total)**, not on a 6th category.
+Five categories are sufficient and defensible; the taxonomy stayed at 5 and the budget went to
+**10 items/category (50 total)** rather than a 6th category.
 
 *Refs: Boden 2004; Gentner 1983; Falkenhainer 1989; Byrne 2005; Simonton 2003; Campbell 1960;
 Guilford 1967 / Torrance 1974 (divergent thinking); Rhodes 1961 (4 P's); Getzels & Csikszentmihalyi

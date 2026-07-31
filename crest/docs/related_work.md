@@ -56,12 +56,12 @@ embedding/n-gram novelty metrics that reward fabrication.
 | Panickssery 2024 | judges favor their own generations | motivates the `same_family` covariate; **leave-one-family-out** kept as a robustness check (see below) |
 | Ye 2024 (Justice or Prejudice) | catalog of judge biases | blind judging (the prompt carries no agent name). *Not* order randomization: scoring is single-answer, not pairwise, so there is no order to randomize |
 | The Leaderboard Illusion (2025) | leaderboard/style confounds | length covariate, budget parity |
-| "novelty mirage" (2026) | LLM judges over-rate novelty | reproduced in our own ablation (+0.98 when the prior-art set is withheld) ⇒ the axis is anchored and renamed novelty; human validation is future work |
-| Krippendorff α (Hayes 2007); ICC (Koo 2016) | reliability estimators | reported (`analysis/stats.py::reliability_report`), alongside **per-judge severity** — severity spread exceeded the between-agent spread here, so agreement alone would have hidden the effect that decided the leaderboard |
+| "novelty mirage" (2026) | LLM judges over-rate novelty | reproduced in our own ablation (New rises when the prior-art set is withheld — `design.md` §0) ⇒ the axis is anchored and renamed novelty; human validation is future work |
+| Krippendorff α (Hayes 2007); ICC (Koo 2016) | reliability estimators | reported (`analysis/stats.py::reliability_report`), alongside **per-judge severity** — severity spread exceeds the between-entrant spread here (`design.md` §0), so agreement alone would have hidden the effect that decided the leaderboard |
 
 **On leave-one-family-out.** CREST ran LOFO as the default protocol until 2026-07-30 and then
 reversed it: with three vendors it makes judge identity perfectly confounded with entrant family
-(one judge was +2.7 to +3.4 points more lenient than the others and was dropped for exactly the
+(one judge is a severity outlier — `design.md` §0 — and was dropped for exactly the
 entrants of its own family), which makes the leaderboard unidentifiable. The full panel now scores
 every entrant, `same_family` is stamped per judge row and modelled as a covariate, and LOFO is
 recoverable post-hoc as a robustness filter. That reversal is itself one of the paper's findings.
@@ -80,8 +80,8 @@ the rest at release — the Croissant / Croissant-RAI records (`croissant.json`)
 yet**, so do not cite them as shipped.
 
 ## The one-sentence gap
-CREST is the first benchmark to score the **novelty and usefulness** (plus exploratory
-surprise) of **deep-research agents**, **by task type**, against a **dated per-item prior-art set**,
+CREST is the first benchmark to score the **novelty, usefulness and surprise** of
+**deep-research agents**, **by task type**, against a **dated per-item prior-art set**,
 with a **multi-vendor full panel** whose self-preference is measured rather than assumed, and a
 **separate** citation-grounding check — turning "is this report creative?" from an unmeasured
 question into a released, reproducible instrument. A frozen shared index and human validation of the

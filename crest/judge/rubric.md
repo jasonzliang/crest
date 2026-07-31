@@ -1,23 +1,22 @@
 # CREST Judge Rubric — New / Useful / Surprising (all three primary)
 
-> **This file is the human-readable mirror of the deployed prompt, `judge/score.py::_judge_prompt`.**
-> It has drifted before — it specified a "judge against the dated set, not the web" *anti-web clause*
-> and a separate **9–10** band that the deployed prompt did not contain — so it is now maintained
-> clause-by-clause against that function. Where the two disagree, **the code is authoritative and
-> this file is the bug.** Last diffed against `_judge_prompt` at commit `af65640` (2026-07-31).
+> **This file is the human-readable mirror of the deployed prompt, `judge/score.py::_judge_prompt`
+> (`JUDGE_PROMPT_VERSION = v2`, hash `e2ce119c`, gated by `analysis/ci_check.sh`).** It has drifted
+> before, so it is maintained clause-by-clause against that function. Where the two disagree, **the
+> code is authoritative and this file is the bug.** Last diffed at commit `af65640` (2026-07-31).
 
-> **What changed and why (2026-07-30).** Two axes are primary, not three, and the first is renamed to
-> what it actually measures. Both changes follow from an ablation on the deployed judge
-> (`analysis/ablate_fields.py`, 10 items × 5 entrants = 50 answers; result in the run's
-> `ablation.json`): withholding the prior-art set moved the first axis by **+0.98** (it is
-> load-bearing), while withholding `expert_baseline` moved Surprising by **−0.02** (it anchored
-> nothing). `expert_baseline` is therefore no longer sent to the judge. Surprising is still scored
-> and reported, and is a PRIMARY axis, but it is **unanchored**, and correlates with novelty at
-> **r = 0.883** (n = 250 scored records, run 2026-07-31T040653Z, computed at RECORD level, which is
-> what the endpoint uses; pooling per-judge rows instead gives 0.946, the figure previously quoted
-> here as 0.94/0.95. Recompute per run -- never quote a fixed figure. The earlier n = 234 described
-> run 020425Z, whose records have since been deleted.)  (the deployed prompt rounds this to
-> "r~0.95").
+> **What changed and why.** `expert_baseline` is no longer sent to the judge, and all three axes are
+> primary. Both follow from an ablation on the deployed judge (`analysis/ablate_fields.py`, 10 items
+> × 5 entrants = 50 answers; result in the run's `ablation.json`): withholding the prior-art set
+> moved New by **+0.98** (load-bearing), while withholding `expert_baseline` moved Surprising by
+> **−0.02** (it anchored nothing). Surprising is still scored and reported and is a PRIMARY axis, but
+> it is **unanchored**, and correlates with New at **r = 0.883** on run 2026-07-31T040653Z (n = 250,
+> at RECORD level, which is what the endpoint uses; pooling the 750 per-judge rows gives 0.946).
+> Recompute per run — never quote a fixed figure. **This correlation is CONTAMINATED and is not
+> evidence that the axes are inseparable:** 040653Z was judged under prompt v1, which told the judge
+> Surprising "correlates with non-redundancy at r~0.95". v2 dropped that clause (and the −0.02
+> figure) as circular, so the correlation must be re-measured on a v2 re-judge from stored
+> transcripts (`harness/rejudge.py`) before it is quoted as a finding.
 
 ## What the judge actually receives
 
@@ -30,9 +29,11 @@
 4. **ANSWER TO SCORE (author identity withheld)** — the full answer text, capped at 400,000 chars
    (guard only: the longest answer observed is 57,282).
 
-Nothing else reaches the judge. In particular **`expert_baseline`, `author_expected_surprises`,
-`category`, `domain`, `axis_isolated`, `time_sensitivity`, the agent's name, and every other
-entrant's answer are all withheld.** The judge returns one JSON object —
+Nothing else reaches the judge on a scoring run. In particular **`expert_baseline`,
+`author_expected_surprises`, `category`, `domain`, `axis_isolated`, `time_sensitivity`, the agent's
+name, and every other entrant's answer are all withheld** — `expert_baseline` reappears as a fifth
+block only under the `restore_expert_baseline` ablation arm, which exists to reproduce the
+pre-withdrawal condition. The judge returns one JSON object —
 `{"new", "useful", "surprising", "hard_rules_violated", "rationale" (≤40 words)}` — and no prose.
 
 **Panel and aggregation** (`judge/score.py::JudgePanel`, `judge/judge_config.live.yaml`):
@@ -41,12 +42,12 @@ entrant's answer are all withheld.** The judge returns one JSON object —
 - **Full panel, not leave-one-family-out.** `leave_one_family_out: false` is the shipped default:
   with only three vendors, LOFO made judge identity perfectly confounded with entrant family and
   introduced a larger bias than the self-preference it removed. Every judge row is stamped
-  `same_family`, so LOFO is recoverable post-hoc as a robustness filter and self-preference enters
-  the model as a covariate instead.
-- **No answer-order randomization** — and this is not an unimplemented control, it is a *vacuous*
-  one: scoring is single-answer, not pairwise, so there is no order to randomize. Earlier versions
-  of this file and of `judge_config.yaml` asserted it; the claim has been withdrawn rather than
-  left standing. Known-answer-list order and axis order are also **not** randomized.
+  `same_family`, so LOFO is recoverable post-hoc (the `same_family == False` rows) and
+  self-preference enters the model as a covariate instead. Measured justification:
+  `judge_config.live.yaml`.
+- **No answer-order randomization** — not an unimplemented control but a *vacuous* one: scoring is
+  single-answer, not pairwise, so there is no order to randomize. The claim has been withdrawn
+  rather than left standing. Known-answer-list order and axis order are also **not** randomized.
 - Per-axis scores are aggregated by **median** across surviving judges. Below `min_judges: 2` the
   record is flagged `judge_degraded` rather than silently averaged; if every judge fails the record
   is `judge_error` with `creativity: null` — never a fake 0.
@@ -54,21 +55,18 @@ entrant's answer are all withheld.** The judge returns one JSON object —
 ## Primary endpoint
 
 **`min(New, Useful, Surprising)` — graded, on the 1–10 scale, not a threshold.**
-This is now the definition in code (`analysis/stats.py::_composite`) and in
-`analysis/preregistration.yaml`. Surprising binds alone in 20% of records, so it is not a
-redundant axis. `stats.py::min2()` reports the New/Useful pair as a robustness check only.
-Surprising IS included, and the paragraph that used to sit here (six lines below the definition
-above) said the opposite. The argument for excluding it was that it is "the sole binding axis in
-roughly 1 record in 147"; measured on the shipped run it is the sole binding axis in **51 of 250
-records (20%)**, so the `min` is doing real work on a fifth of the data. The mechanical point that
-paragraph made is still true and is the reason to keep it: a 9/7/2 record scores 2, not 7.
+This is the definition in code (`analysis/stats.py::_composite`) and in
+`analysis/preregistration.yaml`; `stats.py::min2()` reports the New/Useful pair as a robustness check
+only. All three axes are in the `min`, because on the shipped run Surprising is the **sole binding
+axis in 51 of 250 records (20%)** — the `min` is doing real work on a fifth of the data. Mechanically
+this is a floor, not an average: a 9/7/2 record scores 2, not 7.
 
 The old "at or above threshold on all three axes" indicator survives only for backward comparability
 (`threshold_all_three: 6.0`, reported per record as `creative_all_three`): it is unpre-registered,
 its rate swung **5.4–36.1%** across thresholds 5–7 on the PILOT and **46.4–56.0%** on the canonical
-run 040653Z, and 13.6% of that run's records sit exactly on 6.00 on some axis (34/250; the 24.9%
-and 17.5% quoted here previously came from superseded runs). Adding Surprising to a two-axis gate removes 1 of 250 records at t = 6 and 3 at t = 7
-(recomputed on run 040653Z; the earlier "0 of 234 / 2" described superseded run 020425Z).
+run 040653Z, and 13.6% of that run's records sit exactly on 6.00 on some axis (34/250). Adding
+Surprising to a two-axis gate removes **1 of 250** records at t = 6 and **3** at t = 7. Earlier
+figures on these lines came from runs since deleted; see `result/superseded_runs.json`.
 
 Grounded in the standard definition of creativity (novelty + usefulness) plus Boden's surprise.
 Humans do **not** currently own any axis: **no human validation study has been run** (see
@@ -93,9 +91,9 @@ and the reference set is published so any omission can be contested.
   `C5_law_policy_47` lists 20 voting methods but still omits Phragmén 1894, Nanson 1882 and random
   ballot — verified against the shipped file), so an agent rediscovering absent prior art is
   over-credited. Requiring a resolvable DOI per entry is the fix. A second, larger defect: only
-  **52% of `known_answers` entries carry an explicit year** file-wide, and just **22% (`_3x`) /
-  18% (`_4x`)** in the back half of the file, so for those items "dated prior-art set" overstates
-  what is shipped (`docs/notes/audit_live_C4_remainder.md` §2).
+  **48% of `known_answers` entries carry an explicit year** file-wide (340/708), and just
+  **17% (`_3x`) / 16% (`_4x`)** in the back half of the file, so for those items "dated prior-art
+  set" overstates what is shipped (`docs/notes/audit_live_C4_remainder.md` §2).
 
 ## Useful (viability / soundness / appropriateness) — 1–10
 - Is the idea sound, workable, and appropriate to the challenge? **Every hard rule must be
@@ -114,60 +112,64 @@ and the reference set is published so any omission can be contested.
 - Non-obviousness conditioned on correctness, judged against the judge's own sense of expert
   expectation. **Deliberately unanchored:** `expert_baseline` was supplied here until 2026-07-30 and
   an ablation showed it moved this axis by −0.02. In 7 items it also carried the author's enumeration
-  of the intended surprises (58–59% of the field in two of them; a third read 64% before its baseline was restored 2026-07-31), making Surprising graded recall
-  against a key rather than expectation-violation. That enumeration now lives in the judge-hidden
-  `author_expected_surprises` field.
-- It is reported for continuity and because Boden's surprise criterion motivates the design, but
-  r(New, Surprising) = 0.883 at record level (0.946 pooling per-judge rows) on run 2026-07-31T040653Z, and adding it to a two-axis gate eliminates 1 of 250 records
-  at t = 6. **Do not treat it as independent evidence.**
+  of the intended surprises (58%, 59% and 64% of the field in three of them), making Surprising graded
+  recall against a key rather than expectation-violation. That enumeration now lives in the
+  judge-hidden `author_expected_surprises` field; `questions/quarantine.yaml` tracks the three items.
+- It is reported for continuity and because Boden's surprise criterion motivates the design, but it
+  tracks New closely (r = 0.883; see the header note — that figure is prompt-v1-contaminated) and
+  adding it to a two-axis gate eliminates only 1 of 250 records at t = 6. **Do not treat it as
+  independent evidence.**
 
 ## Grounding gate (applied before scoring, not part of the axes)
 `judge/score.py::grounding_gate`. **What ships is a PILOT proxy, not the FACT-precision gate this
 section used to describe.** It counts *citation-worthy cues* (dated facts, statistics, currency,
 named studies) with a regex, and:
 
-- an empty / near-empty answer (<40 chars) **fails**;
-- an answer carrying ≥1 real source URL **passes**;
+- an empty answer **fails** as `empty_answer`; a non-empty answer under `_MIN_SUBSTANTIVE_CHARS`
+  (**1000**, raised from 40 after 10 truncated-adapter preambles of 90–349 chars were scored 1/1/1)
+  fails as `too_short`;
 - a pure-invention answer making ≤2 uncited verifiable factual claims **passes** with zero citations
   (the old `>= min_citations` floor wrongly zeroed the invent tasks, C1/C5);
-- an answer piling up many external factual claims with no citation **fails**.
+- otherwise it needs ≥1 citation **and** a claims-per-citation ratio ≤ `_MAX_CLAIMS_PER_CITATION`
+  (**20**). This is a ratio, not an OR: the earlier "has ≥1 citation" disjunct let a single URL carry
+  60 fabricated dated statistics.
 
-There is **no frozen snapshot**, no per-claim entailment check, and no FACT precision threshold —
-`judge_config.yaml` still declares `metric: fact_precision, threshold: 0.8`, which is marked
-`[NOT IMPLEMENTED]` in that file and must not be cited as a shipped control.
+There is **no frozen snapshot**, no per-claim entailment check, and no FACT precision threshold. The
+stronger `metric: fact_precision, threshold: 0.8` gate exists only as design intent in
+`docs/judge_protocol_intent.md`, marked `[NOT IMPLEMENTED]` there, and must not be cited as a shipped
+control.
 
 **Fail ⇒ the answer is UNSCORED (`creativity: null`), not zero.** A fake 0 folded into results was
 explicitly rejected; a failing record carries `scoring_status` ∈ {`empty_answer`, `too_short`, `grounding_fail`}.
 
-**Measured contribution: none, so far.** Across 245 records (run 2026-07-31T020425Z -- a
-SUPERSEDED run whose records are deleted; see result/superseded_runs.json. The canonical run
-040653Z has 250 records, all scored, zero empty and zero too-short answers, so on that run the gate
-never fires at all) the anti-fabrication clause fired **zero** times. All 11 rejections were
-**empty strings** from one
-entrant (`claude_shallow`, an adapter failure), which is why `empty_answer` is now a *separate*
-`scoring_status` from `grounding_fail` — conflating them mislabelled an adapter bug as Claude being
-ungrounded. The gate is retained as a cheap guard against an untooled or confabulating entrant, but
-**the paper must not claim it as a working control on this field of entrants.**
+**Measured contribution: none, so far.** Across 245 records (superseded run 2026-07-31T020425Z, since
+deleted — `result/superseded_runs.json`) the anti-fabrication clause fired **zero** times; all 11
+rejections were **empty strings** from one entrant (`claude_shallow`, an adapter failure), which is
+why `empty_answer` is a *separate* `scoring_status` from `grounding_fail` — conflating them
+mislabelled an adapter bug as Claude being ungrounded. On the canonical run 040653Z the gate never
+fires at all: 250/250 scored, shortest answer 2,495 chars. The gate is retained as a cheap guard
+against an untooled or confabulating entrant, but **the paper must not claim it as a working control
+on this field of entrants.**
 
 ## Reporting
 Report the axes **separately per category** (a profile, not one number).
 
 - **Implemented:** inter-judge reliability — Krippendorff's α (interval) and ICC(1,1)/ICC(1,k), plus
-  the per-judge severity table, in `analysis/stats.py::reliability_report`. Measured on the full
-  panel, ICC(1,k) on the canonical run is **0.0 / 0.618 / 0.0** (New / Useful / Surprising) against
-  a 0.80 bar — the .774/.746/.671 previously quoted here came from superseded run 111856Z. The
-  one-way model absorbs the 3.2–3.7-point judge severity spread into error, so these are a floor,
-  not the whole story; recompute per run and never quote a fixed figure — the panel
-  misses it on every axis, and by the most on Surprising. Severity is reported alongside α by
-  design: judge severity varies by 3.32 / 3.20 / 3.74 points per axis on a 1–10 scale (the "2–3
-  points" figure this line used to give predated the full-panel run), exceeding the between-agent
-  spread, so α alone would hide the effect that decided the leaderboard.
+  the per-judge severity table, in `analysis/stats.py::reliability_report`. On the canonical run the
+  full-panel ICC(1,k) is **0.0 / 0.618 / 0.0** (New / Useful / Surprising) against a 0.80 bar: the
+  panel misses it on every axis, and by the most on Surprising. That one-way model absorbs judge
+  severity into error, so it is a **floor**; removing the judge effect two-way gives ICC(3,k)
+  **0.736 / 0.807 / 0.759**, which is the ceiling and clears the bar on Useful only. Report both, and
+  recompute per run — never quote a fixed figure. Severity is reported alongside α by design: it
+  varies by **3.32 / 3.20 / 3.74** points per axis on a 1–10 scale, exceeding the between-agent
+  spread (2.06 on the composite), so α alone would hide the effect that decided the leaderboard.
 - **Not implemented:** length bins — length is logged per record (`output_len_tokens`) but no
   analysis stratifies or adjusts for it, so "per category × length bin" is not something this repo
   currently produces.
 - **Not implemented:** judge↔human agreement. There is no human panel, no human scores, and no
-  human-agreement threshold anywhere in the code — only a `human_validation_required_categories`
-  key in `judge_config.yaml` that nothing reads. Any claim that C1/C5 are human-anchored, or that
-  the panel is "authoritative on C2/C3/C4", is unsupported by the shipped artifact.
+  human-agreement threshold anywhere in the code — `human_validation_required_categories` survives
+  only as design intent in `docs/judge_protocol_intent.md`, read by nothing. Any claim that C1/C5 are
+  human-anchored, or that the panel is "authoritative on C2/C3/C4", is unsupported by the shipped
+  artifact.
 - **No ranking claim is made** (`analysis/preregistration.yaml: ranking_claims: none`), because
   judge severity exceeded the between-agent spread.

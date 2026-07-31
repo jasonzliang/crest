@@ -86,79 +86,55 @@ if h != JUDGE_PROMPT_VERSION_HASH:
 print(f"  OK judge prompt matches stamp {JUDGE_PROMPT_VERSION} ({h})")
 PY2
 
-echo "== canary claim vs data"
-# count, do not merely detect: one item containing the word passed a claim that EVERY item carries one
-n_canary=$(python -c "
-import json,sys
-rows=[json.loads(l) for l in open('crest/questions/crest_challenges.jsonl') if l.strip()]
-print(sum(1 for r in rows if 'canary' in json.dumps(r).lower()), len(rows))
-")
-set -- $n_canary; have=$1; total=$2
-# The allow-list check runs UNCONDITIONALLY. It used to sit inside the `else` of "do all items carry a
-# canary?", so adding canaries to all 50 items would have silently retired it -- and it polices more
-# than the count (an OSF registration, a frozen index, "reproduction would be evidence of
-# contamination"). have/total is now only a number in the message.
+echo "== canary claims are human-approved"
+# NOT a count of canaries in the item file: that count gated nothing, and the ground truth (0 of 50)
+# is recorded in the allow file's header. The check below runs UNCONDITIONALLY -- it used to sit inside
+# the `else` of "do all items carry a canary?", so adding canaries to all 50 items would have silently
+# retired it, and it polices more than a count (an OSF registration, a frozen index, "reproduction
+# would be evidence of contamination").
 {
-  # APPROVAL LIST, not prose-matching. Three grep-based versions of this check were each green for
-  # the wrong reason, and the last two failed in ways that only showed up under adversarial review:
-  #   v1  grepped datasheet.md whole-file for "NOT IMPLEMENTED"; 13 unrelated markers always
-  #       satisfied it, so the FAIL branch was unreachable no matter what the docs claimed.
-  #   v2  excluded lines carrying any hedge word -- but "planned" and "would be" are exactly the
-  #       words a REAL claim uses ("carries a canary GUID, so reproduction WOULD BE evidence").
-  #   v3  required an explicit absence phrase -- still passed a line that contained one for an
-  #       unrelated reason ("Automated dedup is [NOT IMPLEMENTED], but every item embeds a canary").
-  # Prose is not parseable by regex, and each fix bought one round. So: every line mentioning a
-  # canary must be BYTE-IDENTICAL to a line a human approved in canary_claims.allow. A new or edited
-  # canary sentence fails until someone re-reads it and re-approves it -- which is the actual
-  # control wanted here. Scope is EVERY tracked .md and .tex under crest/, enumerated with
-  # git ls-files rather than a hand-listed glob -- the glob covered 43 files and missed 7,
-  # including both papers' main.tex, judge/rubric.md and result/readme.md, while the comment here
-  # claimed "adding a file cannot silently skip it".
+  # APPROVAL LIST, not prose-matching: prose is not parseable by regex, so every line mentioning a
+  # canary must be BYTE-IDENTICAL to a line a human approved in canary_claims.allow, and editing one
+  # costs a re-read -- which is the actual control wanted. (Three grep heuristics preceded this and
+  # were each green for the wrong reason; `git log -- crest/analysis/ci_check.sh` has them.) Scope is
+  # EVERY tracked .md and .tex under crest/, enumerated with git ls-files rather than a hand-listed
+  # glob -- that glob covered 43 files and missed 7, including both papers' main.tex, judge/rubric.md
+  # and result/readme.md.
   allow="crest/analysis/canary_claims.allow"
-  # grep -f with a MISSING pattern file writes to stderr, matches nothing, and exits non-zero --
-  # so `| wc -l` saw 0 lines and the gate printed OK. Replacing a heuristic with an approval list
-  # made the list's own absence fail OPEN: a rename, a path typo or a sparse checkout silently
-  # disabled the entire control. Fail closed instead. (An EMPTY file already fails closed, and a
-  # blank line inside it is harmless: -x anchors the empty pattern to empty lines only.)
+  globs=('crest/*.md' 'crest/**/*.md' 'crest/**/*.tex')
+  # Fail CLOSED on anything that leaves the gate with no input, because each such case printed OK:
+  # `grep -f` on a missing pattern file matches nothing, `git ls-files` prints nothing outside a repo,
+  # and BSD xargs skips grep entirely on an empty list. (An EMPTY allow file already fails closed, and
+  # a blank line inside it is harmless: -x anchors the empty pattern to empty lines only.)
   if ! git rev-parse --git-dir >/dev/null 2>&1; then
-    # git ls-files prints nothing outside a repo, BSD xargs then skips grep entirely, n_bad=0, and
-    # the gate printed OK. Fail closed: the file list IS the gate's coverage.
     echo "  FAIL not a git repository -- cannot enumerate docs, so the canary gate cannot run"; fail=1
   elif [ ! -s "$allow" ]; then
     echo "  FAIL $allow is missing or empty -- the canary gate cannot run"; fail=1
   else
-  # Capture the file list ONCE and assert it is non-empty. `printf "" | xargs -0 grep` exits 0 with no
-  # output, so an empty list yielded n_bad=0 and the gate printed OK -- the same fail-open as the
-  # not-a-git-repo hole closed one branch above, and this file list IS the gate's coverage. Capturing
-  # also collapses a 5-stage pipeline that previously ran once to count and again to print.
-  # NUL-delimited end to end. git ls-files runs TWICE below -- once to count, once to grep -- because
-  # a NUL-separated list cannot be held in a shell variable (bash strips NULs). An earlier comment
-  # here claimed the list was captured once; it was, and that capture was the newline bug.
-  # The previous version ran `git ls-files` WITHOUT -z and rebuilt the NUL
-  # separation with `printf | tr '\n' '\0'`, which is not newline-safe: git QUOTES a path containing a
-  # newline ("crest/docs/new\nline.md"), grep received the literal quoted string, said "No such file",
-  # and 2>/dev/null ate the error -- so that file's canary lines never reached the allow-list check and
-  # the gate printed OK. git -z disables quoting entirely. stderr is no longer discarded, so a file
-  # that cannot be read is loud rather than silently skipped.
-  n_docs=$(git ls-files -z --cached --others --exclude-standard \
-             'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' | tr -dc '\0' | wc -c | tr -d ' ')
+  # NUL-delimited end to end, and `git ls-files` deliberately runs TWICE -- once to count, once to
+  # grep -- because a NUL-separated list cannot be held in a shell variable (bash strips NULs) and the
+  # file list IS this gate's coverage, so its emptiness has to be asserted separately. -z also
+  # disables git's path QUOTING: without it a path containing a newline reached grep as a literal
+  # quoted string, grep said "No such file", and that file's canary lines never reached the gate.
+  # stderr is NOT discarded, so an unreadable file is loud rather than silently skipped.
+  n_docs=$(git ls-files -z --cached --others --exclude-standard "${globs[@]}" \
+             | tr -dc '\0' | wc -c | tr -d ' ')
   if [ "${n_docs:-0}" = "0" ]; then
     echo "  FAIL no crest .md/.tex files enumerated -- the canary gate has no coverage"; fail=1
     bad_lines=""
   else
-    bad_lines=$(git ls-files -z --cached --others --exclude-standard \
-                  'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
+    bad_lines=$(git ls-files -z --cached --others --exclude-standard "${globs[@]}" \
                 | xargs -0 grep -hiE "canar(y|ies)" \
                 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u \
                 | grep -vxFf "$allow")
   fi
   n_bad=$(printf '%s' "$bad_lines" | grep -c . | tr -d ' ')
   if [ "${n_bad:-0}" != "0" ]; then
-    echo "  FAIL $n_bad canary line(s) not in $allow, and only $have/$total items carry one."
+    echo "  FAIL $n_bad canary line(s) not approved in $allow."
     echo "       Re-read each, then add it verbatim to the allow file if it is honest:"
     printf '%s\n' "$bad_lines" | cut -c1-110 | sed 's/^/         /'
     fail=1
-  else echo "  OK all canary mentions are human-approved ($have/$total items carry one)"; fi
+  else echo "  OK all canary mentions are human-approved"; fi
   fi
 }
 

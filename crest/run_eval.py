@@ -3,6 +3,8 @@
 
     python crest/run_eval.py                          # uses crest/config/eval_config.yaml
     python crest/run_eval.py --config <path>
+    python crest/run_eval.py --dry-run                # resolve config/agents/challenges + preflight
+                                                      # keys; make no model calls, spend nothing
 
 Edit crest/config/eval_config.yaml to choose which benchmark(s) + subset, which agents, and the
 judge panel. Each benchmark produces an immutable run directory under <out_root>/runs/<run_id>/
@@ -103,6 +105,11 @@ def main():
     use_cache = cfg.get("use_cache", True) and not args.override_cache
     cache = GenerationCache(out_root, enabled=use_cache,
                             trust_legacy=cfg.get("trust_legacy_cache", False))
+    agents = {k: build_agent(k, budget=budget) for k in cfg["agents"]}
+    print(f"config: {args.config}")
+    print(f"agents: {[(k, a.model) for k, a in agents.items()]}")
+    print(f"judges: {[(j['id'], j['model']) for j in panel.judges]} (min_judges={panel.min_judges})")
+    print(f"cache: {'ON (reusing prior generations)' if use_cache else 'OFF (--override-cache: re-generating)'}")
     if args.override_cache_agents:
         _stale = set(args.override_cache_agents)
         _get = cache.get
@@ -110,12 +117,7 @@ def main():
         # every other entrant is still served for free
         cache.get = (lambda cid, agent, model, qsha, fp="":
                      None if agent in _stale else _get(cid, agent, model, qsha, fp))
-        print(f"cache: forcing re-generation for {sorted(_stale)} (all other agents served from cache)")
-    agents = {k: build_agent(k, budget=budget) for k in cfg["agents"]}
-    print(f"config: {args.config}")
-    print(f"agents: {[(k, a.model) for k, a in agents.items()]}")
-    print(f"judges: {[(j['id'], j['model']) for j in panel.judges]} (min_judges={panel.min_judges})")
-    print(f"cache: {'ON (reusing prior generations)' if use_cache else 'OFF (--override-cache: re-generating)'}")
+        print(f"  forcing re-generation for {sorted(_stale)} (all other agents served from cache)")
 
     preflight(agents, panel, enforce=not args.dry_run)
 

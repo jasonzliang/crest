@@ -381,6 +381,13 @@ Everything below was measured on the full-panel run `2026-07-30T111856Z` (250 re
 untruncated answers, anti-web clause present), i.e. on the corrected instrument rather than the one
 the reviewers analysed.
 
+> **SUPERSEDED RUN.** `111856Z` is not the canonical run and is **not on disk** (`result/` is
+> gitignored), so nothing in this section is reproducible as written. The canonical run is
+> `2026-07-31T040653Z`; its recomputed figures live in `docs/design.md` §0, and where the two
+> disagree, §0 wins. The *directions* below all survive re-measurement; three magnitudes do not
+> (flagged inline). The ablation deltas (+0.98 / −0.02) have no persisted output in either run and
+> can only be re-derived by re-running `analysis/ablate_fields.py`.
+
 ### `known_answers` — KEEP. Now proven load-bearing by ablation.
 Withholding the prior-art list from the judge **inflates New by +0.98** (7.28 -> 8.26 over 50 records).
 That is the novelty mirage reproduced in-house, in the correct direction. It also disposes of the
@@ -393,12 +400,16 @@ against the web or your own background knowledge" clause to the deployed prompt)
 CORRECTNESS the only remaining safeguard against a wrong novelty baseline. Before, a judge's own
 knowledge was a second, unreliable line of defence. This raises the priority of DOI-per-entry (S13).
 
-### `expert_baseline` — DEMOTE the axis, keep the field.
-Withholding it moves Surprising by **-0.02**. It does not anchor the axis it exists for. With
-r(New, Surprising) ~ 0.93 and Surprising the sole binding axis in ~1 record of 147, three independent
-lines agree: report **two primary axes** (New, Useful) with Surprising exploratory. The field is kept
-because deleting it removes the ability to measure the collapse, and Boden-grounded surprise is a
-stated contribution.
+### `expert_baseline` — DEMOTE the axis, keep the field. **CONCLUSION REVERSED.**
+Withholding it moves Surprising by **-0.02**. It does not anchor the axis it exists for — that part
+stands. The recommendation that followed does not: on the argument that r(New, Surprising) ~ 0.93 and
+that Surprising was the sole binding axis in ~1 record of 147, this section proposed reporting **two
+primary axes** with Surprising exploratory. Both premises were wrong. On the canonical run Surprising
+is the sole binding axis in a fifth of all records, and the New/Surprising correlation is
+**CONTAMINATED** — the v1 judge prompt stated that correlation *to the judge* — so it cannot evidence
+inseparability at all (`design.md` §0). The primary endpoint is `min(New, Useful, Surprising)`, all
+three axes. The field is kept because deleting it removes the ability to measure the collapse, and
+Boden-grounded surprise is a stated contribution.
 
 Separately, 7 items had answer keys embedded in this field and are now split into judge-hidden
 `author_expected_surprises`. For three of them the key was the MAJORITY of the field
@@ -406,7 +417,7 @@ Separately, 7 items had answer keys embedded in this field and are now split int
 Surprising was graded recall against an author-written list, not expectation-violation.
 
 ### `axis_isolated` — VALID FOR C1 ONLY. Narrow the claim.
-Measured after the truncation fix (n=196, excluding `balanced`):
+Measured after the truncation fix on run `111856Z` (n=196, excluding `balanced`):
 
 | label | binding-axis hit rate | chance | delta (labelled axis - others) |
 |---|---|---|---|
@@ -414,6 +425,12 @@ Measured after the truncation fix (n=196, excluding `balanced`):
 | novelty (C3, C5) | 21% | 33% | **+1.51** (wrong sign) |
 | surprise (C2) | 15% | 33% | +0.18 |
 | overall | 28% | 33% | — |
+
+> **STALE MAGNITUDES.** Recomputed on the canonical run these rates are materially different
+> (usefulness 68% sole-binding / 80% including ties; surprise 14% / 40%; novelty 0% / 11%) — see
+> `design.md` §0, which is authoritative. The *verdict* is unchanged and in fact strengthened: valid
+> for C1/usefulness, wrong-signed for novelty. Cite §0, not this table; the 56 / 21 / 15 triple has
+> already leaked into three other docs from here.
 
 C1 is genuinely usefulness-limited. The novelty label is wrong-signed: items built to isolate novelty
 are where agents score HIGHEST on New, i.e. they are novelty-EASY rather than novelty-isolating,

@@ -1,8 +1,18 @@
-> **HISTORICAL (pre-2026-07-30).** Refers to entrant keys (`*_dr`) and item fields
-> (`predicted_direction`, `category_name`) that no longer exist. Retained for the
-> reasoning, not as a description of the current artifact.
+> **SPENT — RECOMMENDED FOR DELETION.** This is a *plan* that was fully executed: the set is
+> 50 items, 10 per category, and the 20 new items have since been vetted (`docs/item_vetting.md`)
+> and live-web audited (`docs/notes/audit_live_*.md`). Nothing here describes the shipped artifact;
+> it also refers to entrant keys (`*_dr`) and item fields (`predicted_direction`, `category_name`)
+> that no longer exist, and its §6 acceptance checklist asserts a contamination scan and an embedded
+> no-train marker, neither of which exists for any of the 50 items.
+>
+> It is retained ONLY because two of its lines (in §3 and §6) are under the approval-list gate in
+> `analysis/ci_check.sh`, and one of them is a deliberate, currently-red failure: the approval file
+> lists it under "Deliberately ABSENT (known false claims, so the gate stays red until they are
+> fixed)". Deleting this file *resolves* that failure by removing the false claim — which changes
+> the gate's failure set, so it must be done together with retiring the corresponding entry in the
+> approval file. Whoever owns that file should do both in one commit.
 
-# How to scale CREST from 6 → 10 items per category
+# How to scale CREST from 6 → 10 items per category (EXECUTED — see header)
 
 Goal: grow the scored set from **30 (6/category)** to **50 (10/category)** — i.e. author
 **20 new challenges** — without lowering the quality bar or breaking the pre-registered structure.
@@ -52,7 +62,7 @@ actually dissociate, which is a top reviewer ask.
 ## 3. The per-item quality bar (what "as good as the existing 30" means)
 Every new item must ship, at the level of the current items:
 1. `query` — a self-contained, multi-hop **synthesis** task (answer on **no single page**),
-   with the isolated axis genuinely pinned (see the exemplars in `question_audit.md`).
+   with the isolated axis genuinely pinned.
 2. `known_answers[]` — a **dated** list (as-of the knowledge cutoff) of what is already known,
    each with a source, so *New* is judged against knowledge, not the open web.
 3. `hard_rules[]` — **machine-checkable** constraints that gate *Useful* and block trivial/known
@@ -96,23 +106,10 @@ Only items passing all gates are appended to `crest_challenges.jsonl` (schema-va
 - Length-vs-score correlation near zero (apply the K-candidate + length-budget controls).
 - Contamination scan clean (canary embedded; not derivable from a single indexed page).
 
-## 7. Blocker and how to clear it
-The only hard blocker is that **dating the known-answers lists + verifying novelty needs live web
-research**, and this session's top-level WebSearch budget is exhausted. Two clean options:
-(a) **use the API deep-research agents** as the known-answers compilers (they retain web access via
-the provider tools — verified working this session), or (b) run the generation pass when the
-WebSearch budget resets. Everything else (blueprint, drafting, vetting harness, piloting) is
-available now.
-
-## 8. Coupling with the category decision, and effort
-- If you also add **C6 Scientific Hypothesis Generation** (`category_coverage.md`), target
-  **6×10 = 60** (author **30** new items, not 20). Decide C6 *before* generating, so C6 launches
-  at full power rather than starving existing cells.
-- Effort: item drafting + vetting is fast (hours of agent time); the **expert verification of
-  known-answers/baselines is the slow, expensive part** — start it first, exactly as the paper plan
-  says for the human study.
-
-## 9. Recommended next action
-Author the **20 new items** via the pipeline in §5 (or **30** if C6 is in), with **≥8 post-cutoff**
-and a private-tier split, then re-pilot to confirm headroom and reliability. I can spin up that
-generation workflow on request — say whether to include C6 first.
+## 7. Outcome (recorded 2026-07-31)
+The 20 items were authored (ids `_3x`/`_4x`) and appended; C6 was not added (`category_coverage.md`).
+What the plan asked for and did **not** get: the tool-ablation check (§6) was never run; the
+post-cutoff target was missed badly (`datasheet.md` §2, "Splits"); no private tier and no embedded
+no-train marker exist; and the dating acceptance gate was not enforced — the `_3x`/`_4x` blocks are the
+worst-dated in the file (`datasheet.md` §2, "Prior-art dating"). The §3 quality bar was met on
+structure and missed on provenance.

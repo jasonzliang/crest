@@ -1,17 +1,22 @@
 # Datasheet for CREST
 
 Follows *Datasheets for Datasets* (Gebru et al., 2021). This datasheet describes the artifact **as
-shipped**: every field list, count and control below is meant to be literally true of the files in
-this repo at commit `af65640` (2026-07-31), with anything unbuilt marked `[NOT IMPLEMENTED]` rather
-than described in the present tense. It is also a release gate — NeurIPS/ICLR Datasets & Benchmarks
-desk-reject checks (licensing, contamination, author-COI, human-subjects) are answered here.
+shipped**, with anything unbuilt marked `[NOT IMPLEMENTED]` rather than described in the present
+tense. It is also a release gate — NeurIPS/ICLR Datasets & Benchmarks desk-reject checks (licensing,
+contamination, author-COI, human-subjects) are answered here.
+
+**This file is the SINGLE SOURCE OF TRUTH for dataset composition** — field lists, schema version,
+per-category/domain/axis counts, the `time_sensitivity` split, prior-art dating rates and quarantine
+status. Other docs cross-reference §2 instead of restating those numbers. Conversely, every figure
+measured *from a scored run* (endpoint means, correlations, ICC, judge severity) lives in
+`design.md` §0 and is not restated here.
 
 > **Release status: NOT RELEASE-READY.** The mechanical pre-release gate
-> (`analysis/ci_check.sh`) currently **FAILS**: `analysis/validate_items.py` reports 2 BLOCKING
-> self-contradictions, both in `C1_materials_chemistry_01` (one hard rule permits 'Se' while another
-> bans it; the expert baseline reports mu=0.39 against its own rule's [0.40, 0.90] range). An
-> earlier count of 4 across 3 items included two validator false positives, since fixed. Croissant/Croissant-RAI metadata is **not written yet** — there is no
-> `croissant.json` in the repo — so the Croissant desk-reject gate is not cleared either.
+> (`analysis/ci_check.sh`) currently **FAILS** on `analysis/validate_items.py` self-contradictions
+> in `C1_materials_chemistry_01`. Run the gate for the live list rather than trusting a transcript;
+> an earlier count of 4 across 3 items included two validator false positives, since fixed.
+> Croissant/Croissant-RAI metadata is **not written yet** — there is no `croissant.json` in the
+> repo — so the Croissant desk-reject gate is not cleared either.
 
 ## 1. Motivation
 - **Purpose.** Measure the *creativity* (novelty / Useful / Surprising) of deep-research web
@@ -34,7 +39,7 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
 ## 2. Composition
 - **Instances.** 50 research challenges (10 per category, C1–C5). Each is a natural-language
   research query plus metadata. The shipped schema (`questions/schema.json`, version
-  `crest-challenge/3.1.0`, `additionalProperties: false`) defines **nine required fields** —
+  `crest-challenge/3.2.0`, `additionalProperties: false`) defines **nine required fields** —
   `id`, `category` (C1–C5), `domain`, `query`, `axis_isolated`, `time_sensitivity`,
   `known_answers[]`, `hard_rules[]`, `expert_baseline` — plus **one optional field**,
   `author_expected_surprises` (present in 7 of 50 items). Ten fields total.
@@ -43,7 +48,12 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
   - **Removed fields.** `predicted_direction` and `category_name` (schema v2.0.0) and `rationale`
     (v3.0.0). Predictions now live in `analysis/preregistration.yaml`; per-item design rationale in
     `questions/item_design.jsonl`, whose id-bijection with the challenge file is enforced by
-    `analysis/ci_check.sh`.
+    `analysis/ci_check.sh`. v3.2.0 widened the `domain` enum to twelve values so a second,
+    unrelated 50-item AI/ML set (`questions/crest_aiml_challenges.jsonl`) validates against the
+    same schema. **That set is not part of this datasheet**: it is not listed in
+    `config/eval_config.yaml`, has no `item_design.jsonl` rows, is not covered by the item-vetting
+    or live-web audits, and has never been run or scored. A union enum also means nothing now stops
+    an arts/humanities item being tagged `systems_efficiency`.
   - **Enforcement.** The schema is validated on load (`harness/run_crest.py::load_challenges`), and
     `Challenge.from_json` **raises** on a missing `id`, `query`, `known_answers` or
     `expert_baseline`. Previously the schema was never applied and a missing `known_answers`
@@ -55,11 +65,12 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
   that it is **not externally timestamped** and must not be described as pre-registration.
 - **Labels/ground truth.** There is no single correct answer (by design). Each item ships three
   authored anchors, but only two of them are used at scoring time: the judge sees `known_answers`
-  and `hard_rules`; `expert_baseline` is withheld (an ablation moved Surprising by −0.02 with it
-  removed, and in 7 items it carried the author's own list of the intended surprises). Scores are
-  produced at evaluation time by the LLM judge panel. **`[NOT IMPLEMENTED]` Human validation:** no
-  human panel has been run, no human scores exist, and no code reads
-  `judge_config.yaml: human_validation_required_categories`.
+  and `hard_rules`; `expert_baseline` is withheld (ablating it barely moved Surprising — see
+  `design.md` §0 — and in 7 items it carried the author's own list of the intended surprises).
+  Scores are produced at evaluation time by the LLM judge panel. **`[NOT IMPLEMENTED]` Human
+  validation:** no human panel has been run, no human scores exist, and no code reads
+  `human_validation_required_categories` — a key that no longer exists in any config, only in
+  `docs/judge_protocol_intent.md`, the documentation-only record of the deleted `judge_config.yaml`.
 - **Splits.** Items carry a `time_sensitivity` label, but the distribution makes a pre/post-cutoff
   split unusable as shipped: **35 `timeless`, 14 `pre_cutoff`, 1 `post_cutoff`**. Reporting scores
   split by cutoff class — a control this project's own design spec calls for — is therefore not
@@ -67,10 +78,26 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
   withheld from publication: all 50 items, their prior-art lists and their baselines are in the
   public repo.
 - **Prior-art dating.** `known_answers` is documented as a *dated* set, and the judge prompt calls it
-  the "DATED PRIOR-ART SET", but only **52% of entries carry an explicit year** file-wide — 91% for
-  items `_1x` against **22% (`_3x`)** and **18% (`_4x`)**. An undated bare entry cannot function as a
-  dated novelty baseline, and the audit found the dating error direction is one-sided: prior art is
-  consistently made to look *younger* than it is, which inflates novelty
+  the "DATED PRIOR-ART SET", but most entries are not dated. Measured 2026-07-31 over the shipped
+  file, counting an entry as dated if it contains a 4-digit year (`(?<!\d)(19|20)\d\d(?!\d)`) and
+  excluding each item's leading `Dated as of …` preamble entry, which is a header rather than prior
+  art (21 such entries; 708 substantive entries remain):
+
+  | id block | dated | rate |
+  |---|---|---|
+  | file-wide | 363 / 708 | **51%** |
+  | `_0x` | 64 / 140 | 46% |
+  | `_1x` | 101 / 112 | **90%** |
+  | `_2x` | 152 / 211 | 72% |
+  | `_3x` | 22 / 99 | **22%** |
+  | `_4x` | 24 / 146 | **16%** |
+  | `_42`–`_45` only | 2 / 48 | **4.2%** (46 of 48 carry no year) |
+
+  Earlier drafts quoted 52% / 91% / 22% / 18%; the first, second and fourth were off by 1–2 pp
+  against this definition. Include the preamble entries and the file-wide rate is 53%, so the
+  convention matters — hence stating it. An undated bare entry cannot function as a dated novelty
+  baseline, and the audit found the dating error direction is one-sided: prior art is consistently
+  made to look *younger* than it is, which inflates novelty
   (`docs/notes/audit_live_C4_remainder.md` §2).
 - **External data.** `[NOT IMPLEMENTED]` Retrieval is **live provider web search**; `FrozenIndex`
   raises `NotImplementedError`, so no snapshot exists and no run is contamination-controlled — each
@@ -98,7 +125,8 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
   in the run manifest, and block release. **Currently zero items are quarantined.**
   `C2_biology_medicine_34` was quarantined 2026-07-30 (its `expert_baseline` was 156 chars and failed
   `minLength(200)`; 64% of the field turned out to be an answer key) and **restored 2026-07-31** with
-  a 1,620-char model-drafted baseline — so the shipped set is 50/50, with that item's provenance
+  a 1,620-char model-drafted baseline (measured on the shipped file; `item_vetting.md` said 1,478 and
+  was wrong) — so the shipped set is 50/50, with that item's provenance
   weaker than the rest. Three further items are on a documented watch-list, one of them
   (`C4_engineering_45`) with an auditor verdict of "do not release" because its novelty gate is
   inverted: it offers as its example of a new mechanism something its own `known_answers` already
@@ -129,7 +157,7 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
 - **Intended.** Benchmarking and diagnosing the creativity of deep-research agents; studying the
   task-dependence of creativity; judge-validity research.
 - **Out of scope / cautions.** Not a leaderboard of overall agent quality (no ranking claim is made:
-  measured judge severity exceeded the entire between-agent spread); not a correctness or safety
+  measured judge severity exceeds the entire between-entrant spread — `design.md` §0); not a correctness or safety
   benchmark; not a training set. **The no-training request rests on the license and on this
   document only — there are no canaries to detect ingestion and no gated split to withhold.**
   Creativity scores are LLM-panel scores throughout: no category is human-anchored, so the automated
@@ -147,7 +175,7 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
   and citations only.
 - `[NOT IMPLEMENTED]` Croissant and Croissant-RAI records. No `croissant.json` is produced.
 - Versioning today is the git history plus the challenge-schema version string
-  (`crest-challenge/3.1.0`); each run directory pins the git commit, the config snapshot, and the
+  (`crest-challenge/3.2.0`); each run directory pins the git commit, the config snapshot, and the
   judge model IDs actually used. A semver dataset release that pins model snapshots is not yet cut.
 
 ## 7. Maintenance

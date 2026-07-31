@@ -4,11 +4,21 @@
 Why this exists: a judge-side outage (a vendor out of credit, or a spend-rate cap tripped by high
 concurrency) drops judges from the leave-one-family-out panel. The affected records are flagged
 `judge_degraded` (scored by fewer than `min_judges`) or `judge_error` (no judge survived) rather
-than being silently averaged in. This tool repairs such records IN PLACE, which is useful when you
-want to keep an existing run_id rather than mint a new one -- re-running the agents to fix a *judge*
-problem would otherwise re-pay for generation (~$9/task for an OpenAI deep-research entrant).
-(For most cases prefer a fresh run: the generation cache now serves prior answers for free, so a new
-run re-judges everything cleanly without re-paying. Use this when in-place repair is what you want.)
+than being silently averaged in. This tool repairs such records IN PLACE, keeping the existing
+run_id -- re-running the agents to fix a *judge* problem would re-pay for generation (~$9/task for
+an OpenAI deep-research entrant).
+
+A fresh run is NOT the cheaper door, contrary to what this docstring claimed for several rounds.
+The generation cache only serves records carrying an `adapter_fp`, and 0 of the 250 shipped records
+have one -- `GenerationCache('crest/result')` reports "0 entries from 1 prior run(s); 250 skipped
+(pre-fingerprint)". A fresh run therefore re-generates everything (~$450), and `trust_legacy_cache`
+is not an escape: cache.py forbids it for a run whose numbers ship. Re-judging from stored
+transcripts costs judge calls only.
+
+A repair is PENDING on exactly that basis: every record in run 2026-07-31T040653Z stores
+judge_prompt_version=None while the current prompt is v2, so analysis/ablate_fields.py hard-aborts
+on it and score.py says to re-judge from stored transcripts before quoting any New-vs-Surprising
+correlation. Nothing else can do that.
 
 The agent output is already durably stored: `transcripts.jsonl` holds the full `output_text` and
 `citations` keyed by `record_id`. So we can rebuild exactly what the judges saw and re-score for the
@@ -20,25 +30,27 @@ Safety properties:
     even at equal or fewer judges (an unconditional guard made the prescribed v1->v2 migration
     impossible: a healthy full panel re-judges to the same 3 judges, so every result was discarded
     after being paid for);
-  * records.jsonl is rewritten atomically (temp file + replace), so an interrupted repair cannot
-    truncate the run's canonical data;
+  * every file about to be overwritten is backed up first, and nothing is written until every
+    artifact has been computed, so a failure mid-commit cannot leave records.jsonl repaired with
+    summary/manifest/README stale -- the state that is worse than no repair at all. Each file is
+    then published by rename, so no reader ever sees a truncated records.jsonl;
   * grounding results are preserved as-recorded (the gate is generation-side, not judge-side);
   * refuses to touch a FINALIZED run (run_manifest.json present) unless --force, since a completed
     run is meant to be immutable -- prefer a fresh run_id.
 
 Usage:
-    python -m crest.harness.rejudge --run crest/result/runs/<run_id>
-
-  To migrate a run to a NEW JUDGE PROMPT VERSION -- the case score.py prescribes -- the default
-  invocation does nothing: it targets only judge_degraded/judge_error rows, and a finalized run is
-  refused outright. Both doors were documented and neither worked. The one that works:
-    python -m crest.harness.rejudge --run <dir> --status scored --force
-    python -m crest.harness.rejudge --run <dir> --status judge_degraded judge_error --concurrency 4
     python -m crest.harness.rejudge --run <dir> --dry-run
+    python -m crest.harness.rejudge --run <dir> --status judge_degraded judge_error --concurrency 4
+
+  A NEW-JUDGE-PROMPT-VERSION migration -- the case score.py prescribes -- needs BOTH non-default
+  flags, which the defaults do not hint at: the status filter targets only degraded/error rows, and
+  a finalized run is refused outright.
+    python -m crest.harness.rejudge --run <dir> --status scored --force
 """
 from __future__ import annotations
 import argparse, dataclasses, json, os, shutil, sys, tempfile, collections
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -50,7 +62,8 @@ from crest.judge.score import JudgePanel, JUDGE_PROMPT_VERSION      # noqa: E402
 
 class StoredReport:
     """Minimal stand-in for AgentOutput, rebuilt from a stored transcript. `JudgePanel.score` only
-    reads `.text`; `.citations` is carried so the object is a faithful substitute."""
+    reads `.text`; `.citations` is carried so the object is a faithful substitute.
+    Also imported by analysis/ablate_fields.py, which re-scores from transcripts the same way."""
     __slots__ = ("text", "citations")
     def __init__(self, text: str, citations: list):
         self.text, self.citations = text or "", citations or []
@@ -60,44 +73,26 @@ def _load_jsonl(p: Path) -> list:
     return [json.loads(l) for l in p.open(encoding="utf-8") if l.strip()] if p.exists() else []
 
 
-def _atomic_write_jsonl(path: Path, rows: list) -> None:
-    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=path.name + ".", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fo:
-            for r in rows:
-                fo.write(json.dumps(r, ensure_ascii=False) + "\n")
-        os.replace(tmp, path)                     # atomic on POSIX
-    except BaseException:
-        Path(tmp).unlink(missing_ok=True)
-        raise
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
-def _utc_now_iso() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _utc_stamp() -> str:
-    """Filesystem-safe UTC stamp with MICROSECOND resolution: 20260731T103601_175567.
-
-    Second resolution meant two repairs in the same second landed in the same backup directory, and
-    mkdir(exist_ok=True) masked the collision -- proved to destroy the first repair's pre-images while
-    printing a cheerful backup line. Built with strftime rather than by string-mangling isoformat(),
-    which truncated into the '+00:00' offset and left a trailing '+' in the directory name."""
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%f")
+def _result(n_targets: int, upgraded: int = 0, downgraded: int = 0,
+            unchanged: int = 0, missing: int = 0) -> dict:
+    """The one shape every return path hands back. Built as a helper because `n_downgraded` was
+    absent from two of the four paths, so a caller reading out["n_downgraded"] would KeyError on
+    exactly the no-op returns."""
+    return {"n_targets": n_targets, "n_upgraded": upgraded, "n_downgraded": downgraded,
+            "n_unchanged": unchanged, "n_missing": missing}
 
 
 def _readme_bytes(run_dir: Path, manifest: dict, writer) -> bytes:
     """Render the run README WITHOUT touching the live path.
 
-    The previous version called the writer against the real run_dir and then restored the original
-    from a local variable. That published the new README before any backup existed: instrumented
-    mid-call, README.md held the new content while backup_dir_exists was False, so a kill or ENOSPC in
-    that window left the original recoverable from nowhere. It was also not concurrency-safe -- two
-    rejudge processes on one run dir restored each other's README. _write_run_readme reads only the
+    Rendering against the real run_dir and restoring afterwards published the new README before any
+    backup existed (instrumented mid-call: README.md held new content while backup_dir_exists was
+    False), and two concurrent rejudges restored each other's copy. _write_run_readme reads only the
     manifest dict and uses run_dir solely for the output path, so a throwaway directory works."""
-    import tempfile
     with tempfile.TemporaryDirectory(dir=str(run_dir)) as td:
         staged = Path(td) / run_dir.name
         staged.mkdir()
@@ -106,13 +101,8 @@ def _readme_bytes(run_dir: Path, manifest: dict, writer) -> bytes:
 
 
 def _decide(before: int, before_ver, now: int, allow_downgrade: bool) -> tuple[str, str]:
-    """One place, three outcomes: keep | upgrade | downgrade, with the reason.
-
-    This replaces a three-way decision that was spread across two `if`s, a `_downgraded` sentinel
-    stuffed into the live record dict and popped 24 lines later, and an arithmetic expression that
-    converted the sentinel back into a counter. That structure produced two bugs in two rounds -- an
-    outage silently overwriting good scores and counting them as upgrades, then --allow-downgrade
-    becoming a no-op because the write gate read only one of the counters."""
+    """One place, three outcomes: keep | upgrade | downgrade, with the reason. Spreading this across
+    two `if`s and a sentinel stuffed into the live record dict produced a bug in each of two rounds."""
     if now <= before and before_ver == JUDGE_PROMPT_VERSION:
         # Same panel size AND same rubric: nothing to gain, so never rewrite. Version-awareness is
         # what makes the prescribed v1->v2 migration possible at all -- an unconditional
@@ -145,7 +135,7 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
     targets = [r for r in records if r.get("scoring_status") in set(statuses)]
     print(f"{run_dir.name}: {len(records)} records, {len(targets)} matching {list(statuses)}")
     if not targets:
-        return {"n_targets": 0, "n_upgraded": 0, "n_unchanged": 0, "n_missing": 0}
+        return _result(0)
 
     missing = [r["record_id"] for r in targets if r["record_id"] not in text_by_id]
     if missing:
@@ -155,7 +145,7 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
     if dry_run:
         by = collections.Counter(r["agent"] for r in todo)
         print(f"  [dry-run] would re-judge {len(todo)} record(s): {dict(by)}")
-        return {"n_targets": len(targets), "n_upgraded": 0, "n_unchanged": 0, "n_missing": len(missing)}
+        return _result(len(targets), missing=len(missing))
 
     def one(rec):
         tr = text_by_id[rec["record_id"]]
@@ -202,10 +192,9 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                 # the shipped v1 run produced exactly the v1/v2 mixture score.py says must never
                 # happen -- unlabelled, on a non-random subset.
                 "judge_prompt_version": JUDGE_PROMPT_VERSION,
-                # signature drift: _judges_list gained (panel, entrant_family) so it can stamp
-                # same_family. Calling it without them wrote same_family=False on every repaired row,
-                # silently zeroing the self-preference covariate the whole LOFO->covariate design
-                # rests on -- and only on the repaired subset, which is not random.
+                # _judges_list needs (panel, entrant_family) to stamp same_family. Calling it without
+                # them wrote same_family=False on every repaired row, zeroing the self-preference
+                # covariate the LOFO->covariate design rests on, on a non-random subset.
                 "judges": _judges_list(scores.per_judge, panel, rec.get("model_family")),
             }
             live["scoring_status"] = ("scored" if scores.n_judges >= panel.min_judges
@@ -221,28 +210,17 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                   f"-> {live['scoring_status']} ({why})")
 
     # BOTH counters. Keying the write gate on `upgraded` alone made --allow-downgrade a no-op in
-    # exactly the case it exists for: a uniform vendor outage, where every accepted change is a
-    # downgrade. The records were mutated in memory, then discarded, and the caller got
-    # {n_upgraded: 0, n_unchanged: 0} for records that had already been re-judged and paid for. The
-    # flag worked only when at least one genuine upgrade rode along -- i.e. only when it was not
-    # needed. Third generation of this defect: R4's guard blocked the migration outright, R5's
-    # version-aware guard let an outage destroy data, R6's refusal discarded it after paying.
+    # exactly the case it exists for -- a uniform vendor outage, where every accepted change is a
+    # downgrade: the records were re-judged, paid for, mutated in memory, then discarded.
     if not (upgraded or downgraded):
         print("\nno records changed; leaving the run untouched")
-        return {"n_targets": len(targets), "n_upgraded": 0, "n_downgraded": 0,
-                "n_unchanged": unchanged, "n_missing": len(missing)}
+        return _result(len(targets), unchanged=unchanged, missing=len(missing))
+
     # ---- COMMIT PHASE: compute everything, back up everything, then write everything.
-    #
-    # Four bugs in this function came from partial mutation, so it is now transactional in the only
-    # sense that matters here: nothing is written until every artifact has been computed, and every
-    # file about to be overwritten is backed up first.
-    #   * only records.jsonl was backed up; summary.json, run_manifest.json and README.md were
-    #     overwritten unbacked, destroying the shipped manifest's totals and judge_prompt_version;
-    #   * records.jsonl was written BEFORE compute_summary ran, so an exception there (a record
-    #     missing `category` is enough) left the canonical file repaired and the derived files stale
-    #     -- the state this function's own comment calls "worse than no repair";
-    #   * `if not bak.exists()` kept the generation-0 backup on a second repair, so restoring it
-    #     silently reverted repair #1 while printing no backup line at all.
+    # Four bugs here came from partial mutation: records.jsonl written before compute_summary could
+    # raise; summary/manifest/README overwritten with no backup, destroying the shipped manifest's
+    # totals and judge_prompt_version; and a `if not bak.exists()` guard that kept the generation-0
+    # backup, so restoring it silently reverted a later repair.
     from crest.harness.results import compute_summary, manifest_totals, _write_run_readme
 
     pending: dict[Path, bytes] = {}
@@ -271,25 +249,24 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                   f"score.py states versions must not be mixed; the mixture tracks which vendor was "
                   f"capped, hence entrant family, so it is not random. Re-judge the whole run under "
                   f"one version before quoting any number from it.")
-        m["repaired_at"] = _utc_now_iso()
+        m["repaired_at"] = _utc_now().isoformat()
         m["repair_counts"] = {"upgraded": upgraded, "downgraded": downgraded,
                               "unchanged": unchanged, "un_repairable": len(missing)}
         pending[mf] = json.dumps(m, indent=2, ensure_ascii=False).encode()
         pending[run_dir / "README.md"] = _readme_bytes(run_dir, m, _write_run_readme)
     # records.jsonl is rendered LAST in this dict and renamed LAST below, so the canonical file is
     # the commit marker -- matching finalize_run's convention that the manifest is written last so a
-    # crashed run cannot look complete. Previously it was written FIRST, via the only atomic path,
-    # while the three derived files used truncating write_bytes: an ENOSPC on the first derived write
-    # left records.jsonl repaired and summary/manifest/README stale, which this function's own
-    # comment calls "worse than no repair".
+    # crashed run cannot look complete.
     pending[run_dir / "records.jsonl"] = (
         "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records).encode())
 
-    # Back up every file we are about to replace. SUB-SECOND directory name: second resolution meant
-    # two repairs in the same second landed in the same directory, and mkdir(exist_ok=True) masked it
-    # -- proved to destroy the first repair's pre-images while printing a cheerful backup line. No
-    # exist_ok now either, so a collision raises BEFORE any write and the transaction simply aborts.
-    bak_dir = run_dir / ("pre_repair_" + _utc_stamp())
+    # Back up every file we are about to replace. MICROSECOND resolution in the directory name:
+    # at second resolution two repairs in the same second shared a directory and mkdir(exist_ok=True)
+    # masked it, destroying the first repair's pre-images while printing a cheerful backup line. No
+    # exist_ok now either, so a collision raises BEFORE any write and the transaction aborts. Built
+    # with strftime, not by mangling isoformat() -- that truncated into the '+00:00' offset and left a
+    # trailing '+' in the directory name.
+    bak_dir = run_dir / ("pre_repair_" + _utc_now().strftime("%Y%m%dT%H%M%S_%f"))
     bak_dir.mkdir()
     for path in pending:
         if path.exists():
@@ -318,8 +295,7 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
     print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {downgraded} DOWNGRADED, "
           f"{unchanged} unchanged, {len(missing)} un-repairable")
     print("status now: " + str(dict(collections.Counter(r.get("scoring_status") for r in records))))
-    return {"n_targets": len(targets), "n_upgraded": upgraded, "n_downgraded": downgraded,
-            "n_unchanged": unchanged, "n_missing": len(missing)}
+    return _result(len(targets), upgraded, downgraded, unchanged, len(missing))
 
 
 def main():

@@ -1,20 +1,14 @@
 #!/usr/bin/env python3
 """Stall detector for long-running CREST work. Prints a verdict per job; exits 1 if anything stalled.
 
-Why it exists: liveness keeps getting misdiagnosed, five times now, always by measuring a PROXY for
-work instead of the work itself.
-  * `ps aux | grep -c` reported 2 processes for a run that had already finished;
-  * `pgrep -fc` reported 0 for a run that was very much alive (PID confirmed);
-  * this module then counted PYTHON processes and printed "0 background jobs" for four consecutive
-    cycles while a dozen agents were working;
-  * the fix for that counted `claude` processes, which also match the daemon, the pty host, the
-    spare and every `--resume` session -- so it read 9 when the truth was ~2 and could never read 0;
-  * and a hand-rolled `stat -f %z` on a task .output file measured the SYMLINK (a constant 138
-    bytes) rather than its 1 MB target, which read as a 14-minute stall on an agent that was
-    writing continuously.
-Every one of those was a false reading in a direction that would have caused the wrong action. The
-rule this module now follows: measure the artifact the work produces -- records written, log lines,
-transcript bytes -- never the existence of a process. Verdicts:
+Why it exists: liveness was misdiagnosed five times, always by measuring a PROXY for work instead of
+the work itself. `ps aux | grep -c` reported 2 processes for a run that had already finished;
+`pgrep -fc` reported 0 for a run that was very much alive (PID confirmed); the three later attempts
+-- counting python processes, counting `claude` processes, and stat-ing a symlink -- are recorded in
+the comments on the blocks that replaced them. Every one was a false reading in the direction that
+would have caused the wrong action. The rule this module now follows: measure the artifact the work
+produces -- records written, log lines, transcript bytes -- never the existence of a process.
+Verdicts:
 
   ALIVE+ADVANCING  process present and its record count grew since the last snapshot
   ALIVE+STALLED    process present but no new records and log untouched for > --stall-min
@@ -95,11 +89,15 @@ def main():
             problems.append(verdict)
         print(f"  eval run {rd.name[:34]}: {verdict}")
 
-    # ---- ablation
+    # ---- ablation. /tmp/ablate.log is a fixed path the operator redirects ablate_fields.py into, so
+    # it OUTLIVES its run: a finished or aborted ablation left a stale log reporting on a job nobody
+    # was running (DEAD+INCOMPLETE forever, if that log had no "wrote" marker) -- the same
+    # false-reading-from-a-stale-proxy this module exists to prevent. Trust the log only while a
+    # process is alive or the log is fresh, using the same 2h window as the agent transcripts below.
     ab = _procs("ablate_fields")
     log = Path("/tmp/ablate.log")
-    if ab or log.exists():
-        age = (now - log.stat().st_mtime) / 60 if log.exists() else 999
+    age = (now - log.stat().st_mtime) / 60 if log.exists() else 999
+    if ab or age < 120:
         lines = sum(1 for _ in log.open(encoding="utf-8")) if log.exists() else 0
         state["ablate"] = lines
         if not ab and log.exists() and "wrote " in log.read_text():

@@ -23,18 +23,19 @@ from crest.harness import results as R
 from crest.judge.score import JudgePanel, grounding_gate, JUDGE_PROMPT_VERSION
 from crest.harness.cache import GenerationCache, query_sha, adapter_fingerprint
 
-_FP_CACHE: dict = {}
-
 
 def _fingerprint_for(agent) -> str:
-    """adapter_fingerprint, memoized per (class, model, budget).
+    """adapter_fingerprint, memoized on the agent instance.
 
     It hashes two whole source modules, so calling it once per task meant 500 `getsource` calls per
-    run to produce five constant values."""
-    k = (type(agent).__name__, getattr(agent, "model", ""), getattr(agent, "budget", None))
-    if k not in _FP_CACHE:
-        _FP_CACHE[k] = adapter_fingerprint(agent)
-    return _FP_CACHE[k]
+    250-task run (504 with the cache on, which also probes it once per task) to produce five
+    constant values -- 10 calls, one pair per adapter. Memoizing on the instance rather
+    than on a key tuple keeps this from having to restate, and stay in sync with,
+    adapter_fingerprint's own key."""
+    fp = getattr(agent, "_adapter_fp", None)
+    if fp is None:
+        fp = agent._adapter_fp = adapter_fingerprint(agent)
+    return fp
 
 
 @dataclasses.dataclass
@@ -50,19 +51,18 @@ class Challenge:
     def from_json(d: dict) -> "Challenge":
         """Build a Challenge, FAILING LOUDLY on missing judge-side machinery.
 
-        Previously every field came from `d.get(k)`, so a missing `known_answers` became None and the
-        judge silently received "(none provided)" as the novelty baseline -- the two fields the design
-        calls load-bearing were the two that failed silently, with no error and no scoring_status
-        flag. An item that cannot be scored must not be scored."""
+        With `d.get(k)` for every field, a missing `known_answers` became None and the judge silently
+        received "(none provided)" as the novelty baseline -- the two fields the design calls
+        load-bearing were the two that failed silently, with no error and no scoring_status flag. An
+        item that cannot be scored must not be scored."""
         missing = [k for k in ("id", "query", "known_answers", "expert_baseline") if not d.get(k)]
         if missing:
             raise ValueError(f"challenge {d.get('id', '<no id>')!r} is missing required "
                              f"scoring machinery: {missing}. Refusing to score it.")
-        # Every OTHER non-defaulted field (domain, category, axis_isolated, time_sensitivity) must
-        # also be present. Checked separately, and for PRESENCE rather than truthiness, so a
-        # legitimately False/0 value passes. Without this the dict comprehension below raised a bare
-        # `TypeError: __init__() missing 1 required positional argument` instead of the intended
-        # ValueError naming the item and the field.
+        # The other non-defaulted fields (domain, category, axis_isolated, time_sensitivity) are
+        # checked separately, and for PRESENCE rather than truthiness, so a legitimately False/0 value
+        # passes -- and so the failure names the item and the field instead of raising a bare
+        # `TypeError: __init__() missing 1 required positional argument` from the comprehension below.
         absent = [f.name for f in dataclasses.fields(Challenge)
                   if f.default is dataclasses.MISSING
                   and f.default_factory is dataclasses.MISSING and f.name not in d]
@@ -88,15 +88,13 @@ def _quarantined() -> dict:
         return (yaml.safe_load(_QUARANTINE.read_text(encoding="utf-8")) or {}).get("quarantined", {}) or {}
     except FileNotFoundError:
         return {}
+    # A missing pyyaml and a corrupt file are BOTH hard failures: each used to warn and re-admit every
+    # quarantined item, which is the one outcome quarantine.yaml exists to prevent. A gate that
+    # switches itself off is decorative, whichever route it takes.
     except ImportError as e:
-        # Same reasoning as the schema gate: a missing pyyaml silently re-admitted every quarantined
-        # item, which is the one outcome quarantine.yaml exists to prevent.
         raise RuntimeError(f"pyyaml is required to read {_QUARANTINE.name} but is not installed "
                            f"({e}); refusing to run with quarantine silently disabled.")
     except Exception as e:
-        # Also a hard failure. A raise for a MISSING pyyaml next to a warning for a CORRUPT file is
-        # the same gate switching itself off, just by a different route: a truncated or wrong-shaped
-        # quarantine.yaml printed a warning and re-admitted every quarantined item.
         raise RuntimeError(f"{_QUARANTINE.name} exists but could not be parsed "
                            f"({type(e).__name__}: {e}); refusing to run with quarantine silently "
                            f"disabled. Fix the file, or delete it to run with no quarantine.")
@@ -105,9 +103,9 @@ def _quarantined() -> dict:
 def _prereg_directions() -> dict:
     """Per-category predicted directions, read from analysis/preregistration.yaml.
 
-    They used to be a `predicted_direction` field on every item -- one value per category copied 50
-    times, in an editable file, so it could evidence nothing about ordering. Records still carry the
-    direction (so downstream analysis is unchanged) but it is now sourced from the registration."""
+    Not an item field: one value per category copied onto 50 items, in an editable file, could
+    evidence nothing about ordering. Records still carry the direction (so downstream analysis is
+    unchanged) but it is sourced from the registration."""
     try:
         import yaml
         return (yaml.safe_load(_PREREG.read_text(encoding="utf-8")) or {}).get("predictions", {}) or {}
@@ -118,13 +116,15 @@ def _prereg_directions() -> dict:
 
 
 def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
-    """Load and (by default) VALIDATE against questions/schema.json.
+    """Load and (by default) VALIDATE against questions/schema.json, so a malformed item fails at
+    load rather than at score time.
 
-    The schema shipped for months without ever being applied -- `grep -rn jsonschema` returned
-    nothing -- so its `required` list was decorative and undeclared fields passed silently. Wiring it
-    in here means a malformed item fails at load, not at score time. RAISES if jsonschema is missing
-    rather than warning: a soft-fail meant a fresh checkout ran the whole benchmark unvalidated while
-    ci_check printed "OK 50 items load and validate"."""
+    RAISES if jsonschema is missing rather than warning. A gate that switches itself off when a
+    dependency is absent is decorative: unvalidated, load_challenges accepted category="C6",
+    axis_isolated="novel" and undeclared fields, printed a warning to stdout and returned 50 items --
+    so ci_check.sh exited 0 reporting "OK 50 items load and validate". Neither jsonschema nor pyyaml
+    was declared anywhere, so this was one `pip` away on any fresh checkout. Pass validate=False to
+    opt out deliberately and visibly."""
     raw = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
     quar = _quarantined()
     if quar:
@@ -145,12 +145,6 @@ def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
                                  + "\n  ".join(errs[:12])
                                  + (f"\n  ... and {len(errs)-12} more" if len(errs) > 12 else ""))
         except ImportError as e:
-            # HARD FAILURE, not a warning. A gate that switches itself off when a dependency is
-            # absent is decorative: with jsonschema missing, load_challenges accepted category="C6",
-            # axis_isolated="novel" and undeclared fields, printed a warning to stdout, and returned
-            # 50 items -- so ci_check.sh exited 0 and reported "OK 50 items load and validate".
-            # Neither jsonschema nor pyyaml was declared anywhere, so this was one `pip` away on any
-            # fresh checkout. Pass validate=False to opt out deliberately and visibly.
             raise RuntimeError(
                 f"jsonschema is required to enforce {_SCHEMA.name} but is not installed "
                 f"({e}). Install it (see crest/requirements.txt) or pass validate=False to skip "
@@ -177,7 +171,7 @@ def subset(challenges, per_category=None, limit=None, categories=None):
     return challenges[:limit] if limit else challenges
 
 
-def _judges_list(per_judge: dict, panel=None, entrant_family: str | None = None) -> list:
+def _judges_list(per_judge: dict, panel, entrant_family: str | None) -> list:
     """per_judge {judge_id: {new,useful,surprising,...}} -> list-of-objects (ready for a rater random
     effect via json_normalize(record_path=['creativity','judges'])).
 
@@ -185,7 +179,7 @@ def _judges_list(per_judge: dict, panel=None, entrant_family: str | None = None)
     being excluded by fiat. Under LOFO this is always False (those judges were dropped); with the
     full panel it marks exactly the rows LOFO would have removed, which is what makes the two
     protocols directly comparable on one dataset."""
-    fam = {j["id"]: j["family"] for j in (panel.judges if panel else [])}
+    fam = {j["id"]: j["family"] for j in panel.judges}
     return [{"judge_id": jid, "same_family": bool(entrant_family and fam.get(jid) == entrant_family),
              **vals} for jid, vals in per_judge.items()]
 
@@ -204,13 +198,8 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
     rubric may have changed since, and judge calls are the cheap part."""
     rid = f"{run_id}:{ch.id}:{name}"
     q_sha = query_sha(ch.query)
-    # Memoized, and it must be: this runs per task (250x per run, 500 getsource calls) even with the
-    # cache off, because adapter_fp is stamped into every record for provenance. When
-    # _module_source began raising, that raise landed inside the per-task try/except and was recorded
-    # as an AGENT failure -- so a harness fault was charged to the entrant, counted toward its
-    # circuit breaker, and the run finished with 0 records and 250 "task errors" instead of failing
-    # fast. See _fingerprint_for below.
-    fp = _fingerprint_for(agent)
+    fp = _fingerprint_for(agent)     # memoized; stamped into every record for provenance, so it is
+                                     # computed even with the cache off (see evaluate's warming loop)
     report = cache.get(ch.id, name, agent.model, q_sha, fp) if cache else None
     cached = report is not None
     if not cached:
@@ -244,9 +233,8 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         "record_id": rid, "run_id": run_id,
         "challenge_id": ch.id, "category": ch.category, "domain": ch.domain,
         "axis": ch.axis_isolated, "predicted_direction": ch.predicted_direction,
-        "time_sensitivity": ch.time_sensitivity,   # was never written, so the pre/post-cutoff
-                                                   # split it exists for was not computable
-                                                   # even in principle from records.jsonl
+        "time_sensitivity": ch.time_sensitivity,   # was never written, so the pre/post-cutoff split
+                                                   # it exists for was not computable from records
         "agent": name, "model": agent.model, "model_family": agent.model_family,
         "query_sha": q_sha,                    # content address: invalidates if the prompt is edited
         "adapter_fp": fp,                      # code identity: invalidates if the ADAPTER changes
@@ -280,7 +268,7 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
 
 
 def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concurrency=4,
-             verbose=True, cache=None) -> list:
+             cache=None) -> list:
     """Core loop. Generation runs CONCURRENTLY across independent (challenge, agent) tasks (bounded
     by `concurrency`); each task's judge panel also scores concurrently. Degrades gracefully:
       - a failed task is logged to errors.jsonl (not silently dropped) and skipped;
@@ -292,7 +280,7 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
     model) was generated in any earlier run reuses that stored answer instead of re-paying, so every
     run is a complete, self-contained, immutable run_id. Writes records/transcripts/errors.jsonl."""
     run_dir = Path(run_dir)
-    # Fingerprint every adapter BEFORE any money moves. adapter_fingerprint can now raise (unreadable
+    # Fingerprint every adapter BEFORE any money moves. adapter_fingerprint can raise (unreadable
     # source means an answer cannot be attributed to the code that produced it), and inside the
     # per-task try/except that raise was recorded as an AGENT failure: charged to the entrant, counted
     # toward its circuit breaker, and the run completed with 0 records rather than failing fast.
@@ -301,16 +289,12 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
         _fingerprint_for(_a)
     tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
     records = []
-    if verbose:
-        n_cached = sum(1 for ch, name, a in tasks
-                       if cache and cache.get(ch.id, name, a.model, query_sha(ch.query),
-                                              _fingerprint_for(a))) if cache else 0   # memo, not
-                       # the raw call: this preflight runs per TASK, so on the default verbose+cache
-                       # path it made 504 getsource calls per 250-task run instead of 10 -- six
-                       # lines below the loop whose docstring promises 'one pair per adapter'.
-        print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
-              f"({n_cached} served from cache, {len(tasks)-n_cached} to generate; "
-              f"concurrency={concurrency}); dir={run_dir}")
+    n_cached = sum(1 for ch, name, a in tasks
+                   if cache.get(ch.id, name, a.model, query_sha(ch.query),
+                                _fingerprint_for(a))) if cache else 0
+    print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
+          f"({n_cached} served from cache, {len(tasks)-n_cached} to generate; "
+          f"concurrency={concurrency}); dir={run_dir}")
     cb = {"lock": threading.Lock(), "fails": collections.Counter(), "dead": set()}
     n_err, wlock = 0, threading.Lock()
     # encoding="utf-8" on the WRITERS, not only the readers. These three files are dumped with
@@ -330,9 +314,9 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                 except Exception as e:
                     msg = str(e)
                     if msg.startswith("circuit_open"):
-                        # was `continue` with NO row anywhere: the task vanished from records.jsonl
-                        # and errors.jsonl alike, so finalize_run reported status "completed" with a
-                        # silently short denominator.
+                        # A row here, not a bare `continue`: a skipped task with no row in
+                        # records.jsonl OR errors.jsonl made finalize_run report status "completed"
+                        # with a silently short denominator.
                         with wlock:
                             fe.write(json.dumps({"record_id": f"{run_id}:{ch.id}:{name}",
                                                  "challenge_id": ch.id, "agent": name,
@@ -343,10 +327,11 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                             n_err += 1
                         continue
                     with cb["lock"]:
+                        # ONLY terminal errors count toward the breaker: previously two timeouts plus
+                        # one auth error killed a provider.
                         terminal = any(k in msg.lower() for k in _TERMINAL_ERR)
                         if terminal:
-                            cb["fails"][name] += 1     # only terminal errors count: previously two
-                                                       # timeouts plus one auth error killed a provider
+                            cb["fails"][name] += 1
                         if terminal and cb["fails"][name] >= 3 \
                                 and name not in cb["dead"]:
                             cb["dead"].add(name)
@@ -363,27 +348,26 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                     fo.write(json.dumps(rec, ensure_ascii=False) + "\n"); fo.flush()
                     ft.write(json.dumps(tr, ensure_ascii=False) + "\n"); ft.flush()
                     records.append(rec)
-                if verbose:
-                    tag = " CACHED" if rec.get("generation_cached") else ""
-                    if status == "scored":
-                        print(f"  [{ch.id}/{name}]{tag} cites={gate.n_citations} tok={report.n_tokens} "
-                              f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
-                              f"creative={scores.creative_all_three} judges={scores.n_judges}")
-                    elif status == "judge_degraded":
-                        print(f"  [{ch.id}/{name}] JUDGE DEGRADED: only {scores.n_judges} judge(s) "
-                              f"survived (< min_judges) -> flagged, excluded from headline numbers")
-                    elif status == "judge_error":
-                        print(f"  [{ch.id}/{name}] JUDGE ERROR (all judges failed) -> unscored")
-                    elif status == "empty_answer":
-                        print(f"  [{ch.id}/{name}] EMPTY ANSWER (adapter returned no text) -> unscored")
-                    elif status == "too_short":
-                        # named, not lumped under "grounding FAIL": this is an adapter/provider
-                        # failure, and calling it a grounding failure is what mislabelled a 22%
-                        # Anthropic adapter failure as Claude being ungrounded
-                        print(f"  [{ch.id}/{name}] TOO SHORT ({len(report.text or '')} chars, under "
-                              f"the substantive floor) -> unscored")
-                    else:
-                        print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> unscored")
+                tag = " CACHED" if rec.get("generation_cached") else ""
+                if status == "scored":
+                    print(f"  [{ch.id}/{name}]{tag} cites={gate.n_citations} tok={report.n_tokens} "
+                          f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
+                          f"creative={scores.creative_all_three} judges={scores.n_judges}")
+                elif status == "judge_degraded":
+                    print(f"  [{ch.id}/{name}] JUDGE DEGRADED: only {scores.n_judges} judge(s) "
+                          f"survived (< min_judges) -> flagged, excluded from headline numbers")
+                elif status == "judge_error":
+                    print(f"  [{ch.id}/{name}] JUDGE ERROR (all judges failed) -> unscored")
+                elif status == "empty_answer":
+                    print(f"  [{ch.id}/{name}] EMPTY ANSWER (adapter returned no text) -> unscored")
+                elif status == "too_short":
+                    # named, not lumped under "grounding FAIL": this is an adapter/provider failure,
+                    # and calling it a grounding failure is what mislabelled a 22% Anthropic adapter
+                    # failure as Claude being ungrounded
+                    print(f"  [{ch.id}/{name}] TOO SHORT ({len(report.text or '')} chars, under "
+                          f"the substantive floor) -> unscored")
+                else:
+                    print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> unscored")
     print(f"wrote {run_dir}/records.jsonl  ({len(records)} records, {n_err} task errors)")
     return records
 
@@ -420,17 +404,31 @@ def make_manifest(run_id, created_at, benchmark, agents: dict, panel, budget, co
                          "difference confounds agent quality with evidence volume. Compare within "
                          "arm; treat depth as a factor, not as noise."),
         "judges": [{"id": j["id"], "model": j["model"], "family": j["family"]} for j in panel.judges],
-        # Read from the PANEL, never hardcoded: this string said "leave-one-family-out" while the run
-        # was full-panel, so the manifest -- the provenance record a reviewer trusts -- misdescribed
-        # its own protocol.
+        # Read from the PANEL, never hardcoded: this string once said "leave-one-family-out" while the
+        # run was full-panel, i.e. the provenance record a reviewer trusts misdescribed its own protocol.
         "judge_protocol": (f"{panel.protocol}; blind; "
                            f"{'median' if len(panel.judges) % 2 else 'mean-of-even-panel'} aggregation"),
         "judge_prompt_version": JUDGE_PROMPT_VERSION,
     }
 
 
-def run(args) -> None:
+def main():
     from datetime import datetime, timezone
+    p = argparse.ArgumentParser(description="Run the CREST creativity benchmark (ad-hoc CLI).")
+    p.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
+    p.add_argument("--agents", nargs="+", required=True)
+    p.add_argument("--judge_config", default="crest/judge/judge_config.live.yaml")
+    p.add_argument("--budget", type=int, default=6, help="per-agent web-search cap (where the provider supports it)")
+    p.add_argument("--concurrency", type=int, default=4, help="parallel (challenge, agent) tasks")
+    p.add_argument("--per-category", type=int, default=None, dest="per_category")
+    p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--categories", nargs="+", default=None, help="keep only these categories, e.g. C2 C3")
+    p.add_argument("--subset", default="adhoc", help="label for the run_id (e.g. pilot5cat, full50)")
+    p.add_argument("--override-cache", action="store_true",
+                   help="ignore cached generations from prior runs and re-generate them (RE-PAYS)")
+    p.add_argument("--out-root", dest="out_root", default="crest/result")
+    args = p.parse_args()
+
     challenges = subset(load_challenges(args.challenges), args.per_category, args.limit, args.categories)
     agents = {name: build_agent(name, budget=args.budget) for name in args.agents}
     panel = JudgePanel.from_config(args.judge_config)
@@ -448,23 +446,6 @@ def run(args) -> None:
     R.finalize_run(args.out_root, run_dir, run_id, recs, manifest)
     print(f"run dir: {run_dir}")
     print("next: python -m crest.analysis.stats --run", run_dir / "records.jsonl")
-
-
-def main():
-    p = argparse.ArgumentParser(description="Run the CREST creativity benchmark (ad-hoc CLI).")
-    p.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
-    p.add_argument("--agents", nargs="+", required=True)
-    p.add_argument("--judge_config", default="crest/judge/judge_config.live.yaml")
-    p.add_argument("--budget", type=int, default=6, help="per-agent web-search cap (where the provider supports it)")
-    p.add_argument("--concurrency", type=int, default=4, help="parallel (challenge, agent) tasks")
-    p.add_argument("--per-category", type=int, default=None, dest="per_category")
-    p.add_argument("--limit", type=int, default=None)
-    p.add_argument("--categories", nargs="+", default=None, help="keep only these categories, e.g. C2 C3")
-    p.add_argument("--subset", default="adhoc", help="label for the run_id (e.g. pilot5cat, full50)")
-    p.add_argument("--override-cache", action="store_true",
-                   help="ignore cached generations from prior runs and re-generate them (RE-PAYS)")
-    p.add_argument("--out-root", dest="out_root", default="crest/result")
-    run(p.parse_args())
 
 
 if __name__ == "__main__":

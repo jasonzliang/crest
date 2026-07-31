@@ -1,41 +1,38 @@
-# CREST judge panel — LIVE config (used for runs).
+# CREST judge panel — LIVE config (used for runs). THE ONLY config any code path loads.
 # Read by JudgePanel.from_config: `judges`, `threshold_all_three`, `min_judges`,
-# `leave_one_family_out`. Nothing else in this file is consulted — do not add controls here that no
-# code implements (two such keys, `randomize_answer_order` and a `fact_precision` grounding gate,
-# previously sat in judge_config.yaml declaring behaviour the harness never performed).
+# `leave_one_family_out`. Nothing else here is consulted — do not add controls that no code
+# implements. The unimplemented ones (`randomize_answer_order`, a `fact_precision` grounding gate,
+# `human_validation_required_categories`) used to sit in a sibling `judge_config.yaml`; that file was
+# read by nothing and is gone -- its content is now docs/judge_protocol_intent.md, documentation only.
 
 threshold_all_three: 6.0        # retained for backwards comparability; NOT the primary endpoint --
-                                # it is unpre-registered and the creative rate swung 5.4-36.1%
-                                # across t=5..7 ON THE PILOT (46.4-56.0% on canonical run 040653Z),
-                                # with ~26% of pilot records sitting exactly on 6.00 -- 13.6%
-                                # (34/250) on the canonical run; no pilot data survives to recheck
-                                # the 26%.
-                                # Report min(New, Useful, Surprising) as primary instead: graded,
-                                # on the 1-10 scale, all three NUS axes.
+                                # it is unpre-registered and the creative rate swung 5.4-36.1% across
+                                # t=5..7 ON THE PILOT (46.4-56.0% on canonical run 040653Z), with
+                                # 13.6% (34/250) of that run's records sitting exactly on 6.00 on
+                                # some axis (~26% on the pilot; no pilot data survives to recheck
+                                # it). Report min(New, Useful, Surprising) as primary instead:
+                                # graded, on the 1-10 scale, all three NUS axes.
 
 min_judges: 2                   # below this a record is flagged `judge_degraded`, not silently
                                 # averaged: a single surviving judge is not a panel.
 
 # ---------------------------------------------------------------------------------------------
-# leave_one_family_out: FALSE — the full panel scores every entrant.
+# leave_one_family_out: FALSE — the full panel scores every entrant. MEASURED-AND-WITHDRAWN, not
+# unimplemented: LOFO ran as the default and lost to its own cost. With exactly 3 vendors it made
+# judge identity perfectly CONFOUNDED with entrant family. Paired within the same records on run
+# 040653Z, judge_google is a severity outlier on min(N,U,S): +2.72 vs judge_openai, +3.38 vs
+# judge_anthropic, while those two differ by 0.65. LOFO removed the lenient judge deterministically
+# for exactly the Google entrants, so the two bottom-ranked entrants were precisely the two it never
+# scored, ~60% of the observed leaderboard spread tracked panel composition (measured on the
+# LOFO-protocol run, now deleted; derivation in docs/notes/iclr_metareview.md -- reconstructing the
+# LOFO subset from 040653Z reproduces the direction, Gemini -0.80/-0.54 with every other entrant
+# positive), and NO judge scored all five entrants -- no common-judge comparison. The
+# anti-self-preference control introduced a larger bias than the one it removed. The bias it targets
+# is itself sign-inconsistent by judge (for the Anthropic judge LOFO removed a judge that was
+# HARSHER on its own family); the source paper's bias table is in docs/benchmark_best_practices.md.
 #
-# Why this changed. With exactly 3 vendors, LOFO made judge identity perfectly CONFOUNDED with
-# entrant family, and the confound turned out to dominate the result. Measured paired within the
-# same records, judge_google is a severity outlier: +2.04 vs judge_openai and +3.24 vs
-# judge_anthropic on min(N,U,S), while anthropic and openai agree to within 0.02. LOFO then removed
-# the lenient judge deterministically for exactly the Google entrants, so the two bottom-ranked
-# entrants were precisely the two never scored by it, ~60% of the observed leaderboard spread
-# tracked panel composition, and NO judge scored all five entrants -- leaving no common-judge
-# comparison and an unidentifiable leaderboard. The anti-self-preference control introduced a
-# larger bias than the one it removed.
-#
-# The bias LOFO targets is also not uniform. In the source paper's own bias table the same-family
-# effect was judge-specific and sign-inconsistent: Gemini +2.47/+0.78/+0.67, GPT +0.35/+0.02/+0.47,
-# Claude +0.30/-1.78/-1.57. For the OpenAI judge LOFO spent a whole judge to remove a ~0.0-0.5
-# effect; for the Anthropic judge it removed a judge that was HARSHER on its own family.
-#
-# LOFO is not abandoned -- it is demoted from assumption to measurement. Every record now stamps
-# `same_family` per judge, so the LOFO subset is recoverable post-hoc by filtering those rows, and
+# LOFO is demoted from assumption to measurement, not abandoned. Every judge row stamps
+# `same_family`, so the LOFO subset is recoverable post-hoc as the `same_family == false` rows, and
 # self-preference enters the model as a covariate (analysis/stats.py runs MixedLM) instead of being
 # excluded by fiat. Set this back to true only to reproduce the old protocol.
 leave_one_family_out: false
@@ -50,7 +47,8 @@ judges:
   - id: judge_google
     model: gemini-2.5-pro
     family: google
-# A 4th, genuinely open-weight judge remains the outstanding gap (see judge_config.yaml): with only
-# 3 vendors the panel has no redundancy, and losing one leaves too few judges. Gemma is on the
-# Google key but shares Google's lineage, so labelling it `open_weight` would not buy independence.
-# Satisfying this needs a third-party host (Together/Fireworks/Groq).
+# A 4th, genuinely open-weight judge remains the OUTSTANDING GAP (spec in
+# docs/judge_protocol_intent.md): with only 3 vendors the panel has no redundancy, and losing one
+# leaves too few judges. Gemma is on the Google key but shares Google's lineage, so labelling it
+# `open_weight` would not buy independence. Satisfying this needs a third-party host
+# (Together/Fireworks/Groq).

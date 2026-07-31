@@ -4,19 +4,18 @@ Thin wrappers that evaluate ONE entrant on CREST and write an immutable run dire
 `crest/result/runs/<run_id>/`. For a multi-agent, config-driven run, use **`crest/run_eval.py`**
 with `crest/config/eval_config.yaml` instead.
 
-> **Fixed 2026-07-31.** These scripts were broken between 2026-07-30 and 2026-07-31: `run_one`
-> called `results.find_resumable` / `completed_pairs`, deleted when `--resume` was replaced by the
-> cross-run generation cache, so each raised `AttributeError` before making an API call. They now go
-> through `_common.py::cli()`, which gives every script the same front door as `run_eval.py` —
-> `--dry-run`, `--yes`, key preflight and the cost guard. Previously they took no arguments at all
-> and went from import straight to spending; `--help` started a real 50-item run.
->
-> ```bash
-> python crest/eval/eval_claude_sonnet.py --dry-run        # resolve + preflight, spend nothing
-> python crest/eval/eval_claude_sonnet.py --per-category 2  # cheap balanced 10-item pilot
-> ```
-
 Run from the repo root (the parent of `crest/`):
+
+```bash
+python crest/eval/eval_claude_sonnet.py --dry-run         # resolve + preflight keys, spend nothing
+python crest/eval/eval_claude_sonnet.py --per-category 2  # cheap balanced 10-item pilot
+python crest/eval/eval_claude_sonnet.py                   # full 50-item run for one entrant
+```
+
+Every script shares one front door, `_common.py::cli()`, so each has the same guards as
+`run_eval.py`: `--dry-run`, `--yes`, API-key preflight and the cost guard, plus `--per-category`,
+`--limit`, `--categories`, `--budget`, `--concurrency`, `--override-cache` (`--help` for all).
+The two deep-research scripts default to `--per-category 1` because they cost dollars per task.
 
 | Script | Entrant key | Model (pinned in `harness/agents.py`) | Arm |
 |---|---|---|---|
@@ -27,32 +26,27 @@ Run from the repo root (the parent of `crest/`):
 | `eval_openai_deepresearch_mini.py` | `openai_deepresearch_mini` | `gpt-5.6-sol` (effort=medium, 15 calls) | deep: cheaper depth setting |
 | *(no script yet)* | `gemini_deepresearch` / `gemini_deepresearch_max` | `deep-research-preview-04-2026` / `-max-preview-04-2026` | **deep**: Google Interactions API |
 
+There is **no `--resume`**: a run dir is immutable, so every invocation mints a fresh `run_id` and
+already-paid-for answers are served from the cross-run generation cache (`harness/cache.py`, keyed on
+challenge text + agent + model + adapter fingerprint). A re-run therefore pays only for judging;
+`--override-cache` forces fresh generation and RE-PAYS.
+
 The `*_dr` entrant keys were renamed `*_shallow` (single-turn search-augmented chat, not deep
-research). Any result recorded under `claude_dr` / `openai_dr` / `gemini_dr` is a shallow-arm number.
-The two deep-research scripts' own docstrings still name `o3-deep-research` / `o4-mini-deep-research`
-— stale text; the entrant keys resolve through `_REGISTRY` to `gpt-5.6-sol`.
+research), so any result recorded under `claude_dr` / `openai_dr` / `gemini_dr` is a shallow-arm number.
 
-```bash
-python crest/eval/eval_claude_sonnet.py            # full 50-item run for one model (once fixed)
-```
-Each script takes optional subset args in-code (`run_one("claude_shallow", per_category=2)`) for a
-cheap balanced pilot before a full run. Generation is served from the cross-run cache
-(`harness/cache.py`) where a matching answer already exists, so a re-run pays only for judging;
-there is no `--resume`.
-
-Notes on model availability (verified on the current keys, 2026-07-30):
-- `gpt-5.6` is callable via the Responses API. The purpose-built OpenAI Deep Research models
-  `o3-deep-research` and `o4-mini-deep-research` were deprecated 2026-04-22 and **shut down
-  2026-07-23**: both still appear in `models.list()` but every Responses call 404s. OpenAI deep
-  research is now a *pattern* — a general reasoning model + `web_search` + `background=True`, with
-  depth dialed by `reasoning.effort` and `max_tool_calls`.
+Model availability (verified on the current keys, 2026-07-30):
+- The purpose-built OpenAI Deep Research models `o3-deep-research` / `o4-mini-deep-research` were
+  deprecated 2026-04-22 and **shut down 2026-07-23**: both still appear in `models.list()` but every
+  Responses call 404s. OpenAI deep research is now a *pattern* — a general reasoning model +
+  `web_search` + `background=True`, depth dialed by `reasoning.effort` and `max_tool_calls`.
 - **`gemini-3-pro` / `gemini-3-pro-preview` are deprecated** on the current key; the working Gemini-3
   Pro is **`gemini-3.1-pro-preview`**.
 - Google **does** ship a turnkey deep-research agent (`deep-research-preview-04-2026`,
-  `deep-research-max-preview-04-2026`), correcting this file's earlier claim that grounded Pro was
-  Gemini's only deep-research equivalent. Interactions API only, `background=True` required.
-- Anthropic ships no turnkey deep-research endpoint, so the deep arm has no Anthropic entrant.
+  `deep-research-max-preview-04-2026`), so grounded Gemini Pro is *not* its deep-research equivalent.
+  Interactions API only, `background=True` required.
+- Anthropic ships no turnkey deep-research endpoint, so the deep arm has no Anthropic entrant — an
+  asymmetry to disclose, not a null result for Claude.
 - Requires `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY` in the environment
   (`ANTHROPIC_API_KEYS` pools several Anthropic keys — see `harness/keys.py`).
 
-See `docs/notes/deep_research_apis.md` for the live-probed provider landscape and per-task costs.
+See `crest/docs/notes/deep_research_apis.md` for the live-probed provider landscape and per-task costs.

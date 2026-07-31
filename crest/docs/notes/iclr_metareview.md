@@ -6,10 +6,21 @@
 **Evidence base.** All run-data numbers below are computed on a frozen snapshot of
 `result/runs/2026-07-30T081356Z__crest__full50__git84f7a96__51ea6b/records.jsonl`
 taken at **154 records / 147 scored / 32 of 50 items / 5 agents / 2 judges per record**.
-The live run is still appending, so reviewer numbers computed at n=138 and mine at n=147 differ
+The live run was still appending, so reviewer numbers computed at n=138 and mine at n=147 differ
 by small amounts. Where a reviewer's number and mine disagree I report both and say which
 direction the discrepancy runs. **No Caesar/author-system records exist in either run
 directory** — this matters for p3 and is stated again in §5.
+
+> **EVERY RUN NUMBER IN THIS FILE IS SUPERSEDED (annotated 2026-07-31).** This review was written
+> against a *partial, 2-judge* snapshot of a run that is **no longer on disk** (`result/` is
+> gitignored), so none of its statistics is reproducible and several are wrong by large factors
+> against the shipped instrument. The canonical run is `2026-07-31T040653Z` (250 records, 50/50
+> items, 3 judges each) and its recomputed figures live in **`docs/design.md` §0**, which is the
+> single source of truth. Read this file for its *arguments, triage and root-cause analysis* — that
+> is what it is retained for — and take no number from it. Specific reversals: the "sole binding
+> axis in 1 of 138/147 records" premise behind demoting Surprising is wrong (§SC-6, §RC-B); the
+> per-category `axis_isolated` hit rates in §RC-A are superseded; the truncation bug (§SC-8, §RC-A)
+> is fixed, so every finding this file marks "downstream of RC-A" needs re-measuring, not citing.
 
 **AC decision (stated up front, then justified):**
 
@@ -123,7 +134,10 @@ have trivial holonomy around a particular contractible loop. The correct stateme
 over *all* contractible loops.
 
 ### SC-6 — The three-axis structure collapses. **HOLDS; two reviewer numbers overturned.**
-On my n=147 snapshot:
+On my n=147 snapshot. *(Superseded — do not lift these values; `design.md` §0 has the canonical
+recomputation on 250 records / 3 judges. The verdict "collapses" also no longer follows: the
+New/Surprising correlation is contaminated by the v1 judge prompt, so it cannot evidence
+inseparability either way.)*
 
 | Quantity | R3 claim | AC measurement |
 |---|---|---|

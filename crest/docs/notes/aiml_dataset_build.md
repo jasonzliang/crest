@@ -1,56 +1,44 @@
 # AI/ML CREST dataset — build report
 
-Built 2026-07-31. Output: `/Users/jason/Desktop/rome/crest/questions/crest_aiml_challenges.jsonl`
-(41 lines, 423,505 bytes, UTF-8, one JSON object per line, no trailing comma, LF-terminated).
+> ## ⚠ THIS REPORT DESCRIBES A SUPERSEDED BUILD (annotated 2026-07-31)
+>
+> It documents the **41-item** intermediate state. The shipped file
+> `questions/crest_aiml_challenges.jsonl` now has **50 items, 10 per category**: ids `00`–`40` are
+> unchanged and every per-item finding below still points at a real item, but ids **`41`–`49` are
+> new (C4 ×3, C5 ×6) and are covered by NOTHING in this report** — no audit record, no
+> discrimination review, no dedupe check.
+>
+> Three items this report marks BLOCKING are **CLOSED**:
+> - §8.1 the 9 missing items — authored and appended as `_41`–`_49`.
+> - §7 schema incompatibility — `questions/schema.json` is now `crest-challenge/3.2.0` with the
+>   twelve-value `domain` enum, and all 50 items load and validate.
+> - §8.2's provenance loss — the C5 source is tracked at
+>   `questions/aiml_build/c5_source_verbatim.json`. The *unaudited* half of §8.2 still stands.
+>
+> §5's distributions are re-measured in place below. §0, §4 and §7 are superseded and cut to their
+> surviving conclusions. **This dataset is not wired into `config/eval_config.yaml`, has no
+> `item_design.jsonl` rows (so `ci_check.sh`'s bijection check does not cover it), and has never
+> been run or scored.** It is not the dataset any published CREST number refers to.
 
-Build script: `/Users/jason/Desktop/rome/crest/.tmp_build/assemble.py`
-Renumber map: `/Users/jason/Desktop/rome/crest/.tmp_build/renumber_map.json`
-C5 transcription: `/Users/jason/Desktop/rome/crest/.tmp_build/c5_from_prompt.json`
-
-> ⚠️ **All three are gitignored** (`.gitignore:199 → crest/.tmp*/`). `c5_from_prompt.json` is
-> the *only* copy of the C5 items outside the shipped JSONL, and C5 has no other source
-> artifact anywhere in the repo (§0). On a clean clone the C5 provenance chain is lost.
-> Move `.tmp_build/` somewhere tracked before this is relied on. See §8.2.
+Built 2026-07-31. Output: `questions/crest_aiml_challenges.jsonl`
+(one JSON object per line, UTF-8, LF-terminated).
 
 ---
 
-## 0. HEADLINE — the target was 50 items; 41 shipped
+## 0. HEADLINE — the build shipped 41 of 50; the remaining 9 were authored later. **CLOSED.**
 
-**The five category batches were not all available in full.** This is the single most important
-fact about this build and it is not a judgement call — the source material does not exist.
+At build time the five category batches were not all available: C1/C2/C3 had 10 each on disk, C4
+had **7** (`questions/c4_ml_new10.audited.json`, committed mid-audit), and C5 had **no source file
+at all** — 5 items were transcribed verbatim from the task prompt, and the prompt itself cut off
+inside item 6. Minus one cross-category duplicate (§3) ⇒ **41 shipped**. Nothing was invented to
+reach 50 at the time, which was the right call: the alternative was authoring 8 items with
+fabricated prior-art catalogues.
 
-| Batch | Source of record | Items available | Items expected | Shortfall |
-|---|---|---|---|---|
-| C1 | `.tmp_axv/items.audited.json` | 10 | 10 | — |
-| C2 | `.tmpaudit/c2_items_fixed.json` | 10 | 10 | — |
-| C3 | `questions/c3_ml_new10.corrected.json` | 10 | 10 | — |
-| C4 | `questions/c4_ml_new10.audited.json` | **7** | 10 | **−3** |
-| C5 | *no file on disk* — transcribed from the task prompt | **5** | 10 | **−5** |
-| | | **42** | **50** | **−8** |
-
-Then −1 for a genuine cross-category duplicate (§3) ⇒ **41 shipped**.
-
-Evidence for the shortfall:
-
-- `git log` HEAD is `8901a73 crest: AI/ML build progress — C3 minified, **C4 audit at 7/10**`.
-  The C4 batch was committed mid-audit and items 08/09/10 were never produced.
-- `grep -rl "C5_architectures_training" .` over the entire repo (including `.tmpaudit`,
-  `.tmpaudit2`, `.tmpcite`, `.tmp_axv`, `docs/`, `questions/`) returns **nothing**. The C5
-  batch has no artifact anywhere. `git stash` and the 15,563 reachable git objects do not
-  contain it either.
-- The batch text pasted into the build task was itself truncated mid-item in every batch.
-  For C1/C2/C3/C4 that did not matter (the full artifact was on disk). For C5 it did:
-  the prompt carried 5 complete items and cut off inside item 6
-  (`C5_evaluation_benchmarking_05`, truncated at `"model evaluation for extreme risks
-  (arXiv:2305.15324"` inside `known_answers`).
-
-**Nothing was invented to reach 50.** Filling the gap would have meant authoring 8 benchmark
-items with fabricated prior-art catalogues, which is the exact failure mode this whole audit
-chain exists to prevent. The gap is reported instead. See §8.1 for what has to happen next.
-
-The 5 complete C5 items were transcribed verbatim from the task prompt into
-`.tmp_build/c5_from_prompt.json`. **That transcription is unverified against any original**
-and is a human-review item (§8.2).
+**The 9 were authored separately and appended as ids `_41`–`_49`, so the file is 50/50 and squared
+at 10 per category.** They were NOT produced by this build and carry none of its audit apparatus —
+see the header. The C5 transcription is now tracked at
+`questions/aiml_build/c5_source_verbatim.json`; it remains **unverified against any original**
+(§8.2).
 
 ---
 
@@ -235,20 +223,15 @@ is low, so no pair is a textual near-duplicate.
 
 ## 4. Schema enforcement
 
-Enforced by `.tmp_build/assemble.py`, which refuses to write if any check fails. Result: **0
-errors** across 41 items.
+The build-time checker (`.tmp_build/assemble.py`) passed 0 errors on the 41 items it wrote. **This
+section is superseded by the live gate**: all 50 items now validate against
+`questions/schema.json` (`crest-challenge/3.2.0`) via `harness/run_crest.load_challenges`, which is
+the check that matters. The one build-time convention worth keeping on the record:
 
-- Keys are exactly `id, category, domain, query, axis_isolated, time_sensitivity,
-  known_answers, hard_rules, expert_baseline`, in that order. No key was dropped from any
-  source item — the five batches were already clean of `rationale`, `category_name`,
-  `predicted_direction` and `author_expected_surprises`.
-- `id` matches `^C[1-5]_[a-z_]+_[0-9]{2}$`; all 41 ids unique; **`NN` globally unique and
-  contiguous 00–40** (assigned by a single counter walking C1→C5 in batch order).
-- `query` ≥ 120 chars: min 660, max 915, mean 783.
-- `expert_baseline` ≥ 200 chars: min 517, max 2408, mean 1350.
-- `hard_rules` ≥ 3: min 5, max 9.
-- `known_answers` ≥ 8: min 10, max 30. Each item has ≥ 8 *substantive* entries carrying both a
-  resolvable identifier (arXiv id / DOI / stable URL) **and** a 4-digit year.
+- Every item's `known_answers` carries ≥ 8 *substantive* entries with both a resolvable identifier
+  (arXiv id / DOI / stable URL) **and** a 4-digit year, on top of a leading `Dated as of …`
+  preamble entry that carries neither by design and is excluded from that count. (This is a
+  markedly stricter dating bar than the shipped CREST set achieved — `datasheet.md` §2.)
 
 Two `known_answers` entries do not match the identifier/year regex and were manually cleared
 as false positives, not defects:
@@ -260,66 +243,53 @@ as false positives, not defects:
   arXiv ids. Valid, though spelling out "2019 / 2023 / 2024" would be more consistent with the
   rest of the file.
 
-The leading "Dated as of 2026-07-31…" preamble entry in each item carries no identifier by
-design; it is a header, and it is excluded from the ≥ 8 substantive count.
-
 ---
 
 ## 5. Distributions
 
-### 5a. Category
+**Re-measured 2026-07-31 on the shipped 50-item file** (the 41-item tables this section originally
+carried are gone; they described the intermediate build).
 
-| C1 | C2 | C3 | C4 | C5 | total |
-|---|---|---|---|---|---|
-| 10 | 10 | 10 | **7** | **4** | **41** |
+**Category:** 10 / 10 / 10 / 10 / 10 — squared.
 
-**Unbalanced.** Any per-category analysis will have materially wider error bars on C4 and
-especially C5. C5 at n=4 will not support the per-category comparison that CREST's design
-depends on.
-
-### 5b. Domain
-
-All six AI/ML domains are used at least once, but coverage is not square.
+**Domain × category** (all six AI/ML domains used; still not square):
 
 | domain | C1 | C2 | C3 | C4 | C5 | total |
 |---|---|---|---|---|---|---|
 | `architectures_training` | 2 | 2 | 2 | 2 | 2 | **10** |
 | `alignment_safety` | 2 | 2 | 2 | 2 | 1 | **9** |
 | `evaluation_benchmarking` | 2 | 2 | 2 | 2 | 1 | **9** |
-| `systems_efficiency` | 2 | 2 | 2 | 1 | 0 | **7** |
-| `theory_learning` | 1 | 1 | 1 | 0 | 0 | **3** |
-| `multimodal_agents` | 1 | 1 | 1 | 0 | 0 | **3** |
+| `systems_efficiency` | 2 | 2 | 2 | 2 | 0 | **8** |
+| `theory_learning` | 1 | 1 | 1 | 1 | 3 | **7** |
+| `multimodal_agents` | 1 | 1 | 1 | 1 | 3 | **7** |
 
-C1/C2/C3 are identically shaped (2/2/2/2/1/1), which is clearly the intended design. The
-missing 8 items are exactly what would have squared it: C4 needs `systems_efficiency` ×1,
-`theory_learning` ×1, `multimodal_agents` ×1; C5 needs `alignment_safety` ×1 (the deduped
-slot would have to be re-authored on a different problem), `evaluation_benchmarking` ×1,
-`systems_efficiency` ×2, `theory_learning` ×1, `multimodal_agents` ×1.
+C1–C4 are now identically shaped (2/2/2/2/1/1); the 6 late C5 items went to `theory_learning` ×3
+and `multimodal_agents` ×3, so C5 is the odd row and `systems_efficiency` has **no** C5 item.
 
-`theory_learning` and `multimodal_agents` at n=3 cannot carry a domain-level claim.
-
-### 5c. Time sensitivity
+**Time sensitivity × category** — total 37 `pre_cutoff` / 8 `post_cutoff` / 5 `timeless`:
 
 | | pre_cutoff | post_cutoff | timeless |
 |---|---|---|---|
 | C1 | 5 | 5 | 0 |
 | C2 | **10** | 0 | 0 |
 | C3 | 4 | 1 | 5 |
-| C4 | **7** | 0 | 0 |
-| C5 | 2 | 2 | 0 |
-| **total** | **28 (68%)** | **8 (20%)** | **5 (12%)** |
+| C4 | **10** | 0 | 0 |
+| C5 | 8 | 2 | 0 |
 
-C1 is the only balanced category. **C2 and C4 are 100% `pre_cutoff`** — which is defensible on
-design grounds (a counterfactual world and a measurement-invention task do not need a
-post-cutoff hook), but it means the pre/post-cutoff contrast is confounded with category:
-every `post_cutoff` item is C1, C3 or C5. Any analysis that crosses category with time
-sensitivity will not identify. §8.5.
+C1 is the only balanced category. **C2 and C4 are 100% `pre_cutoff`** — defensible on design
+grounds (a counterfactual world and a measurement-invention task do not need a post-cutoff hook),
+but the pre/post-cutoff contrast stays confounded with category: every `post_cutoff` item is C1,
+C3 or C5. Any analysis crossing category with time sensitivity will not identify. §8.5.
+NB this is the one place the AI/ML set is materially *better* than the shipped CREST set, which has
+a single post-cutoff item (`datasheet.md` §2, "Splits").
 
-### 5d. Axis isolated
+**Axis isolated** — novelty 18, usefulness 11, balanced 11, surprise 10. Near-confounded with
+category rather than perfectly confounded as at 41 items: C1 = `usefulness` ×10, C2 = `surprise`
+×10, C3 = `novelty` ×10, C4 = `balanced` ×9 + `usefulness` ×1, C5 = `novelty` ×8 + `balanced` ×2.
+C3 and C5 share the `novelty` label, so no axis label identifies a single category.
 
-Perfectly confounded with category by construction: C1 = `usefulness` (10), C2 = `surprise`
-(10), C3 = `novelty` (10), C4 = `balanced` (7), C5 = `novelty` (4). Note C3 and C5 share the
-`novelty` axis, so `novelty` totals 14 across two categories while `balanced` has only 7.
+**Rule counts:** mean `hard_rules` per category 7.3 / 6.5 / 7.1 / 8.1 / 5.6 — C5 is still the
+thinnest tier (§8.4). `known_answers` 10–30 per item; `expert_baseline` 517–2,408 chars.
 
 ---
 
@@ -389,7 +359,7 @@ zero**, which is the sharpest discrimination device in the file. Each gate is ba
 | `_28` island biogeography | replay buffers, weight regularisation, "larger models forget less" |
 | `_29` immunology | trained injection classifier, instruction hierarchy, provenance capability restriction, sandboxing, dual-LLM quarantine |
 
-### C4 (n=7) — named discrimination cases with labelled arms
+### C4 (n=7 of the shipped 10 — `_41`/`_42`/`_43` not reviewed) — named discrimination cases with labelled arms
 
 C4 is the only category with an explicit, uniformly-applied `DISCRIMINATION CASE` rule, and it
 names the arms:
@@ -404,7 +374,7 @@ names the arms:
 | `_35` emergence attribution | J1 vanishes under graded rescoring / J2 survives rescoring / J3 pipeline change | three distinct verdicts |
 | `_36` reasoning-budget fairness | S1 high peak at large budget, flat low-budget vs S2 lower peak, strong low-budget | distinct rankings |
 
-### C5 (n=4) — exclusion lists only
+### C5 (n=4 of the shipped 10 — `_44`–`_49` not reviewed) — exclusion lists only
 
 C5's device is the query-level exclusion list plus, in two items, an `expert_baseline` that
 explicitly says the convergent answer is itself excluded:
@@ -419,96 +389,33 @@ explicitly says the convergent answer is itself excluded:
   newer than the model").
 - `C5_architectures_training_38` and `C5_alignment_safety_39`: **no in-rule discrimination
   clause, and their `expert_baseline` does not claim the convergent answer is excluded.** These
-  two are the weakest-discriminating items in the shipped file. §8.4.
+  two are the weakest-discriminating items *of those reviewed here*. §8.4.
 
 ---
 
-## 7. ⚠️ COMPATIBILITY — the live schema will REJECT this file as-is
+## 7. COMPATIBILITY — **CLOSED 2026-07-31**
 
-**`questions/schema.json` pins `domain` to the six ORIGINAL domains. All 41 items in this file
-use AI/ML domains. The dataset FAILS validation and every run will abort until the enum is
-extended.**
+At build time `questions/schema.json` pinned `domain` to the six ORIGINAL domains, so all 41 items
+failed validation on `domain` and nothing else — every other constraint (`id` pattern, `required`,
+`additionalProperties: false`, the two other enums, `minLength`, `minItems`) already passed. The
+schema has since been bumped to **`crest-challenge/3.2.0`** with a twelve-value `domain` enum, and
+all 50 items load and validate through `harness/run_crest.load_challenges`.
 
-This is not a warning that gets skipped. `harness/run_crest.py::load_challenges` (line 99)
-validates by default and **raises** on violation:
+The trade-off that decision made, and which is now live: a **union** enum permits an
+arts/humanities item to be tagged `systems_efficiency`. The alternative considered was a second
+schema file selected per dataset, which would need a change to `load_challenges`' `_SCHEMA`
+constant. That was not done.
 
-```
-119    errs = sorted(v.iter_errors(...))
-122    raise ValueError(f"{len(errs)} schema violation(s) in {path}: ...")
-```
+Two compatibility notes that are **still open**:
 
-Verified empirically against the shipped file:
-
-```
-violations: 41
-Counter({'domain': 41})
-('C1_architectures_training_00', ['domain'],
- "'architectures_training' is not one of ['arts_humanities', 'biology_medicine', 'economics_...")
-```
-
-**41 violations, all on `domain`, and nothing else.** Every other constraint — `id` pattern,
-`required`, `additionalProperties: false`, the two enums, `minLength`, `minItems` — passes.
-
-### Exact change needed
-
-In `/Users/jason/Desktop/rome/crest/questions/schema.json`, replace:
-
-```json
-    "domain": {
-      "enum": [
-        "arts_humanities",
-        "biology_medicine",
-        "economics_business",
-        "engineering",
-        "law_policy",
-        "materials_chemistry"
-      ]
-    },
-```
-
-with:
-
-```json
-    "domain": {
-      "enum": [
-        "arts_humanities",
-        "biology_medicine",
-        "economics_business",
-        "engineering",
-        "law_policy",
-        "materials_chemistry",
-        "alignment_safety",
-        "architectures_training",
-        "evaluation_benchmarking",
-        "multimodal_agents",
-        "systems_efficiency",
-        "theory_learning"
-      ]
-    },
-```
-
-and bump `version` from `crest-challenge/3.1.0` to `crest-challenge/3.2.0`, appending to
-`description`: *"v3.2.0 extended the `domain` enum with the six AI/ML domains used by
-questions/crest_aiml_challenges.jsonl; the original six are retained so
-questions/crest_challenges.jsonl continues to validate."*
-
-**This edit was deliberately NOT made.** `schema.json` is shared with the live 50-item
-`crest_challenges.jsonl` and with `ci_check.sh`; widening the enum is a decision about the
-benchmark's scope, not a build step, and it should be a reviewed commit of its own. Note also
-that a union enum permits an arts-humanities item to be tagged `systems_efficiency` — if that
-matters, the alternative is a second schema file (`schema_aiml.json`) selected by dataset,
-which would require a change to `load_challenges`' `_SCHEMA` constant.
-
-Two further compatibility notes:
-
-- `ci_check.sh` enforces an id bijection between the challenges file and
-  `questions/item_design.jsonl`. `item_design.jsonl` has **no rows for these 41 ids**. CI will
-  fail on the bijection check unless design rows are authored or the check is scoped per-dataset.
+- `ci_check.sh` enforces an id bijection between `questions/crest_challenges.jsonl` and
+  `questions/item_design.jsonl`. `item_design.jsonl` has **no rows for these 50 ids**, so this
+  dataset has no design-rationale sidecar and the bijection gate does not cover it.
 - `expert_baseline` is judge-hidden as of 2026-07-30 and is **not** read by
-  `judge/score.py::_judge_prompt`. It is carried here for provenance only, per the schema note.
-  Nothing in §6's discrimination analysis reaches the judge unless it is also in `hard_rules`
-  or `known_answers` — which is precisely why the four C2 items and two C5 items with no
-  in-rule discrimination clause are flagged.
+  `judge/score.py::_judge_prompt`. It is carried here for provenance only. Nothing in §6's
+  discrimination analysis reaches the judge unless it is also in `hard_rules` or `known_answers` —
+  which is precisely why the four C2 items and two C5 items with no in-rule discrimination clause
+  are flagged (§8.4).
 
 ---
 
@@ -516,43 +423,41 @@ Two further compatibility notes:
 
 Ordered by how much damage it does if left alone.
 
-### 8.1 The 9 missing items — BLOCKING
-Eight were never authored (C4 ×3, C5 ×5) and one was dropped for duplication (C5 ×1, and its
-replacement must target a *different* open problem from `C4_alignment_safety_32`). Decide:
-author the 9, or reframe the dataset as a 41-item set and update every downstream reference
-(`config/eval_config.yaml`, `run_eval.py`, the papers' "50 items" claims, `analysis/`). Do not
-ship a file called 50 that has 41 rows. Required to square the design: C4 needs
-`systems_efficiency`, `theory_learning`, `multimodal_agents`; C5 needs `alignment_safety` ×2
-(one replacing the dropped item), `evaluation_benchmarking`, `systems_efficiency` ×2,
-`theory_learning`, `multimodal_agents`.
+### 8.1 The 9 missing items — **CLOSED.** Authored and appended as `_41`–`_49`
+C4 gained `multimodal_agents`, `theory_learning`, `systems_efficiency`; C5 gained
+`multimodal_agents` ×3 and `theory_learning` ×3. The file is 50 rows, 10 per category. Note what
+that means for everything else in this report: those 9 items came from a different pass and carry
+**no audit record, no discrimination review (§6 stops at `_40`) and no dedupe check** here. If any
+of them duplicates `C4_alignment_safety_32` — the dedupe that cost the original 41st slot — this
+report would not know.
 
-### 8.2 C5 has never been audited — BLOCKING for publication
-Four items, ~89 catalogue entries, zero independent citation checking. C1, C2 and C3 each had a
+### 8.2 C5 has never been audited — **STILL OPEN** (provenance half closed)
+Zero independent citation checking on the C5 items, ~89 catalogue entries. C1, C2 and C3 each had a
 **100% item-level defect rate** under audit; assuming C5 is clean contradicts the observed base
-rate. Additionally the 5 C5 items were **transcribed from the task prompt, not read from a
-source artifact**, so the transcription itself needs diffing against whatever the original was.
-If no original exists, C5 must be treated as unsourced. **And the transcription itself is
-gitignored** — `.tmp_build/c5_from_prompt.json` is the only copy outside the shipped JSONL and
-disappears on a clean clone. Move it (and `assemble.py`, and `renumber_map.json`) into a
-tracked path before anything downstream depends on this build.
+rate. The C5 items were also **transcribed from the task prompt, not read from a source artifact**,
+so the transcription needs diffing against whatever the original was; if no original exists, C5 must
+be treated as unsourced. **Closed:** the transcription is no longer gitignored — it is tracked at
+`questions/aiml_build/c5_source_verbatim.json`, so the chain survives a clean clone. `assemble.py`
+and `renumber_map.json` remain untracked under `crest/.tmp_build/` and will not.
 
 ### 8.3 C4 has no retained pre-audit artifact
 Its corrections cannot be reconstructed or spot-checked, so §2d is thinner than §2a–2c by
 necessity. If the C4 auditor's working copy still exists anywhere, retain it.
 
 ### 8.4 Weak-discriminating items
-Six items have no in-rule discrimination clause and therefore rely wholly on the
+Six of the items reviewed here have no in-rule discrimination clause and therefore rely wholly on the
 `known_answers` no-credit list, which a judge reading `hard_rules` will not see:
 `C2_architectures_training_11`, `C2_alignment_safety_13`, `C2_evaluation_benchmarking_14`,
 `C2_systems_efficiency_17`, `C5_architectures_training_38`, `C5_alignment_safety_39`. The last
-two are worst: C5's mean rule count is 5.0 against 6.5–8.1 elsewhere, and neither item's
-`expert_baseline` claims the convergent answer is excluded. Consider adding an explicit gate.
+two are worst, and C5 is still the thinnest tier at 50 items (mean 5.6 rules vs 6.5–8.1 elsewhere,
+§5). Neither item's `expert_baseline` claims the convergent answer is excluded. Consider adding an
+explicit gate. `_44`–`_49` have not been checked for this at all.
 
 ### 8.5 Confounded design axes
-`axis_isolated` is 1:1 with `category` by construction (and C3/C5 share `novelty`).
-`time_sensitivity` is near-confounded: C2 and C4 are 100% `pre_cutoff`, so every `post_cutoff`
-item is C1, C3 or C5. Any model comparison crossing category with time sensitivity will not
-identify. Decide whether that is intended before running.
+`axis_isolated` is near-1:1 with `category` (C3/C5 share `novelty`; C4 and C5 each carry one
+off-label item — §5). `time_sensitivity` is near-confounded: C2 and C4 are 100% `pre_cutoff`, so
+every `post_cutoff` item is C1, C3 or C5. Any model comparison crossing category with time
+sensitivity will not identify. Decide whether that is intended before running.
 
 ### 8.6 Post-cutoff citations to future-dated arXiv ids
 The catalogues cite ids in the 2602–2606 range (e.g. arXiv:2603.28063, 2604.16242, 2606.04923,
@@ -579,7 +484,8 @@ and should be re-checked at release.
 
 ## Appendix — id renumbering
 
-`NN` runs 00–40, globally unique, assigned by one counter walking C1→C5 in batch order.
+`NN` runs 00–40, globally unique, assigned by one counter walking C1→C5 in batch order. Ids
+`41`–`49` were appended later by a different pass and have no row here.
 
 | new id | old id | source |
 |---|---|---|
@@ -625,4 +531,4 @@ and should be re-checked at release.
 | `C5_alignment_safety_39` | `C5_alignment_safety_02` | `.tmp_build/c5_from_prompt.json` (transcribed) |
 | `C5_evaluation_benchmarking_40` | `C5_evaluation_benchmarking_04` | `.tmp_build/c5_from_prompt.json` (transcribed) |
 
-Dropped: `C5_alignment_safety_03` (dedupe, §3). Never authored: C4 ×3, C5 ×5 (§0).
+Dropped: `C5_alignment_safety_03` (dedupe, §3). Authored later, outside this build: `_41`–`_49` (§8.1).
