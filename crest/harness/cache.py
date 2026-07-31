@@ -91,14 +91,25 @@ class CachedOutput:
     # `truncated` must be here: run_crest records it via getattr(report, "truncated", False), so
     # omitting it silently wrote 0 for every CACHE HIT -- and cache hits are the normal path on a
     # re-run, so the metric read 0 exactly when it mattered.
-    __slots__ = ("text", "citations", "n_tokens", "n_searches", "truncated", "source_run")
+    # The billing fields are here for the SAME reason `truncated` is, and the gate caught them
+    # failing the same way within a minute of the first cache hit: run_crest reads them off the
+    # report via getattr, so a CachedOutput lacking them wrote empty tokens{} and calls[] on every
+    # cache hit. That is the worst possible case to lose them in -- 196 of the science run's 250
+    # records were cache-served, so the normal path would be the unpriceable one.
+    __slots__ = ("text", "citations", "n_tokens", "n_searches", "truncated", "source_run",
+                 "tokens", "billed_tools", "calls", "usage_raw")
     # `truncated` is keyword-only: AgentOutput's 5th positional is `truncated` while this class's is
     # `source_run`, so a positional call would silently swap them between the two duck-typed classes.
-    def __init__(self, text, citations, n_tokens, n_searches, source_run, *, truncated=False):
+    def __init__(self, text, citations, n_tokens, n_searches, source_run, *, truncated=False,
+                 tokens=None, billed_tools=None, calls=None, usage_raw=None):
         self.text, self.citations = text, citations
         self.n_tokens, self.n_searches = n_tokens, n_searches
         self.truncated = bool(truncated)
         self.source_run = source_run
+        self.tokens = dict(tokens or {})
+        self.billed_tools = dict(billed_tools or {})
+        self.calls = list(calls or [])
+        self.usage_raw = list(usage_raw or [])
 
 
 class GenerationCache:
@@ -168,6 +179,13 @@ class GenerationCache:
                     "n_searches": r.get("n_searches", 0) or 0,
                     "truncated": bool(r.get("truncated", False)),
                     "source_run": r.get("run_id") or run_dir.name,
+                    # Carried so a cache hit stays priceable. Absent on pre-1.2.0 records, which is
+                    # why these default to empty rather than raising -- an old cache entry is still
+                    # a valid generation, it just cannot contribute a cost.
+                    "tokens": r.get("tokens") or {},
+                    "billed_tools": r.get("billed_tools") or {},
+                    "calls": r.get("calls") or [],
+                    "usage_raw": r.get("usage_raw") or [],
                 })
         if verbose:
             msg = f"generation cache: {len(self._idx)} entries from {self.n_runs} prior run(s)"
@@ -190,7 +208,9 @@ class GenerationCache:
             return None
         return CachedOutput(hit["text"], hit["citations"], hit["n_tokens"],
                             hit["n_searches"], hit["source_run"],
-                            truncated=hit.get("truncated", False))
+                            truncated=hit.get("truncated", False),
+                            tokens=hit.get("tokens"), billed_tools=hit.get("billed_tools"),
+                            calls=hit.get("calls"), usage_raw=hit.get("usage_raw"))
 
     def __len__(self) -> int:
         return len(self._idx)

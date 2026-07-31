@@ -143,6 +143,11 @@ for path in runs:
         print(f"  NOTE {name}: schema {ver or '?'} predates 1.2.0, so it carries NO billing fields. "
               f"Cost is NOT MEASURED for this run (which is not the same as zero).")
         continue
+    # A run with no manifest is still WRITING. Its records are a partial sample, so a defect there
+    # must be reported but must NOT fail a PRE-RELEASE gate -- an unfinished run is not releasable
+    # anyway, and failing on it would leave the gate red for hours during every run. Still checked
+    # rather than skipped: this is how the cache-hit regression below was caught, one minute in.
+    complete = os.path.exists(os.path.join(os.path.dirname(path), "run_manifest.json"))
     per = collections.defaultdict(lambda: {"n": 0, "in0": 0, "nocalls": 0, "bad": 0})
     for r in recs:
         s = per[r.get("agent", "?")]
@@ -158,21 +163,24 @@ for path in runs:
         # invariant that catches the whole class.
         if int(tk.get("output_reasoning") or 0) > int(tk.get("output_total") or 0):
             s["bad"] += 1
+    tag = "FAIL" if complete else "WARN(in-progress)"
+    def flag(msg):
+        global bad          # module scope in this heredoc, not an enclosing function
+        print(f"  {tag} {name}: {msg}")
+        if complete:
+            bad = 1
     for agent, s in sorted(per.items()):
         if s["in0"] == s["n"]:
-            print(f"  FAIL {name}: {agent} has tokens.input == 0 on ALL {s['n']} record(s) -- the "
-                  f"billing capture is not reaching this adapter, so cost is unanswerable for it")
-            bad = 1
+            flag(f"{agent} has tokens.input == 0 on ALL {s['n']} record(s) -- the billing capture "
+                 f"is not reaching this adapter, so cost is unanswerable for it")
         elif s["in0"]:
             print(f"  WARN {name}: {agent} has tokens.input == 0 on {s['in0']}/{s['n']} record(s)")
         if s["nocalls"] == s["n"]:
-            print(f"  FAIL {name}: {agent} has an empty calls[] on ALL {s['n']} record(s)")
-            bad = 1
+            flag(f"{agent} has an empty calls[] on ALL {s['n']} record(s)")
         if s["bad"]:
-            print(f"  FAIL {name}: {agent} has output_reasoning > output_total on {s['bad']}/"
-                  f"{s['n']} record(s) -- output_total is not reasoning-inclusive for this "
-                  f"provider, so cost is under-counted. Recompute from usage_raw.")
-            bad = 1
+            flag(f"{agent} has output_reasoning > output_total on {s['bad']}/{s['n']} record(s) -- "
+                 f"output_total is not reasoning-inclusive for this provider, so cost is "
+                 f"under-counted. Recompute from usage_raw.")
     if not bad:
         print(f"  OK {name}: billing fields populated for all {len(per)} entrant(s)")
 sys.exit(bad)

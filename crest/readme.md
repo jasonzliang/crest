@@ -18,10 +18,15 @@ open-ended (C5) tasks. The mixed win/loss pattern is the point — see `docs/des
 ```bash
 $EDITOR crest/config/eval_config.yaml           # choose benchmark subset, agents, judges
 python crest/run_eval.py                         # writes crest/result/runs/<run_id>/
+python crest/run_eval.py --config crest/config/eval_config.aiml.yaml   # the AI/ML item set instead
 python -m crest.harness.run_crest --agents claude_shallow --subset adhoc   # one entrant, ad-hoc
 python -m crest.analysis.stats --run crest/result/latest/records.jsonl
-bash crest/analysis/ci_check.sh                  # pre-release gate (currently RED — see Status)
+python -m crest.analysis.costs --run crest/result/runs/<run_id>   # cost, from config/prices.yaml
+bash crest/analysis/ci_check.sh                  # pre-release gate
 ```
+`--dry-run` resolves config, agents, challenges and keys and makes **no model calls** — always the
+first thing to run against a config you have edited. A deep-arm run costs real money per task, so
+`run_eval.py` also requires `--yes` before it will start one.
 Requires `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY` (pool several Anthropic keys via
 `ANTHROPIC_API_KEYS` — see `harness/keys.py`).
 
@@ -75,18 +80,30 @@ crest/
   readme.md            you are here
   run_eval.py          MAIN entry point (config-driven)
   config/              eval_config.yaml — choose benchmark(s), agents, judges
+                       eval_config.aiml.yaml — same, pointed at the AI/ML item set
+                       prices.yaml — per-model prices for analysis/costs.py; ships ALL NULL
   questions/           crest_challenges.jsonl (50) · schema.json (enforced on load)
                        item_design.jsonl (per-item rationale) · quarantine.yaml
                        crest_aiml_challenges.jsonl (a SECOND 50-item AI/ML set, 10/category over 6
-                       AI/ML domains; validates under schema v3.2.0, but it is NOT listed in
-                       config/eval_config.yaml, has NO item_design.jsonl rows, and has never been
-                       run or scored. See docs/notes/aiml_dataset_build.md)
+                       AI/ML domains; validates under schema v3.2.0). It is NOT part of the released
+                       benchmark and no paper claims it: it has NO item_design.jsonl rows and has
+                       had no citation or live-web audit. It now has its own config
+                       (config/eval_config.aiml.yaml) and is gated by ci_check.sh for schema-load
+                       and self-consistency only, deliberately NOT for the release-artifact checks
+                       it would fail. On the mechanical checks it is CLEANER than the science set
+                       (100% of prior-art entries dated, vs 51%). See docs/notes/aiml_dataset_build.md
   harness/             agents.py (entrants) · run_crest.py (core loop) · results.py (run-dir writer)
                        cache.py (cross-run generation cache) · keys.py (key pooling) · rejudge.py
   judge/               score.py (judge panel + grounding check) · rubric.md · judge_config*.yaml
   analysis/            stats.py (mixed-effects, TOST, crossover, bootstrap, ICC/α)
                        preregistration.yaml · ci_check.sh (pre-release gate) · validate_items.py
                        ablate_fields.py · apply_audit_fixes.py · stall_check.py
+                       costs.py (cost from records × config/prices.yaml; refuses to guess — emits
+                       null with a reason and reports priced-vs-total coverage)
+                       audit_novelty_gate.py (items whose novelty rule offers an example their own
+                       prior-art set already contains; heuristic, and its docstring states the
+                       defect class it CANNOT see)
+                       promote_leaderboard.py (tracked result/leaderboard.json)
   eval/                per-entrant eval scripts + readme (one entrant each; --dry-run supported)
   result/              run outputs (runs/<run_id>/…), gitignored; see result/readme.md
   docs/                design.md · datasheet.md · related_work.md · analysis notes
@@ -110,8 +127,11 @@ per-agent creativity numbers yet**, for three reasons:
    `min(New, Useful, Surprising)` — all three axes — consistently across
    `analysis/stats.py::_composite`, `analysis/preregistration.yaml` and `judge/rubric.md`.
    `stats.py::min2()` reports the New/Useful pair as a robustness check.
-3. **The gate is red.** `analysis/ci_check.sh` passes schema, sidecar-bijection and quarantine, and
-   still fails item self-consistency on `C1_materials_chemistry_01`. Run the gate for the live
+3. **The gate is green, and that is not the same as release-ready.** `analysis/ci_check.sh` now
+   passes all of its checks, including the `C1_materials_chemistry_01` self-consistency failure this
+   entry used to describe. What still blocks release is in `docs/datasheet.md`: no human study, no
+   Croissant metadata, the run directory undistributed, and both field-ablation deltas
+   unreproducible. Run the gate for the live
    failure list rather than trusting a transcript of it; two failures previously counted against
    `C2_materials_chemistry_07` and `C4_materials_chemistry_43` were validator false positives — a
    50% false-positive rate on a blocking gate — and were fixed.
