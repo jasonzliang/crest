@@ -151,7 +151,7 @@ def judge_ratings(records_path: str) -> dict:
 
     Read from the file rather than the flattened frame because `creativity.judges` is a nested list
     and json_normalize leaves it as an object column."""
-    rows = [json.loads(l) for l in open(records_path) if l.strip()]
+    rows = [json.loads(l) for l in open(records_path, encoding="utf-8") if l.strip()]
     out = {ax: [] for ax in AXES}
     ids = {ax: [] for ax in AXES}                    # per-unit judge-id tuples, aligned with out[ax]
     by_judge = {ax: {} for ax in AXES}
@@ -685,7 +685,7 @@ def load_prereg(path: str) -> dict:
     without its stated plan is how `--prereg` came to be a flag pointing at a missing file."""
     try:
         import yaml
-        d = yaml.safe_load(open(path)) or {}
+        d = yaml.safe_load(open(path, encoding="utf-8")) or {}
     except FileNotFoundError:
         print(f"  [WARNING: no pre-registration at {path}; predictions/bounds NOT loaded]")
         return {}

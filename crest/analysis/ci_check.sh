@@ -113,7 +113,10 @@ set -- $n_canary; have=$1; total=$2
   # output, so an empty list yielded n_bad=0 and the gate printed OK -- the same fail-open as the
   # not-a-git-repo hole closed one branch above, and this file list IS the gate's coverage. Capturing
   # also collapses a 5-stage pipeline that previously ran once to count and again to print.
-  # NUL-delimited end to end. The previous version ran `git ls-files` WITHOUT -z and rebuilt the NUL
+  # NUL-delimited end to end. git ls-files runs TWICE below -- once to count, once to grep -- because
+  # a NUL-separated list cannot be held in a shell variable (bash strips NULs). An earlier comment
+  # here claimed the list was captured once; it was, and that capture was the newline bug.
+  # The previous version ran `git ls-files` WITHOUT -z and rebuilt the NUL
   # separation with `printf | tr '\n' '\0'`, which is not newline-safe: git QUOTES a path containing a
   # newline ("crest/docs/new\nline.md"), grep received the literal quoted string, said "No such file",
   # and 2>/dev/null ate the error -- so that file's canary lines never reached the allow-list check and

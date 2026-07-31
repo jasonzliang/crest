@@ -178,7 +178,8 @@ judges in `creativity.judges`; each judge row carries `same_family`, so the leav
 subset is recoverable by filtering those rows out.
 
 Totals: {json.dumps(t)}
-""")
+""", encoding="utf-8")   # the template contains a literal U+00B7; an ASCII locale would
+    # otherwise crash HERE, as the last statement of finalize_run, after the whole run is paid for.
 
 
 def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifest: dict) -> None:
@@ -188,7 +189,7 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
     summary = compute_summary(records)
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     errf = run_dir / "errors.jsonl"
-    n_task_errors = sum(1 for _ in open(errf)) if errf.exists() else 0
+    n_task_errors = sum(1 for _ in open(errf, encoding="utf-8")) if errf.exists() else 0
     manifest = {**manifest,
                 "completed_at": _utc_now().isoformat(),
                 "status": "completed" if records else "failed",   # empty run is a FAILED run, not a clean one
@@ -218,7 +219,7 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
     _write_run_readme(run_dir, manifest)
     # discovery registry
     top = manifest.get("agents", [])
-    with (result_root / "index.jsonl").open("a") as fo:
+    with (result_root / "index.jsonl").open("a", encoding="utf-8") as fo:
         fo.write(json.dumps({"run_id": run_id, "created_at": manifest.get("created_at"),
                              "benchmark": manifest.get("benchmark", {}).get("name"),
                              "subset": manifest.get("benchmark", {}).get("subset"),

@@ -165,7 +165,7 @@ def main():
     if a.llm:
         sys.exit("--llm is not implemented; run the mechanical checks and review the residue by hand")
     path = Path(a.challenges) if Path(a.challenges).is_absolute() else REPO / a.challenges
-    items = [json.loads(l) for l in path.open() if l.strip()]
+    items = [json.loads(l) for l in path.open(encoding="utf-8") if l.strip()]
     total, by_kind = 0, collections.Counter()
     for it in items:
         vs = check_item(it)

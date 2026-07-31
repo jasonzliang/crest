@@ -313,8 +313,13 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
               f"concurrency={concurrency}); dir={run_dir}")
     cb = {"lock": threading.Lock(), "fails": collections.Counter(), "dead": set()}
     n_err, wlock = 0, threading.Lock()
-    with (run_dir / "records.jsonl").open("w") as fo, (run_dir / "transcripts.jsonl").open("w") as ft, \
-         (run_dir / "errors.jsonl").open("w") as fe:
+    # encoding="utf-8" on the WRITERS, not only the readers. These three files are dumped with
+    # ensure_ascii=False, so under an ASCII or latin-1 locale an em-dash in a judge rationale or a
+    # vendor error string either crashes mid-run or writes bytes that rejudge's UTF-8 readers then
+    # fail to decode. Pinning one side only moves the failure; it does not remove it.
+    with (run_dir / "records.jsonl").open("w", encoding="utf-8") as fo, \
+         (run_dir / "transcripts.jsonl").open("w", encoding="utf-8") as ft, \
+         (run_dir / "errors.jsonl").open("w", encoding="utf-8") as fe:
         with ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
             futs = {ex.submit(_one_task, ch, name, agent, panel, run_id, cb, cache): (ch, name)
                     for (ch, name, agent) in tasks}

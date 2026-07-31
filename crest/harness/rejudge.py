@@ -37,7 +37,7 @@ Usage:
     python -m crest.harness.rejudge --run <dir> --dry-run
 """
 from __future__ import annotations
-import argparse, dataclasses, json, os, sys, tempfile, collections
+import argparse, dataclasses, json, os, shutil, sys, tempfile, collections
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -310,9 +310,10 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
               f"originals are in {bak_dir.name}/ -- restore from there before re-running.")
         raise
     finally:
-        for leftover in staging.glob("*"):
-            leftover.unlink()
-        staging.rmdir()
+        # rmtree, not glob+unlink: unlink() raises on a subdirectory (a concurrent writer or an NFS
+        # .nfs* file is enough) and this block runs AFTER `raise`, so it would replace the real
+        # exception with a PermissionError about cleanup.
+        shutil.rmtree(staging, ignore_errors=True)
 
     print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {downgraded} DOWNGRADED, "
           f"{unchanged} unchanged, {len(missing)} un-repairable")

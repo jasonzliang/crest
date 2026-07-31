@@ -140,8 +140,8 @@ class GenerationCache:
                 continue
             try:
                 texts = {t["record_id"]: t for t in
-                         (json.loads(l) for l in tr_f.open() if l.strip())}
-                recs = [json.loads(l) for l in recs_f.open() if l.strip()]
+                         (json.loads(l) for l in tr_f.open(encoding="utf-8") if l.strip())}
+                recs = [json.loads(l) for l in recs_f.open(encoding="utf-8") if l.strip()]
             except Exception:
                 continue                       # a half-written run must never break a new one
             self.n_runs += 1
