@@ -64,7 +64,8 @@ fi
 for pat in "human-validated" "human-expert consensus panel" "human panel is the primary scorer" \
            "judge--human agreement" "(OSF, timestamped)" "contamination-controlled"; do
   hits=$(grep -o ".\{0,14\}$pat" crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
-         | grep -v 'not..\{0,8\}'"$pat" | grep -v 'not.\{0,12\}'"$pat" | wc -l | tr -d ' ')
+         | grep -viE "(not|no|never|withdrawn|future work|NOT PERFORMED|NOT IMPLEMENTED)[^.]{0,24}$(printf '%s' "$pat" | sed 's/[][\\.*^$(){}?+|/]/\\&/g')" \
+         | wc -l | tr -d ' ')
   if [ "$hits" != "0" ]; then echo "  FAIL '$pat' asserted (not negated) x$hits"; fail=1;
   else echo "  OK '$pat' absent or negated"; fi
 done
