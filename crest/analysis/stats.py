@@ -48,15 +48,27 @@ class InsufficientData(Exception):
 # --------------------------------------------------------------------------- #
 # I/O + small helpers
 # --------------------------------------------------------------------------- #
+def resolve_records_path(path: str) -> str:
+    """Accept a run DIRECTORY as well as a records.jsonl, and resolve it ONCE.
+
+    rejudge and ablate_fields both take --run as a directory; only stats took a file, so the obvious
+    invocation died on IsADirectoryError. Resolving inside load_run alone was not enough: main() also
+    hands the raw argument to reliability_report, which opens it directly -- so a directory argument
+    loaded fine and then silently produced no reliability table at all."""
+    p = Path(path)
+    if p.is_dir():
+        f = p / "records.jsonl"
+        if not f.exists():
+            raise InsufficientData(f"{p} is a directory with no records.jsonl")
+        return str(f)
+    return path
+
+
 def load_run(path: str):
     """Tolerate a partially-written final line: analysing a LIVE run is the normal case, and an
     uncaught JSONDecodeError there is a crash for no reason."""
     import pandas as pd
-    # Accept a run DIRECTORY as well as a records.jsonl. rejudge and ablate_fields both take --run
-    # as a directory; only this one took a file, so the obvious invocation died on IsADirectoryError.
-    p = Path(path)
-    if p.is_dir():
-        path = str(p / "records.jsonl")
+    path = resolve_records_path(path)
     rows, bad = [], 0
     for line in open(path):
         if not line.strip():
@@ -83,13 +95,18 @@ def _axis_col(axis: str) -> str:
 def _composite(df: pd.DataFrame) -> pd.Series:
     """PRIMARY ENDPOINT: min(New, Useful, Surprising) -- the graded form of "creative on all three".
 
-    Surprising is deliberately EXCLUDED. It is reported as exploratory because ablating
-    expert_baseline moved it by -0.02 (it is not separately anchored), it correlates with
-    novelty at r ~ 0.95, and it is the sole binding axis in roughly 1 record in 147 --
-    so including it in the primary endpoint smuggles the third axis back in while adding no
-    information. This also replaces the mean (which lets a strong axis mask a failing one) and the
-    thresholded all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7).
-    Use min3() if you need the old three-axis minimum for comparability.
+    Surprising is INCLUDED, and this docstring used to say the opposite while the code below already
+    read all three. The case for dropping it was that ablating expert_baseline moved it by -0.02, it
+    correlates with novelty, and it was "the sole binding axis in roughly 1 record in 147". That last
+    figure was wrong by an order of magnitude: recomputed on the shipped run, Surprising binds alone
+    in 51 of 250 records (20%), so dropping it changes the endpoint for a fifth of the data. The two
+    real caveats stand and are reported as limitations -- the axis is not anchored by anything the
+    judge sees, and r(New, Surprising) = 0.883 at record level -- but neither justifies excluding an
+    axis the NUS construct is defined by.
+
+    This replaces the mean (which lets a strong axis mask a failing one) and the thresholded
+    all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7). min2() reports the
+    New/Useful pair as a robustness check.
 
     All-null creativity rows (e.g. grounding-gated agents) become NaN.
     """
@@ -223,11 +240,17 @@ def _prep(df: pd.DataFrame, axis: str | None = None, composite: bool = False) ->
 
     (The raw axis columns are named 'creativity.new' etc. -- the dot breaks
     patsy formulas, so we always model against a renamed 'y'.)
+
+    Rows are dropped unless `scoring_status == "scored"`. This is the SAME predicate
+    harness/results.py::is_scored applies, and it is applied here for the same reason: a
+    judge_degraded row carries a full creativity dict, so keying on non-nullness alone folded rows
+    into every model -- MixedLM, TOST, the crossover interaction, the bootstrap CIs -- that
+    summary.json, the run manifest and run_crest's own console all EXCLUDE from the headline. Two
+    files disagreeing about which records count is how a paper ends up quoting two different n.
     """
-    if composite:
-        y = _composite(df)
-    else:
-        y = df[_axis_col(axis)]
+    y = _composite(df) if composite else df[_axis_col(axis)]
+    if "scoring_status" in df.columns:
+        y = y.where(df["scoring_status"].astype(str) == "scored")
     work = pd.DataFrame(
         {
             "y": pd.to_numeric(y, errors="coerce").to_numpy(),
@@ -609,7 +632,8 @@ def main():
     _bounds = tuple((prereg.get("analysis_plan", {}) or {})
                     .get("tost_equivalence_bounds", (-1.0, 1.0)))
 
-    df = load_run(args.run)
+    records_path = resolve_records_path(args.run)   # resolve ONCE; every consumer gets the file
+    df = load_run(records_path)
     agents = sorted(df["agent"].dropna().astype(str).unique())
     cats = sorted(df["category"].dropna().astype(str).unique())
     print(f"loaded {len(df)} records; agents={agents}; categories={cats}")
@@ -622,6 +646,8 @@ def main():
     scored_rows = df.iloc[0:0]
     if comp is not None:
         scored = df.assign(_composite=comp.to_numpy())
+        if "scoring_status" in scored.columns:     # same predicate as _prep and results.is_scored
+            scored = scored[scored["scoring_status"].astype(str) == "scored"]
         scored_rows = scored.dropna(subset=["_composite"])
         scored_agents = sorted(scored_rows["agent"].astype(str).unique())
         print(f"scored items: {len(scored_rows)}/{len(df)}; "
@@ -639,13 +665,24 @@ def main():
     # reliability was reported.
     print("\n-- judge reliability (ICC / Krippendorff alpha / per-judge severity) --")
     try:
-        rep = reliability_report(args.run)
+        # `records_path`, NOT args.run: load_run now accepts a directory, and passing the raw
+        # argument here made reliability_report die on IsADirectoryError inside the bare `except`
+        # below -- printing "insufficient data" for a run with 250 records x 3 judges. That silently
+        # withheld the ICC / Krippendorff / per-judge-severity table that judge_config.live.yaml,
+        # preregistration.yaml, rubric.md, design.md and the paper all claim is reported, and the
+        # severity spread is the headline methodological finding.
+        rep = reliability_report(records_path)
         for ax, v in rep.items():
             print(f"  {ax:<12} ICC(1,1)={v.get('icc_1_1','-')}  ICC(1,k)={v.get('icc_1_k','-')}  "
                   f"alpha={v.get('krippendorff_alpha_interval','-')}  "
                   f"severity_spread={v.get('severity_spread','-')}  "
                   f"judges_for_0.80={v.get('judges_needed_for_0.80','-')}")
             print(f"               per-judge mean: {v.get('per_judge_mean', {})}")
+            # surface the reason rather than printing a row of dashes: an all-'-' line reads as
+            # "not enough data" when it actually means a computation raised
+            for k in ("icc_error", "alpha_error"):
+                if v.get(k):
+                    print(f"               {k}: {v[k]}")
     except Exception as e:
         print(f"  insufficient data for reliability_report: {type(e).__name__}: {e}")
 

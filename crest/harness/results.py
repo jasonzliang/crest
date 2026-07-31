@@ -74,14 +74,18 @@ def is_scored(r: dict) -> bool:
 def manifest_totals(records: list) -> dict:
     """The manifest `totals` block. Shared so a repair recomputes ALL of it -- rejudge used to
     refresh three keys and leave n_grounding_fail / n_empty_answer / n_truncated / n_judge_error
-    stale, which is the same 'derived artifacts left inconsistent' defect rejudge exists to fix."""
-    st = lambda s: sum(1 for r in records if r.get("scoring_status") == s)
-    return {"n_records": len(records),
-            "n_scored": sum(1 for r in records if is_scored(r)),
-            "n_judge_error": st("judge_error"), "n_judge_degraded": st("judge_degraded"),
-            "n_grounding_fail": st("grounding_fail"), "n_empty_answer": st("empty_answer"),
-            "n_too_short": st("too_short"),
-            "n_truncated": sum(1 for r in records if r.get("truncated"))}
+    stale, which is the same 'derived artifacts left inconsistent' defect rejudge exists to fix.
+
+    Counting is driven by the statuses PRESENT in the data rather than a hand-listed set of keys.
+    The hand-listed version is what went stale when `too_short` was added -- a new status silently
+    counted nowhere, which is the same staleness this function was written to prevent."""
+    counts = collections.Counter(r.get("scoring_status") or "unset" for r in records)
+    out = {"n_records": len(records), "n_scored": sum(1 for r in records if is_scored(r)),
+           "n_truncated": sum(1 for r in records if r.get("truncated"))}
+    for status, n in sorted(counts.items()):
+        if status != "scored":            # n_scored is the stricter is_scored() count, set above
+            out[f"n_{status}"] = n
+    return out
 
 
 def compute_summary(records: list) -> dict:
@@ -149,8 +153,10 @@ print(scores[rid]["agent"], scores[rid]["creativity"]["new"], answers[rid]["outp
 
 ## Reading the scores
 `creativity` is null unless `scoring_status == "scored"`. Other statuses: `judge_degraded` (fewer
-judges than `min_judges` survived), `empty_answer` (the agent returned nothing -- an ADAPTER failure,
-not a grounding failure), `grounding_fail`, `judge_error`. Per-axis values are the MEDIAN across the
+judges than `min_judges` survived), `empty_answer` (the agent returned literally nothing -- an
+ADAPTER failure, not a grounding failure), `too_short` (non-empty but under the substantive-length
+floor; same adapter root cause, but the threshold is a judgement call and the emptiness is not),
+`grounding_fail`, `judge_error`. Per-axis values are the MEDIAN across the
 judges in `creativity.judges`; each judge row carries `same_family`, so the leave-one-family-out
 subset is recoverable by filtering those rows out.
 

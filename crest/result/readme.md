@@ -40,7 +40,9 @@ live on disk only; they are both the generation cache and the evidence base, so 
 Records are `crest-record/1.0.0`. `scoring_status` is one of `scored` · `judge_degraded` (scored,
 but by fewer than `min_judges` — excluded from headline numbers) · `empty_answer` (the adapter
 returned no text; an ADAPTER failure, deliberately distinguished from fabrication) ·
-`grounding_fail` · `judge_error` (no judge survived). `creativity` is `null` on every failure path —
+`too_short` (non-empty but under the substantive-length floor -- same adapter root cause as
+`empty_answer`, but kept separate because the threshold is a judgement call) · `grounding_fail` ·
+`judge_error` (no judge survived). `creativity` is `null` on every failure path —
 never a fake 0. Each record also carries `query_sha` + `adapter_fp` (the cache's content address)
 and `generation_cached` / `cache_source_run` so a reused answer is visible in the data.
 

@@ -56,7 +56,13 @@ echo "== claims the repo cannot instantiate (p2 body only; p3 is not submission-
 if ! ls crest/paper/p2_benchmark_only/sections/*.tex >/dev/null 2>&1; then
   echo "  FAIL p2 sections not found -- claims checks cannot run"; fail=1
 fi
-for pat in "human-validated" "(OSF, timestamped)" "contamination-controlled"; do
+# These are ASSERTION patterns, not vocabulary. Grepping the single token "human-validated" left
+# 04_judge_validation.tex free to assert the study in present tense and different words -- "We
+# validate the panel against a human-expert consensus panel across all five categories", "the human
+# panel is the primary scorer", a reliability verdict per category -- while the gate stayed green
+# because the only literal match was the abstract's negated one. No human study has been run.
+for pat in "human-validated" "human-expert consensus panel" "human panel is the primary scorer" \
+           "judge--human agreement" "(OSF, timestamped)" "contamination-controlled"; do
   hits=$(grep -o ".\{0,14\}$pat" crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
          | grep -v 'not..\{0,8\}'"$pat" | grep -v 'not.\{0,12\}'"$pat" | wc -l | tr -d ' ')
   if [ "$hits" != "0" ]; then echo "  FAIL '$pat' asserted (not negated) x$hits"; fail=1;
@@ -72,19 +78,24 @@ print(sum(1 for r in rows if 'canary' in json.dumps(r).lower()), len(rows))
 set -- $n_canary; have=$1; total=$2
 if [ "$have" = "$total" ] && [ "$have" != "0" ]; then echo "  OK canaries present in all $total items";
 else
-  # The disclosure check must be scoped to the CANARY LINES themselves. A whole-file grep for
-  # "NOT IMPLEMENTED" passed because datasheet.md carries 13 unrelated [NOT IMPLEMENTED] markers,
-  # so this FAIL branch was unreachable no matter what the docs claimed -- the same "gate green for
-  # the wrong reason" defect the check above exists to catch.
-  # Qualifier cues that make a canary mention honest. This is a cue list, not a parser: it accepts
-  # any line that carries a disclaimer and flags the rest, so a NEW affirmative claim fails loudly
-  # while the existing disclosure text passes. "unqualified" is here because the datasheet sentence
-  # describing THIS CHECK ("...if any doc makes an unqualified canary claim") is, by construction,
-  # not itself a canary claim.
-  if grep -rhiE "canar(y|ies)" crest/docs/datasheet.md crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
-     | grep -qivE "NOT IMPLEMENTED|no canar|zero of|0/50|not present|not shipped|would be|planned|unqualified"; then
+  # ALLOWLIST, not a hedge denylist. Two earlier versions of this check were green for the wrong
+  # reason. First it grepped datasheet.md whole-file for "NOT IMPLEMENTED", which 13 unrelated
+  # markers always satisfied, making the FAIL branch unreachable. Then it excluded lines carrying
+  # any hedge word -- but "planned" and "would be" are exactly the words that accompany a REAL
+  # canary claim ("carries a canary GUID, so reproduction WOULD BE evidence of contamination"
+  # passed). So a canary line is honest only if it explicitly states the canaries are ABSENT.
+  # "unqualified" is allowed because the datasheet sentence describing this very check is not
+  # itself a canary claim. Scope adds readme.md, which was previously unchecked.
+  ok_re="NOT IMPLEMENTED|no canar|zero .*canar|not present|not shipped|never shipped|unqualified"
+  if grep -rhiE "canar(y|ies)" crest/readme.md crest/docs/datasheet.md \
+        crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
+     | grep -qivE "$ok_re"; then
     echo "  FAIL canary claimed in docs but only $have/$total items contain one"; fail=1
   else echo "  OK no unqualified canary claim (0/50 items, correctly disclosed)"; fi
+  # p3 is not submission-ready, so its claims do not block a release -- but they must not be
+  # invisible either. Counted and reported, never silently skipped.
+  n_p3=$(grep -rhiE "canar(y|ies)" crest/paper/p3_*/sections/*.tex 2>/dev/null | grep -icvE "$ok_re")
+  [ "${n_p3:-0}" != "0" ] && echo "  NOTE $n_p3 unqualified canary claim(s) in p3 (not gated: p3 is not submission-ready)"
 fi
 
 echo; [ "$fail" = 0 ] && echo "PRE-RELEASE GATE: PASS" || echo "PRE-RELEASE GATE: FAIL"

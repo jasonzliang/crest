@@ -94,14 +94,21 @@ per-agent creativity numbers yet**, for three reasons:
    (judge_google is +2.0 to +3.2 points more lenient than the others), and the earlier
    leave-one-family-out protocol assigned judge panels *by entrant family*, which made the
    leaderboard unidentifiable. Scoring is now full-panel; LOFO is a robustness check.
-2. **New and Surprising are not separable** (r ~ 0.95 on the full-panel run). Ablating
-   `expert_baseline` moves Surprising by -0.02, so it is no longer sent to the judge and Surprising
-   is demoted to EXPLORATORY: the primary endpoint is `min(New, Useful)` — two axes, not
-   three. (Known inconsistency: `analysis/stats.py::_composite` and the `primary_endpoint` line in
-   `analysis/preregistration.yaml` still minimize over all three. Reconcile before citing numbers.)
+2. **Surprising is weakly anchored, but it binds.** Ablating `expert_baseline` moves Surprising
+   by -0.02, so it is no longer sent to the judge — the axis rests on the judge's own expert prior,
+   which is a limitation to report. It was briefly dropped from the endpoint on the further argument
+   that it is redundant with novelty; that argument does not survive its own numbers. Recomputed on
+   the shipped run, r(New, Surprising) = **0.883** at record level (0.946 pooling per-judge rows,
+   which is the figure previously quoted as "r ~ 0.95"), and Surprising is the **sole binding axis
+   in 51 of 250 records (20%)**. The primary endpoint is `min(New, Useful, Surprising)` — all three
+   axes — consistently across `analysis/stats.py::_composite`, `analysis/preregistration.yaml` and
+   `judge/rubric.md`. `stats.py::min2()` reports the New/Useful pair as a robustness check.
 3. **The gate is red.** `analysis/ci_check.sh` passes schema, sidecar-bijection and quarantine, but
-   still fails item self-consistency: 4 mechanical contradictions across 3 items
-   (`C1_materials_chemistry_01` ×2, `C2_materials_chemistry_07`, `C4_materials_chemistry_43`).
+   still fails item self-consistency: **2** mechanical contradictions, both in
+   `C1_materials_chemistry_01` (a baseline reporting mu=0.39 against its own rule's [0.40, 0.90]
+   range, and one hard rule permitting 'Se' while another bans it). The two previously counted
+   against `C2_materials_chemistry_07` and `C4_materials_chemistry_43` were validator false
+   positives -- a 50% false-positive rate on a blocking gate -- and were fixed.
    The quarantine is now **empty** — the one quarantined item was released 2026-07-31 with a
    redrafted baseline that is model-drafted, *not* expert-written, and still needs a physiologist's
    review; `questions/quarantine.yaml` keeps that record plus a watch-list of same-class items.

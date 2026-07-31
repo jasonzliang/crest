@@ -142,6 +142,22 @@ _MAX_KNOWN_ANSWERS = 200
 # keys `ablate` accepts; an unrecognised key used to be silently ignored
 _ABLATABLE = frozenset({"known_answers", "restore_expert_baseline"})
 
+# Bump whenever _judge_prompt's WORDING changes. Stamped into every record so a scored run can be
+# matched to the rubric text that produced it -- the entrant side has had `adapter_fp` since gen/2,
+# but the judge side had nothing, so a prompt edit silently made old and new scores incomparable.
+#   v1  the original rubric.
+#   v2  2026-07-31. Three changes to the Surprising instruction, all of which move scores:
+#       (a) dropped "EXPLORATORY -- reported but not a primary endpoint" (it IS a primary axis);
+#       (b) dropped "an ablation showed it moved this axis by -0.02" and "correlates with novelty at
+#           r~0.95" -- telling a rater that two axes it is about to score are redundant, and then
+#           citing the resulting correlation as evidence about those axes, is circular;
+#       (c) the instruction now matches whether an expert baseline is actually supplied, so the
+#           restore_expert_baseline arm can reproduce the pre-withdrawal condition it measures.
+# Run 2026-07-31T040653Z was scored under v1. Its numbers are NOT comparable to v2 scores and must
+# not be mixed with them; re-judge from stored transcripts (harness/rejudge.py) before quoting any
+# New-vs-Surprising correlation, which is the figure (b) contaminated.
+JUDGE_PROMPT_VERSION = "v2"
+
 
 def _fit_answer(text: str) -> str:
     text = text or ""
@@ -173,14 +189,25 @@ def _judge_prompt(ch: dict, report_text: str, ablate=frozenset()) -> str:
     unknown = set(ablate) - _ABLATABLE
     if unknown:
         raise ValueError(f"unknown ablate key(s) {sorted(unknown)}; valid: {sorted(_ABLATABLE)}")
+    # The Surprising instruction must MATCH whether a baseline is actually supplied. It previously
+    # said "a baseline was supplied here previously" unconditionally, so under the restore arm the
+    # judge was told the baseline was absent while reading it -- meaning that arm could not
+    # reproduce the pre-withdrawal condition it exists to measure.
     eb_block = ""
     if "restore_expert_baseline" in ablate:
         eb_block = f"\n\nEXPERT BASELINE (surprise baseline):\n{ch.get('expert_baseline')}"
+        surprising_line = ("- Surprising: non-obviousness conditioned on correctness, judged against "
+                           "the EXPERT BASELINE below -- how far the answer departs from what that "
+                           "baseline says a domain expert would predict. Do NOT reward nonsense.")
+    else:
+        surprising_line = ("- Surprising: non-obviousness conditioned on correctness, judged against "
+                           "your own sense of what a domain expert would predict. Do NOT reward "
+                           "nonsense.")
     hr = "\n".join(f"- {r}" for r in (ch.get("hard_rules") or [])) or "(none)"
     return f"""You are an expert judge scoring the CREATIVITY of a deep-research answer. Score three axes 1-10:
 - New: novelty of the answer relative to the DATED KNOWN ANSWERS below. Scored ONLY against that list, NOT against the web or your own background knowledge: content absent from the set counts as non-redundant even if you believe you have seen it, and content present in the set does not, even if it looks fresh. Restating an entry => 1-3; recombining entries with minor extension => 4-6; a synthesis or connection not reducible to the entries => 7-10.
 - Useful: is the idea sound, workable, and appropriate? Every HARD RULE must be satisfied; a violated hard rule caps Useful at <=3. Judge on merit, not on how many citations there are.
-- Surprising (EXPLORATORY -- reported but not a primary endpoint): non-obviousness conditioned on correctness, judged against your own sense of what a domain expert would predict. Deliberately UNANCHORED: an author-written expert baseline was supplied here previously and an ablation showed it moved this axis by -0.02, i.e. not at all, while Surprising correlates with novelty at r~0.95. Score it, but treat it as exploratory. Do NOT reward nonsense.
+{surprising_line}
 
 Return ONLY a JSON object, no prose:
 {{"new": <int 1-10>, "useful": <int 1-10>, "surprising": <int 1-10>, "hard_rules_violated": [<strings>], "rationale": "<=40 words"}}
@@ -214,8 +241,14 @@ def _parse_json(s: str) -> dict:
         return json.loads(t)
     except Exception:
         pass
-    start = t.find("{")                            # first balanced {...}, ignoring braces in strings
-    if start != -1:
+    # Scan EVERY balanced {...} and return the first that parses AND carries the three axes.
+    # Committing to the first one lost real verdicts: a reply opening with "<thinking>hmm {maybe}"
+    # raised JSONDecodeError, and one opening with a scratch object returned that object, whose
+    # missing "new" key surfaced four attempts and 28s of backoff later as a dropped judge. Both
+    # fire on VERBOSE replies, so the panel thinned non-randomly -- the same bias shape as the
+    # max_tokens bug this module already documents.
+    best = None
+    for start in (i for i, c in enumerate(t) if c == "{"):
         depth, in_str, esc = 0, False, False
         for i in range(start, len(t)):
             c = t[i]
@@ -233,8 +266,19 @@ def _parse_json(s: str) -> dict:
             elif c == "}":
                 depth -= 1
                 if depth == 0:
-                    return json.loads(t[start:i + 1])
-    raise ValueError("no JSON object found in judge response")
+                    try:
+                        obj = json.loads(t[start:i + 1])
+                    except Exception:
+                        break
+                    if isinstance(obj, dict):
+                        if all(k in obj for k in ("new", "useful", "surprising")):
+                            return obj
+                        if best is None:
+                            best = obj      # fall back only if nothing better turns up
+                    break
+    if best is not None:
+        return best
+    raise ValueError("no JSON object with new/useful/surprising found in judge response")
 
 
 # Token budget for a judge call. Must cover the model's THINKING plus the JSON verdict; a budget
@@ -289,9 +333,14 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
             time.sleep(4.0 * (2 ** (attempt - 1)))   # 4s, 8s, 16s: ride out a provider spend-rate cap
         try:
             d = _parse_json(_judge_completion(family, model, prompt))
-            return {"new": float(d["new"]), "useful": float(d["useful"]),
-                    "surprising": float(d["surprising"]),
-                    "hard_rules_violated": d.get("hard_rules_violated", []),
+            v = {ax: float(d[ax]) for ax in ("new", "useful", "surprising")}
+            # Range-check so the existing retry fires. An off-scale reply (a judge answering on
+            # 0-100, or emitting -3) was written through verbatim with scoring_status "scored", and
+            # with min_judges=2 the median of two IS the mean, so one bad reply moves the record.
+            bad = {ax: s for ax, s in v.items() if not 1.0 <= s <= 10.0}
+            if bad:
+                raise ValueError(f"judge {model} returned out-of-range score(s) {bad}; expected 1-10")
+            return {**v, "hard_rules_violated": d.get("hard_rules_violated", []),
                     "rationale": d.get("rationale", "")}
         except Exception as e:
             last_err = e

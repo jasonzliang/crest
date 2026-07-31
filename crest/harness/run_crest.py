@@ -20,7 +20,7 @@ from pathlib import Path
 
 from crest.harness.agents import build_agent
 from crest.harness import results as R
-from crest.judge.score import JudgePanel, grounding_gate
+from crest.judge.score import JudgePanel, grounding_gate, JUDGE_PROMPT_VERSION
 from crest.harness.cache import GenerationCache, query_sha, adapter_fingerprint
 
 
@@ -233,6 +233,7 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
             "creative_all_three": scores.creative_all_three,
             "n_judges": scores.n_judges,
             "judge_protocol": panel.protocol,
+            "judge_prompt_version": JUDGE_PROMPT_VERSION,   # rubric wording that produced this score
             "judges": _judges_list(scores.per_judge, panel, agent.model_family),
         },
     }
@@ -321,6 +322,14 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                               f"survived (< min_judges) -> flagged, excluded from headline numbers")
                     elif status == "judge_error":
                         print(f"  [{ch.id}/{name}] JUDGE ERROR (all judges failed) -> unscored")
+                    elif status == "empty_answer":
+                        print(f"  [{ch.id}/{name}] EMPTY ANSWER (adapter returned no text) -> unscored")
+                    elif status == "too_short":
+                        # named, not lumped under "grounding FAIL": this is an adapter/provider
+                        # failure, and calling it a grounding failure is what mislabelled a 22%
+                        # Anthropic adapter failure as Claude being ungrounded
+                        print(f"  [{ch.id}/{name}] TOO SHORT ({len(report.text or '')} chars, under "
+                              f"the substantive floor) -> unscored")
                     else:
                         print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> unscored")
     print(f"wrote {run_dir}/records.jsonl  ({len(records)} records, {n_err} task errors)")
@@ -364,6 +373,7 @@ def make_manifest(run_id, created_at, benchmark, agents: dict, panel, budget, co
         # its own protocol.
         "judge_protocol": (f"{panel.protocol}; blind; "
                            f"{'median' if len(panel.judges) % 2 else 'mean-of-even-panel'} aggregation"),
+        "judge_prompt_version": JUDGE_PROMPT_VERSION,
     }
 
 

@@ -146,6 +146,7 @@ class ClaudeShallowResearch(Agent):
         # answer, then scored it (N/U/S = 1/1/1) and read the result as low creativity.
         msgs = [{"role": "user", "content": query}]
         blocks, guard, turns_used, tok_total = [], 0, 1, 0
+        guard_exhausted = False
         while True:
             r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
                 .messages.create(
@@ -163,7 +164,8 @@ class ClaudeShallowResearch(Agent):
             turns_used = guard + 1
             if guard >= 8:                      # bounded: never loop forever on a stuck turn
                 print(f"  [WARNING: {self.model} still pause_turn after {guard} continuations; "
-                      f"returning what it produced so far]")
+                      f"returning what it produced so far -- marking TRUNCATED]")
+                guard_exhausted = True
                 break
             # APPEND, don't replace. Replacing keeps only the latest turn's content, so from the
             # second pause_turn on the model no longer sees its own earlier web_search results or
@@ -183,8 +185,11 @@ class ClaudeShallowResearch(Agent):
             elif b.type == "server_tool_use":
                 n_search += 1
         full = "".join(text)
-        truncated = getattr(r, "stop_reason", None) == "max_tokens"
-        if truncated:
+        # Running the continuation guard out is ALSO truncation: the loop exits with
+        # stop_reason == "pause_turn", so a max_tokens-only test recorded a cut-off fragment as
+        # truncated=false -- indistinguishable in records.jsonl from a complete answer.
+        truncated = getattr(r, "stop_reason", None) == "max_tokens" or guard_exhausted
+        if getattr(r, "stop_reason", None) == "max_tokens":
             print(f"  [WARNING: {self.model} hit max_tokens ({_ANTHROPIC_MAX_TOKENS}); answer is "
                   f"TRUNCATED mid-generation and will be scored as if finished]")
         if not full.strip():

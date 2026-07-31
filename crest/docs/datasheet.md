@@ -7,10 +7,10 @@ than described in the present tense. It is also a release gate — NeurIPS/ICLR 
 desk-reject checks (licensing, contamination, author-COI, human-subjects) are answered here.
 
 > **Release status: NOT RELEASE-READY.** The mechanical pre-release gate
-> (`analysis/ci_check.sh`) currently **FAILS**: `analysis/validate_items.py` reports 4 BLOCKING
-> self-contradictions (2 items whose hard rules permit and ban the same element; 1 baseline
-> violating its own numeric rule; 1 item offering as a "genuinely new" mechanism something already
-> in its own `known_answers`). Croissant/Croissant-RAI metadata is **not written yet** — there is no
+> (`analysis/ci_check.sh`) currently **FAILS**: `analysis/validate_items.py` reports 2 BLOCKING
+> self-contradictions, both in `C1_materials_chemistry_01` (one hard rule permits 'Se' while another
+> bans it; the expert baseline reports mu=0.39 against its own rule's [0.40, 0.90] range). An
+> earlier count of 4 across 3 items included two validator false positives, since fixed. Croissant/Croissant-RAI metadata is **not written yet** — there is no
 > `croissant.json` in the repo — so the Croissant desk-reject gate is not cleared either.
 
 ## 1. Motivation

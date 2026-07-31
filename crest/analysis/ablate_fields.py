@@ -52,7 +52,9 @@ AXES = ("new", "useful", "surprising")
 # dropped every judge, returned None for every record, and crashed on `mean([])` AFTER paying in
 # full for the preceding arm. A typo in this dict must cost $0, not one arm's worth of judge calls.
 _bad = set().union(*ARMS.values()) - _ABLATABLE
-assert not _bad, f"ARMS references ablate key(s) score.py does not accept: {sorted(_bad)}"
+if _bad:   # NOT an assert: `python -O` strips asserts, which would restore the very failure
+           # this guard exists to prevent, at full cost per arm
+    raise SystemExit(f"ARMS references ablate key(s) score.py does not accept: {sorted(_bad)}")
 
 
 def _balanced(records: list, per_category: int) -> list:
@@ -146,11 +148,15 @@ def main():
                  "NO MEASURABLE EFFECT -- the novelty baseline is not doing the work claimed for it."
                  if abs(dn) < 0.5 else
                  "WRONG SIGN: removing the baseline LOWERED novelty, which the design cannot explain."))
-    if "no_expert" in verdict:
-        ds = verdict["no_expert"]["surprising"]
-        print(f"expert_baseline -> Surprising: {ds:+.2f}. "
-              + ("anchors the axis." if abs(ds) >= 0.5 else
-                 "NO MEASURABLE EFFECT -- with New~Surprising already r~0.93, report two axes."))
+    # Keyed on "with_expert", the arm that RESTORES the baseline; the delta's sign is therefore the
+    # opposite of the old "no_expert" arm's. This consumer kept the deleted arm name through the
+    # rename, so the one verdict the arm exists to produce was never printed.
+    if "with_expert" in verdict:
+        ds = verdict["with_expert"]["surprising"]
+        print(f"expert_baseline -> Surprising: {ds:+.2f} when RESTORED. "
+              + ("anchors the axis -- reinstate it in the judge prompt." if abs(ds) >= 0.5 else
+                 "NO MEASURABLE EFFECT -- the axis is not anchored by anything the judge sees, "
+                 "which is a limitation to report, not grounds to drop the axis."))
     out = Path(a.out) if a.out else run_dir / "ablation.json"
     out.write_text(json.dumps({"run": run_dir.name, "per_category": a.per_category,
                                "arms": a.arms, "means": {k: {ax: statistics.mean(v[ax]) for ax in AXES}

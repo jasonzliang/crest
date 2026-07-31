@@ -130,7 +130,7 @@ There is **no frozen snapshot**, no per-claim entailment check, and no FACT prec
 `[NOT IMPLEMENTED]` in that file and must not be cited as a shipped control.
 
 **Fail ⇒ the answer is UNSCORED (`creativity: null`), not zero.** A fake 0 folded into results was
-explicitly rejected; a failing record carries `scoring_status` ∈ {`empty_answer`, `grounding_fail`}.
+explicitly rejected; a failing record carries `scoring_status` ∈ {`empty_answer`, `too_short`, `grounding_fail`}.
 
 **Measured contribution: none, so far.** Across 245 records (2026-07-31 full run) the
 anti-fabrication clause fired **zero** times. All 11 rejections were **empty strings** from one

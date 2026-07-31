@@ -40,7 +40,11 @@ def adapter_fingerprint(agent) -> str:
     import hashlib
     from crest.harness import agents as A
     parts = [type(agent).__name__, getattr(agent, "model", ""), str(getattr(agent, "budget", "")),
-             _module_code_hash(A)]
+             _module_code_hash(A),
+             # _RESEARCH_SYSTEM stays an EXPLICIT part. It is the shared system prompt -- the single
+             # string most able to change every agent's output -- and _module_code_hash discards
+             # docstrings, so relying on the module hash alone would let a prompt edit through.
+             hashlib.sha256(A._RESEARCH_SYSTEM.encode()).hexdigest()[:8]]
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:10]
 
 
@@ -56,16 +60,39 @@ def _module_code_hash(mod) -> str:
     have served pre-fix generations forever, under a docstring claiming the opposite.
 
     Module scope is sound by construction: no adapter output depends on code outside this module
-    that isn't already in the key. It over-invalidates -- any edit to agents.py re-pays generation --
-    which is the honest trade, and it is why comments are stripped: that module is deliberately
-    comment-heavy, and a rationale edit must not cost ~$450."""
-    import hashlib, inspect
+    that isn't already in the key. It over-invalidates -- any real edit to agents.py re-pays
+    generation -- which is the honest trade, and it is why prose is stripped: that module is
+    deliberately comment-heavy, and a rationale edit must not cost ~$450.
+
+    Prose is removed with `tokenize` + `ast`, not a line filter. The line filter this replaces
+    dropped every line whose first non-space character was '#' INCLUDING INSIDE STRING LITERALS, so
+    two _RESEARCH_SYSTEM prompts differing only by a markdown '# Role:' header hashed identically --
+    a silent false negative in the direction that costs correctness. It also hashed all 6,879 chars
+    of docstrings while exempting only the 4,819 chars of comments, so it half-delivered the saving
+    it was added for. Tokenizing never sees inside a string; the ast pass then removes docstrings
+    proper, which are prose by definition and cannot affect an API call."""
+    import ast, hashlib, inspect, io, tokenize
     try:
         src = inspect.getsource(mod)
     except (OSError, TypeError):
         return "nosource"
-    body = "\n".join(l for l in (ln.rstrip() for ln in src.splitlines())
-                     if l.strip() and not l.lstrip().startswith("#"))
+    try:
+        tree = ast.parse(src)
+        for node in ast.walk(tree):              # blank out docstrings, keep every other string
+            if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                d = ast.get_docstring(node, clean=False)
+                if d is not None:
+                    node.body[0].value = ast.Constant(value="")
+        src = ast.unparse(tree)                  # also normalises formatting-only edits
+        body = src
+    except SyntaxError:
+        body = src
+    try:                                         # drop comments; ast.unparse already emits none,
+        toks = tokenize.generate_tokens(io.StringIO(body).readline)   # but the fallback path has them
+        body = tokenize.untokenize(
+            [t[:2] for t in toks if t[0] not in (tokenize.COMMENT, tokenize.NL)])
+    except (tokenize.TokenError, IndentationError):
+        pass
     return hashlib.sha256(body.encode()).hexdigest()[:12]
 
 
@@ -84,7 +111,9 @@ class CachedOutput:
     # omitting it silently wrote 0 for every CACHE HIT -- and cache hits are the normal path on a
     # re-run, so the metric read 0 exactly when it mattered.
     __slots__ = ("text", "citations", "n_tokens", "n_searches", "truncated", "trace", "source_run")
-    def __init__(self, text, citations, n_tokens, n_searches, source_run, truncated=False):
+    # `truncated` is keyword-only: AgentOutput's 5th positional is `truncated` while this class's is
+    # `source_run`, so a positional call would silently swap them between the two duck-typed classes.
+    def __init__(self, text, citations, n_tokens, n_searches, source_run, *, truncated=False):
         self.text, self.citations = text, citations
         self.n_tokens, self.n_searches = n_tokens, n_searches
         self.truncated = bool(truncated)
@@ -113,7 +142,7 @@ class GenerationCache:
         runs = result_root / "runs"
         if not runs.exists():
             return
-        skipped_no_sha = skipped_legacy = 0
+        skipped_no_sha = skipped_legacy = skipped_failed = 0
         for run_dir in sorted(d for d in runs.iterdir() if d.is_dir()):
             recs_f, tr_f = run_dir / "records.jsonl", run_dir / "transcripts.jsonl"
             if not (recs_f.exists() and tr_f.exists()):
@@ -133,6 +162,14 @@ class GenerationCache:
                 tr = texts.get(r.get("record_id"))
                 if not tr or not (tr.get("output_text") or "").strip():
                     continue                   # no/empty generation: regenerate rather than cache it
+                # A too_short or truncated answer is a FAILED generation, not a cheap one. score.py
+                # calls sub-1000-char answers "the SAME adapter failure as the 0-char answers", so
+                # caching them re-serves the failure forever: the module hash cannot invalidate a
+                # provider-side hiccup, and the only escape would be --override-cache (all-or-
+                # nothing, ~$450) to refresh a handful of records.
+                if r.get("scoring_status") in ("empty_answer", "too_short") or r.get("truncated"):
+                    skipped_failed += 1
+                    continue
                 fp = r.get("adapter_fp", "")
                 if not fp and not self.trust_legacy:
                     skipped_legacy += 1          # pre-fingerprint answer, provenance unverifiable
@@ -152,6 +189,8 @@ class GenerationCache:
             if skipped_legacy:
                 msg += (f"; {skipped_legacy} skipped (pre-fingerprint: adapter state unverifiable, "
                         f"use trust_legacy to reuse them anyway)")
+            if skipped_failed:
+                msg += f"; {skipped_failed} skipped (empty/too_short/truncated -- will regenerate)"
             print(msg)
 
     def get(self, challenge_id: str, agent_key: str, model: str, q_sha: str, fp: str = ""):

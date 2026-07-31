@@ -4,14 +4,16 @@ Thin wrappers that evaluate ONE entrant on CREST and write an immutable run dire
 `crest/result/runs/<run_id>/`. For a multi-agent, config-driven run, use **`crest/run_eval.py`**
 with `crest/config/eval_config.yaml` instead.
 
-> **BROKEN as of 2026-07-30 — do not use these scripts yet.** `_common.py::run_one` still calls
-> `results.find_resumable` / `results.completed_pairs` and passes `resume=` to `evaluate()`. All
-> three were deleted when `--resume` was replaced by the cross-run generation cache, so every script
-> here raises `AttributeError` before it makes a single API call. Until `_common.py` is ported to
-> `GenerationCache`, run a single entrant with the ad-hoc CLI, which is fully supported:
+> **Fixed 2026-07-31.** These scripts were broken between 2026-07-30 and 2026-07-31: `run_one`
+> called `results.find_resumable` / `completed_pairs`, deleted when `--resume` was replaced by the
+> cross-run generation cache, so each raised `AttributeError` before making an API call. They now go
+> through `_common.py::cli()`, which gives every script the same front door as `run_eval.py` —
+> `--dry-run`, `--yes`, key preflight and the cost guard. Previously they took no arguments at all
+> and went from import straight to spending; `--help` started a real 50-item run.
+>
 > ```bash
-> python -m crest.harness.run_crest --agents claude_shallow --subset adhoc
-> python -m crest.harness.run_crest --agents claude_shallow --per-category 2 --subset pilot5cat
+> python crest/eval/eval_claude_sonnet.py --dry-run        # resolve + preflight, spend nothing
+> python crest/eval/eval_claude_sonnet.py --per-category 2  # cheap balanced 10-item pilot
 > ```
 
 Run from the repo root (the parent of `crest/`):
