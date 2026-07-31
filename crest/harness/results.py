@@ -186,7 +186,7 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
     and repoint the `latest` symlink. Manifest is written last so a crashed run can't look complete."""
     result_root = Path(result_root)
     summary = compute_summary(records)
-    (run_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
+    (run_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     errf = run_dir / "errors.jsonl"
     n_task_errors = sum(1 for _ in open(errf)) if errf.exists() else 0
     manifest = {**manifest,
@@ -214,7 +214,7 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
                                          "a completed run.",
                     "config.snapshot.yaml": "the config exactly as run.",
                     "README.md": "what each file holds and how to join them."}}
-    (run_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+    (run_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     _write_run_readme(run_dir, manifest)
     # discovery registry
     top = manifest.get("agents", [])

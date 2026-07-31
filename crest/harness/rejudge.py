@@ -57,13 +57,13 @@ class StoredReport:
 
 
 def _load_jsonl(p: Path) -> list:
-    return [json.loads(l) for l in p.open() if l.strip()] if p.exists() else []
+    return [json.loads(l) for l in p.open(encoding="utf-8") if l.strip()] if p.exists() else []
 
 
 def _atomic_write_jsonl(path: Path, rows: list) -> None:
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=path.name + ".", suffix=".tmp")
     try:
-        with os.fdopen(fd, "w") as fo:
+        with os.fdopen(fd, "w", encoding="utf-8") as fo:
             for r in rows:
                 fo.write(json.dumps(r, ensure_ascii=False) + "\n")
         os.replace(tmp, path)                     # atomic on POSIX
@@ -77,21 +77,32 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _readme_bytes(run_dir: Path, manifest: dict, writer) -> bytes:
-    """Render the run README without writing it, so it can join the all-or-nothing commit.
+def _utc_stamp() -> str:
+    """Filesystem-safe UTC stamp with MICROSECOND resolution: 20260731T103601_175567.
 
-    _write_run_readme writes directly, which is fine for finalize_run but not here: a repair must not
-    leave README.md updated and records.jsonl not, or vice versa."""
-    readme = run_dir / "README.md"
-    saved = readme.read_bytes() if readme.exists() else None
-    try:
-        writer(run_dir, manifest)
-        return readme.read_bytes()
-    finally:
-        if saved is not None:
-            readme.write_bytes(saved)
-        elif readme.exists():
-            readme.unlink()
+    Second resolution meant two repairs in the same second landed in the same backup directory, and
+    mkdir(exist_ok=True) masked the collision -- proved to destroy the first repair's pre-images while
+    printing a cheerful backup line. Built with strftime rather than by string-mangling isoformat(),
+    which truncated into the '+00:00' offset and left a trailing '+' in the directory name."""
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%f")
+
+
+def _readme_bytes(run_dir: Path, manifest: dict, writer) -> bytes:
+    """Render the run README WITHOUT touching the live path.
+
+    The previous version called the writer against the real run_dir and then restored the original
+    from a local variable. That published the new README before any backup existed: instrumented
+    mid-call, README.md held the new content while backup_dir_exists was False, so a kill or ENOSPC in
+    that window left the original recoverable from nowhere. It was also not concurrency-safe -- two
+    rejudge processes on one run dir restored each other's README. _write_run_readme reads only the
+    manifest dict and uses run_dir solely for the output path, so a throwaway directory works."""
+    import tempfile
+    with tempfile.TemporaryDirectory(dir=str(run_dir)) as td:
+        staged = Path(td) / run_dir.name
+        staged.mkdir()
+        writer(staged, manifest)
+        return (staged / "README.md").read_bytes()
 
 
 def _decide(before: int, before_ver, now: int, allow_downgrade: bool) -> tuple[str, str]:
@@ -235,14 +246,12 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
     from crest.harness.results import compute_summary, manifest_totals, _write_run_readme
 
     pending: dict[Path, bytes] = {}
-    pending[run_dir / "records.jsonl"] = (
-        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records).encode())
     pending[run_dir / "summary.json"] = json.dumps(
         compute_summary(records), indent=2, ensure_ascii=False).encode()
 
     mf = run_dir / "run_manifest.json"
     if mf.exists():
-        m = json.loads(mf.read_text())
+        m = json.loads(mf.read_text(encoding="utf-8"))
         # REPLACE, don't merge. manifest_totals derives its keys from the statuses PRESENT in the
         # data, so a status that vanishes after a repair stops emitting a key and .update() would
         # leave the stale count in place. Measured: repairing all degraded+error rows left
@@ -251,8 +260,9 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
         # errors.jsonl and it is not derivable from the records.
         m["totals"] = {**manifest_totals(records),
                        "n_task_errors": m.get("totals", {}).get("n_task_errors", 0)}
-        # DERIVE the version. Stamping the current one run-wide asserted v2 for a file that could
-        # hold {v1: 7, v2: 5}, moving the unlabelled mixture up a level instead of removing it.
+        # DERIVE the version. Stamping the current one run-wide asserted a single version for a file
+        # that could hold {v1: 7, v2: 5}, moving the unlabelled mixture up a level rather than
+        # removing it.
         vers = sorted({(r.get("creativity") or {}).get("judge_prompt_version")
                        for r in records if r.get("creativity")}, key=lambda x: (x is None, x))
         m["judge_prompt_version"] = vers[0] if len(vers) == 1 else vers
@@ -266,20 +276,43 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                               "unchanged": unchanged, "un_repairable": len(missing)}
         pending[mf] = json.dumps(m, indent=2, ensure_ascii=False).encode()
         pending[run_dir / "README.md"] = _readme_bytes(run_dir, m, _write_run_readme)
+    # records.jsonl is rendered LAST in this dict and renamed LAST below, so the canonical file is
+    # the commit marker -- matching finalize_run's convention that the manifest is written last so a
+    # crashed run cannot look complete. Previously it was written FIRST, via the only atomic path,
+    # while the three derived files used truncating write_bytes: an ENOSPC on the first derived write
+    # left records.jsonl repaired and summary/manifest/README stale, which this function's own
+    # comment calls "worse than no repair".
+    pending[run_dir / "records.jsonl"] = (
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records).encode())
 
-    # Back up EVERY file we are about to replace, into one timestamped directory so repeated repairs
-    # do not overwrite each other's backups and each can be undone individually.
-    bak_dir = run_dir / f"pre_repair_{_utc_now_iso().replace(':', '').replace('-', '')[:15]}"
-    bak_dir.mkdir(exist_ok=True)
+    # Back up every file we are about to replace. SUB-SECOND directory name: second resolution meant
+    # two repairs in the same second landed in the same directory, and mkdir(exist_ok=True) masked it
+    # -- proved to destroy the first repair's pre-images while printing a cheerful backup line. No
+    # exist_ok now either, so a collision raises BEFORE any write and the transaction simply aborts.
+    bak_dir = run_dir / ("pre_repair_" + _utc_stamp())
+    bak_dir.mkdir()
     for path in pending:
         if path.exists():
             (bak_dir / path.name).write_bytes(path.read_bytes())
     print(f"  backup: {bak_dir.name}/ ({sum(1 for p in pending if p.exists())} file(s))")
 
-    _atomic_write_jsonl(run_dir / "records.jsonl", records)
-    for path, blob in pending.items():
-        if path.name != "records.jsonl":
-            path.write_bytes(blob)
+    # Stage every artifact, then rename them all. Renames within a directory are atomic, so each file
+    # individually flips old->new with no truncated intermediate, and records.jsonl goes last.
+    staging = run_dir / (bak_dir.name + ".staging")
+    staging.mkdir()
+    try:
+        for path, blob in pending.items():
+            (staging / path.name).write_bytes(blob)
+        for path in sorted(pending, key=lambda q: q.name == "records.jsonl"):
+            os.replace(staging / path.name, path)
+    except BaseException:
+        print(f"\n  COMMIT FAILED. Nothing may have been written, or a prefix was: the pre-repair "
+              f"originals are in {bak_dir.name}/ -- restore from there before re-running.")
+        raise
+    finally:
+        for leftover in staging.glob("*"):
+            leftover.unlink()
+        staging.rmdir()
 
     print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {downgraded} DOWNGRADED, "
           f"{unchanged} unchanged, {len(missing)} un-repairable")

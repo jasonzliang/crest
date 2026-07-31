@@ -62,6 +62,11 @@ _SENT_SPLIT_RE = re.compile(r"[.!?\n]+")
 # citations reads as unsupported fabrication and fails the gate.
 _MAX_UNCITED_CLAIMS = 2
 
+# Ceiling on dated/statistical claims per citation before an answer reads as unsupported. Calibrated
+# on run 040653Z: 250 substantive answers run median 0.8, p95 3.8, max 8.0 claims per citation, while
+# a synthetic answer of 60 fabricated dated statistics behind one URL sits at 60.0.
+_MAX_CLAIMS_PER_CITATION = 20
+
 # Minimum length for an answer to be scoreable at all. Was 40 chars, which admitted 10 records of
 # 90-349 chars -- bare research-plan preambles produced by a truncating adapter -- that judges then
 # scored 1/1/1. They are the SAME adapter failure as the 0-char answers, just above the old floor,
@@ -89,8 +94,13 @@ def grounding_gate(report) -> GroundingResult:
       * a pure-invention answer that makes few verifiable external factual claims PASSES
         even with zero citations -- a creative artifact is not punished for lacking
         sources (the old `>= min_citations` floor wrongly zeroed the invent tasks C1/C5);
-      * an answer that piles up many external factual claims with no citation FAILS, so
-        obvious fabrication cannot earn creativity by construction.
+      * an answer whose dated/statistical claims outnumber its citations by more than
+        _MAX_CLAIMS_PER_CITATION FAILS. This is a RATIO, deliberately: the earlier form OR'd
+        "has >=1 citation" against the uncited-claim tolerance, so a single unverified URL let 60
+        fabricated dated statistics through, and the previous version of this bullet claimed
+        fabrication "cannot earn creativity by construction" -- which was false as implemented.
+        It is still only a proxy: the ratio says nothing about whether a citation SUPPORTS the
+        claim beside it, so a fabricator who also emits plausible URLs defeats it.
 
     Honest-proxy limits: this counts citation-worthy *cues*, not atomic facts, and does not
     verify that a citation actually supports a given claim. The PRODUCTION version swaps this
@@ -113,9 +123,24 @@ def grounding_gate(report) -> GroundingResult:
     density = min(1.0, n / max(1.0, len(text) / 600.0)) if text else 0.0
     n_factual = _count_factual_claims(text)
     substantive = len(text.strip()) >= _MIN_SUBSTANTIVE_CHARS
-    grounded = n >= 1                                   # >=1 real source URL backs the scaffolding
-    pure_invention = n_factual <= _MAX_UNCITED_CLAIMS   # few external facts to cite
-    passed = substantive and (grounded or pure_invention)
+    # The old form was `substantive and (n >= 1 or n_factual <= _MAX_UNCITED_CLAIMS)` -- an OR, so the
+    # uncited-claim test was consulted ONLY at zero citations. Measured: 3,109 chars containing 60
+    # fabricated dated statistics failed at 0 citations and PASSED at 1, with that citation never
+    # checked for reachability, relevance or support. So the docstring's "obvious fabrication cannot
+    # earn creativity by construction" was false as implemented.
+    #
+    # The obvious fix -- an allowance of _MAX_UNCITED_CLAIMS per citation -- is WORSE than the bug: it
+    # newly gates 32 of the 250 shipped records, including a 38k-char report with 26 citations and 140
+    # dated claims. Long, genuinely-sourced reports restate and elaborate each source many times, so a
+    # linear per-citation budget punishes thoroughness.
+    #
+    # A RATIO gate separates the two cleanly. Measured over all 250 substantive shipped answers,
+    # claims-per-citation runs median 0.8, p95 3.8, max 8.0; the fabrication probe sits at 60. The
+    # threshold below is 2.5x above the worst real answer and 3x below the probe, and flips 0 of 250.
+    # Honest limits: 20 is calibrated on ONE run's distribution, not derived, and the ratio still says
+    # nothing about whether a citation supports the claim it sits near -- see the docstring.
+    passed = substantive and (n_factual <= _MAX_UNCITED_CLAIMS
+                             or n_factual / max(1, n) <= _MAX_CLAIMS_PER_CITATION)
     return GroundingResult(passed=passed, citation_density=round(density, 3), n_citations=n,
                            empty_answer=not text.strip(),
                            too_short=bool(text.strip()) and not substantive)
@@ -156,7 +181,21 @@ _ABLATABLE = frozenset({"known_answers", "restore_expert_baseline"})
 # Run 2026-07-31T040653Z was scored under v1. Its numbers are NOT comparable to v2 scores and must
 # not be mixed with them; re-judge from stored transcripts (harness/rejudge.py) before quoting any
 # New-vs-Surprising correlation, which is the figure (b) contaminated.
-JUDGE_PROMPT_VERSION = "v2"
+def _prompt_fingerprint() -> str:
+    """Hash of the prompt-building code and the judge's reasoning settings.
+
+    The version used to be a hand-edited literal. Editing any wording in _judge_prompt therefore
+    still stamped records "v2", still passed ablate_fields' `vers != {JUDGE_PROMPT_VERSION}` gate, and
+    made rejudge._decide return "no gain (both v2)" -- so the one tool whose job is migrating a run to
+    a new rubric could not see that the rubric had moved. This makes the stamp self-invalidating."""
+    import hashlib, inspect
+    body = inspect.getsource(_judge_prompt) + repr((_JUDGE_EFFORT, _JUDGE_THINKING,
+                                                    _JUDGE_THINKING_BUDGET, _JUDGE_MAX_TOKENS))
+    return hashlib.sha256(body.encode()).hexdigest()[:8]
+
+
+# JUDGE_PROMPT_VERSION is assigned at the BOTTOM of this module: _prompt_fingerprint() reads
+# _judge_prompt's source, which is not defined yet at this point in the file.
 
 
 def _fit_answer(text: str) -> str:
@@ -237,10 +276,12 @@ def _parse_json(s: str) -> dict:
     if t.startswith("```"):                        # strip ```json ... ``` (or bare ```) fences
         t = re.sub(r"^```(?:json)?\s*", "", t)
         t = re.sub(r"\s*```$", "", t).strip()
-    try:
-        return json.loads(t)
-    except Exception:
-        pass
+    # NO bare `json.loads(t)` fast path. It returned any parseable object without checking for the
+    # three axes, so a wrapped verdict {"scores": {...}} returned the OUTER dict and KeyError'd in
+    # _call_judge four paid calls and 28s of backoff later -- while the SAME payload preceded by one
+    # word of prose parsed on the first try, because the fast path failed and the scan below unwrapped
+    # it. Whether a model wraps its verdict is a per-model habit, so the panel thinned by JUDGE
+    # IDENTITY. The scan handles the bare case too (start=0, balanced, has the axes).
     # Scan EVERY balanced {...} and return the first that parses AND carries the three axes.
     # Committing to the first one lost real verdicts: a reply opening with "<thinking>hmm {maybe}"
     # raised JSONDecodeError, and one opening with a scratch object returned that object, whose
@@ -283,6 +324,20 @@ def _parse_json(s: str) -> dict:
 # that only covers the verdict yields an empty response on long prompts (see _judge_completion).
 _JUDGE_MAX_TOKENS = 8000
 
+# ONE reasoning budget for all three judge arms. They previously ran at three different ones:
+# anthropic omitted `thinking` entirely, so claude-sonnet-5 used ADAPTIVE thinking at its default
+# effort "high"; openai was pinned to effort "low"; google had no token cap and no thinking config at
+# all. judge_config.live.yaml argues at length that judge severity is the dominant measured confound
+# and that the design now leans on the full panel as a CONSTANT instrument -- but one judge was
+# deliberating hard, one minimally, and one was unconfigured, so part of the reported severity spread
+# was a configuration artefact rather than a property of the models. Scoring a JSON verdict against an
+# explicit rubric does not need deep deliberation, so all three are pinned low.
+# NB changing these changes scores: it is folded into the prompt fingerprint below so a run scored
+# under the old settings is not silently compared with a new one.
+_JUDGE_EFFORT = "low"
+_JUDGE_THINKING = {"type": "disabled"}
+_JUDGE_THINKING_BUDGET = 0
+
 
 def _judge_completion(family: str, model: str, prompt: str) -> str:
     """One raw judge call; returns the response text (possibly empty)."""
@@ -299,14 +354,29 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
         # it failed on the LONGEST prompts, the panel thinned preferentially on the most complex
         # items, biasing which records kept a full panel.
         r = call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=300).messages.create(
-            model=model, max_tokens=_JUDGE_MAX_TOKENS,
+            model=model, max_tokens=_JUDGE_MAX_TOKENS, thinking=_JUDGE_THINKING,
             messages=[{"role": "user", "content": prompt}]), "judge")
-        return "".join(b.text for b in r.content if b.type == "text")
+        txt = "".join(b.text for b in r.content if b.type == "text")
+        # DISTINGUISH exhaustion from an outage. Raising the budget to 8000 treated the symptom while
+        # leaving both failures byte-identical: a budget-exhausted reply is a thinking block with an
+        # empty text block, so `txt` is "" and _parse_json raised the same "empty judge response" a
+        # real vendor outage produces -- and because the prompt is built once and passed by value,
+        # all four retries re-sent identical bytes, burning 4 paid calls and 28s on a deterministic
+        # failure before dropping the judge.
+        if not txt and getattr(r, "stop_reason", None) == "max_tokens":
+            raise RuntimeError(
+                f"judge {model} spent the whole max_tokens={_JUDGE_MAX_TOKENS} budget without "
+                f"emitting text (prompt {len(prompt)} chars). This is NOT an outage and retrying is "
+                f"futile: raise _JUDGE_MAX_TOKENS or lower _JUDGE_EFFORT.")
+        return txt
     elif family in ("openai", "open_weight"):
         from openai import OpenAI
         r = OpenAI(timeout=300).responses.create(
-            model=model, input=prompt, reasoning={"effort": "low"},
-            max_output_tokens=_JUDGE_MAX_TOKENS)      # same reasoning-budget trap as above
+            model=model, input=prompt, reasoning={"effort": _JUDGE_EFFORT},
+            max_output_tokens=_JUDGE_MAX_TOKENS)
+        if not (r.output_text or "") and getattr(r, "status", None) == "incomplete":
+            raise RuntimeError(f"judge {model} returned incomplete (likely max_output_tokens="
+                               f"{_JUDGE_MAX_TOKENS} spent on reasoning); retrying is futile.")
         return r.output_text or ""
     elif family == "google":
         import os
@@ -314,7 +384,11 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
         from google.genai import types as gt
         client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"),   # keep a ref (temporary gets GC'd)
                               http_options=gt.HttpOptions(timeout=300_000))  # ms
-        r = client.models.generate_content(model=model, contents=prompt)
+        r = client.models.generate_content(
+            model=model, contents=prompt,
+            config=gt.GenerateContentConfig(max_output_tokens=_JUDGE_MAX_TOKENS,
+                                            thinking_config=gt.ThinkingConfig(
+                                                thinking_budget=_JUDGE_THINKING_BUDGET)))
         return r.text or ""
     else:
         raise ValueError(f"unknown judge family {family}")
@@ -377,6 +451,18 @@ class JudgePanel:
         # the self-preference defence that LOFO exists to provide is gone. Scores below this many
         # judges are recorded but flagged 'judge_degraded' so they can be excluded from headline
         # numbers instead of silently diluting them (this fires when a vendor is down or unfunded).
+        # Validate HERE, in __init__, because from_config runs in main() before any money moves.
+        # A present-but-EMPTY `min_judges:` in the YAML yields None -- .get's default only fires when
+        # the key is absent -- and the resulting `scores.n_judges < None` TypeError is raised at
+        # run_crest.py's status branch, which sits AFTER the "JUDGE PANEL ERROR (agent was fine)"
+        # guard. So it was logged as an agent_error and the record discarded, on every task, after
+        # generation AND all judge calls were paid: 250 fully-paid tasks, 0 records, 250 rows blaming
+        # healthy entrants. The message is not auth/quota, so the circuit breaker never fired and the
+        # run burned to completion. bool is excluded explicitly: it is an int subclass, so `True`
+        # would otherwise pass as min_judges=1.
+        if isinstance(min_judges, bool) or not isinstance(min_judges, int) or min_judges < 1:
+            raise ValueError(f"min_judges must be a positive int, got {min_judges!r} "
+                             f"(a blank `min_judges:` in the YAML parses as None)")
         self.min_judges = min_judges
 
     @classmethod
@@ -426,3 +512,6 @@ class JudgePanel:
         return CreativityScore(agg["new"], agg["useful"], agg["surprising"], all_three, per, len(per))
 
 
+# Assigned last, because _prompt_fingerprint() needs _judge_prompt to exist. Importers see a plain
+# string, so `from crest.judge.score import JUDGE_PROMPT_VERSION` is unchanged.
+JUDGE_PROMPT_VERSION = f"v2+{_prompt_fingerprint()}"

@@ -76,8 +76,11 @@ rows=[json.loads(l) for l in open('crest/questions/crest_challenges.jsonl') if l
 print(sum(1 for r in rows if 'canary' in json.dumps(r).lower()), len(rows))
 ")
 set -- $n_canary; have=$1; total=$2
-if [ "$have" = "$total" ] && [ "$have" != "0" ]; then echo "  OK canaries present in all $total items";
-else
+# The allow-list check runs UNCONDITIONALLY. It used to sit inside the `else` of "do all items carry a
+# canary?", so adding canaries to all 50 items would have silently retired it -- and it polices more
+# than the count (an OSF registration, a frozen index, "reproduction would be evidence of
+# contamination"). have/total is now only a number in the message.
+{
   # APPROVAL LIST, not prose-matching. Three grep-based versions of this check were each green for
   # the wrong reason, and the last two failed in ways that only showed up under adversarial review:
   #   v1  grepped datasheet.md whole-file for "NOT IMPLEMENTED"; 13 unrelated markers always
@@ -110,14 +113,21 @@ else
   # output, so an empty list yielded n_bad=0 and the gate printed OK -- the same fail-open as the
   # not-a-git-repo hole closed one branch above, and this file list IS the gate's coverage. Capturing
   # also collapses a 5-stage pipeline that previously ran once to count and again to print.
-  doc_list=$(git ls-files --cached --others --exclude-standard \
-               'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex')
-  if [ -z "$doc_list" ]; then
+  # NUL-delimited end to end. The previous version ran `git ls-files` WITHOUT -z and rebuilt the NUL
+  # separation with `printf | tr '\n' '\0'`, which is not newline-safe: git QUOTES a path containing a
+  # newline ("crest/docs/new\nline.md"), grep received the literal quoted string, said "No such file",
+  # and 2>/dev/null ate the error -- so that file's canary lines never reached the allow-list check and
+  # the gate printed OK. git -z disables quoting entirely. stderr is no longer discarded, so a file
+  # that cannot be read is loud rather than silently skipped.
+  n_docs=$(git ls-files -z --cached --others --exclude-standard \
+             'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' | tr -dc '\0' | wc -c | tr -d ' ')
+  if [ "${n_docs:-0}" = "0" ]; then
     echo "  FAIL no crest .md/.tex files enumerated -- the canary gate has no coverage"; fail=1
     bad_lines=""
   else
-    bad_lines=$(printf '%s\n' "$doc_list" | tr '\n' '\0' \
-                | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
+    bad_lines=$(git ls-files -z --cached --others --exclude-standard \
+                  'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
+                | xargs -0 grep -hiE "canar(y|ies)" \
                 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u \
                 | grep -vxFf "$allow")
   fi
@@ -129,7 +139,7 @@ else
     fail=1
   else echo "  OK all canary mentions are human-approved ($have/$total items carry one)"; fi
   fi
-fi
+}
 
 echo; [ "$fail" = 0 ] && echo "PRE-RELEASE GATE: PASS" || echo "PRE-RELEASE GATE: FAIL"
 exit $fail
