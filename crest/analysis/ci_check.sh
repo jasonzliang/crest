@@ -114,6 +114,58 @@ print(f'  NOTE {n}/50 aiml items cite sources for known_answers (the science set
 " || true
 fi
 
+echo "== billing fields are actually populated (schema >= 1.2.0 runs)"
+# WHY THIS CHECK EXISTS: adding a field is not the same as getting the data. `answer_chars` is
+# written by current code and is still 0/250 in the shipped run, because a schema-version gap
+# dropped it and nothing checked -- so a length covariate is uncomputable from a run that looks
+# complete. The billing fields would regress identically and just as silently. A field nothing
+# verifies is a field that will be empty when someone finally needs it.
+# Scoped to runs at record_schema_version >= 1.2.0: older runs legitimately have no tokens block,
+# and that state is reported as NOT MEASURED rather than as zero cost -- different claims.
+python - <<'PY2' || fail=1
+import json, sys, glob, os, collections
+runs = sorted(glob.glob("crest/result/runs/*/records.jsonl"))
+if not runs:
+    print("  OK no runs on disk to check")
+    sys.exit(0)
+bad = 0
+for path in runs:
+    recs = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    if not recs:
+        continue
+    name = os.path.basename(os.path.dirname(path))[:44]
+    ver = str(recs[0].get("schema_version") or "")
+    try:  # "crest-record/1.2.0" -> (1,2,0)
+        tup = tuple(int(x) for x in ver.split("/")[-1].split("."))
+    except ValueError:
+        tup = (0,)
+    if tup < (1, 2, 0):
+        print(f"  NOTE {name}: schema {ver or '?'} predates 1.2.0, so it carries NO billing fields. "
+              f"Cost is NOT MEASURED for this run (which is not the same as zero).")
+        continue
+    per = collections.defaultdict(lambda: {"n": 0, "in0": 0, "nocalls": 0})
+    for r in recs:
+        s = per[r.get("agent", "?")]
+        s["n"] += 1
+        if not int(((r.get("tokens") or {}).get("input") or 0)):
+            s["in0"] += 1
+        if not (r.get("calls") or []):
+            s["nocalls"] += 1
+    for agent, s in sorted(per.items()):
+        if s["in0"] == s["n"]:
+            print(f"  FAIL {name}: {agent} has tokens.input == 0 on ALL {s['n']} record(s) -- the "
+                  f"billing capture is not reaching this adapter, so cost is unanswerable for it")
+            bad = 1
+        elif s["in0"]:
+            print(f"  WARN {name}: {agent} has tokens.input == 0 on {s['in0']}/{s['n']} record(s)")
+        if s["nocalls"] == s["n"]:
+            print(f"  FAIL {name}: {agent} has an empty calls[] on ALL {s['n']} record(s)")
+            bad = 1
+    if not bad:
+        print(f"  OK {name}: billing fields populated for all {len(per)} entrant(s)")
+sys.exit(bad)
+PY2
+
 echo "== claims the repo cannot instantiate (BOTH papers)"
 # a gate that silently passes when its input is gone is worse than no gate: deleting the sections
 # directory previously turned three checks green

@@ -248,6 +248,16 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         # r=+0.05 with score and hides the real confound; visible words give r=+0.47, reproducing
         # the r=0.47 the source paper reported. Always length-control on answer_chars/answer_words.
         "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
+        # Billing surface. NOTE what is NOT here: a usd figure. Cost is DERIVED in
+        # analysis/costs.py from config/prices.yaml, not frozen into the record -- because prices
+        # are unknown at run time and every price in that table currently ships as null. Storing a
+        # cost here would freeze a null forever; deriving it means filling the table later re-prices
+        # every run already on disk. Records hold measurements; prices are interpretation.
+        "tokens": dict(getattr(report, "tokens", None) or {}),
+        "billed_tools": dict(getattr(report, "billed_tools", None) or {}),
+        "n_calls": len(getattr(report, "calls", None) or []),
+        "calls": list(getattr(report, "calls", None) or []),
+        "usage_raw": list(getattr(report, "usage_raw", None) or []),
         "truncated": bool(getattr(report, "truncated", False)),
         "answer_chars": len(report.text or ""),
         "answer_words": len((report.text or "").split()),

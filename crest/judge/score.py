@@ -14,6 +14,11 @@ Two pieces:
 """
 from __future__ import annotations
 import dataclasses, json, re, statistics, sys, yaml
+# Shared with the entrant adapters rather than duplicated: one defensive attribute reader means the
+# judge and entrant usage blocks cannot drift in how they handle a missing field. agents.py has no
+# top-level provider imports (every SDK is imported inside its own function), so this is cheap and
+# introduces no cycle -- agents.py does not import this module.
+from crest.harness.agents import _tok
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -368,8 +373,14 @@ _JUDGE_REASONING = {"anthropic": {"type": "disabled"},  # thinking=       accept
                     "google": 128}                      # thinking_budget; 0 rejected server-side
 
 
-def _judge_completion(family: str, model: str, prompt: str) -> str:
-    """One raw judge call; returns the response text (possibly empty)."""
+def _judge_completion(family: str, model: str, prompt: str) -> tuple[str, dict]:
+    """One raw judge call; returns (response text, normalized usage).
+
+    The usage half exists because judge cost was entirely unaccounted: a 250-record run makes 750
+    judge calls -- 3x the number of generations -- and not one token of it was recorded anywhere.
+    Returned as a tuple rather than stashed globally so it stays per-call and thread-safe; judges
+    within a record run in parallel.
+    """
     if family == "anthropic":
         import anthropic
         from crest.harness.keys import call_anthropic
@@ -395,7 +406,10 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
                 f"judge {model} spent the whole max_tokens={_JUDGE_MAX_TOKENS} budget without "
                 f"emitting text (prompt {len(prompt)} chars). This is NOT an outage and retrying is "
                 f"futile: raise _JUDGE_MAX_TOKENS or shorten the prompt.")
-        return txt
+        return txt, {"input": _tok(r.usage, "input_tokens"),
+                     "input_cached": _tok(r.usage, "cache_read_input_tokens"),
+                     "output_total": _tok(r.usage, "output_tokens"),
+                     "output_reasoning": 0}   # not reported by this provider
     elif family in ("openai", "open_weight"):
         from openai import OpenAI
         r = OpenAI(timeout=300).responses.create(
@@ -404,7 +418,11 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
         if not (r.output_text or "") and getattr(r, "status", None) == "incomplete":
             raise RuntimeError(f"judge {model} returned incomplete (likely max_output_tokens="
                                f"{_JUDGE_MAX_TOKENS} spent on reasoning); retrying is futile.")
-        return r.output_text or ""
+        return r.output_text or "", {
+            "input": _tok(r.usage, "input_tokens"),
+            "input_cached": _tok(r.usage, "input_tokens_details.cached_tokens"),
+            "output_total": _tok(r.usage, "output_tokens"),
+            "output_reasoning": _tok(r.usage, "output_tokens_details.reasoning_tokens")}
     elif family == "google":
         import os
         from google import genai
@@ -429,7 +447,13 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
                 raise RuntimeError(
                     f"judge {model} hit max_output_tokens={_JUDGE_MAX_TOKENS} with thinking_budget="
                     f"{_JUDGE_REASONING['google']} and emitted no text; retrying is futile.")
-        return r.text or ""
+        _u = getattr(r, "usage_metadata", None)
+        return r.text or "", {
+            "input": _tok(_u, "prompt_token_count"),
+            "input_cached": _tok(_u, "cached_content_token_count"),
+            "output_total": _tok(_u, "candidates_token_count"),
+            # this arm's thinking cannot be disabled, so reasoning tokens are always billed here
+            "output_reasoning": _tok(_u, "thoughts_token_count")}
     else:
         raise ValueError(f"unknown judge family {family}")
 
@@ -444,7 +468,8 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
         if attempt:
             time.sleep(4.0 * (2 ** (attempt - 1)))   # 4s, 8s, 16s: ride out a provider spend-rate cap
         try:
-            d = _parse_json(_judge_completion(family, model, prompt))
+            _txt, _usage = _judge_completion(family, model, prompt)
+            d = _parse_json(_txt)
             # bool is a subclass of int, so float(True) == 1.0 would sail through the range
             # check below and be written as a legitimate score of 1.
             raw = {ax: d[ax] for ax in ("new", "useful", "surprising")}
@@ -457,8 +482,14 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
             bad = {ax: s for ax, s in v.items() if not 1.0 <= s <= 10.0}
             if bad:
                 raise ValueError(f"judge {model} returned out-of-range score(s) {bad}; expected 1-10")
+            # `usage` flows through _judges_list's **vals into each judge row in the record, so
+            # judge cost becomes attributable per judge per record rather than not at all. Only the
+            # SUCCEEDING attempt's usage is reported: failed attempts are also billed, so this
+            # under-counts on records that retried. n_attempts makes that visible instead of hiding
+            # it -- a retry storm was previously invisible in the artifact.
             return {**v, "hard_rules_violated": d.get("hard_rules_violated", []),
-                    "rationale": d.get("rationale", "")}
+                    "rationale": d.get("rationale", ""),
+                    "usage": _usage, "n_attempts": attempt + 1}
         except Exception as e:
             last_err = e
     raise last_err

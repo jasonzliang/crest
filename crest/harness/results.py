@@ -26,7 +26,12 @@ from pathlib import Path
 
 # 1.1.0: adapter_fp/truncated/answer_chars/answer_words were added to every record while the version
 # stayed 1.0.0 -- one version string denoting two shapes, and the shipped run has 0/250 of them.
-RECORD_SCHEMA_VERSION = "crest-record/1.1.0"
+# 1.2.0: the BILLING surface -- tokens{}, billed_tools{}, n_calls, calls[], usage_raw[]. Cost per
+# question was previously unanswerable: each adapter read only output_tokens off a usage object that
+# already carried input tokens, cache counters and billed tool counts. Input dominates for a
+# research agent, so the single field kept was the one that could not answer the question. Bumped
+# rather than added silently, which is the 1.0.0->1.1.0 mistake recorded above.
+RECORD_SCHEMA_VERSION = "crest-record/1.2.0"
 
 
 def _utc_now():

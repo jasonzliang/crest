@@ -173,7 +173,9 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
   argument in §5–§6 must not rely on it, and `analysis/ci_check.sh` has a check that fails the build
   if any doc makes an unqualified canary claim.
 - **Trajectory logging.** Partial. Each run writes immutable `records.jsonl` (per-record status,
-  grounding result, per-judge scores, `n_searches`, `output_len_tokens`) and `transcripts.jsonl`
+  grounding result, per-judge scores, `n_searches`, `output_len_tokens`, and — from record schema
+  1.2.0 — the billing surface `tokens{}` / `billed_tools{}` / `n_calls` / `calls[]` / `usage_raw[]`,
+  with the same usage block on each judge row) and `transcripts.jsonl`
   (full answer text + citations). `[NOT IMPLEMENTED]` Per-query search logs and automated
   search-time-contamination scanning (benchmark-metadata / question-context / explicit-answer
   leakage) do not exist.

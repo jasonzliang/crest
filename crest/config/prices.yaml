@@ -1,0 +1,71 @@
+# Price table for cost estimation. Read by analysis/costs.py; NOT read by the harness.
+#
+# WHY THIS FILE IS ALL NULLS. Every price below ships unset, deliberately. The failure this whole
+# file exists to prevent is a confident-looking dollar figure whose largest term is missing or
+# guessed. `costs.py` emits null for anything it cannot price from real numbers, and reports how
+# many records it could not price, rather than silently substituting a default. Fill these in from
+# your own provider pricing pages and bump `version`.
+#
+# UNITS: usd_per_mtok = US dollars per 1,000,000 tokens. usd_per_1k = dollars per 1,000 calls.
+#
+# THE `basis` FIELD IS THE IMPORTANT ONE:
+#   basis: token  -> cost is derivable from the token counts in each record.
+#   basis: task   -> the provider bills a flat price per task and does not expose the underlying
+#                    token accounting. Token counts CANNOT be multiplied up to a price. Set
+#                    usd_per_task if you know it, else leave null and costs.py reports "unpriced".
+#                    Both deep-research entrants are task-priced -- eval_config.yaml says so
+#                    itself: "managed multi-step background research loop (minutes + $$/task)".
+#
+version: null            # e.g. 2026-07-31. null => costs.py refuses to price anything and says why.
+currency: USD
+
+models:
+  # ---- shallow arm: ordinary chat + a web-search tool, so token-priced ----
+  claude-sonnet-5:
+    basis: token
+    input_usd_per_mtok: null
+    output_usd_per_mtok: null
+    cache_read_usd_per_mtok: null      # cache_read_input_tokens, billed at a discount
+    cache_write_usd_per_mtok: null     # cache_creation_input_tokens, billed at a premium
+    web_search_usd_per_1k: null        # server_tool_use.web_search_requests
+    web_fetch_usd_per_1k: null         # server_tool_use.web_fetch_requests -- billed, and this
+                                       # project counted it nowhere until schema 1.2.0
+
+  gpt-5.6:
+    basis: token
+    input_usd_per_mtok: null
+    output_usd_per_mtok: null
+    cache_read_usd_per_mtok: null
+    web_search_usd_per_1k: null
+
+  gemini-3.1-pro-preview:
+    basis: token
+    input_usd_per_mtok: null
+    output_usd_per_mtok: null
+    cache_read_usd_per_mtok: null
+    web_search_usd_per_1k: null
+
+  # ---- deep arm: managed research loops, TASK-priced ----
+  # Do not add token prices to these expecting a total. The config comments carry the author's
+  # estimates (~$9 and ~$6 per task) but those were never validated against a bill, and treating an
+  # estimate as a measurement is the exact thing this table is built to stop.
+  gpt-5.6-sol:
+    basis: task
+    usd_per_task: null                 # eval_config.yaml comment says ~$9/task, UNVERIFIED
+  deep-research-max-preview-04-2026:
+    basis: task
+    usd_per_task: null                 # eval_config.yaml comment says ~$6/task, UNVERIFIED
+
+  # ---- judge panel: 3 calls per record, 750 per 250-record run, previously unaccounted ----
+  # Cheap per call, but there are 3x more judge calls than generations, so this is not negligible.
+  claude-sonnet-5-judge:
+    basis: token
+    alias_of: claude-sonnet-5
+  gpt-5-judge:
+    basis: token
+    input_usd_per_mtok: null
+    output_usd_per_mtok: null
+  gemini-2.5-pro-judge:
+    basis: token
+    input_usd_per_mtok: null
+    output_usd_per_mtok: null

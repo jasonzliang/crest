@@ -44,7 +44,7 @@ Model IDs are pinned per entrant in `_REGISTRY`. The authors' own entrant (cited
 one entrant among many; it must not be privileged and all findings must hold with it removed.
 """
 from __future__ import annotations
-import dataclasses, os, re
+import dataclasses, json, os, re
 
 _RESEARCH_SYSTEM = (
     "You are a research agent. Before writing, do REAL web search: issue at least TWO "
@@ -69,6 +69,81 @@ class AgentOutput:
     truncated: bool = False     # answer was cut off (max_tokens / incomplete). Recorded, not just
                                 # warned about, so truncated answers are filterable in analysis --
                                 # they were previously scored as if complete.
+    # ---- billing surface. Added because cost per question was UNANSWERABLE: every adapter read
+    # exactly one attribute (output_tokens) off a usage object that already carried input tokens,
+    # both cache counters and the provider's own billed tool counts, and discarded the rest. Input
+    # is the dominant term for a research agent -- every fetched page re-enters context each turn --
+    # so the one field we kept was the one that could not answer the question.
+    tokens: dict = dataclasses.field(default_factory=dict)
+    #   input, input_cached, input_cache_write, input_tool_use,
+    #   output_total, output_reasoning  (output_visible is DERIVED, never stored: storing both
+    #   invites them disagreeing, and reasoning is reported directly by OpenAI and Google.)
+    billed_tools: dict = dataclasses.field(default_factory=dict)
+    #   web_search_requests / web_fetch_requests as the PROVIDER bills them, which is not the same
+    #   as the counts we parse out of the response body: web_fetch was billed and never counted.
+    calls: list = dataclasses.field(default_factory=list)
+    # Per provider round-trip, NOT just a total. Required for the Anthropic arm specifically: its
+    # pause_turn loop re-sends growing context on every continuation (up to 8), so input tokens are
+    # SUPERLINEAR in turn count. A single accumulated input figure hides the dominant cost term, and
+    # a 1-call record is otherwise indistinguishable from an 8-call one.
+    usage_raw: list = dataclasses.field(default_factory=list)
+    # The provider usage object per call, dict-ified verbatim. This is the root-cause fix rather
+    # than a nicety: the reason this run cannot be priced is that a normalizer chose fields up
+    # front. Keeping raw means the NEXT pricing question is answerable without re-generating.
+    # Especially for the Google deep-research surface, which is preview and whose field presence
+    # varies -- there, guessing a field list is how we lose the data again.
+
+
+def _tok(obj, *paths) -> int:
+    """First present dotted-path attribute among `paths`, as int; 0 if none resolve.
+
+    Defensive on purpose: these usage objects differ per provider AND per SDK version, and a
+    provider adding a field must never raise here -- a billing counter is not worth failing a
+    generation over.
+    """
+    for p in paths:
+        cur = obj
+        for part in p.split("."):
+            cur = getattr(cur, part, None)
+            if cur is None:
+                break
+        if cur is not None:
+            try:
+                return int(cur)
+            except (TypeError, ValueError):
+                pass
+    return 0
+
+
+def _usage_dict(u) -> dict:
+    """Dict-ify a usage object without knowing its shape. Never raises."""
+    if u is None:
+        return {}
+    for attr in ("model_dump", "to_dict", "dict"):
+        f = getattr(u, attr, None)
+        if callable(f):
+            try:
+                d = f()
+                if isinstance(d, dict):
+                    return json.loads(json.dumps(d, default=str))
+            except Exception:
+                pass
+    out = {}
+    for k in dir(u):
+        if k.startswith("_"):
+            continue
+        try:
+            v = getattr(u, k)
+        except Exception:
+            continue
+        if callable(v):
+            continue
+        try:
+            json.dumps(v)
+        except (TypeError, ValueError):
+            v = str(v)
+        out[k] = v
+    return out
 
 
 class FrozenIndex:
@@ -142,6 +217,7 @@ class ClaudeShallowResearch(Agent):
         # answer, then scored it (N/U/S = 1/1/1) and read the result as low creativity.
         msgs = [{"role": "user", "content": query}]
         blocks, guard, tok_total, guard_exhausted = [], 0, 0, False
+        calls, raws = [], []
         while True:
             r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
                 .messages.create(
@@ -153,6 +229,18 @@ class ClaudeShallowResearch(Agent):
             blocks.extend(r.content)
             tok_total += (getattr(r.usage, "output_tokens", 0) or 0)   # ACCUMULATE: reading
                                     # only the last turn reported 42 tokens for a 6042-token answer
+            _u = getattr(r, "usage", None)
+            calls.append({
+                "i": len(calls),
+                "input": _tok(_u, "input_tokens"),
+                "input_cached": _tok(_u, "cache_read_input_tokens"),
+                "input_cache_write": _tok(_u, "cache_creation_input_tokens"),
+                "output": _tok(_u, "output_tokens"),
+                "searches": _tok(_u, "server_tool_use.web_search_requests"),
+                "fetches": _tok(_u, "server_tool_use.web_fetch_requests"),
+                "stop_reason": getattr(r, "stop_reason", None),
+            })
+            raws.append(_usage_dict(_u))
             if getattr(r, "stop_reason", None) != "pause_turn":
                 break
             guard += 1
@@ -194,7 +282,24 @@ class ClaudeShallowResearch(Agent):
                   f"{n_search} search(es), stop_reason={stop} -- "
                   f"raise _ANTHROPIC_MAX_TOKENS or inspect the response]")
         return AgentOutput(full, _citations(cites, full),
-                           n_tokens=tok_total, n_searches=n_search, truncated=truncated)
+                           n_tokens=tok_total, n_searches=n_search, truncated=truncated,
+                           tokens={
+                               # Summed across continuations. The per-call array is what makes the
+                               # growth visible; this total is what a price table multiplies.
+                               "input": sum(c["input"] for c in calls),
+                               "input_cached": sum(c["input_cached"] for c in calls),
+                               "input_cache_write": sum(c["input_cache_write"] for c in calls),
+                               "input_tool_use": 0,   # not separately reported by this provider
+                               "output_total": tok_total,
+                               "output_reasoning": 0,  # not reported by this provider; do NOT
+                                       # infer it from tokens-per-word, which is what forced the
+                                       # 1.33-tokens-per-word estimate this field exists to retire
+                           },
+                           billed_tools={
+                               "web_search_requests": sum(c["searches"] for c in calls),
+                               "web_fetch_requests": sum(c["fetches"] for c in calls),
+                           },
+                           calls=calls, usage_raw=raws)
 
 
 # ---------------- OpenAI ----------------
@@ -218,8 +323,30 @@ def _parse_openai(r) -> AgentOutput:
                                       "title": getattr(ann, "title", "") or ""})
     n_tok = getattr(getattr(r, "usage", None), "output_tokens", 0) or 0
     full = r.output_text or ""
+    u = getattr(r, "usage", None)
     return AgentOutput(full, _citations(cites, full), n_tokens=n_tok,
-                       n_searches=n_search, truncated=getattr(r, "status", None) == "incomplete")
+                       n_searches=n_search, truncated=getattr(r, "status", None) == "incomplete",
+                       tokens={
+                           "input": _tok(u, "input_tokens"),
+                           "input_cached": _tok(u, "input_tokens_details.cached_tokens"),
+                           "input_cache_write": 0,
+                           "input_tool_use": 0,
+                           "output_total": _tok(u, "output_tokens"),
+                           # reported directly, so the invisible-reasoning share is measured here
+                           # rather than inferred: this arm ran 80% invisible on the deep entrant.
+                           "output_reasoning": _tok(u, "output_tokens_details.reasoning_tokens"),
+                       },
+                       # n_search is parsed from response items above; this provider does not report
+                       # a separate BILLED tool count, so the parsed count is the best available and
+                       # is recorded under the same key with that caveat.
+                       billed_tools={"web_search_requests": n_search, "web_fetch_requests": 0},
+                       calls=[{"i": 0, "input": _tok(u, "input_tokens"),
+                               "input_cached": _tok(u, "input_tokens_details.cached_tokens"),
+                               "output": _tok(u, "output_tokens"),
+                               "reasoning": _tok(u, "output_tokens_details.reasoning_tokens"),
+                               "searches": n_search,
+                               "stop_reason": getattr(r, "status", None)}],
+                       usage_raw=[_usage_dict(u)])
 
 
 class OpenAIShallowResearch(Agent):
@@ -315,7 +442,27 @@ class GeminiShallowResearch(Agent):
             print(f"  [NOTE: {self.model} reported ZERO web searches; any citations below are "
                   f"scraped from the answer text and are NOT verified grounding chunks]")
         n_tok = getattr(getattr(r, "usage_metadata", None), "candidates_token_count", 0) or 0
-        return AgentOutput(text, _citations(cites, text), n_tokens=n_tok, n_searches=n_search)
+        u = getattr(r, "usage_metadata", None)
+        return AgentOutput(text, _citations(cites, text), n_tokens=n_tok, n_searches=n_search,
+                       tokens={
+                           "input": _tok(u, "prompt_token_count"),
+                           "input_cached": _tok(u, "cached_content_token_count"),
+                           "input_cache_write": 0,
+                           # THE term that was called unrecoverable: tokens injected into context by
+                           # tool use, i.e. the retrieved page content that dominates a research
+                           # agent's input bill. Only this provider reports it separately.
+                           "input_tool_use": _tok(u, "tool_use_prompt_token_count"),
+                           "output_total": _tok(u, "candidates_token_count"),
+                           "output_reasoning": _tok(u, "thoughts_token_count"),
+                       },
+                       billed_tools={"web_search_requests": n_search, "web_fetch_requests": 0},
+                       calls=[{"i": 0, "input": _tok(u, "prompt_token_count"),
+                               "input_cached": _tok(u, "cached_content_token_count"),
+                               "input_tool_use": _tok(u, "tool_use_prompt_token_count"),
+                               "output": _tok(u, "candidates_token_count"),
+                               "reasoning": _tok(u, "thoughts_token_count"),
+                               "searches": n_search, "stop_reason": None}],
+                       usage_raw=[_usage_dict(u)])
                        # no `or len(cites)` fallback: it fabricated a search count from citations
 
 
@@ -395,7 +542,27 @@ def _parse_gemini_interaction(it) -> AgentOutput:
              or getattr(u, "candidates_token_count", None) or 0)
     n_search = sum(getattr(g, "count", 0) or 0
                    for g in (getattr(u, "grounding_tool_count", None) or []))
-    return AgentOutput(text, _citations(cites, text), n_tokens=n_tok, n_searches=n_search)
+    # This surface is PREVIEW and field presence varies, which is exactly the case where choosing a
+    # field list up front loses the data. So: try both the deep-research and the standard names for
+    # each term, and keep the raw object regardless so anything missed is recoverable later without
+    # re-generating a $6/task run.
+    return AgentOutput(text, _citations(cites, text), n_tokens=n_tok, n_searches=n_search,
+                       tokens={
+                           "input": _tok(u, "total_input_tokens", "input_tokens",
+                                         "prompt_token_count"),
+                           "input_cached": _tok(u, "cached_content_token_count", "cached_tokens"),
+                           "input_cache_write": 0,
+                           "input_tool_use": _tok(u, "tool_use_prompt_token_count"),
+                           "output_total": n_tok,
+                           "output_reasoning": _tok(u, "thoughts_token_count",
+                                                    "total_thoughts_tokens"),
+                       },
+                       billed_tools={"web_search_requests": n_search, "web_fetch_requests": 0},
+                       calls=[{"i": 0,
+                               "input": _tok(u, "total_input_tokens", "input_tokens",
+                                             "prompt_token_count"),
+                               "output": n_tok, "searches": n_search, "stop_reason": None}],
+                       usage_raw=[_usage_dict(u)])
                        # no `or len(cites)` fallback: it fabricated a search count from citations
 
 
