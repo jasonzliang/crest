@@ -129,7 +129,13 @@ def main():
     # ~/.claude/projects/.../subagents/, and measuring the link gave a constant 138 bytes -- read as
     # "stalled at 138 bytes for 14 minutes" for an agent that was in fact writing 1 MB. Path.stat()
     # follows symlinks; Path.lstat() would not.
-    agent_dirs = sorted(Path.home().glob(".claude/projects/*/*/subagents"))
+    # Scope to THIS repo's projects. The glob was `.claude/projects/*/*/subagents`, which spans every
+    # project and session on the machine -- so an agent working in an unrelated repo was reported as
+    # this repo's live job, which is the wrong-direction error again: it says work is in flight when
+    # none is. Project dirs are the working directory with '/' replaced by '-', so a prefix match on
+    # the repo path covers both `rome` and `rome-crest`.
+    slug = str(REPO).replace("/", "-")
+    agent_dirs = sorted(Path.home().glob(f".claude/projects/{slug}*/*/subagents"))
     live, idle = [], []
     for d in agent_dirs:
         for f in d.glob("agent-*.jsonl"):
