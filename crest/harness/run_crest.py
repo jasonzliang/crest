@@ -189,7 +189,15 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         "query_sha": q_sha,                    # content address: invalidates if the prompt is edited
         "generation_cached": cached,           # True => generation reused, not re-paid for
         "cache_source_run": getattr(report, "source_run", None) if cached else None,
+        # NB output_len_tokens is the provider's BILLED output count, which for reasoning models
+        # INCLUDES invisible reasoning tokens. Measured tokens-per-visible-word: openai_shallow 2.0,
+        # openai_deepresearch 6.1, gemini_deepresearch_max 10.0, claude_shallow 13.8 -- so it is NOT
+        # a length measure and NOT comparable across arms. Using it as the length covariate gives
+        # r=+0.05 with score and hides the real confound; visible words give r=+0.47, reproducing
+        # the r=0.47 the source paper reported. Always length-control on answer_chars/answer_words.
         "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
+        "answer_chars": len(report.text or ""),
+        "answer_words": len((report.text or "").split()),
         "scoring_status": status,   # scored | judge_degraded | empty_answer | grounding_fail | judge_error
         "grounding": dataclasses.asdict(gate),
         "creativity": None if scores is None else {           # null on BOTH fail paths (never a fake 0)
@@ -308,7 +316,11 @@ def make_manifest(run_id, created_at, benchmark, agents: dict, panel, budget, co
                          "difference confounds agent quality with evidence volume. Compare within "
                          "arm; treat depth as a factor, not as noise."),
         "judges": [{"id": j["id"], "model": j["model"], "family": j["family"]} for j in panel.judges],
-        "judge_protocol": "leave-one-family-out; blind; median aggregation",
+        # Read from the PANEL, never hardcoded: this string said "leave-one-family-out" while the run
+        # was full-panel, so the manifest -- the provenance record a reviewer trusts -- misdescribed
+        # its own protocol.
+        "judge_protocol": (f"{panel.protocol}; blind; "
+                           f"{'median' if len(panel.judges) % 2 else 'mean-of-even-panel'} aggregation"),
     }
 
 

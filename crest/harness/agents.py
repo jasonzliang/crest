@@ -26,9 +26,20 @@ Run mode is LIVE provider search, so a real run needs only the model API keys (n
 NB: live web search is NOT contamination-controlled; results are time-indexed snapshots. A frozen
 shared index (fair, reproducible run) is future work — see `FrozenIndex`, which deliberately raises.
 
-Search-call budget: enforced where the provider exposes a cap (Anthropic `max_uses`, OpenAI
-`max_tool_calls`); Gemini native search is not directly cappable, so `budget` is advisory there
-(we report n_searches).
+Search-call budget — READ THIS BEFORE COMPARING ARMS. It is NOT uniformly enforced, and the
+asymmetry is large enough to invalidate a naive depth comparison:
+  * Anthropic shallow: `max_uses=budget` (6) — enforced.
+  * OpenAI SHALLOW: **no cap passed at all**. It performs ~2.9 searches only because
+    `_RESEARCH_SYSTEM` asks for "at least TWO" — a prompt suggestion, not a limit.
+  * OpenAI DEEP: `max_tool_calls=40`, but measured max was 23 and 0/49 items reached the cap, so
+    the dial NEVER BOUND. The realised contrast is 10.8 vs 2.9 searches (3.8x), not 40 vs 6.
+  * Gemini DEEP (max agent): ~76 searches median — a 117x contrast against gemini_shallow's 0.65.
+So the two "deep" arms are not comparable manipulations to each other, and the OpenAI depth contrast
+is far weaker than its configuration suggests. Report realised n_searches, never the configured dial.
+
+A further asymmetry the metric cannot see: the OpenAI deep arm's main purchased resource is
+REASONING tokens (~13.8k vs ~2.5k), and `_judge_prompt` receives only `report.text`. The judge never
+sees what the extra money bought.
 
 Model IDs are pinned per entrant in `_REGISTRY`. The authors' own entrant (cited prior work) is
 one entrant among many; it must not be privileged and all findings must hold with it removed.
