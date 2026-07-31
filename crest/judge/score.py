@@ -451,8 +451,12 @@ def _judge_completion(family: str, model: str, prompt: str) -> tuple[str, dict]:
         return r.text or "", {
             "input": _tok(_u, "prompt_token_count"),
             "input_cached": _tok(_u, "cached_content_token_count"),
-            "output_total": _tok(_u, "candidates_token_count"),
-            # this arm's thinking cannot be disabled, so reasoning tokens are always billed here
+            # candidates_token_count EXCLUDES thinking on this provider (measured: candidates 1615 +
+            # thoughts 11156 == total 13619 - prompt 848), so output_total is the SUM to keep the
+            # field meaning "total billable output" across all three vendors. This arm matters most:
+            # its thinking cannot be disabled, so thoughts are never zero here.
+            "output_total": (_tok(_u, "candidates_token_count")
+                             + _tok(_u, "thoughts_token_count")),
             "output_reasoning": _tok(_u, "thoughts_token_count")}
     else:
         raise ValueError(f"unknown judge family {family}")

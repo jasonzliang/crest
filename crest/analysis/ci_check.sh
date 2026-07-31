@@ -143,14 +143,21 @@ for path in runs:
         print(f"  NOTE {name}: schema {ver or '?'} predates 1.2.0, so it carries NO billing fields. "
               f"Cost is NOT MEASURED for this run (which is not the same as zero).")
         continue
-    per = collections.defaultdict(lambda: {"n": 0, "in0": 0, "nocalls": 0})
+    per = collections.defaultdict(lambda: {"n": 0, "in0": 0, "nocalls": 0, "bad": 0})
     for r in recs:
         s = per[r.get("agent", "?")]
         s["n"] += 1
-        if not int(((r.get("tokens") or {}).get("input") or 0)):
+        tk = r.get("tokens") or {}
+        if not int(tk.get("input") or 0):
             s["in0"] += 1
         if not (r.get("calls") or []):
             s["nocalls"] += 1
+        # output_total must be TOTAL BILLABLE OUTPUT, i.e. reasoning-inclusive. Providers disagree
+        # natively -- OpenAI's output_tokens includes reasoning, Google's candidates_token_count
+        # excludes it -- and this shipped wrong once, recording Google output 7.9x low. Cheap
+        # invariant that catches the whole class.
+        if int(tk.get("output_reasoning") or 0) > int(tk.get("output_total") or 0):
+            s["bad"] += 1
     for agent, s in sorted(per.items()):
         if s["in0"] == s["n"]:
             print(f"  FAIL {name}: {agent} has tokens.input == 0 on ALL {s['n']} record(s) -- the "
@@ -160,6 +167,11 @@ for path in runs:
             print(f"  WARN {name}: {agent} has tokens.input == 0 on {s['in0']}/{s['n']} record(s)")
         if s["nocalls"] == s["n"]:
             print(f"  FAIL {name}: {agent} has an empty calls[] on ALL {s['n']} record(s)")
+            bad = 1
+        if s["bad"]:
+            print(f"  FAIL {name}: {agent} has output_reasoning > output_total on {s['bad']}/"
+                  f"{s['n']} record(s) -- output_total is not reasoning-inclusive for this "
+                  f"provider, so cost is under-counted. Recompute from usage_raw.")
             bad = 1
     if not bad:
         print(f"  OK {name}: billing fields populated for all {len(per)} entrant(s)")

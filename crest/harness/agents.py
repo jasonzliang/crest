@@ -329,8 +329,13 @@ def _parse_openai(r) -> AgentOutput:
                        tokens={
                            "input": _tok(u, "input_tokens"),
                            "input_cached": _tok(u, "input_tokens_details.cached_tokens"),
-                           "input_cache_write": 0,
+                           # present on this SDK and billed at a PREMIUM; a live record showed 4733
+                           # cache_write_tokens while this field was hardcoded to 0.
+                           "input_cache_write": _tok(u, "input_tokens_details.cache_write_tokens"),
                            "input_tool_use": 0,
+                           # INCLUSIVE of reasoning here: input 38577 + output 6506 == total 45083
+                           # on a live record, with reasoning 2691 inside the 6506. Do NOT add
+                           # reasoning on top for this provider -- that is Google's shape, not this.
                            "output_total": _tok(u, "output_tokens"),
                            # reported directly, so the invisible-reasoning share is measured here
                            # rather than inferred: this arm ran 80% invisible on the deep entrant.
@@ -342,6 +347,8 @@ def _parse_openai(r) -> AgentOutput:
                        billed_tools={"web_search_requests": n_search, "web_fetch_requests": 0},
                        calls=[{"i": 0, "input": _tok(u, "input_tokens"),
                                "input_cached": _tok(u, "input_tokens_details.cached_tokens"),
+                               "input_cache_write":
+                                   _tok(u, "input_tokens_details.cache_write_tokens"),
                                "output": _tok(u, "output_tokens"),
                                "reasoning": _tok(u, "output_tokens_details.reasoning_tokens"),
                                "searches": n_search,
@@ -452,7 +459,15 @@ class GeminiShallowResearch(Agent):
                            # tool use, i.e. the retrieved page content that dominates a research
                            # agent's input bill. Only this provider reports it separately.
                            "input_tool_use": _tok(u, "tool_use_prompt_token_count"),
-                           "output_total": _tok(u, "candidates_token_count"),
+                           # candidates_token_count EXCLUDES thinking on this provider -- the
+                           # opposite of OpenAI, whose output_tokens INCLUDES reasoning. Measured on
+                           # a live record: candidates 1615, thoughts 11156, total_token_count 13619
+                           # = prompt 848 + 1615 + 11156, so the two are additive. Recording
+                           # candidates alone under-counted billable output by 7.9x on that record.
+                           # output_total is normalized to mean TOTAL BILLABLE OUTPUT everywhere, so
+                           # a price table can multiply it without per-provider branching.
+                           "output_total": (_tok(u, "candidates_token_count")
+                                            + _tok(u, "thoughts_token_count")),
                            "output_reasoning": _tok(u, "thoughts_token_count"),
                        },
                        billed_tools={"web_search_requests": n_search, "web_fetch_requests": 0},
@@ -553,7 +568,15 @@ def _parse_gemini_interaction(it) -> AgentOutput:
                            "input_cached": _tok(u, "cached_content_token_count", "cached_tokens"),
                            "input_cache_write": 0,
                            "input_tool_use": _tok(u, "tool_use_prompt_token_count"),
-                           "output_total": n_tok,
+                           # Same additive shape as the shallow Google arm: thinking is NOT inside
+                           # the candidate/output count on this vendor. n_tok here comes from
+                           # total_output_tokens (deep surface) or candidates_token_count
+                           # (standard), and neither includes thoughts, so add them for a
+                           # total-billable-output figure. If a future SDK makes total_output_tokens
+                           # inclusive this double-counts -- which is why the guard below exists and
+                           # why usage_raw is kept verbatim.
+                           "output_total": n_tok + _tok(u, "thoughts_token_count",
+                                                        "total_thoughts_tokens"),
                            "output_reasoning": _tok(u, "thoughts_token_count",
                                                     "total_thoughts_tokens"),
                        },

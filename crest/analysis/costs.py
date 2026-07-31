@@ -97,9 +97,21 @@ def price_record(rec: dict, prices: dict) -> dict:
     # input_tool_use is retrieved-content injected by tool use. Only Google reports it separately;
     # where a provider folds it into `input` this is 0 and must not be added twice.
     add("input_tool_use", int(tok.get("input_tool_use") or 0), "input_usd_per_mtok", _MTOK)
-    # output_total already INCLUDES reasoning tokens on every provider checked, so reasoning is not
-    # billed again -- it is reported for the visible/invisible split, not as a separate line.
-    add("output", int(tok.get("output_total") or 0), "output_usd_per_mtok", _MTOK)
+    # output_total is NORMALIZED by the adapters to mean total billable output, which is not what
+    # every provider reports natively: OpenAI's output_tokens includes reasoning, Google's
+    # candidates_token_count excludes it and must have thoughts added. So reasoning is already
+    # inside output_total by construction and is NOT billed as a separate line here.
+    # Guard, because that normalization is exactly the kind of thing that silently regresses when a
+    # provider changes shape -- and it already shipped wrong once, undercounting Google output 7.9x:
+    out_total = int(tok.get("output_total") or 0)
+    reasoning = int(tok.get("output_reasoning") or 0)
+    if reasoning > out_total:
+        return {"usd": None, "basis": basis,
+                "reason": f"INCONSISTENT_TOKENS: output_reasoning ({reasoning:,}) exceeds "
+                          f"output_total ({out_total:,}), so output_total is not total billable "
+                          f"output for this record. The adapter normalization is wrong for this "
+                          f"provider -- recompute from usage_raw rather than pricing this."}
+    add("output", out_total, "output_usd_per_mtok", _MTOK)
 
     bt = rec.get("billed_tools") or {}
     add("web_search", int(bt.get("web_search_requests") or 0), "web_search_usd_per_1k", _K)

@@ -1,0 +1,48 @@
+# CREST evaluation config -- the SECOND item file (AI/ML), DEEP ARM ONLY.
+# Run:  python crest/run_eval.py --config crest/config/eval_config.aiml.yaml
+#
+# Separate file rather than editing eval_config.yaml, because that file defines the SHIPPED
+# science-set protocol whose numbers are cited in both papers. Pointing it at a different item set
+# would make the cited run's config snapshot ambiguous.
+#
+# READ BEFORE RUNNING. Three things about this item set that the science set does not share:
+#   1. It has had NO audit of any kind -- no design sidecar (0 of its 50 ids appear in
+#      item_design.jsonl), no citation audit, no live-web audit. The AUDITED science set turned out
+#      to contain C4_engineering_45, whose novelty gate was inverted so that an agent following the
+#      item's own hint reproduced published prior art and scored as NOVEL. Nothing has looked for
+#      that class of defect here.
+#   2. No paper claims it, and readme.md says it is "not run or scored". Scoring it does not make it
+#      a released artifact.
+#   3. These items have never been generated against, so the generation cache serves ZERO of them.
+#      Every task is paid in full.
+benchmarks:
+  - name: crest_aiml
+    challenges: crest/questions/crest_aiml_challenges.jsonl
+    per_category: null
+    limit: null
+    categories: null
+    subset_label: null
+
+# ALL FIVE entrants, matching the science run's shape so the two are comparable in structure.
+agents:
+  # -- shallow arm (chat + native web search, one turn, cents/task) --
+  - claude_shallow            # claude-sonnet-5             + web_search (max_uses=budget)
+  - openai_shallow            # gpt-5.6                     + Responses web_search
+  - gemini_shallow            # gemini-3.1-pro-preview      + google_search grounding
+  # -- deep arm (managed multi-step research loop, $$/task) --
+  - openai_deepresearch       # gpt-5.6-sol, effort=high, max_tool_calls=40   ~$9/task  (UNVERIFIED)
+  - gemini_deepresearch_max   # deep-research-max-preview-04-2026             ~$6/task  (UNVERIFIED)
+# Anthropic ships no turnkey deep-research API, so the deep arm has no Anthropic entrant. That is an
+# asymmetry to disclose, not a null result for Claude.
+
+judge_config: crest/judge/judge_config.live.yaml
+budget: 6
+# Lower than the science run's 8, deliberately. The Anthropic spend-rate cap is what silently
+# degraded panels to a single judge on a previous run at concurrency 16, and with the full panel
+# judge_anthropic fires on 4 of 5 entrants. 4 keeps the judge side well under that cap; the deep arm
+# is minutes-per-task anyway, so concurrency is not the bottleneck for it.
+concurrency: 4
+use_cache: true              # will serve 0 of these items; kept true so a RESUMED run reuses what
+                             # this run already paid for rather than re-paying it.
+trust_legacy_cache: false
+out_root: crest/result
