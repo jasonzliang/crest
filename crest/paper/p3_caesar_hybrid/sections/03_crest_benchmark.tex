@@ -40,7 +40,7 @@ datasheet.
 
 \paragraph{Two-sided prompt design.} The prompt shown to an agent is deliberately \emph{short and
 open}---median $\sim$110 words---posing the task and little else. All axis-isolation and
-anti-contamination machinery (rubric anchors, the known-answers and expert baselines, canary
+anti-contamination machinery (rubric anchors, the known-answers and expert baselines, the planned-but-absent canary
 strings, pre/post-cutoff labels) lives \emph{judge-side} and is never shown to the agent. This
 preserves creative headroom, avoids over-steering the agent toward a target answer, and still keeps
 grading reproducible because every scoring input is fixed and versioned.
@@ -58,7 +58,7 @@ reliable (\S\ref{sec:experiments}).
 \emph{provider-native web search}; the permanently reproducible core is an open-weight entrant run
 against \emph{one shared, dated, hashed retrieval index}. Because \emph{New} is judged against
 per-item \emph{dated known-answers}, fresher retrieval cannot by itself inflate novelty. We ship the
-index as URLs $+$ timestamps $+$ SHA-256 hashes (a signed manifest), embed \emph{canary strings},
-label every item \emph{pre/post training-cutoff}, and maintain a \emph{rolling set} of brand-new
-questions to detect training-data contamination. Every agent receives a matched tool and compute
+index as URLs $+$ timestamps $+$ SHA-256 hashes (a signed manifest) and label every item
+\emph{pre/post training-cutoff}. Contamination canaries and a rolling refresh set are \textbf{not
+implemented}: zero of the 50 items embed a canary string. Every agent receives a matched tool and compute
 budget.
