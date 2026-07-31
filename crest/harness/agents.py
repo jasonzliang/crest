@@ -105,6 +105,17 @@ class Agent:
         raise NotImplementedError
 
 
+# Output-token ceiling for the Anthropic entrant. Raised 9000 -> 32000 because 11 of 49 answers in
+# the 2026-07-31 run came back COMPLETELY EMPTY (0 chars) with searches having fired: server-side
+# web_search results plus reasoning consumed the whole budget before the model emitted a single text
+# block, so the response contained tool-use blocks and no prose. Exactly the failure that a
+# max_tokens=2000 ceiling caused on the judge side, where thinking ate the budget and returned
+# stop_reason=max_tokens with no text. Cost is unaffected for normal answers (billing is on tokens
+# actually produced; the median answer is ~3.4k chars); this only removes a ceiling that was
+# truncating to nothing.
+_ANTHROPIC_MAX_TOKENS = 32000
+
+
 # ---------------- Anthropic ----------------
 class ClaudeShallowResearch(Agent):
     """Claude + server-side web_search tool in one turn -- the SHALLOW arm, not deep research."""
@@ -120,11 +131,11 @@ class ClaudeShallowResearch(Agent):
         # n_searches averaged 5.3: the model was mid-work and we recorded the fragment as its final
         # answer, then scored it (N/U/S = 1/1/1) and read the result as low creativity.
         msgs = [{"role": "user", "content": query}]
-        blocks, guard = [], 0
+        blocks, guard, turns_used = [], 0, 1
         while True:
             r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
                 .messages.create(
-                    model=self.model, max_tokens=9000, system=_RESEARCH_SYSTEM,
+                    model=self.model, max_tokens=_ANTHROPIC_MAX_TOKENS, system=_RESEARCH_SYSTEM,
                     tools=[{"type": "web_search_20250305", "name": "web_search",
                             "max_uses": self.budget}],
                     messages=msgs,
@@ -133,6 +144,7 @@ class ClaudeShallowResearch(Agent):
             if getattr(r, "stop_reason", None) != "pause_turn":
                 break
             guard += 1
+            turns_used = guard + 1
             if guard >= 8:                      # bounded: never loop forever on a stuck turn
                 print(f"  [WARNING: {self.model} still pause_turn after {guard} continuations; "
                       f"returning what it produced so far]")
@@ -149,6 +161,12 @@ class ClaudeShallowResearch(Agent):
             elif b.type == "server_tool_use":
                 n_search += 1
         full = "".join(text)
+        if not full.strip():
+            # never return a silent empty answer: it reads downstream as "the agent had nothing to
+            # say" when it actually means the call produced no text block at all.
+            print(f"  [WARNING: {self.model} returned NO TEXT after {turns_used} turn(s), "
+                  f"{n_search} search(es), stop_reason={getattr(r, 'stop_reason', '?')} -- "
+                  f"raise _ANTHROPIC_MAX_TOKENS or inspect the response]")
         return AgentOutput(full, _merge_inline_urls(_dedup(cites), full),
                            n_tokens=r.usage.output_tokens, n_searches=n_search)
 

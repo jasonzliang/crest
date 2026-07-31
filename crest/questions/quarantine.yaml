@@ -9,7 +9,10 @@
 # Each entry states the defect, why scores would be uninterpretable, and what resolves it. Removing an
 # entry re-admits the item, so the schema must pass for it first.
 
-quarantined:
+quarantined: {}
+
+# RESOLVED 2026-07-31 -- released from quarantine, retained here as the record.
+resolved:
 
   C2_biology_medicine_34:
     reason: >
@@ -28,7 +31,13 @@ quarantined:
       intended surprises. Deliberately not auto-generated: authoring the baseline that then serves as
       the scoring reference is the author-bias problem currently under review.
     flagged: "2026-07-30"
-    blocks_release: true
+    blocks_release: false
+    resolved: >
+      A convergent-expectation baseline was drafted 2026-07-31 (1,478 chars, passes minLength) stating
+      only the first-order packaging/oxygen-budget account and enumerating NO surprises. It is
+      explicitly marked in-field as model-drafted and NOT expert-written, and still needs a
+      physiologist's review -- the author-bias objection is reduced (the drafter is not the entrant
+      author and had no access to agent answers when writing it) but not eliminated.
 
 # Watch-list — NOT quarantined (they pass schema) but same defect class, thinner than they look.
 # Recorded so a reviewer sees they were considered rather than missed.

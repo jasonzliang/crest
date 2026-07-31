@@ -21,6 +21,10 @@ from concurrent.futures import ThreadPoolExecutor
 @dataclasses.dataclass
 class GroundingResult:
     passed: bool
+    empty_answer: bool = False      # distinguishes "the agent produced nothing" (an ADAPTER problem)
+                                    # from "the agent fabricated" (a GROUNDING problem). Conflating
+                                    # them mislabelled a 22% Anthropic adapter failure as Claude
+                                    # being ungrounded.
     citation_density: float = 0.0   # citations per ~600 chars (a proxy, NOT FACT precision); see docstring
     n_citations: int = 0            # count of source URLs found (structured + inline)
 
@@ -79,7 +83,15 @@ def grounding_gate(report, challenge: dict) -> GroundingResult:
     Honest-proxy limits: this counts citation-worthy *cues*, not atomic facts, and does not
     verify that a citation actually supports a given claim. The PRODUCTION version swaps this
     for a per-claim FACT verifier (decompose -> verify each against its cited source).
-    Fail => the answer scores 0 creativity."""
+
+    MEASURED CONTRIBUTION (2026-07-31, 245 records): the anti-fabrication clause fired ZERO times.
+    234 answers passed; all 11 rejections were EMPTY strings, not unsourced prose. Of 10 substantive
+    zero-citation answers, none exceeded the uncited-claim tolerance. Every entrant except
+    claude_shallow had no uncited records at all (median citations 6-52). So on THIS field of
+    entrants -- all using provider-native web search -- the gate contributes nothing beyond an
+    empty-answer check, and the paper must not claim it as a working control. It is retained as a
+    cheap guard that would fire against an untooled or confabulating entrant, and because removing
+    a safety property because it has not yet triggered is a bad trade."""
     cites = getattr(report, "citations", []) or []
     n = len(cites)
     text = getattr(report, "text", "") or ""
@@ -90,7 +102,8 @@ def grounding_gate(report, challenge: dict) -> GroundingResult:
     grounded = n >= 1                                   # >=1 real source URL backs the scaffolding
     pure_invention = n_factual <= _MAX_UNCITED_CLAIMS   # few external facts to cite
     passed = substantive and (grounded or pure_invention)
-    return GroundingResult(passed=passed, citation_density=round(density, 3), n_citations=n)
+    return GroundingResult(passed=passed, citation_density=round(density, 3), n_citations=n,
+                           empty_answer=not substantive)
 
 
 # ---------------- judge panel ----------------

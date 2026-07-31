@@ -170,7 +170,9 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
     scores = panel.score(dataclasses.asdict(ch), report,
                          exclude_family=agent.model_family) if gate.passed else None
     if scores is None:
-        status = "grounding_fail" if not gate.passed else "judge_error"
+        # empty_answer is an ADAPTER failure, not a grounding failure -- keep them distinguishable
+        status = ("empty_answer" if getattr(gate, "empty_answer", False)
+                  else "grounding_fail") if not gate.passed else "judge_error"
     elif scores.n_judges < getattr(panel, "min_judges", 2):
         status = "judge_degraded"      # scored, but by too few judges to be a real LOFO panel
     else:
@@ -188,7 +190,7 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         "generation_cached": cached,           # True => generation reused, not re-paid for
         "cache_source_run": getattr(report, "source_run", None) if cached else None,
         "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
-        "scoring_status": status,          # scored | judge_degraded | grounding_fail | judge_error
+        "scoring_status": status,   # scored | judge_degraded | empty_answer | grounding_fail | judge_error
         "grounding": dataclasses.asdict(gate),
         "creativity": None if scores is None else {           # null on BOTH fail paths (never a fake 0)
             "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,

@@ -75,6 +75,10 @@ def main():
     ap.add_argument("--config", default=str(REPO / "crest/config/eval_config.yaml"))
     ap.add_argument("--dry-run", action="store_true", help="resolve config/agents/challenges + preflight; no model calls")
     ap.add_argument("--yes", action="store_true", help="confirm a large or deep-research-API (costly) run")
+    ap.add_argument("--override-cache-agents", nargs="+", default=None, metavar="AGENT",
+                    help="re-generate ONLY these agents, serving every other agent from cache. Use "
+                         "when one adapter is fixed: --override-cache is all-or-nothing and would "
+                         "re-pay for every entrant (~$450) to refresh one.")
     ap.add_argument("--override-cache", action="store_true",
                     help="ignore cached generations from prior runs and re-generate them (RE-PAYS "
                          "for every agent call; use when you want fresh answers, not fresh scores)")
@@ -88,6 +92,13 @@ def main():
     # (challenge text, agent, model) across ALL runs. --override-cache / use_cache:false overrides.
     use_cache = cfg.get("use_cache", True) and not args.override_cache
     cache = GenerationCache(out_root, enabled=use_cache)
+    if args.override_cache_agents:
+        _stale = set(args.override_cache_agents)
+        _get = cache.get
+        # wrap rather than subclass: a cache MISS for these agents forces fresh generation while
+        # every other entrant is still served for free
+        cache.get = lambda cid, agent, model, qsha: None if agent in _stale else _get(cid, agent, model, qsha)
+        print(f"cache: forcing re-generation for {sorted(_stale)} (all other agents served from cache)")
     agents = {k: build_agent(k, budget=budget) for k in cfg["agents"]}
     print(f"config: {args.config}")
     print(f"agents: {[(k, a.model) for k, a in agents.items()]}")
