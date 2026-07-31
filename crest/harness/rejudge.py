@@ -72,6 +72,28 @@ def _atomic_write_jsonl(path: Path, rows: list) -> None:
         raise
 
 
+def _utc_now_iso() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _readme_bytes(run_dir: Path, manifest: dict, writer) -> bytes:
+    """Render the run README without writing it, so it can join the all-or-nothing commit.
+
+    _write_run_readme writes directly, which is fine for finalize_run but not here: a repair must not
+    leave README.md updated and records.jsonl not, or vice versa."""
+    readme = run_dir / "README.md"
+    saved = readme.read_bytes() if readme.exists() else None
+    try:
+        writer(run_dir, manifest)
+        return readme.read_bytes()
+    finally:
+        if saved is not None:
+            readme.write_bytes(saved)
+        elif readme.exists():
+            readme.unlink()
+
+
 def _decide(before: int, before_ver, now: int, allow_downgrade: bool) -> tuple[str, str]:
     """One place, three outcomes: keep | upgrade | downgrade, with the reason.
 
@@ -198,45 +220,67 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
         print("\nno records changed; leaving the run untouched")
         return {"n_targets": len(targets), "n_upgraded": 0, "n_downgraded": 0,
                 "n_unchanged": unchanged, "n_missing": len(missing)}
-    # Back up before an in-place overwrite. The write is atomic, so it cannot truncate -- but atomic
-    # replacement of good data with bad data is still data loss, and this tool is invoked with --force
-    # on runs whose numbers ship.
-    bak = run_dir / "records.jsonl.bak"
-    if not bak.exists():
-        bak.write_bytes((run_dir / "records.jsonl").read_bytes())
-        print(f"  backup: {bak.name}")
-    _atomic_write_jsonl(run_dir / "records.jsonl", records)
-    # keep the derived artifacts consistent: a repair that leaves summary.json reporting the OLD
-    # means and the manifest the OLD n_judge_degraded is worse than no repair
-    from crest.harness.results import compute_summary, manifest_totals
-    (run_dir / "summary.json").write_text(json.dumps(compute_summary(records), indent=2,
-                                                     ensure_ascii=False))
+    # ---- COMMIT PHASE: compute everything, back up everything, then write everything.
+    #
+    # Four bugs in this function came from partial mutation, so it is now transactional in the only
+    # sense that matters here: nothing is written until every artifact has been computed, and every
+    # file about to be overwritten is backed up first.
+    #   * only records.jsonl was backed up; summary.json, run_manifest.json and README.md were
+    #     overwritten unbacked, destroying the shipped manifest's totals and judge_prompt_version;
+    #   * records.jsonl was written BEFORE compute_summary ran, so an exception there (a record
+    #     missing `category` is enough) left the canonical file repaired and the derived files stale
+    #     -- the state this function's own comment calls "worse than no repair";
+    #   * `if not bak.exists()` kept the generation-0 backup on a second repair, so restoring it
+    #     silently reverted repair #1 while printing no backup line at all.
+    from crest.harness.results import compute_summary, manifest_totals, _write_run_readme
+
+    pending: dict[Path, bytes] = {}
+    pending[run_dir / "records.jsonl"] = (
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records).encode())
+    pending[run_dir / "summary.json"] = json.dumps(
+        compute_summary(records), indent=2, ensure_ascii=False).encode()
+
     mf = run_dir / "run_manifest.json"
     if mf.exists():
         m = json.loads(mf.read_text())
-        # REPLACE, don't merge. manifest_totals now derives its keys from the statuses present in
-        # the data, so a status that vanishes after a repair stops emitting a key -- and .update()
-        # then leaves the stale count in place. Measured: repairing all degraded+error rows left
-        # n_judge_degraded 3 and n_judge_error 2 beside n_scored 12 of n_records 12, parts summing
-        # to 17 of 12. n_task_errors is carried over because it is counted from errors.jsonl by
-        # finalize_run, not derivable from the records.
-        prev = m.get("totals", {})
+        # REPLACE, don't merge. manifest_totals derives its keys from the statuses PRESENT in the
+        # data, so a status that vanishes after a repair stops emitting a key and .update() would
+        # leave the stale count in place. Measured: repairing all degraded+error rows left
+        # n_judge_degraded 3 and n_judge_error 2 beside n_scored 12 of n_records 12 -- parts summing
+        # to 17 of 12. n_task_errors is carried over because finalize_run counts it from
+        # errors.jsonl and it is not derivable from the records.
         m["totals"] = {**manifest_totals(records),
-                       "n_task_errors": prev.get("n_task_errors", 0)}
-        # DERIVE it. Stamping the current version run-wide asserted v2 for a file that could hold
-        # {v1: 7, v2: 5} -- moving the unlabelled mixture up a level instead of removing it.
+                       "n_task_errors": m.get("totals", {}).get("n_task_errors", 0)}
+        # DERIVE the version. Stamping the current one run-wide asserted v2 for a file that could
+        # hold {v1: 7, v2: 5}, moving the unlabelled mixture up a level instead of removing it.
         vers = sorted({(r.get("creativity") or {}).get("judge_prompt_version")
                        for r in records if r.get("creativity")}, key=lambda x: (x is None, x))
         m["judge_prompt_version"] = vers[0] if len(vers) == 1 else vers
-        m["repaired_at"] = __import__("datetime").datetime.now(
-            __import__("datetime").timezone.utc).isoformat()
-        mf.write_text(json.dumps(m, indent=2, ensure_ascii=False))
-        # README.md is the THIRD derived artifact and was the one left stale: it embeds the record
-        # count and a literal `Totals:` line, and it is the file a human opens first. Leaving it
-        # describing the pre-repair run is exactly what the comment above calls "worse than no
-        # repair".
-        from crest.harness.results import _write_run_readme
-        _write_run_readme(run_dir, m)
+        if len(vers) > 1:
+            print(f"\n  WARNING: this run now holds MORE THAN ONE judge prompt version {vers}. "
+                  f"score.py states versions must not be mixed; the mixture tracks which vendor was "
+                  f"capped, hence entrant family, so it is not random. Re-judge the whole run under "
+                  f"one version before quoting any number from it.")
+        m["repaired_at"] = _utc_now_iso()
+        m["repair_counts"] = {"upgraded": upgraded, "downgraded": downgraded,
+                              "unchanged": unchanged, "un_repairable": len(missing)}
+        pending[mf] = json.dumps(m, indent=2, ensure_ascii=False).encode()
+        pending[run_dir / "README.md"] = _readme_bytes(run_dir, m, _write_run_readme)
+
+    # Back up EVERY file we are about to replace, into one timestamped directory so repeated repairs
+    # do not overwrite each other's backups and each can be undone individually.
+    bak_dir = run_dir / f"pre_repair_{_utc_now_iso().replace(':', '').replace('-', '')[:15]}"
+    bak_dir.mkdir(exist_ok=True)
+    for path in pending:
+        if path.exists():
+            (bak_dir / path.name).write_bytes(path.read_bytes())
+    print(f"  backup: {bak_dir.name}/ ({sum(1 for p in pending if p.exists())} file(s))")
+
+    _atomic_write_jsonl(run_dir / "records.jsonl", records)
+    for path, blob in pending.items():
+        if path.name != "records.jsonl":
+            path.write_bytes(blob)
+
     print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {downgraded} DOWNGRADED, "
           f"{unchanged} unchanged, {len(missing)} un-repairable")
     print("status now: " + str(dict(collections.Counter(r.get("scoring_status") for r in records))))
