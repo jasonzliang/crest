@@ -1,0 +1,18 @@
+# CREST dependencies. The repo-root requirements.txt covers Rome; crest previously shipped no
+# manifest of its own, and two of these are LOAD-BEARING FOR CORRECTNESS rather than convenience:
+# without jsonschema the item schema is not enforced, and without pyyaml the quarantine list is not
+# read. Both used to degrade to a stdout warning, so a fresh checkout could run the benchmark with
+# neither control active and still print "OK 50 items load and validate". They now raise.
+jsonschema>=4.0        # enforces questions/schema.json (REQUIRED -- see harness/run_crest.py)
+pyyaml>=6.0            # reads judge_config.live.yaml, quarantine.yaml, preregistration.yaml
+
+# entrant + judge SDKs
+anthropic
+openai
+google-genai
+
+# analysis
+numpy
+pandas
+scipy
+statsmodels           # MixedLM for the crossed random-effects models

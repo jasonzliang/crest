@@ -186,13 +186,59 @@ def icc_oneway(units: list[list[float]]) -> dict:
         raise InsufficientData("no within-unit variance available for ICC")
     ms_b, ms_w = ss_b / df_b, ss_w / df_w
     icc1 = (ms_b - ms_w) / (ms_b + (k_bar - 1) * ms_w) if (ms_b + (k_bar - 1) * ms_w) else float("nan")
+    # Report the RAW value alongside the clamped one. Clamping to [0,1] while printing alpha raw made
+    # two numbers on the same line look like independent corroboration -- but for interval data
+    # ICC(1,1) and Krippendorff's alpha are the same statistic, and unclamped they agree to 3dp. A
+    # reader seeing "ICC(1,1)=0.0  alpha=-0.042" reasonably concludes two controls agree; they are
+    # one control printed twice, once with the negative sign hidden.
+    icc1_raw = icc1
     icc1 = max(0.0, min(1.0, icc1))
     icck = (k_bar * icc1) / (1 + (k_bar - 1) * icc1) if icc1 > 0 else 0.0
     need = float("inf")
     if 0 < icc1 < 1:
         need = 0.80 * (1 - icc1) / (icc1 * (1 - 0.80))
-    return {"icc_1_1": round(icc1, 3), "icc_1_k": round(icck, 3), "k_bar": round(k_bar, 2),
-            "n_units": n, "judges_needed_for_0.80": (None if need == float("inf") else round(need, 1))}
+    out = {"icc_1_1": round(icc1, 3), "icc_1_1_raw": round(icc1_raw, 3),
+           "icc_1_k": round(icck, 3), "k_bar": round(k_bar, 2),
+           "n_units": n, "judges_needed_for_0.80": (None if need == float("inf") else round(need, 1))}
+    out.update(_icc_twoway(units))
+    return out
+
+
+def _icc_twoway(units: list[list[float]]) -> dict:
+    """ICC(3,1) / ICC(3,k): two-way MIXED model, judge main effect removed (Shrout & Fleiss 1979).
+
+    Why this is reported next to the one-way figures rather than instead of them. ICC(1,*) treats
+    raters as interchangeable and pushes any systematic rater severity into the error term. This
+    panel's severity spread is 3.2-3.8 points on a 1-10 scale, which is enormous, so the one-way
+    numbers collapse to ~0 and read as "the judges agree on nothing". That is the correct answer to
+    "can I trust ONE randomly-chosen judge in absolute terms?" -- and the wrong answer to "do the
+    judges RANK answers the same way?", which is what a leaderboard actually rests on. Both belong
+    in the report; quoting either alone misleads in a different direction.
+
+    Requires balanced data (every unit rated by the same k). Skipped otherwise rather than
+    approximated -- the shipped run is full-panel, so k = 3 exactly."""
+    ks = {len(u) for u in units}
+    if len(ks) != 1:
+        return {"icc_3_note": f"skipped: unbalanced panel (ratings per unit: {sorted(ks)})"}
+    k = ks.pop()
+    if k < 2 or len(units) < 3:
+        return {}
+    a = np.asarray(units, dtype=float)                       # n units x k raters
+    n = a.shape[0]
+    grand = a.mean()
+    ss_rows = k * ((a.mean(axis=1) - grand) ** 2).sum()      # between targets
+    ss_cols = n * ((a.mean(axis=0) - grand) ** 2).sum()      # between judges (the severity effect)
+    ss_err = ((a - a.mean(axis=1, keepdims=True) - a.mean(axis=0, keepdims=True) + grand) ** 2).sum()
+    df_r, df_e = n - 1, (n - 1) * (k - 1)
+    if df_e <= 0:
+        return {}
+    ms_r, ms_e = ss_rows / df_r, ss_err / df_e
+    if ms_r <= 0:
+        return {}
+    icc31 = (ms_r - ms_e) / (ms_r + (k - 1) * ms_e) if (ms_r + (k - 1) * ms_e) else float("nan")
+    icc3k = (ms_r - ms_e) / ms_r
+    return {"icc_3_1": round(float(icc31), 3), "icc_3_k": round(float(icc3k), 3),
+            "judge_effect_ss_share": round(float(ss_cols / (ss_rows + ss_cols + ss_err)), 3)}
 
 
 def krippendorff_alpha_interval(units: list[list[float]]) -> float:
@@ -476,6 +522,12 @@ def hurdle_model(df, axis: str):
     else:
         passed = _composite(df) > 0
     y_axis = pd.to_numeric(df.get(col, pd.Series(np.nan, index=df.index)), errors="coerce")
+    # Same scoring_status mask _prep applies. The conditional arm builds its own frame rather than
+    # going through _prep, so it counted judge_degraded rows the rest of the module excludes
+    # (n_obs 250 where the masked count is 210). The GATE arm deliberately keeps every row -- it
+    # models whether a record passed at all, so unscored rows are the outcome, not noise.
+    if "scoring_status" in df.columns:
+        y_axis = y_axis.where(df["scoring_status"].astype(str) == "scored")
 
     gate_df = pd.DataFrame(
         {
@@ -632,8 +684,15 @@ def main():
     _bounds = tuple((prereg.get("analysis_plan", {}) or {})
                     .get("tost_equivalence_bounds", (-1.0, 1.0)))
 
-    records_path = resolve_records_path(args.run)   # resolve ONCE; every consumer gets the file
-    df = load_run(records_path)
+    # resolve ONCE; every consumer gets the file. Caught here because resolve_records_path is a NEW
+    # raise site and InsufficientData's contract is that main() prints and continues -- an uncaught
+    # traceback for "you pointed me at the wrong directory" contradicts it.
+    try:
+        records_path = resolve_records_path(args.run)
+        df = load_run(records_path)
+    except (InsufficientData, FileNotFoundError, OSError) as e:
+        print(f"cannot read run: {type(e).__name__}: {e}")
+        raise SystemExit(1)
     agents = sorted(df["agent"].dropna().astype(str).unique())
     cats = sorted(df["category"].dropna().astype(str).unique())
     print(f"loaded {len(df)} records; agents={agents}; categories={cats}")
@@ -673,10 +732,15 @@ def main():
         # severity spread is the headline methodological finding.
         rep = reliability_report(records_path)
         for ax, v in rep.items():
-            print(f"  {ax:<12} ICC(1,1)={v.get('icc_1_1','-')}  ICC(1,k)={v.get('icc_1_k','-')}  "
+            print(f"  {ax:<12} ICC(1,1)={v.get('icc_1_1','-')} (raw {v.get('icc_1_1_raw','-')})  "
+                  f"ICC(1,k)={v.get('icc_1_k','-')}  "
                   f"alpha={v.get('krippendorff_alpha_interval','-')}  "
                   f"severity_spread={v.get('severity_spread','-')}  "
                   f"judges_for_0.80={v.get('judges_needed_for_0.80','-')}")
+            print(f"               two-way (judge effect removed): ICC(3,1)={v.get('icc_3_1','-')}  "
+                  f"ICC(3,k)={v.get('icc_3_k','-')}  "
+                  f"judge share of variance={v.get('judge_effect_ss_share','-')}"
+                  f"{'  ' + v['icc_3_note'] if v.get('icc_3_note') else ''}")
             print(f"               per-judge mean: {v.get('per_judge_mean', {})}")
             # surface the reason rather than printing a row of dashes: an all-'-' line reads as
             # "not enough data" when it actually means a computation raised
@@ -694,10 +758,16 @@ def main():
         for ax in AXES:
             col = f"creativity.{ax}"
             if col in df.columns:
-                res = _run(f"bootstrap[{ax}]", lambda c=col: bootstrap_ci(df[c].to_numpy()))
-                if res is not None:
-                    n_ax = int(np.sum(~np.isnan(pd.to_numeric(df[col], errors='coerce'))))
-                    print(f"  {ax}: {_fmt_ci(*res)} (n={n_ax})")
+                # Through _prep, NOT raw df: these CIs sat directly beneath a correctly-masked
+                # composite CI while silently including judge_degraded rows, contradicting the
+                # "scored items: N/M" line printed 45 lines above. Measured on a fixture with 40 of
+                # 250 rows degraded, the printed New mean moved -1.14 (6.964 at n=250 vs 8.100 at
+                # n=210). Same predicate, same file, missed in the round that added the mask.
+                sub = _run(f"bootstrap[{ax}]", lambda a=ax: _prep(df, axis=a))
+                if sub is not None and len(sub):
+                    res = _run(f"bootstrap[{ax}]", lambda s=sub: bootstrap_ci(s["y"].to_numpy()))
+                    if res is not None:
+                        print(f"  {ax}: {_fmt_ci(*res)} (n={len(sub)})")
     else:
         print("  insufficient data for bootstrap_ci: no scored items")
 

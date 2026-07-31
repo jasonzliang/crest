@@ -16,8 +16,11 @@ a judge consulting the baseline would CONFIRM the error rather than catch it.
      global parts-pairing penalty. Novelty is awarded for reproducing published prior art.
 
 WHAT THIS CAN AND CANNOT DO. Full "does the baseline satisfy every rule" is a semantic judgement and
-is NOT mechanically decidable. This checks three DECIDABLE classes that together cover cases 1, 2
-and 4, and flags case 3's family only where a rule states a numeric/token fact. The semantic residue
+is NOT mechanically decidable. This checks three DECIDABLE classes. They cover cases 1 and 2. They
+do NOT cover case 4 (C4_engineering_45): the class-3 phrase match requires the offered mechanism to
+be substantially the listed one, and on the live corpus that threshold rejects every candidate
+phrase, so class 3 has zero measured coverage and case 4 is tracked by hand in
+questions/quarantine.yaml. Case 3's family is flagged only where a rule states a numeric/token fact. The semantic residue
 needs an LLM pass (`--llm` is deliberately left unimplemented rather than faked) or human review.
 Treat a clean run as "no mechanical contradiction found", never as "the item is consistent".
 
@@ -33,7 +36,11 @@ REPO = Path(__file__).resolve().parents[2]
 
 # quantity symbol -> how it may be written in prose
 _RANGE_RE = re.compile(r"\b(mu|tau|t|SEA|Isp|band ?gap|gap)\b[^.\[\]]{0,60}?\[\s*([0-9.]+)\s*,\s*([0-9.]+)\s*\]", re.I)
-_BAN_RE = re.compile(r"(?:deliberately\s+)?bans?|banned|excluded|disqualif\w+|must NOT|may not", re.I)
+# \b on every alternative: without it `bans?` matched inside "band gap", "bank", "DrugBank" and
+# "urban" -- 12 of 79 ban-matches in the live corpus (15%), each opening a bogus 240-char ban clause.
+# No live false positive only because exactly one item has a non-empty permitted set.
+_BAN_RE = re.compile(r"(?:\bdeliberately\s+)?\bbans?\b|\bbanned\b|\bexcluded\b|\bdisqualif\w+"
+                     r"|\bmust NOT\b|\bmay not\b", re.I)
 _PERMIT_RE = re.compile(r"may be|is allowed|are allowed|permitted|X may be", re.I)
 # element-ish / short capitalised tokens worth colliding on
 _TOK_RE = re.compile(r"\b(?:[A-Z][a-z]?)\b")
@@ -120,9 +127,17 @@ def check_item(it: dict) -> list[dict]:
             for phrase in re.findall(r"[a-z]+(?:[- ][a-z]+){1,3}", offer.lower()):
                 if len(phrase) < 12:
                     continue
-                # The offered mechanism must be SUBSTANTIALLY the listed one, not a component of it.
-                # "a supply-criticality-weighted atom economy" contains "atom economy" but the novel
-                # part is the weighting; matching the sub-phrase flagged a false contradiction.
+                # The offered mechanism must be SUBSTANTIALLY the listed one, not a component of
+                # it: "a supply-criticality-weighted atom economy" contains "atom economy" but the
+                # novel part is the weighting, and matching the sub-phrase flagged a false
+                # contradiction. MEASURED COVERAGE OF THIS CLASS ON THE LIVE CORPUS: ZERO. There are
+                # 4 _NEW_OFFER_RE hits with offer_words 13-21, so the cap sits at 0.19-0.31 and 0 of
+                # 15 candidate phrases survive it. The cap was added to kill one false positive and
+                # killed the whole class with it -- including C4_engineering_45, the case this
+                # module's docstring cites as motivating the check. Kept rather than deleted because
+                # it costs nothing and would fire on a short offered phrase, but it must NOT be
+                # counted as coverage: C4_engineering_45 is tracked in questions/quarantine.yaml's
+                # watch_list, by hand, because this cannot see it.
                 if len(phrase.split()) / max(1, offer_words) < 0.6:
                     continue
                 if phrase in ka.lower():

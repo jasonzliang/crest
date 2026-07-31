@@ -55,6 +55,8 @@ for the mixed-effects model and the leave-one-family-out subset is recoverable p
 Reliability (Krippendorff α / ICC) and inferential stats live in `crest/analysis/stats.py`, not in
 `summary.json`.
 
-> **Known defect:** `run_manifest.json` hardcodes `"judge_protocol": "leave-one-family-out; blind;
-> median aggregation"` in `harness/run_crest.py::make_manifest`, even on full-panel runs. Trust the
-> per-record `creativity.judge_protocol`, not the manifest, until that is fixed.
+> **Fixed.** `make_manifest` used to hardcode `"judge_protocol": "leave-one-family-out; blind;
+> median aggregation"` even on full-panel runs. It now reads `panel.protocol`, so the manifest and
+> the per-record `creativity.judge_protocol` agree; the shipped run records
+> `"full-panel (same-family as covariate); blind; median aggregation"` and carries a
+> `judge_protocol_note` recording the correction.

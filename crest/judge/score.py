@@ -247,7 +247,6 @@ def _parse_json(s: str) -> dict:
     # missing "new" key surfaced four attempts and 28s of backoff later as a dropped judge. Both
     # fire on VERBOSE replies, so the panel thinned non-randomly -- the same bias shape as the
     # max_tokens bug this module already documents.
-    best = None
     for start in (i for i, c in enumerate(t) if c == "{"):
         depth, in_str, esc = 0, False, False
         for i in range(start, len(t)):
@@ -270,14 +269,13 @@ def _parse_json(s: str) -> dict:
                         obj = json.loads(t[start:i + 1])
                     except Exception:
                         break
-                    if isinstance(obj, dict):
-                        if all(k in obj for k in ("new", "useful", "surprising")):
-                            return obj
-                        if best is None:
-                            best = obj      # fall back only if nothing better turns up
+                    if isinstance(obj, dict) and all(k in obj for k in ("new", "useful", "surprising")):
+                        return obj
                     break
-    if best is not None:
-        return best
+    # No "best effort" fallback. Returning the first dict that merely PARSED was dead as a feature:
+    # _call_judge immediately does float(d["new"]), so an axis-less dict raised a bare KeyError one
+    # frame later -- the exact path this scan was written to remove, with a worse error message and
+    # the same four retries. Failing here names the actual problem.
     raise ValueError("no JSON object with new/useful/surprising found in judge response")
 
 
@@ -333,7 +331,12 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
             time.sleep(4.0 * (2 ** (attempt - 1)))   # 4s, 8s, 16s: ride out a provider spend-rate cap
         try:
             d = _parse_json(_judge_completion(family, model, prompt))
-            v = {ax: float(d[ax]) for ax in ("new", "useful", "surprising")}
+            # bool is a subclass of int, so float(True) == 1.0 would sail through the range
+            # check below and be written as a legitimate score of 1.
+            raw = {ax: d[ax] for ax in ("new", "useful", "surprising")}
+            if any(isinstance(x, bool) for x in raw.values()):
+                raise ValueError(f"judge {model} returned boolean score(s) {raw}; expected 1-10")
+            v = {ax: float(x) for ax, x in raw.items()}
             # Range-check so the existing retry fires. An off-scale reply (a judge answering on
             # 0-100, or emitting -3) was written through verbatim with scoring_status "scored", and
             # with min_judges=2 the median of two IS the mean, so one bad reply moves the record.

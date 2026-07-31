@@ -75,6 +75,11 @@ def _quarantined() -> dict:
         return (yaml.safe_load(_QUARANTINE.read_text()) or {}).get("quarantined", {}) or {}
     except FileNotFoundError:
         return {}
+    except ImportError as e:
+        # Same reasoning as the schema gate: a missing pyyaml silently re-admitted every quarantined
+        # item, which is the one outcome quarantine.yaml exists to prevent.
+        raise RuntimeError(f"pyyaml is required to read {_QUARANTINE.name} but is not installed "
+                           f"({e}); refusing to run with quarantine silently disabled.")
     except Exception as e:
         print(f"  [WARNING: could not read {_QUARANTINE.name} ({type(e).__name__}); "
               f"NO items quarantined this run]")
@@ -101,8 +106,9 @@ def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
 
     The schema shipped for months without ever being applied -- `grep -rn jsonschema` returned
     nothing -- so its `required` list was decorative and undeclared fields passed silently. Wiring it
-    in here means a malformed item fails at load, not at score time. Soft-fails with a warning if
-    jsonschema is not installed, so validation is never silently skipped without saying so."""
+    in here means a malformed item fails at load, not at score time. RAISES if jsonschema is missing
+    rather than warning: a soft-fail meant a fresh checkout ran the whole benchmark unvalidated while
+    ci_check printed "OK 50 items load and validate"."""
     raw = [json.loads(l) for l in open(path) if l.strip()]
     quar = _quarantined()
     if quar:
@@ -122,8 +128,17 @@ def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
                 raise ValueError(f"{len(errs)} schema violation(s) in {path}:\n  "
                                  + "\n  ".join(errs[:12])
                                  + (f"\n  ... and {len(errs)-12} more" if len(errs) > 12 else ""))
-        except ImportError:
-            print(f"  [WARNING: jsonschema not installed -- {_SCHEMA.name} NOT enforced this run]")
+        except ImportError as e:
+            # HARD FAILURE, not a warning. A gate that switches itself off when a dependency is
+            # absent is decorative: with jsonschema missing, load_challenges accepted category="C6",
+            # axis_isolated="novel" and undeclared fields, printed a warning to stdout, and returned
+            # 50 items -- so ci_check.sh exited 0 and reported "OK 50 items load and validate".
+            # Neither jsonschema nor pyyaml was declared anywhere, so this was one `pip` away on any
+            # fresh checkout. Pass validate=False to opt out deliberately and visibly.
+            raise RuntimeError(
+                f"jsonschema is required to enforce {_SCHEMA.name} but is not installed "
+                f"({e}). Install it (see crest/requirements.txt) or pass validate=False to skip "
+                f"validation deliberately -- refusing to run an unvalidated item set silently.")
     directions = _prereg_directions()
     out = []
     for d in raw:

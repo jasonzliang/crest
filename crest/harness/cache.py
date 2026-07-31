@@ -31,69 +31,51 @@ CACHE_KEY_VERSION = "gen/2"   # bumped: gen/1 keys omitted the adapter fingerpri
 def adapter_fingerprint(agent) -> str:
     """Identity of the CODE that produced an answer, not just the model name.
 
-    gen/1 keyed on (challenge, agent, model, query_sha) only, so ANY adapter change short of a
-    model rename silently served stale generations: raising Anthropic max_tokens 9k->32k, adding
-    pause_turn handling, or changing reasoning effort all left the key untouched. In the 2026-07-31
-    run that meant 45 of 49 records per agent came from a run whose manifest records git_dirty=true
-    at a commit predating every committed adapter change -- 80% of the deep arm produced by code
-    that cannot be reconstructed. Fingerprint the knobs that change the OUTPUT."""
-    import hashlib
+    gen/1 keyed on (challenge, agent, model, query_sha) only, so ANY adapter change short of a model
+    rename silently served stale generations: raising Anthropic max_tokens 9k->32k, adding pause_turn
+    handling, or changing reasoning effort all left the key untouched. In the 2026-07-31 run that
+    meant 45 of 49 records per agent came from a run whose manifest records git_dirty=true at a
+    commit predating every committed adapter change -- 80% of the deep arm produced by code that
+    cannot be reconstructed.
+
+    The key is the RAW SOURCE of every module the generation path runs through. Two cleverer schemes
+    were tried and both were unsound in the expensive direction:
+
+      * per-class `inspect.getsource(type(agent))` saw neither inherited methods
+        (OpenAIDeepResearchMini defines no `run`) nor module-level helpers -- and `_parse_openai`
+        and `_parse_gemini_interaction` are where two of three adapter fixes landed. 5 of 7 adapters
+        would have served pre-fix answers forever.
+      * stripping prose so a comment edit stayed free. The line-filter version stripped '#' lines
+        INSIDE string literals, so two system prompts differing by a markdown header collided. The
+        ast+tokenize replacement fixed that and introduced a worse one: it is not stable across
+        Python versions. PEP 701 changed f-string tokenization in 3.12, so identical source hashed
+        2fcc45daca97 on 3.12-3.14 and b9b383d649b4 on 3.9 -- and pyproject declares
+        requires-python >=3.10,<3.14, i.e. the instability sits inside the SUPPORTED range. A minor
+        version bump would have been a 100% cache miss and a full re-generation.
+
+    So: no normalization. A comment edit re-pays generation. That is a real cost and it is the one
+    being chosen deliberately -- the saving was always hypothetical (no run has yet written an
+    adapter_fp, so the cache has served exactly zero entries to date), while both attempts at it
+    produced silent-correctness bugs. Raw source is sound, version-stable, and one line."""
+    import hashlib, inspect
     from crest.harness import agents as A
+    from crest.harness import keys as K
+    # keys.py is in the key because ClaudeShallowResearch.run goes through call_anthropic: the pool,
+    # its cooldown and its exhaustion handling all affect whether and how a generation completes.
+    # It was extracted from agents.py without revisiting this invariant, leaving the docstring's
+    # "nothing outside this module" claim false.
+    src = "".join(_module_source(m) for m in (A, K))
     parts = [type(agent).__name__, getattr(agent, "model", ""), str(getattr(agent, "budget", "")),
-             _module_code_hash(A),
-             # _RESEARCH_SYSTEM stays an EXPLICIT part. It is the shared system prompt -- the single
-             # string most able to change every agent's output -- and _module_code_hash discards
-             # docstrings, so relying on the module hash alone would let a prompt edit through.
-             hashlib.sha256(A._RESEARCH_SYSTEM.encode()).hexdigest()[:8]]
+             hashlib.sha256(src.encode()).hexdigest()[:12]]
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:10]
 
 
-def _module_code_hash(mod) -> str:
-    """Hash of the adapter MODULE's source, comments and blank lines stripped.
-
-    Hashing each adapter class on its own (`inspect.getsource(type(agent))`) was unsound in two ways
-    that both bit in practice. It captured neither INHERITED methods -- OpenAIDeepResearchMini
-    defines no `run` at all, so editing the parent's body left the child's key untouched -- nor
-    MODULE-LEVEL helpers, and `_parse_openai` (gained `truncated=`) and `_parse_gemini_interaction`
-    (lost a fabricated `n_searches` fallback) are exactly where two of the three adapter fixes
-    landed. Measured across that fix commit, 5 of 7 adapters kept an unchanged fingerprint and would
-    have served pre-fix generations forever, under a docstring claiming the opposite.
-
-    Module scope is sound by construction: no adapter output depends on code outside this module
-    that isn't already in the key. It over-invalidates -- any real edit to agents.py re-pays
-    generation -- which is the honest trade, and it is why prose is stripped: that module is
-    deliberately comment-heavy, and a rationale edit must not cost ~$450.
-
-    Prose is removed with `tokenize` + `ast`, not a line filter. The line filter this replaces
-    dropped every line whose first non-space character was '#' INCLUDING INSIDE STRING LITERALS, so
-    two _RESEARCH_SYSTEM prompts differing only by a markdown '# Role:' header hashed identically --
-    a silent false negative in the direction that costs correctness. It also hashed all 6,879 chars
-    of docstrings while exempting only the 4,819 chars of comments, so it half-delivered the saving
-    it was added for. Tokenizing never sees inside a string; the ast pass then removes docstrings
-    proper, which are prose by definition and cannot affect an API call."""
-    import ast, hashlib, inspect, io, tokenize
+def _module_source(mod) -> str:
+    import inspect
     try:
-        src = inspect.getsource(mod)
+        return inspect.getsource(mod)
     except (OSError, TypeError):
-        return "nosource"
-    try:
-        tree = ast.parse(src)
-        for node in ast.walk(tree):              # blank out docstrings, keep every other string
-            if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-                d = ast.get_docstring(node, clean=False)
-                if d is not None:
-                    node.body[0].value = ast.Constant(value="")
-        src = ast.unparse(tree)                  # also normalises formatting-only edits
-        body = src
-    except SyntaxError:
-        body = src
-    try:                                         # drop comments; ast.unparse already emits none,
-        toks = tokenize.generate_tokens(io.StringIO(body).readline)   # but the fallback path has them
-        body = tokenize.untokenize(
-            [t[:2] for t in toks if t[0] not in (tokenize.COMMENT, tokenize.NL)])
-    except (tokenize.TokenError, IndentationError):
-        pass
-    return hashlib.sha256(body.encode()).hexdigest()[:12]
+        return f"<nosource:{getattr(mod, '__name__', '?')}>"
 
 
 def query_sha(query: str) -> str:
@@ -167,7 +149,14 @@ class GenerationCache:
                 # caching them re-serves the failure forever: the module hash cannot invalidate a
                 # provider-side hiccup, and the only escape would be --override-cache (all-or-
                 # nothing, ~$450) to refresh a handful of records.
-                if r.get("scoring_status") in ("empty_answer", "too_short") or r.get("truncated"):
+                # Judge on the TEXT IN HAND, not on the label a past run happened to write. Checking
+                # scoring_status alone trusted history: an answer recorded `scored` under the old
+                # 40-char floor is below today's _MIN_SUBSTANTIVE_CHARS, so it was served from cache,
+                # re-failed the gate on arrival, and would be served again forever. Records with no
+                # status at all (the trust_legacy path) bypassed the check entirely.
+                from crest.judge.score import _MIN_SUBSTANTIVE_CHARS
+                if (r.get("scoring_status") in ("empty_answer", "too_short") or r.get("truncated")
+                        or len((tr.get("output_text") or "").strip()) < _MIN_SUBSTANTIVE_CHARS):
                     skipped_failed += 1
                     continue
                 fp = r.get("adapter_fp", "")

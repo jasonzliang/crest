@@ -13,7 +13,10 @@
 > load-bearing), while withholding `expert_baseline` moved Surprising by **−0.02** (it anchored
 > nothing). `expert_baseline` is therefore no longer sent to the judge. Surprising is still scored
 > and reported, but is **exploratory and unanchored**, and correlates with novelty at
-> **r = 0.94** (n = 234 scored records, 2026-07-31 full run; the deployed prompt rounds this to
+> **r = 0.883** (n = 250 scored records, run 2026-07-31T040653Z, computed at RECORD level, which is
+> what the endpoint uses; pooling per-judge rows instead gives 0.946, the figure previously quoted
+> here as 0.94/0.95. Recompute per run -- never quote a fixed figure. The earlier n = 234 described
+> run 020425Z, whose records have since been deleted.)  (the deployed prompt rounds this to
 > "r~0.95").
 
 ## What the judge actually receives
@@ -54,9 +57,11 @@ entrant's answer are all withheld.** The judge returns one JSON object —
 This is now the definition in code (`analysis/stats.py::_composite`) and in
 `analysis/preregistration.yaml`. Surprising binds alone in 20% of records, so it is not a
 redundant axis. `stats.py::min2()` reports the New/Useful pair as a robustness check only.
-Surprising is deliberately **excluded** from the endpoint: including a demoted, unanchored axis in a
-`min` smuggles it back in as a binding constraint (a 9/7/2 record would score 2, not 7), and it is
-the sole binding axis in roughly 1 record in 147.
+Surprising IS included, and the paragraph that used to sit here (six lines below the definition
+above) said the opposite. The argument for excluding it was that it is "the sole binding axis in
+roughly 1 record in 147"; measured on the shipped run it is the sole binding axis in **51 of 250
+records (20%)**, so the `min` is doing real work on a fifth of the data. The mechanical point that
+paragraph made is still true and is the reason to keep it: a 9/7/2 record scores 2, not 7.
 
 The old "at or above threshold on all three axes" indicator survives only for backward comparability
 (`threshold_all_three: 6.0`, reported per record as `creative_all_three`): it is unpre-registered,
@@ -98,7 +103,8 @@ and the reference set is published so any omission can be contested.
   below.)*
 - Hard rules are checked **by the judge, in-prompt** — there is no deterministic pre-filter. The
   only programmatic rule checking that ships is `analysis/validate_items.py`, which tests items
-  against *themselves* (it currently reports 4 BLOCKING contradictions), not answers against rules.
+  against *themselves* (it currently reports 2 BLOCKING contradictions, both in
+  `C1_materials_chemistry_01`), not answers against rules.
 - *Not a judge instruction:* "Useful gates New" is an **aggregation** property, delivered by the
   `min` endpoint, not a clause in the prompt. The prompt's only anti-nonsense instruction is "Do
   NOT reward nonsense", attached to Surprising.
@@ -132,8 +138,11 @@ There is **no frozen snapshot**, no per-claim entailment check, and no FACT prec
 **Fail ⇒ the answer is UNSCORED (`creativity: null`), not zero.** A fake 0 folded into results was
 explicitly rejected; a failing record carries `scoring_status` ∈ {`empty_answer`, `too_short`, `grounding_fail`}.
 
-**Measured contribution: none, so far.** Across 245 records (2026-07-31 full run) the
-anti-fabrication clause fired **zero** times. All 11 rejections were **empty strings** from one
+**Measured contribution: none, so far.** Across 245 records (run 2026-07-31T020425Z -- a
+SUPERSEDED run whose records are deleted; see result/superseded_runs.json. The canonical run
+040653Z has 250 records, all scored, zero empty and zero too-short answers, so on that run the gate
+never fires at all) the anti-fabrication clause fired **zero** times. All 11 rejections were
+**empty strings** from one
 entrant (`claude_shallow`, an adapter failure), which is why `empty_answer` is now a *separate*
 `scoring_status` from `grounding_fail` — conflating them mislabelled an adapter bug as Claude being
 ungrounded. The gate is retained as a cheap guard against an untooled or confabulating entrant, but
@@ -144,7 +153,10 @@ Report the axes **separately per category** (a profile, not one number).
 
 - **Implemented:** inter-judge reliability — Krippendorff's α (interval) and ICC(1,1)/ICC(1,k), plus
   the per-judge severity table, in `analysis/stats.py::reliability_report`. Measured on the full
-  panel, ICC(1,k) is **.774 / .746 / .671** across the three axes, against a 0.80 bar — the panel
+  panel, ICC(1,k) on the canonical run is **0.0 / 0.618 / 0.0** (New / Useful / Surprising) against
+  a 0.80 bar — the .774/.746/.671 previously quoted here came from superseded run 111856Z. The
+  one-way model absorbs the 3.2–3.8-point judge severity spread into error, so these are a floor,
+  not the whole story; recompute per run and never quote a fixed figure — the panel
   misses it on every axis, and by the most on Surprising. Severity is reported alongside α by
   design: judge severity varied by 2–3 points on a 1–10 scale, exceeding the entire between-agent
   spread, so α alone would hide the effect that decided the leaderboard.

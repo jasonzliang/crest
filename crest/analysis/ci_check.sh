@@ -78,24 +78,32 @@ print(sum(1 for r in rows if 'canary' in json.dumps(r).lower()), len(rows))
 set -- $n_canary; have=$1; total=$2
 if [ "$have" = "$total" ] && [ "$have" != "0" ]; then echo "  OK canaries present in all $total items";
 else
-  # ALLOWLIST, not a hedge denylist. Two earlier versions of this check were green for the wrong
-  # reason. First it grepped datasheet.md whole-file for "NOT IMPLEMENTED", which 13 unrelated
-  # markers always satisfied, making the FAIL branch unreachable. Then it excluded lines carrying
-  # any hedge word -- but "planned" and "would be" are exactly the words that accompany a REAL
-  # canary claim ("carries a canary GUID, so reproduction WOULD BE evidence of contamination"
-  # passed). So a canary line is honest only if it explicitly states the canaries are ABSENT.
-  # "unqualified" is allowed because the datasheet sentence describing this very check is not
-  # itself a canary claim. Scope adds readme.md, which was previously unchecked.
-  ok_re="NOT IMPLEMENTED|no canar|zero .*canar|not present|not shipped|never shipped|unqualified"
-  if grep -rhiE "canar(y|ies)" crest/readme.md crest/docs/datasheet.md \
-        crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
-     | grep -qivE "$ok_re"; then
-    echo "  FAIL canary claimed in docs but only $have/$total items contain one"; fail=1
-  else echo "  OK no unqualified canary claim (0/50 items, correctly disclosed)"; fi
-  # p3 is not submission-ready, so its claims do not block a release -- but they must not be
-  # invisible either. Counted and reported, never silently skipped.
-  n_p3=$(grep -rhiE "canar(y|ies)" crest/paper/p3_*/sections/*.tex 2>/dev/null | grep -icvE "$ok_re")
-  [ "${n_p3:-0}" != "0" ] && echo "  NOTE $n_p3 unqualified canary claim(s) in p3 (not gated: p3 is not submission-ready)"
+  # APPROVAL LIST, not prose-matching. Three grep-based versions of this check were each green for
+  # the wrong reason, and the last two failed in ways that only showed up under adversarial review:
+  #   v1  grepped datasheet.md whole-file for "NOT IMPLEMENTED"; 13 unrelated markers always
+  #       satisfied it, so the FAIL branch was unreachable no matter what the docs claimed.
+  #   v2  excluded lines carrying any hedge word -- but "planned" and "would be" are exactly the
+  #       words a REAL claim uses ("carries a canary GUID, so reproduction WOULD BE evidence").
+  #   v3  required an explicit absence phrase -- still passed a line that contained one for an
+  #       unrelated reason ("Automated dedup is [NOT IMPLEMENTED], but every item embeds a canary").
+  # Prose is not parseable by regex, and each fix bought one round. So: every line mentioning a
+  # canary must be BYTE-IDENTICAL to a line a human approved in canary_claims.allow. A new or edited
+  # canary sentence fails until someone re-reads it and re-approves it -- which is the actual
+  # control wanted here. Scope is every doc and both papers; adding a file cannot silently skip it.
+  allow="crest/analysis/canary_claims.allow"
+  n_bad=$(grep -rhiE "canar(y|ies)" crest/readme.md crest/docs/*.md crest/docs/notes/*.md \
+            crest/paper/*/sections/*.tex 2>/dev/null \
+          | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u \
+          | grep -vxFf "$allow" | wc -l | tr -d ' ')
+  if [ "${n_bad:-0}" != "0" ]; then
+    echo "  FAIL $n_bad canary line(s) not in $allow, and only $have/$total items carry one."
+    echo "       Re-read each, then add it verbatim to the allow file if it is honest:"
+    grep -rhiE "canar(y|ies)" crest/readme.md crest/docs/*.md crest/docs/notes/*.md \
+      crest/paper/*/sections/*.tex 2>/dev/null \
+      | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u | grep -vxFf "$allow" \
+      | cut -c1-110 | sed 's/^/         /'
+    fail=1
+  else echo "  OK all canary mentions are human-approved ($have/$total items carry one)"; fi
 fi
 
 echo; [ "$fail" = 0 ] && echo "PRE-RELEASE GATE: PASS" || echo "PRE-RELEASE GATE: FAIL"

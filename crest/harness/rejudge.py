@@ -36,7 +36,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
 from crest.harness.run_crest import load_challenges, _judges_list   # noqa: E402
-from crest.judge.score import JudgePanel                            # noqa: E402
+from crest.judge.score import JudgePanel, JUDGE_PROMPT_VERSION      # noqa: E402
 
 
 class StoredReport:
@@ -131,6 +131,10 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                 "creative_all_three": scores.creative_all_three,
                 "n_judges": scores.n_judges,
                 "judge_protocol": panel.protocol,
+                # run_crest stamps this; rejudge is the OTHER writer and omitted it, so repairing
+                # the shipped v1 run produced exactly the v1/v2 mixture score.py says must never
+                # happen -- unlabelled, on a non-random subset.
+                "judge_prompt_version": JUDGE_PROMPT_VERSION,
                 # signature drift: _judges_list gained (panel, entrant_family) so it can stamp
                 # same_family. Calling it without them wrote same_family=False on every repaired row,
                 # silently zeroing the self-preference covariate the whole LOFO->covariate design
@@ -158,9 +162,16 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
     mf = run_dir / "run_manifest.json"
     if mf.exists():
         m = json.loads(mf.read_text())
-        # recompute the WHOLE totals block from the same function finalize_run uses; refreshing a
-        # hand-picked subset left the other counters describing the pre-repair records
-        m.setdefault("totals", {}).update(manifest_totals(records))
+        # REPLACE, don't merge. manifest_totals now derives its keys from the statuses present in
+        # the data, so a status that vanishes after a repair stops emitting a key -- and .update()
+        # then leaves the stale count in place. Measured: repairing all degraded+error rows left
+        # n_judge_degraded 3 and n_judge_error 2 beside n_scored 12 of n_records 12, parts summing
+        # to 17 of 12. n_task_errors is carried over because it is counted from errors.jsonl by
+        # finalize_run, not derivable from the records.
+        prev = m.get("totals", {})
+        m["totals"] = {**manifest_totals(records),
+                       "n_task_errors": prev.get("n_task_errors", 0)}
+        m["judge_prompt_version"] = JUDGE_PROMPT_VERSION
         m["repaired_at"] = __import__("datetime").datetime.now(
             __import__("datetime").timezone.utc).isoformat()
         mf.write_text(json.dumps(m, indent=2, ensure_ascii=False))

@@ -14,7 +14,7 @@
 >    The dating error direction is one-sided: prior art is consistently made to look *younger* than
 >    it is, which inflates novelty.
 > 2. **Mechanical self-consistency checking** (`analysis/validate_items.py`, wired into
->    `analysis/ci_check.sh`). It reports **4 BLOCKING contradictions**, all in items graded PASS/KEEP
+>    `analysis/ci_check.sh`). It reports **2 BLOCKING contradictions** (an earlier count of 4 included two validator false positives, since fixed), all in items graded PASS/KEEP
 >    below. The pre-release gate currently FAILS on them.
 >
 > **Field drift.** The Method paragraph below describes reading `predicted_direction` and the
