@@ -11,12 +11,17 @@ status. Other docs cross-reference §2 instead of restating those numbers. Conve
 measured *from a scored run* (endpoint means, correlations, ICC, judge severity) lives in
 `design.md` §0 and is not restated here.
 
-> **Release status: NOT RELEASE-READY.** The mechanical pre-release gate
-> (`analysis/ci_check.sh`) currently **FAILS** on `analysis/validate_items.py` self-contradictions
-> in `C1_materials_chemistry_01`. Run the gate for the live list rather than trusting a transcript;
-> an earlier count of 4 across 3 items included two validator false positives, since fixed.
-> Croissant/Croissant-RAI metadata is **not written yet** — there is no `croissant.json` in the
-> repo — so the Croissant desk-reject gate is not cleared either.
+> **Release status: NOT RELEASE-READY**, but no longer for the reason this note used to give. The
+> mechanical pre-release gate (`analysis/ci_check.sh`) now **PASSES** all 25 checks: the
+> `C1_materials_chemistry_01` self-contradiction it used to fail on has been fixed. Run the gate for
+> the live list rather than trusting any transcript, including this one.
+> What still blocks release: Croissant/Croissant-RAI metadata is **not written** — there is no
+> `croissant.json` in the repo — so the Croissant desk-reject gate is not cleared; **no human study
+> has been run**, so the judge panel is unvalidated against human raters; the 250-record run
+> directory is gitignored and therefore **not distributed**, so the reported results cannot be
+> recomputed from a fresh clone; and both field-ablation deltas quoted in the papers (+0.98 on *New*,
+> −0.02 on *Surprising*) were measured on a superseded run and **cannot be re-derived** against the
+> released records, which all carry `judge_prompt_version: null`.
 
 ## 1. Motivation
 - **Purpose.** Measure the *creativity* (novelty / Useful / Surprising) of deep-research web
@@ -25,11 +30,19 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
   it is not a training set.
 - **Who built it / funding.** [Anonymized for double-blind review.] Funding and institutional
   affiliation disclosed in the camera-ready.
-- **Conflict of interest (COI).** One entrant (an exploration-based agent, cited as prior work) was
-  built by parties overlapping with the benchmark authors. Mitigations: the entrant is one of many;
-  **all headline findings are reported with it removed**; the benchmark is designed so that entrant
-  does not top every category; and the optional mechanism case study is gated on that entrant *not*
-  being rank-1. **Leave-one-family-out judging is no longer one of the mitigations** — it is off by
+- **Conflict of interest (COI).** **Corrected.** This entry previously stated that one entrant (an
+  exploration-based agent, cited as prior work) was built by parties overlapping with the benchmark
+  authors, and listed four mitigations for it. That was false, and both papers cited this file as
+  their COI record while it said so. **No author-built agent was entered.** The released registry
+  contains five off-the-shelf commercial systems — `openai_deepresearch`, `openai_shallow`,
+  `claude_shallow`, `gemini_deepresearch_max`, `gemini_shallow` — and all 250 scored records belong
+  to them, so three of the four mitigations were vacuous ("reported with it removed" removes
+  nothing; "does not top every category" and "gated on that entrant not being rank-1" are undefined
+  for a non-entrant). The optional mechanism case study those triggers gated has been deleted from
+  the paper. The COI that *does* exist is narrower: a prior workshop preprint by the same authors
+  piloted an earlier version of this taxonomy on an exploration agent, so the **taxonomy** has
+  author provenance even though no **entrant** does.
+  **Leave-one-family-out judging is not a mitigation either** — it is off by
   default (`judge/judge_config.live.yaml: leave_one_family_out: false`) because with three vendors
   it confounded judge identity with entrant family and moved the leaderboard more than the
   self-preference it removed. Self-preference is instead *measured*: every judge row is stamped

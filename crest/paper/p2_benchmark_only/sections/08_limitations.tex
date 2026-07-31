@@ -48,8 +48,9 @@ two-way model that removes the judge main effect gives $0.736/0.807/0.759$, but 
 \emph{after} seeing the one-way values and is exploratory.
 
 \paragraph{\emph{Surprising} is unanchored and its correlation with \emph{New} is contaminated.} The
-expert baseline was withdrawn from the judge prompt after an ablation moved the axis by $-0.02$, so
-the axis rests on the judge's own prior. Separately, $r=0.883$ cannot argue the axes are inseparable,
+expert baseline was withdrawn from the judge prompt after an ablation moved the axis by only $-0.02$,
+so the axis rests on the judge's own prior---and that ablation is itself not reproducible against this
+release (below), so the justification for the withdrawal is unchecked. Separately, $r=0.883$ cannot argue the axes are inseparable,
 because the judge prompt used for this run stated a correlation to the judge. A clean estimate
 requires re-scoring, which has not been done.
 
@@ -69,9 +70,28 @@ composite against a reference of $0$ with equivalence bounds of $\pm1$ on a $1$-
 no category can satisfy, so null categories are reported descriptively rather than as equivalence
 results.
 
-\paragraph{Length is not controlled.} Report length is a known confound for LLM judges and may also
-be a genuine \emph{mediator} of creativity via elaboration. Output length is recorded per record but
-enters no released analysis as a covariate, so we cannot separate the two readings.
+\paragraph{Length is not controlled, and is not even measured.} Report length is a known confound for
+LLM judges and may also be a genuine \emph{mediator} of creativity via elaboration. We cannot separate
+those readings, and the reason is worse than a missing covariate: length was \textbf{not recorded}.
+Zero of the $250$ records carry \texttt{answer\_chars} or \texttt{answer\_words}. The only stored size
+field is the provider's billed token count, which includes invisible reasoning tokens and runs from
+$2.0$ to $13.8$ tokens per visible word depending on the arm, so it is not a length measure and is not
+comparable across entrants. A length covariate is therefore not computable from this release at all,
+and fixing it requires re-deriving lengths from the undistributed transcripts.
+
+\paragraph{Both field ablations are unreproducible against this release.} Two ablation deltas are
+quoted in this paper---withholding the dated known-answers list moves \emph{New} by $+0.98$, and
+withholding the expert baseline moves \emph{Surprising} by $-0.02$---and \textbf{neither can be
+re-derived from the released artifact}. Three separate reasons, each sufficient. They were measured on
+run \texttt{111856Z}, which is superseded and no longer on disk, and no per-arm judge scores were
+persisted in any run. The $+0.98$ delta is over $50$ records with a stated baseline of $\emph{New} =
+7.28$, which is inconsistent with this run's $8.14$ over $250$ records and $8.16$ over the matched
+balanced subset, so it was measured against a different instrument. And every one of the $250$ released
+records carries \texttt{judge\_prompt\_version: null}, so \texttt{analysis/ablate\_fields.py} refuses
+to run against them by design. This matters beyond bookkeeping: the $-0.02$ figure is the stated
+justification for withholding the expert baseline from the deployed judge prompt, so a load-bearing
+design decision rests on a measurement this release cannot check. Re-running both ablations under the
+current judge-prompt version is required before either number should be relied on.
 
 \paragraph{Construct validity.} At this scale the New/Useful/Surprising factor structure is
 under-identified, and creativity has no ground truth---the Consensual Assessment Technique bounds,

@@ -74,7 +74,38 @@ for pat in "human-validated" "human-expert consensus panel" "human panel is the 
            "open-weight fourth" "order-randomized" "order-randomised" "pre-register" \
            "frozen shared index" "frozen retrieval snapshot" "signed manifest" \
            "matched tool and compute budget" "matched tool/compute budget" \
-           "human study" "mechanism-driven"; do
+           "human study" "mechanism-driven" \
+           `# Round 2. Each pattern below is here because a real sentence asserted it while the` \
+           `# 17 patterns above stayed green. p2 sections/06 and 07 were NEVER revised and were` \
+           `# still \input by main.tex: s06 claimed human faithfulness labels, a per-claim FACT` \
+           `# verifier, a per-agent firing rate and a with/without sensitivity analysis for a gate` \
+           `# that fired 0/250, and creativity=0 for a failing answer (the harness records` \
+           `# 'unscored'); s07 reported component ablations of an entrant with 0 of 250 records.` \
+           "human faithfulness labels" "per-agent firing rate" "with/without-check" \
+           "per-claim FACT verifier" "we ablate the components" \
+           `# NOT the bare phrase "component ablation": p3 sections 4/5 legitimately DESCRIBE the` \
+           `# ablation protocol that would test the mechanism, and p3 sections 0/1/7/8 legitimately` \
+           `# withdraw it, so a bare match fires 9x on honest text. "we ablate the components" is` \
+           `# what p2 section 07 actually asserted as done.` \
+           "disqualified for creativity" "zero-inflates" \
+           `# Release claims: result/runs/ is gitignored, so per-record judge rows never ship;` \
+           `# there is no croissant.json; and grading is not reproducible from a fresh clone.` \
+           "per-judge scores" "grading reproducible" "Croissant" "releasing everything" \
+           `# All 250 records carry judge_prompt_version: null, so nothing is versioned.` \
+           "scoring input is fixed and versioned" \
+           `# expert_baseline is JUDGE-HIDDEN (schema.json; score.py does not send it), so any` \
+           `# sentence putting it judge-side or scoring Surprising against it is false.` \
+           "expert baselines held judge-side" "against expert expectation" \
+           "expert's expected answer" \
+           `# "registered" evades the "pre-register" pattern; no ablation protocol is registered.` \
+           "registered design" \
+           `# Length was never recorded: 0/250 records carry answer_chars or answer_words, so the` \
+           `# honest sentence is "not recorded" and this cannot be negated away.` \
+           "recorded per record" \
+           `# Catches the "the one property that DOES hold" family. Dating the known-answers list` \
+           `# does not bound what counts as new -- the judge is told absent content is` \
+           `# non-redundant, so fresher retrieval is a route INTO a high New score.` \
+           "does hold"; do
   # The capture window MUST be wider than the negation regex's own lookbehind allowance. It was 14
   # against an allowance of 24, so any negation sitting 15-24 characters before the pattern was
   # truncated out of the captured text and could never match -- the documented 24 was unreachable,

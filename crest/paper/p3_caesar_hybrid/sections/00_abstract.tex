@@ -7,7 +7,9 @@ deep-research outputs on the \emph{New / Useful / Surprising} triad, organized i
 median aggregation. The design contribution is an asymmetry: the agent sees only a short open prompt
 (median 110 words) while the scoring machinery---a dated known-answers list for \emph{New} and
 checkable hard rules for \emph{Useful}---is held judge-side, preserving creative headroom while
-keeping grading reproducible.
+keeping the grading criteria fixed and inspectable. That is
+\textbf{not} the same as keeping grading reproducible, which we do \textbf{not} claim: retrieval is
+live and the run records are not distributed.
 
 \textbf{This paper reports no result about the exploration-based agent it is named for.} That agent
 was never entered: the released registry contains five commercial entrants and all $250$ scored
@@ -20,7 +22,8 @@ so \textbf{the leaderboard is unidentifiable and no ranking claim is supportable
 agent$\times$category interaction is \textbf{null} ($F=0.654$, $p=0.837$), so we find no evidence
 for the rank-reversal earlier drafts claimed; task type moves scores more than entrant identity
 ($2.92$ vs $2.06$ points); and \emph{Useful} is the binding axis. We release the questions, judge
-harness, per-judge scores and analysis code.
+harness, promoted results and analysis code; the per-record judge rows and agent transcripts are
+\textbf{not} distributed.
 \end{abstract}
 
 % ---------------------------------------------------------------------------------------------

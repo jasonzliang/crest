@@ -4,7 +4,13 @@
 \paragraph{What was actually run.} One run: $50$ CREST challenges $\times$ $5$ entrants $=250$
 records, all scored, under live provider-native web search, judged by the three-vendor full panel.
 The entrants are \texttt{openai\_deepresearch}, \texttt{openai\_shallow},
-\texttt{gemini\_deepresearch\_max}, \texttt{gemini\_shallow} and \texttt{claude\_shallow}.
+\texttt{gemini\_deepresearch\_max}, \texttt{gemini\_shallow} and \texttt{claude\_shallow}. It is one
+run in the sense of one judging pass, not one generation pass: \textbf{196 of the 250 answers were
+served from a content-addressed cache} populated by three earlier runs at two different commits, and
+only \texttt{claude\_shallow} was generated entirely fresh (the other four are $49/50$ cached). All
+cached answers were themselves produced under live retrieval, but at earlier times and under earlier
+code, so the run is not a single synchronised snapshot of the field
+(\S\ref{sec:limitations}).
 
 \textbf{The exploration agent of \S\ref{sec:caesar} is not among them}, so this section contains
 \emph{no} evidence about it. Earlier drafts of this section reported a setup that was never run.

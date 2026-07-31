@@ -17,33 +17,42 @@ linguistic novelty \citep{lu2024creativityindex}. We are careful \emph{not} to c
 creativity test exists.'' Our differentiation is precise: CREST is the first to (i) target
 \emph{deep-research agents} that browse and cite, (ii) score the \emph{full} New/Useful/Surprising
 triad rather than novelty alone, (iii) organize by \emph{task type} to expose task-dependence, and
-(iv) anchor ``new'' to per-item dated known-answers so it reflects synthesis relative to what is
-already known, not merely fresher retrieval. That last property is what makes live retrieval
-tolerable here; it is \emph{not} backed by a frozen shared retrieval index, which does not exist
-(\S\ref{sec:crest}).
+(iv) anchor ``new'' to per-item dated known-answers, so the axis is scored relative to an explicit
+prior-art set rather than to corpus statistics. We are careful about what that does \emph{not} buy:
+it does not make live retrieval safe, because content postdating a list is by construction absent
+from it and the judge is told that absent content counts as non-redundant (\S\ref{sec:crest}). There
+is \emph{no} frozen shared retrieval index.
 Crucially, we avoid n-gram or embedding ``novelty'' metrics that reward text merely for being
 unlike anything online; such metrics reward fabrication \citep{saakyan2026death,lu2024creativityindex}.
 
 \paragraph{LLM-as-judge reliability.} LLM judges exhibit self-preference
 \citep{panickssery2024own}, assorted biases \citep{ye2024justice}, and can inflate leaderboards
 \citep{singh2025leaderboard}; ``novelty'' judgments are especially fragile
-\citep{sinhahajari2026mirage}. The literature prescribes a standard mitigation stack
-\citep{zheng2023mtbench}: a multi-vendor panel, leave-one-family-out scoring, blindness to entrant
-identity, randomised presentation order, inter-judge reliability reporting
-\citep{hayes2007alpha,koo2016icc}, and human validation against expert raters. We implement only part of it, and say which part. Implemented: a three-vendor panel
+\citep{sinhahajari2026mirage}. Several mitigations are conventional in this literature---blindness to
+entrant identity and randomised presentation order \citep{zheng2023mtbench}, inter-judge reliability
+reporting \citep{hayes2007alpha,koo2016icc}, and validation against expert raters---and to those we
+add a multi-vendor panel and \emph{leave-one-family-out} scoring. We flag the provenance honestly:
+LOFO is our own coinage, not a control the cited work proposes. \citet{panickssery2024own} and
+\citet{ye2024justice} \emph{document} self-preference; they do not prescribe dropping own-family
+judges, and MT-Bench prescribes neither a multi-vendor panel nor LOFO. We implement only part of this
+stack, and say which part. Implemented: a three-vendor panel
 with median aggregation, and reliability reported under both one-way and two-way models. \emph{Not}
 implemented: the panel is \textbf{not} order-randomized, \textbf{not} leave-one-family-out (we
 measured LOFO and withdrew it---over three vendors it makes judge identity perfectly confounded with
 entrant family and \emph{widens} the between-entrant spread), and \textbf{not} human-validated, since
 \textbf{no} human study has been run. Blindness is implemented but partially defeated: provider
 search tools stamp their own URLs into the report text, leaving a vendor fingerprint in $57\%$ of
-records (\S\ref{sec:limitations}). Our own contribution to this literature is the observation that
-the stack is insufficient without one further step it does not prescribe---estimating per-judge
-\emph{severity}, which on our panel turns out to exceed the whole between-entrant signal.
+records (\S\ref{sec:limitations}). What we add is not a new statistic---rater severity is exactly the
+distinction between absolute agreement and consistency that our own citation \citet{koo2016icc}
+draws, and it is the central parameter of many-facet Rasch measurement---but the empirical finding
+that on this panel severity \emph{exceeds the entire between-entrant signal}, which makes reporting it
+alongside any leaderboard a precondition rather than a refinement.
 
 \paragraph{Accepted benchmark papers set the bar we target, and we do not clear it.} Gorilla,
 ToolLLM, MT-Bench \citep{zheng2023mtbench}, DeepScholar-Bench \citep{deepscholarbench2025}, and
-MLR-Bench \citep{chen2025mlrbench} were accepted by releasing everything, validating the judge
+MLR-Bench \citep{chen2025mlrbench} were accepted by releasing their artifacts in full, validating the judge
 against humans, running many systems head-to-head, and leaving the benchmark unsolved. CREST meets
-the first and last of those and runs five systems head-to-head, but it does \textbf{not} validate its
-judge against humans. We state that as a gap rather than a template we follow.
+only the last of those and runs five systems head-to-head. It does \textbf{not} validate its judge
+against humans, and it does \textbf{not} release everything---the $250$-record run directory is
+gitignored, so the per-record judge rows and transcripts are absent (\S\ref{sec:experiments}). We
+state that as a gap rather than a template we follow.

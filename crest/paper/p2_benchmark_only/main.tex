@@ -22,8 +22,12 @@
 \input{sections/04_judge_validation}
 \input{sections/05_experiments}
 \input{sections/06_grounding}
-% OPTIONAL / IP-gated (the P3 upgrade); include only if all five decision triggers are green.
-\input{sections/07_mechanism_case_study}
+% sections/07_mechanism_case_study was OPTIONAL / IP-gated, to be included only if all five of its
+% decision triggers were green. It is DELETED, as its own header instructed, because at least three
+% are red: the judge is validated on ZERO of 5 categories (not >=4), no ablation was run at all
+% (let alone "clean + fresh"), and "the entrant is NOT top-1" is undefined because the entrant was
+% never entered -- 0 of 250 records belong to it. The file described component ablations of that
+% non-existent entrant as performed results.
 \input{sections/08_limitations}
 \input{sections/09_conclusion}
 

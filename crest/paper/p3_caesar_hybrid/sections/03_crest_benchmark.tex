@@ -5,12 +5,16 @@
 \textbf{Surprising}, each rated $1$--$10$ \citep{runco2012standard,boden2004creative}. The primary
 endpoint is the \emph{graded} conjunction $\min(\text{New},\text{Useful},\text{Surprising})$ on the
 $1$--$10$ scale. A thresholded ``all three clear a fixed cutoff'' indicator was measured and
-\textbf{withdrawn} as primary: its rate swung 5.4--36.1\% across cutoffs $5$--$7$ on the pilot, so it
-is retained only for backward comparability. New is judged against a \emph{dated list of already
-known answers} shipped with each question (so ``new'' means new relative to what is known, not
-merely unlike web text); Useful is judged on soundness, workability, and satisfaction of the
-question's hard rules; Surprising is judged relative to an \emph{expert's expected answer}, as
-expectation-violation conditioned on correctness. Scoring follows the Consensual Assessment
+\textbf{withdrawn} as primary because its rate is cutoff-sensitive. We report both available
+measurements rather than the more favourable one: the swing was $5.4$--$36.1\%$ across cutoffs
+$5$--$7$ on the pilot, whose records are \textbf{not} in this repository and whose figure is therefore
+not checkable, and $56.0$/$54.0$/$46.4\%$ at cutoffs $5$/$6$/$7$ on the released run, which is
+checkable and $6{\times}$ narrower. The indicator is retained only for backward comparability. New is
+judged against a \emph{dated list of already known answers} shipped with each question (so ``new''
+means new relative to a stated prior-art set, not unlike web text); Useful is judged on soundness,
+workability, and satisfaction of the question's hard rules; Surprising is expectation-violation
+conditioned on correctness, judged---in the deployed prompt---against the \emph{judge's own}
+expectation rather than the shipped expert baseline (see below). Scoring follows the Consensual Assessment
 Technique \citep{amabile1982cat,amabile1996context}. Citation accuracy is \emph{not} part of the
 creativity score---it is a separate grounding check (\S\ref{sec:grounding}).
 
@@ -39,17 +43,27 @@ ordering, and there is \textbf{no} OSF or equivalent record. Nothing was confirm
 held-out questions---there is no held-out split. Treat the directions as the authors' stated prior
 expectation and nothing stronger.
 
-\paragraph{What each question ships with.} (i) a dated list of known answers (New baseline);
-(ii) any hard rules to check (Useful); (iii) an expert's expected answer (Surprising baseline);
-and (iv) the predicted direction described above. See the released \texttt{schema.json} and
-datasheet.
+\paragraph{What each question ships with.} (i) a dated list of known answers (the \emph{New}
+baseline); (ii) any hard rules to check (\emph{Useful}); and (iii) an expert baseline answer that the
+judge never sees and that no scoring path reads---shipped, but unused (see below). The per-category predicted direction is \textbf{not} an
+item field: schema v2.0.0 removed it, and it lives only in
+\texttt{analysis/preregistration.yaml}. See the released \texttt{schema.json} and datasheet.
 
 \paragraph{Two-sided prompt design.} The prompt shown to an agent is deliberately \emph{short and
-open}---median $\sim$110 words---posing the task and little else. All axis-isolation and
-anti-contamination machinery (rubric anchors, the known-answers and expert baselines, the planned-but-absent canary
-strings, pre/post-cutoff labels) lives \emph{judge-side} and is never shown to the agent. This
-preserves creative headroom, avoids over-steering the agent toward a target answer, and still keeps
-grading reproducible because every scoring input is fixed and versioned.
+open}---median $\sim$110 words---posing the task and little else. The rubric anchors, the dated
+known-answers, the planned-but-absent canary strings and the pre/post-cutoff labels live
+\emph{judge-side} and are never shown to the agent. This preserves creative headroom and avoids
+over-steering the agent toward a target answer. It does \textbf{not} make grading reproducible, and we
+do \textbf{not} claim every scoring input is fixed and versioned: all $250$ released records carry
+\texttt{judge\_prompt\_version: null}, so the prompt behind the reported scores is not stamped in the
+records at all (\S\ref{sec:limitations}).
+
+\paragraph{The expert baseline is shipped but withheld from the judge.} \emph{Surprising} was intended
+to be scored against the per-item expert baseline. It is \textbf{not}: the baseline was removed from
+the judge prompt before this run was generated, and the deployed instruction asks the judge to score
+against \emph{its own} sense of what a domain expert would predict. So the axis rests on the judge's
+prior, and the baseline ships with each item as unused metadata. The ablation cited as justification
+for the withdrawal is not reproducible against this release (\S\ref{sec:limitations}).
 
 \paragraph{Judge: three vendors, full panel, median.} Every answer is scored by an Anthropic, an
 OpenAI and a Google model, and the panel score is the \emph{median} across the three. Earlier drafts
@@ -68,9 +82,15 @@ and \textbf{no} human study has been run, so humans are the primary scorer on \e
 
 \paragraph{Contamination and fairness controls: what exists, and what does not.} All entrants run
 through their \emph{provider-native web search}, so retrieval is \emph{live} and CREST is
-\textbf{not} contamination-controlled. The one anti-contamination property that does hold is
-indirect: because \emph{New} is judged against per-item \emph{dated known-answers}, fresher
-retrieval cannot by itself inflate the axis. Everything else earlier drafts claimed here is absent.
+\textbf{not} contamination-controlled. Earlier drafts argued that one property held anyway---that
+because \emph{New} is judged against per-item \emph{dated known-answers}, fresher retrieval cannot by
+itself inflate the axis. We withdraw that argument: the mechanism runs the other way. The lists are
+fixed and dated, so answer content postdating a list is \emph{by construction} absent from it, and the
+deployed judge instruction states that ``content absent from the set counts as non-redundant even if
+you believe you have seen it.'' Dating the lists bounds what counts as prior art; it does not bound
+what counts as new, and fresher retrieval is a route \emph{into} a high \emph{New} score. Nothing here
+measures that effect: \textbf{no} analysis splits on training cutoff and only 1 of 50 items is
+post-cutoff. Everything else earlier drafts claimed here is absent.
 There is \textbf{no} open-weight entrant and \textbf{no} permanently reproducible core; there is
 \textbf{no} shared, dated, hashed retrieval index, so we ship \textbf{no} URL/timestamp/SHA-256
 release and \textbf{no} signed manifest, and no party can reconstruct the corpus a run saw.

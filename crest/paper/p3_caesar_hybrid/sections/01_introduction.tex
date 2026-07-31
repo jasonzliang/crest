@@ -37,8 +37,9 @@ scores more than entrant identity does ($2.92$ vs $2.06$ points), and \emph{Usef
 axis---but both are statements about the items and the rubric, not about the frontier.
 
 \paragraph{Why we report it this way.} A benchmark paper that discovers its own instrument cannot
-rank is more useful released than withheld, and the failure mode is general: severity dominance is
-invisible unless per-judge severity is estimated, which most LLM-judge panels do not report. We
+rank is more useful released than withheld, and the failure mode is easy to miss: severity dominance
+is invisible unless per-judge severity is estimated \emph{and} compared against the effect being
+measured. We make no claim about how common that omission is, having run no survey. We
 therefore foreground the negative result and treat the exploration agent strictly as future work,
 noting that a benchmark whose author's own system had topped it would have invited precisely the
 self-serving reading the leaderboard literature warns about \citep{singh2025leaderboard}.
@@ -51,14 +52,18 @@ self-serving reading the leaderboard literature warns about \citep{singh2025lead
     reliability, and the null interaction test (\S\ref{sec:experiments}).
   \item \textbf{Benchmark.} CREST---the first released creativity benchmark for deep-research
     agents: New/Useful/Surprising scoring by task type (fifty questions, ten per type across six
-    domains), with dated known-answers, checkable hard rules and expert baselines held judge-side
-    behind a short open prompt, and a full public release (\S\ref{sec:crest}). The judge panel is
+    domains), with dated known-answers and checkable hard rules held judge-side behind a short open
+    prompt, and a public release of everything except the run records (\S\ref{sec:crest}). A
+    per-item expert baseline ships with each challenge but is \textbf{withheld} from the judge, so
+    \emph{Surprising} rests on the judge's own prior. The judge panel is
     \textbf{not} human-validated and uses \textbf{no} frozen shared retrieval index; both are future
     work.
-  \item \textbf{A registered design for the mechanism question.} A single-dissociation ablation
-    protocol that \emph{would} test whether exploration and refinement drive category-specific
-    gains, stated in full together with the reasons this run cannot execute it
-    (\S\ref{sec:caesar}).
+  \item \textbf{An experimental design for the mechanism question, registered nowhere.} A
+    single-dissociation ablation protocol that \emph{would} test whether exploration and refinement
+    drive category-specific gains, stated in full together with the reasons this run cannot execute
+    it (\S\ref{sec:caesar}). It is \textbf{not} in
+    \texttt{analysis/preregistration.yaml}---that file holds only the five per-category directions
+    and the analysis plan---and it is registered in no external venue.
 \end{enumerate}
 
 We state the scope plainly (\S\ref{sec:limitations}): there is no mechanism evidence here, no human

@@ -19,9 +19,10 @@ evaluation on CREST---including of the agent this paper is named for---inherits 
 until the instrument is repaired.
 
 We therefore release CREST as an instrument to be criticised rather than a ranking to be cited:
-questions, judge harness, per-judge scores, promoted results, analysis code and datasheet. There is
-\textbf{no} frozen retrieval snapshot and \textbf{no} human-validated judge in this release; the
-$250$-record run directory is not distributed, and retrieval was live, so the reported numbers are
-time-indexed and not exactly reproducible. The priorities we would set before anyone reports a
-ranking from this benchmark are, in order: de-ceiling \emph{New}, canonicalising provider URLs so
-the judge is actually blind, and running the human-agreement study.
+questions, judge harness, promoted results, analysis code and datasheet. We do \textbf{not} release the
+per-record judge rows or agent transcripts---the $250$-record run directory is gitignored---and there is
+\textbf{no} frozen retrieval snapshot and \textbf{no} human-validated judge. Retrieval was live, so the
+reported numbers are time-indexed and not exactly reproducible. The priorities we would set before
+anyone reports a ranking from this benchmark are, in order: running the human-agreement study, without
+which no reliability figure here is anchored to human judgement; then canonicalising provider URLs so
+the judge is actually blind; then de-ceiling \emph{New}.

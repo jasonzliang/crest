@@ -37,20 +37,33 @@ data, so those are one control reported twice. The two-way model that removes th
 gives $0.736/0.807/0.759$---but it was chosen \emph{after} seeing the data and is exploratory.
 
 \paragraph{\emph{Surprising} is unanchored and its correlation with \emph{New} is contaminated.} The
-expert baseline was withdrawn from the judge prompt after an ablation moved the axis by $-0.02$, so
-the axis rests on the judge's own prior. Separately, $r = 0.883$ cannot argue the axes are
-inseparable, because the judge prompt for this run stated a correlation to the judge. A clean
-estimate needs re-scoring, which has not been done.
+expert baseline was withdrawn from the judge prompt after an ablation moved the axis by only $-0.02$,
+so the axis rests on the judge's own prior---and \textbf{that ablation is not reproducible against this
+release}, so the justification for the withdrawal is unchecked. It was measured on a superseded run no
+longer on disk, no per-arm judge scores were persisted, and all $250$ released records carry
+\texttt{judge\_prompt\_version: null}, so \texttt{analysis/ablate\_fields.py} refuses to run against
+them by design. The same applies to the $+0.98$ known-answers delta quoted for \emph{New}, whose stated
+baseline ($7.28$ over $50$ records) is inconsistent with this run's $8.14$ over $250$. Separately, $r =
+0.883$ cannot argue the axes are inseparable, because the judge prompt for this run stated a
+correlation to the judge. A clean estimate needs re-scoring, which has not been done.
 
 \paragraph{No mechanism evidence.} The exploration agent was never entered
 (\S\ref{sec:caesar}), so there is no single-agent mechanism claim to scope---there is no mechanism
 claim at all. The five commercial entrants differ in model, search budget and research loop
 simultaneously, so no comparison among them isolates a component.
 
-\paragraph{Budgets are not matched.} Realised searches per item run from ${\sim}0.6$
-(\texttt{gemini\_shallow}) to ${\sim}76$ (\texttt{gemini\_deepresearch\_max}). Depth is confounded
-with vendor rather than controlled, no cost--creativity frontier is reported, and output length is not
-a covariate in any released analysis.
+\paragraph{Budgets are not matched, and generation provenance is not uniform.} Realised searches per
+item run from $0.64$ (\texttt{gemini\_shallow}, zero searches on $40$ of $50$ items) to $76.28$
+(\texttt{gemini\_deepresearch\_max}, max $144$), so depth is confounded with vendor rather than
+controlled, and no cost--creativity frontier is reported. Separately, $196$ of the $250$ generations
+were served from a content-addressed cache populated by three earlier runs at two different commits;
+only \texttt{claude\_shallow} was generated entirely fresh. Cache reuse is therefore unbalanced across
+entrants and its effect on scores is unmeasured.
+
+\paragraph{Length is not controlled, and is not measured.} Output length is \textbf{not} recorded for
+this run: zero of the $250$ records carry \texttt{answer\_chars} or \texttt{answer\_words}. The only
+stored size field is the provider's billed token count, which includes invisible reasoning tokens and
+is not comparable across arms, so a length covariate is not computable from this release at all.
 
 \paragraph{The registered equivalence test cannot fire.} TOST as registered compares a category
 composite against a reference of $0$ with bounds of $\pm1$ on a $1$--$10$ scale, which no category can

@@ -1,6 +1,44 @@
 \section{Creative \emph{and} Grounded: the Factual-Grounding Check}
 \label{sec:grounding}
 
-A creativity benchmark must not reward confabulation. We therefore apply a \emph{factual-grounding check} to every agent's CREST outputs, cross-agent, using established attribution metrics \citep{gao2023alce,rashkin2023ais,min2023factscore} and the DeepResearch Bench FACT score \citep{du2025deepresearchbench}. The check targets an answer's \emph{factual scaffolding}---its load-bearing factual claims---not the creative artifact itself: if that scaffolding is not attributable to the cited sources, the output is disqualified for creativity (creativity score $=0$), whereas a genuine invention is \emph{never} penalized merely for lacking a citation for the invented idea. The production check is a per-claim FACT verifier. This operationalizes ``\emph{Useful} gates \emph{New}'' and closes the novelty-by-hallucination exploit that sinks corpus-novelty metrics (\S\ref{sec:related}).
+A creativity benchmark must not reward confabulation. CREST addresses this with a
+\emph{factual-grounding check} that runs on every answer before creativity is scored. This section
+reports what that check is and what it measured, both of which are less than earlier drafts of this
+section claimed. Taking those claims one at a time: there is \emph{no} per-claim FACT verifier and
+\emph{no} implementation of any of the attribution metrics those drafts cited
+\citep{gao2023alce,rashkin2023ais,min2023factscore,du2025deepresearchbench}; there are \emph{no} human
+faithfulness labels anywhere in this artifact, so precision and recall against them were never
+measured; there is \emph{no} per-agent firing-rate analysis; and there is \emph{no} sensitivity
+analysis comparing results with and without the check. The last two are not merely unrun but
+uncomputable here, for the reason given below.
 
-Because the check zero-inflates the score distribution, we model creativity with a two-part (hurdle) model---a pass component and a conditional-creativity component---rather than assuming normality. We validate the check's precision/recall against human faithfulness labels, report its per-agent firing rate (to detect differential firing), and run a with/without-check sensitivity analysis. This section is computed on the \emph{same} reports scored for creativity, so ``creative and well-sourced'' is shown jointly and across all agents---not as a single-system showcase.
+\paragraph{What the check actually is.} A \emph{cue counter}, not a verifier. It counts
+citation-worthy cues in the answer and requires that dated or statistical claims do not outnumber
+citations beyond a calibrated ratio. It therefore does \textbf{not} check that a citation supports
+the claim beside it, so an entrant that fabricates while emitting plausible URLs defeats it. The
+check targets an answer's \emph{factual scaffolding}---its load-bearing factual claims---and not the
+creative artifact, so a genuine invention is never penalised for lacking a citation for the invented
+idea. A per-claim FACT-style verifier is the intended replacement and is \textbf{not built}.
+
+\paragraph{What it measured: nothing.} All $250$ answers passed and the anti-fabrication clause fired
+\textbf{zero} times. Two consequences follow, and both are why the analyses named above cannot be
+computed rather than merely pending. A per-agent firing-rate comparison has no events to compare. And
+the two-part (hurdle) model, which is implemented in \texttt{analysis/stats.py} and which earlier
+drafts justified by an appeal to zero-inflation in the score distribution, is vacuous here: the
+observed rate of gated records is $0\%$, so its pass component has no variance and only the
+conditional-creativity component carries information. We therefore report the check as a cheap guard
+that has \textbf{not been exercised}, not as a demonstrated control.
+
+\paragraph{A failing answer is \texttt{unscored}, not zero.} Earlier drafts said a failing output is
+disqualified with a creativity score of zero. That is \textbf{not} what the harness does, and the
+difference matters: recording a measurement failure as a real low score would fold it into
+the results and depress an entrant's mean. The harness records \texttt{scoring\_status} and leaves
+\texttt{creativity} null, so gated records are excluded from the reported means rather than counted
+as zeros.
+
+\paragraph{NOT performed: the external citation-faithfulness comparison.} Establishing that
+CREST-creative outputs are also well-sourced would require scoring the same reports on a
+citation-faithfulness benchmark and joining the two result sets per report. No run on any external
+benchmark is included in this artifact, so we make \textbf{no} claim that creativity and grounding
+co-occur; the grounding check is reported separately from the creativity score and is never added
+into it.
