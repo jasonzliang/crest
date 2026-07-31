@@ -231,7 +231,7 @@
    "Generativity: give one falsifiable prediction with a named observable, a direction, and a numeric threshold or exponent, plus the experiment that would refute it.",
    "NOVELTY GATE: an answer whose core is stochastic rounding, loss scaling, keeping sensitive layers or outliers in higher precision, block scaling, or fitting a smooth precision scaling law restates published work and earns no New credit."
   ],
-  "expert_baseline": "The convergent expert answer treats precision as a smooth accuracy-versus-cost dial: rounding is noise, stochastic rounding makes it unbiased, loss scaling and high-precision master weights keep training stable, outliers and sensitive layers get more bits, block-shared scales handle dynamic range, and precision-aware scaling laws place the compute-optimal point at a few bits with post-training-quantization damage growing with tokens seen. The expected contribution is empirical curve-fitting plus engineering mitigation, validated by loss and downstream accuracy at each format."
+  "expert_baseline": "The convergent expert answer treats precision as a smooth accuracy-versus-cost dial: rounding is noise, stochastic rounding makes it unbiased, loss scaling and high-precision master weights keep training stable, outliers and sensitive layers get more bits, block-shared scales handle dynamic range, and precision-aware scaling laws place the compute-optimal training point at roughly 7-8 bits with post-training-quantization damage growing with tokens seen. The expected contribution is empirical curve-fitting plus engineering mitigation, validated by loss and downstream accuracy at each format."
  },
  {
   "id": "C3_systems_efficiency_08",
