@@ -144,7 +144,7 @@
     "ICC(1,k) = 0.0 / 0.618 / 0.0 (New/Useful/Surprising). The one-way model absorbs judge severity into error. Two-way ICC(3,k) = 0.736 / 0.807 / 0.759, with the judge accounting for 63.2% / 29.0% / 68.2% of variance. Report BOTH; either alone misleads.",
     "ICC(3,*) was added AFTER seeing the data and is EXPLORATORY (see analysis/preregistration.yaml).",
     "Live web retrieval, NOT contamination-controlled. No frozen index exists.",
-    "Search budgets are NOT matched across arms: realised searches ran 2.9 (openai_shallow) to ~76 (gemini_deepresearch_max). Treat depth as a factor, not as noise.",
+    "Search budgets are NOT matched across arms: realised searches ran 0.64 (gemini_shallow, with ZERO searches on 40 of its 50 items) to 76.28 (gemini_deepresearch_max, max 144) -- a 119x range, not the 26x an earlier version of this caveat implied by quoting 2.9 (openai_shallow, the second-lowest arm) as the floor. Treat depth as a factor, not as noise.",
     "0 of 250 records carry adapter_fp / truncated / answer_chars / answer_words, so answer-length covariates cannot be computed from this release and the generation cache cannot serve it."
   ]
 }

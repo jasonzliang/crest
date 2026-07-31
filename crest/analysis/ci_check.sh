@@ -50,6 +50,39 @@ python -m crest.analysis.validate_items >/tmp/ci_items.log 2>&1 \
   && echo "  OK no mechanical contradictions" \
   || { echo "  FAIL $(grep -c BLOCKING /tmp/ci_items.log) contradiction(s):"; grep BLOCKING /tmp/ci_items.log | sed 's/^/    /'; fail=1; }
 
+echo "== second item file: crest_aiml_challenges.jsonl"
+# This 50-item AI/ML set was entirely OUTSIDE the gate -- 0 references to it in this script -- so its
+# items could rot silently, and its 9 most recent items had never been mechanically checked at all.
+# It is deliberately held to a LOWER bar than crest_challenges.jsonl, because no paper claims it:
+# grep finds zero mentions across both papers, and readme.md says it is "NOT ... run or scored".
+# So it gets the two checks that apply to ANY item file (it must load, and it must not contradict
+# itself) but NOT the release-artifact checks (design sidecar, quarantine), which would fail on it.
+# PROMOTION CONDITION: the moment any paper, the readme's release list, or the datasheet claims this
+# file as released content, add the item_design.jsonl bijection and quarantine checks for it too --
+# it has NO design sidecar today (0 of its 50 ids appear in item_design.jsonl, vs 50 of 50 for the
+# science set), so that promotion is real work, not a one-line edit.
+AIML=crest/questions/crest_aiml_challenges.jsonl
+if [ ! -s "$AIML" ]; then
+  echo "  FAIL $AIML is missing or empty -- it is referenced by readme.md and the datasheet"; fail=1
+else
+  python -c "
+import sys; sys.path.insert(0,'.')
+from crest.harness.run_crest import load_challenges
+n=len(load_challenges('$AIML'))
+print(f'  OK {n} items load and validate')
+" || fail=1
+  python -m crest.analysis.validate_items --challenges "$AIML" >/tmp/ci_aiml.log 2>&1 \
+    && echo "  OK no mechanical contradictions" \
+    || { echo "  FAIL $(grep -c BLOCKING /tmp/ci_aiml.log) contradiction(s):"; grep BLOCKING /tmp/ci_aiml.log | sed 's/^/    /'; fail=1; }
+  # Not a release check, just visibility: neither item file cites sources for its known-answers
+  # lists, so "dated known-answers" rests on author assertion in BOTH sets, not on citations.
+  python -c "
+import json
+n=sum(1 for l in open('$AIML',encoding='utf-8') if l.strip() and (json.loads(l).get('citations') or json.loads(l).get('sources')))
+print(f'  NOTE {n}/50 aiml items cite sources for known_answers (the science set is also 0/50)')
+" || true
+fi
+
 echo "== claims the repo cannot instantiate (BOTH papers)"
 # a gate that silently passes when its input is gone is worse than no gate: deleting the sections
 # directory previously turned three checks green
