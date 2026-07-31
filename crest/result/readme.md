@@ -15,8 +15,10 @@ result/
   index.jsonl                   append-only registry: one line per run (discovery)   [gitignored]
   latest -> runs/<run_id>       symlink to the newest run (convenience, NOT canonical) [gitignored]
   superseded_runs.json          provenance for DELETED run dirs: what each showed, why superseded
-  leaderboard.json              promoted canonical numbers cited in the paper (by hand; NOT YET
-                                 CREATED — no ranking claim is currently supportable)
+  leaderboard.json            promoted canonical numbers cited in the paper. TRACKED, and the
+                              only copy of the results inside git -- result/runs/ is gitignored,
+                              so summary.json is not in git at all. Regenerate with
+                              `python -m crest.analysis.promote_leaderboard --run <run_dir>`.
   runs/<run_id>/                                                                     [gitignored]
     README.md                   per-run orientation + the records↔transcripts join recipe
     records.jsonl               analysis-grade, one line per (challenge, agent); no heavy text
@@ -33,7 +35,10 @@ result/
 Run outputs are ~7 MB per run, so `runs/`, `index.jsonl` and `latest` are **gitignored** and
 live on disk only; they are both the generation cache and the evidence base, so do not delete them.
 
-- **"the numbers in the paper"** → `leaderboard.json` (hand-promoted, pins source run ids).
+- **"the numbers in the paper"** → `leaderboard.json`. It carries the primary endpoint
+  min(New,Useful,Surprising) per agent (which `summary.json` does NOT), the run's provenance
+  including derived warnings about it, and the caveats -- chiefly that judge severity exceeds
+  the between-agent spread, so **the ordering is not identifiable** from this run.
 - **"the latest run"** → `latest`.
 - **"what runs exist"** → `index.jsonl`.
 - Analyze a run: `python -m crest.analysis.stats --run crest/result/runs/<run_id>/records.jsonl`.
