@@ -1,23 +1,46 @@
 \section{The Exploration Agent Under Study}
 \label{sec:caesar}
 
-One of the entrants is an exploration-based deep-research agent whose full architecture is
-described in a companion preprint that we cite in the third person to preserve double-blind review
-\citep{caesar2026}. We summarize only the properties needed to interpret the ablations in
-\S\ref{sec:experiments}; we make no architectural contribution here and claim no privilege for
-this agent on the leaderboard.
+\textbf{Status: this agent was NOT evaluated in the released run.} The five entrants scored in this
+release are all off-the-shelf commercial systems---\texttt{openai\_deepresearch},
+\texttt{openai\_shallow}, \texttt{claude\_shallow}, \texttt{gemini\_deepresearch\_max} and
+\texttt{gemini\_shallow} (\S\ref{sec:experiments}). No exploration agent appears in the entrant
+registry, and none of the $250$ scored records belongs to one. Everything in this section is
+therefore a \emph{hypothesis and an experimental design}, not a result. An earlier draft described
+the agent as ``one of the entrants'' and pointed at component ablations that test its mechanism;
+neither was true of the artifact, and both are withdrawn.
 
-At a high level the agent (i) maintains an explicit, branching \emph{exploration} over candidate
-lines of inquiry rather than a single linear chain, and (ii) performs an iterative
-\emph{refinement} pass that revises a working answer against retrieved evidence. Our
-\emph{mechanistic hypothesis}---pre-registered---is that these two components map onto two of the
-task types: the exploration/structure-mapping component should drive \textbf{cross-domain} (C3)
-gains, and the refinement-over-a-causal-model component should drive \textbf{counterfactual} (C2)
-gains, while neither should help \textbf{constrained} (C1) or \textbf{open-ended} (C5) tasks. This
-hypothesis is what the component ablations in \S\ref{sec:experiments} test.
+\paragraph{What the agent is.} An exploration-based deep-research agent whose full architecture is
+described in a companion preprint, cited in the third person to preserve double-blind review
+\citep{caesar2026}. We claim no architectural contribution here. Two properties matter for the
+design below: it (i) maintains an explicit, branching \emph{exploration} over candidate lines of
+inquiry rather than a single linear chain, and (ii) performs an iterative \emph{refinement} pass
+that revises a working answer against retrieved evidence.
 
-The agent is included as \emph{one entrant among many}. Every headline claim about CREST is
-required to hold with this agent removed from the board, and the benchmark is explicitly designed
-so that its author's system loses on 2 of the 5 core task types (\S\ref{sec:experiments}). We note
-for transparency that this agent shares a model family with one judge vendor; that judge is
-therefore excluded when scoring this agent under the leave-one-family-out rule.
+\paragraph{The mechanistic hypothesis (untested).} If those components do what their designs
+intend, they should map onto specific task types: exploration/structure-mapping should drive
+\textbf{cross-domain} (C3) gains, and refinement-over-a-causal-model should drive
+\textbf{counterfactual} (C2) gains, while neither should help \textbf{constrained} (C1) or
+\textbf{open-ended} (C5) tasks. Only C2 and C3 are entailed by the account; parity on C4 and nulls
+on C1/C5 are free parameters, which is a genuine weakness of the hypothesis and is recorded as such
+in \texttt{analysis/preregistration.yaml}.
+
+\paragraph{How it would be tested.} The discriminating evidence is a \emph{single dissociation}
+under component ablation: disabling exploration should degrade C3 and not C2, disabling refinement
+should degrade C2 and not C3, and neither should move C1/C5. That design is what would make the
+prediction falsifiable rather than post hoc---a uniform degradation across all five task types
+would be consistent with a generic capability loss, or with length or judge-severity artifacts, and
+would \emph{not} support the mechanistic account. Running it requires (a) an adapter for the agent
+in \texttt{harness/agents.py}, (b) ablated variants exposed as separate entrants, and (c) a run
+judged under a single judge-prompt version. None of the three exists yet.
+
+\paragraph{Conflict of interest, stated plainly.} Were this agent added to the board it would be
+\emph{one entrant among many}, and every headline claim about CREST is required to hold with it
+removed. Two safeguards named in earlier drafts are no longer available and must not be relied on.
+First, leave-one-family-out was \textbf{withdrawn} after measurement: with only three judge vendors
+it makes judge identity perfectly confounded with entrant family, and it widens rather than narrows
+the between-agent spread (\S\ref{sec:crest}). Same-family self-preference is instead stamped per
+judge row for post-hoc analysis, and that analysis is not yet run. Second, and more fundamentally,
+judge severity in this panel ($3.2$--$3.7$ points per axis) exceeds the entire between-agent spread
+($2.06$ points), so \textbf{no ranking claim is supportable for any entrant}, this one included. A
+future evaluation of this agent must report that constraint alongside any result.

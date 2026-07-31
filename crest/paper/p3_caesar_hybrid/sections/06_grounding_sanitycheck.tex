@@ -1,19 +1,33 @@
 \section{Creative \emph{and} Well-Sourced: Grounding Sanity Check}
 \label{sec:grounding}
 
-A natural worry is that creativity scores reward confident fabrication. We address it two ways.
-First, within CREST, Useful penalizes unsound or incoherent claims, and a separate
-\emph{factual-grounding check} must pass before creativity is scored: an answer's \emph{factual
-scaffolding}---the established facts it builds on---must be attributable to cited sources, and an
-answer that fails scores zero creativity. The check targets that scaffolding, \emph{not} the
-invented artifact itself, so it never penalizes novelty; in production it is a per-claim,
-FACT-style verifier (citation faithfulness; \citealp{gao2023alce,rashkin2023ais,min2023factscore}).
-It is reported \emph{separately} from and is never added into the creativity score.
+A natural worry is that creativity scores reward confident fabrication. CREST addresses it two ways,
+and only the first is implemented.
 
-Second, on two established citation-faithfulness benchmarks---\textbf{LiveResearchBench}
+\paragraph{Implemented: a grounding gate, which has never fired.} \emph{Useful} penalizes unsound or
+incoherent claims, and a separate \emph{factual-grounding check} must pass before creativity is
+scored. An answer that fails is recorded \texttt{unscored}---explicitly \emph{not} a creativity score
+of zero, which would fold a measurement failure into the results as a real low score. The check
+targets an answer's \emph{factual scaffolding}---the established facts it builds on---rather than the
+invented artifact, so it does not penalize novelty, and it is reported separately from the creativity
+score and never added into it.
+
+Its measured contribution on the released run is \textbf{nothing}: all $250$ answers passed, and the
+anti-fabrication clause fired zero times. So we report it as a cheap guard that has \emph{not} been
+exercised, not as a demonstrated control. It is also only a proxy---it counts citation-worthy cues
+and checks that dated or statistical claims do not outnumber citations beyond a calibrated ratio. It
+does \textbf{not} verify that a citation supports the claim beside it, so an entrant that fabricates
+while emitting plausible URLs defeats it. A per-claim FACT-style verifier (citation faithfulness;
+\citealp{gao2023alce,rashkin2023ais,min2023factscore}) is the intended replacement and is
+\textbf{not built}.
+
+\paragraph{NOT performed: the external citation-faithfulness comparison.} An earlier draft reported
+that the exploration agent ranks top-2 on citation accuracy on \textbf{LiveResearchBench}
 \citep{liveresearchbench2025} and the \textbf{FACT} score of \textbf{DeepResearch Bench}
-\citep{du2025deepresearchbench}---the exploration agent ranks top-2 on citation accuracy while
-remaining competitive on overall report quality [PLACEHOLDER for ranks]. Because these are the
-\emph{same reports} that score high on CREST creativity, we can state that the creative outputs are
-also well-sourced, not merely fluent guesses. This section measures grounding only; it makes no
-creativity claim.
+\citep{du2025deepresearchbench}, and concluded that because those are the \emph{same reports} that
+score high on CREST creativity, the creative outputs are also well-sourced. That argument is
+withdrawn in full. The exploration agent was never entered into CREST (\S\ref{sec:caesar}), so there
+are no shared reports to reason across, and no run on either external benchmark is included in this
+artifact. Establishing that CREST-creative outputs are also well-sourced would require evaluating
+the same entrants on a citation-faithfulness benchmark and joining the two result sets per report;
+that experiment is future work.

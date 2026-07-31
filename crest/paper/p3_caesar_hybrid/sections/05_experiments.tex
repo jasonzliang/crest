@@ -1,66 +1,84 @@
 \section{Experiments}
 \label{sec:experiments}
 
-\paragraph{Setup.} We run CREST on frontier deep-research agents (OpenAI, Gemini, Claude,
-Perplexity) through their \emph{provider-native web search} and at least one open-weight agent
-(we recommend LangChain's \texttt{open\_deep\_research}) on the frozen shared index as the
-reproducible core, plus the exploration agent of \S\ref{sec:caesar}, all under matched budgets.
-Creativity is scored by the median, leave-one-family-out, human-validated panel (\S\ref{sec:crest}).
-The analysis plan is pre-registered and implemented: we fit per-item mixed-effects models (crossed
-random effects for question and rater), correct for multiplicity, and report bootstrap confidence
-intervals; we do \emph{not} collapse task types into one average. Because the factual-grounding
-check (\S\ref{sec:grounding}) zero-inflates the score distribution, we model creativity with a
-two-part (hurdle) model. For predicted-null and parity categories we use TOST equivalence tests, so
-a non-win reads as evidence of equivalence rather than low power, with C2/C3 as positive controls
-that establish instrument sensitivity.
+\paragraph{What was actually run.} One run: $50$ CREST challenges $\times$ $5$ entrants $=250$
+records, all scored, under live provider-native web search, judged by the three-vendor full panel.
+The entrants are \texttt{openai\_deepresearch}, \texttt{openai\_shallow},
+\texttt{gemini\_deepresearch\_max}, \texttt{gemini\_shallow} and \texttt{claude\_shallow}.
 
-\paragraph{Prior human pilot (small; motivation only, \emph{not} a CREST result).} A small
-\emph{prior} human pilot---5 questions, $\sim$22 votes per item---motivated this study. Reported as
-(agent votes)--(competitor votes):
-\begin{center}
-\begin{tabular}{lcc}
+\textbf{The exploration agent of \S\ref{sec:caesar} is not among them}, so this section contains
+\emph{no} evidence about it. Earlier drafts of this section reported a setup that did not exist: a
+Perplexity entrant, an open-weight entrant on a frozen shared index, matched budgets, a
+human-validated judge panel, component ablations, and a judge$\leftrightarrow$human agreement study.
+None of those was run. They are removed rather than marked \texttt{[PLACEHOLDER]}, because a
+placeholder in a results section reads as ``pending'' when the correct description is ``not
+attempted.''
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lccccccccc}
 \toprule
-Task type & Pilot votes & Direction \\
+ & \multicolumn{1}{c}{Primary} & \multicolumn{3}{c}{Per-axis mean} & \multicolumn{5}{c}{Primary endpoint by category} \\
+\cmidrule(lr){2-2}\cmidrule(lr){3-5}\cmidrule(lr){6-10}
+Entrant & $\min(N,U,S)$ & $N$ & $U$ & $S$ & C1 & C2 & C3 & C4 & C5 \\
 \midrule
-C1 Constrained (invent within rules)      & 5--18  & loses \\
-C2 Counterfactual (``what-if'')           & 18--5  & wins \\
-C3 Cross-domain (connect distant fields)  & 20--2  & wins \\
-C4 Meta-creativity (invent a method)      & 13--9  & $\approx$ even \\
-C5 Open-ended (many valid answers)        & 7--15  & loses \\
+\texttt{openai\_deepresearch}     & 6.24 & 8.52 & 6.76 & 7.90 & 4.40 & 7.70 & 6.70 & 6.00 & 6.40 \\
+\texttt{openai\_shallow}          & 6.18 & 8.58 & 6.68 & 7.82 & 3.80 & 7.60 & \textbf{7.50} & 5.90 & 6.10 \\
+\texttt{claude\_shallow}          & 5.72 & 8.08 & 6.06 & 7.44 & 3.20 & 7.30 & 6.30 & 5.80 & 6.00 \\
+\texttt{gemini\_deepresearch\_max}& 4.92 & 7.96 & 5.02 & 7.42 & 3.60 & 5.80 & 5.50 & 4.30 & 5.40 \\
+\texttt{gemini\_shallow}          & 4.18 & 7.56 & 4.34 & 6.96 & 3.40 & 4.60 & 4.70 & 4.60 & 3.60 \\
+\midrule
+Field mean                        & 5.45 & 8.14 & 5.77 & 7.51 & 3.68 & 6.60 & 6.14 & 5.32 & 5.50 \\
 \bottomrule
 \end{tabular}
-\end{center}
-\textbf{We do not claim the finding on this pilot.} It is hypothesis-generating; the pattern was
-observed post hoc, so we pre-register it and confirm on fresh CREST questions below.
+\caption{CREST results, $n=50$ per entrant. \textbf{Not a ranking.} The between-entrant spread is
+$2.06$ points on the primary endpoint while judge severity spans $3.32/3.20/3.74$ points per axis
+(\S\ref{sec:crest}), so the ordering is not identifiable. Supported readings: \emph{Useful} is the
+binding axis ($4.34$--$6.76$ against $7.56$--$8.58$ for \emph{New}), and C1 is uniformly hard, the
+only category where no entrant clears $5$.}
+\label{tab:results}
+\end{table}
 
-\paragraph{Live-web pilot (pipeline smoke test; motivation only).} Separately, a small
-\emph{live-web} pilot---5 questions, 2 agents, scored by a 3-judge leave-one-family-out panel---
-exercised the end-to-end pipeline and reproduced the predicted direction (creative on cross-domain
-C3, and \emph{not} on constrained C1 or counterfactual C2). This is a smoke test: one item per
-category and effectively one scored agent, so it establishes only that the pipeline runs and points
-the predicted way, \emph{not} the finding. The confirmatory result stays on the frozen-index run
-below, with all numbers reported as [PLACEHOLDER].
+\paragraph{Task type dominates entrant identity.} The field mean spans $3.68$ (C1) to $6.60$ (C2), a
+$2.92$-point range, against $2.06$ points between the best and worst entrant. So CREST does separate
+task types---but the ordering (C2 $>$ C3 $>$ C5 $>$ C4 $>$ C1) is nearly the same for every entrant,
+which is a property of the \emph{items}, not a dissociation among agents.
 
-\paragraph{Main result (on fresh CREST questions).} [PLACEHOLDER: per-task-type effect sizes with
-CIs; the pre-registered pattern is win on C2/C3, parity on C4, null on C1/C5.] The headline is a
-\textbf{crossover interaction}: the top agent on C3 is not the top agent on C1/C5---a
-rank-reversal, not a level shift---which we test explicitly as an agent$\times$task interaction.
-Because the pattern holds across multiple agents [PLACEHOLDER], we retain the general title; were
-it confined to one agent we would retitle to an honest single-agent case study.
+\paragraph{One rank reversal, and it is weak.} \texttt{openai\_shallow} leads on cross-domain C3
+($7.50$ vs $6.70$) while \texttt{openai\_deepresearch} leads overall and on C2, C4 and C5. That is a
+real agent$\times$category interaction, but it is a single reversal between two entrants from the
+same vendor separated by $0.06$ points overall, and judge severity exceeds the entire
+between-entrant spread---so it cannot be distinguished from judge noise. The strong
+``rank-reversal, no single creativity scalar'' framing of earlier drafts is withdrawn.
 
-\paragraph{Mechanism (ablations).} Disabling the exploration component degrades \emph{only} C3;
-disabling the refinement component degrades \emph{only} C2; neither materially changes C1/C5
-[PLACEHOLDER for effect sizes]. This single-dissociation pattern is the evidence that the gains
-are mechanism-driven rather than an artifact of length or judge bias. Ablations are scored under
-the frozen, human-validated judge settings (fixed \emph{before} the questions were touched).
+\paragraph{The mechanistic hypothesis is untested, and this run cannot test it.} The prediction of
+\S\ref{sec:caesar}---exploration drives C3, refinement drives C2, neither moves C1/C5---requires
+component ablations on an agent that was never entered. Nothing in this table bears on it. Note also
+that the commercial entrants here differ along many dimensions at once (model, search budget,
+managed research loop), so even a per-category difference between them would not isolate a
+mechanism; only a within-agent ablation would.
 
-\paragraph{Human study.} Domain experts score the agents' \emph{real} (not rewritten) outputs
-pairwise on all five task types, with emphasis on the two types where the automated judge is least
-reliable. Judge$\leftrightarrow$human agreement: the judge agrees with humans on the C2/C3 win
-types (so the headline wins are on solid ground) and disagrees on the C1/C5 loss types
-[PLACEHOLDER for $\alpha$/ICC]; we therefore treat C1/C5 conclusions as human-anchored and flag the
-gap openly rather than tuning the judge to remove it.
+\paragraph{Prior human pilot (motivation only, \emph{not} a CREST result).} A small prior human
+pilot---$5$ questions, ${\sim}22$ votes per item---motivated this study, reported as (agent
+votes)--(competitor votes): C1 $5$--$18$ (loses), C2 $18$--$5$ (wins), C3 $20$--$2$ (wins), C4
+$13$--$9$ ($\approx$ even), C5 $7$--$15$ (loses). \textbf{We do not claim the finding on this
+pilot}: the pattern was observed post hoc, $n$ is tiny, and the pilot's data are not in this
+repository, so the numbers above are not independently checkable from the artifact. Notably, the
+CREST run does \emph{not} reproduce that pattern for any commercial entrant---the field is ordered by
+task difficulty rather than showing C2/C3 wins against C1/C5 losses.
 
-\paragraph{Length and budget controls.} Output length enters the models as a covariate and all
-agents share a compute/tool budget, so wins are not explained by longer reports or more searches
-\citep{singh2025leaderboard}.
+\paragraph{Statistics: what is computed.} Per-item mixed-effects models with a challenge-level random
+intercept, bootstrap confidence intervals, an agent$\times$category interaction test, and a two-part
+(hurdle) model for the grounding-gated score. Withdrawn from earlier drafts because they are not
+implemented: a \emph{rater} random effect (the models have a challenge intercept only), multiplicity
+correction, output length as a covariate, and MDE/power curves. The registered TOST is not usable as
+registered---it tests a category composite against a reference of $0$ with $\pm1$ bounds on a
+$1$--$10$ scale, which no category can satisfy---so null categories are reported descriptively
+rather than as equivalence results.
+
+\paragraph{Reproducibility.} Items, harness, judge config, analysis code and the promoted
+\texttt{result/leaderboard.json} are tracked. The $250$-record run directory is not:
+\texttt{result/runs/} is gitignored, so per-record judge rows and transcripts are absent from the
+repository and this table cannot be recomputed from a fresh clone. Because retrieval is live, a
+re-run will not reproduce these numbers exactly in any case.
