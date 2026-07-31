@@ -91,6 +91,50 @@ def compute_summary(records: list) -> dict:
     }
 
 
+def _write_run_readme(run_dir: Path, manifest: dict) -> None:
+    """Drop a README into every run dir. The two main files are named misleadingly for historical
+    reasons -- `records.jsonl` is the JUDGE output and `transcripts.jsonl` is the AGENT output -- so
+    a reader opening a released run cannot tell which is which without reading the harness."""
+    t = manifest.get("totals", {})
+    agents = ", ".join(a.get("key", "?") for a in manifest.get("agents", []))
+    judges = ", ".join(j.get("id", "?") for j in manifest.get("judges", []))
+    (run_dir / "README.md").write_text(f"""# Run `{manifest.get('run_id', run_dir.name)}`
+
+{manifest.get('created_at', '')} · {t.get('n_records', '?')} records · agents: {agents}
+judges: {judges} · protocol: {manifest.get('judge_protocol', '?')}
+
+## Which file is which
+
+| file | produced by | contains |
+|---|---|---|
+| `transcripts.jsonl` | **the AGENTS** | what each agent actually wrote: `output_text` + `citations` |
+| `records.jsonl` | **the JUDGES** | the scores: per-axis New/Useful/Surprising, per-judge rows, grounding verdict, `scoring_status` |
+| `errors.jsonl` | the harness | tasks that produced no record at all |
+| `summary.json` | the harness | per-agent and per-agent-x-category aggregates |
+| `run_manifest.json` | the harness | provenance; written last, so it marks completion |
+
+The names are historical: "records" is the judge output and "transcripts" is the agent output, which
+is the reverse of what most readers assume. **Join them on `record_id`.**
+
+```python
+import json
+scores = {{r["record_id"]: r for r in map(json.loads, open("records.jsonl"))}}
+answers = {{t["record_id"]: t for t in map(json.loads, open("transcripts.jsonl"))}}
+rid = next(iter(scores))
+print(scores[rid]["agent"], scores[rid]["creativity"]["new"], answers[rid]["output_text"][:200])
+```
+
+## Reading the scores
+`creativity` is null unless `scoring_status == "scored"`. Other statuses: `judge_degraded` (fewer
+judges than `min_judges` survived), `empty_answer` (the agent returned nothing -- an ADAPTER failure,
+not a grounding failure), `grounding_fail`, `judge_error`. Per-axis values are the MEDIAN across the
+judges in `creativity.judges`; each judge row carries `same_family`, so the leave-one-family-out
+subset is recoverable by filtering those rows out.
+
+Totals: {json.dumps(t)}
+""")
+
+
 def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifest: dict) -> None:
     """Write summary.json + run_manifest.json (last, as the completion marker), append index.jsonl,
     and repoint the `latest` symlink. Manifest is written last so a crashed run can't look complete."""
@@ -113,9 +157,26 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
                            "n_task_errors": n_task_errors},
                 "environment": {"python": sys.version.split()[0], "platform": platform.platform(),
                                 "packages": pkg_versions()},
-                "outputs": {"records": "records.jsonl", "transcripts": "transcripts.jsonl",
-                            "errors": "errors.jsonl", "summary": "summary.json"}}
+                # describe each output by WHO PRODUCED IT and WHAT IS IN IT. The bare filenames are
+                # historical and opaque -- "records" is the judge scores and "transcripts" is the
+                # agent answers, which is the opposite of what most readers assume.
+                "outputs": {
+                    "records.jsonl": "JUDGE EVALUATIONS + metadata, one line per (challenge, agent). "
+                                     "Analysis-grade: per-axis scores, per-judge breakdown with "
+                                     "same_family, grounding verdict, scoring_status. No answer text.",
+                    "transcripts.jsonl": "AGENT ANSWERS, one line per (challenge, agent), joined to "
+                                         "records.jsonl on record_id. The full output_text the agent "
+                                         "produced plus its citations. This is the heavy file.",
+                    "errors.jsonl": "tasks that produced NO record: agent exceptions and "
+                                    "circuit-open skips. A short run is explained here.",
+                    "summary.json": "aggregates per agent and per agent x category.",
+                    "run_manifest.json": "provenance: git commit, pinned models, judge protocol, "
+                                         "totals, environment. Written LAST, so its presence marks "
+                                         "a completed run.",
+                    "config.snapshot.yaml": "the config exactly as run.",
+                    "README.md": "what each file holds and how to join them."}}
     (run_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+    _write_run_readme(run_dir, manifest)
     # discovery registry
     top = manifest.get("agents", [])
     with (result_root / "index.jsonl").open("a") as fo:
