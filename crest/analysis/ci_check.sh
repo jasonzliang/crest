@@ -106,19 +106,26 @@ else
   elif [ ! -s "$allow" ]; then
     echo "  FAIL $allow is missing or empty -- the canary gate cannot run"; fail=1
   else
-  n_bad=$(git ls-files -z --cached --others --exclude-standard \
-            'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
-          | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
-          | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u \
-          | grep -vxFf "$allow" | wc -l | tr -d ' ')
+  # Capture the file list ONCE and assert it is non-empty. `printf "" | xargs -0 grep` exits 0 with no
+  # output, so an empty list yielded n_bad=0 and the gate printed OK -- the same fail-open as the
+  # not-a-git-repo hole closed one branch above, and this file list IS the gate's coverage. Capturing
+  # also collapses a 5-stage pipeline that previously ran once to count and again to print.
+  doc_list=$(git ls-files --cached --others --exclude-standard \
+               'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex')
+  if [ -z "$doc_list" ]; then
+    echo "  FAIL no crest .md/.tex files enumerated -- the canary gate has no coverage"; fail=1
+    bad_lines=""
+  else
+    bad_lines=$(printf '%s\n' "$doc_list" | tr '\n' '\0' \
+                | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
+                | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u \
+                | grep -vxFf "$allow")
+  fi
+  n_bad=$(printf '%s' "$bad_lines" | grep -c . | tr -d ' ')
   if [ "${n_bad:-0}" != "0" ]; then
     echo "  FAIL $n_bad canary line(s) not in $allow, and only $have/$total items carry one."
     echo "       Re-read each, then add it verbatim to the allow file if it is honest:"
-    git ls-files -z --cached --others --exclude-standard \
-            'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
-      | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
-      | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u | grep -vxFf "$allow" \
-      | cut -c1-110 | sed 's/^/         /'
+    printf '%s\n' "$bad_lines" | cut -c1-110 | sed 's/^/         /'
     fail=1
   else echo "  OK all canary mentions are human-approved ($have/$total items carry one)"; fi
   fi

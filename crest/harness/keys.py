@@ -60,6 +60,7 @@ class _Pool:
     def __init__(self):
         self._lock = threading.Lock()
         self._cool: dict[str, float] = {}     # key -> epoch time when usable again
+        self._dead: set[str] = set()          # keys retired permanently (auth failures)
         self._i = 0
 
     def order(self, keys: list[str]) -> list[str]:
@@ -69,10 +70,20 @@ class _Pool:
         with self._lock:
             self._i = (self._i + 1) % max(1, len(keys))
             rot = keys[self._i:] + keys[:self._i]
+            rot = [k for k in rot if k not in self._dead] or rot   # never return an empty pool:
+                            # if every key is retired, hand them all back so the caller sees the
+                            # real provider error instead of an empty-list IndexError
             ready = [k for k in rot if self._cool.get(k, 0.0) <= now]
             cooling = sorted((k for k in rot if self._cool.get(k, 0.0) > now),
                              key=lambda k: self._cool.get(k, 0.0))
         return ready + cooling
+
+    def retire(self, key: str) -> None:
+        """Permanently remove a key for the rest of the process. Used for auth failures, which -- unlike
+        rate limits and spend caps -- do not heal on their own, so cooling them just re-spends an
+        attempt every cooldown."""
+        with self._lock:
+            self._dead.add(key)
 
     def trip(self, key: str, seconds: float = _COOLDOWN_S) -> None:
         with self._lock:
@@ -103,11 +114,17 @@ def call_anthropic(fn, what: str = "anthropic"):
             # single revoked key raised immediately, was never tripped out of the pool, and its
             # message matched run_crest's _TERMINAL_ERR, so three rotations circuit-broke a
             # perfectly healthy entrant. Measured with 1 bad key of 3: 20 of 60 hard failures.
-            if not any(k in msg for k in _KEY_EXHAUSTED + _KEY_INVALID):
+            invalid = any(k in msg for k in _KEY_INVALID)
+            if not (invalid or any(k in msg for k in _KEY_EXHAUSTED)):
                 raise                       # genuine error -- same on every key
-            _POOL.trip(key)
+            # An INVALID key is permanent for that key; an EXHAUSTED one is transient. Cooling both
+            # for _COOLDOWN_S meant a revoked key re-entered the ready rotation every two minutes and
+            # burned one attempt per call for the whole run, while the operator was told it was
+            # "exhausted" and sent to check billing rather than key validity.
+            _POOL.retire(key) if invalid else _POOL.trip(key)
             last = e
             if len(keys) > 1:
-                print(f"  [keypool] {what}: key ...{key[-4:]} exhausted, trying next "
+                print(f"  [keypool] {what}: key ...{key[-4:]} "
+                      f"{'INVALID (retired for this run)' if invalid else 'exhausted'}, trying next "
                       f"({len(keys)} configured)")
     raise last if last else RuntimeError("anthropic key pool: no key succeeded")
