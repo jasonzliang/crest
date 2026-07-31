@@ -304,7 +304,10 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
     if verbose:
         n_cached = sum(1 for ch, name, a in tasks
                        if cache and cache.get(ch.id, name, a.model, query_sha(ch.query),
-                                              adapter_fingerprint(a))) if cache else 0
+                                              _fingerprint_for(a))) if cache else 0   # memo, not
+                       # the raw call: this preflight runs per TASK, so on the default verbose+cache
+                       # path it made 504 getsource calls per 250-task run instead of 10 -- six
+                       # lines below the loop whose docstring promises 'one pair per adapter'.
         print(f"running {len(challenges)} challenges x {len(agents)} agents = {len(tasks)} tasks "
               f"({n_cached} served from cache, {len(tasks)-n_cached} to generate; "
               f"concurrency={concurrency}); dir={run_dir}")

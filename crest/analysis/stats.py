@@ -190,9 +190,15 @@ def icc_oneway(units: list[list[float]], judge_ids: list[tuple] | None = None) -
         pairs = [(u, i) for u, i in zip(units, judge_ids) if len(u) >= 2]
         units = [u for u, _ in pairs]
         judge_ids = [i for _, i in pairs]
+    elif judge_ids is not None:
+        # RAISE, do not discard. Setting judge_ids = None here stripped _icc_twoway's fixed-panel
+        # guard, so a length mismatch produced ICC(3,1)=1.0 on columns that mix judges -- reported as
+        # valid. The pre-fix code gave a false SKIP (conservative); discarding gave a false NUMBER.
+        # The comment four lines above names this exact hazard class and then recreated it.
+        raise InsufficientData(f"judge_ids ({len(judge_ids)}) and units ({len(units)}) are not "
+                               f"parallel; refusing to compute ICC(3,*) on an unverifiable panel")
     else:
         units = [u for u in units if len(u) >= 2]
-        judge_ids = None
     if len(units) < 3:
         raise InsufficientData("need >=3 units with >=2 ratings for ICC")
     n = len(units)
@@ -229,7 +235,7 @@ def _icc_twoway(units: list[list[float]], judge_ids: list[tuple] | None = None) 
 
     Why this is reported next to the one-way figures rather than instead of them. ICC(1,*) treats
     raters as interchangeable and pushes any systematic rater severity into the error term. This
-    panel's severity spread is 3.2-3.8 points on a 1-10 scale, which is enormous, so the one-way
+    panel's severity spread is 3.2-3.7 points on a 1-10 scale, which is enormous, so the one-way
     numbers collapse to ~0 and read as "the judges agree on nothing". That is the correct answer to
     "can I trust ONE randomly-chosen judge in absolute terms?" -- and the wrong answer to "do the
     judges RANK answers the same way?", which is what a leaderboard actually rests on. Both belong
@@ -313,10 +319,13 @@ def reliability_report(records_path: str) -> dict:
             entry["krippendorff_alpha_interval"] = krippendorff_alpha_interval(r["units"][ax])
         except InsufficientData as e:
             entry["alpha_error"] = str(e)
-        entry["per_judge_mean"] = {j: round(float(np.mean(v)), 2) for j, v in sorted(r["by_judge"][ax].items())}
-        sev = entry["per_judge_mean"]
-        if len(sev) >= 2:
-            entry["severity_spread"] = round(max(sev.values()) - min(sev.values()), 2)
+        raw_mean = {j: float(np.mean(v)) for j, v in sorted(r["by_judge"][ax].items())}
+        entry["per_judge_mean"] = {j: round(m, 2) for j, m in raw_mean.items()}
+        # Spread from the RAW means, not the display-rounded ones. Subtracting rounded values turned a
+        # true 3.7440 into a printed 3.75, which then propagated into five docs as a "3.2-3.7" range
+        # when the measured triple is 3.320 / 3.196 / 3.744, i.e. 3.2-3.7.
+        if len(raw_mean) >= 2:
+            entry["severity_spread"] = round(max(raw_mean.values()) - min(raw_mean.values()), 2)
         rep[ax] = entry
     return rep
 

@@ -72,7 +72,7 @@ analysis_plan:
   reliability_reported: ["icc_1_1", "icc_1_k", "krippendorff_alpha", "per_judge_severity",
                          # AMENDMENT 2026-07-31, and it must be read as one. These four were added
                          # AFTER seeing the data, because the one-way figures came out at ~0 and the
-                         # cause was identified as a 3.2-3.8-point judge severity spread that the
+                         # cause was identified as a 3.2-3.7-point judge severity spread that the
                          # one-way model absorbs into error. The two-way model reverses the headline
                          # (Useful 0.0 -> ICC(3,k) 0.807, clearing the 0.80 bar), which is exactly
                          # the kind of post-hoc choice a registration exists to constrain. Treat

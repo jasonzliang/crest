@@ -167,7 +167,9 @@ print(scores[rid]["agent"], scores[rid]["creativity"]["new"], answers[rid]["outp
 ```
 
 ## Reading the scores
-`creativity` is null unless `scoring_status == "scored"`. Other statuses: `judge_degraded` (fewer
+`creativity` is null on every UNSCORED path -- but **`judge_degraded` is the exception**: it carries
+a full `creativity` dict scored by too few judges. Filter on `scoring_status == "scored"`, NOT on
+`creativity is not None`, or degraded rows land in your headline means. Other statuses: `judge_degraded` (fewer
 judges than `min_judges` survived), `empty_answer` (the agent returned literally nothing -- an
 ADAPTER failure, not a grounding failure), `too_short` (non-empty but under the substantive-length
 floor; same adapter root cause, but the threshold is a judgement call and the emptiness is not),

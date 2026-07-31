@@ -37,7 +37,7 @@ live on disk only; they are both the generation cache and the evidence base, so 
 - Analyze a run: `python -m crest.analysis.stats --run crest/result/runs/<run_id>/records.jsonl`.
 - Is a long run still alive? `python -m crest.analysis.stall_check`.
 
-Records are `crest-record/1.0.0`. `scoring_status` is one of `scored` · `judge_degraded` (scored,
+Records are `crest-record/1.1.0`. `scoring_status` is one of `scored` · `judge_degraded` (scored,
 but by fewer than `min_judges` — excluded from headline numbers) · `empty_answer` (the adapter
 returned no text; an ADAPTER failure, deliberately distinguished from fabrication) ·
 `too_short` (non-empty but under the substantive-length floor -- same adapter root cause as
@@ -49,8 +49,8 @@ non-empty dict (three disagreeing definitions of "scored" once made a repair dro
 from 100 to 91). Records written by `run_crest` carry `query_sha` + `adapter_fp` (the cache's
 content address); **the shipped run 040653Z predates `adapter_fp`, `truncated`, `answer_chars` and
 `answer_words` — 0 of its 250 records have them**, so the cache indexes none of it and answer-length
-covariates cannot be computed from that release. Also
-and `generation_cached` / `cache_source_run` so a reused answer is visible in the data.
+covariates cannot be computed from that release. Records also carry `generation_cached` /
+`cache_source_run`, so a reused answer is visible in the data.
 
 Per-judge scores are a list under `creativity.judges`, each row stamped with `same_family`, so
 `pandas.json_normalize(record_path=["creativity","judges"], meta=[...])` yields a rater-level frame

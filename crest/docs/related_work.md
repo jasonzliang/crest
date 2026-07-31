@@ -42,8 +42,8 @@ beyond an empty-answer check. A per-claim FACT verifier is the production versio
 
 **CREST relation:** we do **not** claim "no creativity test exists." Our precise deltas:
 (i) target deep-research agents that *browse and cite*; (ii) score **novelty AND usefulness
-jointly** — primary endpoint `min(New, Useful)`, with Surprising reported as an
-exploratory third axis — not novelty alone; (iii) organize by **task type** to expose
+jointly** — primary endpoint `min(New, Useful, Surprising)`, all three axes, with
+Surprising flagged as weakly anchored rather than demoted — not novelty alone; (iii) organize by **task type** to expose
 task-dependence; (iv) anchor the first axis to a **dated, published, per-item prior-art set** so it
 means not-reducible-to-known-work rather than unlike-the-web (a *frozen shared retrieval index* is
 the intended contamination control and is **future work**, not a released property); (v) **avoid**
@@ -61,7 +61,7 @@ embedding/n-gram novelty metrics that reward fabrication.
 
 **On leave-one-family-out.** CREST ran LOFO as the default protocol until 2026-07-30 and then
 reversed it: with three vendors it makes judge identity perfectly confounded with entrant family
-(one judge was +2.0 to +3.2 points more lenient than the others and was dropped for exactly the
+(one judge was +2.7 to +3.4 points more lenient than the others and was dropped for exactly the
 entrants of its own family), which makes the leaderboard unidentifiable. The full panel now scores
 every entrant, `same_family` is stamped per judge row and modelled as a covariate, and LOFO is
 recoverable post-hoc as a robustness filter. That reversal is itself one of the paper's findings.

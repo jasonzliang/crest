@@ -4,10 +4,10 @@ A benchmark for the **creativity** (New / Useful / Surprising) of deep-research 
 50 expert-authored challenges, 10 per category (C1 Constrained, C2 Counterfactual, C3 Cross-Domain,
 C4 Meta-Creativity, C5 Open-Ended) across 6 domains (8–9 each). Each item is scored 1–10 on
 **New** (the axis reported as `new` — departure from a dated prior-art set, not novelty
-in the world), **Useful**, and **Surprising** (exploratory) by a multi-vendor judge panel, after a
+in the world), **Useful**, and **Surprising** (a primary axis, but weakly anchored) by a multi-vendor judge panel, after a
 factual-grounding check. The **full panel scores every entrant** and `same_family` is stamped on
 each judge row; leave-one-family-out is a post-hoc robustness filter, not the protocol. Primary
-endpoint is `min(New, Useful)` — see `judge/rubric.md`.
+endpoint is `min(New, Useful, Surprising)` — all three axes; see `judge/rubric.md`.
 
 ## The finding CREST is built to test
 Agent creativity is **task-dependent**: predicted strong on cross-domain (C3) and counterfactual

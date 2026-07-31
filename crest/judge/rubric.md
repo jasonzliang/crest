@@ -1,4 +1,4 @@
-# CREST Judge Rubric — New / Useful / (Surprising, exploratory)
+# CREST Judge Rubric — New / Useful / Surprising (all three primary)
 
 > **This file is the human-readable mirror of the deployed prompt, `judge/score.py::_judge_prompt`.**
 > It has drifted before — it specified a "judge against the dated set, not the web" *anti-web clause*
@@ -12,7 +12,7 @@
 > `ablation.json`): withholding the prior-art set moved the first axis by **+0.98** (it is
 > load-bearing), while withholding `expert_baseline` moved Surprising by **−0.02** (it anchored
 > nothing). `expert_baseline` is therefore no longer sent to the judge. Surprising is still scored
-> and reported, but is **exploratory and unanchored**, and correlates with novelty at
+> and reported, and is a PRIMARY axis, but it is **unanchored**, and correlates with novelty at
 > **r = 0.883** (n = 250 scored records, run 2026-07-31T040653Z, computed at RECORD level, which is
 > what the endpoint uses; pooling per-judge rows instead gives 0.946, the figure previously quoted
 > here as 0.94/0.95. Recompute per run -- never quote a fixed figure. The earlier n = 234 described
@@ -67,8 +67,7 @@ The old "at or above threshold on all three axes" indicator survives only for ba
 (`threshold_all_three: 6.0`, reported per record as `creative_all_three`): it is unpre-registered,
 its rate swung **5.4–36.1%** across thresholds 5–7 on the PILOT and **46.4–56.0%** on the canonical
 run 040653Z, and 13.6% of that run's records sit exactly on 6.00 on some axis (34/250; the 24.9%
-and 17.5% quoted here previously came from superseded runs) (the
-latest). Adding Surprising to a two-axis gate removes 1 of 250 records at t = 6 and 3 at t = 7
+and 17.5% quoted here previously came from superseded runs). Adding Surprising to a two-axis gate removes 1 of 250 records at t = 6 and 3 at t = 7
 (recomputed on run 040653Z; the earlier "0 of 234 / 2" described superseded run 020425Z).
 
 Grounded in the standard definition of creativity (novelty + usefulness) plus Boden's surprise.
@@ -157,10 +156,10 @@ Report the axes **separately per category** (a profile, not one number).
   the per-judge severity table, in `analysis/stats.py::reliability_report`. Measured on the full
   panel, ICC(1,k) on the canonical run is **0.0 / 0.618 / 0.0** (New / Useful / Surprising) against
   a 0.80 bar — the .774/.746/.671 previously quoted here came from superseded run 111856Z. The
-  one-way model absorbs the 3.2–3.8-point judge severity spread into error, so these are a floor,
+  one-way model absorbs the 3.2–3.7-point judge severity spread into error, so these are a floor,
   not the whole story; recompute per run and never quote a fixed figure — the panel
   misses it on every axis, and by the most on Surprising. Severity is reported alongside α by
-  design: judge severity varies by 3.32 / 3.20 / 3.75 points per axis on a 1–10 scale (the "2–3
+  design: judge severity varies by 3.32 / 3.20 / 3.74 points per axis on a 1–10 scale (the "2–3
   points" figure this line used to give predated the full-panel run), exceeding the between-agent
   spread, so α alone would hide the effect that decided the leaderboard.
 - **Not implemented:** length bins — length is logged per record (`output_len_tokens`) but no
