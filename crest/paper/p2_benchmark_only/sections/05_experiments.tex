@@ -6,9 +6,10 @@ under live provider-native web search, judged by the three-vendor full panel of 
 The entrants are \texttt{openai\_deepresearch} and \texttt{openai\_shallow} (OpenAI),
 \texttt{gemini\_deepresearch\_max} and \texttt{gemini\_shallow} (Google), and
 \texttt{claude\_shallow} (Anthropic). There is \textbf{no} Perplexity entrant and \textbf{no}
-open-weight entrant; earlier drafts named both, and neither exists in the released registry. All
-numbers below are reproducible from the tracked \texttt{result/leaderboard.json} via
-\texttt{analysis/stats.py}.
+open-weight entrant; earlier drafts named both, and neither exists in the released registry. The
+numbers below are promoted into the tracked \texttt{result/leaderboard.json}; recomputing them
+requires the run's \texttt{records.jsonl}, which is \emph{not} distributed (see the reproducibility
+paragraph at the end of this section).
 
 \paragraph{Stated prior expectations, not a pre-registration.} Per-category directions are recorded
 in \texttt{analysis/preregistration.yaml}: under a mechanistic account, agents coupling relational
@@ -46,6 +47,8 @@ these items is largely measuring usefulness; (ii) \textbf{C1 is uniformly hard},
 for every entrant, the only category where no entrant clears $5$.}
 \label{tab:results}
 \end{table}
+
+\paragraph{Construct threat: the primary endpoint is largely hard-rule compliance.} The conjunctive endpoint is dominated by one axis. On the released run $\mathrm{corr}(\min(N,U,S), U) = 0.976$, the composite \emph{equals} Useful in \textbf{190 of 250 records} ($76\%$), and \emph{New} is the unique minimum in \textbf{1 of 250}. Because \emph{Useful} is defined so that a violated hard rule caps it at ${\leq}3$, the endpoint behaves close to a rule-violation indicator, and the between-category structure tracks constraint density rather than creative process: category means order C1 $3.68 <$ C4 $5.32 <$ C5 $5.50 <$ C3 $6.14 <$ C2 $6.60$, in near-perfect correspondence with the share of judge rows citing a rule violation. Compounding this, the only axis with any one-way reliability is Useful ($\mathrm{ICC}(1,k)=0.618$); the two creativity-bearing axes sit at $0.0$, and \emph{New} averages $8.14/10$---near ceiling and barely discriminating even \emph{with} the prior-art list supplied. We therefore cannot claim the endpoint measures creativity rather than constrained-generation compliance, and the C1 ``predicted null'' is indistinguishable from a floor effect on the items carrying the most checkable rules. This is the most serious open threat to the construct and it is not resolved here.
 
 \paragraph{Axis dependence is visible; the crossover is weak.} Task type moves scores far more than
 entrant identity does: the field mean ranges from $3.68$ (C1) to $6.60$ (C2), a $2.92$-point spread,

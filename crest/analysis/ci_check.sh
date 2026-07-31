@@ -50,11 +50,19 @@ python -m crest.analysis.validate_items >/tmp/ci_items.log 2>&1 \
   && echo "  OK no mechanical contradictions" \
   || { echo "  FAIL $(grep -c BLOCKING /tmp/ci_items.log) contradiction(s):"; grep BLOCKING /tmp/ci_items.log | sed 's/^/    /'; fail=1; }
 
-echo "== claims the repo cannot instantiate (p2 body only; p3 is not submission-ready)"
+echo "== claims the repo cannot instantiate (BOTH papers)"
 # a gate that silently passes when its input is gone is worse than no gate: deleting the sections
 # directory previously turned three checks green
-if ! ls crest/paper/p2_benchmark_only/sections/*.tex >/dev/null 2>&1; then
-  echo "  FAIL p2 sections not found -- claims checks cannot run"; fail=1
+# BOTH papers. Scoping this to p2 "because p3 is not submission-ready" let p3 accumulate seven
+# non-negated human-validation assertions plus a frozen index, an open-weight judge and an
+# order-randomised panel -- and p3 is one `compile.sh` away from being postable. An adversarial
+# review also found that correcting p2/p3 section-by-section left BOTH papers internally
+# contradictory, with the unrevised sections asserting exactly what the revised ones withdraw. A
+# gate that reads only half a paper cannot see that.
+PAPER_TEX=$(ls crest/paper/p2_benchmark_only/sections/*.tex crest/paper/p3_caesar_hybrid/sections/*.tex \
+              crest/paper/p2_benchmark_only/main.tex crest/paper/p3_caesar_hybrid/main.tex 2>/dev/null)
+if [ -z "$PAPER_TEX" ]; then
+  echo "  FAIL no paper .tex found -- claims checks cannot run"; fail=1
 fi
 # These are ASSERTION patterns, not vocabulary. Grepping the single token "human-validated" left
 # 04_judge_validation.tex free to assert the study in present tense and different words -- "We
@@ -62,8 +70,12 @@ fi
 # panel is the primary scorer", a reliability verdict per category -- while the gate stayed green
 # because the only literal match was the abstract's negated one. No human study has been run.
 for pat in "human-validated" "human-expert consensus panel" "human panel is the primary scorer" \
-           "judge--human agreement" "(OSF, timestamped)" "contamination-controlled"; do
-  hits=$(grep -o ".\{0,14\}$pat" crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
+           "judge--human agreement" "(OSF, timestamped)" "contamination-controlled" \
+           "open-weight fourth" "order-randomized" "order-randomised" "pre-register" \
+           "frozen shared index" "frozen retrieval snapshot" "signed manifest" \
+           "matched tool and compute budget" "matched tool/compute budget" \
+           "human study" "mechanism-driven"; do
+  hits=$(grep -o ".\{0,14\}$pat" $PAPER_TEX 2>/dev/null \
          | grep -viE "(not|no|never|withdrawn|future work|NOT PERFORMED|NOT IMPLEMENTED)[^.]{0,24}$(printf '%s' "$pat" | sed 's/[][\\.*^$(){}?+|/]/\\&/g')" \
          | wc -l | tr -d ' ')
   if [ "$hits" != "0" ]; then echo "  FAIL '$pat' asserted (not negated) x$hits"; fail=1;

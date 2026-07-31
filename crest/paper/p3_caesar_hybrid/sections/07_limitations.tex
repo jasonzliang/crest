@@ -1,35 +1,70 @@
 \section{Limitations}
 \label{sec:limitations}
 
-We state the residual risks this hybrid framing carries, several of which are more acute here than
-for a benchmark-only paper.
+An earlier version of this section presented a judge$\leftrightarrow$human disagreement on C1/C5 as a
+candid weakness, described ablations as re-run under human-validated settings, and named an
+open-weight entrant on a frozen index as the ``permanently reproducible core.'' None of those things
+exists. Presenting an unperformed study \emph{as a limitation} is worse than omitting it, because it
+buys credit for candour while adding a false claim. That text is withdrawn. Below are the limitations
+the artifact actually has.
 
-\paragraph{Overlap with the companion preprint.} The exploration agent and an early version of the
-category taxonomy appear in a prior preprint by (anonymized) authors \citep{caesar2026}. The new
-contributions of \emph{this} paper are the benchmark as a released artifact, the human-validated
-judge, and the confirmed, pre-registered task-dependence finding at scale---not the agent. We are
-transparent that a reviewer may view the agent-centric framing as incremental over that preprint;
-\S\ref{sec:crest} and \S\ref{sec:experiments} are written to stand on the benchmark and finding
-alone.
+\paragraph{The leaderboard is unidentifiable, and this dominates everything else.} Per-axis judge
+severity spans $3.32/3.20/3.74$ points on a $1$--$10$ scale while the entire spread between best and
+worst entrant is $2.06$ points. No ordering can be read off this run for any entrant. It is a property
+of the instrument, not of the entrants, and no analysis of the existing data repairs it.
 
-\paragraph{Single-agent mechanism evidence.} The ablation (mechanism) evidence comes from one
-agent. We test the \emph{task-dependence pattern} across several agents, but the causal
-component-level claim is agent-specific; we scope it accordingly and do not generalize the
-mechanism beyond the tested system.
+\paragraph{The primary endpoint is largely hard-rule compliance.} $\mathrm{corr}(\min(N,U,S), U) =
+0.976$; the composite \emph{equals} Useful in $190$ of $250$ records; \emph{New} is the unique minimum
+in $1$ of $250$. Since a violated hard rule caps Useful at ${\leq}3$, the endpoint behaves close to a
+rule-violation indicator, and the between-category ordering tracks constraint density rather than
+creative process. We cannot currently claim it measures creativity as distinct from constrained
+generation.
 
-\paragraph{Judge$\leftrightarrow$human gap on 2 of 5 task types.} The automated judge disagrees
-with human experts on the C1/C5 (loss) types. We anchor C1/C5 conclusions on human scores, freeze
-judge settings before touching the questions, and report the disagreement rather than tuning it
-away. The mechanism (ablation) result still relies on the judge, which is why we re-run it under
-the human-validated settings.
+\paragraph{Judge blindness leaks.} Provider search tools stamp their own URLs
+(\texttt{?utm\_source=openai}; \texttt{vertexaisearch.cloud.google.com} redirects), and those strings
+survive into the report text the judge is shown. $143$ of $250$ records ($57\%$) carry a
+machine-readable vendor fingerprint. Because leave-one-family-out was withdrawn, blindness was the
+only active self-preference control, so self-preference here is live and unmeasured. The fix is to
+canonicalise URLs and re-judge; it has not been done.
 
-\paragraph{Describing the agent may be constrained.} Full architectural detail of the exploration
-agent lives in the cited preprint and may be subject to third-party constraints; this paper is
-written so that no claim depends on disclosure beyond what \S\ref{sec:caesar} states.
+\paragraph{No human validation.} No human-expert study has been run: no
+judge$\leftrightarrow$human agreement, no human--human ceiling, no human-anchored category. Every
+score here is an LLM-judge score. We estimate the study at ${\sim}\$1$--$3$k and have not begun it.
 
-\paragraph{Snapshot staleness and closed-model drift.} Closed frontier agents are pinned by dated
-model IDs; their CREST results are time-indexed snapshots. The open-weight entrant on the frozen
-index is the permanently reproducible core.
+\paragraph{Poor absolute agreement, and a post-hoc model choice.} One-way $\mathrm{ICC}(1,k)$ is
+$0.0/0.618/0.0$; Krippendorff's $\alpha$ is the same statistic as $\mathrm{ICC}(1,1)$ for interval
+data, so those are one control reported twice. The two-way model that removes the judge main effect
+gives $0.736/0.807/0.759$---but it was chosen \emph{after} seeing the data and is exploratory.
 
-\paragraph{Cost.} The human study is the slow, expensive component ($\sim$\$1--3k); we start it
-first and release its protocol.
+\paragraph{\emph{Surprising} is unanchored and its correlation with \emph{New} is contaminated.} The
+expert baseline was withdrawn from the judge prompt after an ablation moved the axis by $-0.02$, so
+the axis rests on the judge's own prior. Separately, $r = 0.883$ cannot argue the axes are
+inseparable, because the judge prompt for this run stated a correlation to the judge. A clean
+estimate needs re-scoring, which has not been done.
+
+\paragraph{No mechanism evidence.} The exploration agent was never entered
+(\S\ref{sec:caesar}), so there is no single-agent mechanism claim to scope---there is no mechanism
+claim at all. The five commercial entrants differ in model, search budget and research loop
+simultaneously, so no comparison among them isolates a component.
+
+\paragraph{Budgets are not matched.} Realised searches per item run from ${\sim}0.6$
+(\texttt{gemini\_shallow}) to ${\sim}76$ (\texttt{gemini\_deepresearch\_max}). Depth is confounded
+with vendor rather than controlled, no cost--creativity frontier is reported, and output length is not
+a covariate in any released analysis.
+
+\paragraph{The registered equivalence test cannot fire.} TOST as registered compares a category
+composite against a reference of $0$ with bounds of $\pm1$ on a $1$--$10$ scale, which no category can
+satisfy. Four of five categories carry null or parity predictions, so those predictions are
+untestable as registered and are reported descriptively.
+
+\paragraph{Not reproducible, and not contamination-controlled.} The $250$-record run directory is not
+distributed, so the reported table cannot be recomputed from a fresh clone. Retrieval is live, so no
+re-run reproduces these numbers. The frozen-index code path deliberately raises rather than
+pretending to provide one. Entrants are pinned by model alias, not dated snapshot, so results are
+time-indexed and the aliases can silently re-point.
+
+\paragraph{Overlap with the companion preprint, and the anonymity risk it creates.} The exploration
+agent and an early version of the taxonomy appear in a prior preprint by (anonymized) authors
+\citep{caesar2026}. Because this paper cites that preprint \emph{and} describes the cited system as
+its authors' own, the anonymisation is structurally weak. The contribution claimed here is the
+benchmark artifact and the negative methodological result, not the agent.

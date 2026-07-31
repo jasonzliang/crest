@@ -1,34 +1,39 @@
 \begin{abstract}
-Deep-research agents search the web and write long, cited reports, yet every existing
-benchmark asks only whether those reports are \emph{correct}. We ask whether they are
-\emph{creative}, and introduce \textbf{CREST} (CREativity of reSearch agenTs), the first
-benchmark to score deep-research outputs on the full \emph{New / Useful / Surprising} triad,
-organized into five task types (fifty questions, ten per type across six domains) and scored by a
-human-validated, multi-vendor leave-one-family-out judge panel (median aggregation), with the full
-benchmark publicly released. Using CREST we report a task-dependent effect: an exploration-based research agent
-(anonymized here; design in a companion preprint) is more creative on tasks that require
-connecting distant fields or counterfactual (``what-if'') reasoning, but not on
-single-answer or open-ended tasks. Ablations indicate the effect is mechanism-driven---
-disabling one component of the agent degrades one task type but not others---and the
-agent's creative reports remain well-sourced, ranking competitively on two established
-citation-faithfulness benchmarks. The mixed win/loss pattern (the agent loses on 2 of 5
-core task types) is the point: a method that won everywhere would signal an artifact,
-whereas winning only where the mechanism predicts, on a benchmark whose own author's system
-does not top every category, argues the effect is real. We release CREST---questions,
-frozen retrieval snapshot, judge, and analysis---as a standing test for the field.
+Deep-research agents search the web and write long, cited reports, yet every existing benchmark
+asks only whether those reports are \emph{correct}. We ask whether they are \emph{creative}, and
+introduce \textbf{CREST} (CREativity of reSearch agenTs), the first released benchmark to score
+deep-research outputs on the \emph{New / Useful / Surprising} triad, organized into five task types
+(fifty questions, ten per type across six domains) and scored by a three-vendor judge panel with
+median aggregation. The design contribution is an asymmetry: the agent sees only a short open prompt
+(median 110 words) while the scoring machinery---a dated known-answers list for \emph{New} and
+checkable hard rules for \emph{Useful}---is held judge-side, preserving creative headroom while
+keeping grading reproducible.
 
+\textbf{This paper reports no result about the exploration-based agent it is named for.} That agent
+was never entered: the released registry contains five commercial entrants and all $250$ scored
+records belong to them. The creativity comparison and the component ablation an earlier draft
+described are \textbf{not supported by any data in this artifact}, and the sections that asserted
+them have been withdrawn (\S\ref{sec:caesar}, \S\ref{sec:experiments},~\S\ref{sec:grounding}).
+What CREST did measure, across the five commercial entrants, is negative and methodological:
+per-axis judge severity spans $3.32/3.20/3.74$ points against a between-entrant spread of $2.06$,
+so \textbf{the leaderboard is unidentifiable and no ranking claim is supportable}; the
+agent$\times$category interaction is \textbf{null} ($F=0.654$, $p=0.837$), so we find no evidence
+for the rank-reversal earlier drafts claimed; task type moves scores more than entrant identity
+($2.92$ vs $2.06$ points); and \emph{Useful} is the binding axis. We release the questions, judge
+harness, per-judge scores and analysis code.
 \end{abstract}
 
 % ---------------------------------------------------------------------------------------------
 % RENDERED status notice. This replaces a LaTeX COMMENT that made the same disclaimer invisible to
 % readers while the abstract asserted findings -- an abstract cannot carry an unrendered caveat.
 \begin{center}
-\fbox{\parbox{0.92\linewidth}{\small\textbf{Status: preprint, results not final.}
-Headline numbers are \textbf{placeholders}. As of this draft no run in the repository contains
-records for the exploration-based agent, so the creativity comparison and the mechanism ablation
-are \textbf{not yet supported by data}. A judge-severity confound (leave-one-family-out over a
-three-vendor panel assigns judge panels by entrant family) made an earlier leaderboard
-unidentifiable; it is corrected by full-panel scoring, and all rankings are being re-measured.
-The benchmark is \textbf{not} contamination-controlled: retrieval was live provider web search and
-the frozen-index mode is unimplemented. The judge panel is \textbf{not} human-validated.}}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Status: preprint, not submission-ready.}
+No run in this repository contains records for the exploration-based agent, so the creativity
+comparison and the mechanism ablation are \textbf{not supported by data} and are withdrawn rather
+than deferred. The judge-severity confound is \textbf{not} fixed: full-panel scoring removes the
+LOFO family/judge confound but does \emph{not} restore identifiability, because severity
+($3.2$--$3.7$ points per axis) still exceeds the entire between-entrant spread ($2.06$). No ranking
+is or will be claimed from this run. The benchmark is \textbf{not} contamination-controlled:
+retrieval was live provider web search and the frozen-index mode is unimplemented. The judge panel
+is \textbf{not} human-validated; no human study has been run.}}
 \end{center}
