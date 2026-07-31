@@ -85,7 +85,7 @@ def _quarantined() -> dict:
     or loosening the schema."""
     try:
         import yaml
-        return (yaml.safe_load(_QUARANTINE.read_text()) or {}).get("quarantined", {}) or {}
+        return (yaml.safe_load(_QUARANTINE.read_text(encoding="utf-8")) or {}).get("quarantined", {}) or {}
     except FileNotFoundError:
         return {}
     except ImportError as e:
@@ -110,7 +110,7 @@ def _prereg_directions() -> dict:
     direction (so downstream analysis is unchanged) but it is now sourced from the registration."""
     try:
         import yaml
-        return (yaml.safe_load(_PREREG.read_text()) or {}).get("predictions", {}) or {}
+        return (yaml.safe_load(_PREREG.read_text(encoding="utf-8")) or {}).get("predictions", {}) or {}
     except Exception as e:
         print(f"  [WARNING: could not read {_PREREG.name} ({type(e).__name__}); "
               f"predicted_direction will be null]")
@@ -125,7 +125,7 @@ def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
     in here means a malformed item fails at load, not at score time. RAISES if jsonschema is missing
     rather than warning: a soft-fail meant a fresh checkout ran the whole benchmark unvalidated while
     ci_check printed "OK 50 items load and validate"."""
-    raw = [json.loads(l) for l in open(path) if l.strip()]
+    raw = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
     quar = _quarantined()
     if quar:
         dropped = [d["id"] for d in raw if d.get("id") in quar]

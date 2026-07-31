@@ -68,6 +68,24 @@ for pat in "human-validated" "human-expert consensus panel" "human panel is the 
   if [ "$hits" != "0" ]; then echo "  FAIL '$pat' asserted (not negated) x$hits"; fail=1;
   else echo "  OK '$pat' absent or negated"; fi
 done
+echo "== judge prompt stamp vs prompt"
+# The prompt version is a hand-bumped literal, checked HERE rather than auto-computed at import.
+# Three auto-invalidating designs were each wrong in a different way (source hash under- and
+# over-fired; a rendered hash was blind to the branch 250/250 answers take), and computing it at
+# import made six modules unimportable if _judge_prompt raised. A build-time comparison gets the one
+# property that matters -- if the prompt changed, do not mix records -- with no import-time risk.
+python - <<'PY2' || fail=1
+import sys; sys.path.insert(0,'.')
+from crest.judge.score import JUDGE_PROMPT_VERSION, JUDGE_PROMPT_VERSION_HASH, prompt_hash
+h = prompt_hash()
+if h != JUDGE_PROMPT_VERSION_HASH:
+    print(f"  FAIL judge prompt changed ({JUDGE_PROMPT_VERSION_HASH} -> {h}) but "
+          f"JUDGE_PROMPT_VERSION is still {JUDGE_PROMPT_VERSION!r}. Bump the version AND the hash, "
+          f"or scores from old and new runs will be mixed silently.")
+    sys.exit(1)
+print(f"  OK judge prompt matches stamp {JUDGE_PROMPT_VERSION} ({h})")
+PY2
+
 echo "== canary claim vs data"
 # count, do not merely detect: one item containing the word passed a claim that EVERY item carries one
 n_canary=$(python -c "

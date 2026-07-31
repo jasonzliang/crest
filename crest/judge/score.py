@@ -60,7 +60,9 @@ _FACT_CUE_RE = re.compile(
 # English returned 40 -- ratio 1.0, passes. That was survivable while the count was one branch of an OR;
 # it is not now that the count is the numerator of the grounding verdict. Still English-CALIBRATED: the
 # cue regex below matches English keywords, so a non-English answer is under-counted regardless.
-_SENT_SPLIT_RE = re.compile(r"[.!?\n\u3002\uff01\uff1f\uff1b]+")
+_SENT_SPLIT_RE = re.compile(r"[.!?\n\u3002\uff01\uff1f]+")   # fullwidth ; EXCLUDED: it is a
+                            # clause separator, so including it over-split CJK relative to Latin,
+                            # where ASCII ";" is likewise not a terminator.
 
 # A pure-invention answer may still drop a couple of incidental facts; tolerate this many
 # UNCITED verifiable-factual-claim sentences before demanding a source. Beyond it, zero
@@ -192,37 +194,52 @@ _ABLATABLE = frozenset({"known_answers", "restore_expert_baseline"})
 # already treats every one of its records as an upgrade. Its numbers are NOT comparable and must
 # not be mixed with them; re-judge from stored transcripts (harness/rejudge.py) before quoting any
 # New-vs-Surprising correlation, which is the figure (b) contaminated.
-def _prompt_fingerprint() -> str:
-    """Hash of the RENDERED prompt plus the reasoning settings -- not of _judge_prompt's source.
+def render_prompt_for_fingerprint() -> str:
+    """The judge prompt rendered over fixed inputs, for the CI staleness gate in analysis/ci_check.sh.
 
-    Hashing the source was wrong in both directions. It UNDER-covered: _MAX_KNOWN_ANSWERS (the
-    prior-art list the New axis is scored against), _JUDGE_MAX_ANSWER_CHARS, _fit_answer's body and
-    _ABLATABLE are all read INSIDE _judge_prompt but declared outside it, so halving the first two
-    left the fingerprint byte-identical. And it OVER-fired: a comment-only or whitespace-only edit
-    changed it, so a `ruff format` pass would make rejudge re-score all 250 records and ablate_fields
-    abort. Rendering covers every constant that shapes the prompt and is immune to formatting.
+    NOT called at import, and NOT hashed into the version automatically. Three attempts at an
+    auto-invalidating stamp were each wrong in a different way:
+      1. hashing _judge_prompt's SOURCE missed _MAX_KNOWN_ANSWERS and _JUDGE_MAX_ANSWER_CHARS (read
+         inside the function, declared outside it), and fired on comment-only edits;
+      2. hashing the RENDERED prompt on an over-limit dummy was blind to _fit_answer's early-return
+         branch -- which 250 of 250 real answers take, the longest being 57,282 chars against a
+         400,000 ceiling -- while firing on ceilings that never bind and on an unrelated grounding
+         constant, either of which would have triggered 750 unnecessary paid judge calls;
+      3. either version, computed at import, made `import crest.judge.score` depend on _judge_prompt
+         succeeding. Adding one required-field access bricked six modules, argparse and --help
+         included.
+    Each fix moved the failure rather than removing it. The only property actually needed is "if the
+    prompt changed, do not mix records", and a build-time comparison gets exactly that.
 
-    Both ablate variants are rendered, so a change to either Surprising branch is caught. The dummy
-    challenge is over-long on purpose, to exercise the truncation ceilings."""
-    import contextlib, hashlib, io
-    ch = {"id": "FP", "query": "q" * 64, "category": "C1", "domain": "engineering",
-          "known_answers": [f"ka{i}" for i in range(_MAX_KNOWN_ANSWERS + 5)],
-          "hard_rules": ["r1", "r2"], "expert_baseline": "b" * 256}
-    # The dummy deliberately exceeds both ceilings, which makes _judge_prompt emit its truncation
-    # warnings. Swallow them: they are an artefact of fingerprinting, and printing them on every
-    # `import crest.judge.score` would train the reader to ignore the real ones.
-    with contextlib.redirect_stderr(io.StringIO()):   # the warnings go to stderr, not stdout
-        rendered = "\x00".join(
-            _judge_prompt(ch, "a" * (_JUDGE_MAX_ANSWER_CHARS + 10), ablate=ab)
+    Two dummies: one shaped like the real distribution (short answer, few known answers, populated
+    lists), covering the branches every run takes; one over both ceilings, covering truncation."""
+    import contextlib, io
+    real = {"id": "FP", "query": "q" * 64, "category": "C1", "domain": "engineering",
+            "known_answers": [f"ka{i}" for i in range(5)], "hard_rules": ["r1", "r2"],
+            "expert_baseline": "b" * 256}
+    over = {**real, "known_answers": [f"ka{i}" for i in range(_MAX_KNOWN_ANSWERS + 5)],
+            "hard_rules": [], "expert_baseline": ""}
+    parts = []
+    with contextlib.redirect_stderr(io.StringIO()):   # the over-limit dummy trips truncation warnings
+        for ch, ans in ((real, "a" * 500), (over, "a" * (_JUDGE_MAX_ANSWER_CHARS + 10))):
             for ab in (frozenset(), frozenset({"restore_expert_baseline"}),
-                       frozenset({"known_answers"})))
-    body = rendered + repr((_JUDGE_EFFORT, sorted(_JUDGE_THINKING.items()),
-                            _JUDGE_THINKING_BUDGET, _JUDGE_MAX_TOKENS, _MIN_SUBSTANTIVE_CHARS))
-    return hashlib.sha256(body.encode()).hexdigest()[:8]
+                       frozenset({"known_answers"})):
+                parts.append(_judge_prompt(ch, ans, ablate=ab))
+    parts.append(repr((_JUDGE_EFFORT, sorted(_JUDGE_THINKING.items()),
+                       _JUDGE_THINKING_BUDGET, _JUDGE_MAX_TOKENS)))
+    return "\x00".join(parts)
 
 
-# JUDGE_PROMPT_VERSION is assigned at the BOTTOM of this module: _prompt_fingerprint() reads
-# _judge_prompt's source, which is not defined yet at this point in the file.
+def prompt_hash() -> str:
+    import hashlib
+    return hashlib.sha256(render_prompt_for_fingerprint().encode()).hexdigest()[:8]
+
+
+JUDGE_PROMPT_VERSION = "v2"
+# Bump BOTH when the prompt or the reasoning settings change. ci_check.sh recomputes
+# prompt_hash() and fails the build if it disagrees, so the bump cannot be forgotten --
+# but it is a build-time check, not an import-time computation.
+JUDGE_PROMPT_VERSION_HASH = "e2ce119c"
 
 
 def _fit_answer(text: str) -> str:
@@ -433,9 +450,11 @@ def _judge_completion(family: str, model: str, prompt: str) -> str:
         # "empty judge response" -- indistinguishable from an outage, retried 4x, judge dropped. This
         # arm needs it MOST: it is the one model whose thinking cannot be turned off.
         if not (r.text or ""):
-            fr = None
-            for c in (getattr(r, "candidates", None) or []):
-                fr = getattr(c, "finish_reason", None)
+            # FIRST candidate, to match r.text. The loop kept the LAST one, so candidates
+            # [MAX_TOKENS, STOP] yielded STOP, the check never fired, and the caller burned 4 retries
+            # on an empty reply -- exactly the failure this check exists to prevent.
+            cands = getattr(r, "candidates", None) or []
+            fr = getattr(cands[0], "finish_reason", None) if cands else None
             if fr is not None and "MAX_TOKENS" in str(fr).upper():
                 raise RuntimeError(
                     f"judge {model} hit max_output_tokens={_JUDGE_MAX_TOKENS} with thinking_budget="
@@ -562,7 +581,3 @@ class JudgePanel:
         all_three = all(agg[ax] >= self.threshold for ax in ("new", "useful", "surprising"))
         return CreativityScore(agg["new"], agg["useful"], agg["surprising"], all_three, per, len(per))
 
-
-# Assigned last, because _prompt_fingerprint() needs _judge_prompt to exist. Importers see a plain
-# string, so `from crest.judge.score import JUDGE_PROMPT_VERSION` is unchanged.
-JUDGE_PROMPT_VERSION = f"v2+{_prompt_fingerprint()}"

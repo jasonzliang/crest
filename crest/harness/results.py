@@ -160,8 +160,8 @@ is the reverse of what most readers assume. **Join them on `record_id`.**
 
 ```python
 import json
-scores = {{r["record_id"]: r for r in map(json.loads, open("records.jsonl"))}}
-answers = {{t["record_id"]: t for t in map(json.loads, open("transcripts.jsonl"))}}
+scores = {{r["record_id"]: r for r in map(json.loads, open("records.jsonl", encoding="utf-8"))}}
+answers = {{t["record_id"]: t for t in map(json.loads, open("transcripts.jsonl", encoding="utf-8"))}}
 rid = next(iter(scores))
 print(scores[rid]["agent"], scores[rid]["creativity"]["new"], answers[rid]["output_text"][:200])
 ```

@@ -69,7 +69,7 @@ def main():
     if runs:
         rd = Path(runs[-1])
         recs = rd / "records.jsonl"
-        n = sum(1 for _ in recs.open()) if recs.exists() else 0
+        n = sum(1 for _ in recs.open(encoding="utf-8")) if recs.exists() else 0
         done = (rd / "run_manifest.json").exists()
         pids = _procs("run_eval.py")
         age_min = (now - recs.stat().st_mtime) / 60 if recs.exists() else 999
@@ -100,7 +100,7 @@ def main():
     log = Path("/tmp/ablate.log")
     if ab or log.exists():
         age = (now - log.stat().st_mtime) / 60 if log.exists() else 999
-        lines = sum(1 for _ in log.open()) if log.exists() else 0
+        lines = sum(1 for _ in log.open(encoding="utf-8")) if log.exists() else 0
         state["ablate"] = lines
         if not ab and log.exists() and "wrote " in log.read_text():
             print(f"  ablation: DONE ({lines} log lines)")

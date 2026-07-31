@@ -72,7 +72,9 @@ def load_run(path: str):
     import pandas as pd
     path = resolve_records_path(path)
     rows, bad = [], 0
-    for line in open(path):
+    for line in open(path, encoding="utf-8"):   # records.jsonl is written UTF-8; reading it under
+        # the platform default is the same bug pointing the other way -- this is load_run, the
+        # primary analysis entry point, and it was missed while judge_ratings in this file was pinned.
         if not line.strip():
             continue
         try:
