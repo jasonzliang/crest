@@ -77,7 +77,7 @@
     "expert_baseline": {
       "type": "string",
       "minLength": 200,
-      "description": "expected expert answer; baseline for Surprising. minLength guards against the placeholder stub that once shipped in C2_law_policy_09."
+      "description": "JUDGE-HIDDEN since 2026-07-30. Was the Surprising anchor; an ablation showed withholding it moved Surprising by -0.02, so it anchored nothing, and in 7 items it carried the author's enumeration of the intended surprises. Retained for provenance and possible future use (e.g. a human-scored arm), but NOT sent to judge/score.py::_judge_prompt."
     },
     "author_expected_surprises": {
       "type": "string",
@@ -85,7 +85,7 @@
     }
   },
   "$id": "https://github.com/.../crest/questions/schema.json",
-  "version": "crest-challenge/3.0.0",
+  "version": "crest-challenge/3.1.0",
   "description": "Validated on load by harness.run_crest.load_challenges. Previously this file was never applied: no jsonschema import existed anywhere in the repo, so `required` was decorative and category_name (present in all 50 items) validated silently because additionalProperties was unset. v2.0.0 removed `predicted_direction` (moved to analysis/preregistration.yaml; it was a 5-row lookup on `category` and, living in editable data, could not evidence ordering) and `category_name` (derivable from `category`; one item shipped a long-form value so groupby yielded 6 categories). v3.0.0 moved `rationale` to questions/item_design.jsonl (read by no code at runtime; 20% of bytes) -- ci_check.sh enforces the id bijection.",
   "additionalProperties": false
 }
