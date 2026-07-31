@@ -37,13 +37,24 @@ def adapter_fingerprint(agent) -> str:
     run that meant 45 of 49 records per agent came from a run whose manifest records git_dirty=true
     at a commit predating every committed adapter change -- 80% of the deep arm produced by code
     that cannot be reconstructed. Fingerprint the knobs that change the OUTPUT."""
-    import hashlib
+    import hashlib, inspect
     from crest.harness import agents as A
-    parts = [type(agent).__name__, getattr(agent, "model", ""),
-             str(getattr(agent, "budget", "")), str(getattr(agent, "effort", "")),
-             str(getattr(agent, "max_tool_calls", "")),
-             str(getattr(A, "_ANTHROPIC_MAX_TOKENS", "")),
+    # Hash the ADAPTER'S OWN SOURCE rather than a hand-listed set of attributes. The hand-listed
+    # version missed every knob that is a literal inside run() instead of a class attribute --
+    # OpenAIShallowResearch hardcodes max_output_tokens=9000 and effort="low", so raising that
+    # ceiling would NOT have changed the key and the truncated answers would have been served from
+    # cache forever. Source-hashing captures any change that can alter the output, by construction.
+    try:
+        body = inspect.getsource(type(agent))
+    except (OSError, TypeError):
+        body = type(agent).__name__
+    parts = [type(agent).__name__, getattr(agent, "model", ""), str(getattr(agent, "budget", "")),
+             hashlib.sha256(body.encode()).hexdigest()[:12],
              hashlib.sha256(A._RESEARCH_SYSTEM.encode()).hexdigest()[:8]]
+    # per-family only: reading the Anthropic ceiling for EVERY agent meant bumping it re-paid for
+    # the entire deep arm (~$450) -- the exact cost this cache exists to avoid
+    if getattr(agent, "model_family", "") == "anthropic":
+        parts.append(str(getattr(A, "_ANTHROPIC_MAX_TOKENS", "")))
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:10]
 
 
@@ -141,26 +152,3 @@ class GenerationCache:
     def __len__(self) -> int:
         return len(self._idx)
 
-
-def backfill_query_sha(run_dir, challenges_file) -> int:
-    """Add `query_sha` to records written before content addressing existed.
-
-    Only safe when you know those records were generated against the CURRENT challenge text -- it
-    asserts nothing and simply stamps the present query hash, so running it on a run that used older
-    wording would make stale answers look valid. Returns the number of records stamped."""
-    from crest.harness.run_crest import load_challenges
-    run_dir = Path(run_dir)
-    q = {c.id: query_sha(c.query) for c in load_challenges(str(challenges_file))}
-    f = run_dir / "records.jsonl"
-    rows = [json.loads(l) for l in f.open() if l.strip()]
-    n = 0
-    for r in rows:
-        if not r.get("query_sha") and r["challenge_id"] in q:
-            r["query_sha"] = q[r["challenge_id"]]; n += 1
-    if n:
-        tmp = f.with_suffix(".jsonl.tmp")
-        with tmp.open("w") as fo:
-            for r in rows:
-                fo.write(json.dumps(r, ensure_ascii=False) + "\n")
-        tmp.replace(f)
-    return n

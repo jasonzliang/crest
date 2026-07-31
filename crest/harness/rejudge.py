@@ -129,7 +129,13 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
             live["creativity"] = {
                 "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
                 "creative_all_three": scores.creative_all_three,
-                "n_judges": scores.n_judges, "judges": _judges_list(scores.per_judge),
+                "n_judges": scores.n_judges,
+                "judge_protocol": panel.protocol,
+                # signature drift: _judges_list gained (panel, entrant_family) so it can stamp
+                # same_family. Calling it without them wrote same_family=False on every repaired row,
+                # silently zeroing the self-preference covariate the whole LOFO->covariate design
+                # rests on -- and only on the repaired subset, which is not random.
+                "judges": _judges_list(scores.per_judge, panel, rec.get("model_family")),
             }
             live["scoring_status"] = ("scored" if scores.n_judges >= panel.min_judges
                                      else "judge_degraded")
@@ -139,7 +145,26 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                   f"-> {live['scoring_status']}")
             upgraded += 1
 
+    if not upgraded:
+        print("\nno records upgraded; leaving the run untouched")
+        return {"n_targets": len(targets), "n_upgraded": 0,
+                "n_unchanged": unchanged, "n_missing": len(missing)}
     _atomic_write_jsonl(run_dir / "records.jsonl", records)
+    # keep the derived artifacts consistent: a repair that leaves summary.json reporting the OLD
+    # means and the manifest the OLD n_judge_degraded is worse than no repair
+    from crest.harness.results import compute_summary
+    (run_dir / "summary.json").write_text(json.dumps(compute_summary(records), indent=2,
+                                                     ensure_ascii=False))
+    mf = run_dir / "run_manifest.json"
+    if mf.exists():
+        m = json.loads(mf.read_text())
+        m.setdefault("totals", {}).update({
+            "n_records": len(records),
+            "n_scored": sum(1 for r in records if r.get("scoring_status") == "scored"),
+            "n_judge_degraded": sum(1 for r in records if r.get("scoring_status") == "judge_degraded")})
+        m["repaired_at"] = __import__("datetime").datetime.now(
+            __import__("datetime").timezone.utc).isoformat()
+        mf.write_text(json.dumps(m, indent=2, ensure_ascii=False))
     print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {unchanged} unchanged, "
           f"{len(missing)} un-repairable")
     print("status now: " + str(dict(collections.Counter(r.get("scoring_status") for r in records))))

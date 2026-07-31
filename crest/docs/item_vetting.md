@@ -71,7 +71,7 @@ modify the dataset.
 | id | cat | domain | G1 | G2 | G3 | G4 | G5 | disp. | reason |
 |----|-----|--------|----|----|----|----|----|-------|--------|
 | C1_biology_medicine_00 | C1 | bio_med | PASS | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | KEEP | CRAB novel-MOA; 7 checkable rules + falsifiable experiment cleanly isolate usefulness. **Live audit: 2 WRONG `known_answers` entries** ("dynobactin N" does not exist — it is dynobactin A; "RG6114" is inavolisib, not the LepB inhibitor G0775). Both corrected in the shipped file 2026-07-30 |
-| C1_materials_chemistry_01 | C1 | mat_chem | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | WEAK | **REVISE** | Perovskite top-cell; 12 parametric rules isolate usefulness; KA band-gaps self-flagged unverified. **2 BLOCKING self-contradictions** (`validate_items.py`): R4 requires mu ∈ [0.40, 0.90] but the item's own `expert_baseline` reports mu ≈ 0.39; R6 permits a chalcogenide (S, Se) while R9 bans Se. The rules exclude the class they were written to admit |
+| C1_materials_chemistry_01 | C1 | mat_chem | PASS | PASS | PASS | PASS | ~~WEAK~~ **→ FAIL** | **REVISE** | Perovskite top-cell; 12 parametric rules isolate usefulness; KA band-gaps self-flagged unverified. **2 BLOCKING self-contradictions** (`validate_items.py`): R4 requires mu ∈ [0.40, 0.90] but the item's own `expert_baseline` reports mu ≈ 0.39; R6 permits a chalcogenide (S, Se) while R9 bans Se. The rules exclude the class they were written to admit |
 | C1_economics_business_02 | C1 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | GPU spot-market mechanism; formal IC/budget-balance rules make usefulness provable |
 | C1_law_policy_03 | C1 | law | PASS | PASS | PASS | PASS | PASS | KEEP | LEO-debris instrument; treaty-article + incentive-compat constraints isolate legal-operability |
 | C1_engineering_04 | C1 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | FDM energy-absorber; strict SEA/plateau/reusability envelope; usefulness fully checkable |
@@ -81,7 +81,7 @@ modify the dataset.
 | C1_engineering_32 | C1 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Daytime radiative cooler; radiative-balance inequality gives checkable usefulness |
 | C1_arts_humanities_33 | C1 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | Novel tuning; cents-error/pitch-count arithmetic makes usefulness directly checkable |
 | C2_biology_medicine_06 | C2 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | No-adaptive-immunity world; first-order pre-claimed, surprise via cross-field 2nd-order + coherence lock |
-| C2_materials_chemistry_07 | C2 | mat_chem | PASS | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | PASS | **REVISE** | No-crystallinity world; six-arena scaffold, surprise via inverted/net-benefit consequences. **1 BLOCKING self-contradiction**: one hard rule permits 'Si' while another bans it |
+| C2_materials_chemistry_07 | C2 | mat_chem | PASS | PASS | PASS | PASS | ~~PASS~~ **→ FAIL** | **REVISE** | No-crystallinity world; six-arena scaffold, surprise via inverted/net-benefit consequences. **1 BLOCKING self-contradiction**: one hard rule permits 'Si' while another bans it |
 | C2_economics_business_08 | C2 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | No limited liability; partial-counterfactual record anchors surprising-but-true cascades |
 | C2_law_policy_09 | C2 | law | PASS | PASS | PASS | PASS | ~~FAIL~~ **→ FIXED** | ~~REVISE~~ **KEEP** | Statute-of-limitations world; design strong. The placeholder `expert_baseline` stub was **replaced with the real 818-char convergent-expectation text**; its enumeration of intended surprises was split into the judge-hidden `author_expected_surprises` field |
 | C2_engineering_10 | C2 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | 1.5g world; scaling-law scaffold, surprise via gravity-invariants and direction-reversals |
@@ -116,18 +116,33 @@ modify the dataset.
 | C5_law_policy_27 | C5 | law | PASS | PASS | PASS | PASS | PASS | KEEP | New future-generations instrument; open-world non-existence proof across many jurisdictions |
 | C5_engineering_28 | C5 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | New engineering device; 3-corpus white-space map; no off-the-shelf integration allowed |
 | C5_arts_humanities_29 | C5 | arts | PASS | PASS | PASS | PASS | PASS | KEEP | New poetic form; 33-entry cross-lingual catalogue + collision rule; high headroom |
-| C5_economics_business_46 | C5 | econ | PASS | WEAK | WEAK | WEAK | PASS | REVISE | "Invent an economic index"; synthesis is negative-verify only, saturable, can't separate genuine vs arbitrary novelty |
-| C5_law_policy_47 | C5 | law | PASS | WEAK | WEAK | WEAK | PASS | REVISE | "Invent a voting method"; thin synthesis + low headroom; a strong agent trivially clears it |
-| C5_engineering_48 | C5 | eng | PASS | WEAK | WEAK | WEAK | PASS | REVISE | "Invent a planar linkage"; only a mobility floor; low headroom, thin synthesis |
-| C5_arts_humanities_49 | C5 | arts | PASS | WEAK | WEAK | WEAK | PASS | REVISE | "Invent a musical form"; thin synthesis, easily saturated novelty |
+| C5_economics_business_46 | C5 | econ | PASS | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | PASS | **REVISED** | "Invent an economic index"; was negative-verify only and saturable. **Fix applied:** 5 hard rules (was 3) incl. a multi-source absence proof and a non-saturation guard; 21-entry prior-art catalogue |
+| C5_law_policy_47 | C5 | law | PASS | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | ~~PASS~~ **→ WEAK** | **REVISED** | "Invent a voting method". **Fix applied** (5 rules, absence proof, non-saturation guard, 20-method catalogue) — but the suggested named social-choice property was not added, and the catalogue is **still incomplete**: Phragmén 1894, Nanson 1882 and random ballot are absent, and Bucklin is dated 1909 when the method is Condorcet 1793 |
+| C5_engineering_48 | C5 | eng | PASS | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | PASS | **REVISED** | "Invent a planar linkage". **Fix applied:** 5 rules incl. a determinate Grübler–Kutzbach mobility bar, absence proof and non-saturation guard; 21-entry catalogue |
+| C5_arts_humanities_49 | C5 | arts | PASS | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | ~~WEAK~~ **→ REVISED** | ~~PASS~~ **→ FAIL** | **REVISED** | "Invent a musical form". **Fix applied** (5 rules, absence proof, non-saturation guard, 21-entry catalogue), but the suggested fully-worked realized example was not required, and the catalogue is **bare and undated** — confirmed by two independent audit passes |
 
 ## Summary
 
-**Dispositions:** KEEP = 45 · REVISE = 5 · CUT = 0.
+**Dispositions (as graded 2026-07-29):** KEEP = 45 · REVISE = 5 · CUT = 0.
+
+**→ SUPERSEDED.** After the live-web audit and mechanical validation, the standing count is:
+5 REVISE items **fixed or acted on** (09's baseline restored; 46–49 hardened to 5 rules with
+absence-proof and non-saturation guards), and **8 items newly flagged** that this pass graded
+KEEP — `01`, `07`, `43` (BLOCKING self-contradictions), `00` (2 wrong prior-art entries, since
+corrected), `17` (over-permissive novelty gate, unfixed), `42`/`44` (undated / pruned prior art),
+and `45` (**inverted novelty gate — "do not release"**). Plus `34`, quarantined and then restored on
+a model-drafted baseline. The pre-release gate (`analysis/ci_check.sh`) fails on the four blocking
+contradictions.
 
 ### REVISE items and the specific fix
 
-- **C2_law_policy_09** (G5 FAIL) — `expert_baseline` is a placeholder stub
+> **Status 2026-07-31: all five were acted on.** 09's baseline was restored in full. 46–49 were
+> hardened — each now carries **5 hard rules** (was 3) including a multi-source absence proof and an
+> explicit non-saturation guard, plus a ~21-entry prior-art catalogue. The *generic* hardening
+> landed; two of the *item-specific* bars proposed below did not (47's named social-choice property,
+> 49's fully-worked realized example), and 47's and 49's catalogues remain incomplete/undated.
+
+- **C2_law_policy_09** (G5 FAIL — **now FIXED**) — `expert_baseline` was a placeholder stub
   (`"See expert-baseline field content above."`) instead of the real reference
   answer. For a C2 surprise item the baseline is load-bearing (Surprise is scored
   against it), so this must be fixed. **Fix:** restore the actual expert-baseline
@@ -152,9 +167,11 @@ modify the dataset.
 ### Systematic patterns
 
 - **By gate.**
-  - *G1 (contamination):* uniformly strong. The invention/counterfactual format plus
-    `known_answers` lists that pre-claim the memorizable and first-order content make
-    the whole set genuinely multi-hop; nothing is answerable from a single indexed page.
+  - *G1 (contamination):* uniformly strong **on inspection**. The invention/counterfactual format
+    plus `known_answers` lists that pre-claim the memorizable and first-order content make
+    the whole set look genuinely multi-hop; no item was found answerable from a single indexed
+    page. **→ SUPERSEDED as a measurement:** no tool-ablation check was run, and runs use live web
+    search with no frozen index, so search-time contamination is uncontrolled and unmeasured.
   - *G2 (synthesis):* strong except the C5 lightweight subset (46–49). C5 as a category
     leans on "prove absence" negative-verification, which is thinner synthesis than the
     literature-fusion demanded by C1/C3/C4; the C5 *originals* (24–29) compensate with
@@ -165,32 +182,54 @@ modify the dataset.
     C1 arts/invention items (05, 33) lean novelty-adjacent — handled by concrete
     functional/usefulness checks. Only 46–49 are genuinely WEAK (novelty labeled but
     the bar can't separate genuine from arbitrary novelty).
+    **→ SUPERSEDED twice over.** (a) The "handled by … expert baselines" mitigation no longer
+    operates: `expert_baseline` is judge-hidden as of 2026-07-30 (ablating it moved Surprising by
+    −0.02), and in the run data New and Surprising correlate at **r = 0.94** — the axes do not
+    dissociate. (b) The axis labels were measured against judge verdicts and mostly do not bind:
+    the isolated axis is the binding one 56% of the time for C1/usefulness (vs 33% chance), but
+    only 21% for the novelty label — those items are novelty-*easy* — and 15% for surprise.
   - *G4 (headroom):* C1/C3/C4 are the hardest tiers and clearly unsaturated; only
     46–49 are saturable.
-  - *G5 (metadata):* all `known_answers` are dated & non-empty and all `hard_rules`
-    (min 3) are checkable. One hard FAIL (09, broken `expert_baseline`). Two softer
-    systematic issues below.
-- **Missing `category_name` in every new item.** All 20 newly-added items (30–49) omit
-  the `category_name` field that all 30 originals carry — a metadata regression worth
-  backfilling (does not affect gradeability).
-- **Self-flagged unverified `known_answers`.** Three items (01, 05, 15) note in their
-  rationale that the web-search budget was exhausted before verification, so their
-  `known_answers`/prior-art (perovskite band-gaps; quenine/krama facts; RG-on-voting
-  prior art) should be spot-checked against live sources before deployment.
+  - *G5 (metadata):* ~~all `known_answers` are dated & non-empty~~ **→ FALSE, see header.**
+    `known_answers` is non-empty everywhere (schema `minItems: 3`) and `hard_rules` are checkable
+    (min 5 in the shipped file), but only **52%** of prior-art entries carry a year, and the `_3x`
+    /`_4x` half of the file sits at 22% / 18%. One hard FAIL at the time (09, broken
+    `expert_baseline`) — since fixed; a second (34) was found later by schema enforcement.
+- ~~**Missing `category_name` in every new item.**~~ **→ MOOT.** `category_name` was removed from
+  *all* 50 items in schema v2.0.0 (it was derivable from `category`, and one item shipped a
+  long-form value that made `groupby` yield six categories). There is nothing to backfill.
+- **Self-flagged unverified `known_answers`.** Three items (01, 05, 15) noted that the web-search
+  budget was exhausted before verification. **→ Now resolved by the live audit:** `15` is fully
+  verified (all 13 prior-art entries check out); `05` and `33` and `32` came back clean; `01`'s
+  Cs₂TiI₆ band gap is half-corroborated (the 1.56 eV direct figure holds; the indirect figure does
+  not reproduce) and it retains two IMPRECISE entries plus the two blocking rule contradictions
+  above.
 - **Weakest category = C5.** Its open-ended novelty framing makes synthesis thin and
   headroom fragile; the originals hold up only because of large `known_answers` sets
   and heavy deliverables. **Strongest = C3** (equation/theorem-level fidelity, highest
-  headroom) and **C4** (each hard rule pins a distinct axis, cleanly balanced).
+  headroom) and ~~**C4**~~ **→ SUPERSEDED on C4.** The live audit rates C4-new the *weakest*
+  block in the file: `_45`'s novelty gate is inverted, `_42`'s is close behind, `_43` contradicts
+  itself, and 46 of 48 prior-art entries across `_42`–`_45` carry no year at all. C3's own
+  standing is also qualified — the audit found five mathematical errors in C3 hard rules and one
+  materially wrong novelty gate (`_17`), though it confirmed zero fabrications across ~155 checked
+  claims.
 
 ### Do the newly-added items (30–49) hold up as well as the originals?
 
-Mostly yes. The new C1 (30–33), C2 (34–37), C3 (38–41), and C4 (42–45) items reuse the
-same isolation logic as the originals — checkable feasibility envelopes, anti-obvious
-coherence rules, well-anchored expert baselines, and novelty gates — and are graded
-PASS on all five gates. The C3-new (38–41, clean Gentner structure-mapping with novelty
-gates) and C4-new (42–45, balanced with discriminating hard cases) are arguably as
-strong as any originals. The one exception is the **C5 lightweight subset (46–49)**,
-which is a visibly weaker tier than the C5 originals (24–29) and accounts for 4 of the
-5 REVISE items. Two metadata regressions accompany the new batch: the missing
-`category_name` field across all of 30–49, and the placeholder `expert_baseline` in the
-one *original* item 09 (unrelated to the new batch, but the only G5 FAIL).
+**→ SUPERSEDED. The answer measured by the live audit is: no.** The desk pass concluded "mostly
+yes", reasoning that the new C1 (30–33), C2 (34–37), C3 (38–41) and C4 (42–45) items reuse the
+originals' isolation logic — checkable feasibility envelopes, anti-obvious coherence rules,
+well-anchored expert baselines, novelty gates — and graded them PASS on all five gates. Two things
+that reading could not see turned out to separate the halves of the file:
+
+1. **The citation cliff.** Prior-art dating collapses from 91% (`_1x`) to 22% (`_3x`) and 18%
+   (`_4x`). Whoever wrote the back half of the file stopped citing, and an undated bare name cannot
+   gate novelty at all — a judge cannot ask "absent as of date D" when D is unstated.
+2. **Gate inversion.** `_45`'s hard rule offers as its example of a new mechanism something its own
+   prior-art list already implements, and its baseline asserts the opposite of the truth, so the
+   gate awards novelty for reproducing published prior art. `_42` and `_43` have milder versions.
+
+The **C5 lightweight subset (46–49)** — the one weakness this pass did catch — has since been
+hardened. The metadata regressions it named have both closed: `category_name` no longer exists on
+any item, and 09's placeholder baseline was replaced. They were replaced by different ones: 34's
+baseline is model-drafted, and `_3x`/`_4x` prior art is largely undated.

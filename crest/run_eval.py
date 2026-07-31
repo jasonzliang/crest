@@ -38,15 +38,25 @@ def _label(bench, n) -> str:
 
 FAMILY_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY",
               "google": "GOOGLE_API_KEY", "open_weight": "OPENAI_API_KEY"}
-DR_KEYS = {"openai_deepresearch", "openai_deepresearch_mini"}   # slow + $$ per call
+# every deep-research entrant, derived rather than hand-listed: the hand-listed version omitted
+# both Gemini deep agents, so a 20-task pilot (~$120) ran with no confirmation
+from crest.harness.agents import _REGISTRY as _AGENT_REGISTRY
+DR_KEYS = {k for k in _AGENT_REGISTRY if "deepresearch" in k}
 
 
 def preflight(agents, panel, enforce=True):
     """Verify the API keys for every family in use are present BEFORE spending. Aborts a real run
     on a missing key (in --dry-run, warns instead) so a run can't quietly burn money and die."""
+    from crest.harness.keys import anthropic_keys
     fams = {a.model_family for a in agents.values()} | {j["family"] for j in panel.judges}
-    missing = sorted({FAMILY_ENV.get(f, f"?({f})") for f in fams
-                      if not (FAMILY_ENV.get(f) and os.environ.get(FAMILY_ENV[f]))})
+    def _have(f):
+        # anthropic may be configured via the POOLED var alone (ANTHROPIC_API_KEYS), which
+        # harness/keys.py documents as preferred -- checking only the singular var aborted runs
+        # that had two working keys configured
+        if f == "anthropic":
+            return bool(anthropic_keys())
+        return bool(FAMILY_ENV.get(f) and os.environ.get(FAMILY_ENV[f]))
+    missing = sorted({FAMILY_ENV.get(f, f"?({f})") for f in fams if not _have(f)})
     if missing:
         print(f"PREFLIGHT: missing API keys for families in use: {missing}")
         if enforce:

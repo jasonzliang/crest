@@ -65,10 +65,15 @@ def compute_summary(records: list) -> dict:
     """Cheap aggregates for a leaderboard (per agent, and per agent x category). Inferential stats
     (mixed-effects, TOST, Krippendorff alpha / ICC) are left to crest.analysis.stats on records.jsonl."""
     def agg(rows):
-        scored = [r for r in rows if r.get("creativity")]
+        # ONLY status=="scored". A judge_degraded row carries a creativity dict, so the old
+        # `if r.get("creativity")` swept it into the headline means -- while the console printed
+        # "excluded from headline numbers" for that very record. summary.json is what gets promoted
+        # to leaderboard.json, so the contradiction shipped downstream.
+        scored = [r for r in rows if r.get("scoring_status") == "scored"]
+        degraded = [r for r in rows if r.get("scoring_status") == "judge_degraded"]
         n = len(rows)
         gpass = sum(1 for r in rows if r.get("grounding", {}).get("passed"))
-        out = {"n": n, "n_scored": len(scored),
+        out = {"n": n, "n_scored": len(scored), "n_degraded": len(degraded),
                "grounding_pass_rate": round(gpass / n, 3) if n else None}
         if scored:
             for ax in ("new", "useful", "surprising"):

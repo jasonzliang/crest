@@ -32,7 +32,7 @@ def run_one(agent_key, per_category=None, limit=None, categories=None, budget=6,
     # every run mints a fresh run_id. These scripts previously called R.find_resumable /
     # R.completed_pairs, which no longer exist -- so all five eval/*.py entry points raised
     # AttributeError before making a single API call.
-    run_id, run_dir = R.new_run(out_root, agent_key, repo_root)
+    run_id, run_dir = R.new_run(out_root, agent_key, REPO)
     created = datetime.now(timezone.utc).isoformat()
     print(f"evaluating {agent_key} ({agents[agent_key].model}) on {len(challenges)} challenges -> {run_dir}")
     cache = GenerationCache(out_root, enabled=not override_cache)

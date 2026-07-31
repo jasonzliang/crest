@@ -67,6 +67,9 @@ class AgentOutput:
     citations: list                 # [{"url": str, "title": str}]
     n_tokens: int = 0
     n_searches: int = 0
+    truncated: bool = False     # answer was cut off (max_tokens / incomplete). Recorded, not just
+                                # warned about, so truncated answers are filterable in analysis --
+                                # they were previously scored as if complete.
     trace: dict = dataclasses.field(default_factory=dict)
 
 
@@ -108,8 +111,8 @@ def _retry(fn, what: str, attempts: int = 4, base_sleep: float = 5.0):
 class Agent:
     model_family: str = "unknown"     # used for leave-one-family-out judging
     model: str = ""
-    def __init__(self, index: FrozenIndex | None = None, budget: int = 6, model: str | None = None):
-        self.index, self.budget = index, budget
+    def __init__(self, budget: int = 6, model: str | None = None):
+        self.budget = budget
         if model:
             self.model = model
     def run(self, query: str) -> AgentOutput:
@@ -142,7 +145,7 @@ class ClaudeShallowResearch(Agent):
         # n_searches averaged 5.3: the model was mid-work and we recorded the fragment as its final
         # answer, then scored it (N/U/S = 1/1/1) and read the result as low creativity.
         msgs = [{"role": "user", "content": query}]
-        blocks, guard, turns_used = [], 0, 1
+        blocks, guard, turns_used, tok_total = [], 0, 1, 0
         while True:
             r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
                 .messages.create(
@@ -152,6 +155,8 @@ class ClaudeShallowResearch(Agent):
                     messages=msgs,
                 ), "entrant"), f"anthropic entrant ({self.model})")
             blocks.extend(r.content)
+            tok_total += (getattr(r.usage, "output_tokens", 0) or 0)   # ACCUMULATE: reading
+                                    # only the last turn reported 42 tokens for a 6042-token answer
             if getattr(r, "stop_reason", None) != "pause_turn":
                 break
             guard += 1
@@ -160,7 +165,10 @@ class ClaudeShallowResearch(Agent):
                 print(f"  [WARNING: {self.model} still pause_turn after {guard} continuations; "
                       f"returning what it produced so far]")
                 break
-            msgs = msgs + [{"role": "assistant", "content": r.content}]
+            # replace, don't append: appending yields [user, assistant, assistant, ...] which
+            # is non-conformant (roles must alternate) and re-bills every prior partial turn
+            msgs = [{"role": "user", "content": query},
+                    {"role": "assistant", "content": r.content}]
         text, cites, n_search = [], [], 0
         for b in blocks:
             if b.type == "text":
@@ -172,6 +180,10 @@ class ClaudeShallowResearch(Agent):
             elif b.type == "server_tool_use":
                 n_search += 1
         full = "".join(text)
+        truncated = getattr(r, "stop_reason", None) == "max_tokens"
+        if truncated:
+            print(f"  [WARNING: {self.model} hit max_tokens ({_ANTHROPIC_MAX_TOKENS}); answer is "
+                  f"TRUNCATED mid-generation and will be scored as if finished]")
         if not full.strip():
             # never return a silent empty answer: it reads downstream as "the agent had nothing to
             # say" when it actually means the call produced no text block at all.
@@ -179,7 +191,7 @@ class ClaudeShallowResearch(Agent):
                   f"{n_search} search(es), stop_reason={getattr(r, 'stop_reason', '?')} -- "
                   f"raise _ANTHROPIC_MAX_TOKENS or inspect the response]")
         return AgentOutput(full, _merge_inline_urls(_dedup(cites), full),
-                           n_tokens=r.usage.output_tokens, n_searches=n_search)
+                           n_tokens=tok_total, n_searches=n_search, truncated=truncated)
 
 
 # ---------------- OpenAI ----------------
@@ -203,7 +215,8 @@ def _parse_openai(r) -> AgentOutput:
                                       "title": getattr(ann, "title", "") or ""})
     n_tok = getattr(getattr(r, "usage", None), "output_tokens", 0) or 0
     full = r.output_text or ""
-    return AgentOutput(full, _merge_inline_urls(_dedup(cites), full), n_tokens=n_tok, n_searches=n_search)
+    return AgentOutput(full, _merge_inline_urls(_dedup(cites), full), n_tokens=n_tok,
+                       n_searches=n_search, truncated=getattr(r, "status", None) == "incomplete")
 
 
 class OpenAIShallowResearch(Agent):
@@ -304,7 +317,8 @@ class GeminiShallowResearch(Agent):
                   f"scraped from the answer text and are NOT verified grounding chunks]")
         n_tok = getattr(getattr(r, "usage_metadata", None), "candidates_token_count", 0) or 0
         return AgentOutput(text, _merge_inline_urls(_dedup(cites), text),
-                           n_tokens=n_tok, n_searches=n_search or len(cites))
+                           n_tokens=n_tok, n_searches=n_search)   # no `or len(cites)` fallback:
+                       # it fabricated a search count from citations when the counter was absent
 
 
 class GeminiDeepResearchAPI(Agent):
@@ -387,20 +401,9 @@ def _parse_gemini_interaction(it) -> AgentOutput:
     n_search = sum(getattr(g, "count", 0) or 0
                    for g in (getattr(u, "grounding_tool_count", None) or []))
     return AgentOutput(text, _merge_inline_urls(_dedup(cites), text),
-                       n_tokens=n_tok, n_searches=n_search or len(cites))
+                       n_tokens=n_tok, n_searches=n_search)   # no `or len(cites)` fallback:
+                       # it fabricated a search count from citations when the counter was absent
 
-
-# ---------------- future entrants (documented, not yet wired) ----------------
-class OpenSourceAgent(Agent):
-    """Open-weight agent on the frozen index = the permanently reproducible core. Future work."""
-    model_family = "open_weight"
-    def run(self, query): raise NotImplementedError("point at a hosted open-weight endpoint")
-
-class AuthorEntrant(Agent):
-    """The authors' own entrant (cited prior work). One entrant among many; must not be privileged
-    and all findings must hold with it removed. Same family as the GPT judge -> excluded under LOFO."""
-    model_family = "openai"
-    def run(self, query): raise NotImplementedError("plug in the authors' system endpoint")
 
 
 def _dedup(cites: list) -> list:
@@ -437,13 +440,15 @@ _REGISTRY = {
     "openai_deepresearch_mini": (OpenAIDeepResearchMini, "gpt-5.6-sol"),         # effort=medium, 15 calls
     "gemini_deepresearch":      (GeminiDeepResearchAPI, "deep-research-preview-04-2026"),
     "gemini_deepresearch_max":  (GeminiDeepResearchAPI, "deep-research-max-preview-04-2026"),
-    # future entrants
-    "oss_dr":                   (OpenSourceAgent, ""),
-    "author_entrant":           (AuthorEntrant, ""),
+    # Future entrants (oss_dr, author_entrant) removed: their run() raised NotImplementedError, so
+    # selecting one passed preflight and the cost guard, then died mid-run. Re-add with a real
+    # endpoint, not a placeholder.
 }
 
-def build_agent(name: str, index: FrozenIndex | None = None, budget: int = 6, model: str | None = None) -> Agent:
+def build_agent(name: str, budget: int = 6, model: str | None = None) -> Agent:
+    # `index=` was removed: FrozenIndex.__init__ raises unconditionally, so the parameter was
+    # provably always None at every call site. The class stays as the documented future-work marker.
     if name not in _REGISTRY:
         raise ValueError(f"unknown agent '{name}'; known: {sorted(_REGISTRY)}")
     cls, default_model = _REGISTRY[name]
-    return cls(index=index, budget=budget, model=model or default_model or None)
+    return cls(budget=budget, model=model or default_model or None)

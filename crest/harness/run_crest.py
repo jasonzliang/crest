@@ -18,7 +18,7 @@ import argparse, json, dataclasses, threading, collections
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from crest.harness.agents import build_agent, FrozenIndex
+from crest.harness.agents import build_agent
 from crest.harness import results as R
 from crest.judge.score import JudgePanel, grounding_gate
 from crest.harness.cache import GenerationCache, query_sha, adapter_fingerprint
@@ -29,7 +29,9 @@ class Challenge:
     id: str; category: str; domain: str; query: str
     axis_isolated: str; time_sensitivity: str
     known_answers: list; hard_rules: list; expert_baseline: str
-    predicted_direction: str | None; rationale: str = ""
+    # defaults, because these are no longer item fields: predicted_direction is populated from
+    # analysis/preregistration.yaml after construction, and rationale moved to item_design.jsonl
+    predicted_direction: str | None = None; rationale: str = ""
 
     @staticmethod
     def from_json(d: dict) -> "Challenge":
@@ -43,7 +45,7 @@ class Challenge:
         if missing:
             raise ValueError(f"challenge {d.get('id', '<no id>')!r} is missing required "
                              f"scoring machinery: {missing}. Refusing to score it.")
-        f = {k: d.get(k) for k in Challenge.__dataclass_fields__}
+        f = {k: d[k] for k in Challenge.__dataclass_fields__ if k in d}  # preserve defaults
         f["hard_rules"] = d.get("hard_rules") or []
         return Challenge(**f)
 
@@ -168,8 +170,18 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
             raise RuntimeError(f"circuit_open:{name}")
         report = agent.run(ch.query)                          # may raise -> handled by caller
     gate = grounding_gate(report, ch)
-    scores = panel.score(dataclasses.asdict(ch), report,
-                         exclude_family=agent.model_family) if gate.passed else None
+    # Judge failures must NEVER reach the agent circuit breaker. panel.score() swallows per-judge
+    # errors, but anything else it raises (LOFO leaving no judges, a client construction error, a
+    # vendor outage) propagated into the agent-failure handler: the run then logged agent_error and
+    # DISABLED a perfectly healthy entrant because a judge vendor went down.
+    scores = None
+    if gate.passed:
+        try:
+            scores = panel.score(dataclasses.asdict(ch), report, exclude_family=agent.model_family)
+        except Exception as e:
+            print(f"  [{ch.id}/{name}] JUDGE PANEL ERROR (agent was fine): "
+                  f"{type(e).__name__}: {str(e)[:110]}")
+            scores = None
     if scores is None:
         # empty_answer is an ADAPTER failure, not a grounding failure -- keep them distinguishable
         status = ("empty_answer" if getattr(gate, "empty_answer", False)
@@ -199,6 +211,7 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         # r=+0.05 with score and hides the real confound; visible words give r=+0.47, reproducing
         # the r=0.47 the source paper reported. Always length-control on answer_chars/answer_words.
         "output_len_tokens": report.n_tokens, "n_searches": report.n_searches,
+        "truncated": bool(getattr(report, "truncated", False)),
         "answer_chars": len(report.text or ""),
         "answer_words": len((report.text or "").split()),
         "scoring_status": status,   # scored | judge_degraded | empty_answer | grounding_fail | judge_error
@@ -230,7 +243,7 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
     run is a complete, self-contained, immutable run_id. Writes records/transcripts/errors.jsonl."""
     run_dir = Path(run_dir)
     tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
-    records, mode = [], "w"
+    records = []
     if verbose:
         n_cached = sum(1 for ch, name, a in tasks
                        if cache and cache.get(ch.id, name, a.model, query_sha(ch.query),
@@ -240,8 +253,8 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
               f"concurrency={concurrency}); dir={run_dir}")
     cb = {"lock": threading.Lock(), "fails": collections.Counter(), "dead": set()}
     n_err, wlock = 0, threading.Lock()
-    with (run_dir / "records.jsonl").open(mode) as fo, (run_dir / "transcripts.jsonl").open(mode) as ft, \
-         (run_dir / "errors.jsonl").open(mode) as fe:
+    with (run_dir / "records.jsonl").open("w") as fo, (run_dir / "transcripts.jsonl").open("w") as ft, \
+         (run_dir / "errors.jsonl").open("w") as fe:
         with ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
             futs = {ex.submit(_one_task, ch, name, agent, panel, run_id, cb, cache): (ch, name)
                     for (ch, name, agent) in tasks}
@@ -252,10 +265,24 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                 except Exception as e:
                     msg = str(e)
                     if msg.startswith("circuit_open"):
-                        continue                              # agent already disabled; skip quietly
+                        # was `continue` with NO row anywhere: the task vanished from records.jsonl
+                        # and errors.jsonl alike, so finalize_run reported status "completed" with a
+                        # silently short denominator.
+                        with wlock:
+                            fe.write(json.dumps({"record_id": f"{run_id}:{ch.id}:{name}",
+                                                 "challenge_id": ch.id, "agent": name,
+                                                 "status": "skipped_circuit_open",
+                                                 "error_type": "CircuitOpen",
+                                                 "error": "provider disabled after repeated terminal failures"},
+                                                ensure_ascii=False) + "\n"); fe.flush()
+                            n_err += 1
+                        continue
                     with cb["lock"]:
-                        cb["fails"][name] += 1
-                        if any(k in msg.lower() for k in _TERMINAL_ERR) and cb["fails"][name] >= 3 \
+                        terminal = any(k in msg.lower() for k in _TERMINAL_ERR)
+                        if terminal:
+                            cb["fails"][name] += 1     # only terminal errors count: previously two
+                                                       # timeouts plus one auth error killed a provider
+                        if terminal and cb["fails"][name] >= 3 \
                                 and name not in cb["dead"]:
                             cb["dead"].add(name)
                             print(f"  [circuit] disabling '{name}' after repeated auth/quota failures")
@@ -331,8 +358,6 @@ def make_manifest(run_id, created_at, benchmark, agents: dict, panel, budget, co
 def run(args) -> None:
     from datetime import datetime, timezone
     challenges = subset(load_challenges(args.challenges), args.per_category, args.limit, args.categories)
-    if args.index:
-        FrozenIndex(args.index)   # raises (future work)
     agents = {name: build_agent(name, budget=args.budget) for name in args.agents}
     panel = JudgePanel.from_config(args.judge_config)
     repo_root = Path(__file__).resolve().parents[2]
@@ -355,9 +380,6 @@ def main():
     p = argparse.ArgumentParser(description="Run the CREST creativity benchmark (ad-hoc CLI).")
     p.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
     p.add_argument("--agents", nargs="+", required=True)
-    p.add_argument("--index", default=None,
-                   help="frozen shared index (contamination-controlled run). FUTURE WORK: raises. "
-                        "Omit for LIVE provider-web-search mode.")
     p.add_argument("--judge_config", default="crest/judge/judge_config.live.yaml")
     p.add_argument("--budget", type=int, default=6, help="per-agent web-search cap (where the provider supports it)")
     p.add_argument("--concurrency", type=int, default=4, help="parallel (challenge, agent) tasks")

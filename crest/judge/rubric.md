@@ -50,18 +50,18 @@ entrant's answer are all withheld.** The judge returns one JSON object —
 
 ## Primary endpoint
 
-**`min` of the axes, on the 1–10 scale — not a threshold on all three.** The old "at or above
-threshold on all three axes" indicator is retained only for backward comparability
-(`threshold_all_three: 6.0`, reported as `creative_all_three`): it is unpre-registered, its rate
-swung **5.4–36.1%** across thresholds 5–7 on the pilot run and 38.9–48.7% on the most recent full
-run, and 24.9% of records on the first full run sat exactly on 6.00 on some axis (17.5% on the
-latest). Adding Surprising to the gate removes 0 records at t = 6 and 2 of 234 at t = 7.
+**`min(non-redundancy, Useful)` — two axes, on the 1–10 scale, not a threshold on all three.**
+This is now the definition in code (`analysis/stats.py::_composite`) and in
+`analysis/preregistration.yaml`; `min3()` is retained for comparability with earlier numbers.
+Surprising is deliberately **excluded** from the endpoint: including a demoted, unanchored axis in a
+`min` smuggles it back in as a binding constraint (a 9/7/2 record would score 2, not 7), and it is
+the sole binding axis in roughly 1 record in 147.
 
-⚠ **Docs/code discrepancy, unresolved.** This file and `readme.md` describe the endpoint as
-`min(non-redundancy, Useful)` (two axes); `analysis/preregistration.yaml` and the shipped
-`analysis/stats.py::_composite` compute `min(New, Useful, Surprising)` (three axes). The two differ
-on 0–2 of 234 records, so no reported number turns on it — but the code has not been changed to
-match the two-axis wording, and a paper must state which one it used.
+The old "at or above threshold on all three axes" indicator survives only for backward comparability
+(`threshold_all_three: 6.0`, reported per record as `creative_all_three`): it is unpre-registered,
+its rate swung **5.4–36.1%** across thresholds 5–7 on the pilot run and 38.9–48.7% on the most recent
+full run, and 24.9% of records on the first full run sat exactly on 6.00 on some axis (17.5% on the
+latest). Adding Surprising to a two-axis gate removes 0 of 234 records at t = 6 and 2 at t = 7.
 
 Grounded in the standard definition of creativity (novelty + usefulness) plus Boden's surprise.
 Humans do **not** currently own any axis: **no human validation study has been run** (see
@@ -142,10 +142,11 @@ ungrounded. The gate is retained as a cheap guard against an untooled or confabu
 Report the axes **separately per category** (a profile, not one number).
 
 - **Implemented:** inter-judge reliability — Krippendorff's α (interval) and ICC(1,1)/ICC(1,k), plus
-  the per-judge severity table, in `analysis/stats.py::reliability_report`. Severity is reported
-  alongside α by design: on this project's data judge severity varied by 2–3 points on a 1–10 scale,
-  exceeding the entire between-agent spread, so α alone would hide the effect that decided the
-  leaderboard. (`judge_config.yaml`'s `[NOT IMPLEMENTED]` note on this key is now stale.)
+  the per-judge severity table, in `analysis/stats.py::reliability_report`. Measured on the full
+  panel, ICC(1,k) is **.774 / .746 / .671** across the three axes, against a 0.80 bar — the panel
+  misses it on every axis, and by the most on Surprising. Severity is reported alongside α by
+  design: judge severity varied by 2–3 points on a 1–10 scale, exceeding the entire between-agent
+  spread, so α alone would hide the effect that decided the leaderboard.
 - **Not implemented:** length bins — length is logged per record (`output_len_tokens`) but no
   analysis stratifies or adjusts for it, so "per category × length bin" is not something this repo
   currently produces.
