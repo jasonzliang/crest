@@ -180,6 +180,9 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         "record_id": rid, "run_id": run_id,
         "challenge_id": ch.id, "category": ch.category, "domain": ch.domain,
         "axis": ch.axis_isolated, "predicted_direction": ch.predicted_direction,
+        "time_sensitivity": ch.time_sensitivity,   # was never written, so the pre/post-cutoff
+                                                   # split it exists for was not computable
+                                                   # even in principle from records.jsonl
         "agent": name, "model": agent.model, "model_family": agent.model_family,
         "query_sha": q_sha,                    # content address: invalidates if the prompt is edited
         "generation_cached": cached,           # True => generation reused, not re-paid for

@@ -20,6 +20,18 @@ n=len(load_challenges('crest/questions/crest_challenges.jsonl'))
 print(f'  OK {n} items load and validate')
 " || fail=1
 
+echo "== sidecar id bijection (rationale lives in item_design.jsonl)"
+python - <<'PY2' || fail=1
+import json, sys
+a={json.loads(l)["id"] for l in open("crest/questions/crest_challenges.jsonl") if l.strip()}
+b={json.loads(l).get("id") for l in open("crest/questions/item_design.jsonl") if l.strip()} - {None}
+if a != b:
+    print(f"  FAIL sidecar drift: {len(a-b)} item(s) missing design notes {sorted(a-b)[:5]}, "
+          f"{len(b-a)} orphaned {sorted(b-a)[:5]}")
+    sys.exit(1)
+print(f"  OK {len(a)} items, exact id bijection with item_design.jsonl")
+PY2
+
 echo "== quarantine (a benchmark shipping 49/50 must say so)"
 python - <<'PY2' || fail=1
 import sys, yaml, pathlib
