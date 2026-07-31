@@ -64,9 +64,14 @@ def main():
         age_min = (now - recs.stat().st_mtime) / 60 if recs.exists() else 999
         key = f"run:{rd.name}"
         state[key] = n
-        grew = n > prev.get(key, -1)
+        seen_before = key in prev
+        grew = seen_before and n > prev[key]   # a FIRST sample cannot show growth; treating
+                                               # it as ADVANCING is the single-sample
+                                               # misdiagnosis this module exists to prevent
         if done:
             verdict = f"DONE ({n}/{a.target} records, manifest written)"
+        elif pids and not seen_before:
+            verdict = f"ALIVE pid={pids} n={n}/{a.target} (first sample -- no baseline yet)"
         elif pids and grew:
             verdict = f"ALIVE+ADVANCING pid={pids} {prev.get(key,'?')}->{n}/{a.target}"
         elif pids and age_min > a.stall_min:
@@ -99,7 +104,7 @@ def main():
             v = f"DEAD+INCOMPLETE ({lines} lines, no 'wrote' marker)"
             print(f"  ablation: {v}"); problems.append(v)
 
-    STATE.write_text(json.dumps(state))
+    STATE.write_text(json.dumps({**prev, **state}))   # keep other runs' counters, don't drop them
     if problems:
         print(f"\nSTALLED/DEAD: {len(problems)} — fix or skip, and record the skip.")
         raise SystemExit(1)

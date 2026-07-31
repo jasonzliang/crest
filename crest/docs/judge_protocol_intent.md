@@ -1,3 +1,12 @@
+# Judge protocol — design intent vs implemented behaviour
+
+> Moved out of `judge/judge_config.yaml` on 2026-07-31. That file was shaped like a config but was
+> read by **no code path** (every caller defaults to `judge_config.live.yaml`), which made it a
+> trap: `JudgePanel.from_config` loaded it happily with placeholder model IDs
+> (`claude-opus-4-8-YYYYMMDD`), no `min_judges`, and no `leave_one_family_out` key — so pointing
+> anything at it would silently revert LOFO to True. The live config is
+> `judge/judge_config.live.yaml`; this file is documentation only and must never be loaded.
+
 # CREST judge panel configuration.
 # Multi-vendor + >=1 open-weight; leave-one-family-out is enforced in score.py.
 # Pin dated model snapshots for reproducibility (record exact IDs at run time).
@@ -28,10 +37,11 @@ judges:
     family: open_weight
 
 reliability:
-  report: [krippendorff_alpha, icc]     # IMPLEMENTED 2026-07-30 in analysis/stats.py::
+  report: [krippendorff_alpha, icc]     # IMPLEMENTED in analysis/stats.py::
                                         # reliability_report() -- ICC(1,1), ICC(1,k), Krippendorff
                                         # alpha (interval) and per-judge severity. Measured on the
-                                        # full panel: ICC(1,k) .774/.746/.671 vs the 0.80 bar.
+                                        # NB run-specific: ICC(1,k) was .774/.746/.671 on run 111856Z but .527/.631/.445 on a later
+                                        # run -- recompute per run, never quote a fixed figure.
   human_validation_required_categories: [C1, C2, C3, C4, C5]   # human panel validates all; primary on C1/C5
 
 grounding_gate:

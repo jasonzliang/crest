@@ -51,6 +51,11 @@ python -m crest.analysis.validate_items >/tmp/ci_items.log 2>&1 \
   || { echo "  FAIL $(grep -c BLOCKING /tmp/ci_items.log) contradiction(s):"; grep BLOCKING /tmp/ci_items.log | sed 's/^/    /'; fail=1; }
 
 echo "== claims the repo cannot instantiate (p2 body only; p3 is not submission-ready)"
+# a gate that silently passes when its input is gone is worse than no gate: deleting the sections
+# directory previously turned three checks green
+if ! ls crest/paper/p2_benchmark_only/sections/*.tex >/dev/null 2>&1; then
+  echo "  FAIL p2 sections not found -- claims checks cannot run"; fail=1
+fi
 for pat in "human-validated" "(OSF, timestamped)" "contamination-controlled"; do
   hits=$(grep -o ".\{0,14\}$pat" crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
          | grep -v 'not..\{0,8\}'"$pat" | grep -v 'not.\{0,12\}'"$pat" | wc -l | tr -d ' ')
@@ -58,10 +63,18 @@ for pat in "human-validated" "(OSF, timestamped)" "contamination-controlled"; do
   else echo "  OK '$pat' absent or negated"; fi
 done
 echo "== canary claim vs data"
-if grep -qi canary crest/questions/crest_challenges.jsonl; then echo "  OK canaries present in data";
+# count, do not merely detect: one item containing the word passed a claim that EVERY item carries one
+n_canary=$(python -c "
+import json,sys
+rows=[json.loads(l) for l in open('crest/questions/crest_challenges.jsonl') if l.strip()]
+print(sum(1 for r in rows if 'canary' in json.dumps(r).lower()), len(rows))
+")
+set -- $n_canary; have=$1; total=$2
+if [ "$have" = "$total" ] && [ "$have" != "0" ]; then echo "  OK canaries present in all $total items";
 else
-  if grep -rqi "each item embeds a canary\|Every item embeds a" crest/docs/datasheet.md crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null; then
-    echo "  FAIL canary claimed but 0/50 items contain one"; fail=1
+  if grep -rqiE "canar(y|ies)" crest/docs/datasheet.md crest/paper/p2_benchmark_only/sections/*.tex 2>/dev/null \
+     && ! grep -rqi "NOT IMPLEMENTED" crest/docs/datasheet.md; then
+    echo "  FAIL canary claimed in docs but only $have/$total items contain one"; fail=1
   else echo "  OK no unqualified canary claim (0/50 items, correctly disclosed)"; fi
 fi
 

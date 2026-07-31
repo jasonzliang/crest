@@ -108,6 +108,8 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
                            "n_judge_error": sum(1 for r in records if r.get("scoring_status") == "judge_error"),
                            "n_judge_degraded": sum(1 for r in records if r.get("scoring_status") == "judge_degraded"),
                            "n_grounding_fail": sum(1 for r in records if r.get("scoring_status") == "grounding_fail"),
+                           "n_empty_answer": sum(1 for r in records if r.get("scoring_status") == "empty_answer"),
+                           "n_truncated": sum(1 for r in records if r.get("truncated")),
                            "n_task_errors": n_task_errors},
                 "environment": {"python": sys.version.split()[0], "platform": platform.platform(),
                                 "packages": pkg_versions()},

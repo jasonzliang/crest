@@ -17,7 +17,13 @@ import argparse, json, warnings
 import numpy as np
 import pandas as pd
 
-AXES = ("new", "useful", "surprising")
+ALL_AXES = ("new", "useful", "surprising")
+PRIMARY_AXES = ("new", "useful")     # Surprising is EXPLORATORY: ablation moved it by -0.02, it
+                                     # correlates with non-redundancy at r~0.95, and it is the sole
+                                     # binding axis in ~1 record in 147. Single source of truth --
+                                     # four separate copies of the axis tuple caused the drift that
+                                     # left the primary endpoint defined three different ways.
+AXES = ALL_AXES                      # back-compat alias
 
 
 class InsufficientData(Exception):
@@ -32,10 +38,22 @@ class InsufficientData(Exception):
 # I/O + small helpers
 # --------------------------------------------------------------------------- #
 def load_run(path: str):
+    """Tolerate a partially-written final line: analysing a LIVE run is the normal case, and an
+    uncaught JSONDecodeError there is a crash for no reason."""
     import pandas as pd
-    rows = [json.loads(l) for l in open(path) if l.strip()]
-    df = pd.json_normalize(rows)
-    return df
+    rows, bad = [], 0
+    for line in open(path):
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            bad += 1
+    if bad:
+        print(f"  [skipped {bad} unparseable line(s) -- run still being written?]")
+    if not rows:
+        raise InsufficientData(f"no parseable records in {path}")
+    return pd.json_normalize(rows)
 
 
 def _axis_col(axis: str) -> str:
@@ -44,12 +62,6 @@ def _axis_col(axis: str) -> str:
     return f"creativity.{axis}"
 
 
-def mean_composite(df: pd.DataFrame) -> pd.Series:
-    """OLD endpoint (mean of the three axes), retained for comparability."""
-    cols = [f"creativity.{a}" for a in AXES if f"creativity.{a}" in df.columns]
-    if not cols:
-        return pd.Series(np.nan, index=df.index)
-    return df[cols].mean(axis=1)
 
 
 def _composite(df: pd.DataFrame) -> pd.Series:
@@ -65,18 +77,15 @@ def _composite(df: pd.DataFrame) -> pd.Series:
 
     All-null creativity rows (e.g. grounding-gated agents) become NaN.
     """
-    cols = [f"creativity.{a}" for a in ("new", "useful") if f"creativity.{a}" in df.columns]
-    if not cols:
-        return pd.Series(np.nan, index=df.index)
-    return df[cols].min(axis=1)
+    cols = [f"creativity.{a}" for a in PRIMARY_AXES]
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        # HARD ERROR, not silent degradation. Dropping a missing axis turned min(new, useful) into
+        # a one-axis endpoint: composite 5.18 -> 7.65 and the crossover interaction flipped
+        # p=0.91 -> p=0.00015, with main() still printing the two-axis label.
+        raise InsufficientData(f"primary endpoint needs {cols}; missing {missing}")
+    return df[cols].min(axis=1, skipna=False)   # a NaN axis must NOT be silently skipped
 
-
-def min3(df: pd.DataFrame) -> pd.Series:
-    """The three-axis minimum, retained for comparability with pre-2026-07-31 numbers."""
-    cols = [f"creativity.{a}" for a in AXES if f"creativity.{a}" in df.columns]
-    if not cols:
-        return pd.Series(np.nan, index=df.index)
-    return df[cols].min(axis=1)
 
 
 # --------------------------------------------------------------------------- #
@@ -592,6 +601,21 @@ def main():
         print("\n-- descriptive (composite mean by agent) --")
         for ag, sub in scored_rows.groupby(scored_rows["agent"].astype(str)):
             print(f"  {ag}: mean={sub['_composite'].mean():.3f} (n={len(sub)})")
+
+    # Judge reliability -- previously computed by a function nothing called, while rubric.md,
+    # design.md, related_work.md, benchmark_best_practices.md and preregistration.yaml all stated
+    # reliability was reported.
+    print("\n-- judge reliability (ICC / Krippendorff alpha / per-judge severity) --")
+    try:
+        rep = reliability_report(args.run)
+        for ax, v in rep.items():
+            print(f"  {ax:<12} ICC(1,1)={v.get('icc_1_1','-')}  ICC(1,k)={v.get('icc_1_k','-')}  "
+                  f"alpha={v.get('krippendorff_alpha_interval','-')}  "
+                  f"severity_spread={v.get('severity_spread','-')}  "
+                  f"judges_for_0.80={v.get('judges_needed_for_0.80','-')}")
+            print(f"               per-judge mean: {v.get('per_judge_mean', {})}")
+    except Exception as e:
+        print(f"  insufficient data for reliability_report: {type(e).__name__}: {e}")
 
     # Bootstrap CIs (this generally works even with one scored agent).
     print("\n-- bootstrap CIs --")

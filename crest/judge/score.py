@@ -14,7 +14,7 @@ Two pieces:
      vacuous and has been removed rather than left as an unimplemented assertion.
 """
 from __future__ import annotations
-import dataclasses, json, re, sys, yaml
+import dataclasses, json, re, statistics, sys, yaml
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -57,6 +57,13 @@ _SENT_SPLIT_RE = re.compile(r"[.!?\n]+")
 # citations reads as unsupported fabrication and fails the gate.
 _MAX_UNCITED_CLAIMS = 2
 
+# Minimum length for an answer to be scoreable at all. Was 40 chars, which admitted 10 records of
+# 90-349 chars -- bare research-plan preambles produced by a truncating adapter -- that judges then
+# scored 1/1/1. They are the SAME adapter failure as the 0-char answers, just above the old floor,
+# and excluding them moved one entrant's composite 3.08 -> 3.71 while no other agent moved. A
+# deep-research answer that is shorter than this is a failure to answer, not a bad answer.
+_MIN_SUBSTANTIVE_CHARS = 1000
+
 
 def _count_factual_claims(text: str) -> int:
     """Lightweight proxy for the number of *verifiable external factual claims* an answer
@@ -66,7 +73,7 @@ def _count_factual_claims(text: str) -> int:
     return sum(1 for s in _SENT_SPLIT_RE.split(text) if _FACT_CUE_RE.search(s))
 
 
-def grounding_gate(report, challenge: dict) -> GroundingResult:
+def grounding_gate(report, challenge: dict | None = None) -> GroundingResult:
     """Factual-grounding check (see module docstring). PILOT implementation: a lightweight
     proxy that targets an answer's FACTUAL SCAFFOLDING, not its creative proposal. We
     estimate how many verifiable external factual claims the answer makes (dated facts,
@@ -98,7 +105,7 @@ def grounding_gate(report, challenge: dict) -> GroundingResult:
     # crude density: citations per ~600 chars of answer, saturating at 1.0
     density = min(1.0, n / max(1.0, len(text) / 600.0)) if text else 0.0
     n_factual = _count_factual_claims(text)
-    substantive = len(text.strip()) >= 40
+    substantive = len(text.strip()) >= _MIN_SUBSTANTIVE_CHARS
     grounded = n >= 1                                   # >=1 real source URL backs the scaffolding
     pure_invention = n_factual <= _MAX_UNCITED_CLAIMS   # few external facts to cite
     passed = substantive and (grounded or pure_invention)
@@ -124,6 +131,9 @@ _JUDGE_MAX_ANSWER_CHARS = 400_000
 # guard only, and it warns rather than truncating in silence.
 _MAX_KNOWN_ANSWERS = 200
 
+# keys `ablate` accepts; an unrecognised key used to be silently ignored
+_ABLATABLE = frozenset({"known_answers", "restore_expert_baseline"})
+
 
 def _fit_answer(text: str) -> str:
     text = text or ""
@@ -147,12 +157,17 @@ def _judge_prompt(ch: dict, report_text: str, ablate=frozenset()) -> str:
     ka = "\n".join(f"- {a}" for a in _ka[:_MAX_KNOWN_ANSWERS]) or "(none provided)"
     if "known_answers" in ablate:
         ka = "(ABLATED: no novelty baseline supplied for this run)"
-    # expert_baseline is NO LONGER SENT TO THE JUDGE. Ablation: withholding it moved Surprising by
-    # -0.02 (n=50), so it did not anchor the axis it existed for -- while in 7 items it carried the
-    # author's enumeration of the intended surprises, turning Surprising into graded recall against
-    # a key. The field is retained in the dataset for provenance and possible future use, and the
-    # ablate hook still accepts "expert_baseline" so the old behaviour is reproducible.
-    _ = ablate
+    # expert_baseline is NOT sent to the judge by default (ablation: withholding it moved Surprising
+    # by -0.02, and in 7 items it carried the author's enumeration of the intended surprises). Set
+    # "restore_expert_baseline" in `ablate` to reproduce the OLD behaviour -- previously this was a
+    # `_ = ablate` no-op, which silently made two of ablate_fields.py's four arms duplicates of the
+    # other two while the tool reported them as independent measurements.
+    unknown = set(ablate) - _ABLATABLE
+    if unknown:
+        raise ValueError(f"unknown ablate key(s) {sorted(unknown)}; valid: {sorted(_ABLATABLE)}")
+    eb_block = ""
+    if "restore_expert_baseline" in ablate:
+        eb_block = f"\n\nEXPERT BASELINE (surprise baseline):\n{ch.get('expert_baseline')}"
     hr = "\n".join(f"- {r}" for r in (ch.get("hard_rules") or [])) or "(none)"
     return f"""You are an expert judge scoring the CREATIVITY of a deep-research answer. Score three axes 1-10:
 - NON-REDUNDANCY (reported as "new"): how far the answer departs from the DATED PRIOR-ART SET below. This is NOT a judgement of novelty in the world -- it is non-redundancy against a specific, dated, published reference set, which is what makes it reproducible. Judge ONLY against that set, NOT against the web or your own background knowledge: content absent from the set counts as non-redundant even if you believe you have seen it, and content present in the set does not, even if it looks fresh. Restating an entry => 1-3; recombining entries with minor extension => 4-6; a synthesis or connection not reducible to the entries => 7-10.
@@ -171,6 +186,7 @@ DATED PRIOR-ART SET (the reference for non-redundancy; judge only against this):
 HARD RULES (usefulness gate):
 {hr}
 
+{eb_block}
 ANSWER TO SCORE (author identity withheld):
 {_fit_answer(report_text)}
 """
@@ -344,11 +360,9 @@ class JudgePanel:
         if not per:
             return None   # NO judge succeeded (e.g. judges out of quota) -> UNSCORED, not a real 0.
                           # Caller must record this as a judge error, not fold a fake 0 into results.
-        agg = {ax: _median([v[ax] for v in per.values()]) for ax in ("new", "useful", "surprising")}
+        agg = {ax: statistics.median([v[ax] for v in per.values()])
+               for ax in ("new", "useful", "surprising")}
         all_three = all(agg[ax] >= self.threshold for ax in ("new", "useful", "surprising"))
         return CreativityScore(agg["new"], agg["useful"], agg["surprising"], all_three, per, len(per))
 
 
-def _median(xs: list[float]) -> float:
-    xs = sorted(xs); n = len(xs)
-    return xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2

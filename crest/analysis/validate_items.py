@@ -45,6 +45,27 @@ _STOP = {"A", "I", "R", "S", "The", "It", "In", "On", "Of", "To", "And", "Or", "
 _PLACEHOLDER = {"X", "A", "B", "M", "L", "E", "D", "N", "Y", "Z", "T", "P", "Q"}
 
 
+def _standalone_symbols(clause: str) -> set:
+    """Element symbols appearing as FREE-STANDING list items, not inside a compound.
+
+    A bare-symbol collision produced a false positive on a red CI gate: an item banned
+    "single-crystal Si" while permitting "a-Si:H", which is not a contradiction but the whole point
+    of a no-crystallinity counterfactual. Requiring the symbol to be delimited by whitespace or
+    list punctuation excludes hyphenated/colonated compounds (a-Si:H, LiCoO2-style contexts) while
+    still catching genuine list membership like "(S, Se)" vs "bans ... Te, Se, Bi"."""
+    out = set()
+    for m in _TOK_RE.finditer(clause):
+        t = m.group(0)
+        if t in _STOP or t in _PLACEHOLDER or len(t) > 2:
+            continue
+        before = clause[m.start() - 1] if m.start() else " "
+        after = clause[m.end()] if m.end() < len(clause) else " "
+        if before in "-:/" or after in "-:/":     # part of a compound term, not a listed element
+            continue
+        out.add(t)
+    return out
+
+
 def _num_near(text: str, sym: str) -> list[float]:
     """Numbers stated for `sym` in prose, e.g. 'mu~0.39-0.42' -> [0.39, 0.42]."""
     out = []
@@ -83,13 +104,9 @@ def check_item(it: dict) -> list[dict]:
     for rule in rules:
         if _PERMIT_RE.search(rule):
             for m in _PERMIT_RE.finditer(rule):
-                clause = rule[m.end():m.end() + 200]
-                permitted |= {t for t in _TOK_RE.findall(clause)
-                              if t not in _STOP and t not in _PLACEHOLDER and len(t) <= 2}
+                permitted |= _standalone_symbols(rule[m.end():m.end() + 200])
         for m in _BAN_RE.finditer(rule):
-            clause = rule[m.end():m.end() + 240]          # the enumerated ban list only
-            banned |= {t for t in _TOK_RE.findall(clause)
-                       if t not in _STOP and t not in _PLACEHOLDER and len(t) <= 2}
+            banned |= _standalone_symbols(rule[m.end():m.end() + 240])   # enumerated ban list only
     for t in sorted(permitted & banned):
         v.append({"kind": "rules_permit_and_ban_same_token", "severity": "BLOCKING",
                   "detail": f"one hard rule permits '{t}' while another bans it"})
@@ -99,8 +116,14 @@ def check_item(it: dict) -> list[dict]:
         for m in _NEW_OFFER_RE.finditer(rule):
             offer = m.group(1)
             # distinctive multiword phrases from the offered example
+            offer_words = len(re.findall(r"[a-z]+", offer.lower()))
             for phrase in re.findall(r"[a-z]+(?:[- ][a-z]+){1,3}", offer.lower()):
                 if len(phrase) < 12:
+                    continue
+                # The offered mechanism must be SUBSTANTIALLY the listed one, not a component of it.
+                # "a supply-criticality-weighted atom economy" contains "atom economy" but the novel
+                # part is the weighting; matching the sub-phrase flagged a false contradiction.
+                if len(phrase.split()) / max(1, offer_words) < 0.6:
                     continue
                 if phrase in ka.lower():
                     v.append({"kind": "new_mechanism_already_in_known_answers", "severity": "BLOCKING",
