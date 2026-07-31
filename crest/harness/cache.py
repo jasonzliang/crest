@@ -71,11 +71,18 @@ def adapter_fingerprint(agent) -> str:
 
 
 def _module_source(mod) -> str:
+    """Raise rather than degrade. Returning a `<nosource:...>` sentinel collapsed the fingerprint to
+    a CONSTANT for every adapter -- silently restoring the exact "serve answers from unknown code"
+    failure gen/2 exists to prevent, in the one environment (zipapp, frozen build) where nobody
+    would think to check. If source is unreadable the cache must not be trusted at all."""
     import inspect
     try:
         return inspect.getsource(mod)
-    except (OSError, TypeError):
-        return f"<nosource:{getattr(mod, '__name__', '?')}>"
+    except (OSError, TypeError) as e:
+        raise RuntimeError(
+            f"cannot read source of {getattr(mod, '__name__', mod)!r} ({type(e).__name__}), so an "
+            f"answer cannot be attributed to the code that produced it. Run from a source checkout, "
+            f"or disable the cache explicitly with --override-cache.") from e
 
 
 def query_sha(query: str) -> str:

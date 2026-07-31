@@ -39,7 +39,13 @@ _RANGE_RE = re.compile(r"\b(mu|tau|t|SEA|Isp|band ?gap|gap)\b[^.\[\]]{0,60}?\[\s
 # \b on every alternative: without it `bans?` matched inside "band gap", "bank", "DrugBank" and
 # "urban" -- 12 of 79 ban-matches in the live corpus (15%), each opening a bogus 240-char ban clause.
 # No live false positive only because exactly one item has a non-empty permitted set.
-_BAN_RE = re.compile(r"(?:\bdeliberately\s+)?\bbans?\b|\bbanned\b|\bexcluded\b|\bdisqualif\w+"
+# \b on every alternative: without it `bans?` matched inside "band gap", "bank", "DrugBank" and
+# "urban" -- 12 of 79 ban-matches in the live corpus (15%), each opening a bogus 240-char ban clause.
+# `ban\w*` rather than `bans?`, because the boundary version silently dropped "banning".
+# forbid/forbidden (5 hits in the science corpus's hard_rules) and disallowed (6) were never in the
+# vocabulary at all, so class 2's coverage was materially thinner than this module implied.
+_BAN_RE = re.compile(r"\bban(?:s|ned|ning)?\b|\bexclude[ds]?\b|\bexcluding\b|\bdisqualif\w+"
+                     r"|\bforbid(?:s|den|ding)?\b|\bdisallow(?:s|ed|ing)?\b"
                      r"|\bmust NOT\b|\bmay not\b", re.I)
 _PERMIT_RE = re.compile(r"may be|is allowed|are allowed|permitted|X may be", re.I)
 # element-ish / short capitalised tokens worth colliding on

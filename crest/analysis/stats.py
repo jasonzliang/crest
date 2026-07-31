@@ -150,22 +150,29 @@ def judge_ratings(records_path: str) -> dict:
     and json_normalize leaves it as an object column."""
     rows = [json.loads(l) for l in open(records_path) if l.strip()]
     out = {ax: [] for ax in AXES}
+    ids = {ax: [] for ax in AXES}                    # per-unit judge-id tuples, aligned with out[ax]
     by_judge = {ax: {} for ax in AXES}
     for r in rows:
         c = r.get("creativity")
         if not c or not c.get("judges"):
             continue
         for ax in AXES:
-            vals = [j[ax] for j in c["judges"] if j.get(ax) is not None]
-            if len(vals) >= 2:                       # a unit needs >=2 raters to inform agreement
-                out[ax].append(vals)
+            rated = [j for j in c["judges"] if j.get(ax) is not None]
+            if len(rated) >= 2:                      # a unit needs >=2 raters to inform agreement
+                out[ax].append([j[ax] for j in rated])
+                # Track WHICH judges, not just how many. ICC(1,*) and alpha are rater-agnostic so
+                # positional lists are fine for them, but ICC(3,*) treats column position AS rater
+                # identity. Under leave_one_family_out every unit has the same COUNT from a
+                # different PAIR, so a count-only balance check passed and the two-way model was
+                # computed on a matrix whose columns mixed judges -- reporting it as valid.
+                ids[ax].append(tuple(j.get("judge_id") for j in rated))
             for j in c["judges"]:
                 if j.get(ax) is not None:
                     by_judge[ax].setdefault(j["judge_id"], []).append(j[ax])
-    return {"units": out, "by_judge": by_judge, "n_records": len(rows)}
+    return {"units": out, "judge_ids": ids, "by_judge": by_judge, "n_records": len(rows)}
 
 
-def icc_oneway(units: list[list[float]]) -> dict:
+def icc_oneway(units: list[list[float]], judge_ids: list[tuple] | None = None) -> dict:
     """ICC(1,1) and ICC(1,k) from a one-way random-effects ANOVA on ragged rater groups.
 
     ICC(1,1) = reliability of a SINGLE judge; ICC(1,k) = reliability of the k-judge mean actually
@@ -200,11 +207,11 @@ def icc_oneway(units: list[list[float]]) -> dict:
     out = {"icc_1_1": round(icc1, 3), "icc_1_1_raw": round(icc1_raw, 3),
            "icc_1_k": round(icck, 3), "k_bar": round(k_bar, 2),
            "n_units": n, "judges_needed_for_0.80": (None if need == float("inf") else round(need, 1))}
-    out.update(_icc_twoway(units))
+    out.update(_icc_twoway(units, judge_ids))
     return out
 
 
-def _icc_twoway(units: list[list[float]]) -> dict:
+def _icc_twoway(units: list[list[float]], judge_ids: list[tuple] | None = None) -> dict:
     """ICC(3,1) / ICC(3,k): two-way MIXED model, judge main effect removed (Shrout & Fleiss 1979).
 
     Why this is reported next to the one-way figures rather than instead of them. ICC(1,*) treats
@@ -220,6 +227,16 @@ def _icc_twoway(units: list[list[float]]) -> dict:
     ks = {len(u) for u in units}
     if len(ks) != 1:
         return {"icc_3_note": f"skipped: unbalanced panel (ratings per unit: {sorted(ks)})"}
+    # Equal COUNTS are not a fixed panel. Verified on a LOFO fixture built from the run's real
+    # severities: every unit had k=2, the count check passed, and ICC(3,k) came out 0.789 from a
+    # matrix with three different column patterns whose positional means (6.26, 8.60) matched no
+    # actual judge. The severity effect the two-way model exists to remove was only partly removed.
+    if judge_ids is not None:
+        distinct = {tuple(t) for t in judge_ids}
+        if len(distinct) != 1:
+            return {"icc_3_note": f"skipped: rater set varies across units "
+                                  f"({len(distinct)} distinct panels, e.g. leave-one-family-out) "
+                                  f"-- ICC(3,*) requires a fixed panel"}
     k = ks.pop()
     if k < 2 or len(units) < 3:
         return {}
@@ -237,8 +254,18 @@ def _icc_twoway(units: list[list[float]]) -> dict:
         return {}
     icc31 = (ms_r - ms_e) / (ms_r + (k - 1) * ms_e) if (ms_r + (k - 1) * ms_e) else float("nan")
     icc3k = (ms_r - ms_e) / ms_r
+    # Report BOTH shares, and name them for what they are. The SS share understates the judge
+    # contribution because SS_judge carries k-1 df against SS_target's n-1 (2 vs 249 here), so on the
+    # shipped run it reads 0.535/0.215/0.590 where the variance-component share is 0.632/0.290/0.682
+    # -- an understatement of 7.5-9.7pp, in the direction that flatters the panel. The old single key
+    # was printed as "judge share of variance", which is the number a paper would copy.
+    ms_c = ss_cols / (k - 1) if k > 1 else 0.0
+    v_t = max(0.0, (ms_r - ms_e) / k)                 # target variance component
+    v_j = max(0.0, (ms_c - ms_e) / len(units))        # judge (column) variance component
+    tot = v_t + v_j + ms_e
     return {"icc_3_1": round(float(icc31), 3), "icc_3_k": round(float(icc3k), 3),
-            "judge_effect_ss_share": round(float(ss_cols / (ss_rows + ss_cols + ss_err)), 3)}
+            "judge_effect_ss_share": round(float(ss_cols / (ss_rows + ss_cols + ss_err)), 3),
+            "judge_effect_var_share": (round(float(v_j / tot), 3) if tot > 0 else None)}
 
 
 def krippendorff_alpha_interval(units: list[list[float]]) -> float:
@@ -266,7 +293,7 @@ def reliability_report(records_path: str) -> dict:
     for ax in AXES:
         entry = {}
         try:
-            entry.update(icc_oneway(r["units"][ax]))
+            entry.update(icc_oneway(r["units"][ax], r["judge_ids"][ax]))
         except InsufficientData as e:
             entry["icc_error"] = str(e)
         try:
@@ -713,6 +740,20 @@ def main():
               f"agents with scores={scored_agents}; "
               f"scored categories={sorted(scored_rows['category'].astype(str).unique())}")
 
+    # min2 as the stated robustness check. rubric.md, benchmark_best_practices.md and
+    # preregistration.yaml all describe min(New, Useful) as the two-axis robustness comparison, and
+    # min2() existed with a docstring and no caller -- a documented control that was never computed.
+    if len(scored_rows):
+        m2 = _run("min2", lambda: min2(df))
+        if m2 is not None:
+            both = pd.DataFrame({"three": scored_rows["_composite"].to_numpy(),
+                                 "two": m2.reindex(scored_rows.index).to_numpy()}).dropna()
+            if len(both) > 2:
+                print(f"\n-- robustness: min(New,Useful) vs min(New,Useful,Surprising) --")
+                print(f"  two-axis mean={both['two'].mean():.3f}  three-axis mean="
+                      f"{both['three'].mean():.3f}  delta={both['three'].mean()-both['two'].mean():+.3f}"
+                      f"  corr={both['two'].corr(both['three']):.4f}  (n={len(both)})")
+
     # Descriptive: per-agent composite mean.
     if len(scored_rows):
         print("\n-- descriptive (composite mean by agent) --")
@@ -739,7 +780,8 @@ def main():
                   f"judges_for_0.80={v.get('judges_needed_for_0.80','-')}")
             print(f"               two-way (judge effect removed): ICC(3,1)={v.get('icc_3_1','-')}  "
                   f"ICC(3,k)={v.get('icc_3_k','-')}  "
-                  f"judge share of variance={v.get('judge_effect_ss_share','-')}"
+                  f"judge share: SS={v.get('judge_effect_ss_share','-')} "
+                  f"var={v.get('judge_effect_var_share','-')}"
                   f"{'  ' + v['icc_3_note'] if v.get('icc_3_note') else ''}")
             print(f"               per-judge mean: {v.get('per_judge_mean', {})}")
             # surface the reason rather than printing a row of dashes: an all-'-' line reads as
@@ -796,9 +838,14 @@ def main():
             print(f"    {cat}: " + ", ".join(f"{a}={v:.2f}" for a, v in rk))
 
     # TOST equivalence per category.
-    print("\n-- TOST equivalence (composite vs 0, bounds +/-1) --")
+    print(f"\n-- TOST equivalence (composite vs 0, bounds {list(_bounds)}) --")
     for cat in cats:
-        res = _run(f"tost_equivalence[{cat}]", lambda c=cat: tost_equivalence(df, c))
+        # bounds=_bounds: the REGISTERED bounds were read from preregistration.yaml, printed in
+        # the header, and then not passed -- so tost_equivalence silently used its own (-1, 1)
+        # default and one run printed two different bounds. Harmless only while the registered
+        # value happens to equal the default, i.e. editing the registration did nothing.
+        res = _run(f"tost_equivalence[{cat}]",
+                   lambda c=cat: tost_equivalence(df, c, bounds=_bounds))
         if res is not None:
             print(f"  {cat}: mean={res['mean']:.3f} n={res['n']} "
                   f"equivalent={res['equivalent']} "

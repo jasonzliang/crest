@@ -20,7 +20,10 @@ Interpretation:
   * If New does not drop when `known_answers` is withheld, the novelty baseline is not doing the
     work claimed for it, and the field should be cut rather than defended.
   * If Surprising does not drop when `expert_baseline` is withheld, the third axis is not anchored
-    by it, which (with New~Surprising already at r~0.93) argues for reporting two axes.
+    by it, the axis rests on the judge's own prior -- a limitation to report, NOT grounds to drop
+    the axis. (An earlier version of this line argued for two axes on the strength of r~0.93; the
+    measured value is 0.883 at record level, and Surprising is the sole binding axis in 51/250
+    records, so the endpoint keeps all three.)
 
 Usage:
     python -m crest.analysis.ablate_fields --run crest/result/runs/<run_id> --per-category 2
@@ -35,7 +38,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
 from crest.harness.run_crest import load_challenges          # noqa: E402
-from crest.judge.score import JudgePanel, _ABLATABLE          # noqa: E402
+from crest.judge.score import JudgePanel, _ABLATABLE, JUDGE_PROMPT_VERSION   # noqa: E402
 from crest.harness.rejudge import StoredReport, _load_jsonl   # noqa: E402
 
 # NOTE the INVERTED semantics. This script's own first run proved expert_baseline does not anchor
@@ -82,6 +85,17 @@ def main():
     run_dir = _p(a.run)
 
     records = [r for r in _load_jsonl(run_dir / "records.jsonl") if r.get("creativity")]
+    # The FULL arm is read from the run; every other arm is re-scored with the CURRENT prompt. If the
+    # rubric has moved since the run, each delta conflates the ablation with the rubric bump -- and
+    # the with_expert -> Surprising verdict is precisely the one v2 changed the prompt to enable.
+    vers = {(r.get("creativity") or {}).get("judge_prompt_version") for r in records}
+    if vers != {JUDGE_PROMPT_VERSION}:
+        raise SystemExit(
+            f"judge prompt version mismatch: this run was scored under {sorted(vers, key=str)} but "
+            f"the current prompt is {JUDGE_PROMPT_VERSION}. The FULL arm comes from the run and the "
+            f"ablation arms from the current prompt, so every delta would mix the ablation with the "
+            f"rubric change. Re-judge the run first (harness/rejudge.py), or ablate a run scored "
+            f"under {JUDGE_PROMPT_VERSION}.")
     texts = {t["record_id"]: t for t in _load_jsonl(run_dir / "transcripts.jsonl")}
     ch_by_id = {c.id: c for c in load_challenges(str(_p(a.challenges)))}
     subset = [r for r in _balanced(records, a.per_category) if r["record_id"] in texts]

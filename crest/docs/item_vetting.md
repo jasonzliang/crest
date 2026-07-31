@@ -184,7 +184,7 @@ contradictions.
     the bar can't separate genuine from arbitrary novelty).
     **→ SUPERSEDED twice over.** (a) The "handled by … expert baselines" mitigation no longer
     operates: `expert_baseline` is judge-hidden as of 2026-07-30 (ablating it moved Surprising by
-    −0.02), and in the run data New and Surprising correlate at **r = 0.94** — the axes do not
+    −0.02), and in the run data **r(New, Surprising) = 0.883 at record level (0.946 pooling per-judge rows) on run 2026-07-31T040653Z** — the axes do not
     dissociate. (b) The axis labels were measured against judge verdicts and mostly do not bind:
     the isolated axis is the binding one 56% of the time for C1/usefulness (vs 33% chance), but
     only 21% for the novelty label — those items are novelty-*easy* — and 15% for surprise.

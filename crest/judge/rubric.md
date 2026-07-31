@@ -67,7 +67,8 @@ The old "at or above threshold on all three axes" indicator survives only for ba
 (`threshold_all_three: 6.0`, reported per record as `creative_all_three`): it is unpre-registered,
 its rate swung **5.4–36.1%** across thresholds 5–7 on the pilot run and 38.9–48.7% on the most recent
 full run, and 24.9% of records on the first full run sat exactly on 6.00 on some axis (17.5% on the
-latest). Adding Surprising to a two-axis gate removes 0 of 234 records at t = 6 and 2 at t = 7.
+latest). Adding Surprising to a two-axis gate removes 1 of 250 records at t = 6 and 3 at t = 7
+(recomputed on run 040653Z; the earlier "0 of 234 / 2" described superseded run 020425Z).
 
 Grounded in the standard definition of creativity (novelty + usefulness) plus Boden's surprise.
 Humans do **not** currently own any axis: **no human validation study has been run** (see
@@ -117,7 +118,7 @@ and the reference set is published so any omission can be contested.
   against a key rather than expectation-violation. That enumeration now lives in the judge-hidden
   `author_expected_surprises` field.
 - It is reported for continuity and because Boden's surprise criterion motivates the design, but
-  r(New, Surprising) = 0.94 and adding it to a two-axis gate eliminates 0 of 234 records
+  r(New, Surprising) = 0.883 at record level (0.946 pooling per-judge rows) on run 2026-07-31T040653Z, and adding it to a two-axis gate eliminates 1 of 250 records
   at t = 6. **Do not treat it as independent evidence.**
 
 ## Grounding gate (applied before scoring, not part of the axes)
@@ -158,7 +159,8 @@ Report the axes **separately per category** (a profile, not one number).
   one-way model absorbs the 3.2–3.8-point judge severity spread into error, so these are a floor,
   not the whole story; recompute per run and never quote a fixed figure — the panel
   misses it on every axis, and by the most on Surprising. Severity is reported alongside α by
-  design: judge severity varied by 2–3 points on a 1–10 scale, exceeding the entire between-agent
+  design: judge severity varies by 3.32 / 3.20 / 3.75 points per axis on a 1–10 scale (the "2–3
+  points" figure this line used to give predated the full-panel run), exceeding the between-agent
   spread, so α alone would hide the effect that decided the leaderboard.
 - **Not implemented:** length bins — length is logged per record (`output_len_tokens`) but no
   analysis stratifies or adjusts for it, so "per category × length bin" is not something this repo

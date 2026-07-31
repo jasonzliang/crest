@@ -89,21 +89,33 @@ else
   # Prose is not parseable by regex, and each fix bought one round. So: every line mentioning a
   # canary must be BYTE-IDENTICAL to a line a human approved in canary_claims.allow. A new or edited
   # canary sentence fails until someone re-reads it and re-approves it -- which is the actual
-  # control wanted here. Scope is every doc and both papers; adding a file cannot silently skip it.
+  # control wanted here. Scope is EVERY tracked .md and .tex under crest/, enumerated with
+  # git ls-files rather than a hand-listed glob -- the glob covered 43 files and missed 7,
+  # including both papers' main.tex, judge/rubric.md and result/readme.md, while the comment here
+  # claimed "adding a file cannot silently skip it".
   allow="crest/analysis/canary_claims.allow"
-  n_bad=$(grep -rhiE "canar(y|ies)" crest/readme.md crest/docs/*.md crest/docs/notes/*.md \
-            crest/paper/*/sections/*.tex 2>/dev/null \
+  # grep -f with a MISSING pattern file writes to stderr, matches nothing, and exits non-zero --
+  # so `| wc -l` saw 0 lines and the gate printed OK. Replacing a heuristic with an approval list
+  # made the list's own absence fail OPEN: a rename, a path typo or a sparse checkout silently
+  # disabled the entire control. Fail closed instead. (An EMPTY file already fails closed, and a
+  # blank line inside it is harmless: -x anchors the empty pattern to empty lines only.)
+  if [ ! -s "$allow" ]; then
+    echo "  FAIL $allow is missing or empty -- the canary gate cannot run"; fail=1
+  else
+  n_bad=$(git ls-files -z 'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
+          | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
           | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u \
           | grep -vxFf "$allow" | wc -l | tr -d ' ')
   if [ "${n_bad:-0}" != "0" ]; then
     echo "  FAIL $n_bad canary line(s) not in $allow, and only $have/$total items carry one."
     echo "       Re-read each, then add it verbatim to the allow file if it is honest:"
-    grep -rhiE "canar(y|ies)" crest/readme.md crest/docs/*.md crest/docs/notes/*.md \
-      crest/paper/*/sections/*.tex 2>/dev/null \
+    git ls-files -z 'crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' \
+      | xargs -0 grep -hiE "canar(y|ies)" 2>/dev/null \
       | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u | grep -vxFf "$allow" \
       | cut -c1-110 | sed 's/^/         /'
     fail=1
   else echo "  OK all canary mentions are human-approved ($have/$total items carry one)"; fi
+  fi
 fi
 
 echo; [ "$fail" = 0 ] && echo "PRE-RELEASE GATE: PASS" || echo "PRE-RELEASE GATE: FAIL"

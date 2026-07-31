@@ -15,7 +15,11 @@ The agent output is already durably stored: `transcripts.jsonl` holds the full `
 cost of the judge calls alone.
 
 Safety properties:
-  * NEVER downgrades -- a re-judged record is written back only if it gained judges;
+  * never downgrades WITHIN a prompt version -- a re-judged record is written back only if it
+    gained judges, UNLESS the judge prompt version changed, in which case the new score is taken
+    even at equal or fewer judges (an unconditional guard made the prescribed v1->v2 migration
+    impossible: a healthy full panel re-judges to the same 3 judges, so every result was discarded
+    after being paid for);
   * records.jsonl is rewritten atomically (temp file + replace), so an interrupted repair cannot
     truncate the run's canonical data;
   * grounding results are preserved as-recorded (the gate is generation-side, not judge-side);
@@ -120,11 +124,24 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                 unchanged += 1
                 continue
             before = (rec.get("creativity") or {}).get("n_judges", 0)
-            if scores.n_judges <= before:            # never downgrade a record
+            before_ver = (rec.get("creativity") or {}).get("judge_prompt_version")
+            # The never-downgrade guard must be VERSION-AWARE, or it blocks the one migration
+            # score.py prescribes. A v1->v2 re-judge of a healthy full-panel record returns the same
+            # 3 judges it already had, so `<= before` discarded every result -- AFTER paying for it.
+            # Measured on a copy of the shipped run with a stubbed panel: 250 targets, 0 upgraded,
+            # 250x "no gain (3 -> 3 judges)", records.jsonl untouched, judge_prompt_version still
+            # None on all 250. In a real run that is 750 wasted judge calls and the prescribed
+            # remedy for the run's headline caveat simply does not exist.
+            if scores.n_judges <= before and before_ver == JUDGE_PROMPT_VERSION:
                 print(f"  [{rec['challenge_id']}/{rec['agent']}] no gain "
-                      f"({before} -> {scores.n_judges} judges); keeping original")
+                      f"({before} -> {scores.n_judges} judges, both {JUDGE_PROMPT_VERSION}); "
+                      f"keeping original")
                 unchanged += 1
                 continue
+            if scores.n_judges < before:
+                print(f"  [{rec['challenge_id']}/{rec['agent']}] FEWER judges "
+                      f"({before} -> {scores.n_judges}) but prompt {before_ver} -> "
+                      f"{JUDGE_PROMPT_VERSION}; taking the new score for comparability")
             live = by_id[rec["record_id"]]
             live["creativity"] = {
                 "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
@@ -171,10 +188,20 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
         prev = m.get("totals", {})
         m["totals"] = {**manifest_totals(records),
                        "n_task_errors": prev.get("n_task_errors", 0)}
-        m["judge_prompt_version"] = JUDGE_PROMPT_VERSION
+        # DERIVE it. Stamping the current version run-wide asserted v2 for a file that could hold
+        # {v1: 7, v2: 5} -- moving the unlabelled mixture up a level instead of removing it.
+        vers = sorted({(r.get("creativity") or {}).get("judge_prompt_version")
+                       for r in records if r.get("creativity")}, key=lambda x: (x is None, x))
+        m["judge_prompt_version"] = vers[0] if len(vers) == 1 else vers
         m["repaired_at"] = __import__("datetime").datetime.now(
             __import__("datetime").timezone.utc).isoformat()
         mf.write_text(json.dumps(m, indent=2, ensure_ascii=False))
+        # README.md is the THIRD derived artifact and was the one left stale: it embeds the record
+        # count and a literal `Totals:` line, and it is the file a human opens first. Leaving it
+        # describing the pre-repair run is exactly what the comment above calls "worse than no
+        # repair".
+        from crest.harness.results import _write_run_readme
+        _write_run_readme(run_dir, m)
     print(f"\nrewrote {run_dir/'records.jsonl'}: {upgraded} upgraded, {unchanged} unchanged, "
           f"{len(missing)} un-repairable")
     print("status now: " + str(dict(collections.Counter(r.get("scoring_status") for r in records))))

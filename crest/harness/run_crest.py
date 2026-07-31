@@ -81,9 +81,12 @@ def _quarantined() -> dict:
         raise RuntimeError(f"pyyaml is required to read {_QUARANTINE.name} but is not installed "
                            f"({e}); refusing to run with quarantine silently disabled.")
     except Exception as e:
-        print(f"  [WARNING: could not read {_QUARANTINE.name} ({type(e).__name__}); "
-              f"NO items quarantined this run]")
-        return {}
+        # Also a hard failure. A raise for a MISSING pyyaml next to a warning for a CORRUPT file is
+        # the same gate switching itself off, just by a different route: a truncated or wrong-shaped
+        # quarantine.yaml printed a warning and re-admitted every quarantined item.
+        raise RuntimeError(f"{_QUARANTINE.name} exists but could not be parsed "
+                           f"({type(e).__name__}: {e}); refusing to run with quarantine silently "
+                           f"disabled. Fix the file, or delete it to run with no quarantine.")
 
 
 def _prereg_directions() -> dict:

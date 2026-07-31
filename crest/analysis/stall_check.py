@@ -27,7 +27,7 @@ Snapshots land in .stall_state.json next to the run dir, so consecutive calls ca
 Usage:  python -m crest.analysis.stall_check [--stall-min 10] [--target 250]
 """
 from __future__ import annotations
-import argparse, json, subprocess, time, glob, os
+import argparse, json, subprocess, time, glob
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]

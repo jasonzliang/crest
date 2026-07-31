@@ -63,6 +63,15 @@ analysis_plan:
   judge_protocol: "full panel; same_family as a covariate; leave-one-family-out as robustness check"
   tost_equivalence_bounds: [-1.0, 1.0]               # on the 1-10 scale, for reading nulls as
                                                      # evidence-for-equivalence rather than absent power
-  reliability_reported: ["icc_1_1", "icc_1_k", "krippendorff_alpha", "per_judge_severity"]
+  reliability_reported: ["icc_1_1", "icc_1_k", "krippendorff_alpha", "per_judge_severity",
+                         # AMENDMENT 2026-07-31, and it must be read as one. These four were added
+                         # AFTER seeing the data, because the one-way figures came out at ~0 and the
+                         # cause was identified as a 3.2-3.8-point judge severity spread that the
+                         # one-way model absorbs into error. The two-way model reverses the headline
+                         # (Useful 0.0 -> ICC(3,k) 0.807, clearing the 0.80 bar), which is exactly
+                         # the kind of post-hoc choice a registration exists to constrain. Treat
+                         # ICC(3,*) as EXPLORATORY and report the one-way figures alongside it
+                         # always; the pre-data commitment was to the one-way numbers.
+                         "icc_1_1_raw", "icc_3_1", "icc_3_k", "judge_effect_var_share"]
   ranking_claims: none                               # judge severity exceeded the between-agent
                                                      # spread; no leaderboard claim is made
