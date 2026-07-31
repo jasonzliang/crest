@@ -224,8 +224,10 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         status = ("empty_answer" if getattr(gate, "empty_answer", False)
                   else "too_short" if getattr(gate, "too_short", False)
                   else "grounding_fail") if not gate.passed else "judge_error"
-    elif scores.n_judges < getattr(panel, "min_judges", 2):
-        status = "judge_degraded"      # scored, but by too few judges to be a real LOFO panel
+    # Fallback is the PANEL SIZE, not a literal 2. A hardcoded 2 here is the same defect as the old
+    # min_judges default: on a 3-judge panel it silently blesses the loss of one vendor as "scored".
+    elif scores.n_judges < getattr(panel, "min_judges", len(getattr(panel, "judges", []) or []) or 1):
+        status = "judge_degraded"      # scored, but by too few judges to be the configured panel
     else:
         status = "scored"
     rec = {

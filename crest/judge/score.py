@@ -500,8 +500,13 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
 
 
 class JudgePanel:
-    def __init__(self, judges: list, threshold_all_three: float = 6.0, min_judges: int = 2,
+    # min_judges default is None -> len(judges), NOT a hardcoded 2. A literal 2 in this signature is
+    # how the 3-judge panel ended up tolerating the silent loss of one vendor: from_config passed its
+    # own default, but any DIRECT construction (tests, ad-hoc scripts, rejudge) still got 2.
+    def __init__(self, judges: list, threshold_all_three: float = 6.0, min_judges: int | None = None,
                  lofo: bool = True, ablate=frozenset()):
+        if min_judges is None:
+            min_judges = len(judges)
         self.judges = judges                      # [{"id","model","family"}]
         self.threshold = threshold_all_three
         # LOFO (leave-one-family-out) drops the judge sharing the entrant's family -- defensible as a
@@ -534,11 +539,30 @@ class JudgePanel:
             raise ValueError(f"min_judges must be a positive int, got {min_judges!r} "
                              f"(a blank `min_judges:` in the YAML parses as None)")
         self.min_judges = min_judges
+        # A threshold BELOW the configured panel size makes the loss of a whole vendor invisible:
+        # n_judges lands >= min_judges, so run_crest labels the record "scored" and it enters the
+        # headline means carrying a systematic severity shift. Warned here -- in __init__, before any
+        # money moves -- rather than discovered in the artifact afterwards, which is how it went both
+        # previous times (judge_google via an invalid thinking_budget; judge_anthropic via the
+        # spend-rate cap, 11 of 31 records in run 2026-07-31T180746Z, every one labelled "scored").
+        # A WARNING and not a raise: tolerating a thinned panel is a legitimate choice for a cheap
+        # pilot. It just must never be an accident.
+        if min_judges < len(judges):
+            print(f"  [WARNING: min_judges={min_judges} is BELOW the {len(judges)} configured "
+                  f"judges, so a record that loses {len(judges) - min_judges} judge(s) will still be "
+                  f"labelled 'scored' and will enter the headline means. Per-judge severity spans "
+                  f"~3.2-3.7 points against a ~2.1-point between-entrant spread, so one missing "
+                  f"vendor moves a score by more than the effect being measured. Set min_judges="
+                  f"{len(judges)} unless you intend this.]")
 
     @classmethod
     def from_config(cls, path: str) -> "JudgePanel":
         cfg = yaml.safe_load(open(path))
-        return cls(cfg["judges"], cfg.get("threshold_all_three", 6.0), cfg.get("min_judges", 2),
+        # Default is the FULL panel size, not a hardcoded 2. An absent `min_judges:` should demand
+        # every configured judge rather than quietly tolerating the loss of one -- the old default of
+        # 2 was silently correct only for a 2-judge panel and silently wrong for this 3-judge one.
+        return cls(cfg["judges"], cfg.get("threshold_all_three", 6.0),
+                   cfg.get("min_judges", len(cfg["judges"])),
                    cfg.get("leave_one_family_out", True))
 
     @property

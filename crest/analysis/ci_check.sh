@@ -114,6 +114,46 @@ print(f'  NOTE {n}/50 aiml items cite sources for known_answers (the science set
 " || true
 fi
 
+echo "== min_judges covers the whole panel, and no run hides a thinned one"
+# min_judges was 2 against a 3-judge panel, so losing exactly ONE vendor left n_judges=2 >= 2 and the
+# record was labelled "scored". That is not theoretical: it happened to judge_google (invalid
+# thinking_budget) and again to judge_anthropic (spend-rate cap, 11 of 31 records in run
+# 2026-07-31T180746Z). One missing vendor shifts a score by more than the between-entrant spread it
+# is meant to measure, so a config that permits it silently is a defect, not a preference.
+python - <<'PY2' || fail=1
+import sys, yaml, json, glob, os, collections
+rc = 0
+cfg = yaml.safe_load(open("crest/judge/judge_config.live.yaml")) or {}
+n_j, mj = len(cfg.get("judges") or []), cfg.get("min_judges")
+if mj is None:
+    print(f"  FAIL judge_config.live.yaml has no min_judges; it must be set to {n_j}"); rc = 1
+elif mj < n_j:
+    print(f"  FAIL min_judges={mj} is below the {n_j} configured judges -- losing a vendor would "
+          f"pass as 'scored' and enter the headline means"); rc = 1
+else:
+    print(f"  OK min_judges={mj} covers all {n_j} configured judges")
+# And catch runs already on disk whose records claim "scored" on a thinned panel.
+for path in sorted(glob.glob("crest/result/runs/*/records.jsonl")):
+    recs = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    if not recs:
+        continue
+    name = os.path.basename(os.path.dirname(path))[:44]
+    thin = collections.Counter()
+    for r in recs:
+        js = (r.get("creativity") or {}).get("judges") or []
+        if r.get("scoring_status") == "scored" and 0 < len(js) < n_j:
+            for j in {x.get("judge_id") for x in js} ^ {x["id"] for x in cfg["judges"]}:
+                thin[j] += 1
+    if thin:
+        complete = os.path.exists(os.path.join(os.path.dirname(path), "run_manifest.json"))
+        tag = "FAIL" if complete else "WARN(in-progress)"
+        print(f"  {tag} {name}: record(s) labelled 'scored' with a THINNED panel, missing "
+              f"{dict(thin)} -- these carry a systematic severity shift")
+        if complete:
+            rc = 1
+sys.exit(rc)
+PY2
+
 echo "== billing fields are actually populated (schema >= 1.2.0 runs)"
 # WHY THIS CHECK EXISTS: adding a field is not the same as getting the data. `answer_chars` is
 # written by current code and is still 0/250 in the shipped run, because a schema-version gap

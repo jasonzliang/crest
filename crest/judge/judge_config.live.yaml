@@ -13,8 +13,22 @@ threshold_all_three: 6.0        # retained for backwards comparability; NOT the 
                                 # it). Report min(New, Useful, Surprising) as primary instead:
                                 # graded, on the 1-10 scale, all three NUS axes.
 
-min_judges: 2                   # below this a record is flagged `judge_degraded`, not silently
-                                # averaged: a single surviving judge is not a panel.
+min_judges: 3                   # == the number of judges configured below. Below this a record is
+                                # flagged `judge_degraded` instead of being silently averaged.
+                                # WAS 2, on the reasoning that "a single surviving judge is not a
+                                # panel". True but insufficient: with THREE judges configured, 2 >= 2,
+                                # so losing exactly one judge passed as `scored` and was invisible.
+                                # That is not hypothetical. It has now happened twice:
+                                #   - an invalid google thinking_budget removed judge_google and a
+                                #     run reported 250/250 "scored" computed without it (score.py);
+                                #   - the Anthropic spend-RATE cap removed judge_anthropic from 11 of
+                                #     31 records in run 2026-07-31T180746Z, all labelled "scored".
+                                # It matters because per-judge severity spans 3.32/3.20/3.74 points
+                                # while the entire between-entrant spread is 2.06: dropping one
+                                # vendor shifts a score by more than the effect being measured.
+                                # Keep this EQUAL to len(judges). If a 4th judge is added, raise it to
+                                # 4, or silent single-judge loss returns. JudgePanel warns loudly at
+                                # construction when it is lower, and ci_check.sh fails on it.
 
 # ---------------------------------------------------------------------------------------------
 # leave_one_family_out: FALSE — the full panel scores every entrant. MEASURED-AND-WITHDRAWN, not
