@@ -93,7 +93,7 @@ modify the dataset.
 | C3_biology_medicine_12 | C3 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Category theory→differentiation; novelty gate blocks Rosen/MES; structural-fidelity rules |
 | C3_materials_chemistry_13 | C3 | mat_chem | PASS | PASS | PASS | PASS | PASS | KEEP | Pop-gen→solid-state; trivial mappings banned; novelty on deeper terms + disanalogy |
 | C3_economics_business_14 | C3 | econ | PASS | PASS | PASS | PASS | PASS | KEEP | Knot theory→ownership networks; unoccupied niche; invariance proof required |
-| C3_law_policy_15 | C3 | law | PASS | PASS | PASS | PASS | ~~WEAK~~ **→ CLEARED** | KEEP | RG→federalism; Galam-gated; novelty on competence-allocation dictionary. **Live audit verified all 13 prior-art entries and the RG mathematics; its central negative claim survived ten independent query forms** — the auditor's best-constructed item in the set. The self-flagged-unverified caveat is discharged |
+| C3_law_policy_15 | C3 | law | PASS | PASS | PASS | PASS | ~~WEAK~~ **→ CLEARED** | KEEP | RG→federalism; Galam-gated; novelty on competence-allocation dictionary. **Live audit verified all 10 prior-art entries and the RG mathematics; its central negative claim survived ten independent query forms** — the auditor's best-constructed item in the set. The self-flagged-unverified caveat is discharged |
 | C3_engineering_16 | C3 | eng | PASS | PASS | PASS | PASS | PASS | KEEP | Pop-gen→software evolution; Lehman-gated; equation-level correspondences + predictions |
 | C3_arts_humanities_17 | C3 | arts | PASS | PASS | ~~PASS~~ **→ SUPERSEDED** | PASS | PASS | **REVISE** | Gauge theory→translation; shallow "meaning=invariant" gated; holonomy/curvature layer required. **Live audit: the novelty gate is materially wrong, not merely loose.** The item asserts existing work carries "the invariance HEADLINE only — no connection, no curvature, no Wilson loop"; Coda et al., arXiv:2203.08189 (2022) already builds fiber bundles whose fibers are admissible interpretations, motivated by linguistic ambiguity. **Still missing from `known_answers`** — the gate over-rewards |
 | C3_biology_medicine_38 | C3 | bio_med | PASS | PASS | PASS | PASS | PASS | KEEP | Optimal transport→non-transport biology; homonym/trajectory uses gated; novelty on duality/slackness |
@@ -124,14 +124,20 @@ modify the dataset.
 ## Summary
 
 **Dispositions (as graded 2026-07-29):** KEEP = 45 · REVISE = 5 · CUT = 0.
+*(The table below no longer reproduces that split: four rows -- `01`, `17`, `42`, `43` -- had their
+disposition cell overwritten with **REVISE** without a strikethrough, unlike `45`
+(`~~KEEP~~ **DO NOT RELEASE**`). Parsing the table as it stands gives KEEP 40 / REVISE 5 /
+REVISED 4 / DO-NOT-RELEASE 1. The 45/5/0 line is the ORIGINAL 2026-07-29 grading; the table records
+the state after later revisions.)*
 
 **→ SUPERSEDED.** After the live-web audit and mechanical validation, the standing count is:
 5 REVISE items **fixed or acted on** (09's baseline restored; 46–49 hardened to 5 rules with
 absence-proof and non-saturation guards), and **8 items newly flagged** that this pass graded
-KEEP — `01`, `07`, `43` (BLOCKING self-contradictions), `00` (2 wrong prior-art entries, since
+KEEP — `01` (BLOCKING self-contradictions; `07` and `43` were validator FALSE POSITIVES, since
+fixed -- see readme.md), `00` (2 wrong prior-art entries, since
 corrected), `17` (over-permissive novelty gate, unfixed), `42`/`44` (undated / pruned prior art),
 and `45` (**inverted novelty gate — "do not release"**). Plus `34`, quarantined and then restored on
-a model-drafted baseline. The pre-release gate (`analysis/ci_check.sh`) fails on the four blocking
+a model-drafted baseline. The pre-release gate (`analysis/ci_check.sh`) fails on the two blocking
 contradictions.
 
 ### REVISE items and the specific fix
@@ -200,7 +206,7 @@ contradictions.
   long-form value that made `groupby` yield six categories). There is nothing to backfill.
 - **Self-flagged unverified `known_answers`.** Three items (01, 05, 15) noted that the web-search
   budget was exhausted before verification. **→ Now resolved by the live audit:** `15` is fully
-  verified (all 13 prior-art entries check out); `05` and `33` and `32` came back clean; `01`'s
+  verified (all 10 prior-art entries check out); `05` and `33` and `32` came back clean; `01`'s
   Cs₂TiI₆ band gap is half-corroborated (the 1.56 eV direct figure holds; the indirect figure does
   not reproduce) and it retains two IMPRECISE entries plus the two blocking rule contradictions
   above.

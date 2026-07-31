@@ -29,7 +29,7 @@ the mechanistic account; parity on C4 and nulls on C1/C5 are free parameters.
   mixed-effects (challenge as random effect), retiring n=5 Cliff's-Delta.
 - **Dual-label** every item: isolated N/U/S axis, domain, pre/post-training-cutoff.
 - Include **axis-isolating** items (novelty-dominant, usefulness-dominant,
-  surprise-dominant) so the aggregate cannot hide a weak axis (MEASURED 2026-07-30: this holds for C1/usefulness only -- 56% binding vs 33% chance; the novelty label is wrong-signed at 21%, i.e. those items are novelty-EASY, and surprise is 15%. Narrow the claim accordingly.).
+  surprise-dominant) so the aggregate cannot hide a weak axis (MEASURED 2026-07-30: this holds for C1/usefulness only -- 80% binding with ties permitted / 68% sole-binding, vs 33% chance, on run 040653Z; the novelty label is wrong-signed at 21%, i.e. those items are novelty-EASY, and surprise is 15%. Narrow the claim accordingly.).
 
 ## 3. Per-item contents
 Each challenge ships with: dated **known-answers** list (the prior-art set
@@ -73,7 +73,7 @@ multi-source web synthesis**, never a single-fact lookup.
 - **REVERSED 2026-07-30: the FULL PANEL scores every entrant**
   (`leave_one_family_out: false`). With exactly 3 vendors, LOFO made judge
   identity perfectly confounded with entrant family: `judge_google` is a severity
-  outlier (+2.04 vs OpenAI, +3.24 vs Anthropic on min(N,U,S)), LOFO removed it
+  outlier (+2.72 vs judge_openai and +3.38 vs judge_anthropic on min(N,U,S), while those two differ by 0.65), LOFO removed it
   deterministically for exactly the Google entrants, no judge scored all five
   entrants, and ~60% of the observed spread tracked panel composition. The
   anti-self-preference control introduced a larger bias than the one it removed.
@@ -85,7 +85,7 @@ multi-source web synthesis**, never a single-fact lookup.
   records, 20%). It remains WEAKLY ANCHORED: its judge-visible anchor field moved it by −0.02 when
   ablated, and r(New, Surprising) = 0.883 at record level on run 040653Z (0.946 pooled). NB the v1 judge prompt itself told the judge "Surprising correlates with non-redundancy at r~0.95", so this correlation is CONTAMINATED by the rubric and must not be used as evidence that the axes are inseparable until a v2 re-judge exists (see JUDGE_PROMPT_VERSION in judge/score.py).
   The thresholded "all three ≥ 6" indicator is retained only for backward
-  comparability — its rate swings 5.4–36.1% across thresholds 5–7.
+  comparability — its rate swung 5.4–36.1% across thresholds 5–7 ON THE PILOT (46.4–56.0% on the canonical run 040653Z).
 - Report **inter-judge agreement** (Krippendorff α / ICC, implemented in
   `analysis/stats.py::reliability_report`) plus **per-judge severity**, blinded.
   ~~answer-order randomized~~ — VACUOUS and removed: scoring is single-answer,
@@ -137,7 +137,7 @@ Release benchmark + prompts + frozen snapshots + judge configs + human labels +
 all transcripts publicly (defuses "self-serving benchmark"; enables re-scoring).
 Datasheet in `datasheet.md`. Version + leaderboard. `analysis/ci_check.sh` is the
 pre-release gate that mechanically enforces this list; it is currently **RED**
-(4 item self-contradictions) and no leaderboard has been promoted, because judge
+(2 item self-contradictions, both in C1_materials_chemistry_01) and no leaderboard has been promoted, because judge
 severity exceeded the between-agent spread and no ranking claim is supportable.
 
 ## 11. DO-NOT list (from the audits/sweep)

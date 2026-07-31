@@ -91,7 +91,7 @@ A full 250-task run exists (50 items x 5 entrants, all three judges per record).
 per-agent creativity numbers yet**, for three reasons:
 
 1. **No ranking claim is supportable.** Judge severity exceeds the between-agent spread
-   (judge_google is +2.0 to +3.2 points more lenient than the others), and the earlier
+   (judge_google is +2.7 to +3.4 points more lenient than the others), and the earlier
    leave-one-family-out protocol assigned judge panels *by entrant family*, which made the
    leaderboard unidentifiable. Scoring is now full-panel; LOFO is a robustness check.
 2. **Surprising is weakly anchored, but it binds.** Ablating `expert_baseline` moves Surprising

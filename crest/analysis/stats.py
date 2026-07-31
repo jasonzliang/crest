@@ -107,7 +107,8 @@ def _composite(df: pd.DataFrame) -> pd.Series:
     axis the NUS construct is defined by.
 
     This replaces the mean (which lets a strong axis mask a failing one) and the thresholded
-    all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7). min2() reports the
+    all-three indicator (whose rate swung 5.4-36.1% across thresholds 5..7 ON THE PILOT, and
+    46.4-56.0% on the canonical run 040653Z). min2() reports the
     New/Useful pair as a robustness check.
 
     All-null creativity rows (e.g. grounding-gated agents) become NaN.

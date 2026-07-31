@@ -51,7 +51,8 @@ analysis_plan:
                                                      # dropping it changes the endpoint for a fifth
                                                      # of the data. Replaces the thresholded
                                                      # all-three indicator (rate swung 5.4-36.1%
-                                                     # across thresholds 5..7).
+                                                     # across thresholds 5..7 ON THE PILOT;
+                                                     # 46.4-56.0% on canonical run 040653Z).
   secondary_endpoints: ["New", "Useful", "Surprising"]   # each axis reported on its own as well.
                                                      # Caveat kept, since it is real and cuts the
                                                      # other way: ablating expert_baseline moved

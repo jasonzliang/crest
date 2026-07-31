@@ -65,8 +65,9 @@ paragraph made is still true and is the reason to keep it: a 9/7/2 record scores
 
 The old "at or above threshold on all three axes" indicator survives only for backward comparability
 (`threshold_all_three: 6.0`, reported per record as `creative_all_three`): it is unpre-registered,
-its rate swung **5.4–36.1%** across thresholds 5–7 on the pilot run and 38.9–48.7% on the most recent
-full run, and 24.9% of records on the first full run sat exactly on 6.00 on some axis (17.5% on the
+its rate swung **5.4–36.1%** across thresholds 5–7 on the PILOT and **46.4–56.0%** on the canonical
+run 040653Z, and 13.6% of that run's records sit exactly on 6.00 on some axis (34/250; the 24.9%
+and 17.5% quoted here previously came from superseded runs) (the
 latest). Adding Surprising to a two-axis gate removes 1 of 250 records at t = 6 and 3 at t = 7
 (recomputed on run 040653Z; the earlier "0 of 234 / 2" described superseded run 020425Z).
 
@@ -114,7 +115,7 @@ and the reference set is published so any omission can be contested.
 - Non-obviousness conditioned on correctness, judged against the judge's own sense of expert
   expectation. **Deliberately unanchored:** `expert_baseline` was supplied here until 2026-07-30 and
   an ablation showed it moved this axis by −0.02. In 7 items it also carried the author's enumeration
-  of the intended surprises (58–64% of the field in three of them), making Surprising graded recall
+  of the intended surprises (58–59% of the field in two of them; a third read 64% before its baseline was restored 2026-07-31), making Surprising graded recall
   against a key rather than expectation-violation. That enumeration now lives in the judge-hidden
   `author_expected_surprises` field.
 - It is reported for continuity and because Boden's surprise criterion motivates the design, but

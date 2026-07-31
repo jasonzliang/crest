@@ -98,7 +98,7 @@ desk-reject checks (licensing, contamination, author-COI, human-subjects) are an
   in the run manifest, and block release. **Currently zero items are quarantined.**
   `C2_biology_medicine_34` was quarantined 2026-07-30 (its `expert_baseline` was 156 chars and failed
   `minLength(200)`; 64% of the field turned out to be an answer key) and **restored 2026-07-31** with
-  a 1,478-char model-drafted baseline — so the shipped set is 50/50, with that item's provenance
+  a 1,620-char model-drafted baseline — so the shipped set is 50/50, with that item's provenance
   weaker than the rest. Three further items are on a documented watch-list, one of them
   (`C4_engineering_45`) with an auditor verdict of "do not release" because its novelty gate is
   inverted: it offers as its example of a new mechanism something its own `known_answers` already

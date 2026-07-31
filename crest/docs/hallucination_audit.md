@@ -2,7 +2,7 @@
 > method note: live web search was unavailable. A subsequent live-web audit of all 50 items
 > (~610 claims, `docs/notes/audit_live_*.md`) found this pass produced **both a false positive and a
 > false negative**: it wrongly flagged Hart's inversor (1874-5 is correct) and wrongly suspected the
-> Cs2TiI6 band gap was ~1.0-1.5 eV (measured ~1.56 eV). Its 11 applied corrections stand and are
+> Cs2TiI6 band gap was ~1.0-1.5 eV (measured ~1.56 eV). Its applied corrections stand (11 claimed, 10 transcribed below) and are
 > retained below for provenance, but its *conclusions* — including "no fabricated sources" — cannot
 > be relied on, because that finding is not obtainable without web access. Use the live reports.
 
@@ -19,9 +19,11 @@ No fabricated sources and no source-mathematics errors were found (RG β-functio
 inequality, Kantorovich duality, sheaf H¹ obstruction, Kingman/Little, knot invariants,
 quasispecies↔Ising, fixation≈2s, cent values 701.955/386.314/315.641 — all stated correctly). The
 set is unusually well-sourced. Only citation date/venue/attribution slips were found; **2
-high-confidence, ~9 medium/low**. All actionable ones were corrected.
+high-confidence, 8 medium/low**. All actionable ones were corrected.
 
-## Corrections applied (11)
+## Corrections applied (10 listed)
+*The prose above says 11; the table below has 10 rows. One correction was applied but never
+transcribed here — the count and the table disagree, and the table is the auditable record.*
 | Item | Field | Fix | Conf |
 |---|---|---|---|
 | C4_economics_business_20 | known_answers | *Radical Markets* (2018): "Lanier–Weyl" → **Posner & Weyl** | HIGH |

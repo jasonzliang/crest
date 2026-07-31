@@ -5,8 +5,11 @@
 # previously sat in judge_config.yaml declaring behaviour the harness never performed).
 
 threshold_all_three: 6.0        # retained for backwards comparability; NOT the primary endpoint --
-                                # it is unpre-registered and the creative rate swings 5.4-36.1%
-                                # across t=5..7, with ~26% of records sitting exactly on 6.00.
+                                # it is unpre-registered and the creative rate swung 5.4-36.1%
+                                # across t=5..7 ON THE PILOT (46.4-56.0% on canonical run 040653Z),
+                                # with ~26% of pilot records sitting exactly on 6.00 -- 13.6%
+                                # (34/250) on the canonical run; no pilot data survives to recheck
+                                # the 26%.
                                 # Report min(New, Useful, Surprising) as primary instead: graded,
                                 # on the 1-10 scale, all three NUS axes.
 

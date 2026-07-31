@@ -28,7 +28,7 @@ result/
 ```
 
 `run_id = <UTC-timestamp>__crest__<subset>__git<sha>__<nonce>` — sortable and provenance-encoding.
-Run outputs are ~16 MB per session, so `runs/`, `index.jsonl` and `latest` are **gitignored** and
+Run outputs are ~7 MB per run, so `runs/`, `index.jsonl` and `latest` are **gitignored** and
 live on disk only; they are both the generation cache and the evidence base, so do not delete them.
 
 - **"the numbers in the paper"** → `leaderboard.json` (hand-promoted, pins source run ids).
