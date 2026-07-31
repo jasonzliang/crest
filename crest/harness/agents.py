@@ -113,14 +113,33 @@ class ClaudeShallowResearch(Agent):
     def run(self, query: str) -> AgentOutput:
         import anthropic
         from crest.harness.keys import call_anthropic
-        r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
-            .messages.create(
-                model=self.model, max_tokens=9000, system=_RESEARCH_SYSTEM,
-                tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": self.budget}],
-                messages=[{"role": "user", "content": query}],
-            ), "entrant"), f"anthropic entrant ({self.model})")
+        # Anthropic runs web_search server-side and may need SEVERAL turns. On a long turn it returns
+        # stop_reason == "pause_turn" with only partial content, and the caller must resend the
+        # assistant message UNCHANGED to resume. Not handling that is why 24 of 50 claude_shallow
+        # records in the 2026-07-30 run had a MEDIAN ANSWER OF 134 CHARS and zero citations while
+        # n_searches averaged 5.3: the model was mid-work and we recorded the fragment as its final
+        # answer, then scored it (N/U/S = 1/1/1) and read the result as low creativity.
+        msgs = [{"role": "user", "content": query}]
+        blocks, guard = [], 0
+        while True:
+            r = _retry(lambda: call_anthropic(lambda k: anthropic.Anthropic(api_key=k, timeout=600)
+                .messages.create(
+                    model=self.model, max_tokens=9000, system=_RESEARCH_SYSTEM,
+                    tools=[{"type": "web_search_20250305", "name": "web_search",
+                            "max_uses": self.budget}],
+                    messages=msgs,
+                ), "entrant"), f"anthropic entrant ({self.model})")
+            blocks.extend(r.content)
+            if getattr(r, "stop_reason", None) != "pause_turn":
+                break
+            guard += 1
+            if guard >= 8:                      # bounded: never loop forever on a stuck turn
+                print(f"  [WARNING: {self.model} still pause_turn after {guard} continuations; "
+                      f"returning what it produced so far]")
+                break
+            msgs = msgs + [{"role": "assistant", "content": r.content}]
         text, cites, n_search = [], [], 0
-        for b in r.content:
+        for b in blocks:
             if b.type == "text":
                 text.append(b.text)
                 for c in (getattr(b, "citations", None) or []):
