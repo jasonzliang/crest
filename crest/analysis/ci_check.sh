@@ -75,8 +75,15 @@ for pat in "human-validated" "human-expert consensus panel" "human panel is the 
            "frozen shared index" "frozen retrieval snapshot" "signed manifest" \
            "matched tool and compute budget" "matched tool/compute budget" \
            "human study" "mechanism-driven"; do
-  hits=$(grep -o ".\{0,14\}$pat" $PAPER_TEX 2>/dev/null \
-         | grep -viE "(not|no|never|withdrawn|future work|NOT PERFORMED|NOT IMPLEMENTED)[^.]{0,24}$(printf '%s' "$pat" | sed 's/[][\\.*^$(){}?+|/]/\\&/g')" \
+  # The capture window MUST be wider than the negation regex's own lookbehind allowance. It was 14
+  # against an allowance of 24, so any negation sitting 15-24 characters before the pattern was
+  # truncated out of the captured text and could never match -- the documented 24 was unreachable,
+  # and "entrants do \textbf{not} receive a matched tool/compute budget" (negation 15 chars out)
+  # failed the gate while being a correct disclaimer. 40 > 24, so the allowance now actually applies.
+  # The negation tokens are word-bounded: an unbounded "no" matches inside "known", "novel" and
+  # "cannot", which would have let "per-item dated known-answers ... matched tool budget" pass.
+  hits=$(grep -o ".\{0,40\}$pat" $PAPER_TEX 2>/dev/null \
+         | grep -viE "(\bnot\b|\bno\b|\bnever\b|withdrawn|future work|NOT PERFORMED|NOT IMPLEMENTED)[^.]{0,24}$(printf '%s' "$pat" | sed 's/[][\\.*^$(){}?+|/]/\\&/g')" \
          | wc -l | tr -d ' ')
   if [ "$hits" != "0" ]; then echo "  FAIL '$pat' asserted (not negated) x$hits"; fail=1;
   else echo "  OK '$pat' absent or negated"; fi

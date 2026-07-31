@@ -2,11 +2,26 @@
 \label{sec:conclusion}
 
 Deep-research agents have been judged only on correctness. We introduced \textbf{CREST}, the first
-benchmark to ask whether their outputs are \emph{creative}---New, Useful, and Surprising---and used
-it to establish a task-dependent effect: web-based exploration makes a research agent more creative
-on cross-domain and counterfactual tasks, but not on constrained or open-ended ones, with ablation
-evidence that specific components cause specific gains and with the creative reports remaining
-well-sourced. The mixed win/loss pattern, on a benchmark whose own author's system loses 2 of 5
-task types, is what makes the finding credible rather than self-serving. We release CREST---
-questions, frozen retrieval snapshot, human-validated judge, and analysis code---so the community
-can measure, and improve, the creativity of research agents, not just their accuracy.
+released benchmark to ask whether their outputs are \emph{creative}---New, Useful, and
+Surprising---and ran five commercial entrants through it under live provider-native web search.
+
+An earlier version of this conclusion claimed the benchmark had established a task-dependent effect
+in which web-based exploration makes a research agent more creative on cross-domain and
+counterfactual tasks, backed by component ablations and human corroboration. \textbf{No data in this
+artifact supports any part of that}, and it is withdrawn: the exploration agent was never entered,
+\emph{no} ablation was run, and \emph{no} human study exists. What the run does establish is negative and
+about the instrument. Per-axis judge severity ($3.32/3.20/3.74$ points) exceeds the entire
+between-entrant spread ($2.06$), so the leaderboard is \textbf{unidentifiable}; the
+agent$\times$category interaction is \textbf{null} ($F=0.654$, $p=0.837$); the primary endpoint
+correlates $0.976$ with \emph{Useful} and so behaves largely as a hard-rule-compliance indicator;
+and the two creativity-bearing axes sit near ceiling with zero one-way reliability. Any future
+evaluation on CREST---including of the agent this paper is named for---inherits those constraints
+until the instrument is repaired.
+
+We therefore release CREST as an instrument to be criticised rather than a ranking to be cited:
+questions, judge harness, per-judge scores, promoted results, analysis code and datasheet. There is
+\textbf{no} frozen retrieval snapshot and \textbf{no} human-validated judge in this release; the
+$250$-record run directory is not distributed, and retrieval was live, so the reported numbers are
+time-indexed and not exactly reproducible. The priorities we would set before anyone reports a
+ranking from this benchmark are, in order: de-ceiling \emph{New}, canonicalising provider URLs so
+the judge is actually blind, and running the human-agreement study.

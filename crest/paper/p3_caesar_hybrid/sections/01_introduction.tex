@@ -9,45 +9,57 @@ these agents are marketed for: helping researchers, analysts, and inventors find
 not already obvious. That capacity is \emph{creativity}, and it is essentially unmeasured for
 this class of system.
 
-We introduce \textbf{CREST} (CREativity of reSearch agenTs), the first benchmark that scores
-deep-research outputs for creativity using the standard construct from the creativity literature:
-an output is creative only if it is simultaneously \emph{New}, \emph{Useful}, and
+We introduce \textbf{CREST} (CREativity of reSearch agenTs), the first released benchmark that
+scores deep-research outputs for creativity using the standard construct from the creativity
+literature: an output is creative only if it is simultaneously \emph{New}, \emph{Useful}, and
 \emph{Surprising} \citep{runco2012standard,boden2004creative,amabile1982cat}. CREST organizes
-questions by \emph{task type}---inventing under constraints, counterfactual reasoning,
-cross-domain synthesis, meta-creativity, and open-ended generation---because our central finding
-is that creativity in these agents is not a single scalar but \emph{depends on the task}.
+questions by \emph{task type}---inventing under constraints, counterfactual reasoning, cross-domain
+synthesis, meta-creativity, and open-ended generation.
 
-\paragraph{The finding.} Running CREST on an exploration-based research agent (anonymized here;
-its architecture is described in a companion preprint we cite in the third person
-\citep{caesar2026}) alongside frontier and open-weight competitors, we find the agent is more
-creative on \emph{cross-domain} and \emph{counterfactual} tasks, roughly at parity on
-\emph{meta-creativity}, and \emph{not} more creative on \emph{constrained} and \emph{open-ended}
-tasks. Ablations tie each win to a specific mechanism: turning off one component degrades one
-task type and not the others. The wins survive a human study and coexist with strong
-citation-faithfulness, so the creative reports are not confident fabrication.
+\paragraph{What this paper does and does not report.} An earlier draft of this section announced a
+finding that \textbf{no} data in this artifact supports: that an exploration-based research agent is
+more creative on cross-domain and counterfactual tasks, that component ablations tie each win to a
+specific mechanism, and that those wins are corroborated by human raters. Taking those in turn:
+that agent was \emph{never entered}---the released registry contains five off-the-shelf commercial
+systems and all $250$ scored records belong to them (\S\ref{sec:experiments}); \emph{no} component
+ablation was run, so nothing ties any result to a mechanism; and \emph{no} human study exists, so
+there is no human corroboration of anything here. The claims are withdrawn rather than deferred, and
+\S\ref{sec:caesar} now presents the agent as a hypothesis and an experimental design rather than a
+result.
 
-\paragraph{Why the losses matter.} We deliberately foreground where the agent \emph{loses}. A
-method that improved every task type would be indistinguishable from a length or judge-bias
-artifact. Winning only where the mechanism predicts---and losing where it does not, on a
-benchmark whose own author's system does not top every category---is the strongest available
-evidence that the effect is real and mechanism-driven rather than an artifact of a self-serving
-test \citep{singh2025leaderboard}. The hero of this paper is \textbf{CREST + the task-dependence
-finding}, not ``our agent wins.''
+\paragraph{What CREST did measure.} Across the five commercial entrants, the result is
+methodological and negative. Per-axis judge severity spans $3.32/3.20/3.74$ points on a $1$--$10$
+scale against a between-entrant spread of $2.06$ points, so \textbf{the leaderboard this benchmark
+produces is unidentifiable} and no ranking claim is supportable for any entrant. The
+agent$\times$category interaction is \textbf{null} ($F=0.654$, $p=0.837$), so we find no evidence
+for the task-dependent dissociation earlier drafts built the paper around. Task type does move
+scores more than entrant identity does ($2.92$ vs $2.06$ points), and \emph{Useful} is the binding
+axis---but both are statements about the items and the rubric, not about the frontier.
+
+\paragraph{Why we report it this way.} A benchmark paper that discovers its own instrument cannot
+rank is more useful released than withheld, and the failure mode is general: severity dominance is
+invisible unless per-judge severity is estimated, which most LLM-judge panels do not report. We
+therefore foreground the negative result and treat the exploration agent strictly as future work,
+noting that a benchmark whose author's own system had topped it would have invited precisely the
+self-serving reading the leaderboard literature warns about \citep{singh2025leaderboard}.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item \textbf{Finding.} Creativity in deep-research agents is task-dependent, with ablation
-    evidence that specific architectural components cause specific gains (\S\ref{sec:experiments}).
-  \item \textbf{Benchmark.} CREST---the first creativity benchmark for deep-research agents:
-    New/Useful/Surprising scoring by task type (fifty questions, ten per type), a human-validated
-    leave-one-family-out median judge panel, a frozen shared retrieval index for reproducibility,
-    and a full public release
-    (\S\ref{sec:crest}).
-  \item \textbf{Evidence of creative-and-grounded synthesis.} The same reports that score high on
-    creativity rank competitively on two established citation-faithfulness benchmarks
-    (\S\ref{sec:grounding}).
+  \item \textbf{Result (methodological, negative).} On this panel, judge-severity variance exceeds
+    the entire between-entrant signal, so a conventionally-constructed creativity leaderboard for
+    deep-research agents is not identifiable; we report per-judge severity, one-way and two-way
+    reliability, and the null interaction test (\S\ref{sec:experiments}).
+  \item \textbf{Benchmark.} CREST---the first released creativity benchmark for deep-research
+    agents: New/Useful/Surprising scoring by task type (fifty questions, ten per type across six
+    domains), with dated known-answers, checkable hard rules and expert baselines held judge-side
+    behind a short open prompt, and a full public release (\S\ref{sec:crest}). The judge panel is
+    \textbf{not} human-validated and uses \textbf{no} frozen shared retrieval index; both are future
+    work.
+  \item \textbf{A registered design for the mechanism question.} A single-dissociation ablation
+    protocol that \emph{would} test whether exploration and refinement drive category-specific
+    gains, stated in full together with the reasons this run cannot execute it
+    (\S\ref{sec:caesar}).
 \end{enumerate}
 
-We state the scope honestly (\S\ref{sec:limitations}): the mechanism evidence is currently
-strongest for one agent, we test the task-dependence pattern across several agents, and we
-report the two task types where our judge and human experts disagree.
+We state the scope plainly (\S\ref{sec:limitations}): there is no mechanism evidence here, no human
+validation, and no identifiable ranking.

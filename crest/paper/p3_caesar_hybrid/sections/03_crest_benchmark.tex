@@ -14,8 +14,8 @@ expectation-violation conditioned on correctness. Scoring follows the Consensual
 Technique \citep{amabile1982cat,amabile1996context}. Citation accuracy is \emph{not} part of the
 creativity score---it is a separate grounding check (\S\ref{sec:grounding}).
 
-\paragraph{Task types (the axis that carries the finding).} Five core categories, each grounded
-in a mechanism from the creativity literature:
+\paragraph{Task types.} Five core categories, each grounded in a mechanism from the creativity
+literature:
 \begin{itemize}
   \item \textbf{C1 Constrained}---invent within strict rules (bounded/exploratory creativity,
     \citealp{boden2004creative}; \citealp{simonton2003constrained}).
@@ -29,13 +29,19 @@ in a mechanism from the creativity literature:
 \end{itemize}
 CREST ships \textbf{50 questions---ten per task type}---spread over six domains (biology/medicine,
 materials/chemistry, economics/business, law/policy, engineering, arts/humanities; eight to nine
-per domain), so ``task type'' is not confounded with one specific
-question. We \textbf{pre-register} the per-task-type prediction (win on C2/C3, parity on C4, null
-on C1/C5) \emph{before} running CREST and confirm on fresh, held-out questions.
+per domain), so ``task type'' is not confounded with one specific question.
+
+\paragraph{Stated prior expectations, \emph{not} a pre-registration.} The per-task-type prediction
+(win on C2/C3, parity on C4, null on C1/C5) is recorded in
+\texttt{analysis/preregistration.yaml}, and the file itself states that it is \textbf{not} an
+externally timestamped registration: it was created in-repo after the code, so it cannot evidence
+ordering, and there is \textbf{no} OSF or equivalent record. Nothing was confirmed on fresh,
+held-out questions---there is no held-out split. Treat the directions as the authors' stated prior
+expectation and nothing stronger.
 
 \paragraph{What each question ships with.} (i) a dated list of known answers (New baseline);
 (ii) any hard rules to check (Useful); (iii) an expert's expected answer (Surprising baseline);
-and (iv) the pre-registered predicted direction. See the released \texttt{schema.json} and
+and (iv) the predicted direction described above. See the released \texttt{schema.json} and
 datasheet.
 
 \paragraph{Two-sided prompt design.} The prompt shown to an agent is deliberately \emph{short and
@@ -45,20 +51,31 @@ strings, pre/post-cutoff labels) lives \emph{judge-side} and is never shown to t
 preserves creative headroom, avoids over-steering the agent toward a target answer, and still keeps
 grading reproducible because every scoring input is fixed and versioned.
 
-\paragraph{Judge.} A multi-vendor panel---Anthropic, OpenAI, and Google models plus an open-weight
-fourth in the full protocol, each pinned to a \emph{dated model snapshot}---scores blind to agent
-identity and order-randomized; a model never judges an entrant of its own family
-(\emph{leave-one-family-out}) to defuse self-preference \citep{panickssery2024own}, and the panel
-score is the \emph{median} across judges. We report inter-judge reliability (Krippendorff $\alpha$,
-ICC; \citealp{hayes2007alpha,koo2016icc}) and, critically, agreement with human experts on all five
-task types, with humans the \emph{primary} scorer on the two types (C1/C5) where the panel is least
-reliable (\S\ref{sec:experiments}).
+\paragraph{Judge: three vendors, full panel, median.} Every answer is scored by an Anthropic, an
+OpenAI and a Google model, and the panel score is the \emph{median} across the three. Earlier drafts
+described a protocol with four properties this panel does not have. There is \textbf{no} open-weight
+fourth judge. Judges are pinned by model \emph{alias}, \textbf{not} by dated snapshot, so the aliases
+can silently re-point and results are time-indexed. Presentation is \textbf{not} order-randomized.
+And scoring is \textbf{not} leave-one-family-out: we measured LOFO and withdrew it, because over
+three vendors it makes judge identity perfectly confounded with entrant family and \emph{widens} the
+between-entrant spread from $2.06$ to $3.06$ points. Self-preference is therefore handled only by
+blindness plus a per-row \texttt{same\_family} stamp for post-hoc analysis, and that analysis is
+\textbf{not} yet run. We report inter-judge reliability under both one-way and two-way models
+(Krippendorff $\alpha$, ICC; \citealp{hayes2007alpha,koo2016icc}) together with per-judge severity,
+which turns out to be the number that matters. Agreement with human experts is \textbf{not} reported
+and \textbf{no} human study has been run, so humans are the primary scorer on \emph{no} category
+(\S\ref{sec:limitations}).
 
-\paragraph{Contamination and fairness controls.} Frontier entrants run through their
-\emph{provider-native web search}; the permanently reproducible core is an open-weight entrant run
-against \emph{one shared, dated, hashed retrieval index}. Because \emph{New} is judged against
-per-item \emph{dated known-answers}, fresher retrieval cannot by itself inflate novelty. We ship the
-index as URLs $+$ timestamps $+$ SHA-256 hashes (a signed manifest) and label every item
-\emph{pre/post training-cutoff}. Contamination canaries and a rolling refresh set are \textbf{not
-implemented}: zero of the 50 items embed a canary string. Every agent receives a matched tool and compute
-budget.
+\paragraph{Contamination and fairness controls: what exists, and what does not.} All entrants run
+through their \emph{provider-native web search}, so retrieval is \emph{live} and CREST is
+\textbf{not} contamination-controlled. The one anti-contamination property that does hold is
+indirect: because \emph{New} is judged against per-item \emph{dated known-answers}, fresher
+retrieval cannot by itself inflate the axis. Everything else earlier drafts claimed here is absent.
+There is \textbf{no} open-weight entrant and \textbf{no} permanently reproducible core; there is
+\textbf{no} shared, dated, hashed retrieval index, so we ship \textbf{no} URL/timestamp/SHA-256
+release and \textbf{no} signed manifest, and no party can reconstruct the corpus a run saw.
+Contamination canaries and a rolling refresh set are \textbf{not implemented}: zero of the 50 items
+embed a canary string. Items carry a time-sensitivity label, but \textbf{no} released analysis splits
+results on training cutoff. Entrants do \textbf{not} receive a matched tool and compute budget:
+realised searches per item run from $0.64$ (\texttt{gemini\_shallow}, zero searches on $40$ of $50$
+items) to $76.28$ (\texttt{gemini\_deepresearch\_max}), so depth is confounded with vendor.

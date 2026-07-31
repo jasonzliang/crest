@@ -1,2 +1,24 @@
 \section{Conclusion}
-As deep-research agents mature, the axis that separates a research collaborator from a search summarizer---creativity---has been unmeasured. \textsc{CREST} makes it measurable: a released benchmark of 50 challenges (10 per category) scoring New/Useful/Surprising over five creative-process categories and six domains, with a multi-vendor full-panel judge and a factual-grounding check (human validation and an open-weight fourth judge remain future work) so novelty counts only when its factual scaffolding is grounded. Our cross-agent finding is that creativity does not order current agents on a single scale---it dissociates by task in a theory-predicted way. We hope CREST reorients deep-research evaluation from ``did it find the answer'' toward ``did it find something worth knowing,'' and we release the benchmark, judge harness, frozen snapshots, and datasheet to support that shift.
+As deep-research agents mature, the axis that separates a research collaborator from a search
+summarizer---creativity---has been unmeasured. \textsc{CREST} makes it measurable: a released
+benchmark of 50 challenges (10 per category) scoring New/Useful/Surprising over five
+creative-process categories and six domains, with a multi-vendor full-panel judge and a separate
+factual-grounding check, so novelty counts only when its factual scaffolding is grounded. There is
+\textbf{no} human validation and \textbf{no} open-weight fourth judge; both remain future work.
+
+Our result is methodological and negative, and we think it is the more useful contribution. Running
+five commercial entrants through a benchmark built to this standard specification, judge-severity
+variance ($3.32/3.20/3.74$ points per axis) exceeds the entire between-entrant spread ($2.06$), so
+the leaderboard this benchmark produces is \textbf{unidentifiable} and we make no ranking claim. The
+agent$\times$category interaction is \textbf{null} ($F=0.654$, $p=0.837$): an earlier draft read a
+theory-predicted dissociation off these data and that claim is withdrawn. What does survive is that
+task type moves scores more than entrant identity does ($2.92$ vs $2.06$ points) and that
+\emph{Useful} is the binding axis---which is a statement about the items and the rubric, not about
+the frontier.
+
+The lesson we would draw is that a creativity leaderboard for research agents is easy to build and
+hard to make identifiable, and that the reliability work has to come before the ranking. We release
+the challenges, judge harness, per-judge scores, promoted results, analysis code and datasheet so
+that the instrument can be criticised directly; the $250$-record run directory is \textbf{not}
+distributed and retrieval was live, and we state plainly what that costs in reproducibility
+(\S\ref{sec:limitations}).

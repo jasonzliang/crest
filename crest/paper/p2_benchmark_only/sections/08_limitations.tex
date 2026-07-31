@@ -1,4 +1,91 @@
 \section{Limitations}
 \label{sec:limitations}
 
-We state the irreducible risks plainly. \textbf{Power vs.\ multiplicity.} At $\sim$10 items per cell ($\geq$8 usable after the factual-grounding check), rigorous multiplicity correction and detecting real per-cell effects remain in tension; null/parity results are therefore hypothesis-generating, and only the largest wins are confirmatory (\S\ref{sec:experiments}). \textbf{Closed-agent reproducibility.} Frontier deep-research products drift and deprecate; their scores are time-indexed snapshots, not reproducible numbers. The reproducible core is the open-weight agent on the frozen index; closed-agent results are reported as a dated snapshot. \textbf{Frozen-index realism.} Freezing the corpus removes the live-retrieval skill that defines deep-research agents; we report both frozen and live regimes and treat neither as ``the'' answer. \textbf{Correlated judges.} Frontier judges share training data and RLHF-induced biases (verbosity, sycophancy), so panel diversity does not fully cancel them; the open-weight judge partly mitigates this. \textbf{Length.} Length may be a \emph{mediator} of creativity (elaboration), not only a confound; we report length-conditioned effects but cannot fully resolve the causal ambiguity. \textbf{Construct.} At this scale the New/Useful/Surprising factor structure is under-identified, and creativity has no ground truth---the Consensual Assessment Technique bounds, but does not eliminate, the judge-defines-construct circularity. \textbf{Conflict of interest.} One evaluated agent was built by the authors; we disclose this prominently (Ethics), exclude it from rubric design, pre-register outcome-independence, and show all findings hold with it removed.
+An earlier version of this section described a reproducible core built on an open-weight agent
+running against a frozen index, results reported under both frozen and live regimes, an open-weight
+fourth judge, length-conditioned effects, an outcome-independence commitment registered outside the
+repository, and a conflict of interest arising from an author-built entrant. \textbf{None of those
+exists in this artifact}, and the last is not merely unimplemented but false: no author-built agent
+was entered, and all five entrants are off-the-shelf commercial systems. Asserting absent controls
+inside a limitations section is the worst place to do it, because the section's rhetorical function
+is to buy credit for candour. That text is withdrawn. Below are the limitations the artifact has.
+
+\paragraph{The leaderboard is unidentifiable, and this dominates every other limitation.} Per-axis
+judge severity spans $3.32/3.20/3.74$ points on a $1$--$10$ scale while the entire spread between
+the best and worst entrant is $2.06$ points. No ordering can be read off this run, and no
+re-analysis of the existing data repairs it: it is a property of the instrument.
+
+\paragraph{The primary endpoint is largely hard-rule compliance.} $\mathrm{corr}(\min(N,U,S),U) =
+0.976$; the composite \emph{equals} Useful in $190$ of $250$ records; \emph{New} is the unique
+minimum in $1$ of $250$. Because a violated hard rule caps Useful at ${\leq}3$, the endpoint behaves
+close to a rule-violation indicator, and the between-category ordering tracks constraint density
+rather than creative process. We cannot claim it measures creativity as distinct from constrained
+generation, and the C1 result is indistinguishable from a floor effect on the items carrying the
+most checkable rules.
+
+\paragraph{The two creativity-bearing axes are at ceiling with no one-way reliability.} \emph{New}
+averages $8.14/10$ with $\mathrm{ICC}(1,k)=0.0$ and a total between-entrant range of $1.02$ points;
+\emph{Surprising} averages $7.51$ with $\mathrm{ICC}(1,k)=0.0$ and a range of $0.94$. Only
+\emph{Useful} has any one-way agreement ($0.618$). So the axes the construct rests on are the ones
+this instrument resolves least well, and an intervention targeting them has almost nowhere to
+register.
+
+\paragraph{Judge blindness leaks.} Provider search tools stamp their own URLs
+(\texttt{?utm\_source=openai}; \texttt{vertexaisearch.cloud.google.com} redirects) and those strings
+survive into the report text the judge is shown: $143$ of $250$ records ($57\%$) carry a
+machine-readable vendor fingerprint. Every entrant shares a vendor family with one of the three
+judges, \texttt{same\_family} is stamped per judge row but the self-preference analysis is
+\textbf{not run}, and leave-one-family-out was withdrawn---so blindness was the only active control
+and it is partially defeated. The fix is to canonicalise URLs and re-judge; it has not been done.
+
+\paragraph{No human validation.} No human-expert study has been run: no judge--human agreement, no
+human--human ceiling, no human-anchored category. Every number in this paper is an LLM-judge score.
+We estimate the study at ${\sim}\$1$--$3$k and have not begun it.
+
+\paragraph{A post-hoc model choice.} Krippendorff's $\alpha$ is the same statistic as
+$\mathrm{ICC}(1,1)$ for interval data, so those are one control reported twice, not two. The
+two-way model that removes the judge main effect gives $0.736/0.807/0.759$, but it was selected
+\emph{after} seeing the one-way values and is exploratory.
+
+\paragraph{\emph{Surprising} is unanchored and its correlation with \emph{New} is contaminated.} The
+expert baseline was withdrawn from the judge prompt after an ablation moved the axis by $-0.02$, so
+the axis rests on the judge's own prior. Separately, $r=0.883$ cannot argue the axes are inseparable,
+because the judge prompt used for this run stated a correlation to the judge. A clean estimate
+requires re-scoring, which has not been done.
+
+\paragraph{Budgets are not matched, and generation provenance is not uniform.} Realised searches per
+item run from $0.64$ (\texttt{gemini\_shallow}, zero searches on $40$ of $50$ items) to $76.28$
+(\texttt{gemini\_deepresearch\_max}, max $144$), so retrieval depth is confounded with vendor rather
+than controlled, and no cost--creativity frontier is reported. Separately, $196$ of the $250$
+generations were served from a content-addressed cache populated by three earlier runs at two
+different commits; only \texttt{claude\_shallow} was generated entirely fresh. Cache reuse is
+therefore not balanced across entrants, and its effect on scores is unmeasured.
+
+\paragraph{Power, multiplicity, and an unusable equivalence test.} At $10$ items per cell, per-cell
+effects and rigorous multiplicity correction remain in tension; no multiplicity correction is
+applied to the reported cells and no MDE or power curve is computed, so null and parity results are
+hypothesis-generating only. The registered TOST cannot fire as written: it compares a category
+composite against a reference of $0$ with equivalence bounds of $\pm1$ on a $1$--$10$ scale, which
+no category can satisfy, so null categories are reported descriptively rather than as equivalence
+results.
+
+\paragraph{Length is not controlled.} Report length is a known confound for LLM judges and may also
+be a genuine \emph{mediator} of creativity via elaboration. Output length is recorded per record but
+enters no released analysis as a covariate, so we cannot separate the two readings.
+
+\paragraph{Construct validity.} At this scale the New/Useful/Surprising factor structure is
+under-identified, and creativity has no ground truth---the Consensual Assessment Technique bounds,
+but does not eliminate, the circularity in which the judge defines the construct it measures.
+
+\paragraph{Not reproducible, and not contamination-controlled.} The $250$-record run directory is
+\textbf{not} distributed, so the reported table cannot be recomputed from a fresh clone. Retrieval
+is live, so no re-run reproduces these numbers under any circumstances. There is \textbf{no} frozen
+shared index: the code path raises rather than pretending to provide one. Entrants are pinned by
+model alias rather than dated snapshot, so results are time-indexed and the aliases can silently
+re-point.
+
+\paragraph{Conflict of interest.} A prior workshop preprint by the same authors piloted an earlier
+version of this taxonomy on an exploration agent \citep{caesar2026}. That agent is \textbf{not} an
+entrant here and no run in this artifact contains records for it, so no result reported in this
+paper concerns a system the authors built. The taxonomy's provenance is nevertheless disclosed, and
+the datasheet carries the full statement.
