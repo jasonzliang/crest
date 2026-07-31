@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 """Stall detector for long-running CREST work. Prints a verdict per job; exits 1 if anything stalled.
 
-Why it exists: liveness was misdiagnosed twice in one session — `ps aux | grep -c` reported 2
-processes for a run that had already finished, and `pgrep -fc` reported 0 for a run that was very
-much alive (PID confirmed). Both times the wrong call was nearly made. This does it deterministically:
+Why it exists: liveness keeps getting misdiagnosed, five times now, always by measuring a PROXY for
+work instead of the work itself.
+  * `ps aux | grep -c` reported 2 processes for a run that had already finished;
+  * `pgrep -fc` reported 0 for a run that was very much alive (PID confirmed);
+  * this module then counted PYTHON processes and printed "0 background jobs" for four consecutive
+    cycles while a dozen agents were working;
+  * the fix for that counted `claude` processes, which also match the daemon, the pty host, the
+    spare and every `--resume` session -- so it read 9 when the truth was ~2 and could never read 0;
+  * and a hand-rolled `stat -f %z` on a task .output file measured the SYMLINK (a constant 138
+    bytes) rather than its 1 MB target, which read as a 14-minute stall on an agent that was
+    writing continuously.
+Every one of those was a false reading in a direction that would have caused the wrong action. The
+rule this module now follows: measure the artifact the work produces -- records written, log lines,
+transcript bytes -- never the existence of a process. Verdicts:
 
   ALIVE+ADVANCING  process present and its record count grew since the last snapshot
   ALIVE+STALLED    process present but no new records and log untouched for > --stall-min
@@ -104,20 +115,42 @@ def main():
             v = f"DEAD+INCOMPLETE ({lines} lines, no 'wrote' marker)"
             print(f"  ablation: {v}"); problems.append(v)
 
-    # ---- background agents + workflows (they do not appear as run_eval processes)
+    # ---- background agents: measured by TRANSCRIPT WRITES, not by process name.
     #
-    # This line counted PYTHON processes and reported "0 python proc(s)" for four consecutive
-    # monitor cycles while 11-13 background agents were running -- so the one line meant to answer
-    # "is anything working right now?" answered it wrong, in the direction that reads as idle. That
-    # is precisely the misdiagnosis this module exists to prevent, reintroduced in the module
-    # itself. Subagents are `claude` processes, not python ones. The two variables that DID look for
-    # them (`_procs("claude-code")`, a glob for workflow dirs) were computed and then never used.
-    n_agents = len(_procs("claude"))
-    print(f"  background: {n_agents} claude agent proc(s); {len(_procs('python'))} python proc(s); "
-          f"{len(list((REPO/'crest/result/runs').glob('*/')))} run dir(s) on disk")
-    if n_agents:
-        print(f"    -> agents are alive: an in_progress task with no *python* job may still be "
-              f"advancing. Check the task's own output before calling it stalled.")
+    # Two counting bugs preceded this, both the same class the module exists to prevent:
+    #   * counting PYTHON processes reported "0" for four cycles while a dozen agents worked;
+    #   * counting `claude` processes reported 9 when the real number was ~2 -- the pattern also
+    #     matches the daemon, bg-pty-host, bg-spare and every `claude --resume` session, so it can
+    #     never read zero and "agents are alive" became a constant.
+    # A process name says nothing about progress anyway. A subagent writes its transcript
+    # continuously, so mtime is the direct signal: advancing, idle, or absent.
+    #
+    # NB stat the TARGET, not the link. The task .output files are symlinks into
+    # ~/.claude/projects/.../subagents/, and measuring the link gave a constant 138 bytes -- read as
+    # "stalled at 138 bytes for 14 minutes" for an agent that was in fact writing 1 MB. Path.stat()
+    # follows symlinks; Path.lstat() would not.
+    agent_dirs = sorted(Path.home().glob(".claude/projects/*/*/subagents"))
+    live, idle = [], []
+    for d in agent_dirs:
+        for f in d.glob("agent-*.jsonl"):
+            try:
+                age = (now - f.stat().st_mtime) / 60      # stat() follows symlinks
+            except OSError:
+                continue
+            if age < a.stall_min:
+                live.append((f.name[6:23], age, f.stat().st_size))
+            elif age < 120:                                # older than 2h: finished long ago, ignore
+                idle.append((f.name[6:23], age))
+    if live:
+        for name, age, size in sorted(live, key=lambda x: x[1]):
+            print(f"  agent {name}: ADVANCING (wrote {age*60:.0f}s ago, {size/1024:.0f} KB)")
+    elif idle:
+        newest = min(idle, key=lambda x: x[1])
+        print(f"  agents: none advancing; newest transcript {newest[0]} idle {newest[1]:.0f}min "
+              f"(> --stall-min {a.stall_min:g}) -- treat any in_progress task as STALLED")
+    else:
+        print("  agents: none running")
+    print(f"  runs on disk: {len(list((REPO/'crest/result/runs').glob('*/')))}")
 
     # ---- release gate: the single number that says whether this is shippable
     g = subprocess.run(["bash", str(REPO / "crest/analysis/ci_check.sh")],
