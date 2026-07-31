@@ -105,10 +105,19 @@ def main():
             print(f"  ablation: {v}"); problems.append(v)
 
     # ---- background agents + workflows (they do not appear as run_eval processes)
-    agents = _procs("claude-code") + _procs("subagent")
-    wf = list(REPO.glob(".claude/projects/*/subagents/workflows/*")) if (REPO / ".claude").exists() else []
-    print(f"  background: {len(_procs('python')) } python proc(s); "
-          f"{len(list((REPO/'crest/result/runs').glob('*/'))) } run dir(s) on disk")
+    #
+    # This line counted PYTHON processes and reported "0 python proc(s)" for four consecutive
+    # monitor cycles while 11-13 background agents were running -- so the one line meant to answer
+    # "is anything working right now?" answered it wrong, in the direction that reads as idle. That
+    # is precisely the misdiagnosis this module exists to prevent, reintroduced in the module
+    # itself. Subagents are `claude` processes, not python ones. The two variables that DID look for
+    # them (`_procs("claude-code")`, a glob for workflow dirs) were computed and then never used.
+    n_agents = len(_procs("claude"))
+    print(f"  background: {n_agents} claude agent proc(s); {len(_procs('python'))} python proc(s); "
+          f"{len(list((REPO/'crest/result/runs').glob('*/')))} run dir(s) on disk")
+    if n_agents:
+        print(f"    -> agents are alive: an in_progress task with no *python* job may still be "
+              f"advancing. Check the task's own output before calling it stalled.")
 
     # ---- release gate: the single number that says whether this is shippable
     g = subprocess.run(["bash", str(REPO / "crest/analysis/ci_check.sh")],
