@@ -37,6 +37,14 @@ agents:
 
 judge_config: crest/judge/judge_config.live.yaml
 budget: 6
+# 4. Was 8 (the science run's value) and 8 TRIPPED THE ANTHROPIC SPEND-RATE CAP on this account, in
+# run 2026-07-31T180746Z: 3 claude_shallow tasks lost and judge_anthropic dropped from 11 of 31
+# records. So "proven on this account" was proven for that run's conditions, not for today's -- a
+# rate cap depends on what else the account has spent recently, and the science run had already
+# consumed part of the window. 4 halves the Anthropic call rate; judge_anthropic fires on all 5
+# entrants under the full panel, so it is the hottest path in a run.
+# The provider-wide cooldown gate added to keys.py is the real defence; this is just less load.
+# NOTE the historical reasoning below is kept because it explains why 8 LOOKED safe:
 # 8, matching the science run, because that value is PROVEN on this account rather than guessed.
 # That run: concurrency 8, FULL panel (so judge_anthropic fired on all 5 entrants, not 4 of 5 as an
 # older LOFO-era comment says), 250 records, on a SINGLE Anthropic key -- and its manifest records
@@ -45,7 +53,7 @@ budget: 6
 # concurrency 16, which is 2x the proven-safe value, and 4 merely doubled wall clock for nothing.
 # NOT raised to 12+: untested between a proven-good 8 and a known-bad 16, and the failure mode is a
 # SILENTLY thinned judge panel, which would corrupt the run rather than fail it.
-concurrency: 8
+concurrency: 4
 use_cache: true              # will serve 0 of these items; kept true so a RESUMED run reuses what
                              # this run already paid for rather than re-paying it.
 trust_legacy_cache: false

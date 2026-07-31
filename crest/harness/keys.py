@@ -37,6 +37,23 @@ _KEY_EXHAUSTED = ("usage limits", "regain access", "rate limit", "rate_limit", "
 
 _COOLDOWN_S = 120.0        # how long a tripped key sits out before we try it again
 
+# PROVIDER-WIDE cooldown, distinct from the per-key one above, and the thing that was missing.
+# A spend-RATE cap is a property of the ACCOUNT under AGGREGATE load, not of one key or one call, so
+# per-call backoff cannot clear it: while one task sleeps 5s, the other N-1 concurrent tasks keep
+# hammering the same account, the cap stays tripped, and every task exhausts its retries and dies.
+# That is exactly what happened in run 2026-07-31T180746Z -- 3 claude_shallow tasks lost after
+# 5s/10s/20s of backoff each, and judge_anthropic dropped from 11 of 31 records -- while _TRANSIENT
+# already listed "usage limits" and _retry was working as designed. The retries were fine; nothing
+# SHED LOAD. This gate makes every thread wait out one shared window, which is the only thing that
+# actually lets a rate cap recover.
+# 90s, not the per-key 120s: keys.py's own docstring records that this cap "recovers within minutes
+# once load drops", and 90s is long enough to shed a burst without stalling a run that merely
+# clipped the limit once. It is a FLOOR on waiting, not a promise -- if the cap is still up, the next
+# error re-arms it.
+_PROVIDER_COOLDOWN_S = 90.0
+_MAX_GATE_WAIT_S = 300.0   # never block a single call longer than this; past it, let the real
+                           # provider error surface so the circuit breaker can act on it
+
 
 def _split(v: str) -> list[str]:
     return [p for p in re.split(r"[,\s]+", v.strip()) if p]
@@ -61,6 +78,7 @@ class _Pool:
         self._lock = threading.Lock()
         self._cool: dict[str, float] = {}     # key -> epoch time when usable again
         self._dead: set[str] = set()          # keys retired permanently (auth failures)
+        self._provider_until = 0.0            # epoch time when ANY Anthropic call may proceed
         self._i = 0
 
     def order(self, keys: list[str]) -> list[str]:
@@ -89,6 +107,29 @@ class _Pool:
         with self._lock:
             self._cool[key] = time.time() + seconds
 
+    # ---- provider-wide gate ----
+    def trip_provider(self, seconds: float = _PROVIDER_COOLDOWN_S) -> None:
+        """Pause ALL Anthropic calls, every thread, for `seconds`. Extends but never shortens an
+        existing window, so a second trip during a cooldown cannot accidentally release it early."""
+        with self._lock:
+            self._provider_until = max(getattr(self, "_provider_until", 0.0), time.time() + seconds)
+
+    def wait_for_provider(self, what: str) -> None:
+        """Block until the provider-wide window expires. Called BEFORE spending an attempt, so a
+        capped account costs one sleep rather than one failed paid call per task."""
+        while True:
+            with self._lock:
+                until = getattr(self, "_provider_until", 0.0)
+            remaining = until - time.time()
+            if remaining <= 0.5:      # 0.5 not 0: a sub-second remainder is not worth a log line,
+                return                # and printing "waiting 0s" made the gate look broken
+            nap = min(remaining, _MAX_GATE_WAIT_S)
+            print(f"  [keypool] {what}: Anthropic provider-wide cooldown, waiting {nap:.0f}s "
+                  f"(a spend-RATE cap only clears when aggregate load drops)")
+            time.sleep(nap)
+            if remaining > _MAX_GATE_WAIT_S:
+                return          # waited the cap; let the real error surface for the circuit breaker
+
 
 _POOL = _Pool()
 
@@ -103,6 +144,10 @@ def call_anthropic(fn, what: str = "anthropic"):
     keys = anthropic_keys()
     if not keys:
         raise RuntimeError("no ANTHROPIC_API_KEY / ANTHROPIC_API_KEYS configured")
+    # Wait out any provider-wide window BEFORE spending an attempt. Checking here rather than after a
+    # failure is the point: a capped account then costs one sleep per task instead of one failed --
+    # but still billed and still retried -- call per task.
+    _POOL.wait_for_provider(what)
     last: Exception | None = None
     for key in _POOL.order(keys):
         try:
@@ -127,4 +172,12 @@ def call_anthropic(fn, what: str = "anthropic"):
                 print(f"  [keypool] {what}: key ...{key[-4:]} "
                       f"{'INVALID (retired for this run)' if invalid else 'exhausted'}, trying next "
                       f"({len(keys)} configured)")
+            # A RATE/spend cap is an account-level condition, so arm the provider-wide gate: without
+            # this, cooling one key achieves nothing when there is only one key (order() hands a
+            # cooling key back as a last resort, by design, so the cooldown is bypassed) and achieves
+            # little with several, since the cap is on the account rather than the key.
+            # Auth failures are deliberately excluded -- a revoked key is not a reason to stall every
+            # other key's traffic.
+            if not invalid:
+                _POOL.trip_provider()
     raise last if last else RuntimeError("anthropic key pool: no key succeeded")
