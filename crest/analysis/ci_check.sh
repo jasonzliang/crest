@@ -34,15 +34,46 @@ PY2
 
 echo "== quarantine (a benchmark shipping 49/50 must say so)"
 python - <<'PY2' || fail=1
-import sys, yaml, pathlib
+import sys, yaml, pathlib, re
 q=(yaml.safe_load(pathlib.Path("crest/questions/quarantine.yaml").read_text()) or {})
+rc=0
 items=q.get("quarantined") or {}
 if items:
     print(f"  FAIL {len(items)} item(s) quarantined -> not release-ready: {sorted(items)}")
     for k,v in items.items():
         print(f"    {k}: {str(v.get('reason','')).strip().splitlines()[0][:100]}...")
-    sys.exit(1)
-print("  OK no quarantined items")
+    rc=1
+else:
+    print("  OK no quarantined items")
+# The watch_list was read by NOTHING. This gate checked only `quarantined:`, so an item carrying an
+# explicit auditor verdict of "do not release" sat in the shipped 50 with the release gate GREEN --
+# the exact failure mode this script exists to prevent, one level up. A verdict recorded in a YAML
+# file that no check reads is a comment, not a control. Watch-list entries are NOT automatically
+# blocking (thin-but-shippable is a real category), but a do-not-release verdict is.
+watch=q.get("watch_list") or {}
+BLOCKING=re.compile(r"do\s+not\s+release", re.I)
+# An entry may legitimately QUOTE the verdict while recording that it has been dealt with, so a
+# resolved entry needs a way to say so without the gate reading its own history as a live blocker.
+# The convention is a leading "RESOLVED <date>"; anything else mentioning do-not-release blocks.
+RESOLVED=re.compile(r"^\s*RESOLVED\s+\d{4}-\d{2}-\d{2}", re.I)
+blockers={k:str(v) for k,v in watch.items()
+          if BLOCKING.search(str(v)) and not RESOLVED.match(str(v))}
+resolved=[k for k,v in watch.items() if RESOLVED.match(str(v))]
+if resolved:
+    print(f"  OK {len(resolved)} watch-list item(s) marked RESOLVED with a date: {sorted(resolved)}")
+if blockers:
+    print(f"  FAIL {len(blockers)} watch-list item(s) carry a DO-NOT-RELEASE verdict but are still "
+          f"shipped and NOT quarantined: {sorted(blockers)}")
+    for k,v in blockers.items():
+        print(f"    {k}: {' '.join(v.split())[:220]}...")
+    print("    -> Resolve explicitly: fix the item, move it to `quarantined:`, or record why the")
+    print("       verdict is overridden. Do not leave it shipped with the gate green.")
+    rc=1
+elif watch:
+    print(f"  OK {len(watch)} watch-list item(s), none carrying a do-not-release verdict: {sorted(watch)}")
+else:
+    print("  OK no watch-list items")
+sys.exit(rc)
 PY2
 
 echo "== item self-consistency"

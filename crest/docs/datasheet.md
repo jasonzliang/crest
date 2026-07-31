@@ -12,7 +12,8 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
 `design.md` §0 and is not restated here.
 
 > **Release status: NOT RELEASE-READY**, but no longer for the reason this note used to give. The
-> mechanical pre-release gate (`analysis/ci_check.sh`) now **PASSES** all 25 checks: the
+> mechanical pre-release gate (`analysis/ci_check.sh`) now **PASSES** all of its checks (47 as of
+> 2026-07-31; the count grows as patterns are added, so do not cite a number from this line): the
 > `C1_materials_chemistry_01` self-contradiction it used to fail on has been fixed. Run the gate for
 > the live list rather than trusting any transcript, including this one.
 > What still blocks release: Croissant/Croissant-RAI metadata is **not written** — there is no
@@ -65,7 +66,10 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
     unrelated 50-item AI/ML set (`questions/crest_aiml_challenges.jsonl`) validates against the
     same schema. **That set is not part of this datasheet**: it is not listed in
     `config/eval_config.yaml`, has no `item_design.jsonl` rows, is not covered by the item-vetting
-    or live-web audits, and has never been run or scored. A union enum also means nothing now stops
+    or live-web audits, and has never been run or scored. It **is** now covered by
+    `analysis/ci_check.sh` for schema/loader validation and self-consistency (added 2026-07-31, when
+    it turned out to have zero references in that script); it is deliberately *not* held to the
+    release-artifact checks, and the promotion condition is recorded in the script. A union enum also means nothing now stops
     an arts/humanities item being tagged `systems_efficiency`.
   - **Enforcement.** The schema is validated on load (`harness/run_crest.py::load_challenges`), and
     `Challenge.from_json` **raises** on a missing `id`, `query`, `known_answers` or
@@ -140,10 +144,18 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
   `minLength(200)`; 64% of the field turned out to be an answer key) and **restored 2026-07-31** with
   a 1,620-char model-drafted baseline (measured on the shipped file; `item_vetting.md` said 1,478 and
   was wrong) — so the shipped set is 50/50, with that item's provenance
-  weaker than the rest. Three further items are on a documented watch-list, one of them
-  (`C4_engineering_45`) with an auditor verdict of "do not release" because its novelty gate is
-  inverted: it offers as its example of a new mechanism something its own `known_answers` already
-  contains.
+  weaker than the rest. Three items are on a documented watch-list. One of them
+  (`C4_engineering_45`) carried an auditor verdict of "do not release" because its novelty gate was
+  inverted — it offered as its example of a new mechanism something its own `known_answers` already
+  contains. **Fixed 2026-07-31**, along with two citation errors in the same item, and the watch-list
+  entry now records the fix. That fix has a provenance cost stated there and as caveat 8 of
+  `result/leaderboard.json`: **the released run was scored against the old wording**, so this item's
+  5 records no longer correspond to the shipped item — as is also true of
+  `C1_materials_chemistry_01`, whose numeric rules were edited after that run was scored. Any
+  per-item or C4-category claim from that run must exclude those 10 records or be re-run.
+  Note the gate could not see any of this until 2026-07-31: it read only `quarantined:` and ignored
+  `watch_list:` entirely, so an item under an explicit do-not-release verdict shipped with the
+  release gate green. It now fails on a live verdict and requires a dated `RESOLVED` marker to pass.
 
 ## 4. Preprocessing / frozen index
 - **Frozen shared index.** `[NOT IMPLEMENTED]` The intended design is that all agents retrieve from

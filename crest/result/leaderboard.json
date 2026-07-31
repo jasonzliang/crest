@@ -145,6 +145,7 @@
     "ICC(3,*) was added AFTER seeing the data and is EXPLORATORY (see analysis/preregistration.yaml).",
     "Live web retrieval, NOT contamination-controlled. No frozen index exists.",
     "Search budgets are NOT matched across arms: realised searches ran 0.64 (gemini_shallow, with ZERO searches on 40 of its 50 items) to 76.28 (gemini_deepresearch_max, max 144) -- a 119x range, not the 26x an earlier version of this caveat implied by quoting 2.9 (openai_shallow, the second-lowest arm) as the floor. Treat depth as a factor, not as noise.",
-    "0 of 250 records carry adapter_fp / truncated / answer_chars / answer_words, so answer-length covariates cannot be computed from this release and the generation cache cannot serve it."
+    "0 of 250 records carry adapter_fp / truncated / answer_chars / answer_words, so answer-length covariates cannot be computed from this release and the generation cache cannot serve it.",
+    "TWO ITEMS WERE EDITED AFTER THIS RUN WAS SCORED, so their records no longer match the shipped items. C4_engineering_45: its novelty gate was INVERTED -- hard rule (d) offered a software-lock/parts-pairing penalty as its example of a NEW mechanism while the item's own known_answers list iFixit, whose published rubric already applies one globally (up to -100%), and its expert_baseline asserted the opposite, so an agent following the item's own hint reproduced published prior art and was scored as NOVEL. Fixed 2026-07-31, AFTER this run. C1_materials_chemistry_01: its numeric rules were edited after scoring. The 10 records for these two items (5 entrants x 2) must be excluded from, or re-run before, any per-item or C4-category claim. Nothing in this file is recomputed from the corrected items."
   ]
 }

@@ -45,10 +45,29 @@ watch_list:
   C2_law_policy_37:        "59% of expert_baseline was answer key; 210 chars remain"
   C2_economics_business_36: "58% of expert_baseline was answer key; 230 chars remain"
   C4_engineering_45: >
-    Not a baseline-length problem: its gate is INVERTED. A hard rule offers "a software-lock/
+    RESOLVED 2026-07-31 by fixing the item; kept on the watch-list because the fix has a
+    provenance cost, described at the end of this entry.
+    THE DEFECT: its novelty gate was INVERTED. Hard rule (d) offered "a software-lock/
     parts-pairing penalty as a hard multiplier" as its example of a genuinely NEW mechanism, but
     iFixit -- in the item's own known_answers -- already applies a global parts-pairing penalty
-    (verified against iFixit's published methodology). An agent following the item's own hint
-    reproduces published prior art and is scored as novel, and the baseline would lead a judge to
-    confirm rather than catch it. The C4/C5 auditor's verdict was "do not release this item".
-    Consider quarantining once the release decision is made.
+    (up to -100%, verified against iFixit's published methodology), and rule (d)'s second example
+    (splitting intrinsic hardware from institutional/legal reparability) is close to EN 45554's
+    product-related vs support-related split. So an agent following either of the item's own hints
+    reproduced published prior art and was scored as NOVEL. Worse, expert_baseline asserted the
+    opposite of the truth on the decisive point ("the convergent baseline rarely penalizes software
+    parts-pairing"), so a judge reading the item would CONFIRM the false positive rather than catch
+    it. The C4/C5 auditor's verdict was "do not release this item".
+    THE FIX: rule (d) now explicitly DISQUALIFIES both candidates and says why; expert_baseline now
+    states that the convergent baseline does already penalize parts-pairing, and relocates the
+    genuine gap (credit for open diagnostic access, whole-life spare-part pricing). Two citation
+    errors from the same audit fixed at once: known_answers[11] attributed a "modularity index" to
+    Martin & Ishii, whose Design-for-Variety method yields the Generational Variety Index and the
+    Coupling Index instead (real modularity measures are Gershenson et al. and Mikkola & Gassmann);
+    known_answers[3] cited ESPR 2024/1781, an enabling framework, while omitting the only operative
+    EU repairability score, the A-E class under Reg (EU) 2023/1669.
+    PROVENANCE COST -- READ THIS BEFORE USING THE SCORES: the released run
+    (2026-07-31T040653Z) was generated and judged against the OLD wording. Its 5 records for this
+    item therefore do not correspond to the item as now shipped, and the same is true of
+    C1_materials_chemistry_01, whose numeric rules were edited after that run was scored. Any
+    per-item or C4-category claim drawn from that run must either exclude these two items or be
+    re-run. This is recorded as caveat 8 in result/leaderboard.json.
