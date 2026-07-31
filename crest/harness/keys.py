@@ -172,12 +172,13 @@ def call_anthropic(fn, what: str = "anthropic"):
                 print(f"  [keypool] {what}: key ...{key[-4:]} "
                       f"{'INVALID (retired for this run)' if invalid else 'exhausted'}, trying next "
                       f"({len(keys)} configured)")
-            # A RATE/spend cap is an account-level condition, so arm the provider-wide gate: without
-            # this, cooling one key achieves nothing when there is only one key (order() hands a
-            # cooling key back as a last resort, by design, so the cooldown is bypassed) and achieves
-            # little with several, since the cap is on the account rather than the key.
-            # Auth failures are deliberately excluded -- a revoked key is not a reason to stall every
-            # other key's traffic.
-            if not invalid:
-                _POOL.trip_provider()
+    # Arm the provider-wide gate ONLY once every key has failed, and only for cap-class errors.
+    # Arming it inside the per-key loop was wrong as soon as more than one key exists: keys can sit
+    # on DIFFERENT accounts with different limits, so one capped key would repeatedly stall the
+    # healthy ones for 90s apiece -- turning a working pool into the single-key case it exists to
+    # avoid. Measured on this machine: of 3 keys, 1 was capped until 00:00 UTC and 2 were fine.
+    # "Every key is capped" IS the account-level condition worth pausing all threads for; "one key
+    # is capped" is what the per-key cooldown in the loop above already handles.
+    if last is not None and any(k in str(last).lower() for k in _KEY_EXHAUSTED):
+        _POOL.trip_provider()
     raise last if last else RuntimeError("anthropic key pool: no key succeeded")
