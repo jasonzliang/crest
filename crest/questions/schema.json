@@ -92,7 +92,8 @@
     }
   },
   "$id": "https://github.com/.../crest/questions/schema.json",
-  "version": "crest-challenge/3.1.0",
+  "version": "crest-challenge/3.2.0",
   "description": "Validated on load by harness.run_crest.load_challenges. Previously this file was never applied: no jsonschema import existed anywhere in the repo, so `required` was decorative and category_name (present in all 50 items) validated silently because additionalProperties was unset. v2.0.0 removed `predicted_direction` (moved to analysis/preregistration.yaml; it was a 5-row lookup on `category` and, living in editable data, could not evidence ordering) and `category_name` (derivable from `category`; one item shipped a long-form value so groupby yielded 6 categories). v3.0.0 moved `rationale` to questions/item_design.jsonl (read by no code at runtime; 20% of bytes) -- ci_check.sh enforces the id bijection.",
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$comment": "v3.2.0: the `domain` enum went from the 6 science names to the 12-name union with the AI/ML dataset. The version was not bumped at the time, so two different schemas both self-identified as 3.1.0 -- and that string is what run manifests and the datasheet cite, so it stopped identifying what was actually enforced."
 }
