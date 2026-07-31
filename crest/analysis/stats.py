@@ -18,11 +18,21 @@ import numpy as np
 import pandas as pd
 
 ALL_AXES = ("new", "useful", "surprising")
-PRIMARY_AXES = ("new", "useful")     # Surprising is EXPLORATORY: ablation moved it by -0.02, it
-                                     # correlates with novelty at r~0.95, and it is the sole
-                                     # binding axis in ~1 record in 147. Single source of truth --
-                                     # four separate copies of the axis tuple caused the drift that
-                                     # left the primary endpoint defined three different ways.
+PRIMARY_AXES = ("new", "useful", "surprising")
+# All THREE axes. An earlier revision dropped Surprising on the grounds that it was "the sole binding
+# axis in ~1 record in 147" -- that figure was threshold-based on a smaller LOFO run and did not
+# survive re-measurement. On the clean 250-record full-panel run Surprising is UNIQUELY the lowest
+# axis in 51/250 records (20%), so a conjunctive endpoint that omits it is not measuring the gate the
+# benchmark claims to apply.
+#
+# It is still nearly redundant with New (r ~ 0.95): including it lowers every agent by 0.06-0.38 and
+# changes no ranking (corr(min2, min3) = 0.989). So the choice costs nothing in conclusions and buys
+# consistency with the stated three-axis design. Use min2() for the two-axis variant.
+#
+# Caveat to carry into the paper: Surprising is UNANCHORED since expert_baseline was withdrawn from
+# the judge prompt, so 20% of primary-endpoint values now rest on an unanchored judgement.
+# Single source of truth -- four scattered copies of this tuple caused the drift that once left the
+# primary endpoint defined three different ways.
 AXES = ALL_AXES                      # back-compat alias
 
 
@@ -65,7 +75,7 @@ def _axis_col(axis: str) -> str:
 
 
 def _composite(df: pd.DataFrame) -> pd.Series:
-    """PRIMARY ENDPOINT: min(New, Useful) -- TWO axes, not three.
+    """PRIMARY ENDPOINT: min(New, Useful, Surprising) -- the graded form of "creative on all three".
 
     Surprising is deliberately EXCLUDED. It is reported as exploratory because ablating
     expert_baseline moved it by -0.02 (it is not separately anchored), it correlates with
@@ -85,6 +95,16 @@ def _composite(df: pd.DataFrame) -> pd.Series:
         # p=0.91 -> p=0.00015, with main() still printing the two-axis label.
         raise InsufficientData(f"primary endpoint needs {cols}; missing {missing}")
     return df[cols].min(axis=1, skipna=False)   # a NaN axis must NOT be silently skipped
+
+
+def min2(df: pd.DataFrame) -> pd.Series:
+    """Two-axis variant, min(New, Useful) -- Surprising excluded. Retained because Surprising is
+    unanchored; report alongside the primary when that caveat matters."""
+    cols = [f"creativity.{a}" for a in ("new", "useful")]
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        raise InsufficientData(f"min2 needs {cols}; missing {missing}")
+    return df[cols].min(axis=1, skipna=False)
 
 
 

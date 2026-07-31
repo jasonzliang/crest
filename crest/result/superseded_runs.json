@@ -1,0 +1,213 @@
+{
+  "_comment": "Provenance for deleted run directories. The full records/transcripts were removed as obsolete; these summaries preserve what each run showed and why it was superseded. The canonical run is 2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3. NB an earlier cleanup deleted a run that was the only cache source for one item, forcing regeneration -- the canonical run was verified self-sufficient (250/250 records with transcripts) before this.",
+  "canonical_run": "2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3",
+  "archived": [
+    {
+      "run_id": "2026-07-30T081356Z__crest__full50__git84f7a96__51ea6b",
+      "size_mb": 6.6,
+      "created_at": "2026-07-30T08:13:56.772216+00:00",
+      "totals": {
+        "n_records": 249,
+        "n_scored": 241,
+        "n_judge_error": 0,
+        "n_judge_degraded": 0,
+        "n_grounding_fail": 8,
+        "n_task_errors": 1
+      },
+      "agents": [
+        "claude_shallow",
+        "openai_shallow",
+        "gemini_shallow",
+        "openai_deepresearch",
+        "gemini_deepresearch_max"
+      ],
+      "judge_protocol": "leave-one-family-out; blind; median aggregation",
+      "per_agent_summary": {
+        "claude_shallow": {
+          "n": 50,
+          "n_scored": 42,
+          "grounding_pass_rate": 0.84,
+          "mean_new": 4.63,
+          "mean_useful": 3.24,
+          "mean_surprising": 4.25,
+          "creative_rate": 0.214
+        },
+        "gemini_deepresearch_max": {
+          "n": 49,
+          "n_scored": 49,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 5.18,
+          "mean_useful": 2.72,
+          "mean_surprising": 3.97,
+          "creative_rate": 0.041
+        },
+        "gemini_shallow": {
+          "n": 50,
+          "n_scored": 50,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 5.97,
+          "mean_useful": 3.91,
+          "mean_surprising": 5.05,
+          "creative_rate": 0.16
+        },
+        "openai_deepresearch": {
+          "n": 50,
+          "n_scored": 50,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 7.34,
+          "mean_useful": 5.97,
+          "mean_surprising": 7.05,
+          "creative_rate": 0.6
+        },
+        "openai_shallow": {
+          "n": 50,
+          "n_scored": 50,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 7.29,
+          "mean_useful": 5.94,
+          "mean_surprising": 6.67,
+          "creative_rate": 0.56
+        }
+      },
+      "superseded_because": "LOFO arm. Redundant: the canonical run stamps same_family on every judge row, so the LOFO subset is reconstructible by filtering those rows -- verified to reproduce the confound (Gemini -0.80/-0.54, others positive). Its records also predate the judge_protocol field."
+    },
+    {
+      "run_id": "2026-07-30T111856Z__crest__full50__git84f7a96__23cdc2",
+      "size_mb": 6.8,
+      "created_at": "2026-07-30T11:18:56.365316+00:00",
+      "totals": {
+        "n_records": 250,
+        "n_scored": 246,
+        "n_judge_error": 0,
+        "n_judge_degraded": 0,
+        "n_grounding_fail": 4,
+        "n_task_errors": 0
+      },
+      "agents": [
+        "claude_shallow",
+        "openai_shallow",
+        "gemini_shallow",
+        "openai_deepresearch",
+        "gemini_deepresearch_max"
+      ],
+      "judge_protocol": "leave-one-family-out; blind; median aggregation",
+      "per_agent_summary": {
+        "claude_shallow": {
+          "n": 50,
+          "n_scored": 46,
+          "grounding_pass_rate": 0.92,
+          "mean_new": 4.17,
+          "mean_useful": 2.72,
+          "mean_surprising": 3.59,
+          "creative_rate": 0.174
+        },
+        "gemini_deepresearch_max": {
+          "n": 50,
+          "n_scored": 50,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 7.68,
+          "mean_useful": 5.07,
+          "mean_surprising": 6.84,
+          "creative_rate": 0.48
+        },
+        "gemini_shallow": {
+          "n": 50,
+          "n_scored": 50,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 7.44,
+          "mean_useful": 4.38,
+          "mean_surprising": 6.5,
+          "creative_rate": 0.28
+        },
+        "openai_deepresearch": {
+          "n": 50,
+          "n_scored": 50,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 8.38,
+          "mean_useful": 6.82,
+          "mean_surprising": 7.78,
+          "creative_rate": 0.68
+        },
+        "openai_shallow": {
+          "n": 50,
+          "n_scored": 50,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 8.4,
+          "mean_useful": 6.92,
+          "mean_surprising": 7.62,
+          "creative_rate": 0.68
+        }
+      },
+      "superseded_because": "First full-panel run, but on the PRE-correction dataset and the BROKEN Anthropic adapter (11 empty answers, 20 truncated). Its claude_shallow numbers are adapter artifacts."
+    },
+    {
+      "run_id": "2026-07-31T020425Z__crest__full49__gitcf7b4d9__a3669b",
+      "size_mb": 6.6,
+      "created_at": "2026-07-31T02:04:25.842842+00:00",
+      "totals": {
+        "n_records": 245,
+        "n_scored": 234,
+        "n_judge_error": 0,
+        "n_judge_degraded": 0,
+        "n_grounding_fail": 11,
+        "n_task_errors": 0
+      },
+      "agents": [
+        "claude_shallow",
+        "openai_shallow",
+        "gemini_shallow",
+        "openai_deepresearch",
+        "gemini_deepresearch_max"
+      ],
+      "judge_protocol": "leave-one-family-out; blind; median aggregation",
+      "per_agent_summary": {
+        "claude_shallow": {
+          "n": 49,
+          "n_scored": 38,
+          "grounding_pass_rate": 0.776,
+          "mean_new": 5.34,
+          "mean_useful": 3.08,
+          "mean_surprising": 4.79,
+          "creative_rate": 0.158
+        },
+        "gemini_deepresearch_max": {
+          "n": 49,
+          "n_scored": 49,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 7.92,
+          "mean_useful": 4.86,
+          "mean_surprising": 7.41,
+          "creative_rate": 0.388
+        },
+        "gemini_shallow": {
+          "n": 49,
+          "n_scored": 49,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 7.47,
+          "mean_useful": 4.47,
+          "mean_surprising": 7.02,
+          "creative_rate": 0.367
+        },
+        "openai_deepresearch": {
+          "n": 49,
+          "n_scored": 49,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 8.51,
+          "mean_useful": 6.78,
+          "mean_surprising": 7.82,
+          "creative_rate": 0.653
+        },
+        "openai_shallow": {
+          "n": 49,
+          "n_scored": 49,
+          "grounding_pass_rate": 1.0,
+          "mean_new": 8.51,
+          "mean_useful": 6.73,
+          "mean_surprising": 7.9,
+          "creative_rate": 0.633
+        }
+      },
+      "superseded_because": "full49: run while C2_biology_medicine_34 was quarantined, and still on the broken Anthropic adapter."
+    }
+  ]
+}
