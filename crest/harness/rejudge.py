@@ -72,6 +72,28 @@ def _atomic_write_jsonl(path: Path, rows: list) -> None:
         raise
 
 
+def _decide(before: int, before_ver, now: int, allow_downgrade: bool) -> tuple[str, str]:
+    """One place, three outcomes: keep | upgrade | downgrade, with the reason.
+
+    This replaces a three-way decision that was spread across two `if`s, a `_downgraded` sentinel
+    stuffed into the live record dict and popped 24 lines later, and an arithmetic expression that
+    converted the sentinel back into a counter. That structure produced two bugs in two rounds -- an
+    outage silently overwriting good scores and counting them as upgrades, then --allow-downgrade
+    becoming a no-op because the write gate read only one of the counters."""
+    if now <= before and before_ver == JUDGE_PROMPT_VERSION:
+        # Same panel size AND same rubric: nothing to gain, so never rewrite. Version-awareness is
+        # what makes the prescribed v1->v2 migration possible at all -- an unconditional
+        # `now <= before` discarded every result on a healthy full panel, after paying for it.
+        return "keep", f"no gain ({before} -> {now} judges, both {JUDGE_PROMPT_VERSION})"
+    if now < before:
+        if not allow_downgrade:
+            return "keep", (f"REFUSING downgrade ({before} -> {now} judges); a judge is probably "
+                            f"capped, which is transient. Re-run when the panel is healthy, or pass "
+                            f"--allow-downgrade")
+        return "downgrade", f"prompt {before_ver} -> {JUDGE_PROMPT_VERSION}, accepted with --allow-downgrade"
+    return "upgrade", f"prompt {before_ver} -> {JUDGE_PROMPT_VERSION}" if now == before else f"{before} -> {now} judges"
+
+
 def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
             statuses=("judge_degraded", "judge_error"), concurrency: int = 4,
             dry_run: bool = False, force: bool = False,
@@ -132,36 +154,11 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
                 continue
             before = (rec.get("creativity") or {}).get("n_judges", 0)
             before_ver = (rec.get("creativity") or {}).get("judge_prompt_version")
-            # The never-downgrade guard must be VERSION-AWARE, or it blocks the one migration
-            # score.py prescribes. A v1->v2 re-judge of a healthy full-panel record returns the same
-            # 3 judges it already had, so `<= before` discarded every result -- AFTER paying for it.
-            # Measured on a copy of the shipped run with a stubbed panel: 250 targets, 0 upgraded,
-            # 250x "no gain (3 -> 3 judges)", records.jsonl untouched, judge_prompt_version still
-            # None on all 250. In a real run that is 750 wasted judge calls and the prescribed
-            # remedy for the run's headline caveat simply does not exist.
-            if scores.n_judges <= before and before_ver == JUDGE_PROMPT_VERSION:
-                print(f"  [{rec['challenge_id']}/{rec['agent']}] no gain "
-                      f"({before} -> {scores.n_judges} judges, both {JUDGE_PROMPT_VERSION}); "
-                      f"keeping original")
+            action, why = _decide(before, before_ver, scores.n_judges, allow_downgrade)
+            if action == "keep":
+                print(f"  [{rec['challenge_id']}/{rec['agent']}] keeping original: {why}")
                 unchanged += 1
                 continue
-            if scores.n_judges < before:
-                # A judge outage during the prescribed v1->v2 migration would otherwise overwrite
-                # good full-panel scores with degraded ones, atomically and with no backup, and count
-                # each as "upgraded". Measured: 6/6 records went scored(3) -> judge_degraded(1),
-                # manifest n_scored 250 -> 0, summary said "6 upgraded, 0 unchanged". Refuse by
-                # default -- a capped vendor is the likeliest cause, and it is transient.
-                if not allow_downgrade:
-                    print(f"  [{rec['challenge_id']}/{rec['agent']}] REFUSING downgrade "
-                          f"({before} -> {scores.n_judges} judges); a judge is probably capped. "
-                          f"Re-run when the panel is healthy, or pass --allow-downgrade.")
-                    unchanged += 1
-                    continue
-                print(f"  [{rec['challenge_id']}/{rec['agent']}] DOWNGRADE accepted "
-                      f"({before} -> {scores.n_judges} judges) for prompt {before_ver} -> "
-                      f"{JUDGE_PROMPT_VERSION}")
-                downgraded += 1
-                by_id[rec["record_id"]]["_downgraded"] = True
             live = by_id[rec["record_id"]]
             live["creativity"] = {
                 "new": scores.new, "useful": scores.useful, "surprising": scores.surprising,
@@ -181,14 +178,25 @@ def rejudge(run_dir: Path, panel: JudgePanel, challenges_file: str,
             live["scoring_status"] = ("scored" if scores.n_judges >= panel.min_judges
                                      else "judge_degraded")
             live["rejudged"] = True                  # provenance: this row was repaired, not fresh
-            print(f"  [{rec['challenge_id']}/{rec['agent']}] {before} -> {scores.n_judges} judges, "
-                  f"N/U/S={scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
-                  f"-> {live['scoring_status']}")
-            upgraded += 0 if by_id[rec['record_id']].pop('_downgraded', False) else 1
+            if action == "downgrade":
+                downgraded += 1
+            else:
+                upgraded += 1
+            print(f"  [{rec['challenge_id']}/{rec['agent']}] {action.upper()}: {before} -> "
+                  f"{scores.n_judges} judges, N/U/S="
+                  f"{scores.new:.0f}/{scores.useful:.0f}/{scores.surprising:.0f} "
+                  f"-> {live['scoring_status']} ({why})")
 
-    if not upgraded:
-        print("\nno records upgraded; leaving the run untouched")
-        return {"n_targets": len(targets), "n_upgraded": 0,
+    # BOTH counters. Keying the write gate on `upgraded` alone made --allow-downgrade a no-op in
+    # exactly the case it exists for: a uniform vendor outage, where every accepted change is a
+    # downgrade. The records were mutated in memory, then discarded, and the caller got
+    # {n_upgraded: 0, n_unchanged: 0} for records that had already been re-judged and paid for. The
+    # flag worked only when at least one genuine upgrade rode along -- i.e. only when it was not
+    # needed. Third generation of this defect: R4's guard blocked the migration outright, R5's
+    # version-aware guard let an outage destroy data, R6's refusal discarded it after paying.
+    if not (upgraded or downgraded):
+        print("\nno records changed; leaving the run untouched")
+        return {"n_targets": len(targets), "n_upgraded": 0, "n_downgraded": 0,
                 "n_unchanged": unchanged, "n_missing": len(missing)}
     # Back up before an in-place overwrite. The write is atomic, so it cannot truncate -- but atomic
     # replacement of good data with bad data is still data loss, and this tool is invoked with --force
