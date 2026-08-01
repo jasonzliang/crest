@@ -44,7 +44,7 @@ live on disk only; they are both the generation cache and the evidence base, so 
 - Analyze a run: `python -m crest.analysis.stats --run crest/result/runs/<run_id>/records.jsonl`.
 - Is a long run still alive? `python -m crest.analysis.stall_check`.
 
-`RECORD_SCHEMA_VERSION` in `harness/results.py` is now `crest-record/1.1.0`; the shipped run 040653Z
+`RECORD_SCHEMA_VERSION` in `harness/results.py` is now `crest-record/1.2.0`; the shipped run 040653Z
 was written under the previous version and all 250 of its records — and its manifest — stamp
 `crest-record/1.0.0`. `scoring_status` is one of `scored` · `judge_degraded` (scored,
 but by fewer than `min_judges` — excluded from headline numbers) · `empty_answer` (the adapter

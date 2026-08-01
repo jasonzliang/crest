@@ -116,11 +116,26 @@ def build(run_dir: Path) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--run", required=True, help="a finalized run dir under result/runs/")
-    ap.add_argument("--out", default="crest/result/leaderboard.json")
+    # NO clobbering default. This defaulted to crest/result/leaderboard.json -- the SCIENCE run's
+    # numbers, cited by four .tex files across both papers -- so promoting any other run without
+    # remembering a flag silently overwrote the paper's results. That happened on 2026-07-31 and had
+    # to be restored from git. The path is now DERIVED from the run's own manifest benchmark name, so
+    # it structurally cannot pick the wrong file; --out still overrides.
+    ap.add_argument("--out", default=None,
+                    help="output path; default is derived from the run's benchmark name")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     run_dir = Path(a.run) if Path(a.run).is_absolute() else REPO / a.run
-    out = Path(a.out) if Path(a.out).is_absolute() else REPO / a.out
+    if a.out:
+        out = Path(a.out) if Path(a.out).is_absolute() else REPO / a.out
+    else:
+        # DERIVED from the run's own manifest, so promoting run X can only ever write X's file.
+        import json as _j
+        _mf = _j.loads((run_dir / "run_manifest.json").read_text(encoding="utf-8"))
+        _bench = ((_mf.get("benchmark") or {}).get("name") or "crest")
+        out = REPO / "crest/result" / ("leaderboard.json" if _bench == "crest"
+                                       else f"leaderboard.{_bench}.json")
+        print(f"  --out derived from benchmark '{_bench}': {out.relative_to(REPO)}")
 
     lb = build(run_dir)
     # Preserve the hand-written caveats across regeneration. They are editorial judgements about what
