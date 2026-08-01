@@ -15,6 +15,7 @@ For config-driven, multi-agent runs, prefer:  python crest/run_eval.py
 """
 from __future__ import annotations
 import argparse, json, dataclasses, threading, collections
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -364,8 +365,12 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                             cb["dead"].add(name)
                             print(f"  [circuit] disabling '{name}' after repeated auth/quota failures")
                     with wlock:
+                        # ts + pass: error rows carried NEITHER, which is why a burst hypothesis
+                        # could not be tested against runs already paid for. Four items failed
+                        # within the first tasks dispatched in one run and nothing recorded WHEN.
                         fe.write(json.dumps({"record_id": f"{run_id}:{ch.id}:{name}", "challenge_id": ch.id,
                                              "agent": name, "status": "agent_error",
+                                             "ts": datetime.now(timezone.utc).isoformat(), "pass": "main",
                                              "error_type": type(e).__name__, "error": msg[:200]},
                                             ensure_ascii=False) + "\n"); fe.flush()
                         n_err += 1
@@ -424,6 +429,7 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                         fe.write(json.dumps({"record_id": f"{run_id}:{ch.id}:{name}",
                                              "challenge_id": ch.id, "agent": name,
                                              "status": "agent_error_after_sweep",
+                                             "ts": datetime.now(timezone.utc).isoformat(), "pass": "sweep",
                                              "error_type": type(e).__name__, "error": str(e)[:200]},
                                             ensure_ascii=False) + "\n"); fe.flush()
                     continue

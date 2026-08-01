@@ -41,3 +41,23 @@ equivalences:
       rate-limit policy: it changes whether a call is re-attempted after a failure, never what is
       sent or how a response is parsed. No prompt, model id, tool declaration, token limit or
       reasoning setting was touched. Verified by diffing agents.py and keys.py across abae78a..66a1c80.
+
+  - from: "904217d03a66"        # a56217f -- produced runs 015432Z and 022516Z
+    to:   "1f86b6bd919a"        # HEAD: gemini-dr retry base_sleep 5s -> 60s, explicit store=True
+    date: "2026-08-01"
+    reason: >
+      Two changes to GeminiDeepResearchAPI.run, both argued below rather than assumed, because this
+      one is closer to the line than the previous entry.
+      (1) _retry base_sleep 5.0 -> 60.0 on the create call. Pure retry timing: it changes how long we
+      wait between attempts after a failure, never what is sent. Unambiguously generation-neutral.
+      (2) store=True is now passed explicitly where the SDK previously omitted the field. This is a
+      REQUEST-SHAPE change, so it does not qualify under the blanket "retry policy" exemption and
+      needs its own argument. `store` controls whether the interaction is persisted server-side for
+      later retrieval; it is not a generation parameter and cannot alter model output. Google's own
+      docs state that background execution REQUIRES store=True and that store=false is "incompatible
+      with background execution" -- and every one of our background runs completed and returned
+      results (46/50, then 49/50). So the server was already treating store as true; sending it
+      explicitly makes the existing behaviour visible rather than changing it. That inference is the
+      single non-deductive step in this entry and is recorded as such.
+      NOT included and NOT relevant: the errors.jsonl timestamp/pass fields live in run_crest.py,
+      which is not part of the fingerprint at all.

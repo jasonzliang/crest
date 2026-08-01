@@ -529,11 +529,24 @@ class GeminiDeepResearchAPI(Agent):
             agent_config={"type": "deep-research", "thinking_summaries": "auto",
                           "collaborative_planning": False},   # never block on a plan approval
             background=True,                                  # REQUIRED for agents
-        ), f"gemini-dr create ({self.model})", attempts=3, extra=_GEMINI_DR_FLAKY)
-        # attempts=3 (2 retries), not the default 4: this is CREATION only, so a retry costs one
-        # cheap round-trip and never re-pays a completed research job. Scoped to create deliberately
-        # -- the poll loop below must NOT treat an invalid-argument as retryable, because a bad
-        # interaction id would then spin for the full backoff instead of failing fast.
+            # Google's docs state that background execution REQUIRES store=True and that
+            # store=false is "incompatible with background execution". We were sending NEITHER --
+            # the SDK omits the field entirely by default -- and relying on the server defaulting it
+            # true. 46/50 succeeding says it does, but that is an undocumented default on a preview
+            # surface, which is exactly the kind of thing that changes without notice. Be explicit.
+            store=True,
+        ), f"gemini-dr create ({self.model})", attempts=3, base_sleep=60.0,
+           extra=_GEMINI_DR_FLAKY)
+        # base_sleep=60s, NOT the 5s default, and this is the actual fix for the flaky 400.
+        # At 5s the three attempts wait 5s and 10s -- the ENTIRE retry budget is spent inside a
+        # 15-second window. The failures this retry exists to absorb are transient server-side
+        # faults on the Deep Research create path with second-to-minute persistence (Google has
+        # documented precedent for returning 400 INVALID_ARGUMENT for transient backend conditions
+        # on byte-identical payloads, and an acknowledged-but-undiagnosed intermittent-400 report
+        # on this exact endpoint). Three samples 15 seconds apart are effectively ONE sample: that
+        # is why item C1_evaluation_benchmarking_04 logged "5 failures" that were really ~3
+        # correlated bursts. 60s spreads the budget over ~3 minutes instead.
+        # Still cheap: a rejected create costs nothing, and this never re-pays a completed job.
         iid, waited = it.id, 0
         while True:
             it = _retry(lambda: client.interactions.get(iid),  # positional id; no .name on Interaction
