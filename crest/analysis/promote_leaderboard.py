@@ -141,11 +141,34 @@ def main() -> None:
     # Preserve the hand-written caveats across regeneration. They are editorial judgements about what
     # the numbers do and do not support, and they must NOT be silently dropped by a re-run -- that
     # would turn "the ordering is not identifiable" into an unqualified leaderboard.
+    # ...but carrying them is DANGEROUS in the other direction, and that direction has now fired
+    # twice. A caveat states measured facts about a SPECIFIC run ("gemini_shallow n=47", "1 truncated
+    # record", "corr = 0.957", "judge_openai 77.3%"). Re-pointing this file at a new run keeps those
+    # sentences verbatim and reattaches them to numbers they were never measured on. On
+    # leaderboard.crest_aiml.json that left FIVE of eight caveats describing the superseded v2 run --
+    # including one asserting corr = 0.957 while caveat 2 of the same file correctly said 0.737, so
+    # the artifact contradicted itself. Every one of them read as authoritative.
+    # So: carry them (dropping them is worse), but say loudly whose numbers they were written against
+    # and force a human to re-read them when the source run changes.
     if out.exists():
         prev = json.loads(out.read_text(encoding="utf-8"))
         if prev.get("caveats"):
             lb["caveats"] = prev["caveats"]
-            print(f"  carried over {len(prev['caveats'])} caveat(s) from the existing file")
+            prev_run = (prev.get("provenance") or {}).get("run_id")
+            new_run = (lb.get("provenance") or {}).get("run_id")
+            if prev_run and new_run and prev_run != prev_run == new_run:
+                pass
+            if prev_run != new_run:
+                print(f"  *** RE-READ THE CAVEATS *** carried {len(prev['caveats'])} caveat(s) written "
+                      f"against run\n        {prev_run}\n      onto numbers from a DIFFERENT run\n"
+                      f"        {new_run}\n      Any caveat quoting an n, a correlation, a rate or a "
+                      f"count is now UNVERIFIED and probably wrong. Recheck each one against this run "
+                      f"before this file is cited.")
+                lb["caveats"] = [f"*** UNVERIFIED AGAINST THIS RUN: carried over from {prev_run}. "
+                                 f"Recheck or delete. ***"] + list(prev["caveats"])
+            else:
+                print(f"  carried over {len(prev['caveats'])} caveat(s) from the existing file "
+                      f"(same source run, so their measured figures still apply)")
     if "caveats" not in lb:
         lb["caveats"] = ["TODO: no caveats recorded. State at minimum whether the ordering is "
                          "identifiable given the measured judge-severity spread."]

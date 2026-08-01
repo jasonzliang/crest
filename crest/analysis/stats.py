@@ -14,7 +14,7 @@ panel vs human) happens upstream in judge/score.py; this module analyses whateve
 Requires: statsmodels, scipy, numpy, pandas (see pyproject/requirements).
 """
 from __future__ import annotations
-import argparse, json, warnings
+import argparse, json, math, warnings
 from pathlib import Path
 
 import numpy as np
@@ -477,22 +477,32 @@ def crossover_interaction(df, axis: str | None = None):
     for cat, sub in means.groupby(level=0):
         ordered = sub.droplevel(0).sort_values(ascending=False)
         rankings[str(cat)] = [(str(a), float(v)) for a, v in ordered.items()]
-    # TIES ARE NOT REVERSALS. `lst[0]` took whichever name sort_values left first, i.e. alphabetical
-    # order -- an artifact of naming, not of data. On run 2026-08-01T015432Z, C4 is an EXACT tie
-    # (openai_deepresearch 6.5000 == openai_shallow 6.5000) while every other category tops out at
-    # openai_shallow, so this reported rank_reversal=True -- the module's stated headline finding --
-    # on data containing no reversal. Renaming the tied agent to zz_* with IDENTICAL scores flipped it
-    # back to False: a pure relabeling moved the result. A category with a tied top has no single
-    # winner, so it cannot evidence a crossover; it is recorded and excluded.
-    top_agent, tied_cats = {}, []
+    # A reversal exists iff NO SINGLE AGENT CAN TOP EVERY CATEGORY -- i.e. the intersection of the
+    # per-category argmax SETS is empty. Two wrong versions preceded this one and each failed on a
+    # case the other handled:
+    #   (a) `lst[0][0]`, comparing single winners, broke ties by whichever name sort_values left
+    #       first -- alphabetical order. On run 2026-08-01T015432Z, C4 is an exact tie
+    #       (openai_deepresearch == openai_shallow == 6.5000) while openai_shallow tops the other
+    #       four, so it reported rank_reversal=True -- the module's headline finding -- on data with
+    #       no reversal. Renaming the tied agent to zz_* with IDENTICAL scores flipped the verdict:
+    #       a pure relabeling moved the result.
+    #   (b) EXCLUDING tied categories fixed that and broke the converse. Given C1 {A:9,B:5,C:4} and
+    #       C2 {B:8,C:8,A:3}, no agent can top both, so a reversal plainly exists -- but C2 is
+    #       dropped as tied and the verdict comes back False. Dropping a category also silently
+    #       shrinks the evidence, and all-tied would answer "no reversal" from zero categories.
+    # The argmax-set intersection handles both: a tie makes a category admit MORE possible winners,
+    # which is weaker evidence of a reversal, not a reason to discard the category.
+    # isclose, not ==: composites are means over 3 judges, so exact mathematical ties land on
+    # different floats (6.199999999999999 vs 6.2 vs 6.200000000000001 all occur for 31/5).
+    winners: dict[str, set] = {}
     for c, lst in rankings.items():
         if not lst:
             continue
-        if len(lst) > 1 and lst[0][1] == lst[1][1]:
-            tied_cats.append(c)
-            continue
-        top_agent[c] = lst[0][0]
-    rank_reversal = len(set(top_agent.values())) > 1
+        best = lst[0][1]
+        winners[c] = {a for a, v in lst if math.isclose(v, best, rel_tol=0.0, abs_tol=1e-9)}
+    rank_reversal = bool(winners) and not set.intersection(*winners.values())
+    top_agent = {c: sorted(s)[0] for c, s in winners.items() if len(s) == 1}
+    tied_cats = sorted(c for c, s in winners.items() if len(s) > 1)
 
     # Interaction F-test (may be non-estimable on a fully saturated design).
     model = smf.ols("y ~ C(agent)*C(category)", work).fit()

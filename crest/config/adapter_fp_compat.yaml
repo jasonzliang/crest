@@ -62,8 +62,13 @@ equivalences:
       NOT included and NOT relevant: the errors.jsonl timestamp/pass fields live in run_crest.py,
       which is not part of the fingerprint at all.
 
-  - from: "1f86b6bd919a"        # head of the chain above -- the state that generated all 493
-                                # crest_aiml records across runs 193800Z, 015432Z and 031755Z
+  - from: "1f86b6bd919a"        # head of the chain above. CORRECTED: an earlier draft of this
+                                # comment said this state generated "all 493 crest_aiml records".
+                                # It generated ONE. Mapping every recorded adapter_fp back through
+                                # _fp_from_src_hash gives 193800Z -> 35a422715024 (243 records),
+                                # 015432Z -> 904217d03a66 (249), 031755Z -> 1f86b6bd919a (1). The
+                                # chain still covers all three; only the annotation was wrong, and
+                                # the annotations are the whole point of a human-audited ledger.
     to:   "30d57e374361"        # HEAD after 43f1cc10 (the docs->doc rename) + the COI correction
     date: "2026-07-31"
     reason: >
@@ -84,5 +89,9 @@ equivalences:
       above, so without this assertion the one-line rename in (1) stranded all 250 cached crest_aiml
       generations -- a measured 250/250 cache hits before 43f1cc10 and 0/250 after, ~$450 to
       re-generate, 100 of those tasks being deep-research at ~$6-9 each. The intermediate hash
-      ec4cdd29395a (after (1), before (2)) is deliberately not listed: no generation was ever made
-      under it, and transitivity through this entry covers it if one ever is.
+      ec4cdd29395a (after (1), before (2)) is deliberately not listed because no generation was ever
+      made under it. An earlier draft added that "transitivity through this entry covers it if one
+      ever is" -- that is FALSE and is retracted: ec4cdd29395a is not a node in the graph, so the
+      closure never reaches it. Anyone who checks out 43f1cc10 and generates gets records this
+      ledger does not cover (measured: 0/250 cache hits at that commit, 250/250 either side of it).
+      If that ever matters, add the node explicitly rather than relying on transitivity.

@@ -67,11 +67,13 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
     same schema. **That set is not part of this datasheet**: it is not listed in
     `config/eval_config.yaml`, has no `item_design.jsonl` rows, is not covered by the item-vetting
     or live-web audits. It **has** been run and scored, and both prior statements to the contrary
-    here were wrong: three runs exist on disk (243, 249 and 1 records, `benchmark: crest_aiml` in
-    their manifests) and their scores are promoted into **tracked**
-    `result/leaderboard.crest_aiml.json`. Those are the repo's only runs scored under judge prompt
-    **v3** — the science set's 250-record run is v1/v2 — so the AI/ML set is not "unused evidence",
-    it is the *newest* evidence, and no claim in this datasheet rests on it. It is **not** covered by
+    here were wrong: three runs exist on disk with `benchmark: crest_aiml` in their manifests, at
+    243, 249 and 1 records. Of those, the **249-record run alone** (`2026-08-01T015432Z`) is promoted
+    into **tracked** `result/leaderboard.crest_aiml.json`; the 243-record run is scored under judge
+    prompt **v2** and the other two under **v3**. So the v3-scored evidence in this repo is 250
+    records, all on the AI/ML set. The science set's 250-record run carries
+    `judge_prompt_version: null` — it predates the stamp entirely, so it is unversioned rather than
+    "v1/v2". No claim in this datasheet rests on the AI/ML set. It is **not** covered by
     `analysis/ci_check.sh`: the schema/loader, sidecar-bijection and second-item-file checks were all
     REMOVED from that script (see its header, lines 26-36), so the earlier claim of coverage "added
     2026-07-31" describes a check that no longer exists. Its own run validates it on load. A union enum also means nothing now stops

@@ -87,8 +87,10 @@ sections; the judge protocol, model IDs, prompts and full transcripts are publis
 **Croissant and Croissant-RAI entirely** (no `croissant.json`, so the NeurIPS machine-readable-metadata
 desk-reject gate is not cleared), no HF/DOI hosting, no per-layer license, no Data Statement, no
 canary, no private tier, and — the one reviewers reject over — **no judge↔human agreement study**.
-`analysis/ci_check.sh` is the shipped analogue of the "green validator pass": it currently PASSES
-(44/44). Green is not release-ready — what still blocks release is in `doc/datasheet.md`, not in the
+`analysis/ci_check.sh` is the shipped analogue of the "green validator pass": it currently PASSES.
+Run it for the count rather than trusting one written here — the previous two values in this
+sentence were both stale, and the second went stale in the same commit that wrote it, because that
+commit also added an assertion. Green is not release-ready — what still blocks release is in `doc/datasheet.md`, not in the
 gate — but the earlier "it currently FAILS" here was stale, and stale in the flattering direction of
 sounding more self-critical than the repo actually is.
 

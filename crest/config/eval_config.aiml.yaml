@@ -13,8 +13,13 @@
 #      that class of defect here.
 #   2. No paper claims it, and readme.md says it is "not run or scored". Scoring it does not make it
 #      a released artifact.
-#   3. These items have never been generated against, so the generation cache serves ZERO of them.
-#      Every task is paid in full.
+#   3. OUT OF DATE AND DANGEROUS AS WRITTEN (corrected 2026-08-01). This said the items had never
+#      been generated against, so the cache serves ZERO and "every task is paid in full". Measured
+#      today with real cache-key lookups: 250/250 tasks resolve from cache. Three runs have since
+#      been paid for. Do NOT budget a full re-generation off this comment -- and do not budget off
+#      `--dry-run` either, which prints only the cache INDEX SIZE ("492 entries"), a number that
+#      does not move when the fingerprint changes and the real hit rate goes to zero. That exact
+#      insensitivity cost ~$450 once already. Run ci_check.sh's adapter_fp continuity check instead.
 benchmarks:
   - name: crest_aiml
     challenges: crest/question/crest_aiml_challenges.jsonl

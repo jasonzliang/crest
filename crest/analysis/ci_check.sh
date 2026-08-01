@@ -335,38 +335,63 @@ python - <<'PY2' || fail=1
 import sys, json, glob, collections; sys.path.insert(0,'.')
 from crest.harness.agents import build_agent
 from crest.harness.cache import adapter_fingerprint, adapter_src_hash, compat_src_hashes, _fp_from_src_hash
-rec = collections.defaultdict(set)
+rec, rec_rows = collections.defaultdict(set), []
 for f in glob.glob('crest/result/runs/*/records.jsonl'):
     for l in open(f, encoding='utf-8'):
         if l.strip():
             r = json.loads(l)
             if r.get('adapter_fp'):
                 rec[r['agent']].add(r['adapter_fp'])
+                rec_rows.append((r['agent'], r['adapter_fp']))
+n_runs = len(glob.glob('crest/result/runs/*/records.jsonl'))
 if not rec:
-    # NOT a vacuous OK: say which it is. result/runs/ is gitignored, so a fresh clone legitimately
-    # has nothing to check -- but so does a tree whose runs were deleted, and those must not read
-    # the same. The header of this script condemns exactly that conflation.
-    print("  OK no fingerprinted records on disk (fresh clone or gitignored runs) -- nothing to strand")
-    sys.exit(0)
+    # Three distinct states, and they MUST NOT read the same -- the header of this script condemns
+    # exactly that conflation, and an earlier draft of this very check collapsed the last two.
+    if n_runs == 0:
+        print("  OK no runs on disk (fresh clone; result/runs/ is gitignored) -- nothing to strand")
+        sys.exit(0)
+    print(f"  FAIL {n_runs} run(s) on disk but NOT ONE record carries adapter_fp. Either they all "
+          f"predate the fingerprint (then they were already uncacheable and this gate cannot help), "
+          f"or the field stopped being written. Both need a human; neither is 'nothing to check'.")
+    sys.exit(1)
 alts = compat_src_hashes(adapter_src_hash())
-bad = []
+bad, unbuildable, cov = [], [], {}
 for k in sorted(rec):
     try:
         a = build_agent(k, budget=6)
-    except Exception:
-        continue                       # a retired entrant's old records are not a continuity failure
+    except Exception as e:
+        # NOT `continue`. An entrant we cannot construct is an entrant we did not check, and the
+        # first version of this counted it as checked -- printing "OK all 5 entrant(s)" while
+        # verifying none of them. Renaming the _REGISTRY keys made build_agent raise for all five,
+        # stranded 250/250 tasks, and turned this check GREEN: the worse the adapter layer broke,
+        # the more likely it passed. That is the exact failure this check exists to end.
+        unbuildable.append(f"{k} ({type(e).__name__})")
+        continue
     fps = {adapter_fingerprint(a)} | {_fp_from_src_hash(a, x) for x in alts}
-    if not (fps & rec[k]):
+    hits = sum(1 for r in rec_rows if r[0] == k and r[1] in fps)
+    cov[k] = (hits, sum(1 for r in rec_rows if r[0] == k))
+    if not hits:
         bad.append(f"{k} (current {adapter_fingerprint(a)}, cached {sorted(rec[k])})")
-if bad:
-    print(f"  FAIL {len(bad)} entrant(s) can no longer reach any cached generation -- a re-run will "
-          f"RE-PAY for them. Either the adapter genuinely changed (then this is correct and expected), "
-          f"or an inert edit moved the source hash: {bad}")
-    print(f"       src hash {adapter_src_hash()}; ledger-reachable {alts or '[]'}. If the change "
-          f"cannot alter a generated answer, add a dated entry to config/adapter_fp_compat.yaml.")
+if bad or unbuildable:
+    if bad:
+        print(f"  FAIL {len(bad)} entrant(s) can no longer reach any cached generation -- a re-run "
+              f"will RE-PAY for them. Either the adapter genuinely changed (then this is correct and "
+              f"expected), or an inert edit moved the source hash: {bad}")
+        print(f"       src hash {adapter_src_hash()}; ledger-reachable {alts or '[]'}. If the change "
+              f"cannot alter a generated answer, add a dated entry to config/adapter_fp_compat.yaml.")
+    if unbuildable:
+        print(f"  FAIL {len(unbuildable)} entrant(s) have cached records but could not be "
+              f"CONSTRUCTED, so their continuity is UNKNOWN, not OK: {unbuildable}")
     sys.exit(1)
-print(f"  OK all {len(rec)} entrant(s) still reach their cached generations "
+# Coverage, not mere existence. `if not hits` passes on ONE matching record out of hundreds, so an
+# entrant about to re-pay for 49 of 50 tasks would read green. Partial coverage is a warning rather
+# than a failure because a legitimately re-generated entrant sits at partial coverage on purpose.
+partial = {k: v for k, v in cov.items() if v[0] < v[1]}
+print(f"  OK all {len(cov)} entrant(s) checked and still reach their cached generations "
       f"(src {adapter_src_hash()}, {len(alts)} ledger-equivalent hash(es))")
+if partial:
+    print(f"     note: partial coverage -- these will re-pay for the shortfall: "
+          f"{ {k: f'{v[0]}/{v[1]}' for k, v in sorted(partial.items())} }")
 PY2
 
 echo "== canary claims are human-approved"

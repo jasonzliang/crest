@@ -88,9 +88,14 @@ crest/
                        AI/ML domains; validates under schema v3.2.0). It is NOT part of the released
                        benchmark and no paper claims it: it has NO item_design.jsonl rows and has
                        had no citation or live-web audit. It now has its own config
-                       (config/eval_config.aiml.yaml) and is gated by ci_check.sh for schema-load
-                       and self-consistency only, deliberately NOT for the release-artifact checks
-                       it would fail. On the mechanical checks it is CLEANER than the science set
+                       (config/eval_config.aiml.yaml) and is NOT gated by ci_check.sh at all: the
+                       schema-load, sidecar-bijection and second-item-file checks were all REMOVED
+                       from that script (see its header). The earlier claim of coverage here named
+                       checks that no longer exist; its own run validates it on load. It HAS been
+                       run and scored -- three runs at 243/249/1 records, the 249 promoted into
+                       tracked result/leaderboard.crest_aiml.json -- so "not part of the released
+                       benchmark" describes what the papers claim, not what exists.
+                       On the mechanical checks it is CLEANER than the science set
                        (100% of prior-art entries dated, vs 51%). See doc/misc/aiml_dataset_build.md
   harness/             agents.py (entrants) · run_crest.py (core loop) · results.py (run-dir writer)
                        cache.py (cross-run generation cache) · keys.py (key pooling) · rejudge.py
