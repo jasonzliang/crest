@@ -1,0 +1,150 @@
+{
+  "_README": "Promoted, tracked copy of the run whose numbers are cited. Regenerate with `python -m crest.analysis.promote_leaderboard --run <run_dir>`. summary.json is NOT a substitute: it lacks the primary endpoint, the provenance and the caveats.",
+  "provenance": {
+    "run_id": "2026-07-31T193800Z__crest__full50__gitabae78a__87dfe2",
+    "created_at": "2026-07-31T19:38:00.634166+00:00",
+    "code_git_commit": "abae78a",
+    "judge_protocol": "full-panel (same-family as covariate); blind; median aggregation",
+    "judge_prompt_version_per_record": "v2",
+    "judges": [
+      {
+        "id": "judge_anthropic",
+        "model": "claude-sonnet-5",
+        "family": "anthropic"
+      },
+      {
+        "id": "judge_openai",
+        "model": "gpt-5",
+        "family": "openai"
+      },
+      {
+        "id": "judge_google",
+        "model": "gemini-2.5-pro",
+        "family": "google"
+      }
+    ],
+    "record_schema_version": "crest-record/1.2.0",
+    "n_records": 243,
+    "n_scored": 243,
+    "totals": {
+      "n_records": 243,
+      "n_scored": 243,
+      "n_truncated": 1,
+      "n_task_errors": 7
+    }
+  },
+  "primary_endpoint": {
+    "definition": "min(New, Useful, Surprising), graded on the 1-10 scale",
+    "per_agent": {
+      "claude_shallow": {
+        "mean": 5.56,
+        "n": 50
+      },
+      "gemini_deepresearch_max": {
+        "mean": 4.283,
+        "n": 46
+      },
+      "gemini_shallow": {
+        "mean": 4.0,
+        "n": 47
+      },
+      "openai_deepresearch": {
+        "mean": 6.52,
+        "n": 50
+      },
+      "openai_shallow": {
+        "mean": 6.42,
+        "n": 50
+      }
+    }
+  },
+  "per_axis_means": {
+    "claude_shallow": {
+      "n": 50,
+      "n_scored": 50,
+      "n_degraded": 0,
+      "grounding_pass_rate": 1.0,
+      "mean_new": 7.62,
+      "mean_useful": 6.1,
+      "mean_surprising": 6.12,
+      "creative_rate": 0.6
+    },
+    "gemini_deepresearch_max": {
+      "n": 46,
+      "n_scored": 46,
+      "n_degraded": 0,
+      "grounding_pass_rate": 1.0,
+      "mean_new": 7.83,
+      "mean_useful": 4.52,
+      "mean_surprising": 6.28,
+      "creative_rate": 0.283
+    },
+    "gemini_shallow": {
+      "n": 47,
+      "n_scored": 47,
+      "n_degraded": 0,
+      "grounding_pass_rate": 1.0,
+      "mean_new": 7.28,
+      "mean_useful": 4.36,
+      "mean_surprising": 5.64,
+      "creative_rate": 0.191
+    },
+    "openai_deepresearch": {
+      "n": 50,
+      "n_scored": 50,
+      "n_degraded": 0,
+      "grounding_pass_rate": 1.0,
+      "mean_new": 8.4,
+      "mean_useful": 7.2,
+      "mean_surprising": 6.92,
+      "creative_rate": 0.76
+    },
+    "openai_shallow": {
+      "n": 50,
+      "n_scored": 50,
+      "n_degraded": 0,
+      "grounding_pass_rate": 1.0,
+      "mean_new": 8.42,
+      "mean_useful": 7.04,
+      "mean_surprising": 6.92,
+      "creative_rate": 0.78
+    }
+  },
+  "per_agent_category_primary": {
+    "claude_shallow|C1": 3.3,
+    "claude_shallow|C2": 6.4,
+    "claude_shallow|C3": 6.3,
+    "claude_shallow|C4": 5.4,
+    "claude_shallow|C5": 6.4,
+    "gemini_deepresearch_max|C1": 2.667,
+    "gemini_deepresearch_max|C2": 3.0,
+    "gemini_deepresearch_max|C3": 5.3,
+    "gemini_deepresearch_max|C4": 4.2,
+    "gemini_deepresearch_max|C5": 5.6,
+    "gemini_shallow|C1": 2.9,
+    "gemini_shallow|C2": 3.571,
+    "gemini_shallow|C3": 3.7,
+    "gemini_shallow|C4": 4.1,
+    "gemini_shallow|C5": 5.6,
+    "openai_deepresearch|C1": 4.2,
+    "openai_deepresearch|C2": 7.6,
+    "openai_deepresearch|C3": 7.4,
+    "openai_deepresearch|C4": 6.0,
+    "openai_deepresearch|C5": 7.4,
+    "openai_shallow|C1": 4.1,
+    "openai_shallow|C2": 7.0,
+    "openai_shallow|C3": 7.6,
+    "openai_shallow|C4": 6.6,
+    "openai_shallow|C5": 6.8
+  },
+  "caveats": [
+    "NO RANKING CLAIM IS MADE. On the science run, per-axis judge severity (3.32/3.20/3.74) EXCEEDED the entire between-entrant spread (2.06), so an ordering is not identifiable from a run of this design. This table is not a leaderboard.",
+    "DIFFERENT ITEM SET AND DIFFERENT JUDGE PROMPT from result/leaderboard.json. These are the 50 AI/ML items, and this is the FIRST run scored under JUDGE_PROMPT_VERSION v2 (hash e2ce119c); the science run is v1/null. The two files' numbers are NOT comparable in either direction.",
+    "n IS UNEQUAL AND NOT MISSING AT RANDOM: claude_shallow/openai_deepresearch/openai_shallow n=50, gemini_shallow n=47, gemini_deepresearch_max n=46. The 7 missing records are provider failures concentrated in the two Google arms (4x flaky 400 'invalid argument' on the deep-research preview surface, 2x ServerError, 1x ReadTimeout), so absence correlates with the provider, not with the items.",
+    "gemini_shallow DID NOT BROWSE. It returned ZERO web searches on essentially every item (verified three ways: the google_search tool IS attached, 0 grounding-metadata parse failures, and tokens.input_tool_use == 0). Part of its low score reflects answering from parametric memory rather than lower creativity, and its citations are scraped from answer text rather than verified grounding chunks.",
+    "THE ENDPOINT IS LARGELY HARD-RULE COMPLIANCE. corr(min(N,U,S), Useful) = 0.957 on this run. Useful is ~85% explained by a single binary ('did any judge cite a rule violation'): clean judge rows average 8.63, citing rows 2.84. Audited 2026-07-31: only 9.5% of the 702 hard rules across both item files are creativity-relevant, and those rules account for 0.5% of the violations cited on this run.",
+    "THE GATE IS A JUDGE-IDENTITY EFFECT ON THIS ITEM SET. Rule-gate firing rate by judge: judge_openai 77.3%, judge_anthropic 63.8%, judge_google 4.3%. Judge identity explains 40.3% of gate variance versus 30.1% for answer identity, and Useful's one-way ICC(1,k) is NEGATIVE here. Do not read per-entrant Useful differences as answer quality without accounting for this.",
+    "1 truncated record (claude_shallow) is included and flagged; filter on `truncated` before any length-sensitive analysis.",
+    "Retrieval was LIVE provider web search. Not contamination-controlled; no frozen index exists. The run directory is gitignored, so per-record judge rows and transcripts are not distributed and this file cannot be recomputed from a fresh clone."
+  ]
+}

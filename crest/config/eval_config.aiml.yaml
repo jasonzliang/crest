@@ -37,6 +37,18 @@ agents:
 
 judge_config: crest/judge/judge_config.live.yaml
 budget: 6
+# 12, raised from 4 once the real bottleneck was measured. The DEEP ARM IS 90-93% OF ALL THE WORK
+# (100 tasks x 20-30 min vs 150 shallow x ~1.5 min), so wall-clock is essentially
+# deep-task-duration / concurrency: measured 9-13 h at 4, 4.6-6.7 h at 8, 3-4.5 h at 12.
+# Safe to raise despite the earlier cap, for a reason that was true all along and that I missed when
+# I dropped it to 4: THE DEEP ARM MAKES NO ANTHROPIC CALLS AT ALL. Only claude_shallow generation and
+# the 3 judge_anthropic calls per completed record touch Anthropic, and judges fire on completion, so
+# Anthropic load scales with the RECORD RATE (~2/min observed), not with concurrency directly.
+# Two further changes since the cap: two healthy keys are pooled rather than one, and keys.py now has
+# a provider-wide cooldown gate that sheds load instead of letting each task burn its own retries.
+# Concurrency is also NOT part of adapter_fingerprint (that covers agents.py + keys.py source, the
+# class name, the model and the budget), so changing it re-uses every cached generation.
+# Historical note kept below because it explains why 4 looked necessary:
 # 4. Was 8 (the science run's value) and 8 TRIPPED THE ANTHROPIC SPEND-RATE CAP on this account, in
 # run 2026-07-31T180746Z: 3 claude_shallow tasks lost and judge_anthropic dropped from 11 of 31
 # records. So "proven on this account" was proven for that run's conditions, not for today's -- a
@@ -53,7 +65,7 @@ budget: 6
 # concurrency 16, which is 2x the proven-safe value, and 4 merely doubled wall clock for nothing.
 # NOT raised to 12+: untested between a proven-good 8 and a known-bad 16, and the failure mode is a
 # SILENTLY thinned judge panel, which would corrupt the run rather than fail it.
-concurrency: 4
+concurrency: 12
 use_cache: true              # will serve 0 of these items; kept true so a RESUMED run reuses what
                              # this run already paid for rather than re-paying it.
 trust_legacy_cache: false

@@ -224,8 +224,23 @@ def prompt_hash() -> str:
 # judge_prompt_version=None, so ablate_fields already aborts on it and rejudge already treats every
 # record as an upgrade. Its numbers must NOT be mixed with v2; re-judge from stored transcripts
 # (harness/rejudge.py) before quoting any New-vs-Surprising correlation -- the figure (b) contaminated.
-JUDGE_PROMPT_VERSION = "v2"
-JUDGE_PROMPT_VERSION_HASH = "e2ce119c"
+# v3 (2026-07-31) DECOUPLES COMPLIANCE FROM CREATIVITY. Three changes, all from measured audits:
+#   (a) the "a violated hard rule caps Useful at <=3" gate is DELETED. With it, corr(min(N,U,S),
+#       Useful) was 0.976 (science) / 0.957 (AI/ML), the composite EQUALLED Useful in 190/250, and
+#       Useful was ~85% explained by one binary -- "did any judge cite a violation" (clean rows mean
+#       8.63, citing rows 2.84). The primary creativity endpoint WAS the compliance gate. Rule
+#       conformance is now its own axis, `rule_compliance`, folded into nothing.
+#   (b) "Scored ONLY against that list, NOT against the web or your own background knowledge" is
+#       softened. That absolutism converted an incomplete sample into a novelty claim: the
+#       known_answers audit found 113 verified-real prior-art families missing across 13 items (67%
+#       coverage, worst 51%), and the clause instructed the judge to treat each omission as evidence
+#       of novelty. The judge now scores primarily against the list and reports omissions it knows
+#       of in `prior_art_omitted`, which turns the gap into a self-repairing collection loop.
+#   (c) the HARD RULES header no longer calls itself a "usefulness gate", because it is not one.
+# v2 runs are NOT comparable: 2026-07-31T193800Z (243 records, AI/ML) and any other v2 run must be
+# re-judged from stored transcripts before its numbers are mixed with v3.
+JUDGE_PROMPT_VERSION = "v3"
+JUDGE_PROMPT_VERSION_HASH = "d4c68e7b"
 
 
 def _fit_answer(text: str) -> str:
@@ -273,12 +288,13 @@ def _judge_prompt(ch: dict, report_text: str, ablate=frozenset()) -> str:
                            "nonsense.")
     hr = "\n".join(f"- {r}" for r in (ch.get("hard_rules") or [])) or "(none)"
     return f"""You are an expert judge scoring the CREATIVITY of a deep-research answer. Score three axes 1-10:
-- New: novelty of the answer relative to the DATED KNOWN ANSWERS below. Scored ONLY against that list, NOT against the web or your own background knowledge: content absent from the set counts as non-redundant even if you believe you have seen it, and content present in the set does not, even if it looks fresh. Restating an entry => 1-3; recombining entries with minor extension => 4-6; a synthesis or connection not reducible to the entries => 7-10.
-- Useful: is the idea sound, workable, and appropriate? Every HARD RULE must be satisfied; a violated hard rule caps Useful at <=3. Judge on merit, not on how many citations there are.
+- New: novelty of the answer relative to the DATED KNOWN ANSWERS below. Score PRIMARILY against that list, which is a curated sample of prior art and is NOT exhaustive. If you know of relevant prior art the list omits, name it in `prior_art_omitted` and take it into account: an idea already known to you is not novel merely because this list failed to mention it. Restating an entry => 1-3; recombining entries with minor extension => 4-6; a synthesis or connection not reducible to known prior art => 7-10.
+- Useful: is the idea sound, workable, and appropriate ON ITS MERITS? Judge the quality of the idea, not its conformance to the HARD RULES and not how many citations it carries. Rule conformance is scored SEPARATELY below and must NOT cap this axis.
 {surprising_line}
+- rule_compliance: 0-10, how fully the answer satisfies the HARD RULES below. 10 = every rule satisfied; 0 = none. Score this INDEPENDENTLY of whether the idea is any good.
 
 Return ONLY a JSON object, no prose:
-{{"new": <int 1-10>, "useful": <int 1-10>, "surprising": <int 1-10>, "hard_rules_violated": [<strings>], "rationale": "<=40 words"}}
+{{"new": <int 1-10>, "useful": <int 1-10>, "surprising": <int 1-10>, "rule_compliance": <int 0-10>, "hard_rules_violated": [<strings>], "prior_art_omitted": [<strings>], "rationale": "<=40 words"}}
 
 TASK:
 {ch.get('query')}
@@ -286,7 +302,7 @@ TASK:
 DATED KNOWN ANSWERS (novelty baseline; judge ONLY against this list, not the web):
 {ka}
 
-HARD RULES (usefulness gate):
+HARD RULES (scored separately as rule_compliance; these do NOT cap Useful):
 {hr}
 
 {eb_block}
@@ -491,7 +507,24 @@ def _call_judge(family: str, model: str, prompt: str) -> dict:
             # SUCCEEDING attempt's usage is reported: failed attempts are also billed, so this
             # under-counts on records that retried. n_attempts makes that visible instead of hiding
             # it -- a retry storm was previously invisible in the artifact.
+            # rule_compliance is captured but is NOT folded into any axis and NOT part of the
+            # primary endpoint. That decoupling is the point: with the old <=3 cap, corr(min,Useful)
+            # was 0.976/0.957 and Useful was ~85% explained by the single binary "did a judge cite a
+            # violation" (clean rows 8.63, citing rows 2.84), so the creativity endpoint WAS the
+            # compliance gate. Now both are reportable and their correlation is an empirical result
+            # rather than an artifact of the prompt. Tolerated as absent: a judge on an older prompt.
+            rc = d.get("rule_compliance")
+            try:
+                rc = None if rc is None else max(0.0, min(10.0, float(rc)))
+            except (TypeError, ValueError):
+                rc = None
             return {**v, "hard_rules_violated": d.get("hard_rules_violated", []),
+                    "rule_compliance": rc,
+                    # judge-named prior art the curated list omitted. The known_answers audit found
+                    # 113 verified-real missing families across 13 items (67% coverage), and the old
+                    # "score ONLY against this list" wording turned each omission into affirmative
+                    # evidence of novelty. Collecting them makes the gap self-repairing.
+                    "prior_art_omitted": d.get("prior_art_omitted", []),
                     "rationale": d.get("rationale", ""),
                     "usage": _usage, "n_attempts": attempt + 1}
         except Exception as e:

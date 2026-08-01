@@ -161,8 +161,24 @@ _TRANSIENT = ("rate limit", "rate_limit", "429", "500", "502", "503", "504", "ov
               # under load, so back off and retry rather than losing the task.
               "usage limits", "regain access")
 
-def _retry(fn, what: str, attempts: int = 4, base_sleep: float = 5.0):
+# NARROW addition for ONE adapter, deliberately not added to _TRANSIENT above. The Gemini
+# deep-research PREVIEW surface intermittently returns
+#     400 invalid_request: "Request contains an invalid argument."
+# for requests that are structurally identical to ones that succeed. Measured over the 2026-07-31
+# AI/ML run: 4 failures in 50 attempts, and the failing items were 699 and 751 chars -- ranks 5 and
+# 13 of 50 by length, i.e. among the SHORTEST -- with no non-ASCII, while longer items succeeded. So
+# it is provider flakiness, not a malformed request.
+# Why NOT in _TRANSIENT: score.py documents an invalid thinking_budget producing a server-side 400 on
+# EVERY call, where treating 400 as retryable burned 4 paid calls per record on a deterministic
+# failure. Scoped to this one adapter and capped at 2 attempts, a systematic config error still
+# surfaces as a wall of errors rather than a silent retry storm.
+_GEMINI_DR_FLAKY = ("invalid argument", "invalid_request")
+
+
+def _retry(fn, what: str, attempts: int = 4, base_sleep: float = 5.0, extra=()):
     """Retry `fn` on TRANSIENT failures only (429 / 5xx / connection), with exponential backoff.
+
+    `extra` adds caller-scoped retryable substrings WITHOUT widening the global _TRANSIENT set.
 
     Deliberately narrow: auth, quota-exhausted and 404-model errors are NOT transient and must fail
     fast so the caller's circuit breaker can disable a dead provider instead of retrying into the
@@ -174,7 +190,7 @@ def _retry(fn, what: str, attempts: int = 4, base_sleep: float = 5.0):
             return fn()
         except Exception as e:
             msg = str(e).lower()
-            if i == attempts - 1 or not any(k in msg for k in _TRANSIENT):
+            if i == attempts - 1 or not any(k in msg for k in (*_TRANSIENT, *extra)):
                 raise
             sleep = base_sleep * (2 ** i)
             print(f"  [retry {i+1}/{attempts-1} {what} in {sleep:.0f}s: {type(e).__name__}: {str(e)[:90]}]")
@@ -513,7 +529,11 @@ class GeminiDeepResearchAPI(Agent):
             agent_config={"type": "deep-research", "thinking_summaries": "auto",
                           "collaborative_planning": False},   # never block on a plan approval
             background=True,                                  # REQUIRED for agents
-        ), f"gemini-dr create ({self.model})")
+        ), f"gemini-dr create ({self.model})", attempts=3, extra=_GEMINI_DR_FLAKY)
+        # attempts=3 (2 retries), not the default 4: this is CREATION only, so a retry costs one
+        # cheap round-trip and never re-pays a completed research job. Scoped to create deliberately
+        # -- the poll loop below must NOT treat an invalid-argument as retryable, because a bad
+        # interaction id would then spin for the full backoff instead of failing fast.
         iid, waited = it.id, 0
         while True:
             it = _retry(lambda: client.interactions.get(iid),  # positional id; no .name on Interaction

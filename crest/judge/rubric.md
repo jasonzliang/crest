@@ -96,8 +96,13 @@ and the reference set is published so any omission can be contested.
   set" overstates what is shipped (`docs/notes/audit_live_C4_remainder.md` §2).
 
 ## Useful (viability / soundness / appropriateness) — 1–10
-- Is the idea sound, workable, and appropriate to the challenge? **Every hard rule must be
-  satisfied; a violated hard rule caps Useful at ≤3.**
+- Is the idea sound, workable, and appropriate to the challenge, **on its merits**?
+- **Hard rules do NOT cap this axis** (changed in judge prompt v3, 2026-07-31). They are scored
+  independently as `rule_compliance` (0–10). Under the old `≤3` cap the two were welded together:
+  `corr(min(N,U,S), Useful)` ran 0.976 / 0.957, the composite *equalled* Useful in 190 of 250
+  records, and Useful was ~85% explained by the single binary "did any judge cite a violation"
+  (clean judge rows averaged 8.63, citing rows 2.84). The creativity endpoint was the compliance
+  gate. Reporting them separately makes their correlation a result rather than an artifact.
 - Useful is scored on the idea's merit, **not** on citations. *(Grounding is a separate gate — see
   below.)*
 - Hard rules are checked **by the judge, in-prompt** — there is no deterministic pre-filter. The

@@ -12,10 +12,23 @@ not checkable, and $56.0$/$54.0$/$46.4\%$ at cutoffs $5$/$6$/$7$ on the released
 checkable and $6{\times}$ narrower. The indicator is retained only for backward comparability. New is
 judged against a \emph{dated list of already known answers} shipped with each question (so ``new''
 means new relative to a stated prior-art set, not unlike web text); Useful is judged on soundness,
-workability, and satisfaction of the question's hard rules; Surprising is expectation-violation
-conditioned on correctness, judged---in the deployed prompt---against the \emph{judge's own}
-expectation rather than the shipped expert baseline (see below). Scoring follows the Consensual Assessment
-Technique \citep{amabile1982cat,amabile1996context}. Citation accuracy is \emph{not} part of the
+workability, and appropriateness \emph{on the idea's merits}; conformance to the question's hard
+rules is scored separately as \texttt{rule\_compliance} and does \textbf{not} cap \emph{Useful}
+(\S\ref{sec:limitations}). Surprising is expectation-violation conditioned on correctness,
+judged---in the deployed prompt---against the \emph{judge's own} expectation rather than the shipped
+expert baseline (see below).
+
+\paragraph{Relation to the Consensual Assessment Technique: we depart from it.} Earlier drafts
+stated that ``scoring follows the Consensual Assessment Technique'' \citep{amabile1982cat,
+amabile1996context}. That claim is \textbf{withdrawn}, because CAT prescribes the opposite of what
+we do on three counts. CAT requires \emph{domain-expert human} raters; we use LLM judges and have
+run no human study. CAT requires raters to apply their \emph{own subjective} criteria, explicitly
+not a supplied rubric or checklist---Amabile's point being that creativity has no defensible
+external criterion, so consensus among experts \emph{is} the criterion; we supply band anchors, a
+prior-art list and a rule list. And CAT rates artifacts \emph{relative to one another within the
+judged pool}, not against an external standard; we score each answer independently against
+per-item references. The honest provenance of our hard rules is instruction-following evaluation in
+the manner of IFEval, not CAT, and we state it that way. Citation accuracy is \emph{not} part of the
 creativity score---it is a separate grounding check (\S\ref{sec:grounding}).
 
 \paragraph{Task types.} Five core categories, each grounded in a mechanism from the creativity

@@ -17,7 +17,7 @@ re-analysis of the existing data repairs it: it is a property of the instrument.
 
 \paragraph{The primary endpoint is largely hard-rule compliance.} $\mathrm{corr}(\min(N,U,S),U) =
 0.976$; the composite \emph{equals} Useful in $190$ of $250$ records; \emph{New} is the unique
-minimum in $1$ of $250$. Because a violated hard rule caps Useful at ${\leq}3$, the endpoint behaves
+minimum in $1$ of $250$. Under judge prompt v1/v2 a violated hard rule capped Useful at ${\leq}3$ (removed in v3, which scores rule conformance separately as \texttt{rule\_compliance}), so the endpoint behaves
 close to a rule-violation indicator, and the between-category ordering tracks constraint density
 rather than creative process. We cannot claim it measures creativity as distinct from constrained
 generation, and the C1 result is indistinguishable from a floor effect on the items carrying the
@@ -93,9 +93,16 @@ justification for withholding the expert baseline from the deployed judge prompt
 design decision rests on a measurement this release cannot check. Re-running both ablations under the
 current judge-prompt version is required before either number should be relied on.
 
-\paragraph{Construct validity.} At this scale the New/Useful/Surprising factor structure is
-under-identified, and creativity has no ground truth---the Consensual Assessment Technique bounds,
-but does not eliminate, the circularity in which the judge defines the construct it measures.
+\paragraph{Construct validity, and we do \emph{not} claim CAT as a warrant.} At this scale the
+New/Useful/Surprising factor structure is under-identified, and creativity has no ground truth. An
+earlier version of this paragraph said the Consensual Assessment Technique ``bounds, but does not
+eliminate,'' the circularity in which the judge defines the construct it measures. That is
+withdrawn: CAT cannot bound anything here, because we do not implement it. CAT requires
+domain-expert \emph{human} raters applying their \emph{own} criteria to artifacts rated
+\emph{relative to one another}; we use LLM judges, supply them an explicit rubric and reference
+lists, and score each answer independently against per-item standards. The circularity is therefore
+unbounded by any external warrant, which is a plain statement of the limitation rather than a
+mitigated one.
 
 \paragraph{Not reproducible, and not contamination-controlled.} The $250$-record run directory is
 \textbf{not} distributed, so the reported table cannot be recomputed from a fresh clone. Retrieval
