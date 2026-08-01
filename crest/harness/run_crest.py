@@ -309,6 +309,14 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
           f"concurrency={concurrency}); dir={run_dir}")
     cb = {"lock": threading.Lock(), "fails": collections.Counter(), "dead": set()}
     n_err, wlock = 0, threading.Lock()
+    # Tasks that failed on a NON-terminal error, re-attempted once after the main pass (see the
+    # sweep block at the end). Before this, a failed task was logged and skipped for good: the
+    # 2026-07-31 AI/ML run finalised at 243/250 with 7 provider failures that nothing ever retried,
+    # and by the time anyone noticed, an agents.py edit had changed adapter_fp so recovering them
+    # meant re-paying the whole run. The per-call _retry in agents.py is not a substitute -- it
+    # retries within seconds, while these failures (a flaky preview-API 400, a 5xx, a read timeout)
+    # clear on a timescale of minutes.
+    failed_tasks: list = []
     # encoding="utf-8" on the WRITERS, not only the readers. These three files are dumped with
     # ensure_ascii=False, so under an ASCII or latin-1 locale an em-dash in a judge rationale or a
     # vendor error string either crashes mid-run or writes bytes that rejudge's UTF-8 readers then
@@ -354,6 +362,12 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                                              "error_type": type(e).__name__, "error": msg[:200]},
                                             ensure_ascii=False) + "\n"); fe.flush()
                         n_err += 1
+                        # Queue for the sweep pass below. NOT terminal errors: an out-of-money or
+                        # auth failure will fail again identically and retrying it just burns time
+                        # into a spend cap. Circuit-open tasks are already excluded (they `continue`
+                        # above and never reach here).
+                        if not terminal:
+                            failed_tasks.append((ch, name, agents[name]))
                     print(f"  [{ch.id}/{name}] AGENT FAILED: {type(e).__name__}: {msg[:120]}")
                     continue
                 with wlock:                                   # thread-safe append (crash-safe JSONL)
@@ -380,7 +394,45 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
                           f"the substantive floor) -> unscored")
                 else:
                     print(f"  [{ch.id}/{name}] grounding FAIL (cites={gate.n_citations}) -> unscored")
-    print(f"wrote {run_dir}/records.jsonl  ({len(records)} records, {n_err} task errors)")
+
+        # ---- SWEEP PASS: one re-attempt of every non-terminal failure ----
+        # Deliberately serial and after the main pass has fully drained. Both matter: the failures
+        # worth retrying are provider-side transients, so the value comes from the elapsed time and
+        # the reduced concurrent load, not from trying harder. A single pass, never a loop -- an
+        # unbounded retry against a genuinely broken provider is how a run burns money silently.
+        if failed_tasks:
+            print(f"\nsweep: re-attempting {len(failed_tasks)} failed task(s) once "
+                  f"(non-terminal errors only; terminal auth/quota failures are not retried)")
+            recovered = 0
+            for ch, name, agent in failed_tasks:
+                if name in cb["dead"]:
+                    print(f"  [{ch.id}/{name}] sweep SKIPPED: provider circuit-broken")
+                    continue
+                try:
+                    rec, tr, gate, scores, report, status = _one_task(
+                        ch, name, agent, panel, run_id, cb, cache)
+                except Exception as e:
+                    print(f"  [{ch.id}/{name}] sweep FAILED again: {type(e).__name__}: {str(e)[:110]}")
+                    with wlock:
+                        fe.write(json.dumps({"record_id": f"{run_id}:{ch.id}:{name}",
+                                             "challenge_id": ch.id, "agent": name,
+                                             "status": "agent_error_after_sweep",
+                                             "error_type": type(e).__name__, "error": str(e)[:200]},
+                                            ensure_ascii=False) + "\n"); fe.flush()
+                    continue
+                with wlock:
+                    fo.write(json.dumps(rec, ensure_ascii=False) + "\n"); fo.flush()
+                    ft.write(json.dumps(tr, ensure_ascii=False) + "\n"); ft.flush()
+                    records.append(rec)
+                    n_err -= 1          # the first-pass error row stays in errors.jsonl as the
+                                        # provenance of what happened; the count reflects reality
+                    recovered += 1
+                print(f"  [{ch.id}/{name}] sweep RECOVERED ({status})")
+            print(f"sweep: recovered {recovered}/{len(failed_tasks)}")
+    print(f"wrote {run_dir}/records.jsonl  ({len(records)} records, {n_err} unrecovered task errors)")
+    if len(records) < len(tasks):
+        print(f"  *** INCOMPLETE: {len(records)}/{len(tasks)} records. Per-entrant n is UNEQUAL and "
+              f"the missing tasks are provider failures, so they are NOT missing at random.")
     return records
 
 
