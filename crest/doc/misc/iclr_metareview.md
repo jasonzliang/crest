@@ -15,7 +15,7 @@ directory** — this matters for p3 and is stated again in §5.
 > against a *partial, 2-judge* snapshot of a run that is **no longer on disk** (`result/` is
 > gitignored), so none of its statistics is reproducible and several are wrong by large factors
 > against the shipped instrument. The canonical run is `2026-07-31T040653Z` (250 records, 50/50
-> items, 3 judges each) and its recomputed figures live in **`docs/design.md` §0**, which is the
+> items, 3 judges each) and its recomputed figures live in **`doc/design.md` §0**, which is the
 > single source of truth. Read this file for its *arguments, triage and root-cause analysis* — that
 > is what it is retained for — and take no number from it. Specific reversals: the "sole binding
 > axis in 1 of 138/147 records" premise behind demoting Surprising is wrong (§SC-6, §RC-B); the
@@ -41,7 +41,7 @@ claims are overturned in detail while their substance survives; three reviewer n
 worse than the reviewer stated; one reviewer argument I discard as a weak instrument.
 
 ### SC-1 — Canary strings asserted but absent. **HOLDS.**
-`grep -ci canary questions/crest_challenges.jsonl` → **0**. `docs/datasheet.md:50-52` states
+`grep -ci canary question/crest_challenges.jsonl` → **0**. `doc/datasheet.md:50-52` states
 "Each item embeds a canary string enabling post-hoc detection in future model training corpora"
 and `datasheet.md` §5 further leans on it ("not a training set (canaries + license restrict
 training use)"). `paper/p2_benchmark_only/sections/03_benchmark_design.tex` and
@@ -84,7 +84,7 @@ gate from the cue-counting heuristic actually implemented in `grounding_gate()`.
 one line in the file — the argparse definition. It is never consumed.
 
 ### SC-4 — `predicted_direction` is not a pre-registration. **HOLDS, verbatim.**
-`git show eadce0c:crest/questions/schema.json` — the original enum was
+`git show eadce0c:crest/question/schema.json` — the original enum was
 `["caesar_win", "parity", "predicted_null"]`. The original data:
 `{('C2','caesar_win'): 10, ('C3','caesar_win'): 10, ('C1','predicted_null'): 10,
 ('C5','predicted_null'): 10, ('C4','parity'): 10}`. The value was renamed to `favored` in
@@ -301,7 +301,7 @@ R1's "the novelty yardstick is uncitable" and R3's "Surprising is redundant" and
 recall against an author key" are **one defect with two field names**. Any remediation that
 touches only `known_answers` or only `expert_baseline` will not move the correlation.
 
-The authors already know this. `docs/notes/field_justification.md` reports "CREST's own judges
+The authors already know this. `doc/misc/field_justification.md` reports "CREST's own judges
 score New and Surprising at r = 0.77-0.94, with 28% of verdicts assigning identical values,"
 cites the CFA literature showing two-factor beats three-factor, and recommends demoting
 Surprising to secondary. The finding is in the repo and not in the papers.
@@ -413,7 +413,7 @@ A disattenuated New-Surprising correlation of 3.11, Surprising removing 2 of 42 
 an N&U gate, and 9 of 10 C2 items handing the judge the answer key together mean the triad is
 a dyad plus a leak. Repairing it means rewriting `expert_baseline` for 50 items *and*
 re-measuring. The paper can retreat to a two-axis claim — which
-`docs/notes/field_justification.md` already recommends — but the triad claim as submitted
+`doc/misc/field_justification.md` already recommends — but the triad claim as submitted
 cannot be rescued.
 
 **B4. Pre-registration misrepresentation (SC-4).** `git log -S caesar_win` plus two `git show`
@@ -581,7 +581,7 @@ interesting. It is a different paper from either submission.
 prediction"* and `:35` *"the pre-registered predicted direction"* → "the authors' stated prior
 expectation, recorded in the item file; not externally timestamped."
 
-**`docs/datasheet.md:47-52`** — the frozen-index manifest ("Released as a manifest (URL +
+**`doc/datasheet.md:47-52`** — the frozen-index manifest ("Released as a manifest (URL +
 timestamp + SHA-256 per document)") and the canary claim. Delete or implement. Note the canary
 claim is also load-bearing for the datasheet's licensing argument in §5, which must change too.
 

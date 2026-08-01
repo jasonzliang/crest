@@ -44,7 +44,7 @@ reliability:
                                         # NB strongly RUN-SPECIFIC: ICC(1,k) has come out
                                         # .774/.746/.671 and .527/.631/.445 on two superseded runs.
                                         # Recompute per run; the canonical values live in
-                                        # docs/design.md section 0 and nowhere else.
+                                        # doc/design.md section 0 and nowhere else.
   human_validation_required_categories: [C1, C2, C3, C4, C5]   # human panel validates all; primary on C1/C5
 
 grounding_gate:

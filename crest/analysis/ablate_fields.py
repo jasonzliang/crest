@@ -75,7 +75,7 @@ def main():
     ap = argparse.ArgumentParser(description="Measure whether judge-side fields change scores.")
     ap.add_argument("--run", required=True)
     ap.add_argument("--judge-config", default="crest/judge/judge_config.live.yaml")
-    ap.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
+    ap.add_argument("--challenges", default="crest/question/crest_challenges.jsonl")
     ap.add_argument("--arms", nargs="+", default=list(ARMS), choices=list(ARMS))
     ap.add_argument("--per-category", type=int, default=2, help="challenges per category to ablate")
     ap.add_argument("--concurrency", type=int, default=6)

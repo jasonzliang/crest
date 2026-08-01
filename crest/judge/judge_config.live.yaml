@@ -3,7 +3,7 @@
 # `leave_one_family_out`. Nothing else here is consulted — do not add controls that no code
 # implements. The unimplemented ones (`randomize_answer_order`, a `fact_precision` grounding gate,
 # `human_validation_required_categories`) used to sit in a sibling `judge_config.yaml`; that file was
-# read by nothing and is gone -- its content is now docs/judge_protocol_intent.md, documentation only.
+# read by nothing and is gone -- its content is now doc/judge_protocol_intent.md, documentation only.
 
 threshold_all_three: 6.0        # retained for backwards comparability; NOT the primary endpoint --
                                 # it is unpre-registered and the creative rate swung 5.4-36.1% across
@@ -38,12 +38,12 @@ min_judges: 3                   # == the number of judges configured below. Belo
 # judge_anthropic, while those two differ by 0.65. LOFO removed the lenient judge deterministically
 # for exactly the Google entrants, so the two bottom-ranked entrants were precisely the two it never
 # scored, ~60% of the observed leaderboard spread tracked panel composition (measured on the
-# LOFO-protocol run, now deleted; derivation in docs/notes/iclr_metareview.md -- reconstructing the
+# LOFO-protocol run, now deleted; derivation in doc/misc/iclr_metareview.md -- reconstructing the
 # LOFO subset from 040653Z reproduces the direction, Gemini -0.80/-0.54 with every other entrant
 # positive), and NO judge scored all five entrants -- no common-judge comparison. The
 # anti-self-preference control introduced a larger bias than the one it removed. The bias it targets
 # is itself sign-inconsistent by judge (for the Anthropic judge LOFO removed a judge that was
-# HARSHER on its own family); the source paper's bias table is in docs/benchmark_best_practices.md.
+# HARSHER on its own family); the source paper's bias table is in doc/benchmark_best_practices.md.
 #
 # LOFO is demoted from assumption to measurement, not abandoned. Every judge row stamps
 # `same_family`, so the LOFO subset is recoverable post-hoc as the `same_family == false` rows, and
@@ -62,7 +62,7 @@ judges:
     model: gemini-2.5-pro
     family: google
 # A 4th, genuinely open-weight judge remains the OUTSTANDING GAP (spec in
-# docs/judge_protocol_intent.md): with only 3 vendors the panel has no redundancy, and losing one
+# doc/judge_protocol_intent.md): with only 3 vendors the panel has no redundancy, and losing one
 # leaves too few judges. Gemma is on the Google key but shares Google's lineage, so labelling it
 # `open_weight` would not buy independence. Satisfying this needs a third-party host
 # (Together/Fireworks/Groq).

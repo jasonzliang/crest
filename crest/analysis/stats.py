@@ -129,7 +129,7 @@ def min2(df: pd.DataFrame) -> pd.Series:
 # --------------------------------------------------------------------------- #
 # Judge reliability: ICC + Krippendorff alpha + per-judge severity
 #
-# docs/judge_protocol_intent.md (the retired judge_config.yaml's content) mandates
+# doc/judge_protocol_intent.md (the retired judge_config.yaml's content) mandates
 # `report: [krippendorff_alpha, icc]` with thresholds per Koo & Li
 # 2016; per-judge scores are persisted in creativity.judges[], so all of it is computable from any
 # run's records.jsonl.
@@ -293,7 +293,7 @@ def krippendorff_alpha_interval(units: list[list[float]]) -> float:
 
 
 def reliability_report(records_path: str) -> dict:
-    """Everything docs/judge_protocol_intent.md asks for, plus the severity table explaining the rest."""
+    """Everything doc/judge_protocol_intent.md asks for, plus the severity table explaining the rest."""
     r = judge_ratings(records_path)
     rep = {}
     for ax in AXES:

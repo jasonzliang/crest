@@ -3,24 +3,24 @@
 > ## ⚠ THIS REPORT DESCRIBES A SUPERSEDED BUILD (annotated 2026-07-31)
 >
 > It documents the **41-item** intermediate state. The shipped file
-> `questions/crest_aiml_challenges.jsonl` now has **50 items, 10 per category**: ids `00`–`40` are
+> `question/crest_aiml_challenges.jsonl` now has **50 items, 10 per category**: ids `00`–`40` are
 > unchanged and every per-item finding below still points at a real item, but ids **`41`–`49` are
 > new (C4 ×3, C5 ×6) and are covered by NOTHING in this report** — no audit record, no
 > discrimination review, no dedupe check.
 >
 > Three items this report marks BLOCKING are **CLOSED**:
 > - §8.1 the 9 missing items — authored and appended as `_41`–`_49`.
-> - §7 schema incompatibility — `questions/schema.json` is now `crest-challenge/3.2.0` with the
+> - §7 schema incompatibility — `question/schema.json` is now `crest-challenge/3.2.0` with the
 >   twelve-value `domain` enum, and all 50 items load and validate.
 > - §8.2's provenance loss — the C5 source is tracked at
->   `questions/aiml_build/c5_source_verbatim.json`. The *unaudited* half of §8.2 still stands.
+>   `question/aiml_build/c5_source_verbatim.json`. The *unaudited* half of §8.2 still stands.
 >
 > §5's distributions are re-measured in place below. §0, §4 and §7 are superseded and cut to their
 > surviving conclusions. **This dataset is not wired into `config/eval_config.yaml`, has no
 > `item_design.jsonl` rows (so `ci_check.sh`'s bijection check does not cover it), and has never
 > been run or scored.** It is not the dataset any published CREST number refers to.
 
-Built 2026-07-31. Output: `questions/crest_aiml_challenges.jsonl`
+Built 2026-07-31. Output: `question/crest_aiml_challenges.jsonl`
 (one JSON object per line, UTF-8, LF-terminated).
 
 ---
@@ -37,7 +37,7 @@ fabricated prior-art catalogues.
 **The 9 were authored separately and appended as ids `_41`–`_49`, so the file is 50/50 and squared
 at 10 per category.** They were NOT produced by this build and carry none of its audit apparatus —
 see the header. The C5 transcription is now tracked at
-`questions/aiml_build/c5_source_verbatim.json`; it remains **unverified against any original**
+`question/aiml_build/c5_source_verbatim.json`; it remains **unverified against any original**
 (§8.2).
 
 ---
@@ -225,7 +225,7 @@ is low, so no pair is a textual near-duplicate.
 
 The build-time checker (`.tmp_build/assemble.py`) passed 0 errors on the 41 items it wrote. **This
 section is superseded by the live gate**: all 50 items now validate against
-`questions/schema.json` (`crest-challenge/3.2.0`) via `harness/run_crest.load_challenges`, which is
+`question/schema.json` (`crest-challenge/3.2.0`) via `harness/run_crest.load_challenges`, which is
 the check that matters. The one build-time convention worth keeping on the record:
 
 - Every item's `known_answers` carries ≥ 8 *substantive* entries with both a resolvable identifier
@@ -395,7 +395,7 @@ explicitly says the convergent answer is itself excluded:
 
 ## 7. COMPATIBILITY — **CLOSED 2026-07-31**
 
-At build time `questions/schema.json` pinned `domain` to the six ORIGINAL domains, so all 41 items
+At build time `question/schema.json` pinned `domain` to the six ORIGINAL domains, so all 41 items
 failed validation on `domain` and nothing else — every other constraint (`id` pattern, `required`,
 `additionalProperties: false`, the two other enums, `minLength`, `minItems`) already passed. The
 schema has since been bumped to **`crest-challenge/3.2.0`** with a twelve-value `domain` enum, and
@@ -408,8 +408,8 @@ constant. That was not done.
 
 Two compatibility notes that are **still open**:
 
-- `ci_check.sh` enforces an id bijection between `questions/crest_challenges.jsonl` and
-  `questions/item_design.jsonl`. `item_design.jsonl` has **no rows for these 50 ids**, so this
+- `ci_check.sh` enforces an id bijection between `question/crest_challenges.jsonl` and
+  `question/item_design.jsonl`. `item_design.jsonl` has **no rows for these 50 ids**, so this
   dataset has no design-rationale sidecar and the bijection gate does not cover it.
 - `expert_baseline` is judge-hidden as of 2026-07-30 and is **not** read by
   `judge/score.py::_judge_prompt`. It is carried here for provenance only. Nothing in §6's
@@ -437,7 +437,7 @@ Zero independent citation checking on the C5 items, ~89 catalogue entries. C1, C
 rate. The C5 items were also **transcribed from the task prompt, not read from a source artifact**,
 so the transcription needs diffing against whatever the original was; if no original exists, C5 must
 be treated as unsourced. **Closed:** the transcription is no longer gitignored — it is tracked at
-`questions/aiml_build/c5_source_verbatim.json`, so the chain survives a clean clone. `assemble.py`
+`question/aiml_build/c5_source_verbatim.json`, so the chain survives a clean clone. `assemble.py`
 and `renumber_map.json` remain untracked under `crest/.tmp_build/` and will not.
 
 ### 8.3 C4 has no retained pre-audit artifact

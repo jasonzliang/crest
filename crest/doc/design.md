@@ -79,16 +79,16 @@ multi-source web synthesis**, never a single-fact lookup.
   the dataset for provenance; `judge/score.py::_judge_prompt` no longer sends it.
   Its answer-key content was split into a second judge-hidden field,
   **`author_expected_surprises`**.
-- Fields REMOVED from `questions/crest_challenges.jsonl`: `predicted_direction` →
+- Fields REMOVED from `question/crest_challenges.jsonl`: `predicted_direction` →
   `analysis/preregistration.yaml` (it was a 5-row lookup on `category` sitting in
   editable data, so it could evidence no ordering); `rationale` →
-  `questions/item_design.jsonl`; `category_name` (derivable from `category`).
+  `question/item_design.jsonl`; `category_name` (derivable from `category`).
   The current field list and schema version live in `datasheet.md` §2.
-- `questions/schema.json` is now **enforced on load** by
+- `question/schema.json` is now **enforced on load** by
   `harness/run_crest.load_challenges`. It previously shipped unapplied — no
   `jsonschema` import existed anywhere in the repo — so `required` was decorative.
 - Items with a defect that makes their scores uninterpretable are listed in
-  `questions/quarantine.yaml` and dropped from runs with a loud notice.
+  `question/quarantine.yaml` and dropped from runs with a loud notice.
 
 ## 4. Contamination & length controls
 - **Post-cutoff subset** (events/facts after baseline models' cutoffs) + a
@@ -164,7 +164,7 @@ multi-source web synthesis**, never a single-fact lookup.
   beyond an empty-answer check and must not be claimed as a working control.
   The declared `grounding_gate.metric: fact_precision` was materially stronger than the gate that
   runs; that config was deleted and survives as documentation only in
-  `docs/judge_protocol_intent.md`.]
+  `doc/judge_protocol_intent.md`.]
 - Optional capability control: DeepResearch Bench RACE or LiveResearchBench —
   reported as capability, NEVER as creativity, NEVER a coverage leaderboard.
 

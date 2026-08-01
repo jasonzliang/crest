@@ -34,10 +34,10 @@ result/aborted/*/
 !result/aborted/readme.md
 
 # Dataset working copies. git is the diff trail once committed; every audit correction is also
-# recorded old->new in docs/notes/hallucination_audit_live_log.jsonl.
-questions/*.bak_*
-questions/crest_challenges.pre_audit.jsonl
-questions/crest_challenges.audit.jsonl
+# recorded old->new in doc/misc/hallucination_audit_live_log.jsonl.
+question/*.bak_*
+question/crest_challenges.pre_audit.jsonl
+question/crest_challenges.audit.jsonl
 
 # LaTeX output PDFs are build artifacts (regenerate with paper/compile.sh)
 **/main.pdf

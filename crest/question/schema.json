@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CREST challenge",
+  "type": "object",
+  "required": [
+    "id",
+    "category",
+    "domain",
+    "query",
+    "axis_isolated",
+    "time_sensitivity",
+    "known_answers",
+    "expert_baseline",
+    "hard_rules"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^C[1-5]_[a-z_]+_[0-9]{2}$"
+    },
+    "category": {
+      "enum": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "description": "C1 Constrained, C2 Counterfactual, C3 Cross-Domain, C4 Meta-Creativity, C5 Open-Ended"
+    },
+    "domain": {
+      "enum": [
+        "alignment_safety",
+        "architectures_training",
+        "arts_humanities",
+        "biology_medicine",
+        "economics_business",
+        "engineering",
+        "evaluation_benchmarking",
+        "law_policy",
+        "materials_chemistry",
+        "multimodal_agents",
+        "systems_efficiency",
+        "theory_learning"
+      ],
+      "$comment": "Union of two datasets' vocabularies: the six original science domains (crest_challenges.jsonl) and the six AI/ML domains (crest_aiml_challenges.jsonl). One schema rather than two because everything else about the item format is identical; the enum still catches typos, since a misspelling is in neither set. It no longer catches a science item using an AI/ML domain or vice versa -- the datasets are separate files, so that is not a confusion the loader can make."
+    },
+    "query": {
+      "type": "string",
+      "description": "the challenge prompt; must require multi-source web synthesis",
+      "minLength": 120
+    },
+    "axis_isolated": {
+      "enum": [
+        "novelty",
+        "usefulness",
+        "surprise",
+        "balanced"
+      ]
+    },
+    "time_sensitivity": {
+      "enum": [
+        "pre_cutoff",
+        "post_cutoff",
+        "timeless"
+      ]
+    },
+    "known_answers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "dated list of already-known answers; baseline for New",
+      "minItems": 3
+    },
+    "hard_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "checkable constraints (esp. constrained category)",
+      "minItems": 3
+    },
+    "expert_baseline": {
+      "type": "string",
+      "minLength": 200,
+      "description": "JUDGE-HIDDEN since 2026-07-30. Was the Surprising anchor; an ablation showed withholding it moved Surprising by -0.02, so it anchored nothing, and in 7 items it carried the author's enumeration of the intended surprises. Retained for provenance and possible future use (e.g. a human-scored arm), but NOT sent to judge/score.py::_judge_prompt."
+    },
+    "author_expected_surprises": {
+      "type": "string",
+      "description": "JUDGE-HIDDEN. Author-written enumeration of the surprises the baseline is not supposed to anticipate, plus any rubric directives that were embedded in expert_baseline. Split out because piping it to the judge made Surprising into graded recall against an author-written key: an answer containing the listed content scored high by construction, and a different genuine surprise earned nothing. NOT read by judge/score.py::_judge_prompt -- keep it that way."
+    }
+  },
+  "$id": "https://github.com/.../crest/question/schema.json",
+  "version": "crest-challenge/3.2.0",
+  "description": "Validated on load by harness.run_crest.load_challenges. Previously this file was never applied: no jsonschema import existed anywhere in the repo, so `required` was decorative and category_name (present in all 50 items) validated silently because additionalProperties was unset. v2.0.0 removed `predicted_direction` (moved to analysis/preregistration.yaml; it was a 5-row lookup on `category` and, living in editable data, could not evidence ordering) and `category_name` (derivable from `category`; one item shipped a long-form value so groupby yielded 6 categories). v3.0.0 moved `rationale` to question/item_design.jsonl (read by no code at runtime; 20% of bytes) -- ci_check.sh enforces the id bijection.",
+  "additionalProperties": false,
+  "$comment": "v3.2.0: the `domain` enum went from the 6 science names to the 12-name union with the AI/ML dataset. The version was not bumped at the time, so two different schemas both self-identified as 3.1.0 -- and this string is what the prose cites (doc/datasheet.md, doc/design.md), so it stopped identifying what was actually enforced. NB run manifests do NOT record it: they stamp only the RECORD schema version, so a run cannot be traced to the item schema it validated against. All 12 enum values are in use (6 per dataset)."
+}

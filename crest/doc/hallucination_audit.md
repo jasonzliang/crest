@@ -1,6 +1,6 @@
 > **SUPERSEDED (2026-07-30).** This pass was *knowledge-based triage* — it says so in its own
 > method note: live web search was unavailable. A subsequent live-web audit of all 50 items
-> (~610 claims, `docs/notes/audit_live_*.md`) found this pass produced **both a false positive and a
+> (~610 claims, `doc/misc/audit_live_*.md`) found this pass produced **both a false positive and a
 > false negative**: it wrongly flagged Hart's inversor (1874-5 is correct) and wrongly suspected the
 > Cs2TiI6 band gap was ~1.0-1.5 eV (measured ~1.56 eV). Its applied corrections stand (11 claimed, 10 transcribed below) and are
 > retained below for provenance, but its *conclusions* — including "no fabricated sources" — cannot
@@ -38,8 +38,8 @@ transcribed here — the count and the table disagree, and the table is the audi
 | C4_biology_medicine_18 | known_answers | ICLAC Register "(2010 onward)" → "(2012 onward)" | low |
 
 ## Residual low-confidence notes — **all but two closed by the live-web pass**
-The live-web audit (`docs/notes/audit_live_*.md`, 2026-07-30) resolved these and the resulting item
-edits are recorded machine-readably in `docs/notes/hallucination_audit_live_log.jsonl` — that file,
+The live-web audit (`doc/misc/audit_live_*.md`, 2026-07-30) resolved these and the resulting item
+edits are recorded machine-readably in `doc/misc/hallucination_audit_live_log.jsonl` — that file,
 not this list, is the auditable record of what changed. Dispositions:
 
 - **CORRECTED in the item file** (see the log): `C1_economics_business_02` (Milgrom-Segal 2014, not
@@ -55,6 +55,6 @@ not this list, is the auditable record of what changed. Dispositions:
 
 ## Standing recommendation
 The live-web per-citation pass this section asked for **was run** across all 50 items
-(`docs/notes/audit_live_*.md`, ~610 claims). What it did not deliver, and what release still needs:
+(`doc/misc/audit_live_*.md`, ~610 claims). What it did not deliver, and what release still needs:
 per-answer provenance in the datasheet, and a resolvable DOI per `known_answers` entry — about half
-of them still carry no year at all (`docs/datasheet.md` §2, "Prior-art dating").
+of them still carry no year at all (`doc/datasheet.md` §2, "Prior-art dating").

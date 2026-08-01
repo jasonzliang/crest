@@ -93,7 +93,7 @@ and the reference set is published so any omission can be contested.
   over-credited. Requiring a resolvable DOI per entry is the fix. A second, larger defect: only
   **48% of `known_answers` entries carry an explicit year** file-wide (340/708), and just
   **17% (`_3x`) / 16% (`_4x`)** in the back half of the file, so for those items "dated prior-art
-  set" overstates what is shipped (`docs/notes/audit_live_C4_remainder.md` §2).
+  set" overstates what is shipped (`doc/misc/audit_live_C4_remainder.md` §2).
 
 ## Useful (viability / soundness / appropriateness) — 1–10
 - Is the idea sound, workable, and appropriate to the challenge, **on its merits**?
@@ -119,7 +119,7 @@ and the reference set is published so any omission can be contested.
   an ablation showed it moved this axis by −0.02. In 7 items it also carried the author's enumeration
   of the intended surprises (58%, 59% and 64% of the field in three of them), making Surprising graded
   recall against a key rather than expectation-violation. That enumeration now lives in the
-  judge-hidden `author_expected_surprises` field; `questions/quarantine.yaml` tracks the three items.
+  judge-hidden `author_expected_surprises` field; `question/quarantine.yaml` tracks the three items.
 - It is reported for continuity and because Boden's surprise criterion motivates the design, but it
   tracks New closely (r = 0.883; see the header note — that figure is prompt-v1-contaminated) and
   adding it to a two-axis gate eliminates only 1 of 250 records at t = 6. **Do not treat it as
@@ -141,7 +141,7 @@ named studies) with a regex, and:
 
 There is **no frozen snapshot**, no per-claim entailment check, and no FACT precision threshold. The
 stronger `metric: fact_precision, threshold: 0.8` gate exists only as design intent in
-`docs/judge_protocol_intent.md`, marked `[NOT IMPLEMENTED]` there, and must not be cited as a shipped
+`doc/judge_protocol_intent.md`, marked `[NOT IMPLEMENTED]` there, and must not be cited as a shipped
 control.
 
 **Fail ⇒ the answer is UNSCORED (`creativity: null`), not zero.** A fake 0 folded into results was
@@ -173,7 +173,7 @@ Report the axes **separately per category** (a profile, not one number).
   currently produces.
 - **Not implemented:** judge↔human agreement. There is no human panel, no human scores, and no
   human-agreement threshold anywhere in the code — `human_validation_required_categories` survives
-  only as design intent in `docs/judge_protocol_intent.md`, read by nothing. Any claim that C1/C5 are
+  only as design intent in `doc/judge_protocol_intent.md`, read by nothing. Any claim that C1/C5 are
   human-anchored, or that the panel is "authoritative on C2/C3/C4", is unsupported by the shipped
   artifact.
 - **No ranking claim is made** (`analysis/preregistration.yaml: ranking_claims: none`), because

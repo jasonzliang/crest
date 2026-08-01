@@ -1,7 +1,7 @@
 # Live-web citation audit — C5 remainder (5 items)
 
 Scope: `C5_arts_humanities_29`, `C5_materials_chemistry_25`, `C5_biology_medicine_24`,
-`C5_engineering_28`, `C5_arts_humanities_49` in `questions/crest_challenges.audit.jsonl`.
+`C5_engineering_28`, `C5_arts_humanities_49` in `question/crest_challenges.audit.jsonl`.
 Audited live-web against primary sources (publisher DOI pages, Crossref, official
 registries, regulator press releases, university-press books). Wikipedia was not
 used as the sole basis for any verdict.
@@ -9,7 +9,7 @@ used as the sole basis for any verdict.
 **No `.jsonl` file was edited.** Replacement strings below are proposals only; each has
 been verified to occur EXACTLY ONCE in the raw file text.
 
-**Continuity.** These five items are precisely the set that `docs/notes/audit_live_C4_C5.md` §6
+**Continuity.** These five items are precisely the set that `doc/misc/audit_live_C4_C5.md` §6
 listed as "NOT audited beyond a read-through" when its WebSearch budget ran out at 200/200, minus
 the four C4 items since closed by `audit_live_C4_remainder.md`. With this pass, claim-level live
 audit coverage of the 50-item file is complete. Two prior conclusions are refined here:
@@ -116,7 +116,7 @@ Three consequences that set the severity of everything below:
 
 ## 0b. Dating density vs dating accuracy — and continuity with the earlier passes
 
-The prior passes (`docs/notes/audit_live_C4_C5.md` §5, `audit_live_C4_remainder.md` §2) established
+The prior passes (`doc/misc/audit_live_C4_C5.md` §5, `audit_live_C4_remainder.md` §2) established
 two things: (i) a systematic **brand-date vs concept-date** defect with *zero counter-examples*, and
 (ii) a citation-density cliff in the back half of the file. Both hold here, and this pass adds a
 third observation: **density and accuracy are independent failures.**

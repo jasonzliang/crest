@@ -7,7 +7,7 @@
 # (One benchmark today: CREST. The list makes adding more trivial.)
 benchmarks:
   - name: crest
-    challenges: crest/questions/crest_challenges.jsonl
+    challenges: crest/question/crest_challenges.jsonl
     # Subset filters for a cheap pilot (omit / null = run all 50):
     per_category: null      # e.g. 2 -> first 2 items per category (balanced 10-item pilot)
     limit: null             # e.g. 5 -> first 5 items total
@@ -15,7 +15,7 @@ benchmarks:
     subset_label: null      # override the run_id's auto subset label (full50 / per2cat / first5 / cats-...)
 
 # Entrants to evaluate. Keys resolve to pinned model IDs in crest/harness/agents.py.
-# TWO ARMS (see crest/docs/notes/deep_research_apis.md):
+# TWO ARMS (see crest/doc/misc/deep_research_apis.md):
 #   *_shallow       = chat model + native web search, ONE turn, few searches   (cents/task)
 #   *_deepresearch* = managed multi-step background research loop              (minutes + $$/task)
 agents:

@@ -59,7 +59,7 @@ per-item anchors, (c) the construct-validity literature on novelty/usefulness/su
 (d) CREST's own 144 judge verdicts.
 
 Out of scope: whether the 50 items are individually well-designed (covered by
-`docs/item_vetting.md`), factual accuracy of item content (covered by `docs/hallucination_audit.md`
+`doc/item_vetting.md`), factual accuracy of item content (covered by `doc/hallucination_audit.md`
 and a pending live-web pass), and the LOFO-versus-full-panel judging question (separate analysis).
 
 ### Assumptions surfaced
@@ -110,7 +110,7 @@ benchmarks "systematically favor the model that created them" [3]. CREST's prior
 assembled with agent assistance, which places them on the LLM-as-a-testset arm of exactly this
 failure mode. Published mitigations are ensemble judging [4], calibration, diversity enhancement, and
 human involvement [3]. CREST already has the multi-vendor ensemble; what it lacks is **independent
-verification of the lists themselves.** `docs/hallucination_audit.md` was explicit that live web
+verification of the lists themselves.** `doc/hallucination_audit.md` was explicit that live web
 search was unavailable and that "a full per-citation web verification remains a pre-release step,"
 leaving 8 items flagged. Closing that gap is the highest-value remaining action on this field —
 an unverified novelty yardstick is a load-bearing component resting on unchecked content.
@@ -220,10 +220,10 @@ benchmark repositories argues datasets are more usable when accompanied by metad
 composition and intended tasks [10]. Design rationale is a reviewer *asset* — it is the evidence that
 axis-isolation claims were reasoned rather than asserted.
 
-**Verdict: move to a sidecar (`questions/item_design.jsonl`, keyed by `id`), do not cut.** This cuts
+**Verdict: move to a sidecar (`question/item_design.jsonl`, keyed by `id`), do not cut.** This cuts
 the runtime dataset by 20% with zero behavioural change, keeps the provenance reviewers want, and has
 the incidental benefit of shrinking what must be loaded per judge call. CREST already has
-`docs/datasheet.md` as the natural host for the aggregate narrative.
+`doc/datasheet.md` as the natural host for the aggregate narrative.
 
 ---
 
@@ -302,7 +302,7 @@ review.
 secondary endpoint, publish the inter-axis correlation matrix, and consider a two-factor primary
 composite.
 
-**Move to sidecar (1 field):** `rationale` → `questions/item_design.jsonl`. −20% runtime bytes, zero
+**Move to sidecar (1 field):** `rationale` → `question/item_design.jsonl`. −20% runtime bytes, zero
 behavioural change, provenance preserved for reviewers.
 
 **Cut: nothing.**
@@ -316,7 +316,7 @@ Ranked actions, highest reviewer-risk-reduction first:
    Recompute on the full run first.
 3. **Enforce the hard-rule cap post-hoc** (clamp Useful ≤ 3 when `hard_rules_violated` is non-empty)
    to close the 17% adherence leak.
-4. **Move `rationale` to a sidecar** and point `docs/datasheet.md` at it.
+4. **Move `rationale` to a sidecar** and point `doc/datasheet.md` at it.
 5. **Fix the `time_sensitivity` stratum or drop the contamination claim** — n=1 cannot support a split,
    and the "frozen snapshot" already claimed in the abstract does not exist in code.
 6. **Programmatically verify the deterministic subset of `hard_rules`**, moving toward IFEval-grade
@@ -383,7 +383,7 @@ the reviewers analysed.
 
 > **SUPERSEDED RUN.** `111856Z` is not the canonical run and is **not on disk** (`result/` is
 > gitignored), so nothing in this section is reproducible as written. The canonical run is
-> `2026-07-31T040653Z`; its recomputed figures live in `docs/design.md` §0, and where the two
+> `2026-07-31T040653Z`; its recomputed figures live in `doc/design.md` §0, and where the two
 > disagree, §0 wins. The *directions* below all survive re-measurement; three magnitudes do not
 > (flagged inline). The ablation deltas (+0.98 / −0.02) have no persisted output in either run and
 > can only be re-derived by re-running `analysis/ablate_fields.py`.

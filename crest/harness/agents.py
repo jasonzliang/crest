@@ -391,7 +391,7 @@ class OpenAIDeepResearchAPI(Agent):
     `o3-deep-research` / `o4-mini-deep-research` models are shut down (see module docstring), so the
     supported configuration is a general reasoning model + >=1 data-source tool + `background=True`,
     with depth dialed by `reasoning.effort` / `max_tool_calls` -- the cost dial, see
-    docs/notes/deep_research_apis.md.
+    doc/misc/deep_research_apis.md.
 
     The tool string is `web_search` (`web_search_preview` is the retired-era name); `background=True`
     is required in practice because these runs take minutes, so we poll to completion."""

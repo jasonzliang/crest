@@ -2,7 +2,7 @@
 
 Auditor pass: live WebSearch/WebFetch, 2026-07-30.
 Scope: `C4_biology_medicine_42`, `C4_materials_chemistry_43`, `C4_economics_business_44`, `C4_engineering_45`
-Source under audit: `/Users/jason/Desktop/rome/crest/questions/crest_challenges.audit.jsonl` (working copy, **not edited**).
+Source under audit: `/Users/jason/Desktop/rome/crest/question/crest_challenges.audit.jsonl` (working copy, **not edited**).
 Fields examined: `known_answers`, `expert_baseline`, `hard_rules`, `rationale`, `query`.
 
 ---
@@ -188,7 +188,7 @@ Consequence: a model that proposes exactly the mechanism the item suggests satis
 
 ## 4. Exact replacement strings
 
-Each `old` below was verified by script to occur **exactly once** in `questions/crest_challenges.audit.jsonl` (48/48 `known_answers` strings + 5 prose strings, all unique). No `.jsonl` file was modified. Apply to the live `crest_challenges.jsonl` after confirming the same uniqueness there.
+Each `old` below was verified by script to occur **exactly once** in `question/crest_challenges.audit.jsonl` (48/48 `known_answers` strings + 5 prose strings, all unique). No `.jsonl` file was modified. Apply to the live `crest_challenges.jsonl` after confirming the same uniqueness there.
 
 Priority: **P0** = must fix before release (wrong/void gate) · **P1** = stale or misleading · **P2** = add missing date/citation.
 

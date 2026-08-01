@@ -70,8 +70,8 @@ literature, and together they were chosen so an agent's creativity can *dissocia
 The scale-up recommended below happened: the shipped set is 5 categories × 10 items = **50**, and
 C6 was not added. This section is retained as the rationale for the current taxonomy, not as an
 open decision. (The count audit it originally cross-referenced, `question_audit.md`, was a review
-of the earlier 30-item set and has been deleted as spent; `docs/item_vetting.md` and
-`docs/notes/audit_live_*.md` are the per-item record for the shipped 50.)
+of the earlier 30-item set and has been deleted as spent; `doc/item_vetting.md` and
+`doc/misc/audit_live_*.md` are the per-item record for the shipped 50.)
 
 ## One-line verdict
 Five categories are sufficient and defensible; the taxonomy stayed at 5 and the budget went to

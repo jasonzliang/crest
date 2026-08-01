@@ -5,7 +5,7 @@
 > This was a **desk review**: every grade below was assigned by reading the item, with **no web
 > access and no execution**. Two later passes contradict it, and where they do, **they win**:
 >
-> 1. **Live-web citation audit of all 50 items** (~610 claims, `docs/notes/audit_live_*.md`,
+> 1. **Live-web citation audit of all 50 items** (~610 claims, `doc/misc/audit_live_*.md`,
 >    2026-07-30). It found real defects in items this pass graded PASS, and it **overturns the
 >    headline G5 finding**: the claim below that "all `known_answers` are dated & non-empty" is
 >    false — most entries carry no year at all. The measured rates and the counting convention are
@@ -22,7 +22,7 @@
 > **Field drift.** The Method paragraph below describes reading `predicted_direction` and the
 > designer `rationale` on each item. **Neither field exists any more:** `predicted_direction` and
 > `category_name` were removed in schema v2.0.0 (predictions moved to
-> `analysis/preregistration.yaml`), and `rationale` moved to `questions/item_design.jsonl` in v3.0.0.
+> `analysis/preregistration.yaml`), and `rationale` moved to `question/item_design.jsonl` in v3.0.0.
 > A judge-hidden `author_expected_surprises` field was added. Items now ship ten fields, not twelve.
 >
 > **What still stands.** The per-item table is retained as the historical record of the desk pass;
@@ -37,7 +37,7 @@
 ## Method
 
 This is an adversarial item-vetting pass over all 50 CREST challenges in
-`questions/crest_challenges.jsonl` (ids ending `00`–`29` are the 30 original items;
+`question/crest_challenges.jsonl` (ids ending `00`–`29` are the 30 original items;
 `30`–`49` are the 20 newly-added items). Each item was read in full — `query`,
 `hard_rules`, `known_answers`, `expert_baseline`, and (at the time) the per-item
 `predicted_direction` and designer `rationale` — and stress-tested against five gates.

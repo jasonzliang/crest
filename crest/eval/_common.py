@@ -22,7 +22,7 @@ from crest.harness import results as R
 from crest.harness.cache import GenerationCache
 from crest.judge.score import JudgePanel
 
-CHALLENGES = "crest/questions/crest_challenges.jsonl"    # used as a path AND recorded in the manifest
+CHALLENGES = "crest/question/crest_challenges.jsonl"    # used as a path AND recorded in the manifest
 
 
 def cli(agent_key: str, **defaults):

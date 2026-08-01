@@ -1,6 +1,6 @@
 # Live-Web Citation Audit — C4 / C5 items
 
-**Scope:** the 20 items with `id` starting `C4_` or `C5_` in `questions/crest_challenges.audit.jsonl`
+**Scope:** the 20 items with `id` starting `C4_` or `C5_` in `question/crest_challenges.audit.jsonl`
 **Date of audit:** 2026-07-30
 **Method:** live WebSearch + WebFetch (Wikipedia, primary institutional pages, Crossref API, PubMed, press releases). No `.jsonl` file was modified.
 **Fields examined:** `known_answers`, `expert_baseline`, `query`, `hard_rules`.

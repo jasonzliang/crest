@@ -17,7 +17,7 @@
 #      Every task is paid in full.
 benchmarks:
   - name: crest_aiml
-    challenges: crest/questions/crest_aiml_challenges.jsonl
+    challenges: crest/question/crest_aiml_challenges.jsonl
     per_category: null
     limit: null
     categories: null

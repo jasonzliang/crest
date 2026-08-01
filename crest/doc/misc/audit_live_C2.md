@@ -1,6 +1,6 @@
 # CREST live-web citation audit — C2 (counterfactual reasoning), 10 items
 
-**Scope:** the 10 items whose `id` starts with `C2_` in `questions/crest_challenges.audit.jsonl`
+**Scope:** the 10 items whose `id` starts with `C2_` in `question/crest_challenges.audit.jsonl`
 (working copy; **no `.jsonl` file was edited by this audit**).
 **Method:** live WebSearch + WebFetch against primary sources (arXiv, Crossref, PubMed/PMC,
 legislation.gov.uk statute PDFs, CourtListener/Justia, publisher pages, MacTutor, Wikipedia
@@ -666,11 +666,11 @@ is **correct as written**.
 ## 16. Provenance / integrity note for whoever applies these fixes
 
 - **No `.jsonl` file was edited by this audit.** All 26 `OLD` strings above were re-validated
-  against `questions/crest_challenges.audit.jsonl` at the end of the audit: each matches
+  against `question/crest_challenges.audit.jsonl` at the end of the audit: each matches
   **exactly once**, byte-for-byte, so every replacement can be applied as a literal
   find-and-replace without disambiguation.
-- `questions/crest_challenges.audit.jsonl` **was** modified during this audit window, but by
-  **other auditors working other categories** — `docs/notes/hallucination_audit_live_log.jsonl`
+- `question/crest_challenges.audit.jsonl` **was** modified during this audit window, but by
+  **other auditors working other categories** — `doc/misc/hallucination_audit_live_log.jsonl`
   gained 13 entries for C1, C4 and C5 items while this audit ran. All ten C2 items were
   re-hashed afterwards and are unchanged. If these C2 fixes are applied later, re-confirm the
   `OLD` strings first in case a sibling pass touches C2.

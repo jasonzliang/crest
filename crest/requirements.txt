@@ -13,7 +13,7 @@
 # without them rather than warning, because a missing jsonschema silently disabled item validation
 # and a missing pyyaml silently re-admitted every quarantined item -- while ci_check.sh still printed
 # "OK 50 items load and validate".
-jsonschema>=4.0        # enforces questions/schema.json (REQUIRED -- see harness/run_crest.py)
+jsonschema>=4.0        # enforces question/schema.json (REQUIRED -- see harness/run_crest.py)
 pyyaml>=6.0            # reads judge_config.live.yaml, quarantine.yaml, preregistration.yaml
 
 # analysis (root already provides numpy and scipy)

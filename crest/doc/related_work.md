@@ -75,7 +75,7 @@ of any evaluated agent** — the property reviewers most need to see.
 
 ## 5. Dataset documentation & release
 Gebru 2021 (Datasheets), Pushkarna 2022 (Data Cards), Mitchell 2019 (Model Cards),
-Croissant 2024 (+ Croissant-RAI). CREST ships the datasheet today (`docs/datasheet.md`) and targets
+Croissant 2024 (+ Croissant-RAI). CREST ships the datasheet today (`doc/datasheet.md`) and targets
 the rest at release — the Croissant / Croissant-RAI records (`croissant.json`) are **not generated
 yet**, so do not cite them as shipped.
 

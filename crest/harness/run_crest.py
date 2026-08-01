@@ -76,14 +76,14 @@ class Challenge:
         return Challenge(**f)
 
 
-_SCHEMA = Path(__file__).resolve().parents[1] / "questions/schema.json"
+_SCHEMA = Path(__file__).resolve().parents[1] / "question/schema.json"
 _PREREG = Path(__file__).resolve().parents[1] / "analysis/preregistration.yaml"
-_QUARANTINE = Path(__file__).resolve().parents[1] / "questions/quarantine.yaml"
+_QUARANTINE = Path(__file__).resolve().parents[1] / "question/quarantine.yaml"
 
 
 def _quarantined() -> dict:
     """{item_id: reason} for items excluded because a known defect makes their scores
-    uninterpretable. See questions/quarantine.yaml for why this exists rather than deleting the items
+    uninterpretable. See question/quarantine.yaml for why this exists rather than deleting the items
     or loosening the schema."""
     try:
         import yaml
@@ -118,7 +118,7 @@ def _prereg_directions() -> dict:
 
 
 def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
-    """Load and (by default) VALIDATE against questions/schema.json, so a malformed item fails at
+    """Load and (by default) VALIDATE against question/schema.json, so a malformed item fails at
     load rather than at score time.
 
     RAISES if jsonschema is missing rather than warning. A gate that switches itself off when a
@@ -134,7 +134,7 @@ def load_challenges(path: str, validate: bool = True) -> list[Challenge]:
         raw = [d for d in raw if d.get("id") not in quar]
         if dropped:
             print(f"  [QUARANTINE: excluding {len(dropped)} item(s) with known defects: {dropped}. "
-                  f"See questions/quarantine.yaml. These block a public release.]")
+                  f"See question/quarantine.yaml. These block a public release.]")
     if validate:
         try:
             import jsonschema
@@ -504,7 +504,7 @@ def make_manifest(run_id, created_at, benchmark, agents: dict, panel, budget, co
 def main():
     from datetime import datetime, timezone
     p = argparse.ArgumentParser(description="Run the CREST creativity benchmark (ad-hoc CLI).")
-    p.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
+    p.add_argument("--challenges", default="crest/question/crest_challenges.jsonl")
     p.add_argument("--agents", nargs="+", required=True)
     p.add_argument("--judge_config", default="crest/judge/judge_config.live.yaml")
     p.add_argument("--budget", type=int, default=6, help="per-agent web-search cap (where the provider supports it)")

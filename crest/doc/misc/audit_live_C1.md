@@ -1,6 +1,6 @@
 # CREST C1 — live-web citation audit
 
-**Scope:** the 10 items with `id` prefix `C1_` in `questions/crest_challenges.audit.jsonl`.
+**Scope:** the 10 items with `id` prefix `C1_` in `question/crest_challenges.audit.jsonl`.
 **Fields audited:** `known_answers` (highest weight — it is the novelty yardstick), `expert_baseline`, `query`.
 **Date of audit:** 2026-07-30. **No `.jsonl` file was modified.**
 
@@ -222,7 +222,7 @@ econ_02 = 1 IMPRECISE · bio_30 = 1 IMPRECISE · **arts_05, arts_33, eng_32 = cl
 
 ## Recommended mechanical replacements
 
-Apply to `questions/crest_challenges.jsonl` (and the audit copy). Each is an exact substring
+Apply to `question/crest_challenges.jsonl` (and the audit copy). Each is an exact substring
 replacement; the surrounding entry text is unchanged unless shown.
 
 ### WRONG — fix before release

@@ -13,7 +13,7 @@ flag C4_engineering_45 -- the very item it was written for. That is not a tuning
 structural. The item's prior-art entry is the bare NAME "iFixit Repairability Score"; the fact that
 iFixit's rubric applies a global parts-pairing penalty lives in iFixit's published methodology, not
 anywhere in the item text. No lexical method can see it. Detecting that defect class requires reading
-the cited frameworks, which is what the live-web audits (docs/notes/audit_live_*.md) did by hand.
+the cited frameworks, which is what the live-web audits (doc/misc/audit_live_*.md) did by hand.
 
 So this catches a NARROWER subclass: a novelty rule whose example reuses wording that appears in the
 item's own prior-art text. Useful, cheap, and NOT a substitute for a semantic audit. A clean result
@@ -25,7 +25,7 @@ by a listed framework needs domain knowledge. Worth running before paying for a 
 scores on an inverted item are uninterpretable.
 
 Usage:
-  python -m crest.analysis.audit_novelty_gate --challenges crest/questions/crest_aiml_challenges.jsonl
+  python -m crest.analysis.audit_novelty_gate --challenges crest/question/crest_aiml_challenges.jsonl
   python -m crest.analysis.audit_novelty_gate            # defaults to the science set
 """
 from __future__ import annotations
@@ -116,7 +116,7 @@ def audit(path: str) -> list:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
+    ap.add_argument("--challenges", default="crest/question/crest_challenges.jsonl")
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args()
 

@@ -1,7 +1,7 @@
 # Live-Web Citation Audit — CREST category C3 (Cross-Domain Synthesis)
 
 **Date:** 2026-07-30
-**Scope:** all 10 items with `id` prefix `C3_` in `questions/crest_challenges.audit.jsonl` (working copy).
+**Scope:** all 10 items with `id` prefix `C3_` in `question/crest_challenges.audit.jsonl` (working copy).
 **No `.jsonl` file was modified.**
 
 **Two claim classes audited:**

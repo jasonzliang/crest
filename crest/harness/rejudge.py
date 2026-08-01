@@ -302,7 +302,7 @@ def main():
     ap = argparse.ArgumentParser(description="Re-judge degraded/unscored records from stored transcripts.")
     ap.add_argument("--run", required=True, help="run directory (crest/result/runs/<run_id>)")
     ap.add_argument("--judge-config", default="crest/judge/judge_config.live.yaml")
-    ap.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
+    ap.add_argument("--challenges", default="crest/question/crest_challenges.jsonl")
     ap.add_argument("--status", nargs="+", default=["judge_degraded", "judge_error"],
                     help="scoring_status values to repair")
     ap.add_argument("--concurrency", type=int, default=4,

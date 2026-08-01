@@ -52,7 +52,7 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
 
 ## 2. Composition
 - **Instances.** 50 research challenges (10 per category, C1–C5). Each is a natural-language
-  research query plus metadata. The shipped schema (`questions/schema.json`, version
+  research query plus metadata. The shipped schema (`question/schema.json`, version
   `crest-challenge/3.2.0`, `additionalProperties: false`) defines **nine required fields** —
   `id`, `category` (C1–C5), `domain`, `query`, `axis_isolated`, `time_sensitivity`,
   `known_answers[]`, `hard_rules[]`, `expert_baseline` — plus **one optional field**,
@@ -61,9 +61,9 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
     dataset for provenance but are **not sent to the judge** (see §"Labels" and `judge/rubric.md`).
   - **Removed fields.** `predicted_direction` and `category_name` (schema v2.0.0) and `rationale`
     (v3.0.0). Predictions now live in `analysis/preregistration.yaml`; per-item design rationale in
-    `questions/item_design.jsonl`, whose id-bijection with the challenge file is enforced by
+    `question/item_design.jsonl`, whose id-bijection with the challenge file is enforced by
     `analysis/ci_check.sh`. v3.2.0 widened the `domain` enum to twelve values so a second,
-    unrelated 50-item AI/ML set (`questions/crest_aiml_challenges.jsonl`) validates against the
+    unrelated 50-item AI/ML set (`question/crest_aiml_challenges.jsonl`) validates against the
     same schema. **That set is not part of this datasheet**: it is not listed in
     `config/eval_config.yaml`, has no `item_design.jsonl` rows, is not covered by the item-vetting
     or live-web audits, and has never been run or scored. It **is** now covered by
@@ -87,7 +87,7 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
   Scores are produced at evaluation time by the LLM judge panel. **`[NOT IMPLEMENTED]` Human
   validation:** no human panel has been run, no human scores exist, and no code reads
   `human_validation_required_categories` — a key that no longer exists in any config, only in
-  `docs/judge_protocol_intent.md`, the documentation-only record of the deleted `judge_config.yaml`.
+  `doc/judge_protocol_intent.md`, the documentation-only record of the deleted `judge_config.yaml`.
 - **Splits.** Items carry a `time_sensitivity` label, but the distribution makes a pre/post-cutoff
   split unusable as shipped: **35 `timeless`, 14 `pre_cutoff`, 1 `post_cutoff`**. Reporting scores
   split by cutoff class — a control this project's own design spec calls for — is therefore not
@@ -115,7 +115,7 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
   convention matters — hence stating it. An undated bare entry cannot function as a dated novelty
   baseline, and the audit found the dating error direction is one-sided: prior art is consistently
   made to look *younger* than it is, which inflates novelty
-  (`docs/notes/audit_live_C4_remainder.md` §2).
+  (`doc/misc/audit_live_C4_remainder.md` §2).
 - **External data.** `[NOT IMPLEMENTED]` Retrieval is **live provider web search**; `FrozenIndex`
   raises `NotImplementedError`, so no snapshot exists and no run is contamination-controlled — each
   run manifest records `contamination_controlled: false` and states the caveat. Intended design: a
@@ -131,13 +131,13 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
   `dataAnnotationProtocol` fields are unfilled. One `expert_baseline`
   (`C2_biology_medicine_34`) is explicitly **model-drafted, not expert-written**, and is flagged
   in-field as needing physiologist review.
-- **Adversarial item-vetting log** (`docs/item_vetting.md`, appended in summary below). Every item
+- **Adversarial item-vetting log** (`doc/item_vetting.md`, appended in summary below). Every item
   was red-teamed for: (i) contamination risk, (ii) synthesis-required, (iii) axis-isolation,
   (iv) headroom, (v) metadata completeness. **That pass is now partly superseded**: a subsequent
-  live-web audit of all 50 items (~610 claims, `docs/notes/audit_live_*.md`) contradicted several of
+  live-web audit of all 50 items (~610 claims, `doc/misc/audit_live_*.md`) contradicted several of
   its PASS grades, and its header records what no longer holds. Both documents should be read
   together; neither alone is current.
-- **Quarantine.** `questions/quarantine.yaml` is the mechanism for excluding an item whose defect
+- **Quarantine.** `question/quarantine.yaml` is the mechanism for excluding an item whose defect
   makes its scores uninterpretable; quarantined items are dropped at load with a loud notice, counted
   in the run manifest, and block release. **Currently zero items are quarantined.**
   `C2_biology_medicine_34` was quarantined 2026-07-30 (its `expert_baseline` was 156 chars and failed
@@ -207,7 +207,7 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
 
 ## 7. Maintenance
 - Maintained by the (anonymized) authors; issues/PRs via the public repo. Defective items are
-  handled through `questions/quarantine.yaml`, which records the defect, why scores would be
+  handled through `question/quarantine.yaml`, which records the defect, why scores would be
   uninterpretable, what resolves it, and — for released items — the resolution, so the record
   survives the fix. `[NOT IMPLEMENTED]` A rolling fresh-question set, per-cycle refresh, and item
   tombstones do not exist yet. `[NOT IMPLEMENTED]` There is also **no open-weight entrant and no
@@ -227,6 +227,6 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
 
 ## Appendix: adversarial item-vetting log
 Per-item dispositions (contamination / synthesis-required / axis-isolation / headroom / metadata):
-see **`docs/item_vetting.md`** for the full per-item table and rationale, and read its
-"superseded" header first — the later live-web audit (`docs/notes/audit_live_*.md`) overturned
+see **`doc/item_vetting.md`** for the full per-item table and rationale, and read its
+"superseded" header first — the later live-web audit (`doc/misc/audit_live_*.md`) overturned
 several of its grades, most importantly on `known_answers` dating and on `C4_engineering_45`.

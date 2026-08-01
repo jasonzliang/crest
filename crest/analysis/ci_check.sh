@@ -44,7 +44,7 @@ fail=0
 echo "== quarantine (a benchmark shipping 49/50 must say so)"
 python - <<'PY2' || fail=1
 import sys, yaml, pathlib, re
-q=(yaml.safe_load(pathlib.Path("crest/questions/quarantine.yaml").read_text()) or {})
+q=(yaml.safe_load(pathlib.Path("crest/question/quarantine.yaml").read_text()) or {})
 rc=0
 items=q.get("quarantined") or {}
 if items:
@@ -325,17 +325,17 @@ echo "== canary claims are human-approved"
   # glob -- that glob covered 43 files and missed 7, including both papers' main.tex, judge/rubric.md
   # and result/readme.md.
   allow="crest/analysis/canary_claims.allow"
-  # NARROWED 2026-07-31: docs/notes/** excluded. Those are internal working notes, not release
+  # NARROWED 2026-07-31: doc/misc/** excluded. Those are internal working notes, not release
   # content -- iclr_metareview.md and paper_comparison.md alone held 11 of the 26 matching lines, and
   # every edit to one cost a byte-identical re-approval for no release risk. Scope is now the
-  # RELEASE-FACING docs only: readme, docs/*.md (datasheet, best-practices) and both papers. The
+  # RELEASE-FACING docs only: readme, doc/*.md (datasheet, best-practices) and both papers. The
   # mechanism is unchanged, and deliberately so: its own header records that three grep heuristics
   # preceded it and each passed a real affirmative claim.
   # The exclusion must be an :(exclude) PATHSPEC, not a narrower glob. git pathspec wildcards match
-  # `/` by default, so 'crest/docs/*.md' still matched crest/docs/notes/*.md and the narrowing was
+  # `/` by default, so 'crest/doc/*.md' still matched crest/doc/misc/*.md and the narrowing was
   # silently a no-op -- 26 lines before and after. Measured: that glob returns 20 files, its
   # :(glob)-prefixed form 7.
-  globs=('crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' ':(exclude)crest/docs/notes/*')
+  globs=('crest/*.md' 'crest/**/*.md' 'crest/**/*.tex' ':(exclude)crest/doc/misc/*')
   # Fail CLOSED on anything that leaves the gate with no input, because each such case printed OK:
   # `grep -f` on a missing pattern file matches nothing, `git ls-files` prints nothing outside a repo,
   # and BSD xargs skips grep entirely on an empty list. (An EMPTY allow file already fails closed, and

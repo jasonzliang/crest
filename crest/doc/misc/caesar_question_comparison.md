@@ -16,10 +16,10 @@
 > original questions, the "the original 5 didn't require research" argument, the dropped
 > length-control regression, and the 12-items-pointing-at-judge-side-content fix.
 
-Pre-run vetting pass, 2026-07-30. Compares the shipped `questions/crest_challenges.jsonl` against
+Pre-run vetting pass, 2026-07-30. Compares the shipped `question/crest_challenges.jsonl` against
 (a) the five original challenges in the Caesar paper (arXiv:2604.20855, App. pp.19–20) and (b) the
 design contract in `science_moonshot/documentation/caesar/caesar_creativity_eval_spec.md` (v1,
-2026-07-24). Complements `docs/item_vetting.md` (per-item gates); this note is about the *set*.
+2026-07-24). Complements `doc/item_vetting.md` (per-item gates); this note is about the *set*.
 
 ## The five original Caesar questions (verbatim)
 
@@ -76,7 +76,7 @@ only `ch.query`; `known_answers` is judge-side. So these were unfollowable instr
 judges *do* see the rules, an agent could be penalized for failing an instruction it could not read.
 Rewrote all 16 occurrences self-contained ("...a domain expert would name immediately", "...already
 established in the published literature", "...and earn no novelty credit"), preserving the bar
-exactly. No other item touched. `docs/item_vetting.md` missed this because it graded items in
+exactly. No other item touched. `doc/item_vetting.md` missed this because it graded items in
 isolation rather than against what the harness actually shows the agent.
 
 Also confirmed already-fixed since that audit: C2_law_policy_09's `expert_baseline` is now real
@@ -91,7 +91,7 @@ Balanced 10/category; domains 8–9 each.
 
 Recoverable from this run's `records.jsonl` afterwards:
 * **No inter-judge reliability.** `judge/judge_config.yaml` (since deleted; see
-  `docs/judge_protocol_intent.md`) mandated `[krippendorff_alpha, icc]`;
+  `doc/judge_protocol_intent.md`) mandated `[krippendorff_alpha, icc]`;
   `analysis/stats.py` contains zero references to either. Per-judge scores *are* persisted as a
   list-of-objects, so IRR is computable post-hoc — but it is currently unwritten code.
 * **Length covariate** — see above; `output_len_tokens` is recorded.

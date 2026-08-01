@@ -2,7 +2,7 @@
 #
 # WHY THIS FILE EXISTS, AND WHAT IT IS NOT.
 # The per-category directions previously lived in `predicted_direction` inside
-# questions/crest_challenges.jsonl — one value per category, transcribed across all 50 items, so it
+# question/crest_challenges.jsonl — one value per category, transcribed across all 50 items, so it
 # carried zero item-level information. Worse, it could not evidence ordering: the field sat in an
 # editable data file, its original enum value was literally `caesar_win` on the 20 C2/C3 items, and
 # it was renamed to `favored` fourteen hours later in a commit titled "honesty fixes". A prediction
@@ -26,7 +26,7 @@ registration:
   git_commit_at_creation: "84f7a96"
   externally_timestamped: false        # <- the load-bearing admission
   registry_url: null                   # populate when an OSF/AsPredicted record exists
-  supersedes: "predicted_direction field in questions/crest_challenges.jsonl (removed 2026-07-30)"
+  supersedes: "predicted_direction field in question/crest_challenges.jsonl (removed 2026-07-30)"
 
 # Mechanistic account being tested: an architecture that improves relational grounding plus
 # convergent refinement should help where structure-mapping (Gentner 1983) and counterfactual

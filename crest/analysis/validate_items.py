@@ -17,7 +17,7 @@ a judge consulting the baseline would CONFIRM the error rather than catch it.
 
 WHAT THIS CAN AND CANNOT DO. Full "does the baseline satisfy every rule" is a semantic judgement and
 is NOT mechanically decidable. This checks TWO DECIDABLE classes; they cover cases 1 and 2 above.
-Cases 3 and 4 are tracked BY HAND in questions/quarantine.yaml's watch_list. A phrase matcher for
+Cases 3 and 4 are tracked BY HAND in question/quarantine.yaml's watch_list. A phrase matcher for
 case 4 shipped and was deleted rather than re-tuned: "the mechanism offered as NEW is already in
 known_answers" is indistinguishable, without semantics, from C4_materials_chemistry_43 legitimately
 offering "a supply-criticality-weighted atom economy" (novel in the weighting; its head noun is
@@ -126,7 +126,7 @@ def check_item(it: dict) -> list[dict]:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
+    ap.add_argument("--challenges", default="crest/question/crest_challenges.jsonl")
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--llm", action="store_true",
                     help="NOT IMPLEMENTED: the semantic residue needs a model pass; left explicit "

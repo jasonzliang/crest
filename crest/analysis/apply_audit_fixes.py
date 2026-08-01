@@ -44,8 +44,8 @@ def parse_reports(notes_dir: Path) -> tuple[list, list]:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--challenges", default="crest/questions/crest_challenges.jsonl")
-    ap.add_argument("--notes", default="crest/docs/notes")
+    ap.add_argument("--challenges", default="crest/question/crest_challenges.jsonl")
+    ap.add_argument("--notes", default="crest/doc/notes")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     path = REPO / a.challenges

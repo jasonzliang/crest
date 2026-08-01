@@ -49,4 +49,4 @@ Model availability (verified on the current keys, 2026-07-30):
 - Requires `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY` in the environment
   (`ANTHROPIC_API_KEYS` pools several Anthropic keys — see `harness/keys.py`).
 
-See `crest/docs/notes/deep_research_apis.md` for the live-probed provider landscape and per-task costs.
+See `crest/doc/misc/deep_research_apis.md` for the live-probed provider landscape and per-task costs.
