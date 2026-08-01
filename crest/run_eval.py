@@ -139,7 +139,9 @@ def main():
         # Every run gets a fresh run_id (runs are immutable). Prior work is not "resumed" -- the
         # generation cache serves already-paid-for agent answers from ANY previous run, so a re-run
         # costs only judging. This replaced --resume, which reused work from an interrupted run only.
-        run_id, run_dir = R.new_run(out_root, label, REPO)
+        # benchmark name from the config, so the run_id says WHICH item set it covered. Two runs over
+        # different 50-item sets were previously indistinguishable by name.
+        run_id, run_dir = R.new_run(out_root, label, REPO, benchmark=bench.get("name") or "crest")
         shutil.copy(_p(args.config), run_dir / "config.snapshot.yaml")   # literal config as-run
         created = datetime.now(timezone.utc).isoformat()
         recs = evaluate(chs, agents, panel, run_dir, run_id,

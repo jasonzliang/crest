@@ -20,7 +20,7 @@ and ready for a rater random effect); a run is immutable — a re-run is a NEW r
 mutation; record the live-web contamination caveat + effective corpus date as first-class fields.
 """
 from __future__ import annotations
-import json, subprocess, sys, platform, collections, statistics, secrets
+import json, re, subprocess, sys, platform, collections, statistics, secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,12 +68,26 @@ def pkg_versions() -> dict:
     return out
 
 
-def new_run(result_root, subset: str, repo_root) -> tuple[str, Path]:
-    """Create result/runs/<run_id>/ and return (run_id, run_dir). run_id is sortable + provenance-encoding."""
+def new_run(result_root, subset: str, repo_root, benchmark: str = "crest") -> tuple[str, Path]:
+    """Create result/runs/<run_id>/ and return (run_id, run_dir). run_id is sortable + provenance-encoding.
+
+    `benchmark` was HARDCODED to "crest", which made the run_id actively misleading once a second
+    item set existed: runs over crest_aiml_challenges.jsonl (50 AI/ML items) and over
+    crest_challenges.jsonl (50 science items) produced directory names identical apart from the
+    timestamp and commit, so the only way to tell which 50 items a run covered was to open its
+    config.snapshot.yaml. It now comes from the config's benchmark name.
+
+    Sanitised because the run_id is parsed on delimiters and used as a path component: `__` is the
+    field separator (promote_leaderboard splits on "__git"), and a slash would silently create a
+    nested directory. Single underscores are KEPT, so `crest_aiml` stays legible; only runs of two
+    or more are collapsed, and anything outside [A-Za-z0-9._-] becomes '-'.
+    """
     ts = _utc_now().strftime("%Y-%m-%dT%H%M%SZ")
     sha = git_info(repo_root)["git_commit"] or "nogit"
     nonce = secrets.token_hex(3)   # real entropy: distinct even for same-second, same-subset runs
-    run_id = f"{ts}__crest__{subset}__git{sha}__{nonce}"
+    bench = re.sub(r"[^A-Za-z0-9._-]+", "-", str(benchmark or "crest"))
+    bench = re.sub(r"_{2,}", "_", bench).strip("-_") or "crest"   # never emit the `__` separator
+    run_id = f"{ts}__{bench}__{subset}__git{sha}__{nonce}"
     run_dir = Path(result_root) / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=False)   # fail loudly on the (now vanishingly rare) collision
     return run_id, run_dir

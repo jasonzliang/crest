@@ -1,11 +1,11 @@
 {
   "_README": "Promoted, tracked copy of the run whose numbers are cited. Regenerate with `python -m crest.analysis.promote_leaderboard --run <run_dir>`. summary.json is NOT a substitute: it lacks the primary endpoint, the provenance and the caveats.",
   "provenance": {
-    "run_id": "2026-07-31T193800Z__crest__full50__gitabae78a__87dfe2",
-    "created_at": "2026-07-31T19:38:00.634166+00:00",
-    "code_git_commit": "abae78a",
+    "run_id": "2026-08-01T015432Z__crest__full50__git1a710f2__1cfd91",
+    "created_at": "2026-08-01T01:54:32.411831+00:00",
+    "code_git_commit": "1a710f2",
     "judge_protocol": "full-panel (same-family as covariate); blind; median aggregation",
-    "judge_prompt_version_per_record": "v2",
+    "judge_prompt_version_per_record": "v3",
     "judges": [
       {
         "id": "judge_anthropic",
@@ -24,36 +24,36 @@
       }
     ],
     "record_schema_version": "crest-record/1.2.0",
-    "n_records": 243,
-    "n_scored": 243,
+    "n_records": 249,
+    "n_scored": 249,
     "totals": {
-      "n_records": 243,
-      "n_scored": 243,
-      "n_truncated": 1,
-      "n_task_errors": 7
+      "n_records": 249,
+      "n_scored": 249,
+      "n_truncated": 0,
+      "n_task_errors": 2
     }
   },
   "primary_endpoint": {
     "definition": "min(New, Useful, Surprising), graded on the 1-10 scale",
     "per_agent": {
       "claude_shallow": {
-        "mean": 5.56,
+        "mean": 5.72,
         "n": 50
       },
       "gemini_deepresearch_max": {
-        "mean": 4.283,
-        "n": 46
+        "mean": 5.102,
+        "n": 49
       },
       "gemini_shallow": {
-        "mean": 4.0,
-        "n": 47
+        "mean": 4.86,
+        "n": 50
       },
       "openai_deepresearch": {
-        "mean": 6.52,
+        "mean": 6.54,
         "n": 50
       },
       "openai_shallow": {
-        "mean": 6.42,
+        "mean": 6.68,
         "n": 50
       }
     }
@@ -64,78 +64,78 @@
       "n_scored": 50,
       "n_degraded": 0,
       "grounding_pass_rate": 1.0,
-      "mean_new": 7.62,
-      "mean_useful": 6.1,
-      "mean_surprising": 6.12,
-      "creative_rate": 0.6
+      "mean_new": 6.78,
+      "mean_useful": 7.38,
+      "mean_surprising": 5.78,
+      "creative_rate": 0.7
     },
     "gemini_deepresearch_max": {
-      "n": 46,
-      "n_scored": 46,
+      "n": 49,
+      "n_scored": 49,
       "n_degraded": 0,
       "grounding_pass_rate": 1.0,
-      "mean_new": 7.83,
-      "mean_useful": 4.52,
-      "mean_surprising": 6.28,
-      "creative_rate": 0.283
+      "mean_new": 6.65,
+      "mean_useful": 5.88,
+      "mean_surprising": 5.65,
+      "creative_rate": 0.449
     },
     "gemini_shallow": {
-      "n": 47,
-      "n_scored": 47,
+      "n": 50,
+      "n_scored": 50,
       "n_degraded": 0,
       "grounding_pass_rate": 1.0,
-      "mean_new": 7.28,
-      "mean_useful": 4.36,
-      "mean_surprising": 5.64,
-      "creative_rate": 0.191
+      "mean_new": 6.2,
+      "mean_useful": 5.84,
+      "mean_surprising": 5.18,
+      "creative_rate": 0.38
     },
     "openai_deepresearch": {
       "n": 50,
       "n_scored": 50,
       "n_degraded": 0,
       "grounding_pass_rate": 1.0,
-      "mean_new": 8.4,
-      "mean_useful": 7.2,
-      "mean_surprising": 6.92,
-      "creative_rate": 0.76
+      "mean_new": 7.54,
+      "mean_useful": 7.98,
+      "mean_surprising": 6.56,
+      "creative_rate": 0.82
     },
     "openai_shallow": {
       "n": 50,
       "n_scored": 50,
       "n_degraded": 0,
       "grounding_pass_rate": 1.0,
-      "mean_new": 8.42,
-      "mean_useful": 7.04,
-      "mean_surprising": 6.92,
-      "creative_rate": 0.78
+      "mean_new": 7.62,
+      "mean_useful": 8.16,
+      "mean_surprising": 6.72,
+      "creative_rate": 0.88
     }
   },
   "per_agent_category_primary": {
-    "claude_shallow|C1": 3.3,
-    "claude_shallow|C2": 6.4,
-    "claude_shallow|C3": 6.3,
-    "claude_shallow|C4": 5.4,
-    "claude_shallow|C5": 6.4,
-    "gemini_deepresearch_max|C1": 2.667,
-    "gemini_deepresearch_max|C2": 3.0,
-    "gemini_deepresearch_max|C3": 5.3,
-    "gemini_deepresearch_max|C4": 4.2,
-    "gemini_deepresearch_max|C5": 5.6,
-    "gemini_shallow|C1": 2.9,
-    "gemini_shallow|C2": 3.571,
-    "gemini_shallow|C3": 3.7,
-    "gemini_shallow|C4": 4.1,
-    "gemini_shallow|C5": 5.6,
-    "openai_deepresearch|C1": 4.2,
-    "openai_deepresearch|C2": 7.6,
-    "openai_deepresearch|C3": 7.4,
-    "openai_deepresearch|C4": 6.0,
-    "openai_deepresearch|C5": 7.4,
-    "openai_shallow|C1": 4.1,
-    "openai_shallow|C2": 7.0,
-    "openai_shallow|C3": 7.6,
-    "openai_shallow|C4": 6.6,
-    "openai_shallow|C5": 6.8
+    "claude_shallow|C1": 3.7,
+    "claude_shallow|C2": 6.1,
+    "claude_shallow|C3": 7.3,
+    "claude_shallow|C4": 5.5,
+    "claude_shallow|C5": 6.0,
+    "gemini_deepresearch_max|C1": 3.667,
+    "gemini_deepresearch_max|C2": 4.9,
+    "gemini_deepresearch_max|C3": 6.3,
+    "gemini_deepresearch_max|C4": 4.8,
+    "gemini_deepresearch_max|C5": 5.7,
+    "gemini_shallow|C1": 3.4,
+    "gemini_shallow|C2": 4.1,
+    "gemini_shallow|C3": 6.3,
+    "gemini_shallow|C4": 4.8,
+    "gemini_shallow|C5": 5.7,
+    "openai_deepresearch|C1": 4.9,
+    "openai_deepresearch|C2": 7.0,
+    "openai_deepresearch|C3": 7.5,
+    "openai_deepresearch|C4": 6.5,
+    "openai_deepresearch|C5": 6.8,
+    "openai_shallow|C1": 5.1,
+    "openai_shallow|C2": 7.2,
+    "openai_shallow|C3": 7.7,
+    "openai_shallow|C4": 6.5,
+    "openai_shallow|C5": 6.9
   },
   "caveats": [
     "NO RANKING CLAIM IS MADE. On the science run, per-axis judge severity (3.32/3.20/3.74) EXCEEDED the entire between-entrant spread (2.06), so an ordering is not identifiable from a run of this design. This table is not a leaderboard.",
