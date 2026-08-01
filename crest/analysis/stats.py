@@ -477,7 +477,21 @@ def crossover_interaction(df, axis: str | None = None):
     for cat, sub in means.groupby(level=0):
         ordered = sub.droplevel(0).sort_values(ascending=False)
         rankings[str(cat)] = [(str(a), float(v)) for a, v in ordered.items()]
-    top_agent = {c: lst[0][0] for c, lst in rankings.items() if lst}
+    # TIES ARE NOT REVERSALS. `lst[0]` took whichever name sort_values left first, i.e. alphabetical
+    # order -- an artifact of naming, not of data. On run 2026-08-01T015432Z, C4 is an EXACT tie
+    # (openai_deepresearch 6.5000 == openai_shallow 6.5000) while every other category tops out at
+    # openai_shallow, so this reported rank_reversal=True -- the module's stated headline finding --
+    # on data containing no reversal. Renaming the tied agent to zz_* with IDENTICAL scores flipped it
+    # back to False: a pure relabeling moved the result. A category with a tied top has no single
+    # winner, so it cannot evidence a crossover; it is recorded and excluded.
+    top_agent, tied_cats = {}, []
+    for c, lst in rankings.items():
+        if not lst:
+            continue
+        if len(lst) > 1 and lst[0][1] == lst[1][1]:
+            tied_cats.append(c)
+            continue
+        top_agent[c] = lst[0][0]
     rank_reversal = len(set(top_agent.values())) > 1
 
     # Interaction F-test (may be non-estimable on a fully saturated design).
@@ -508,6 +522,9 @@ def crossover_interaction(df, axis: str | None = None):
         "rankings": rankings,
         "top_agent_by_category": top_agent,
         "rank_reversal": rank_reversal,
+        # Reported, never silently dropped: excluding a category from the reversal test is a
+        # narrowing of the evidence and has to be visible wherever the verdict is.
+        "categories_with_tied_top": sorted(tied_cats),
     }
 
 
@@ -851,6 +868,9 @@ def main():
         ptxt = "NA" if it["p"] is None else f"{it['p']:.3g}"
         print(f"  interaction F={Ftxt} p={ptxt} (df_resid={it['df_resid']})")
         print(f"  rank_reversal={res['rank_reversal']}  top_by_category={res['top_agent_by_category']}")
+        if res.get("categories_with_tied_top"):
+            print(f"    (excluded from the reversal test -- exact tie for top, so no single winner: "
+                  f"{res['categories_with_tied_top']})")
         for cat, rk in res["rankings"].items():
             print(f"    {cat}: " + ", ".join(f"{a}={v:.2f}" for a, v in rk))
 

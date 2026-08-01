@@ -215,7 +215,14 @@ PAPER_TEX=$(ls crest/paper/p2_benchmark_only/sections/*.tex crest/paper/p3_caesa
               crest/paper/p2_benchmark_only/main.tex crest/paper/p3_caesar_hybrid/main.tex 2>/dev/null)
 if [ -z "$PAPER_TEX" ]; then
   echo "  FAIL no paper .tex found -- claims checks cannot run"; fail=1
-fi
+else
+# The loop below MUST be inside this else. `grep -o PAT $PAPER_TEX` with PAPER_TEX empty gets NO FILE
+# OPERANDS, so grep falls back to STDIN: run from a terminal the gate blocks on the first pattern --
+# and stall_check.py shells out to this script with capture_output=True and no stdin=, so the stall
+# detector would hang with it. Run with stdin at EOF it instead prints ~30 "OK '<pat>' absent or
+# negated" lines for checks that read nothing. `fail=1` above means the gate still exits FAIL, so
+# this was never a silent pass -- but 30 green lines under a FAIL is exactly the reporting that the
+# header three lines up warns about, and the hang is worse than either.
 # These are ASSERTION patterns, not vocabulary. Grepping the single token "human-validated" left
 # 04_judge_validation.tex free to assert the study in present tense and different words -- "We
 # validate the panel against a human-expert consensus panel across all five categories", "the human
@@ -278,6 +285,7 @@ for pat in "human-validated" "human-expert consensus panel" "human panel is the 
   if [ "$hits" != "0" ]; then echo "  FAIL '$pat' asserted (not negated) x$hits"; fail=1;
   else echo "  OK '$pat' absent or negated"; fi
 done
+fi   # end: claims checks only run when PAPER_TEX is non-empty (see the grep-reads-stdin note above)
 echo "== compiled PDFs are not stale"
 # The papers' PDFs sat two days behind their sources while every honesty correction landed in the
 # .tex files. The PDF is what circulates, so a stale one silently re-asserts withdrawn claims.
@@ -308,6 +316,57 @@ if h != JUDGE_PROMPT_VERSION_HASH:
           f"or scores from old and new runs will be mixed silently.")
     sys.exit(1)
 print(f"  OK judge prompt matches stamp {JUDGE_PROMPT_VERSION} ({h})")
+PY2
+
+echo "== cached generations are still reachable (adapter_fp continuity)"
+# Born from a real, expensive miss. Commit 43f1cc10 rewrote ONE docstring line in agents.py --
+# `docs/notes/...` -> `doc/misc/...` -- as part of a directory rename. agents.py raw source is in the
+# adapter fingerprint, so that flipped adapter_src_hash off the head of the compat ledger's chain and
+# stranded all 250 cached crest_aiml generations: a measured 250/250 cache hits before, 0/250 after,
+# ~$450 to re-generate with 100 deep-research tasks at ~$6-9 each.
+# Nothing caught it. The gate had a billing check born from a cache-hit regression but no check that
+# the cache HITS, and `--dry-run` cannot see it either: evaluate() -- which prints "N served from
+# cache" -- is skipped, so the only pre-spend signal is the index SIZE, which is computed before any
+# fingerprint comparison and therefore does not move. The commit was verified with exactly that
+# insensitive number ("cache resolves 492 entries").
+# So this asserts the property directly: every entrant's CURRENT fingerprint, or one reachable from
+# it through a human-asserted ledger equivalence, matches a fingerprint some run actually recorded.
+python - <<'PY2' || fail=1
+import sys, json, glob, collections; sys.path.insert(0,'.')
+from crest.harness.agents import build_agent
+from crest.harness.cache import adapter_fingerprint, adapter_src_hash, compat_src_hashes, _fp_from_src_hash
+rec = collections.defaultdict(set)
+for f in glob.glob('crest/result/runs/*/records.jsonl'):
+    for l in open(f, encoding='utf-8'):
+        if l.strip():
+            r = json.loads(l)
+            if r.get('adapter_fp'):
+                rec[r['agent']].add(r['adapter_fp'])
+if not rec:
+    # NOT a vacuous OK: say which it is. result/runs/ is gitignored, so a fresh clone legitimately
+    # has nothing to check -- but so does a tree whose runs were deleted, and those must not read
+    # the same. The header of this script condemns exactly that conflation.
+    print("  OK no fingerprinted records on disk (fresh clone or gitignored runs) -- nothing to strand")
+    sys.exit(0)
+alts = compat_src_hashes(adapter_src_hash())
+bad = []
+for k in sorted(rec):
+    try:
+        a = build_agent(k, budget=6)
+    except Exception:
+        continue                       # a retired entrant's old records are not a continuity failure
+    fps = {adapter_fingerprint(a)} | {_fp_from_src_hash(a, x) for x in alts}
+    if not (fps & rec[k]):
+        bad.append(f"{k} (current {adapter_fingerprint(a)}, cached {sorted(rec[k])})")
+if bad:
+    print(f"  FAIL {len(bad)} entrant(s) can no longer reach any cached generation -- a re-run will "
+          f"RE-PAY for them. Either the adapter genuinely changed (then this is correct and expected), "
+          f"or an inert edit moved the source hash: {bad}")
+    print(f"       src hash {adapter_src_hash()}; ledger-reachable {alts or '[]'}. If the change "
+          f"cannot alter a generated answer, add a dated entry to config/adapter_fp_compat.yaml.")
+    sys.exit(1)
+print(f"  OK all {len(rec)} entrant(s) still reach their cached generations "
+      f"(src {adapter_src_hash()}, {len(alts)} ledger-equivalent hash(es))")
 PY2
 
 echo "== canary claims are human-approved"

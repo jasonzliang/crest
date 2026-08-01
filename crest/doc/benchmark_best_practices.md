@@ -87,7 +87,10 @@ sections; the judge protocol, model IDs, prompts and full transcripts are publis
 **Croissant and Croissant-RAI entirely** (no `croissant.json`, so the NeurIPS machine-readable-metadata
 desk-reject gate is not cleared), no HF/DOI hosting, no per-layer license, no Data Statement, no
 canary, no private tier, and — the one reviewers reject over — **no judge↔human agreement study**.
-`analysis/ci_check.sh` is the shipped analogue of the "green validator pass": it currently FAILS.
+`analysis/ci_check.sh` is the shipped analogue of the "green validator pass": it currently PASSES
+(44/44). Green is not release-ready — what still blocks release is in `doc/datasheet.md`, not in the
+gate — but the earlier "it currently FAILS" here was stale, and stale in the flattering direction of
+sounding more self-critical than the repo actually is.
 
 - Adopt the NeurIPS Evaluations & Datasets Track requirements as the release spec even if publishing elsewhere: ship (a) data+code accessible at submission, (b) valid core Croissant, (c) Croissant-RAI fields, (d) an executable, documented scoring harness. Before release, run the file through the MLCommons Croissant Validator (HF Space) and complete the RAI Editor — a green validator pass is the cheapest insurance against desk rejection.
 - Host CREST on Hugging Face (or OpenML/Dataverse) so the core Croissant file is auto-generated and you inherit a persistent DOI + citeAs. Set version using semver and populate dateModified. Publish a small OPEN sample split for reviewers/users while keeping the full scoring set gated (see contamination rec).

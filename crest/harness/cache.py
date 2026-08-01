@@ -18,7 +18,7 @@ a parser bug than a real answer, and caching one would make the bug permanent).
 Enabled by default; disable with `use_cache: false` in the config or `--override-cache` on the CLI.
 """
 from __future__ import annotations
-import hashlib, inspect, json
+import hashlib, inspect, json, pathlib
 from pathlib import Path
 
 
@@ -70,7 +70,10 @@ def _fp_from_src_hash(agent, src_hash: str) -> str:
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:10]
 
 
-def compat_src_hashes(current: str, path: str = "crest/config/adapter_fp_compat.yaml") -> list[str]:
+_LEDGER = pathlib.Path(__file__).resolve().parents[1] / "config" / "adapter_fp_compat.yaml"
+
+
+def compat_src_hashes(current: str, path: str | pathlib.Path = _LEDGER) -> list[str]:
     """Source hashes a human has ASSERTED in the ledger to be generation-equivalent to `current`.
 
     The ledger is the narrow escape hatch for the fingerprint's one real cost: an edit that cannot
@@ -81,9 +84,16 @@ def compat_src_hashes(current: str, path: str = "crest/config/adapter_fp_compat.
 
     Equivalence is symmetric and transitive, so a chain of assertions composes.
     """
-    import pathlib, collections
+    import collections
     p = pathlib.Path(path)
     if not p.exists():
+        # LOUD, and resolved against THIS FILE rather than the cwd. The default used to be the
+        # relative string "crest/config/adapter_fp_compat.yaml", so running run_eval.py from anywhere
+        # but the repo root -- which its own docstring promises is supported ("Runnable from any
+        # cwd") -- silently discarded every human-asserted equivalence and re-paid for generation
+        # with no message. Every other path in run_eval.py is resolved REPO-relative via _p().
+        print(f"  [WARNING: no adapter_fp compat ledger at {p}; every source change is treated as "
+              f"incompatible, so cached generations under a prior source hash will be RE-PAID for]")
         return []
     try:
         import yaml

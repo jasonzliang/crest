@@ -27,8 +27,20 @@ PAIR_RE = re.compile(r"^[ \t]*[-*]\s*OLD:\s*`(.+?)`[ \t]*$\n[ \t]*[-*]\s*NEW:\s*
 
 
 def parse_reports(notes_dir: Path) -> tuple[list, list]:
+    # FAIL CLOSED. Path.glob on a MISSING directory returns an empty iterator rather than raising, so
+    # this printed "staged corrections parsed: 0 / nothing to apply" and exited 0 -- a data-integrity
+    # tool reporting clean while seeing nothing. That is not hypothetical: the docs/notes -> doc/misc
+    # rename left the --notes default pointing at a directory that does not exist, and against the
+    # real one the same command parses 65 corrections.
+    if not notes_dir.is_dir():
+        raise SystemExit(f"--notes: {notes_dir} is not a directory. Refusing to report 'nothing to "
+                         f"apply' after reading no reports; that is indistinguishable from clean.")
+    reports = sorted(notes_dir.glob("audit_live_*.md"))
+    if not reports:
+        raise SystemExit(f"--notes: {notes_dir} contains no audit_live_*.md. Same reason: an empty "
+                         f"read must not look like a clean result.")
     out, truncated = [], []
-    for f in sorted(notes_dir.glob("audit_live_*.md")):
+    for f in reports:
         for m in PAIR_RE.finditer(f.read_text()):
             old, new = m.group(1), m.group(2)
             if not old or old == new:
@@ -45,7 +57,7 @@ def parse_reports(notes_dir: Path) -> tuple[list, list]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--challenges", default="crest/question/crest_challenges.jsonl")
-    ap.add_argument("--notes", default="crest/doc/notes")
+    ap.add_argument("--notes", default="crest/doc/misc")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     path = REPO / a.challenges

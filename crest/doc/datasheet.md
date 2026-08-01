@@ -66,10 +66,15 @@ measured *from a scored run* (endpoint means, correlations, ICC, judge severity)
     unrelated 50-item AI/ML set (`question/crest_aiml_challenges.jsonl`) validates against the
     same schema. **That set is not part of this datasheet**: it is not listed in
     `config/eval_config.yaml`, has no `item_design.jsonl` rows, is not covered by the item-vetting
-    or live-web audits, and has never been run or scored. It **is** now covered by
-    `analysis/ci_check.sh` for schema/loader validation and self-consistency (added 2026-07-31, when
-    it turned out to have zero references in that script); it is deliberately *not* held to the
-    release-artifact checks, and the promotion condition is recorded in the script. A union enum also means nothing now stops
+    or live-web audits. It **has** been run and scored, and both prior statements to the contrary
+    here were wrong: three runs exist on disk (243, 249 and 1 records, `benchmark: crest_aiml` in
+    their manifests) and their scores are promoted into **tracked**
+    `result/leaderboard.crest_aiml.json`. Those are the repo's only runs scored under judge prompt
+    **v3** — the science set's 250-record run is v1/v2 — so the AI/ML set is not "unused evidence",
+    it is the *newest* evidence, and no claim in this datasheet rests on it. It is **not** covered by
+    `analysis/ci_check.sh`: the schema/loader, sidecar-bijection and second-item-file checks were all
+    REMOVED from that script (see its header, lines 26-36), so the earlier claim of coverage "added
+    2026-07-31" describes a check that no longer exists. Its own run validates it on load. A union enum also means nothing now stops
     an arts/humanities item being tagged `systems_efficiency`.
   - **Enforcement.** The schema is validated on load (`harness/run_crest.py::load_challenges`), and
     `Challenge.from_json` **raises** on a missing `id`, `query`, `known_answers` or

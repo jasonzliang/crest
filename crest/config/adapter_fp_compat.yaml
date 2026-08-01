@@ -61,3 +61,28 @@ equivalences:
       single non-deductive step in this entry and is recorded as such.
       NOT included and NOT relevant: the errors.jsonl timestamp/pass fields live in run_crest.py,
       which is not part of the fingerprint at all.
+
+  - from: "1f86b6bd919a"        # head of the chain above -- the state that generated all 493
+                                # crest_aiml records across runs 193800Z, 015432Z and 031755Z
+    to:   "30d57e374361"        # HEAD after 43f1cc10 (the docs->doc rename) + the COI correction
+    date: "2026-07-31"
+    reason: >
+      DOCSTRING TEXT ONLY. Two hunks, both inside triple-quoted module/class docstrings, verified by
+      `git diff 43f1cc10^ -- crest/harness/agents.py crest/harness/keys.py`, which returns exactly
+      these two and nothing else. keys.py is byte-identical across the span.
+      (1) agents.py OpenAIDeepResearchAPI class docstring: the cross-reference
+      `docs/notes/deep_research_apis.md` -> `doc/misc/deep_research_apis.md`, a path fixup from the
+      directory rename in 43f1cc10.
+      (2) agents.py module docstring: the conflict-of-interest paragraph, which asserted "the
+      authors' own entrant ... is one entrant among many". That claim is false and was already
+      retracted in doc/datasheet.md; _REGISTRY holds commercial models only and `author_entrant` was
+      removed. Replaced with the correction.
+      Neither hunk is reachable by any code path: no prompt, model id, tool declaration, token limit,
+      reasoning-effort setting, temperature or response parser is touched, and a docstring is inert
+      at runtime. This is the exact case the ledger's rule 1 names ("comments ... qualify").
+      WHY IT MATTERS, and why this entry is not cosmetic: 1f86b6bd919a is the head of the chain
+      above, so without this assertion the one-line rename in (1) stranded all 250 cached crest_aiml
+      generations -- a measured 250/250 cache hits before 43f1cc10 and 0/250 after, ~$450 to
+      re-generate, 100 of those tasks being deep-research at ~$6-9 each. The intermediate hash
+      ec4cdd29395a (after (1), before (2)) is deliberately not listed: no generation was ever made
+      under it, and transitivity through this entry covers it if one ever is.

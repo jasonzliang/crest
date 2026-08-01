@@ -40,8 +40,11 @@ A further asymmetry the metric cannot see: the OpenAI deep arm's main purchased 
 REASONING tokens (~13.8k vs ~2.5k), and `_judge_prompt` receives only `report.text`. The judge never
 sees what the extra money bought.
 
-Model IDs are pinned per entrant in `_REGISTRY`. The authors' own entrant (cited prior work) is
-one entrant among many; it must not be privileged and all findings must hold with it removed.
+Model IDs are pinned per entrant in `_REGISTRY`. There is NO author-built entrant: `_REGISTRY` holds
+commercial models only, and `author_entrant` was removed. The retracted version of this paragraph
+claimed the authors' own agent was "one entrant among many", which was false and is corrected in
+`doc/datasheet.md` -- it is restated here because a reviewer grepping the code for the conflict of
+interest would otherwise find the withdrawn claim and not the correction.
 """
 from __future__ import annotations
 import dataclasses, json, os, re

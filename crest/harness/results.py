@@ -204,7 +204,21 @@ def finalize_run(result_root, run_dir: Path, run_id: str, records: list, manifes
     summary = compute_summary(records)
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     errf = run_dir / "errors.jsonl"
-    n_task_errors = sum(1 for _ in open(errf, encoding="utf-8")) if errf.exists() else 0
+    # DISTINCT failing tasks, not raw rows. A task that fails in the main pass and fails AGAIN in the
+    # auto-sweep writes two rows for one task, and a task that fails then RECOVERS leaves its main-pass
+    # row in place on purpose (run_crest keeps it as the evidence the retry was needed). Counting lines
+    # made run 2026-08-01T015432Z report n_records=249 + n_task_errors=2 -- parts summing to 251 of
+    # 250 -- for a single failing task, and would report a lost task on a run that lost none.
+    n_task_errors = 0
+    if errf.exists():
+        failed, recovered = set(), {r["record_id"] for r in records if r.get("record_id")}
+        for line in open(errf, encoding="utf-8"):
+            if line.strip():
+                try:
+                    failed.add(json.loads(line).get("record_id"))
+                except json.JSONDecodeError:
+                    n_task_errors += 1          # unparseable row: count it rather than lose it
+        n_task_errors += len(failed - recovered - {None})
     manifest = {**manifest,
                 "completed_at": _utc_now().isoformat(),
                 "status": "completed" if records else "failed",   # empty run is a FAILED run, not a clean one

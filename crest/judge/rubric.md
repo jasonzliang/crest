@@ -1,7 +1,7 @@
 # CREST Judge Rubric — New / Useful / Surprising (all three primary)
 
 > **This file is the human-readable mirror of the deployed prompt, `judge/score.py::_judge_prompt`
-> (`JUDGE_PROMPT_VERSION = v2`, hash `e2ce119c`, gated by `analysis/ci_check.sh`).** It has drifted
+> (`JUDGE_PROMPT_VERSION = v3`, hash `d4c68e7b`, gated by `analysis/ci_check.sh`).** It has drifted
 > before, so it is maintained clause-by-clause against that function. Where the two disagree, **the
 > code is authoritative and this file is the bug.** Last diffed at commit `af65640` (2026-07-31).
 
@@ -34,7 +34,10 @@ Nothing else reaches the judge on a scoring run. In particular **`expert_baselin
 name, and every other entrant's answer are all withheld** — `expert_baseline` reappears as a fifth
 block only under the `restore_expert_baseline` ablation arm, which exists to reproduce the
 pre-withdrawal condition. The judge returns one JSON object —
-`{"new", "useful", "surprising", "hard_rules_violated", "rationale" (≤40 words)}` — and no prose.
+`{"new", "useful", "surprising", "rule_compliance", "hard_rules_violated", "prior_art_omitted",
+"rationale" (≤40 words)}` — and no prose. `rule_compliance` (0-10) and `prior_art_omitted` are v3
+additions: rule conformance is its own axis and must **not** cap Useful, and a judge that knows prior
+art the dated list omits names it there rather than silently scoring against it.
 
 **Panel and aggregation** (`judge/score.py::JudgePanel`, `judge/judge_config.live.yaml`):
 
@@ -48,7 +51,7 @@ pre-withdrawal condition. The judge returns one JSON object —
 - **No answer-order randomization** — not an unimplemented control but a *vacuous* one: scoring is
   single-answer, not pairwise, so there is no order to randomize. The claim has been withdrawn
   rather than left standing. Known-answer-list order and axis order are also **not** randomized.
-- Per-axis scores are aggregated by **median** across surviving judges. Below `min_judges: 2` the
+- Per-axis scores are aggregated by **median** across surviving judges. Below `min_judges: 3` the
   record is flagged `judge_degraded` rather than silently averaged; if every judge fails the record
   is `judge_error` with `creativity: null` — never a fake 0.
 
@@ -107,8 +110,10 @@ and the reference set is published so any omission can be contested.
   below.)*
 - Hard rules are checked **by the judge, in-prompt** — there is no deterministic pre-filter. The
   only programmatic rule checking that ships is `analysis/validate_items.py`, which tests items
-  against *themselves* (it currently reports 2 BLOCKING contradictions, both in
-  `C1_materials_chemistry_01`), not answers against rules.
+  against *themselves* (it currently reports **0** mechanical contradictions across all 50 items;
+  the 2 it once reported in `C1_materials_chemistry_01` were fixed), not answers against rules. A
+  clean result there means no *mechanical* contradiction was found — semantic rule/baseline
+  conflicts are not decidable by it, as the tool's own footer says.
 - *Not a judge instruction:* "Useful gates New" is an **aggregation** property, delivered by the
   `min` endpoint, not a clause in the prompt. The prompt's only anti-nonsense instruction is "Do
   NOT reward nonsense", attached to Surprising.
