@@ -1,0 +1,43 @@
+# ADAPTER FINGERPRINT COMPATIBILITY LEDGER
+#
+# WHY THIS EXISTS. cache.py::adapter_fingerprint hashes the RAW SOURCE of harness/agents.py and
+# harness/keys.py. That is deliberate and sound -- two cleverer schemes were tried and both were
+# unsound in the expensive direction (per-class getsource missed inherited methods and module-level
+# helpers; comment-stripping was not stable across Python versions, and PEP 701 changed f-string
+# tokenization inside the SUPPORTED range). See that function's docstring.
+#
+# The price is that ANY edit to either module invalidates every cached generation, including edits
+# that cannot possibly change a generated answer. That price came due on 2026-07-31: a retry-policy
+# change stranded 243 paid generations, which made recovering 7 failed records cost a full re-run.
+#
+# This ledger is the narrow escape hatch. A human may ASSERT that a specific source-hash transition
+# was generation-neutral, with a reason, once, in a reviewable file. Nothing is inferred: the default
+# stays "different source => different fingerprint => re-generate".
+#
+# RULES FOR ADDING AN ENTRY -- read before you do.
+#   1. The change must be incapable of altering what a model returns. Retry policy, key pooling,
+#      cooldowns, logging, comments, type hints, and error-message text qualify. ANYTHING that
+#      touches a prompt, a model id, a tool declaration, a token limit, a reasoning-effort setting,
+#      a temperature, or the parsing of a response DOES NOT, no matter how small it looks.
+#   2. Diff the two commits before asserting. Record the commit range in `reason`.
+#   3. If you are unsure, do not add the entry. Re-generating costs money; a wrong entry silently
+#      attributes answers to code that did not produce them, which is the failure the fingerprint
+#      exists to prevent and is not detectable afterwards.
+#
+# Equivalence is treated as transitive and symmetric, so a chain A->B->C makes A and C equivalent.
+# Cache hits served through an assertion are logged, and the serving record carries
+# `adapter_fp_compat` naming the source hash it was actually generated under.
+
+equivalences:
+  - from: "35a422715024"        # abae78a -- the source state that produced run 2026-07-31T193800Z.
+                                # VERIFIED, not assumed: this hash reproduces the `adapter_fp`
+                                # recorded in that run on 5 of 5 sampled records.
+    to:   "904217d03a66"        # HEAD after 050e59d + 66a1c80
+    date: "2026-07-31"
+    reason: >
+      Commits 050e59d and 66a1c80. agents.py gained a `_GEMINI_DR_FLAKY` tuple, an `extra=` parameter
+      on `_retry`, and `extra=_GEMINI_DR_FLAKY, attempts=3` on the Gemini deep-research
+      interactions.create call. keys.py gained a provider-wide cooldown gate. All of it is retry and
+      rate-limit policy: it changes whether a call is re-attempted after a failure, never what is
+      sent or how a response is parsed. No prompt, model id, tool declaration, token limit or
+      reasoning setting was touched. Verified by diffing agents.py and keys.py across abae78a..66a1c80.

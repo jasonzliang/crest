@@ -243,6 +243,11 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
                                                # (max_tokens, effort, tool caps, system prompt)
         "generation_cached": cached,           # True => generation reused, not re-paid for
         "cache_source_run": getattr(report, "source_run", None) if cached else None,
+        # Non-null ONLY when the answer was served through an assertion in
+        # config/adapter_fp_compat.yaml: it names the source hash the answer was actually generated
+        # under, so `adapter_fp` above (which records the CURRENT state) is never the only provenance
+        # a mixed record carries.
+        "adapter_fp_compat": getattr(report, "adapter_fp_compat", None) if cached else None,
         # NB output_len_tokens is the provider's BILLED output count, which for reasoning models
         # INCLUDES invisible reasoning tokens. Measured tokens-per-visible-word: openai_shallow 2.0,
         # openai_deepresearch 6.1, gemini_deepresearch_max 10.0, claude_shallow 13.8 -- so it is NOT
@@ -299,6 +304,8 @@ def evaluate(challenges, agents: dict, panel: JudgePanel, run_dir, run_id, concu
     # Doing it here also warms the memo, so it costs one getsource pair per adapter, not per task.
     for _a in agents.values():
         _fingerprint_for(_a)
+    if cache:
+        cache.register_compat(agents)
     tasks = [(ch, name, agent) for ch in challenges for name, agent in agents.items()]
     records = []
     n_cached = sum(1 for ch, name, a in tasks

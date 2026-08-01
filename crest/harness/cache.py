@@ -51,14 +51,58 @@ def adapter_fingerprint(agent) -> str:
     saving was always hypothetical (no run has yet written an adapter_fp, so the cache has served
     exactly zero entries to date), while both attempts at it produced silent-correctness bugs. Raw
     source is sound, version-stable, and one line."""
+    return _fp_from_src_hash(agent, adapter_src_hash())
+
+
+def adapter_src_hash() -> str:
+    """The 12-char raw-source hash of the modules a generation runs through."""
     from crest.harness import agents as A
     from crest.harness import keys as K
     # keys.py is in the key because ClaudeShallowResearch.run goes through call_anthropic: the pool,
     # its cooldown and its exhaustion handling all affect whether and how a generation completes.
     src = "".join(_module_source(m) for m in (A, K))
+    return hashlib.sha256(src.encode()).hexdigest()[:12]
+
+
+def _fp_from_src_hash(agent, src_hash: str) -> str:
     parts = [type(agent).__name__, getattr(agent, "model", ""), str(getattr(agent, "budget", "")),
-             hashlib.sha256(src.encode()).hexdigest()[:12]]
+             src_hash]
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:10]
+
+
+def compat_src_hashes(current: str, path: str = "crest/config/adapter_fp_compat.yaml") -> list[str]:
+    """Source hashes a human has ASSERTED in the ledger to be generation-equivalent to `current`.
+
+    The ledger is the narrow escape hatch for the fingerprint's one real cost: an edit that cannot
+    change a generated answer -- retry policy, key pooling, a comment -- still invalidates every
+    cached generation. On 2026-07-31 that stranded 243 paid generations and turned the recovery of 7
+    failed records into a full re-run. Nothing here is inferred; absent an explicit dated assertion
+    with a reason, a different source hash means re-generate, as before.
+
+    Equivalence is symmetric and transitive, so a chain of assertions composes.
+    """
+    import pathlib, collections
+    p = pathlib.Path(path)
+    if not p.exists():
+        return []
+    try:
+        import yaml
+        doc = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    except Exception as e:                      # a malformed ledger must not silently widen the
+        print(f"  [WARNING: adapter_fp_compat unreadable ({type(e).__name__}); "
+              f"treating every source change as incompatible]")
+        return []                               # cache -- fail CLOSED, back to strict behaviour
+    adj = collections.defaultdict(set)
+    for e in (doc.get("equivalences") or []):
+        a, b = str(e.get("from", "")), str(e.get("to", ""))
+        if a and b:
+            adj[a].add(b); adj[b].add(a)
+    seen, stack = {current}, [current]          # transitive closure
+    while stack:
+        for nxt in adj[stack.pop()]:
+            if nxt not in seen:
+                seen.add(nxt); stack.append(nxt)
+    return [h for h in seen if h != current]
 
 
 def _module_source(mod) -> str:
@@ -97,7 +141,7 @@ class CachedOutput:
     # cache hit. That is the worst possible case to lose them in -- 196 of the science run's 250
     # records were cache-served, so the normal path would be the unpriceable one.
     __slots__ = ("text", "citations", "n_tokens", "n_searches", "truncated", "source_run",
-                 "tokens", "billed_tools", "calls", "usage_raw")
+                 "tokens", "billed_tools", "calls", "usage_raw", "adapter_fp_compat")
     # `truncated` is keyword-only: AgentOutput's 5th positional is `truncated` while this class's is
     # `source_run`, so a positional call would silently swap them between the two duck-typed classes.
     def __init__(self, text, citations, n_tokens, n_searches, source_run, *, truncated=False,
@@ -106,6 +150,7 @@ class CachedOutput:
         self.n_tokens, self.n_searches = n_tokens, n_searches
         self.truncated = bool(truncated)
         self.source_run = source_run
+        self.adapter_fp_compat = None   # set by Index.get when served via the compat ledger
         self.tokens = dict(tokens or {})
         self.billed_tools = dict(billed_tools or {})
         self.calls = list(calls or [])
@@ -126,9 +171,28 @@ class GenerationCache:
         self.trust_legacy = trust_legacy
         self.enabled = enabled
         self._idx: dict[str, dict] = {}
+        self._compat_fps: dict = {}   # (agent_key, model) -> [(alt_fp, alt_src_hash), ...]
         self.n_runs = 0
         if enabled:
             self._build(Path(result_root), verbose)
+
+    def register_compat(self, agents: dict) -> None:
+        """Precompute the alternate fingerprints permitted by the compatibility ledger.
+
+        Called once per run with the live adapters, because an alternate fingerprint depends on the
+        adapter's class/model/budget as well as the source hash. Silent when the ledger asserts
+        nothing, which is the default state.
+        """
+        cur = adapter_src_hash()
+        alts = compat_src_hashes(cur)
+        if not alts:
+            return
+        for name, agent in agents.items():
+            self._compat_fps[(name, getattr(agent, "model", ""))] = [
+                (_fp_from_src_hash(agent, h), h) for h in alts]
+        print(f"  adapter-fp compat: {len(alts)} asserted generation-neutral source hash(es) "
+              f"({', '.join(alts)}) -- cached answers from those states are reusable; see "
+              f"config/adapter_fp_compat.yaml for the assertion and its reason")
 
     def _build(self, result_root: Path, verbose: bool) -> None:
         runs = result_root / "runs"
@@ -202,15 +266,28 @@ class GenerationCache:
         if not self.enabled:
             return None
         hit = self._idx.get(cache_key(challenge_id, agent_key, model, q_sha, fp))
+        compat_from = None
+        if hit is None and self._compat_fps:
+            # A human-asserted generation-neutral source change (config/adapter_fp_compat.yaml).
+            # Logged, and stamped onto the record as `adapter_fp_compat`, so an answer served this
+            # way names the source hash it was ACTUALLY produced under rather than silently
+            # inheriting the current one.
+            for alt_fp, alt_src in self._compat_fps.get((agent_key, model), []):
+                hit = self._idx.get(cache_key(challenge_id, agent_key, model, q_sha, alt_fp))
+                if hit is not None:
+                    compat_from = alt_src
+                    break
         if hit is None and self.trust_legacy:      # fall back to a pre-fingerprint entry
             hit = self._idx.get(cache_key(challenge_id, agent_key, model, q_sha, ""))
         if hit is None:
             return None
-        return CachedOutput(hit["text"], hit["citations"], hit["n_tokens"],
-                            hit["n_searches"], hit["source_run"],
-                            truncated=hit.get("truncated", False),
-                            tokens=hit.get("tokens"), billed_tools=hit.get("billed_tools"),
-                            calls=hit.get("calls"), usage_raw=hit.get("usage_raw"))
+        out = CachedOutput(hit["text"], hit["citations"], hit["n_tokens"],
+                           hit["n_searches"], hit["source_run"],
+                           truncated=hit.get("truncated", False),
+                           tokens=hit.get("tokens"), billed_tools=hit.get("billed_tools"),
+                           calls=hit.get("calls"), usage_raw=hit.get("usage_raw"))
+        out.adapter_fp_compat = compat_from
+        return out
 
     def __len__(self) -> int:
         return len(self._idx)
