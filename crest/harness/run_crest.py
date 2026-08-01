@@ -15,6 +15,7 @@ For config-driven, multi-agent runs, prefer:  python crest/run_eval.py
 """
 from __future__ import annotations
 import argparse, json, dataclasses, threading, collections
+import time as _time
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -203,10 +204,18 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
                                      # computed even with the cache off (see evaluate's warming loop)
     report = cache.get(ch.id, name, agent.model, q_sha, fp) if cache else None
     cached = report is not None
+    gen_seconds = None
     if not cached:
         if name in cb["dead"]:                                # provider disabled -> skip cheaply
             raise RuntimeError(f"circuit_open:{name}")
+        # Time the generation. Records carried NO duration field at all, so the only per-task timing
+        # anyone had was a vendor doc string ("up to ~30 min") which is contradicted three lines
+        # below it in agents.py by our own observation of a task still in_progress at 3900s. Two
+        # runs of deep-research data existed and the distribution was unmeasurable from them; a
+        # 15-minute cap got set on that basis and killed a task that had already succeeded at create.
+        _t0 = _time.monotonic()
         report = agent.run(ch.query)                          # may raise -> handled by caller
+        gen_seconds = round(_time.monotonic() - _t0, 1)
     gate = grounding_gate(report)
     # Judge failures must NEVER reach the agent circuit breaker. panel.score() swallows per-judge
     # errors, but anything else it raises (LOFO leaving no judges, a client construction error, a
@@ -249,6 +258,9 @@ def _one_task(ch, name, agent, panel, run_id, cb, cache=None):
         # under, so `adapter_fp` above (which records the CURRENT state) is never the only provenance
         # a mixed record carries.
         "adapter_fp_compat": getattr(report, "adapter_fp_compat", None) if cached else None,
+        # None on a cache hit: the stored answer was generated in some earlier run, and
+        # attributing that run's wall-clock to this one would be a fabricated measurement.
+        "gen_seconds": gen_seconds,
         # NB output_len_tokens is the provider's BILLED output count, which for reasoning models
         # INCLUDES invisible reasoning tokens. Measured tokens-per-visible-word: openai_shallow 2.0,
         # openai_deepresearch 6.1, gemini_deepresearch_max 10.0, claude_shallow 13.8 -- so it is NOT
