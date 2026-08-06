@@ -1,0 +1,18 @@
+# CREST runtime dependencies (complete — this repo is self-contained).
+#
+# jsonschema and pyyaml are LOAD-BEARING FOR CORRECTNESS, not convenience:
+# harness/run_crest.py RAISES without them. A missing jsonschema silently disabled item
+# validation, and a missing pyyaml silently re-admitted every quarantined item.
+jsonschema>=4.0
+pyyaml>=6.0
+
+# entrant + judge SDKs
+anthropic
+openai
+google-genai>=2.16.0
+
+# analysis
+numpy
+scipy
+pandas
+statsmodels        # MixedLM for the crossed random-effects models
