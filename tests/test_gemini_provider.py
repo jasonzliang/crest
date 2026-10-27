@@ -106,7 +106,7 @@ def test_expired_resume_recovers_completed_paid_answer_before_enforcing_timeout(
     assert job.state["remote_status"] == "completed"
 
 
-@pytest.mark.parametrize("status", ["incomplete", "failed", "cancelled", "requires_action", "queued", "unknown", None])
+@pytest.mark.parametrize("status", ["incomplete", "failed", "cancelled", "requires_action", "unknown", None])
 def test_only_exact_completed_is_successful(tmp_path, status):
     job = FakeJob(tmp_path)
     raw = completed(status=status)
@@ -158,13 +158,14 @@ def test_poll_failure_keeps_remote_id_for_resume(tmp_path):
     assert run(lambda r: httpx.Response(200, json=completed()), job)["text"]
 
 
-def test_timeout_uses_durable_elapsed_time_and_cancels(tmp_path):
+@pytest.mark.parametrize("active_status", ["in_progress", "queued"])
+def test_timeout_uses_durable_elapsed_time_and_cancels(tmp_path, active_status):
     job = FakeJob(tmp_path, remote_id="research-1", submitted_at=time.time() - 100)
     calls = []
     def handler(request):
         calls.append((request.method, request.url.path))
         if request.method == "GET":
-            return httpx.Response(200, json={"id": "research-1", "status": "in_progress"})
+            return httpx.Response(200, json={"id": "research-1", "status": active_status})
         return httpx.Response(200, json={"id": "research-1", "status": "cancelled"})
     with pytest.raises(TimeoutError):
         run(handler, job, settings={"timeout_seconds": 1})
@@ -322,6 +323,80 @@ def test_completed_response_with_missing_thought_usage_has_unknown_judge_cost(tm
     raw["usage"].pop("total_thought_tokens")
     raw["usage"]["grounding_tool_count"] = []
     result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge")
+    assert result["cost_usd"] is None
+    assert result["cost_estimated"] is False
+
+
+@pytest.mark.parametrize("resume", [False, True])
+def test_argon_queued_submission_resume_and_poll_complete_without_resubmission(tmp_path, resume):
+    from crest.judging import SCHEMA
+    verdict = {criterion: {"reason": "A develops the clearer idea", "winner": "A"}
+               for criterion in ("new", "useful", "surprising")}
+    job = FakeJob(tmp_path, **({"remote_id": "research-1", "submitted_at": time.time()} if resume else {}))
+    calls = []
+    statuses = iter(["queued", "queued", "in_progress", "completed"])
+
+    def handler(request):
+        calls.append(request.method)
+        if request.method == "POST":
+            body = json.loads(request.content)
+            assert body["model"] == "gemini-4-argon"
+            assert body["generation_config"] == {"thinking_level": "high", "max_output_tokens": 32768}
+            assert body["response_format"]["schema"] == SCHEMA
+            assert "tools" not in body
+        status = next(statuses)
+        raw = completed(json.dumps(verdict), status=status, model="gemini-4-argon", created="2026-10-26T12:00:00Z")
+        raw["usage"]["grounding_tool_count"] = []
+        return httpx.Response(200, json=raw)
+
+    result = run(handler, job, method="judge", settings={"model": "gemini-4-argon", "max_output_tokens": 32768})
+    assert calls == (["GET"] * 4 if resume else ["POST", "GET", "GET", "GET"])
+    assert json.loads(result["text"]) == verdict
+    assert job.state["remote_status"] == "completed"
+
+
+@pytest.mark.parametrize("created,input_rate,cached_rate,output_rate,pricing_date", [
+    ("2026-11-30T23:59:59Z", 2, .1, 10, "2026-11-30"),
+    ("2026-12-01T00:00:00Z", 4, .2, 20, "2026-12-01"),
+    ("2026-12-01T00:30:00+01:00", 2, .1, 10, "2026-11-30"),
+])
+@pytest.mark.parametrize("inputs", [1000, 200001])
+def test_argon_dated_single_context_price_bills_reasoning_once(
+    tmp_path, created, input_rate, cached_rate, output_rate, pricing_date, inputs,
+):
+    raw = completed(model="gemini-4-argon", created=created)
+    raw["usage"].update(total_input_tokens=inputs, grounding_tool_count=[])
+    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge",
+                 settings={"model": "gemini-4-argon"})
+    assert result["cost_usd"] == pytest.approx(
+        ((inputs - 100) * input_rate + 100 * cached_rate + (200 + 50) * output_rate) / 1_000_000
+    )
+    assert result["cost_estimated"] is True
+    assert result["pricing_date"] == pricing_date
+    assert result["pricing_date_source"] == "response.created"
+    assert result["usage"]["output_tokens"] == 200
+    assert result["usage"]["reasoning_tokens"] == 50
+
+
+@pytest.mark.parametrize("created", [None, "invalid timestamp"])
+def test_argon_missing_creation_date_records_explicit_utc_pricing_fallback(tmp_path, monkeypatch, created):
+    module = importlib.import_module("crest.providers.gemini")
+    monkeypatch.setattr(module.time, "time", lambda: 1796083200.0)  # 2026-12-01 UTC
+    raw = completed(model="gemini-4-argon", created=created)
+    raw["usage"]["grounding_tool_count"] = []
+    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge",
+                 settings={"model": "gemini-4-argon"})
+    assert result["pricing_date"] == "2026-12-01"
+    assert result["pricing_date_source"] == "processing_date_utc"
+    assert result["cost_usd"] == pytest.approx((900 * 4 + 100 * .2 + 250 * 20) / 1_000_000)
+    assert any("creation" in warning.lower() for warning in result["warnings"])
+
+
+def test_unknown_judge_model_remains_unpriced(tmp_path):
+    raw = completed(model="gemini-unknown", created="2026-11-30T00:00:00Z")
+    raw["usage"]["grounding_tool_count"] = []
+    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge",
+                 settings={"model": "gemini-unknown"})
     assert result["cost_usd"] is None
     assert result["cost_estimated"] is False
 

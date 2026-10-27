@@ -20,6 +20,8 @@ SETTINGS = frozenset({
     "rome_path", "model", "exploration_model", "kb_model", "embedding_model",
     "reasoning_effort", "exploration_reasoning_effort", "kb_reasoning_effort",
     "synthesis_reasoning_effort", "max_iterations", "max_depth",
+    "adapt_role", "use_quick_explore", "quick_explore_insights", "quick_explore_workers",
+    "synthesis_merge_artifacts", "save_graph_interval",
     "additional_starting_queries", "max_web_searches", "synthesis_drafts",
     "synthesis_iterations", "retrieval_chunks", "max_completion_tokens",
     "exploration_max_completion_tokens", "kb_max_completion_tokens", "max_input_tokens",

@@ -606,3 +606,57 @@ def test_cancellation_after_create_dispatch_stays_ambiguous_and_never_reposts(tm
 
     asyncio.run(exercise())
     assert calls == ["POST"]
+
+
+@pytest.mark.parametrize(
+    "input_tokens,cached_tokens,cache_write_tokens,output_tokens,expected_cost",
+    [
+        (1000, 0, 0, 1000, .06),
+        (1000, 200, 100, 300, .02345),
+        (1000, 1000, 0, 0, .001),
+        (1000, 0, 1000, 0, .0125),
+        (272000, 2000, 1000, 1000, 2.7545),
+        (300000, 20000, 10000, 1000, 5.765),
+    ],
+)
+def test_astra_judge_billing_uses_exact_standard_cache_and_context_rates(
+    tmp_path, input_tokens, cached_tokens, cache_write_tokens, output_tokens, expected_cost
+):
+    raw = completed(model="gpt-6-astra", usage={
+        "input_tokens": input_tokens,
+        "input_tokens_details": {"cached_tokens": cached_tokens, "cache_write_tokens": cache_write_tokens},
+        "output_tokens": output_tokens,
+        "output_tokens_details": {"reasoning_tokens": output_tokens // 2},
+        "total_tokens": input_tokens + output_tokens,
+    })
+
+    def handler(request):
+        payload = json.loads(request.content)
+        assert payload["model"] == "gpt-6-astra"
+        assert payload["reasoning"] == {"effort": "high"}
+        assert payload["service_tier"] == "default"
+        assert not payload.get("tools")
+        return httpx.Response(200, json=raw)
+
+    result = invoke(handler, FakeJob(tmp_path), {"model": "gpt-6-astra", "reasoning_effort": "high"}, judge=True)
+    assert result["cost_usd"] == pytest.approx(expected_cost)
+    assert result["cost_estimated"] is True
+    assert result["usage"]["cached_input_tokens"] == cached_tokens
+    assert result["usage"]["cache_write_tokens"] == cache_write_tokens
+    assert result["usage"]["output_tokens"] == output_tokens
+    assert result["raw"] == raw
+
+
+@pytest.mark.parametrize("changes", [
+    {"model": "unrecognized-model"},
+    {"service_tier": "fast"},
+    {"usage": None},
+    {"usage": {"input_tokens": 1000}},
+])
+def test_astra_billing_keeps_unsupported_or_missing_price_inputs_unknown(tmp_path, changes):
+    raw = completed(model="gpt-6-astra")
+    raw.update(changes)
+    result = invoke(lambda request: httpx.Response(200, json=raw), FakeJob(tmp_path),
+                    {"model": "gpt-6-astra"}, judge=True)
+    assert result["cost_usd"] is None
+    assert any("Cost unknown" in warning for warning in result["warnings"])

@@ -27,11 +27,14 @@ DEFAULTS = {
     'research': {
         'caesar': {
             'rome_path': '../rome', 'python_executable': sys.executable,
-            'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6.1-sol',
-            'kb_model': 'gpt-6.1-sol', 'budget_usd': 5.0, 'handler_budget_usd': 4.0,
-            'max_iterations': 30, 'synthesis_drafts': 2, 'synthesis_iterations': 5,
+            'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna',
+            'kb_model': 'gpt-6-luna', 'budget_usd': 5.0, 'handler_budget_usd': 5.0,
+            'max_iterations': 250, 'synthesis_drafts': 3, 'synthesis_iterations': 15,
+            'additional_starting_queries': 11, 'use_quick_explore': True,
+            'quick_explore_insights': True, 'quick_explore_workers': 2,
+            'adapt_role': True, 'synthesis_merge_artifacts': True,
             'max_completion_tokens': 6000, 'exploration_max_completion_tokens': 2000,
-            'synthesis_reserve_usd': 1.5,
+            'synthesis_reserve_usd': 3.0,
             'timeout_seconds': 7200, 'initial_concurrency': 1, 'concurrency': 4, 'revision': 1,
         },
         'openai': {
@@ -48,11 +51,11 @@ DEFAULTS = {
         },
     },
     'judges': {
-        'openai': {'model': 'gpt-6.1-sol', 'reasoning_effort': 'medium',
-                   'max_output_tokens': 12000, 'timeout_seconds': 900,
+        'openai': {'model': 'gpt-6-astra', 'reasoning_effort': 'high',
+                   'max_output_tokens': 32768, 'timeout_seconds': 900,
                    'poll_interval_seconds': 3, 'initial_concurrency': 4, 'concurrency': 16, 'revision': 1},
-        'gemini': {'model': 'gemini-3.1-pro-preview', 'thinking_level': 'high',
-                   'max_output_tokens': 12000, 'timeout_seconds': 900,
+        'gemini': {'model': 'gemini-4-argon', 'thinking_level': 'high',
+                   'max_output_tokens': 32768, 'timeout_seconds': 900,
                    'poll_interval_seconds': 3, 'initial_concurrency': 4, 'concurrency': 16, 'revision': 1},
     },
     'analysis': {'bootstrap_samples': 1000, 'seed': 2026, 'workers': 0},
@@ -93,10 +96,18 @@ def load_config(path: Path | str = ROOT / 'crest.yaml') -> dict:
         for name, settings in config[section].items():
             for key in ('concurrency', 'initial_concurrency', 'retry_attempts', 'max_output_tokens', 'max_tool_calls', 'max_iterations',
                         'synthesis_drafts', 'synthesis_iterations', 'max_completion_tokens',
-                        'exploration_max_completion_tokens'):
+                        'exploration_max_completion_tokens', 'quick_explore_workers'):
                 if key in settings and (isinstance(settings[key], bool) or
                                         not isinstance(settings[key], int) or settings[key] < 1):
                     raise ValueError(f'{section}.{name}.{key} must be a positive integer')
+            if 'additional_starting_queries' in settings and (
+                    type(settings['additional_starting_queries']) is not int or
+                    settings['additional_starting_queries'] < 0):
+                raise ValueError(f'{section}.{name}.additional_starting_queries must be a nonnegative integer')
+            for key in ('use_quick_explore', 'quick_explore_insights', 'adapt_role',
+                        'synthesis_merge_artifacts'):
+                if key in settings and not isinstance(settings[key], bool):
+                    raise ValueError(f'{section}.{name}.{key} must be a boolean')
             if settings['initial_concurrency'] > settings['concurrency']:
                 settings['initial_concurrency'] = settings['concurrency']
             for key in ('budget_usd', 'handler_budget_usd', 'timeout_seconds', 'poll_interval_seconds',

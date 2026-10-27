@@ -29,8 +29,8 @@ class Job:
 
 def artifact(**changes):
     return {"abstract": "An abstract.", "artifact": "Full finding [1], including its last line.",
-            "sources": {"https://example.test/paper": 1}, "num_drafts": 2,
-            "metadata": {"synthesis_queries": 5}, **changes}
+            "sources": {"https://example.test/paper": 1}, "num_drafts": 3,
+            "metadata": {"synthesis_queries": 15}, **changes}
 
 
 def completed():
@@ -42,24 +42,29 @@ def completed():
 def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     first = worker.build_config("Q", {}, tmp_path / "one", "abc")
     second = worker.build_config("Q", {"exploration_model": "custom-explore", "kb_model": "custom-kb"}, tmp_path / "two", "def")
-    assert first["CaesarAgent"]["max_iterations"] == 30
+    assert first["CaesarAgent"]["max_iterations"] == 250
     assert first["CaesarAgent"]["max_depth"] == 6
-    assert first["CaesarAgent"]["additional_starting_queries"] == 3
+    assert first["CaesarAgent"]["use_quick_explore"] is True
+    assert first["CaesarAgent"]["quick_explore_insights"] is True
+    assert first["CaesarAgent"]["quick_explore_workers"] == 2
+    assert first["CaesarAgent"]["adapt_role"] is True
+    assert first["ArtifactSynthesizer"]["synthesis_merge_artifacts"] is True
+    assert first["CaesarAgent"]["additional_starting_queries"] == 11
     assert first["CaesarAgent"]["max_web_searches"] == 5
-    assert first["ArtifactSynthesizer"]["synthesis_drafts"] == 2
-    assert first["ArtifactSynthesizer"]["synthesis_iterations"] == 5
+    assert first["ArtifactSynthesizer"]["synthesis_drafts"] == 3
+    assert first["ArtifactSynthesizer"]["synthesis_iterations"] == 15
     assert first["ArtifactSynthesizer"]["synthesis_top_k"] == 8
     assert first["ArtifactSynthesizer"]["synthesis_generate_images"] == 0
     assert first["ArtifactSynthesizer"]["synthesis_merge_clarify"] is False
     assert first["BraveSearch"]["use_ddgs"] is True
     assert first["ChromaClientManager"]["enable_reranking"] is False
     assert first["LLMHandler"]["model"] == "gpt-6.1-sol"
-    assert first["LLMHandler"]["cost_limit"] == 4
+    assert first["LLMHandler"]["cost_limit"] == 5
     assert first["LLMHandler"]["max_completion_tokens"] == 6000
     assert first["LLMHandler"]["max_input_tokens"] == 64000
     assert first["CaesarAgent"]["exploration_llm_config"]["max_completion_tokens"] == 2000
-    assert first["CaesarAgent"]["exploration_llm_config"]["model"] == "gpt-6.1-sol"
-    assert first["ChromaClientManager"]["model"] == "gpt-6.1-sol"
+    assert first["CaesarAgent"]["exploration_llm_config"]["model"] == "gpt-6-luna"
+    assert first["ChromaClientManager"]["model"] == "gpt-6-luna"
     assert second["CaesarAgent"]["exploration_llm_config"]["model"] == "custom-explore"
     assert second["ChromaClientManager"]["model"] == "custom-kb"
     assert first["ChromaClientManager"]["collection_name"] != second["ChromaClientManager"]["collection_name"]
@@ -78,7 +83,7 @@ def test_extract_result_preserves_abstract_full_artifact_and_source_map():
     assert result["raw"]["artifact"]["sources"] == artifact()["sources"]
 
 
-@pytest.mark.parametrize("value", [None, {}, artifact(artifact=""), artifact(num_drafts=0), artifact(num_drafts=1), artifact(metadata={"synthesis_queries": 2})])
+@pytest.mark.parametrize("value", [None, {}, artifact(artifact=""), artifact(num_drafts=0), artifact(num_drafts=1), artifact(metadata={"synthesis_queries": 0})])
 def test_extract_rejects_empty_or_incomplete_artifact(value):
     with pytest.raises(ValueError):
         worker.extract_result(value, "gpt-6.1-sol", {})
@@ -202,6 +207,10 @@ def test_scoped_compatibility_registers_prices_reasoning_and_llama_models():
     with worker.compatibility(Handler, config, llm, llama, 2000):
         assert Handler.MODEL_PRICING["gpt-6.1-sol"] == {"input": 2, "output": 10}
         assert Handler.MODEL_CONTEXT_SIZE["gpt-6.1-sol"] == 1050000
+        assert Handler.MODEL_PRICING["gpt-6-luna"] == {"input": .1, "output": .5}
+        assert Handler.MODEL_CONTEXT_SIZE["gpt-6-luna"] == 1050000
+        assert "gpt-6-luna" in Handler.REASONING_MODELS
+        assert llama.O1_MODELS["gpt-6-luna"] == 1050000
         assert "gpt-6.1-sol" in Handler.REASONING_MODELS
         assert llama.O1_MODELS["gpt-6.1-sol"] == 1050000
         assert llama.CHAT_MODELS["gpt-6.1-sol"] == 1050000
@@ -418,7 +427,7 @@ def test_real_rome_handler_and_llama_kb_offline_validation(tmp_path, monkeypatch
                 assert "top_p" not in payload
                 if len(sent) == 1:
                     assert "temperature" not in payload
-                return httpx.Response(200, json={"id": "offline-real-handler", "object": "chat.completion", "created": 0, "model": "gpt-6.1-sol", "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": '{"artifact":"complete"}'}}], "usage": {"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120}})
+                return httpx.Response(200, json={"id": "offline-real-handler", "object": "chat.completion", "created": 0, "model": payload["model"], "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": '{"artifact":"complete"}'}}], "usage": {"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120}})
             original_init = openai.OpenAI.__init__
             def init(instance, *args, **kwargs):
                 kwargs["http_client"] = httpx.Client(transport=httpx.MockTransport(transport))
@@ -428,12 +437,14 @@ def test_real_rome_handler_and_llama_kb_offline_validation(tmp_path, monkeypatch
             handler = LLMHandler(config=config["LLMHandler"])
             assert handler.top_p == 1.0  # The installed LiteLLM drop_params path filters this.
             assert handler.chat_completion("Q", response_format={"type": "json_object"}) == '{"artifact":"complete"}'
-            llama = LlamaOpenAI(model="gpt-6.1-sol", api_key="offline-regression-test", max_tokens=2000, additional_kwargs={"reasoning_effort": "low"})
+            assert handler.chat_completion("Q", override_config={"model": "gpt-6-luna", "reasoning_effort": "low"}) == '{"artifact":"complete"}'
+            llama = LlamaOpenAI(model="gpt-6-luna", api_key="offline-regression-test", max_tokens=2000, additional_kwargs={"reasoning_effort": "low"})
             assert llama.chat([ChatMessage(role="user", content="Q")]).message.content == '{"artifact":"complete"}'
-    assert len(sent) == 2
+    assert len(sent) == 3
     assert sent[0]["reasoning_effort"] == "medium"
     assert sent[1]["reasoning_effort"] == "low"
-    assert audit.snapshot()["successful_calls"] == 2
+    assert sent[2]["reasoning_effort"] == "low"
+    assert audit.snapshot()["successful_calls"] == 3
 
 
 def test_fatal_deadline_passes_actual_rome_synthesis_catch_and_cleans_up(tmp_path, monkeypatch):
@@ -539,14 +550,14 @@ def test_exploration_reserve_leaves_budget_for_real_synthesis_and_rejects_no_ins
             if synthesis_fails:
                 raise RuntimeError("synthesis unavailable")
             pay("synthesis")
-            return artifact(metadata={"synthesis_queries": 5, "iterations_run": self.current_iteration})
+            return artifact(metadata={"synthesis_queries": 15, "iterations_run": self.current_iteration})
         def shutdown(self): calls.append("shutdown")
     @contextmanager
     def runtime(settings, audit):
         with audit.installed(SDK): yield Agent
     monkeypatch.setattr(worker, "_runtime", runtime)
     path = tmp_path / "result.json"
-    settings = {"synthesis_reserve_usd": reserve, "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 1000000}}}
+    settings = {"handler_budget_usd": 4., "synthesis_reserve_usd": reserve, "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 1000000}}}
     worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path)
     saved = json.loads(path.read_text())
     assert saved["status"] == expected_status
@@ -736,3 +747,219 @@ def test_async_accepted_response_parse_failure_is_fatal_without_retry(tmp_path):
     assert len(paid) == 1
     assert audit.snapshot()["cost_usd"] is None
     assert len(audit.snapshot()["in_flight"]) == 1
+
+
+def test_chroma_start_uses_worker_interpreter_without_chroma_on_path(tmp_path, monkeypatch):
+    """Exercise Rome's real startup lifecycle with a local fake Chroma CLI."""
+    import atexit
+    import socket
+    import sys
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+        from rome.kb_server import ChromaServerManager
+    package = tmp_path / "fake-modules" / "chromadb"
+    (package / "cli").mkdir(parents=True)
+    (package / "__init__.py").write_text("")
+    (package / "cli" / "__init__.py").write_text("")
+    (package / "cli" / "cli.py").write_text('''import json, sys
+from pathlib import Path
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+def app():
+    args = sys.argv
+    host, port = args[args.index("--host") + 1], int(args[args.index("--port") + 1])
+    persist = Path(args[args.index("--path") + 1])
+    (persist.parent / "cli-argv.json").write_text(json.dumps({"executable": sys.executable, "argv": args}))
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"{}")
+        def log_message(self, *args): pass
+    HTTPServer((host, port), Handler).serve_forever()
+''')
+    monkeypatch.setenv("PATH", str(tmp_path / "no-executables"))
+    monkeypatch.setenv("PYTHONPATH", str(package.parent))
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    manager = ChromaServerManager({"host": "127.0.0.1", "port": port,
+        "persist_path": str(tmp_path / "store"), "startup_timeout": 3, "shutdown_timeout": 1})
+    original = ChromaServerManager._try_start_command
+    with worker.chroma_python_cli(ChromaServerManager):
+        try:
+            assert manager.start()
+            saved = json.loads((tmp_path / "cli-argv.json").read_text())
+            assert saved["executable"] == sys.executable
+            assert saved["argv"][:2] == ["chroma", "run"]
+            assert saved["argv"][saved["argv"].index("--port") + 1] == str(port)
+        finally:
+            manager._kill_process()
+            atexit.unregister(manager.stop)
+    assert ChromaServerManager._try_start_command is original
+    assert audit.snapshot()["successful_calls"] == 0
+
+
+def test_parallel_quick_exploration_reserves_synthesis_budget_and_ingests_completed_pages(tmp_path, monkeypatch):
+    """Run Rome's quick loop, including its real executor and result ingestion."""
+    import threading
+    import networkx as nx
+    audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+        from caesar.caesar_agent import CaesarAgent
+    barrier = threading.Barrier(2)
+    lock = threading.Lock()
+    observed = {"active": 0, "peak": 0, "pages": 0}
+    calls = []
+    class SDK:
+        def request(self, cast_to, options, **kwargs):
+            label = options.json_data["label"]
+            with lock:
+                observed["active"] += 1
+                observed["peak"] = max(observed["peak"], observed["active"])
+                calls.append(label)
+                if label == "page": observed["pages"] += 1
+                page_number = observed["pages"]
+            try:
+                if label == "page" and page_number <= 2:
+                    barrier.wait(timeout=3)
+                return SimpleNamespace(usage={"prompt_tokens": 0, "completion_tokens": 1})
+            finally:
+                with lock: observed["active"] -= 1
+    def pay(label):
+        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 1, "label": label}))
+    class Agent(FakeAgent):
+        use_quick_explore = True
+        shutdown_called = False
+        def __init__(self, **kwargs):
+            self.current_iteration = 0
+            self.max_iterations = kwargs["config"]["CaesarAgent"]["max_iterations"]
+            self.quick_explore_workers = kwargs["config"]["CaesarAgent"]["quick_explore_workers"]
+            self.visited_urls, self.failed_urls = {}, set()
+            self.starting_url = "https://seed.test"
+            self.graph = nx.DiGraph()
+            self.logger = SimpleNamespace(info=lambda *args: None, error=lambda *args: None)
+            self.checkpoint_manager = SimpleNamespace(save=lambda *args, **kwargs: None)
+            self.kb_manager = SimpleNamespace(add_texts=self.ingest)
+            self.synthesizer = SimpleNamespace(synthesize_artifact=self.synthesize)
+        def perceive(self):
+            return "seed", [(f"https://page.test/{i}", "page") for i in range(250)]
+        def _quick_perceive_and_think(self, url, iteration):
+            pay("page")
+            return {"url": url, "insights": "insight", "iteration": iteration}
+        def explore(self): return CaesarAgent.quick_explore(self)
+        def ingest(self, texts):
+            assert observed["active"] == 0
+            assert len(texts) == 2
+            pay("embedding")
+        def synthesize(self):
+            pay("synthesis")
+            return artifact(metadata={"synthesis_queries": 15, "iterations_run": self.current_iteration})
+        def shutdown(self): self.shutdown_called = True
+    @contextmanager
+    def runtime(settings, audit):
+        with audit.installed(SDK): yield Agent
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    path = tmp_path / "result.json"
+    settings = {"synthesis_reserve_usd": 3., "handler_budget_usd": 5., "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 1000000}}}
+    assert worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path) == 0
+    result = json.loads(path.read_text())["result"]
+    assert calls.count("page") == 2
+    assert calls.count("embedding") == 1
+    assert calls.count("synthesis") == 1
+    assert observed["peak"] == 2
+    assert result["cost_usd"] == 4
+    assert result["usage"]["in_flight"] == []
+    assert result["raw"]["exploration_budget_stop"]["iterations_completed"] == 2
+
+
+def test_reduced_qa_rounds_preserve_complete_artifact_and_actual_metadata():
+    value = artifact(metadata={"synthesis_queries": 4})
+    result = worker.extract_result(value, "gpt-6.1-sol", {})
+    assert result["text"]
+    assert result["raw"]["artifact"]["metadata"]["synthesis_queries"] == 4
+    assert any("4" in warning and "15" in warning for warning in result["warnings"])
+
+
+def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatch):
+    setup_audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, setup_audit):
+        from caesar.artifact_synthesis import ArtifactSynthesizer
+    calls = []
+    class SDK:
+        def request(self, cast_to, options, **kwargs):
+            calls.append(options.json_data["label"])
+            return SimpleNamespace(usage={"prompt_tokens": 0, "completion_tokens": options.json_data["max_completion_tokens"]})
+    def pay(label, tokens):
+        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": tokens, "label": label}))
+    class Synthesizer(ArtifactSynthesizer):
+        synthesis_iterations = 15
+        synthesis_drafts = 3
+        synthesis_merge_artifacts = True
+        def __init__(self):
+            self._reasoning_floor = {}
+            self._num_drafts = 3
+            self.synthesis_top_k, self.synthesis_top_n = 8, 8
+            self.filters = None
+            self.logger = SimpleNamespace(info=lambda *a: None, error=lambda *a: None)
+            self.kb_manager = SimpleNamespace(query=self.query)
+        def query(self, *args, **kwargs):
+            try: pay("qa", 1)
+            except worker.BudgetExceeded: return None, []
+            return "answer", []
+        def _generate_qa_pairs(self, *args, **kwargs):
+            return ArtifactSynthesizer._generate_qa_pairs(self, "iterative (n=15)", "question")
+        def _merge_artifacts(self, drafts):
+            pay("merge", 4)
+            return artifact(metadata={"synthesis_queries": len(drafts[-1])})
+        def synthesize_artifact(self):
+            drafts = []
+            for index in range(1, 4):
+                self._current_draft = index
+                pairs = self._generate_qa_pairs()
+                assert pairs
+                pay("draft", 4)
+                drafts.append(pairs)
+                if index < 3: pay("refine", 2)
+            return self._merge_artifacts(drafts)
+    class Agent(FakeAgent):
+        starting_query = "question"
+        def __init__(self, **kwargs):
+            self.synthesizer = Synthesizer()
+            self.synthesizer.agent = self
+        def chat_completion(self, *args, **kwargs):
+            pay("next_query", 2)
+            return '{"query":"next question"}'
+        def parse_json_response(self, value): return json.loads(value)
+        def explore(self):
+            pay("exploration", 20)
+            return self.synthesizer.synthesize_artifact()
+        def shutdown(self): pass
+    @contextmanager
+    def runtime(settings, audit):
+        with audit.installed(SDK): yield Agent
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    path = tmp_path / "result.json"
+    settings = {"model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 50000}}}
+    assert worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path) == 0
+    result = json.loads(path.read_text())["result"]
+    assert calls.count("draft") == 3
+    assert calls.count("merge") == 1
+    assert result["cost_usd"] <= 5
+    records = result["raw"]["synthesis_budget"]["drafts"]
+    assert len(records) == 3
+    assert all(1 <= row["completed_qa_rounds"] <= 15 for row in records)
+    assert any(row["completed_qa_rounds"] < 15 for row in records)
+    assert any(row["budget_limited"] for row in records)
+    assert result["raw"]["synthesis_budget"]["merge_completed"] is True
+
+
+@pytest.mark.parametrize("inputs,details,expected", [(1000, {"cache_write_tokens": 1000}, .000175), (272001, {}, .0544752)])
+def test_latest_luna_usage_uses_verified_cache_and_long_context_prices(tmp_path, inputs, details, expected):
+    class SDK:
+        def request(self, *args, **kwargs):
+            return SimpleNamespace(usage={"prompt_tokens": inputs, "completion_tokens": 100, "prompt_tokens_details": details})
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    with audit.installed(SDK):
+        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6-luna", "messages": [], "max_completion_tokens": 100}))
+    assert audit.snapshot()["cost_usd"] == pytest.approx(expected)

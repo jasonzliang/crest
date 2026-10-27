@@ -1,6 +1,7 @@
 """Durable OpenAI Responses REST transport with safe rejected-request retries.
 
 Pricing reference: https://developers.openai.com/api/docs/models/gpt-6.1-sol
+                 https://developers.openai.com/api/docs/models/gpt-6-astra
 Web search billing: https://developers.openai.com/api/docs/guides/tools-web-search
 The budget is a soft target: background usage may only arrive at completion.
 """
@@ -87,14 +88,17 @@ def _account(raw):
         "web_search_calls": None if unknown_search else searches,
     }
     required = [usage[k] for k in ("input_tokens", "cached_input_tokens", "cache_write_tokens", "output_tokens", "web_search_calls")]
-    if raw.get("model") != "gpt-6.1-sol" or raw.get("service_tier", "default") != "default" or None in required:
+    # Standard USD per million tokens; cache writes use the default 30m TTL.
+    rates = {"gpt-6.1-sol": (2, .10, 2.50, 10), "gpt-6-astra": (10, 1, 12.50, 50)}.get(raw.get("model"))
+    if rates is None or raw.get("service_tier", "default") != "default" or None in required:
         return usage, None
     inp, cached, writes, output, searches = required
     if cached + writes > inp:
         return usage, None
+    input_rate, cached_rate, write_rate, output_rate = rates
     long_context = inp > 272000
-    input_cost = ((inp - cached - writes) * 2 + cached * .10 + writes * 2.50) * (2 if long_context else 1)
-    output_cost = output * 10 * (1.5 if long_context else 1)
+    input_cost = ((inp - cached - writes) * input_rate + cached * cached_rate + writes * write_rate) * (2 if long_context else 1)
+    output_cost = output * output_rate * (1.5 if long_context else 1)
     return usage, (input_cost + output_cost) / 1_000_000 + searches * .01
 
 

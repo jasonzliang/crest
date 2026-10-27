@@ -1,6 +1,6 @@
 """Gemini v1beta Interactions adapter with safe rejected-request retries.
 
-Protocol and pricing checked 2026-10-25:
+Protocol and pricing checked 2026-10-26:
 https://ai.google.dev/gemini-api/docs/deep-research
 https://ai.google.dev/api/interactions-api
 https://ai.google.dev/gemini-api/docs/pricing
@@ -9,7 +9,7 @@ https://ai.google.dev/gemini-api/docs/pricing
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import time
 from typing import TYPE_CHECKING
@@ -27,6 +27,8 @@ ADAPTER_VERSION = "gemini-interactions-v1beta-2"
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
 RESEARCH_AGENT = "deep-research-preview-04-2026"
 BILLING_MODEL = "gemini-3.1-pro-preview"
+ARGON_MODEL = "gemini-4-argon"
+ACTIVE_STATUSES = ("queued", "in_progress")
 
 
 async def generate(prompt: str, settings: dict, job: Job, *, client=None) -> dict:
@@ -101,7 +103,7 @@ async def _interact(body, settings, job, client, key, *, research):
         job.save(remote_status=status)
         if status == "completed":
             return _result(raw, settings, research=research)
-        if status != "in_progress":
+        if status not in ACTIVE_STATUSES:
             raise RuntimeError(f"Gemini interaction ended with status {status!r}: {raw.get('error')}")
     try:
         async with asyncio.timeout(max(0, deadline - time.time())):
@@ -124,7 +126,7 @@ async def _interact(body, settings, job, client, key, *, research):
                 job.save(raw=raw, remote_status=status)
                 if status == "completed":
                     return _result(raw, settings, research=research)
-                if status != "in_progress":
+                if status not in ACTIVE_STATUSES:
                     raise RuntimeError(f"Gemini interaction ended with status {status!r}: {raw.get('error')}")
                 if research:
                     usage = _usage(raw)
@@ -237,9 +239,24 @@ def _usage(raw):
     return usage
 
 
-def _cost(usage, model, *, research):
+def _pricing_date(raw):
+    created = raw.get("created")
+    if isinstance(created, str):
+        try:
+            timestamp = datetime.fromisoformat(created.replace("Z", "+00:00"))
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
+            return timestamp.astimezone(timezone.utc).date().isoformat(), "response.created"
+        except (ValueError, OverflowError):
+            pass
+    return datetime.fromtimestamp(time.time(), timezone.utc).date().isoformat(), "processing_date_utc"
+
+
+def _cost(usage, model, *, research, pricing_date=None):
     fields = [usage[name] for name in ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_tokens")]
-    if model != BILLING_MODEL or any(value is None for value in fields):
+    if model not in {BILLING_MODEL, ARGON_MODEL} or any(value is None for value in fields):
+        return None
+    if research and model != BILLING_MODEL:
         return None
     inputs, cached, outputs, thoughts = fields
     if cached > inputs:
@@ -260,7 +277,14 @@ def _cost(usage, model, *, research):
         inputs += tools
     elif tools not in (None, 0) or any(item.get("count") != 0 for item in (grounding or [])):
         return None
-    input_rate, cached_rate, output_rate = (4, .4, 18) if research or inputs > 200_000 else (2, .2, 12)
+    if model == ARGON_MODEL:
+        if pricing_date is None:
+            return None
+        # Argon has one context price; its introductory rates end Nov 30.
+        input_rate, cached_rate, output_rate = ((2, .1, 10) if pricing_date < "2026-12-01"
+                                               else (4, .2, 20))
+    else:
+        input_rate, cached_rate, output_rate = (4, .4, 18) if research or inputs > 200_000 else (2, .2, 12)
     # The official v1beta example has input=7, output=20, thought=22,
     # total=49: output and thought counts are disjoint. Bill each once.
     return ((inputs - cached) * input_rate + cached * cached_rate
@@ -273,7 +297,13 @@ def _result(raw, settings, *, research):
     model = (settings.get("billing_model", BILLING_MODEL) if research
              else raw.get("model", settings.get("model", BILLING_MODEL)))
     warnings = []
-    cost = _cost(usage, model, research=research)
+    pricing = {}
+    if not research and model == ARGON_MODEL:
+        pricing_date, source = _pricing_date(raw)
+        pricing = {"pricing_date": pricing_date, "pricing_date_source": source}
+        if source != "response.created":
+            warnings.append("Response creation date unavailable; Argon pricing uses the recorded UTC processing date.")
+    cost = _cost(usage, model, research=research, pricing_date=pricing.get("pricing_date"))
     if research:
         budget = settings.get("budget_usd", 5.0)
         warnings.append(f"Research budget ${budget:g} is a target; the managed agent exposes no dollar cap.")
@@ -288,4 +318,4 @@ def _result(raw, settings, *, research):
     if cost is not None:
         warnings.append("Cost uses published standard model rates; excludes account-specific discounts and cache storage.")
     return {"text": text, "citations": citations, "model": model, "usage": usage,
-            "cost_usd": cost, "cost_estimated": cost is not None, "warnings": warnings, "raw": raw}
+            "cost_usd": cost, "cost_estimated": cost is not None, "warnings": warnings, "raw": raw, **pricing}

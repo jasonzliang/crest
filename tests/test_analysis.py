@@ -94,6 +94,83 @@ class AnalysisTests(unittest.TestCase):
                          {"disagreements": 18, "comparisons": 18, "rate": 1.0})
         self.assertEqual(result["diagnostics"]["swapped_inconsistency"]["rate"], 0.0)
 
+    def test_opposing_position_preferences_remain_visible_by_judge_and_criterion(self):
+        def choose(q, pair, judge, order, criterion):
+            if criterion == "new":
+                return order[0] if judge == "openai" else order[1]
+            if criterion == "useful":
+                return pair[0]
+            return pair[0] if judge == "openai" else pair[1]
+        data = experiment(2, choose=choose)
+        data[2].pop()  # Every diagnostic must exclude this incomplete question.
+        diagnostics = report(data)["diagnostics"]
+        self.assertEqual(diagnostics["position_a_preference"]["rate"], 0.5)
+        views = diagnostics["by_judge_criterion"]
+        self.assertEqual(views["openai"]["new"]["position_a_preference"],
+                         {"wins": 6, "choices": 6, "rate": 1.0})
+        self.assertEqual(views["gemini"]["new"]["position_a_preference"],
+                         {"wins": 0, "choices": 6, "rate": 0.0})
+        self.assertEqual(views["openai"]["new"]["swapped_inconsistency"],
+                         {"disagreements": 3, "comparisons": 3, "rate": 1.0})
+        self.assertEqual(views["gemini"]["useful"]["position_a_preference"],
+                         {"wins": 3, "choices": 6, "rate": 0.5})
+        self.assertEqual(views["gemini"]["useful"]["swapped_inconsistency"],
+                         {"disagreements": 0, "comparisons": 3, "rate": 0.0})
+        self.assertEqual(diagnostics["judge_disagreement_per_criterion"], {
+            "new": {"disagreements": 6, "comparisons": 6, "rate": 1.0},
+            "useful": {"disagreements": 0, "comparisons": 6, "rate": 0.0},
+            "surprising": {"disagreements": 6, "comparisons": 6, "rate": 1.0}})
+
+    def test_paired_contrast_uses_same_question_draws_and_reports_ordering_ties(self):
+        data = experiment(2, choose=lambda q, pair, judge, order, criterion: pair[q % 2])
+        result = report(data, bootstrap_samples=4, seed=19)
+        # Seed 19 draws the question blocks [0,0], [0,1], [1,1], [0,1].
+        # For a minus b, their shared-draw index differences are .5, 0, -.5, 0.
+        contrast = result["paired_contrasts"][0]
+        self.assertEqual(contrast["pair"], ["a", "b"])
+        self.assertEqual(contrast["difference"], 0.0)
+        self.assertAlmostEqual(contrast["ci95"][0], -0.4625)
+        self.assertAlmostEqual(contrast["ci95"][1], 0.4625)
+        self.assertEqual(contrast["ordering_stability"],
+                         {"first_higher": 0.25, "equal": 0.5, "second_higher": 0.25})
+        self.assertEqual(contrast["bootstrap_samples"], 4)
+        self.assertEqual(result, report(data, bootstrap_samples=4, seed=19))
+
+    def test_contrasts_compare_overall_indices_on_common_blocks_not_head_to_head_votes(self):
+        data = experiment(2, choose=lambda q, pair, judge, order, criterion: pair[q % 2])
+        data[2].pop()
+        result = report(data)
+        self.assertEqual(result["pairwise"]["overall"]["a"]["b"], 1.0)
+        contrast = result["paired_contrasts"][0]
+        self.assertEqual(contrast["difference"], 0.5)
+        self.assertEqual(contrast["ci95"], [0.5, 0.5])
+        self.assertEqual(contrast["ordering_stability"],
+                         {"first_higher": 1.0, "equal": 0.0, "second_higher": 0.0})
+
+    def test_exact_index_ties_have_zero_contrasts_and_equal_bootstrap_ordering(self):
+        result = report(experiment(choose=lambda q, pair, judge, order, criterion: order[0]))
+        for contrast in result["paired_contrasts"]:
+            self.assertEqual(contrast["difference"], 0.0)
+            self.assertEqual(contrast["ci95"], [0.0, 0.0])
+            self.assertEqual(contrast["ordering_stability"],
+                             {"first_higher": 0.0, "equal": 1.0, "second_higher": 0.0})
+        self.assertEqual([row["rank"] for row in result["ranking"]], [1, 1, 1])
+
+    def test_empty_blocks_or_disabled_bootstrap_do_not_fabricate_contrast_stability(self):
+        for data, samples, difference in ((([], [], []), 200, None), (experiment(), 0, 0.5)):
+            with self.subTest(samples=samples, difference=difference):
+                result = report(data, bootstrap_samples=samples)
+                contrast = result["paired_contrasts"][0]
+                self.assertEqual(contrast["difference"], difference)
+                self.assertIsNone(contrast["ci95"])
+                self.assertEqual(contrast["bootstrap_samples"], 0)
+                self.assertEqual(contrast["ordering_stability"],
+                                 {"first_higher": None, "equal": None, "second_higher": None})
+        empty = report(([], [], []))["diagnostics"]["by_judge_criterion"]["openai"]["new"]
+        self.assertEqual(empty["position_a_preference"], {"wins": 0, "choices": 0, "rate": None})
+        self.assertEqual(empty["swapped_inconsistency"],
+                         {"disagreements": 0, "comparisons": 0, "rate": None})
+
     def test_missing_judge_excludes_whole_question_from_all_summaries(self):
         questions, answers, judgments = experiment(2)
         judgments.pop()
@@ -306,6 +383,11 @@ class AnalysisTests(unittest.TestCase):
             self.assertIn("unknown", markdown.lower())
             self.assertIn("descriptive", markdown.lower())
             self.assertIn("question", markdown.lower())
+            self.assertIn("Paired overall-index contrasts", markdown)
+            self.assertIn("Judge × criterion diagnostics", markdown)
+            self.assertIn("swapped-presentation inconsistency", markdown)
+            self.assertIn("frozen answers", markdown)
+            self.assertIn("not a Bayesian probability", markdown)
 
 
 if __name__ == "__main__":

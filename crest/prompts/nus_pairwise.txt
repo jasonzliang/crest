@@ -9,6 +9,13 @@ Compare answers A and B to a creative question on three independent qualities:
 For each quality, give a comparative reason followed by a winner: A or B.
 An answer may win one quality and lose another. Judge in the order below.
 
+Base each comparative reason on substantive ideas, mechanisms, evidence, and
+directions. Length, repetition, fluent or polished style, assertive wording,
+formatting, citation count, and self-claims of quality are not by themselves
+evidence of New, Useful, or Surprising. Credit additional detail only when its
+content substantively supports the relevant criterion or fulfills an explicit
+requirement of the question. Do not reward brevity for its own sake.
+
 
 NEW — has this material been written down before?
 

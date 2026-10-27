@@ -386,7 +386,7 @@ class Pipeline:
         return summary | {'directory': str(directory), 'run_dir': str(self.run_dir)}
 
     def analyze(self) -> dict:
-        from .analysis import analyze, write_report
+        from .analysis import ANALYSIS_VERSION, analyze, write_report
         source = self._latest_stage('judge')
         questions = json.loads((source / 'questions.json').read_text())
         answers = json.loads((source / 'answers.json').read_text())
@@ -399,7 +399,7 @@ class Pipeline:
             values = [{k: v for k, v in record.items() if k not in {'cache_hit', 'cache_record'}}
                       for record in records]
             return sorted(values, key=digest)
-        cache_key = digest({'analysis_version': '3', 'questions': questions,
+        cache_key = digest({'analysis_version': ANALYSIS_VERSION, 'questions': questions,
                             'answers': stable(answers), 'judgments': stable(judgments),
                             'failures': stable(failures),
                             'agents': self.manifest['agents'], 'judges': list(judges),
