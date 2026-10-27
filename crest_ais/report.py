@@ -310,10 +310,12 @@ def _small_pool_note(report):
         eligible = per_agent.get(agent, {}).get("eligible")
         if isinstance(eligible, int) and 0 < eligible <= 3:
             noun = "paper" if eligible == 1 else "papers"
-            notes.append(f'<p class="notice compact"><strong>Small released pool:</strong> '
-                         f'{_text(_label(report, agent))} has {_count(eligible)} eligible {noun}. '
-                         'Repeated comparisons of these papers do not add independent papers.</p>')
-    return "".join(notes)
+            notes.append(f'{_text(_label(report, agent))} has {_count(eligible)} eligible {noun}')
+    if not notes:
+        return ""
+    label = "Small released pool" if len(notes) == 1 else "Small released pools"
+    return (f'<p class="notice compact"><strong>{label}:</strong> ' + "; ".join(notes) + '. '
+            'Repeated comparisons of these papers do not add independent papers.</p>')
 
 
 def _coverage(report):
