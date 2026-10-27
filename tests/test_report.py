@@ -159,6 +159,27 @@ def test_partial_unknown_ledger_is_not_dropped_or_double_counted_as_zero(run):
     assert resources['unknown_cost_answers'] == 1
 
 
+def test_html_omits_usage_events_without_changing_canonical_usage_or_costs(run, tmp_path):
+    from crest.report import load_run, write_report
+    rows = json.loads(answers_path(run).read_text())
+    marker = 'BULKY_USAGE_EVENT_RETAINED_ONLY_IN_CANONICAL_JSON'
+    rows[0]['result']['usage'] = {'input_tokens': 1234, 'output_tokens': 567, 'known_cost_usd': 1.,
+        'per_model_costs_usd': {'gpt-6.1-sol': 1.},
+        'events': [{'request': marker + 'x' * 10000}, {'response': marker}]}
+    dump(answers_path(run), rows)
+    original = answers_path(run).read_bytes()
+    output = tmp_path / 'page.html'; write_report(run, output)
+    html = output.read_text()
+    assert marker not in html
+    assert 'Usage events omitted from this HTML: 2.' in html
+    assert '01-generate-test/answers.jsonl' in html and 'result.usage.events' in html
+    assert rows[0]['key'] in html
+    assert '&quot;input_tokens&quot;: 1234' in html and '&quot;output_tokens&quot;: 567' in html
+    assert '&quot;per_model_costs_usd&quot;' in html
+    assert answers_path(run).read_bytes() == original
+    assert load_run(run)['resources']['generation']['caesar']['known_cost_usd'] == 50
+
+
 def test_missing_times_remain_unknown_and_cache_hits_keep_original_duration(run):
     from crest.report import load_run
     rows = json.loads(answers_path(run).read_text())
@@ -260,6 +281,23 @@ def test_real_final_audit_enriches_active_attempt_times_and_retains_its_warnings
     assert 'Billing remains estimated; no invoice has been verified.' in html
     assert 'Lifetime budget compliance is not established' not in html
     assert 'model-based reserved exposure' in html.lower()
+
+
+def test_uncertain_billing_note_clarifies_reservations_without_mutating_audit(run, tmp_path):
+    from crest.report import write_report
+    doc = final_audit(run)
+    raw_warning = '10 completed answers have uncertain final billing; see bounded exposure'
+    doc['warnings'] = [raw_warning]
+    caesar = [r for r in doc['generation']['answer_details'] if r['agent'] == 'caesar']
+    for row in caesar[:10]: row['unknown_attempt_count'] = 1
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    original = audit.read_bytes()
+    output = tmp_path / 'page.html'; write_report(run, output, audit=audit)
+    html = output.read_text()
+    assert raw_warning not in html
+    assert '10 Caesar answers have unresolved prior charges' in html
+    assert 'model-based estimates, not invoice bounds' in html
+    assert audit.read_bytes() == original
 
 
 def test_audit_hashes_must_match_selected_frozen_snapshot(run, tmp_path):
@@ -475,6 +513,8 @@ def test_superseded_paid_judgments_add_costs_once_and_never_add_votes(run, tmp_p
     text = output.read_text()
     assert '600 scored judgments + 4 prior or superseded paid calls' in text
     assert '$0.8000' in text
+    assert '600 scored verdicts: $60.000000' in text
+    assert '604 paid verdicts: $60.800000' in text
     assert text.count('class="judgment"') == 600
     # An old paid key cannot also be counted as a currently scored verdict.
     prior[0]['key'] = current[0]['key']

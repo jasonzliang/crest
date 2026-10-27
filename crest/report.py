@@ -286,6 +286,7 @@ def load_run(run_dir, *, audit=None):
     data['resources'] = {
         'generation': {agent: _summarize([a for a in data['answers'] if a['agent'] == agent], audit_records) for agent in AGENTS},
         'judging': {judge: _summarize([j for j in data['judgments'] if j['judge'] == judge], {}) for judge in JUDGES},
+        'paid_judging': summarize_costs([*data['judgments'], *prior]),
         'prior_judging': summarize_costs(prior)}
     return data
 
@@ -294,8 +295,8 @@ def _pct(value):
     return f'{value * 100:.1f}%' if _number(value) else 'Unavailable'
 
 
-def _money(value):
-    return f'${value:,.4f}' if _number(value) else 'Unknown'
+def _money(value, places=4):
+    return f'${value:,.{places}f}' if _number(value) else 'Unknown'
 
 
 def _duration(value):
@@ -418,6 +419,12 @@ def _resources(data):
                  'components and explicitly conditional Google pricing scenarios. '
                  'Judging is additional: ' + '; '.join(_text(j) + ' ' + _money(judging[j]['known_cost_usd']) for j in JUDGES) + '.</p>')
     prior = data['resources']['prior_judging']
+    paid = data['resources']['paid_judging']
+    scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in JUDGES)
+    parts.append(f'<p><strong>600 scored verdicts: {_money(scored, 6)}. '
+                 f'All {paid["records"]} paid verdicts: {_money(paid["cumulative_known_estimate_usd"], 6)}.</strong> '
+                 f'The paid total includes {prior["records"]} prior or superseded verdicts once; they add no ranking votes. '
+                 'These are estimates; unknown charges and any failed attempts are reported separately.</p>')
     if prior['records']:
         parts.append(f'<p><strong>600 scored judgments + {prior["records"]} prior or superseded paid calls.</strong> '
                      f'The latter add {_money(prior["cumulative_known_estimate_usd"])} in recorded estimates '
@@ -430,7 +437,7 @@ def _resources(data):
         _text(SHORT[a]) + ' — usage-priced ' + _money(generation[a]['cost_assessment']['usage_priced_estimate_usd'])
         + ', conditional scenarios ' + _money(generation[a]['cost_assessment']['conditional_scenario_estimate_usd'])
         + ', other recorded estimates ' + _money(generation[a]['cost_assessment']['recorded_provider_estimate_usd'])
-        for a in AGENTS) + '. The complete assumptions, pricing sources, usage and conditional scenarios are retained with each answer below.</p>')
+        for a in AGENTS) + '. Pricing assumptions, sources, aggregate usage and conditional scenarios are retained with each answer below.</p>')
     google = generation['gemini']
     parts.append(f'<p>Google research has {google["estimated_above_target"]} saved estimates above $5. '
                  'These are conditional list-price estimates under a conservative pricing envelope; actual billed USD and per-loop backend models are unknown. The flags do not establish invoice overruns. '
@@ -466,14 +473,22 @@ def _resources(data):
                      + '; failed-attempt known estimates already included: ' + _money(ledger.get('failed_known_usd'))
                      + '. Model-based reserved exposure for unresolved charges: ' + _money(ledger.get('unknown_reserved_usd'))
                      + '. This exposure is not a guaranteed invoice bound and is not added to known spend.</p>')
-        parts.append('<p class="small">Audit judging estimates: successful verdicts '
-                     + _money(judging_audit.get('known_estimated_usd')) + '; failed jobs '
+        parts.append('<p class="small">Audit judging estimates: 600 scored verdicts '
+                     + _money(judging_audit.get('known_estimated_usd'), 6) + '; all '
+                     + str(paid['records']) + ' paid verdicts including prior or superseded calls '
+                     + _money(paid['cumulative_known_estimate_usd'], 6) + '; failed jobs '
                      + _money(judging_audit.get('failed_known_usd')) + '. Unknown failed-job bills: '
                      + _text(judging_audit.get('failed_unknown_cost_count', 'not recorded'))
                      + '; partial observations on unpriced failures: '
                      + _money(judging_audit.get('failed_partial_observed_usd')) + ' (not a final bill).</p>')
         warnings = doc.get('warnings') or []
         if warnings:
+            counts = {a: sum(r.get('agent') == a and (r.get('unknown_attempt_count') or 0) > 0
+                             for r in data['audit_records'].values()) for a in AGENTS}
+            subjects = '; '.join(f'{n} {SHORT[a]} answers have unresolved prior charges' for a, n in counts.items() if n)
+            clarified = subjects + '; retained reservations are model-based estimates, not invoice bounds.'
+            warnings = [clarified if subjects and isinstance(w, str) and 'uncertain final billing' in w
+                        and 'bounded exposure' in w else w for w in warnings]
             parts.append('<details><summary>Final audit notes</summary><ul>'
                          + ''.join('<li>' + _text(warning) + '</li>' for warning in warnings) + '</ul></details>')
     else:
@@ -520,6 +535,17 @@ def _questions(data):
             cost = cost_for_row(row)
             audited = data['audit_records'].get((qid, agent))
             record = {'cost_details': cost, 'usage': row['result'].get('usage'), 'timing': row.get('timing')}
+            usage = record['usage']
+            event_note = ''
+            if isinstance(usage, dict) and isinstance(usage.get('events'), list):
+                count = len(usage['events'])
+                record['usage'] = {key: value for key, value in usage.items() if key != 'events'}
+                source = data['generation_dir'].name + '/answers.jsonl'
+                record['omitted_usage_events'] = {'count': count, 'source': source,
+                                                'field': 'result.usage.events', 'answer_key': row['key']}
+                event_note = (f'<p class="small">Usage events omitted from this HTML: {count}. '
+                              f'Canonical source: <code>{_text(source)}</code>, field <code>result.usage.events</code>; '
+                              f'answer key <code>{_text(row["key"])}</code>.</p>')
             audit_note = ''
             if audited:
                 record['final_audit'] = audited
@@ -543,6 +569,7 @@ def _questions(data):
                          f'<details class="configuration"><summary>Configuration: {_text(identity or "legacy run settings")}</summary>'
                          f'<pre tabindex="0" aria-label="Frozen configuration">{_text(json.dumps(configuration, ensure_ascii=False, indent=2))}</pre></details>'
                          f'<details class="cost-record"><summary>Cost, usage and timing record</summary>'
+                         f'{event_note}'
                          f'<pre tabindex="0" aria-label="Cost, usage and timing record">{_text(json.dumps(record, ensure_ascii=False, indent=2))}</pre></details>'
                          f'<p class="small">{artifact_note}Answer key: <code>{_text(row["key"])}</code></p></details>')
         parts.append('<details class="judgments"><summary>Read all 12 overall judgments</summary>')
