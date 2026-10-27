@@ -1,10 +1,14 @@
 """Readable artifact names and provenance, independent of paid-work identities."""
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 import re
+from zoneinfo import ZoneInfo
 
 from .cache import digest
+
+
+DEFAULT_RESULTS_TIMEZONE = 'America/Chicago'
 
 
 TRANSPORT_SETTINGS = frozenset({
@@ -47,28 +51,36 @@ def answer_metadata(task: dict, question_number: int, *, prompt_template: str | 
             'configuration_sha256': record['configuration_sha256']}
 
 
-def _utc(created_at: datetime | str) -> datetime:
+def _local(created_at: datetime | str, results_timezone: str) -> datetime:
     value = datetime.fromisoformat(created_at.replace('Z', '+00:00')) if isinstance(created_at, str) else created_at
     if not isinstance(value, datetime) or value.tzinfo is None:
         raise ValueError('Directory timestamps must have a timezone')
-    return value.astimezone(timezone.utc)
+    return value.astimezone(ZoneInfo(results_timezone))
 
 
-def run_directory_name(created_at: datetime | str, nonce: str) -> str:
+def run_date_directory_name(created_at: datetime | str, *,
+                            results_timezone: str = DEFAULT_RESULTS_TIMEZONE) -> str:
+    """Use the same local date as the run's readable directory timestamp."""
+    return _local(created_at, results_timezone).date().isoformat()
+
+
+def run_directory_name(created_at: datetime | str, nonce: str, *,
+                       results_timezone: str = DEFAULT_RESULTS_TIMEZONE) -> str:
     if not isinstance(nonce, str) or not re.fullmatch(r'[0-9a-f]{8}', nonce):
         raise ValueError('Run nonce must contain eight lowercase hexadecimal characters')
-    return _utc(created_at).strftime('%H-%M-%SZ') + '-' + nonce
+    return _local(created_at, results_timezone).strftime('%H-%M-%S-%Z') + '-' + nonce
 
 
-def stage_directory_name(number: int, name: str, created_at: datetime | str) -> str:
+def stage_directory_name(number: int, name: str, created_at: datetime | str, *,
+                         results_timezone: str = DEFAULT_RESULTS_TIMEZONE) -> str:
     if type(number) is not int or number < 1 or not re.fullmatch(r'[a-z][a-z0-9-]*', name):
         raise ValueError('Stage needs a positive number and simple name')
-    return f'{number:02d}-{name}-' + _utc(created_at).strftime('%Y-%m-%d_%H-%M-%SZ')
+    return f'{number:02d}-{name}-' + _local(created_at, results_timezone).strftime('%Y-%m-%d_%H-%M-%S-%Z')
 
 
 def reserve_directory(parent: Path, name: str) -> Path:
     """Atomically reserve a directory, preserving any existing same-second run."""
-    if not isinstance(name, str) or not re.fullmatch(r'[A-Za-z0-9_.-]+', name) or name in {'.', '..'}:
+    if not isinstance(name, str) or not re.fullmatch(r'[A-Za-z0-9_.+-]+', name) or name in {'.', '..'}:
         raise ValueError('Directory name must be one local path component')
     parent = Path(parent)
     parent.mkdir(parents=True, exist_ok=True)

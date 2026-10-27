@@ -140,7 +140,7 @@ def test_default_plan_ignores_additional_collections(tmp_path):
     for number, agent in enumerate(DEFAULT_AGENTS):
         add_collection(agent, number)
     config = {"data_root": tmp_path, "judges": JUDGES,
-              "rubric": Path(__file__).resolve().parents[1] / "prompts" / "rubric.txt"}
+              "rubric": Path(__file__).resolve().parents[1] / "prompts" / "rubric_v2.txt"}
     args = SimpleNamespace(pairs_per_matchup=None, seed=None)
     baseline = _new_plan(config, args)
 
@@ -631,8 +631,8 @@ def test_overall_protocol_freezes_current_crest_semantics_and_invalidates_all_ol
     if not frozen.exists():
         pytest.skip("Frozen corrected v1 plan not present")
     old = json.loads(frozen.read_text())
-    rubric = (root / "prompts" / "rubric.txt").read_text()
-    assert rubric == (root.parent / "crest" / "prompts" / "nus_pairwise.txt").read_text()
+    rubric = (root / "prompts" / "rubric_v2.txt").read_text()
+    assert rubric == (root.parent / "crest" / "prompts" / "nus_pairwise_v2.txt").read_text()
     assert PROTOCOL_VERSION == "crest-ais-overall-v3"
     assert JUDGING_VERSION == root_judging.PROTOCOL_VERSION == "nus-overall-pairwise-v3"
     assert SAMPLING_VERSION == "crest-ais-v1"

@@ -1,9 +1,10 @@
 # Paths are relative to this file. Credentials come only from the environment.
 questions: ../data/queries_n50.jsonl
-# Revised rubric; select ../prompts/nus_pairwise_v2.txt for the previous wording.
-rubric: ../prompts/nus_pairwise.txt
+# Revised v2 rubric; select ../prompts/nus_pairwise_v1.txt for the original v1 wording.
+rubric: ../prompts/nus_pairwise_v2.txt
 cache_dir: ../results/.cache/generation
 output_dir: ../results
+results_timezone: America/Chicago  # Local result directory names; event timestamps stay UTC.
 
 research:
   caesar:

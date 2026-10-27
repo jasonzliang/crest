@@ -1,7 +1,8 @@
 # Profile for the 64 GB jason-mbp. Unspecified settings inherit the defaults.
 # Run with the Python environment that has Rome's dependencies installed.
-# Select ../prompts/nus_pairwise_v2.txt for the previous rubric wording.
-rubric: ../prompts/nus_pairwise.txt
+# Select ../prompts/nus_pairwise_v1.txt for the original v1 rubric wording.
+rubric: ../prompts/nus_pairwise_v2.txt
+results_timezone: America/Chicago
 research:
   caesar:
     initial_concurrency: 20

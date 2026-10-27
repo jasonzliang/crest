@@ -10,6 +10,7 @@ from itertools import combinations
 import json
 import re
 
+from .cache import digest
 from .presentation import PRESENTATION_VERSION, present_answer
 
 
@@ -132,12 +133,6 @@ def parse_verdict(text: str, *, require_reason_quality: bool = False) -> dict:
     return validate_verdict(value, require_reason_quality=require_reason_quality)
 
 
-def _fingerprint(value: dict) -> str:
-    encoded = json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False,
-                         separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
 def make_judgment_jobs(questions: list[dict], answers: list[dict], judges: dict,
                        rubric: str) -> list[dict]:
     """Create every available pair × both orders × each judge, deterministically.
@@ -181,7 +176,7 @@ def make_judgment_jobs(questions: list[dict], answers: list[dict], judges: dict,
                 prompt = build_prompt(question["text"], *presented, rubric,
                                       answers_are_presented=True)
                 for judge, settings in sorted(judges.items()):
-                    key = _fingerprint({
+                    key = digest({
                         "protocol_version": PROTOCOL_VERSION,
                         "presentation_version": PRESENTATION_VERSION,
                         "question_id": question["id"],

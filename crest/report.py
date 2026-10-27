@@ -294,6 +294,7 @@ def load_run(run_dir, *, audit=None):
             raise ValueError('Conflicting prior paid judgment records')
         prior_keys[key] = row
     data['prior_judgments'] = prior
+    data['prior_judgments_path'] = prior_path.relative_to(run).as_posix()
     audit_records, audit_path, audit_doc = _audit_records(run, audit, data['answers'])
     data.update(audit_records=audit_records, audit_path=audit_path, audit_doc=audit_doc)
     if audit_doc is not None:
@@ -427,6 +428,40 @@ def _judges(data):
     return ''.join(parts)
 
 
+def _judgment_attempt_count(rows):
+    """Count retained API attempts once; legacy jobs represent one attempt."""
+    jobs = {row['key']: row for row in rows}
+    attempts = set()
+    for key, row in jobs.items():
+        receipts = row.get('attempts')
+        if receipts:
+            for index, receipt in enumerate(receipts):
+                identity = receipt.get('key')
+                attempts.add(('key', identity) if identity else ('position', key, index))
+        else:
+            attempts.add(('key', key))
+    return len(attempts)
+
+
+def _prior_judgment_summary(row):
+    """Keep cost receipt references without duplicating provider response payloads."""
+    cost = cost_for_row(row)
+    receipts = row.get('attempts') or [row]
+    summary = {key: row[key] for key in (
+        'key', 'question_id', 'stage', 'source_judgment_directory', 'cache_record',
+        'cost_usd', 'cost_scope') if key in row}
+    summary.update(
+        judge=row.get('judge', row.get('provider')),
+        known_cost_usd=cost['cumulative_known_estimate_usd'],
+        unknown_cost_count=row.get('unknown_cost_count', sum(not _number(r.get('cost_usd')) for r in receipts)),
+        estimate_incomplete=cost['estimate_incomplete'],
+        api_attempt_count=_judgment_attempt_count([row]),
+        attempts=[{key: receipt[key] for key in (
+            'key', 'status', 'cost_usd', 'cache_record', 'submission_unknown',
+            'observed_cost_usd', 'observed_cost_scope') if key in receipt} for receipt in receipts])
+    return summary
+
+
 def _resources(data):
     generation, judging = data['resources']['generation'], data['resources']['judging']
     agents = _system_order(data)
@@ -470,18 +505,26 @@ def _resources(data):
     prior = data['resources']['prior_judging']
     paid = data['resources']['paid_judging']
     scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in JUDGES)
-    parts.append(f'<p><strong>600 scored verdicts: {_money(scored, 6)}. '
-                 f'All {paid["records"]} paid verdicts: {_money(paid["cumulative_known_estimate_usd"], 6)}.</strong> '
-                 f'The paid total includes {prior["records"]} prior or superseded verdicts once; they add no ranking votes. '
-                 'These are estimates; unknown charges and any failed attempts are reported separately.</p>')
+    scored_attempts = _judgment_attempt_count(data['judgments'])
+    paid_attempts = _judgment_attempt_count([*data['judgments'], *data['prior_judgments']])
+    parts.append(f'<p><strong>600 scored verdicts from 600 judgment jobs ({scored_attempts} API attempts): '
+                 f'{_money(scored, 6)}. All {paid["records"]} judgment jobs ({paid_attempts} API attempts): '
+                 f'{_money(paid["cumulative_known_estimate_usd"], 6)}.</strong> '
+                 'Job estimates include retained rejected attempts. Selected-response costs and usage cover only the successful attempt. '
+                 'Unknown additional charges are excluded.</p>')
     if prior['records']:
-        parts.append(f'<p><strong>600 scored judgments + {prior["records"]} prior or superseded paid calls.</strong> '
-                     f'The latter add {_money(prior["cumulative_known_estimate_usd"])} in recorded estimates '
-                     f'({prior["unknown_count"]} incomplete estimates) and no ranking votes. '
-                     'This separate subtotal is not included in the 600 scored-call estimates above. '
-                     'It is already included when an audit-wide judging total covers these same prior keys.</p>')
-        parts.append('<details><summary>Prior or superseded paid judgment ledger</summary><pre>'
-                     + _text(json.dumps(data['prior_judgments'], ensure_ascii=False, indent=2)) + '</pre></details>')
+        parts.append(f'<p>The total includes {prior["records"]} prior or superseded judgment jobs once: '
+                     f'{_money(prior["cumulative_known_estimate_usd"])} '
+                     f'({prior["unknown_count"]} incomplete estimates). They add no ranking votes. '
+                     'This subtotal is already included in the all-job total and is not added again to audit totals covering the same keys.</p>')
+        prior_rows = {row['key']: row for row in data['prior_judgments']}
+        compact_prior = [_prior_judgment_summary(row) for row in prior_rows.values()]
+        parts.append('<details><summary>Prior or superseded paid judgment ledger</summary>'
+                     '<p class="small">Full receipts remain in the canonical ledger: '
+                     f'<code>{_text(data["prior_judgments_path"])}</code>. '
+                     'Provider responses, repeated prompts and usage events are omitted from this HTML.</p>'
+                     '<pre tabindex="0" aria-label="Prior judgment cost summary">'
+                     + _text(json.dumps(compact_prior, ensure_ascii=False, indent=2)) + '</pre></details>')
     parts.append('<p class="small">Estimate classifications: ' + '; '.join(
         _text(LABELS[a]) + ' — usage-priced ' + _money(generation[a]['cost_assessment']['usage_priced_estimate_usd'])
         + ', conditional scenarios ' + _money(generation[a]['cost_assessment']['conditional_scenario_estimate_usd'])
@@ -518,10 +561,8 @@ def _resources(data):
                      + '; failed-attempt known estimates already included: ' + _money(ledger.get('failed_known_usd'))
                      + '. Model-based reserved exposure for unresolved charges: ' + _money(ledger.get('unknown_reserved_usd'))
                      + '. This exposure is not a guaranteed invoice bound and is not added to known spend.</p>')
-        parts.append('<p class="small">Audit judging estimates: 600 scored verdicts '
-                     + _money(judging_audit.get('known_estimated_usd'), 6) + '; all '
-                     + str(paid['records']) + ' paid verdicts including prior or superseded calls '
-                     + _money(paid['cumulative_known_estimate_usd'], 6) + '; failed jobs '
+        parts.append('<p class="small">Audit judging estimate for the 600 scored judgment jobs: '
+                     + _money(judging_audit.get('known_estimated_usd'), 6) + '; separate failed jobs '
                      + _money(judging_audit.get('failed_known_usd')) + '. Unknown failed-job bills: '
                      + _text(judging_audit.get('failed_unknown_cost_count', 'not recorded'))
                      + '; partial observations on unpriced failures: '
@@ -550,14 +591,21 @@ def _models(data):
         settings = research.get(agent, {})
         models = sorted({str(a['result'].get('model', 'Unavailable')) for a in data['answers'] if a['agent'] == agent})
         if agent == 'gemini':
-            detail = f'Managed agent: {settings.get("agent", "not recorded")}. Configured billing model: {settings.get("billing_model", "not recorded")}; not an override of the provider-controlled backbone.'
+            detail = f'Managed agent: {settings.get("agent", "not recorded")}. Configured billing model: {settings.get("billing_model", "not recorded")}; not an override of the provider-controlled backbone. Per-loop backend models are not reported for this run.'
         elif agent == 'openai':
-            detail = 'Sol + hosted web search through Responses API; not the complete hosted ChatGPT deep-research harness.'
+            detail = f'Sol + hosted web search through Responses API; reasoning effort: {settings.get("reasoning_effort", "not recorded")}. This run evaluates that configured workflow.'
         else:
             detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Per-answer configuration records retain helper settings and recovery provenance.'
         rows.append([_text(LABELS[agent]), _text(', '.join(models)), _text(detail)])
     return ('<section id="systems"><details><summary>Models and research workflows</summary>'
             + _table(['System', 'Recorded result model / billing reference', 'Workflow'], rows, 'Frozen research systems')
+            + '<p class="small">Google introduced its April 2026 Deep Research agents as built with Gemini 3.1 Pro '
+            '(<a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">Google announcement</a>). '
+            'That product description does not identify this run’s per-loop backend models.</p>'
+            '<p class="small">OpenAI’s o3-deep-research and o4-mini-deep-research API models shut down July 23, 2026 '
+            '(<a href="https://developers.openai.com/api/docs/deprecations">deprecation notice</a>; '
+            '<a href="https://developers.openai.com/api/docs/guides/deep-research">deep research guide</a>). '
+            'The OpenAI results here come from the Sol workflow recorded above.</p>'
             + '</details></section>')
 
 

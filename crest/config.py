@@ -7,17 +7,20 @@ import math
 from pathlib import Path
 import re
 import sys
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
 
 from .cache import digest
+from .artifacts import DEFAULT_RESULTS_TIMEZONE
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ROOT / 'crest/configs/crest.yaml'
 DEFAULTS = {
     'questions': '../data/queries_n50.jsonl',
-    'rubric': '../prompts/nus_pairwise.txt',
+    'rubric': '../prompts/nus_pairwise_v2.txt',
     'cache_dir': '../results/.cache/generation', 'output_dir': '../results',
+    'results_timezone': DEFAULT_RESULTS_TIMEZONE,
     'research_prompt': (
         'Answer the question below, producing the requested artifact rather than a research plan. '
         'Follow its explicit requirements, format and length. Research relevant evidence and '
@@ -92,6 +95,12 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
         raise ValueError('Configuration must be a YAML mapping')
     config = copy.deepcopy(DEFAULTS)
     _merge(config, supplied)
+    try:
+        if not isinstance(config['results_timezone'], str) or not config['results_timezone']:
+            raise ValueError
+        ZoneInfo(config['results_timezone'])
+    except (ValueError, ZoneInfoNotFoundError) as exc:
+        raise ValueError('results_timezone must be a valid IANA timezone, such as America/Chicago') from exc
     for key in ('questions', 'rubric', 'cache_dir', 'output_dir'):
         p = Path(config[key]).expanduser()
         config[key] = str((path.parent / p).resolve())

@@ -29,7 +29,8 @@ SETTINGS = frozenset({
     "exploration_max_completion_tokens", "kb_max_completion_tokens", "max_input_tokens",
     "query_max_completion_tokens", "synthesis_top_k", "synthesis_top_n",
     "budget_usd", "handler_budget_usd", "handler_cost_limit", "timeout_seconds",
-    "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts", "recovery_from", "budget_history_from",
+    "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts",
+    "retry_backoff_base_seconds", "retry_backoff_max_seconds", "recovery_from", "budget_history_from",
 })
 
 

@@ -220,8 +220,8 @@ class AnalysisTests(unittest.TestCase):
                      lambda j: j.update(verdict={"new": {"reason": "N", "winner": "A"},
                                                  "useful": {"reason": "U", "winner": "A"},
                                                  "surprising": {"reason": "S", "winner": "A"}})]
-        for mutate in mutations:
-            with self.subTest(mutate=mutate):
+        for index, mutate in enumerate(mutations):
+            with self.subTest(index=index):
                 data = experiment()
                 mutate(data[2][0])
                 result = report(data)

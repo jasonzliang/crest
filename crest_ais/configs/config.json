@@ -1,7 +1,7 @@
 {
   "data_root": "..",
   "output_dir": "results",
-  "rubric": "../prompts/rubric.txt",
+  "rubric": "../prompts/rubric_v2.txt",
   "inherit_judges": "../../crest/configs/crest.yaml",
   "pairs_per_matchup": 10,
   "seed": 2026,

@@ -138,6 +138,57 @@ def test_launch_persists_pid_and_result_without_serializing_secrets(tmp_path, mo
     assert job.state["submission_unknown"] is False
 
 
+@pytest.mark.parametrize("backoff, expected_waits", [
+    ({}, [1.25, 2.25, 4.25, 8.25, 16.25, 30.25, 30.25]),
+    ({"retry_backoff_base_seconds": 3, "retry_backoff_max_seconds": 5},
+     [3.25, 5.25, 5.25, 5.25, 5.25, 5.25, 5.25]),
+    ({"retry_backoff_base_seconds": .5, "retry_backoff_max_seconds": 1.5},
+     [.75, 1.25, 1.75, 1.75, 1.75, 1.75, 1.75]),
+])
+def test_worker_retries_honor_configured_backoff_through_adapter(tmp_path, monkeypatch, backoff, expected_waits):
+    waits, sent = [], []
+    class RateLimited(Exception):
+        status_code = 429
+    class SDK:
+        def request(self, *args, **kwargs):
+            sent.append(1)
+            if len(sent) < 8:
+                raise RateLimited()
+            return SimpleNamespace(usage={"prompt_tokens": 100, "completion_tokens": 20})
+    class Agent(FakeAgent):
+        shutdown_called = False
+        def __init__(self, **kwargs): pass
+        def explore(self):
+            SDK().request(object, SimpleNamespace(json_data={
+                "model": worker.SOL, "messages": [], "max_completion_tokens": 100}))
+            return artifact()
+        def shutdown(self): pass
+    @contextmanager
+    def runtime(settings, audit):
+        with audit.installed(SDK):
+            yield Agent
+    async def launch(*args, **kwargs):
+        request = json.loads(Path(args[args.index("--request") + 1]).read_text())
+        assert worker.run_worker(request, Path(args[args.index("--result") + 1])) == 0
+        class Child:
+            pid = 876
+            returncode = 0
+            async def wait(self): return 0
+        return Child()
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    monkeypatch.setattr(worker.time, "sleep", waits.append)
+    monkeypatch.setattr(worker.random, "uniform", lambda *args: .25)
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", launch)
+
+    result = asyncio.run(caesar.generate("Q", {"retry_attempts": 8, **backoff}, Job(tmp_path)))
+
+    assert result["text"]
+    assert len(sent) == 8
+    assert waits == expected_waits
+    assert result["usage"]["failed_calls"] == 7
+    assert result["usage"]["successful_calls"] == 1
+
+
 def test_resumed_live_worker_is_waited_for_without_duplicate_launch(tmp_path, monkeypatch):
     path = tmp_path / "result.json"
     job = Job(tmp_path, {"result_path": str(path), "worker_pid": 876, "worker_started_at": time.time()})

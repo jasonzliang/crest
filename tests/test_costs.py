@@ -10,6 +10,16 @@ PRIOR_KEY = "a" * 64
 CURRENT_KEY = "b" * 64
 
 
+def test_astra_judge_metadata_identifies_usage_pricing_without_changing_saved_cost():
+    result = {'model': 'gpt-6-astra', 'cost_usd': .123, 'usage': {}}
+    details = assess_cost(result, agent='openai')
+    assert details['cost_basis'] == 'usage_priced_estimate'
+    assert details['cumulative_known_estimate_usd'] == .123
+    assert details['pricing']['rates']['gpt-6-astra'] == {
+        'input': 10, 'cached_input': 1, 'cache_write_30m': 12.5, 'output': 50}
+    assert 'https://developers.openai.com/api/docs/models/gpt-6-astra' in details['pricing']['source_urls']
+
+
 def test_judge_retry_receipts_count_rejected_attempts_without_repricing_success_usage():
     success = {'model': 'gpt-6-astra', 'cost_usd': .3, 'usage': {'output_tokens': 100}}
     row = {'judge': 'openai', 'key': CURRENT_KEY, 'result': success, 'cost_usd': .5,

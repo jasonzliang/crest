@@ -152,6 +152,9 @@ python -m crest analyze --run "$CREST_RUN" --config crest/configs/crest.mbp.yaml
 <h2 id="interpretation">Read the ranking</h2>
 <p>Rank by overall wins divided by comparisons on common complete questions. A full 50-question block gives each system 400 comparisons. Reports include ties, cycles, per-judge diagnostics, exclusions, and paired whole-question bootstrap intervals. There are no per-criterion rankings. These are the selected judges' preferences for the saved answers, not a validated general creativity measurement; see <a href="docs/judging-method.html#limits">interpretation limits</a>.</p>
 <h2 id="development">Development and history</h2>
-<p>Run <code>python -m pytest</code> for the test suite. Historical protocols, questions, papers, and results live under <a href="crest/_archive/index.html">crest/_archive/</a> and remain separate from the current method. Old caches are not automatically imported.</p>
+<p>After installing <code>.[test]</code>, run the full test suite from the repository root:</p>
+<pre><code>python -m pytest</code></pre>
+<p>This runs both <code>tests/</code> and <code>crest_ais/tests/</code> in parallel, with one worker per logical CPU core. Use <code>python -m pytest -n 0</code> for serial debugging, or <code>python -m pytest -n 4</code> to choose the worker count.</p>
+<p>Historical protocols, questions, papers, and results live under <a href="crest/_archive/index.html">crest/_archive/</a> and remain separate from the current method. Old caches are not automatically imported.</p>
 <p>Apache License 2.0 — <a href="LICENSE">LICENSE</a>.</p>
 </article><footer><a href="docs/index.html">All documents</a></footer></main></body></html>

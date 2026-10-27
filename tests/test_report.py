@@ -1,5 +1,6 @@
 """Offline publication, provenance, accounting and escaping contracts for CREST HTML."""
 from copy import deepcopy
+from html import unescape
 from html.parser import HTMLParser
 from itertools import combinations
 import json
@@ -106,6 +107,51 @@ def test_revised_method_describes_judge_presentations_not_raw_url_metadata():
     assert 'URL destinations were hidden' in html
     assert 'Original answers are preserved' in html
     assert 'this run was not fully blinded' not in html
+
+
+def test_judging_cost_copy_distinguishes_jobs_from_paid_attempts(run):
+    from crest.report import load_run, _resources
+    data = load_run(run)
+    data['judgments'][0]['attempts'] = [{'status': 'rejected'}, {'status': 'completed'}]
+    html = _resources(data)
+    assert '601 API attempts' in html
+    assert '600 judgment jobs' in html
+    assert 'failed attempts are reported separately' not in html
+
+
+def test_judging_estimate_includes_rejected_attempt_without_changing_receipts(run):
+    from crest.report import load_run, _resources
+    path = run / '02-judge-test/judgments.jsonl'
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    rows[0].update(cost_usd=.15, cost_scope='all_judgment_attempts', attempts=[
+        {'key': 'rejected-attempt', 'status': 'rejected', 'cost_usd': .05},
+        {'key': 'selected-attempt', 'status': 'completed', 'cost_usd': .1}])
+    path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    original = path.read_bytes()
+    data = load_run(run)
+    html = _resources(data)
+    assert '600 scored verdicts from 600 judgment jobs (601 API attempts): $60.050000' in html
+    assert 'Job estimates include retained rejected attempts' in html
+    assert 'Selected-response costs and usage cover only the successful attempt' in html
+    assert path.read_bytes() == original
+    assert data['judgments'][0]['result']['cost_usd'] == .1
+
+
+def test_model_notes_cite_provider_history_and_preserve_run_uncertainty(run):
+    from crest.report import load_run, _models
+    html = _models(load_run(run))
+    assert 'reasoning effort: high' in html
+    assert 'built with Gemini 3.1 Pro' in html
+    assert 'Per-loop backend models are not reported for this run' in html
+    assert 'not an override' in html
+    assert 'July 23, 2026' in html
+    assert 'o3-deep-research' in html and 'o4-mini-deep-research' in html
+    for source in [
+        'https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/',
+        'https://developers.openai.com/api/docs/deprecations',
+        'https://developers.openai.com/api/docs/guides/deep-research',
+    ]:
+        assert f'href="{source}"' in html
 
 
 def test_refuses_incomplete_publication_without_overwriting_destination(run, tmp_path):
@@ -686,13 +732,73 @@ def test_superseded_paid_judgments_add_costs_once_and_never_add_votes(run, tmp_p
     output = tmp_path / 'page.html'
     write_report(run, output)
     text = output.read_text()
-    assert '600 scored judgments + 4 prior or superseded paid calls' in text
+    assert '4 prior or superseded judgment jobs' in text
     assert '$0.8000' in text
-    assert '600 scored verdicts: $60.000000' in text
-    assert '604 paid verdicts: $60.800000' in text
+    assert '600 scored verdicts from 600 judgment jobs (600 API attempts): $60.000000' in text
+    assert 'All 604 judgment jobs (604 API attempts): $60.800000' in text
     assert text.count('class="judgment"') == 600
     # An old paid key cannot also be counted as a currently scored verdict.
     prior[0]['key'] = current[0]['key']
     file.write_text(json.dumps(prior[0]) + '\n')
     with pytest.raises(ValueError, match='prior|superseded'):
         load_run(run)
+
+
+def test_prior_judgment_attempt_count_deduplicates_job_keys(run):
+    from crest.report import load_run, _resources
+    prior = {'key': 'prior-job', 'stage': 'judge', 'valid_for_ranking': False,
+             'cost_usd': .3, 'cost_scope': 'all_judgment_attempts', 'attempts': [
+                 {'key': 'prior-rejected', 'status': 'rejected', 'cost_usd': .2},
+                 {'key': 'prior-completed', 'status': 'completed', 'cost_usd': .1}]}
+    path = run / '02-judge-test/prior_judgment_costs.jsonl'
+    path.write_text(''.join(json.dumps(prior) + '\n' for _ in range(2)))
+    data = load_run(run)
+    html = _resources(data)
+    assert 'All 601 judgment jobs (602 API attempts): $60.300000' in html
+    assert '1 prior or superseded judgment jobs' in html
+    assert data['ranking']['coverage']['valid_judgments'] == 600
+
+
+@pytest.mark.parametrize('ledger_directory', ['02-judge-test', ''])
+def test_prior_ledger_html_omits_raw_payloads_and_retains_cost_receipt_summary(run, tmp_path, ledger_directory):
+    from crest.report import load_run, write_report, _questions
+    evidence = _questions(load_run(run))
+    marker = 'PRIOR_RAW_PAYLOAD_RETAINED_ONLY_IN_CANONICAL_JSONL'
+    payload = marker + 'x' * 20000
+    prior = {'key': 'prior-paid-job', 'judge': 'openai', 'stage': 'judge',
+             'source_judgment_directory': '02-judge-previous', 'valid_for_ranking': False,
+             'cost_usd': None, 'known_cost_usd': .2, 'unknown_cost_count': 1,
+             'cost_scope': 'all_judgment_attempts', 'cache_record': 'cache/prior-paid-job.json',
+             'usage': {'events': [payload]}, 'raw': {'request': payload},
+             'result': {'text': payload, 'raw': {'prompt': payload}}, 'attempts': [
+                 {'key': 'prior-rejected', 'status': 'rejected', 'cost_usd': .2,
+                  'cache_record': 'cache/attempts/prior-rejected.json',
+                  'result': {'text': payload, 'raw': {'prompt': payload}}},
+                 {'key': 'prior-unpriced', 'status': 'failed', 'cost_usd': None,
+                  'cache_record': 'cache/attempts/prior-unpriced.json',
+                  'usage': {'events': [payload]}, 'result': {'raw': {'answers': payload}}}]}
+    ledger = run / ledger_directory / 'prior_judgment_costs.jsonl'
+    ledger.write_text(''.join(json.dumps(prior) + '\n' for _ in range(2)))
+    original = ledger.read_bytes()
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert marker not in html
+    assert ledger.relative_to(run).as_posix() in html
+    assert 'Full receipts remain in the canonical ledger' in html
+    compact = re.search(r'<pre[^>]*aria-label="Prior judgment cost summary"[^>]*>(.*?)</pre>', html, re.S)
+    assert compact is not None and len(compact.group(1)) < 5000
+    records = json.loads(unescape(compact.group(1)))
+    assert len(records) == 1
+    record = records[0]
+    assert record['key'] == 'prior-paid-job' and record['judge'] == 'openai'
+    assert record['stage'] == 'judge' and record['source_judgment_directory'] == '02-judge-previous'
+    assert record['cost_usd'] is None and record['known_cost_usd'] == .2
+    assert record['unknown_cost_count'] == 1 and record['api_attempt_count'] == 2
+    assert [(r['key'], r['status'], r['cost_usd']) for r in record['attempts']] == [
+        ('prior-rejected', 'rejected', .2), ('prior-unpriced', 'failed', None)]
+    assert record['attempts'][1]['cache_record'] == 'cache/attempts/prior-unpriced.json'
+    assert 'All 601 judgment jobs (602 API attempts): $60.200000' in html
+    assert evidence in html
+    assert html.count('class="answer"') == 150 and html.count('class="reason"') == 600
+    assert ledger.read_bytes() == original

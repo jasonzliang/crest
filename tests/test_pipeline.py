@@ -49,7 +49,7 @@ def test_questions_preserve_text_and_reject_duplicate_text(tmp_path):
 def fixture_config(tmp_path, n=2):
     q = tmp_path / 'questions.jsonl'
     q.write_text(''.join(json.dumps({'query': f'Question {i}'}) + '\n' for i in range(n)))
-    rubric = tmp_path / 'rubric.txt'
+    rubric = tmp_path / 'rubric_v2.txt'
     rubric.write_text('Compare New, Useful and Surprising. Choose A or B.')
     p = tmp_path / 'crest.yaml'
     p.write_text(f'questions: {q}\nrubric: {rubric}\ncache_dir: {tmp_path / "cache"}\noutput_dir: {tmp_path / "results"}\n')
@@ -628,8 +628,8 @@ def test_flat_answer_files_link_configuration_registry_without_changing_paid_key
         assert len(row['configuration_sha256']) == 64
         assert record['settings']['model'] == config['research']['openai']['model']
     assert all(path.is_file() for path in (stage / 'answers').iterdir())
-    assert re.fullmatch(r'\d{2}-\d{2}-\d{2}Z-[a-f0-9]{8}', pipeline.run_dir.name)
-    assert re.fullmatch(r'01-generate-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}Z', stage.name)
+    assert re.fullmatch(r'\d{2}-\d{2}-\d{2}-(?:CDT|CST)-[a-f0-9]{8}', pipeline.run_dir.name)
+    assert re.fullmatch(r'01-generate-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-(?:CDT|CST)', stage.name)
     assert [task['key'] for task in pipeline.generation_jobs()] == keys
 
 

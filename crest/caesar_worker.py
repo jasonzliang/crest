@@ -236,9 +236,12 @@ class UsageAudit:
     Both retry here with bounded attempts/backoff and a new budget check each time;
     SDK-internal retries are disabled so every attempt remains visible.
     """
-    def __init__(self, budget: float, path: Path, prices=None, *, retry_attempts=4):
+    def __init__(self, budget: float, path: Path, prices=None, *, retry_attempts=4,
+                 retry_backoff_base_seconds=1, retry_backoff_max_seconds=30):
         self.budget = float(budget)
         self.retry_attempts = max(1, int(retry_attempts))
+        self.retry_backoff_base_seconds = max(0., float(retry_backoff_base_seconds))
+        self.retry_backoff_max_seconds = max(0., float(retry_backoff_max_seconds))
         self.path = Path(path)
         self.prices = {**PRICES, **(prices or {})}
         self.events = []
@@ -373,7 +376,8 @@ class UsageAudit:
         if not transient or _error_body(error).get("retryable") is False or getattr(error, "code", None) == "insufficient_quota" or attempt + 1 >= self.retry_attempts:
             outcome = "rejected" if status in (401, 403, 429) else "billing outcome unknown"
             raise SDKRequestFailed(f"{type(error).__name__}: {outcome}; stopped after {attempt + 1} attempt(s)") from error
-        return max(min(30., 2. ** attempt) + random.uniform(0., 1.), _retry_after_seconds(error))
+        backoff = min(self.retry_backoff_max_seconds, self.retry_backoff_base_seconds * 2. ** attempt)
+        return max(backoff + random.uniform(0., 1.), _retry_after_seconds(error))
 
     def completed(self, token, response):
         try:
@@ -734,9 +738,7 @@ def _explore_with_synthesis_reserve(agent, settings, audit):
     exploration_seconds = (deadline - started) * .375
     stop = None
     def perceive(*args, **kwargs):
-        usage = audit.snapshot()
-        committed = usage["known_cost_usd"] + sum(item["reserved_usd"] for item in usage["in_flight"])
-        committed += sum(item.get("reserved_usd", 0) for item in usage["events"] if item["status"] == "failed")
+        committed = _committed_spend(audit)
         time_limited = time.monotonic() >= started + exploration_seconds
         if time_limited or committed >= max(0., ceiling - reserve):
             raise ExplorationBudgetReserved({"iterations_completed": max(0, agent.current_iteration - 1),
@@ -925,7 +927,10 @@ def run_worker(request: dict, result_path: Path) -> int:
             handler_budget_usd=min(float(settings.get("handler_budget_usd", 5.)), budget_history["new_attempt_budget_usd"]),
             synthesis_reserve_usd=budget_history["effective_synthesis_reserve_usd"])
         atomic_json(output_dir / "budget-history.json", budget_history)
-    audit = UsageAudit(attempt_settings.get("budget_usd", 5.), output_dir / "usage.json", settings.get("model_pricing"), retry_attempts=settings.get("retry_attempts", 4))
+    audit = UsageAudit(attempt_settings.get("budget_usd", 5.), output_dir / "usage.json", settings.get("model_pricing"),
+                       retry_attempts=settings.get("retry_attempts", 4),
+                       retry_backoff_base_seconds=settings.get("retry_backoff_base_seconds", 1),
+                       retry_backoff_max_seconds=settings.get("retry_backoff_max_seconds", 30))
     agent = None
     record = None
     artifact = None

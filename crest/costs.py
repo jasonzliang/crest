@@ -9,6 +9,7 @@ import posixpath
 COST_VERSION = "crest-cost-assessment-v2"
 PRICING_DATE = "2026-10-27"
 OPENAI_SOURCES = ["https://developers.openai.com/api/docs/pricing",
+                  "https://developers.openai.com/api/docs/models/gpt-6-astra",
                   "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
                   "https://developers.openai.com/api/docs/models/gpt-6-luna",
                   "https://developers.openai.com/api/docs/models/text-embedding-3-small",
@@ -19,6 +20,7 @@ GOOGLE_SOURCES = ["https://ai.google.dev/gemini-api/docs/pricing",
                   "https://ai.google.dev/api/interactions-api",
                   "https://ai.google.dev/gemini-api/docs/google-search"]
 OPENAI_RATES = {
+    "gpt-6-astra": {"input": 10, "cached_input": 1, "cache_write_30m": 12.5, "output": 50},
     "gpt-6.1-sol": {"input": 2, "cached_input": .1, "cache_write_30m": 2.5, "output": 10},
     "gpt-6-luna": {"input": .1, "cached_input": .01, "cache_write_30m": .125, "output": .5},
     "text-embedding-3-small": {"input": .02, "output": 0},

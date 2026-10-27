@@ -30,7 +30,7 @@ def load_config(path: Path | None = None, *, data_root: Path | None = None) -> d
     root = Path(data_root).expanduser().resolve() if data_root else (base / config.get("data_root", ".")).resolve()
     config["data_root"] = root
     config["output_dir"] = (root / config.get("output_dir", "results")).resolve()
-    config["rubric"] = (base / config.get("rubric", "rubric.txt")).resolve()
+    config["rubric"] = (base / config.get("rubric", "../prompts/rubric_v2.txt")).resolve()
     inheritance = (base / config.get("inherit_judges", CREST_DEFAULT_CONFIG)).resolve()
     inherited = yaml.safe_load(inheritance.read_text(encoding="utf-8"))
     judges = inherited.get("judges", {})

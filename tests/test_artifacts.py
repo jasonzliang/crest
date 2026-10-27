@@ -106,15 +106,49 @@ def test_answer_numbers_must_be_positive_ordinals(number):
         artifacts().answer_metadata(task(), number)
 
 
-def test_directory_names_show_utc_seconds_without_changing_event_timestamps():
+def test_directory_names_show_local_seconds_without_changing_event_timestamps():
     module = artifacts()
     event = '20261027T090203.987654Z'
-    assert module.run_directory_name(event, 'abcd1234') == '09-02-03Z-abcd1234'
-    assert module.stage_directory_name(1, 'generate', event) == '01-generate-2026-10-27_09-02-03Z'
-    assert module.stage_directory_name(2, 'judge', event) == '02-judge-2026-10-27_09-02-03Z'
+    assert module.run_directory_name(event, 'abcd1234') == '04-02-03-CDT-abcd1234'
+    assert module.stage_directory_name(1, 'generate', event) == '01-generate-2026-10-27_04-02-03-CDT'
+    assert module.stage_directory_name(2, 'judge', event) == '02-judge-2026-10-27_04-02-03-CDT'
     local = datetime(2026, 10, 27, 4, 2, 3, tzinfo=timezone(timedelta(hours=-5)))
-    assert module.run_directory_name(local, 'abcd1234') == '09-02-03Z-abcd1234'
+    assert module.run_directory_name(local, 'abcd1234') == '04-02-03-CDT-abcd1234'
     assert event == '20261027T090203.987654Z'
+
+
+def test_run_date_bucket_and_name_use_the_same_local_day():
+    module = artifacts()
+    event = '2026-10-27T04:17:53Z'
+    assert module.run_date_directory_name(event) == '2026-10-26'
+    assert module.run_directory_name(event, '8bbde248') == '23-17-53-CDT-8bbde248'
+
+
+@pytest.mark.parametrize('event, suffix', [
+    ('2026-11-01T06:30:00Z', '01-30-00-CDT'),
+    ('2026-11-01T07:30:00Z', '01-30-00-CST'),
+])
+def test_directory_timezone_suffix_distinguishes_repeated_dst_hour(event, suffix):
+    module = artifacts()
+    assert module.run_directory_name(event, 'abcd1234') == suffix + '-abcd1234'
+    assert module.stage_directory_name(2, 'judge', event) == '02-judge-2026-11-01_' + suffix
+
+
+def test_offset_timestamp_is_converted_to_the_configured_timezone():
+    module = artifacts()
+    event = '2026-10-27T21:29:00+04:00'
+    assert module.stage_directory_name(2, 'judge', event) == '02-judge-2026-10-27_12-29-00-CDT'
+    assert module.run_directory_name(event, 'abcd1234', results_timezone='America/New_York') == '13-29-00-EDT-abcd1234'
+    assert module.run_date_directory_name('2026-10-27T04:17:53Z', results_timezone='UTC') == '2026-10-27'
+
+
+@pytest.mark.parametrize('event', ['2026-10-27T04:17:53', datetime(2026, 10, 27, 4, 17, 53)])
+def test_directory_timestamps_must_be_timezone_aware(event):
+    module = artifacts()
+    with pytest.raises(ValueError, match='timezone'):
+        module.run_date_directory_name(event)
+    with pytest.raises(ValueError, match='timezone'):
+        module.run_directory_name(event, 'abcd1234')
 
 
 def test_directory_reservation_is_atomic_under_concurrency_and_preserves_existing_files(tmp_path):

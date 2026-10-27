@@ -238,12 +238,18 @@ def _create_extension(source_run: Path, run_dir: Path, data_root: Path, *, plan_
 
 
 def _preflight(tasks: list[dict], cache: Cache, provided: dict) -> None:
-    required = {task["judge"] for task in tasks
-                if task["judge"] not in provided
-                and cache.job(task["key"]).state.get("status") not in {"completed", *TERMINAL_FAILURES}
-                and not (cache.job(task["key"]).state.get("submission_unknown")
-                         and not cache.job(task["key"]).state.get("remote_id"))
-                and not isinstance(cache.job(task["key"]).state.get("result"), dict)}
+    required = set()
+    for task in tasks:
+        if task["judge"] in provided:
+            continue
+        state = cache.job(task["key"]).state
+        if state.get("status") in {"completed", *TERMINAL_FAILURES}:
+            continue
+        if state.get("submission_unknown") and not state.get("remote_id"):
+            continue
+        if isinstance(state.get("result"), dict):
+            continue
+        required.add(task["judge"])
     missing = []
     if "openai" in required and not os.environ.get("OPENAI_API_KEY"):
         missing.append("OPENAI_API_KEY")

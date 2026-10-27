@@ -28,7 +28,10 @@ def main(argv=None):
         if run and args.agents:
             raise ValueError('An existing run keeps its agent snapshot; use a new generation run to change agents')
         if not run and args.stage in {'judge', 'analyze'}:
-            latest = Path(config['output_dir']) / 'latest.json'
+            root = Path(config['output_dir'])
+            latest = root / '.cache' / 'latest.json'
+            if not latest.exists():
+                latest = root / 'latest.json'
             if not latest.exists():
                 raise ValueError('No generation run yet. Run python -m crest generate first or pass --run PATH')
             run = Path(json.loads(latest.read_text())['run_dir'])

@@ -18,8 +18,9 @@ from .cache import Cache, CacheCorruption, digest, write_json
 from .config import load_questions
 from .concurrency import AdaptiveLimiter
 from .costs import assess_cost
-from .artifacts import (TRANSPORT_SETTINGS, answer_metadata, configuration_record,
-                        reserve_directory, run_directory_name, stage_directory_name)
+from .artifacts import (DEFAULT_RESULTS_TIMEZONE, TRANSPORT_SETTINGS, answer_metadata,
+                        configuration_record, reserve_directory, run_date_directory_name,
+                        run_directory_name, stage_directory_name)
 
 
 def timestamp() -> str:
@@ -67,7 +68,6 @@ def _read_jsonl(path: Path) -> list[dict]:
 
 
 def _append(path: Path, row: dict) -> None:
-    import os
     with path.open('a', encoding='utf-8') as stream:
         stream.write(json.dumps(row, ensure_ascii=False, allow_nan=False) + '\n')
         stream.flush()
@@ -178,20 +178,24 @@ class Pipeline:
             return
         stamp = timestamp()
         root = Path(self.config['output_dir'])
-        date = datetime.fromisoformat(stamp.replace('Z', '+00:00')).date().isoformat()
+        results_timezone = self.config.get('results_timezone', DEFAULT_RESULTS_TIMEZONE)
+        date = run_date_directory_name(stamp, results_timezone=results_timezone)
         jobs = self.generation_jobs()
-        self.run_dir = reserve_directory(root / date, run_directory_name(stamp, uuid.uuid4().hex[:8]))
+        name = run_directory_name(stamp, uuid.uuid4().hex[:8], results_timezone=results_timezone)
+        self.run_dir = reserve_directory(root / date, name)
         self.manifest = {'schema': 'crest-run-v1', 'created_at': stamp,
                          'questions': self.questions, 'agents': list(self.config['research']),
                          'generation_jobs': jobs, 'config': self.config, 'stages': []}
         write_json(self.run_dir / 'run.json', self.manifest)
-        write_json(root / 'latest.json', {'run_dir': str(self.run_dir), 'created_at': stamp})
+        write_json(root / '.cache' / 'latest.json', {'run_dir': str(self.run_dir), 'created_at': stamp})
 
     def _new_stage(self, number: int, name: str) -> Path:
         if not self.run_dir:
             raise ValueError('Select an existing generation run with --run, or generate first')
         started = timestamp()
-        path = reserve_directory(self.run_dir, stage_directory_name(number, name, started))
+        directory_name = stage_directory_name(number, name, started,
+            results_timezone=self.config.get('results_timezone', DEFAULT_RESULTS_TIMEZONE))
+        path = reserve_directory(self.run_dir, directory_name)
         stage = {'name': name, 'directory': path.name, 'started_at': started, 'status': 'running'}
         write_json(path / 'manifest.json', stage)
         with self._manifest_lock():

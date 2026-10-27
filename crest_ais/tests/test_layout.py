@@ -17,7 +17,7 @@ def test_default_config_resolves_package_data_results_and_prompt_from_any_cwd(tm
     config = load_config()
     assert config["data_root"] == ROOT
     assert config["output_dir"] == ROOT / "results"
-    assert config["rubric"] == ROOT / "prompts" / "rubric.txt"
+    assert config["rubric"] == ROOT / "prompts" / "rubric_v2.txt"
     inherited = yaml.safe_load(DEFAULT_CONFIG.read_text())
     for judge in ("openai", "gemini"):
         assert config["judges"][judge]["model"] == inherited["judges"][judge]["model"]
@@ -31,13 +31,13 @@ def test_explicit_config_keeps_paths_relative_to_its_own_directory(tmp_path, mon
     directory.mkdir()
     prompts = tmp_path / "prompts"
     prompts.mkdir()
-    (prompts / "rubric.txt").write_text("Unchanged comparison guidance")
+    (prompts / "rubric_v2.txt").write_text("Unchanged comparison guidance")
     inherited = {"judges": {name: {"model": f"fixture-{name}", "concurrency": 8}
                              for name in ("openai", "gemini")}}
     (tmp_path / "judges.yaml").write_text(yaml.safe_dump(inherited))
     config_path = directory / "custom.json"
     config_path.write_text(json.dumps({"data_root": "../dataset", "output_dir": "runs",
-                                      "rubric": "../prompts/rubric.txt", "inherit_judges": "../judges.yaml"}))
+                                      "rubric": "../prompts/rubric_v2.txt", "inherit_judges": "../judges.yaml"}))
     monkeypatch.chdir(prompts)
     config = load_config(config_path)
     assert config["data_root"] == tmp_path / "dataset"
