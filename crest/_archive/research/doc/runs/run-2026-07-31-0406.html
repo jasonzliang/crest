@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Run outputs · CREST</title><style>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Run 2026-07-31 04:06 UTC · CREST</title><style>
 :root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
@@ -110,108 +110,73 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style></head>
-<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../README.html">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><article><h1 id="crestresult--run-outputs">crest/result — run outputs</h1>
-<p>Each evaluation writes a run directory. Runs are
-<strong>immutable</strong>: every invocation mints a new
-<code>run_id</code> and nothing is ever resumed into an existing one.
-There is no <code>--resume</code> / <code>--no-resume</code>. What stops
-you re-paying is the <strong>cross-run generation cache</strong>
-(<code>harness/cache.py</code>, on by default): an agent answer already
-stored in <em>any</em> previous run is served for free, keyed by
-(challenge text, agent, model, adapter fingerprint), so a re-run costs
-judge calls only. Disable it with <code>--override-cache</code> (all
-entrants) or <code>--override-cache-agents &lt;keys&gt;</code> (just the
-named ones), or <code>use_cache: false</code> in the config. To repair
-judge failures in place without minting a new run, use
-<code>python -m crest.harness.rejudge --run &lt;run_dir&gt;</code>.</p>
-<pre tabindex="0"><code>result/
-  readme.md                     this file (the only tracked thing in here)
-  index.jsonl                   append-only registry: one line per run (discovery)   [gitignored]
-  latest -&gt; runs/&lt;run_id&gt;       symlink to the newest run (convenience, NOT canonical) [gitignored]
-  superseded_runs.json          provenance for DELETED run dirs: what each showed, why superseded
-  leaderboard.json            promoted canonical numbers cited in the paper. TRACKED, and the
-                              only copy of the results inside git -- result/runs/ is gitignored,
-                              so summary.json is not in git at all. Regenerate with
-                              `python -m crest.analysis.promote_leaderboard --run &lt;run_dir&gt;`.
-  runs/&lt;run_id&gt;/                                                                     [gitignored]
-    README.md                   per-run orientation + the records↔transcripts join recipe
-    records.jsonl               analysis-grade, one line per (challenge, agent); no heavy text
-    transcripts.jsonl           heavy: full agent output text + citations, keyed by record_id
-    errors.jsonl                one line per failed task (agent error / circuit-broken provider)
-    config.snapshot.yaml        literal copy of the config as-run (run_eval.py only)
-    run_manifest.json           provenance: git commit, config, pinned models, judge panel,
-                                 live-vs-frozen mode + contamination caveat, totals, env
-    summary.json                aggregates per agent × category (grounding/creative rates, means)
-    ablation.json               written only by `analysis/ablate_fields.py`</code></pre>
-<p><code>run_id = &lt;UTC-timestamp&gt;__crest__&lt;subset&gt;__git&lt;sha&gt;__&lt;nonce&gt;</code>
-— sortable and provenance-encoding. Run outputs are ~7 MB per run, so
-<code>runs/</code>, <code>index.jsonl</code> and <code>latest</code> are
-<strong>gitignored</strong> and live on disk only; they are both the
-generation cache and the evidence base, so do not delete them.</p>
-<ul>
-<li><strong>"the numbers in the paper"</strong> →
-<code>leaderboard.json</code>. It carries the primary endpoint
-min(New,Useful,Surprising) per agent (which <code>summary.json</code>
-does NOT), the run's provenance including derived warnings about it, and
-the caveats -- chiefly that judge severity exceeds the between-agent
-spread, so <strong>the ordering is not identifiable</strong> from this
-run.</li>
-<li><strong>"the latest run"</strong> → <code>latest</code>.</li>
-<li><strong>"what runs exist"</strong> → <code>index.jsonl</code>.</li>
-<li>Analyze a run:
-<code>python -m crest.analysis.stats --run crest/result/runs/&lt;run_id&gt;/records.jsonl</code>.</li>
-<li>Is a long run still alive?
-<code>python -m crest.analysis.stall_check</code>.</li>
-</ul>
-<p><code>RECORD_SCHEMA_VERSION</code> in <code>harness/results.py</code>
-is now <code>crest-record/1.2.0</code>; the shipped run 040653Z was
-written under the previous version and all 250 of its records — and its
-manifest — stamp <code>crest-record/1.0.0</code>.
-<code>scoring_status</code> is one of <code>scored</code> ·
-<code>judge_degraded</code> (scored, but by fewer than
-<code>min_judges</code> — excluded from headline numbers) ·
-<code>empty_answer</code> (the adapter returned no text; an ADAPTER
-failure, deliberately distinguished from fabrication) ·
-<code>too_short</code> (non-empty but under the substantive-length floor
--- same adapter root cause as <code>empty_answer</code>, but kept
-separate because the threshold is a judgement call) ·
-<code>grounding_fail</code> · <code>judge_error</code> (no judge
-survived). <code>creativity</code> is <code>null</code> on every
-UNSCORED path — never a fake 0 — but <strong><code>judge_degraded</code>
-is the exception: it carries a full <code>creativity</code>
-dict</strong> scored by too few judges, which is why
-<code>results.py::is_scored</code> requires BOTH
-<code>scoring_status == "scored"</code> and a non-empty dict (three
-disagreeing definitions of "scored" once made a repair drop the headline
-count from 100 to 91). Records written by <code>run_crest</code> carry
-<code>query_sha</code> + <code>adapter_fp</code> (the cache's content
-address); <strong>the shipped run 040653Z predates
-<code>adapter_fp</code>, <code>truncated</code>,
-<code>answer_chars</code> and <code>answer_words</code> — 0 of its 250
-records have them</strong>, so the cache indexes none of it and
-answer-length covariates cannot be computed from that release. Records
-also carry <code>generation_cached</code> /
-<code>cache_source_run</code>, so a reused answer is visible in the
-data.</p>
-<p>Per-judge scores are a list under <code>creativity.judges</code>,
-each row stamped with <code>same_family</code>, so
-<code>pandas.json_normalize(record_path=["creativity","judges"], meta=[...])</code>
-yields a rater-level frame for the mixed-effects model (750 rows on run
-040653Z). The leave-one-family-out subset is the rows with
-<strong><code>same_family == False</code></strong> — LOFO <em>drops</em>
-the same-family judge, so keeping <code>== True</code> selects the exact
-complement (500 vs 250 rows on that run).
-<code>creativity.judge_protocol</code> records which protocol produced
-the row (<code>full-panel (same-family as covariate)</code> by
-default).</p>
-<p>Reliability (Krippendorff α / ICC) and inferential stats live in
-<code>crest/analysis/stats.py</code>, not in
-<code>summary.json</code>.</p>
-<p><code>make_manifest</code> derives <code>judge_protocol</code> from
-<code>panel.protocol</code>, so it agrees with the per-record
-<code>creativity.judge_protocol</code>. Run 040653Z's manifest was
-written before that fix and hand-corrected; its
-<code>judge_protocol_note</code> records exactly that.</p>
-</article><footer><a href="../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#run-2026-07-31t040653z__crest__full50__gitb0cdbe7__431cc3">Run 2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3</a></li><li><a href="#which-file-is-which">Which file is which</a></li><li><a href="#reading-the-scores">Reading the scores</a></li></ul></nav></details><p class="archive-note"><strong>Archive storage.</strong> This note was moved from <code>crest/_archive/research/result/runs/2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3/</code>. Result data remain there locally and are excluded from Git. Any tracking instructions below describe the earlier layout.</p><article><h1 id="run-2026-07-31t040653z__crest__full50__gitb0cdbe7__431cc3">Run
+<code>2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3</code></h1>
+<p>2026-07-31T04:06:53.660170+00:00 · 250 records · agents:
+claude_shallow, openai_shallow, gemini_shallow, openai_deepresearch,
+gemini_deepresearch_max judges: judge_anthropic, judge_openai,
+judge_google · protocol: full-panel (same-family as covariate); blind;
+median aggregation</p>
+<h2 id="which-file-is-which">Which file is which</h2>
+<div aria-label="Which file is which table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">file</th>
+<th scope="col">produced by</th>
+<th scope="col">contains</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>transcripts.jsonl</code></td>
+<td><strong>the AGENTS</strong></td>
+<td>what each agent actually wrote: <code>output_text</code> +
+<code>citations</code></td>
+</tr>
+<tr>
+<td><code>records.jsonl</code></td>
+<td><strong>the JUDGES</strong></td>
+<td>the scores: per-axis New/Useful/Surprising, per-judge rows,
+grounding verdict, <code>scoring_status</code></td>
+</tr>
+<tr>
+<td><code>errors.jsonl</code></td>
+<td>the harness</td>
+<td>tasks that produced no record at all</td>
+</tr>
+<tr>
+<td><code>summary.json</code></td>
+<td>the harness</td>
+<td>per-agent and per-agent-x-category aggregates</td>
+</tr>
+<tr>
+<td><code>run_manifest.json</code></td>
+<td>the harness</td>
+<td>provenance; written last, so it marks completion</td>
+</tr>
+</tbody>
+</table></div>
+<p>The names are historical: "records" is the judge output and
+"transcripts" is the agent output, which is the reverse of what most
+readers assume. <strong>Join them on
+<code>record_id</code>.</strong></p>
+<pre class="python" tabindex="0"><code>import json
+scores = {r["record_id"]: r for r in map(json.loads, open("records.jsonl"))}
+answers = {t["record_id"]: t for t in map(json.loads, open("transcripts.jsonl"))}
+rid = next(iter(scores))
+print(scores[rid]["agent"], scores[rid]["creativity"]["new"], answers[rid]["output_text"][:200])</code></pre>
+<h2 id="reading-the-scores">Reading the scores</h2>
+<p><code>creativity</code> is null unless
+<code>scoring_status == "scored"</code>. Other statuses:
+<code>judge_degraded</code> (fewer judges than <code>min_judges</code>
+survived), <code>empty_answer</code> (the agent returned nothing -- an
+ADAPTER failure, not a grounding failure), <code>grounding_fail</code>,
+<code>judge_error</code>. Per-axis values are the MEDIAN across the
+judges in <code>creativity.judges</code>; each judge row carries
+<code>same_family</code>, so the leave-one-family-out subset is
+recoverable by filtering those rows out.</p>
+<p>Totals: {"n_records": 250, "n_scored": 250, "n_judge_error": 0,
+"n_judge_degraded": 0, "n_grounding_fail": 0, "n_task_errors": 0}</p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
 

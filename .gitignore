@@ -5,6 +5,8 @@ __pycache__/
 .venv/
 venv/
 .cache/
+# Generated run data (current and historical).
+result/
 results/
 # Compatibility alias for result paths recorded before the package layout change.
 /results

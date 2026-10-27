@@ -111,65 +111,28 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style></head>
 <body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../README.html">CREST</a><a href="../../docs/crest-guide.html">Research pipeline</a><a href="../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><article><h1 id="historical-crest-material">Historical CREST material</h1>
-<p>This directory preserves the previous runtime and research assets
-outside the active pipeline. Its contents retain their original
-historical context.</p>
-<div aria-label="Reference table" class="table-scroll" role="region" tabindex="0"><table>
-<thead>
-<tr>
-<th scope="col">Path</th>
-<th scope="col">Contents</th>
-</tr>
-</thead>
+<main id="document-main" tabindex="-1"><p class="metadata">Archive index · Updated October 27, 2026</p><div class="archive-note"><strong>Archive reference.</strong> Earlier material is kept for context. Use the research pipeline guide for current experiments.</div><article><h1 id="historical-crest-material">Historical CREST material</h1>
+<p>Earlier code, research documents, and source snapshots are grouped below. For current experiments, use the <a href="../../docs/crest-guide.html">research pipeline guide</a>.</p>
+<div aria-label="Archive contents" class="table-scroll" role="region" tabindex="0"><table>
+<thead><tr><th scope="col">Folder</th><th scope="col">Contents</th><th scope="col">Git tracking</th></tr></thead>
 <tbody>
-<tr>
-<td><code>runtime/</code></td>
-<td>Previous evaluation harness, judge, configs, analysis scripts,
-launchers, and runtime documentation.</td>
-</tr>
-<tr>
-<td><code>research/doc/</code></td>
-<td>Design notes, audits, datasheet, and supporting research.</td>
-</tr>
-<tr>
-<td><code>research/paper/</code></td>
-<td>Paper sources and shared LaTeX assets.</td>
-</tr>
-<tr>
-<td><code>research/question/</code></td>
-<td>Historical question sets, schemas, design sidecars, and quarantine
-records.</td>
-</tr>
-<tr>
-<td><code>research/result/</code></td>
-<td>Earlier results, leaderboards, manifests, and result
-documentation.</td>
-</tr>
-<tr>
-<td><code>nus_rubric_4pt_original.txt</code></td>
-<td>Rome rubric before its requested binary pairwise adaptation.</td>
-</tr>
-<tr>
-<td><code>original_crest_gitignore.txt</code></td>
-<td>Unmodified historical ignore rules; the archived research copy adds
-exceptions that keep previously tracked run files visible to Git.</td>
-</tr>
-</tbody>
-</table></div>
-<p>The earlier protocol used absolute creativity scores, grounding
-gates, and multi-vendor panel summaries. Its results and caches are not
-automatically imported or treated as evidence for the current binary
-pairwise ranking protocol.</p>
-<p>Use the repository-root <code>stage1_generate.py</code>,
-<code>stage2_judge.py</code>, and <code>stage3_analyze.py</code> scripts
-for current experiments. See the <a href="../../README.html">current
-README</a> for installation and commands. The default 50 questions use
-the bundled <code>crest/data/queries_n50.jsonl</code> copy from Rome,
-not this archive.</p>
-<p>Archived files retain original imports, dependency assumptions, and
-internal links. Preservation does not make the old runtime a supported
-compatibility entrypoint; historical links may require resolving paths
-within the archived tree.</p>
-</article><footer><a href="../../docs/index.html">Browse all documents</a></footer></main></body></html>
+<tr><td><a href="reference/original-project-overview.html"><code>reference/</code></a></td><td>Original project overview, runtime notes, rubric, ignore rules, and requirements.</td><td>Versioned</td></tr>
+<tr><td><a href="research/doc/design.html"><code>research/doc/</code></a></td><td>Design, dataset documentation, citation audits, and historical run notes in <code>runs/</code>.</td><td>Versioned</td></tr>
+<tr><td><a href="research/paper/p2_benchmark_only/crest-paper-outline.html"><code>research/paper/</code></a></td><td>Paper drafts and shared LaTeX sources.</td><td>Sources versioned; build outputs ignored</td></tr>
+<tr><td><code>research/question/</code></td><td>Historical question sets, schemas, design records, and quarantine decisions.</td><td>Versioned</td></tr>
+<tr><td><a href="runtime/index.html"><code>runtime/</code></a></td><td>Previous evaluation harness, judge, configurations, and analysis scripts.</td><td>Versioned</td></tr>
+<tr><td><a href="entrypoints/index.html"><code>entrypoints/</code></a></td><td>Stage-wrapper notes; current commands use <code>python -m crest</code>.</td><td>Versioned notes</td></tr>
+<tr><td><code>research/result/</code></td><td>Local run records, transcripts, leaderboards, and manifests.</td><td>Ignored; local files preserved</td></tr>
+</tbody></table></div>
+<h2 id="reference-files">Original reference files</h2>
+<ul>
+<li><a href="reference/original-project-overview.html">Original project overview</a></li>
+<li><a href="reference/original-runtime-notes.html">Original runtime notes</a></li>
+<li><a href="reference/nus-rubric-4point.txt">Original four-point NUS rubric</a></li>
+<li><a href="reference/original-gitignore.txt">Original ignore rules</a></li>
+<li><a href="reference/original-requirements.txt">Original dependencies</a></li>
+</ul>
+<h2 id="run-records">Historical runs</h2>
+<p>The <a href="research/doc/runs/run-outputs.html">run format notes</a> and <a href="research/doc/runs/aborted-runs.html">aborted-run explanations</a> remain in Git. The underlying data in <code>research/result/</code> stay on disk; a fresh clone does not include them. Both <code>result/</code> and <code>results/</code> directories are ignored throughout this repository.</p>
+<p>The earlier protocol used absolute creativity scores, grounding checks, and panel summaries. These historical results are not inputs to the current pairwise rankings. Archived scripts retain their original imports and dependency assumptions; they are reference code.</p></article><footer><a href="../../docs/index.html">Browse all documents</a></footer></main></body></html>
 

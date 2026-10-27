@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Historical runtime notes · CREST</title><style>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Archived stage wrappers · CREST</title><style>
 :root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
@@ -110,24 +110,10 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style></head>
-<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../README.html">CREST</a><a href="../../docs/crest-guide.html">Research pipeline</a><a href="../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><article><h1 id="historical-crest-runtime">Historical CREST runtime</h1>
-<p><code>legacy/crest/</code> preserves the previous evaluation harness,
-judge implementation, configs, analysis scripts, per-entrant launchers,
-and documentation. Its protocol used absolute creativity scores,
-grounding gates, and multi-vendor panel summaries. These files document
-earlier experiments and are outside the active Python package.</p>
-<p>Use the repository-root <code>stage1_generate.py</code>,
-<code>stage2_judge.py</code>, and <code>stage3_analyze.py</code> scripts
-for the current binary pairwise protocol. See the <a href="../../README.html">current README</a> for installation and
-commands.</p>
-<p>Historical datasets, research documents, papers, and results remain
-in <code>crest/</code>. <code>nus_rubric_4pt_original.txt</code>
-preserves the earlier Rome rubric before its requested binary pairwise
-adaptation. Earlier results and caches are not automatically imported or
-treated as evidence for the current ranking protocol.</p>
-<p>The archived runtime retains its original imports and dependency
-assumptions; moving it here is preservation, not a supported
-compatibility entrypoint.</p>
-</article><footer><a href="../../docs/index.html">Browse all documents</a></footer></main></body></html>
-
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../README.html">CREST</a><a href="../../../docs/crest-guide.html">Research pipeline</a><a href="../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">Archived entry points · Updated October 27, 2026</p><div class="archive-note"><strong>Archive reference.</strong> Earlier material is kept for context. Use the research pipeline guide for current experiments.</div><article><h1 id="archived-stage-wrappers">Archived stage wrappers</h1>
+<p>The former stage wrappers were <code>stage1_generate.py</code>, <code>stage2_judge.py</code>, and <code>stage3_analyze.py</code>. For current work, use the single CREST command from the repository root:</p>
+<pre><code class="language-bash">python -m crest generate
+python -m crest judge --run crest/results/YYYY-MM-DD/RUN
+python -m crest analyze --run crest/results/YYYY-MM-DD/RUN</code></pre>
+<p>Use <code>python -m crest --help</code> for options, or see the <a href="../../../docs/crest-guide.html">research pipeline guide</a>.</p></article><footer><a href="../../../docs/index.html">Browse all documents</a></footer></main></body></html>

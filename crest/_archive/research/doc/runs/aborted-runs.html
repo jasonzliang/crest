@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Run 2026-07-31 04:06 UTC · CREST</title><style>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Aborted runs · CREST</title><style>
 :root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
@@ -110,73 +110,83 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style></head>
-<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../../README.html">CREST</a><a href="../../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#run-2026-07-31t040653z__crest__full50__gitb0cdbe7__431cc3">Run 2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3</a></li><li><a href="#which-file-is-which">Which file is which</a></li><li><a href="#reading-the-scores">Reading the scores</a></li></ul></nav></details><article><h1 id="run-2026-07-31t040653z__crest__full50__gitb0cdbe7__431cc3">Run
-<code>2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3</code></h1>
-<p>2026-07-31T04:06:53.660170+00:00 · 250 records · agents:
-claude_shallow, openai_shallow, gemini_shallow, openai_deepresearch,
-gemini_deepresearch_max judges: judge_anthropic, judge_openai,
-judge_google · protocol: full-panel (same-family as covariate); blind;
-median aggregation</p>
-<h2 id="which-file-is-which">Which file is which</h2>
-<div aria-label="Which file is which table" class="table-scroll" role="region" tabindex="0"><table>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><p class="archive-note"><strong>Archive storage.</strong> This note was moved from <code>crest/_archive/research/result/aborted/</code>. Result data remain there locally and are excluded from Git. Any tracking instructions below describe the earlier layout.</p><article><h1 id="aborted-runs">Aborted runs</h1>
+<p>Runs that were stopped before writing a
+<code>run_manifest.json</code>, kept rather than deleted because each
+holds <strong>generations that were paid for</strong>. They live here
+and not in <code>runs/</code> for two reasons:</p>
+<ol type="1">
+<li><code>harness/cache.py</code> scans
+<code>&lt;result_root&gt;/runs</code> only, so anything here is
+deliberately <strong>excluded from the generation cache</strong>. Every
+run below was aborted for a reason that makes its records unfit to
+reuse, and an aborted record silently serving a later run is exactly the
+failure the <code>adapter_fp</code> fingerprint exists to prevent.</li>
+<li><code>analysis/stall_check.py</code> and
+<code>analysis/ci_check.sh</code> walk <code>runs/</code>. Leaving dead
+partials there made every check report a permanently DEAD+INCOMPLETE run
+and re-warn about defects already diagnosed and recorded, which trains
+the reader to ignore the output.</li>
+</ol>
+<p>Deleting them instead would have destroyed the only record of that
+spend, so they stay.</p>
+<div aria-label="Reference table" class="table-scroll" role="region" tabindex="0"><table>
 <thead>
 <tr>
-<th scope="col">file</th>
-<th scope="col">produced by</th>
-<th scope="col">contains</th>
+<th scope="col">run</th>
+<th scope="col">records</th>
+<th scope="col">why aborted</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>transcripts.jsonl</code></td>
-<td><strong>the AGENTS</strong></td>
-<td>what each agent actually wrote: <code>output_text</code> +
-<code>citations</code></td>
+<td><code>175342Z…__ABORTED_buggy_google_token_norm</code></td>
+<td>3</td>
+<td>The Google adapters recorded <code>candidates_token_count</code> as
+<code>output_total</code>, which <strong>excludes</strong> thinking
+tokens, under-counting billable output <strong>7.9x</strong> (measured:
+candidates 1615 + thoughts 11156 = 12771). Fixed in
+<code>233b57f</code>.</td>
 </tr>
 <tr>
-<td><code>records.jsonl</code></td>
-<td><strong>the JUDGES</strong></td>
-<td>the scores: per-axis New/Useful/Surprising, per-judge rows,
-grounding verdict, <code>scoring_status</code></td>
+<td><code>180017Z…__STOPPED_to_raise_concurrency_4rec</code></td>
+<td>4</td>
+<td>Stopped deliberately to raise concurrency 4 -&gt; 8 after confirming
+the science run had used 8 safely. Its own 4 records DO carry populated
+billing fields. The empty-billing records are the 4 that
+<code>180746Z</code> cache-served <strong>from</strong> this run before
+the <code>CachedOutput</code> fix -- the defect is real but belongs to
+the consumer, not the producer. (Corrected 2026-08-01; the earlier text
+attributed it here.)</td>
 </tr>
 <tr>
-<td><code>errors.jsonl</code></td>
-<td>the harness</td>
-<td>tasks that produced no record at all</td>
+<td><code>190834Z…__STOPPED_to_raise_concurrency_8to12_20rec</code></td>
+<td>20</td>
+<td>Stopped deliberately to raise concurrency 8 -&gt; 12 after measuring
+that the deep arm is 90-93% of wall-clock. Archived 2026-08-01: all 20
+records are byte-identical duplicates of records in the 249-record run
+2026-08-01T015432Z, so zero unique generations and $0 of paid work are
+removed from the cache by archiving it.</td>
 </tr>
 <tr>
-<td><code>summary.json</code></td>
-<td>the harness</td>
-<td>per-agent and per-agent-x-category aggregates</td>
-</tr>
-<tr>
-<td><code>run_manifest.json</code></td>
-<td>the harness</td>
-<td>provenance; written last, so it marks completion</td>
+<td><code>180746Z…__KILLED_anthropic_spend_cap_31rec_11_thinned_panels</code></td>
+<td>31</td>
+<td>Anthropic hit its configured spend cap. 3
+<code>claude_shallow</code> tasks failed outright and
+<strong><code>judge_anthropic</code> is missing from 11 of the 31
+records</strong> — every one of which still reads
+<code>scoring_status: "scored"</code>, because <code>min_judges</code>
+was 2 against a 3-judge panel. That is the defect <code>49cb7ff</code>
+fixed. These 11 records carry a systematic severity shift and must not
+be analysed.</td>
 </tr>
 </tbody>
 </table></div>
-<p>The names are historical: "records" is the judge output and
-"transcripts" is the agent output, which is the reverse of what most
-readers assume. <strong>Join them on
-<code>record_id</code>.</strong></p>
-<pre class="python" tabindex="0"><code>import json
-scores = {r["record_id"]: r for r in map(json.loads, open("records.jsonl"))}
-answers = {t["record_id"]: t for t in map(json.loads, open("transcripts.jsonl"))}
-rid = next(iter(scores))
-print(scores[rid]["agent"], scores[rid]["creativity"]["new"], answers[rid]["output_text"][:200])</code></pre>
-<h2 id="reading-the-scores">Reading the scores</h2>
-<p><code>creativity</code> is null unless
-<code>scoring_status == "scored"</code>. Other statuses:
-<code>judge_degraded</code> (fewer judges than <code>min_judges</code>
-survived), <code>empty_answer</code> (the agent returned nothing -- an
-ADAPTER failure, not a grounding failure), <code>grounding_fail</code>,
-<code>judge_error</code>. Per-axis values are the MEDIAN across the
-judges in <code>creativity.judges</code>; each judge row carries
-<code>same_family</code>, so the leave-one-family-out subset is
-recoverable by filtering those rows out.</p>
-<p>Totals: {"n_records": 250, "n_scored": 250, "n_judge_error": 0,
-"n_judge_degraded": 0, "n_grounding_fail": 0, "n_task_errors": 0}</p>
-</article><footer><a href="../../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+<p>A run with 0 records is simply deleted rather than archived here —
+there is nothing to preserve. <code>2026-07-31T184726Z</code> (launched
+into a still-active spend cap) was removed on that basis.</p>
+<p>Provenance for runs whose directories were deleted <em>before</em>
+this convention existed is in <code>../superseded_runs.json</code>.</p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
 
