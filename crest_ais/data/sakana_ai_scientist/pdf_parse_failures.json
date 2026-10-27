@@ -1,0 +1,9 @@
+[
+  {
+    "path": "pdfs/deepseek__deepseek_runs_grokking__20240803_023806_refined_sleep_wake_grokking__sleep_wake_grokking.pdf",
+    "byte_size": 9572,
+    "return_code": 1,
+    "stderr": "Syntax Error: Invalid XRef entry 0\nSyntax Error: Missing 'endstream' or incorrect stream length\nSyntax Error: Couldn't find trailer dictionary\nSyntax Error: Invalid XRef entry 0\nSyntax Error: Missing 'endstream' or incorrect stream length\nSyntax Error: Couldn't find trailer dictionary\nSyntax Error: Couldn't read xref table\n",
+    "contains_eof_marker": false
+  }
+]

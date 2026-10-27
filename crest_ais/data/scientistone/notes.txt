@@ -1,0 +1,26 @@
+ScientistOne official generated-paper collection
+
+Identity confirmed: ScientistOne (also styled Scientist-One / Scientist One), Google Cloud AI Research.
+Official current project: https://scientist-one.github.io/
+Author system-description paper: https://arxiv.org/abs/2605.26340
+Official artifacts: https://github.com/scientist-one/generated-artifacts
+Corroborating Google publication page: https://research.google/pubs/scientist-one-verifiable-autonomous-research-via-chain-of-evidence/
+
+Collection selection
+The author project page explicitly describes its 21 papers as autonomously generated, and links the official artifact repository. The complete recursive GitHub tree contains exactly 21 PDFs, all under generated-papers/. The gallery references the same 21 PDFs. These are the papers collected here, not the human-authored paper describing the research system.
+
+Composition and evaluation caveats
+15 ADRS papers: Cloudcast, EPLB, LLM-SQL, Prism, and transaction scheduling, each with seeds 1, 2, and 3. Each task's seed outputs share a title but contain different methods/results and different bytes. Keep them as separate generated outputs; aggregate with awareness of repeated benchmark task prompts.
+5 MLE-Bench papers: Lyft 3D object detection, Google AI4Code notebook ordering, iMet 2020 art attributes, iNaturalist 2019 species recognition, and RSNA-MICCAI brain tumor radiogenomics.
+1 Parameter Golf paper: language model quantization/compression.
+Across the set, papers carry Anonymous Author(s) and Anonymous Institution rather than a named AI author; generated provenance is established by the official linked repository and project statement.
+No individual paper publication date was established. published_date is null. The official artifact commit added all 21 files on May 25, 2026; repository_release_date records that separately.
+The Google Research publication page retains an older system title and audit counts than the author site/arXiv. This does not affect file identity; the project page, artifact commit, and gallery agree on the 21-file release.
+
+Byte integrity and reproducibility
+Repository commit: 721f1fbe3b39a558dff13386c50621a357e6f9a7
+All PDFs downloaded from raw.githubusercontent.com URLs pinned to the commit. Every file starts with the PDF signature, has the byte count reported by the official Git tree, and matches the exact Git blob SHA-1. The manifest additionally records SHA-256, page count, byte size, task, seed, and direct provenance links. All 21 PDFs parse successfully with pypdf. No repository code or scripts were executed.
+Official root license: Apache-2.0, saved unchanged as LICENSE.txt. This is repository-level provenance; no distinct PDF-specific license statement was established.
+
+Unavailable candidates: none among the official project gallery and repository PDF set.
+Excluded candidate: arXiv 2605.26340, the system-description paper.

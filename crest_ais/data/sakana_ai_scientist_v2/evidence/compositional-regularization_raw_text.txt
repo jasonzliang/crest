@@ -1,0 +1,586 @@
+                Under review as a workshop paper at ICLR 2025
+
+
+          000  COMPOSITIONAL REGULARIZATION:          001
+
+          002        UNEXPECTED OBSTACLES IN ENHANCING NEURAL
+          003
+          004  NETWORK GENERALIZATION
+          005
+          006
+               Anonymous authors
+          007
+                   Paper under double-blind review
+          008
+          009
+          010
+          011                            ABSTRACT
+          012
+          013             Neural networks excel in many tasks but often struggle with compositional gener-
+          014             alization—the ability to understand and generate novel combinations of familiar
+          015            components. This limitation hampers their performance on tasks requiring sys-
+          016              tematic reasoning beyond the training data. In this work, we introduce a training
+          017            method that incorporates an explicit compositional regularization term into the
+          018               loss function, aiming to encourage the network to develop compositional repre-
+          019               sentations. Contrary to our expectations, our experiments on synthetic arithmetic
+          020              expression datasets reveal that models trained with compositional regularization
+                       do not achieve significant improvements in generalization to unseen combinations          021
+                       compared to baseline models. Additionally, we find that increasing the complex-
+          022
+                                ity of expressions exacerbates the models’ difficulties, regardless of compositional
+          023
+                             regularization. These findings highlight the challenges of enforcing compositional
+          024               structures in neural networks and suggest that such regularization may not be suf-
+          025                ficient to enhance compositional generalization.
+          026
+          027
+          028
+          029    1  INTRODUCTION
+          030
+
+          031
+                 Compositional generalization refers to the ability to understand and produce novel combinations of          032
+              known components, a fundamental aspect of human cognition (Ito et al., 2022). Despite the success
+          033
+                   of neural networks in various domains, they often struggle with compositional generalization, lim-
+          034
+                     iting their applicability in tasks requiring systematic reasoning beyond the training data (Qu et al.,
+          035     2023; Klinger et al., 2020). Previous efforts to enhance compositional generalization have explored
+          036     various approaches, including architectural modifications and training strategies (Finn et al., 2017;
+          037     Lepori et al., 2023). One promising direction is the incorporation of regularization terms that en-   Comment:
+          038     courage certain properties in the learned representations (Yin et al., 2023).                            Citing MAML
+          039                                                                                                                in the context
+                   In this paper, we introduce a training method that incorporates an explicit compositional regular-
+          040                                                                                                        of composi-
+                    ization term into the loss function. This regularization term is designed to penalize deviations from
+          041                                                                                                                  tional gener-                  expected compositional structures in the network’s internal representations, with the aim of encour-
+          042                                                                                                                 alization does                  aging the network to form compositional representations. We hypothesized that this approach would
+                                                                                                                   not seem en-
+          043     enhance the network’s ability to generalize to unseen combinations. However, our experiments on
+                                                                                                                                           tirely appropri-
+          044     synthetic arithmetic expression datasets show that the inclusion of compositional regularization does
+                                                                                                                              ate
+          045     not lead to the expected improvements in generalization performance. In some cases, it even hinders
+          046     the learning process. Furthermore, we observe that increasing the complexity of arithmetic expres-
+Comment:047      sions, such as using more operators or nesting , exacerbates the models’ generalization difficulties
+The dataset048     regardless of the regularization.  These unexpected results highlight the challenges of enforcing
+used in the        compositionality through regularization and suggest that this approach may not be straightforwardly
+experiments049                     effective.
+did not con-050
+tain a nesting051     In summary, we propose a compositional regularization term intended to enhance compositional
+structure, but          052     generalization in neural networks, conduct extensive experiments to evaluate its impact, and analyze
+some exper-
+          053     the unexpected outcomes, including the impact of operator complexity, discussing potential reasonsiments were
+conducted      why compositional regularization did not yield the anticipated benefits.
+with increas-
+ing complexity
+by incorpo-                                             1
+rating more
+operators.
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+          054    2  RELATED WORK
+Comment:055An
+incomplete056and                 Compositional generalization in neural networks has been a topic of considerable research interest
+too general057                  (Klinger et al., 2020). Ito et al. (2022) explored abstract representations to tackle this issue, empha-version of a
+related work058     sizing the importance of compositionality in achieving human-like reasoning. Yin et al. (2023) pro-
+section.   059     posed consistency regularization training to enhance compositional generalization. Meta-learning
+          060     approaches, such as Model-Agnostic Meta-Learning (MAML) (Finn et al., 2017), have also been
+          061     investigated to improve generalization capabilities. Lepori et al. (2023) studied structural composi-
+          062      tionality in neural networks, suggesting that networks may implicitly learn to decompose complex
+          063      tasks.
+          064    Our work differs by directly incorporating an explicit regularization term into the training objective
+          065      to enforce compositional structures. Despite the theoretical appeal, our findings indicate that such
+          066     regularization may not effectively enhance compositional generalization and that operator complex-
+          067      ity plays a significant role in the models’ performance limitations.
+
+          068
+          069    3  METHOD
+          070
+          071    Our goal is to enhance compositional generalization in neural networks by incorporating a composi-
+          072      tional regularization term into the training loss. We focus on a simple yet illustrative task: evaluating
+          073     arithmetic expressions involving basic operators.
+          074
+          075     3.1  MODEL ARCHITECTURE
+          076
+Comment:077   We use an LSTM-based neural network (Goodfellow et al., 2016) to model the mapping from input
+This should078be    expressions to their computed results. The model consists of an embedding layer, an LSTM layer,
+Hochreiter      &     and a fully connected output layer.          079
+Schmidhuber
+(1997).   080
+          081     3.2  COMPOSITIONAL REGULARIZATION
+          082
+                  Let ht be the hidden state at time t. We define the compositional regularization term as the mean   Comment:          083
+                  squared difference between successive hidden states:                                             This should be
+          084
+                                                          T −1                                       more precise.          085                                                   1                   X ∥ht+1 −ht∥2                               (1)    E.g. refer to          086                                  Lcomp =                                          T −1                                                      the embed-
+          087                                                  t=1                                              ding hidden
+          088    where T is the length of the input sequence.                                                                    state. A bet-
+          089                                                                                                                           ter alternative
+                 This term penalizes large changes in hidden states between successive time steps, encouraging the
+          090                                                                                       would be et                model to form additive representations, which are a simple form of compositionality.
+          091                                                                                          and et−1.
+          092
+                 3.3  TRAINING OBJECTIVE
+          093
+          094    The total loss is the sum of the main loss (mean squared error between predicted and true results)
+          095    and the compositional regularization term weighted by a hyperparameter λ:
+          096
+                                                                       Ltotal = Lmain + λLcomp.                                    (2)
+          097
+          098   We experimented with different values of λ to assess its impact on compositional generalization.
+          099
+          100    4  EXPERIMENTS
+          101
+
+          102
+                 4.1  EXPERIMENTAL SETUP
+          103
+          104   We generated synthetic datasets of arithmetic expressions to evaluate compositional generalization.
+          105    The datasets consist of expressions combining digits and operators (e.g., “3+4”, “7*2”). We com-
+          106     pared models trained with and without the compositional regularization term and performed several
+          107     ablation studies to assess the impact of different hyperparameters, operator complexity, and archi-
+                     tectural choices.
+
+
+                                                       2
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          108
+          109
+
+          110
+          111
+          112
+          113
+          114
+          115
+          116     Figure 1: Baseline model performance over epochs.  Left: Training and test loss decrease over
+          117     epochs, indicating learning progress.  Middle: Test accuracy increases, reaching approximately
+          118    84%. Right: Compositional loss remains steady, suggesting the model does not inherently developComment:
+Figure 1 shows119     compositional representations without regularization.
+only up to 120
+40% accuracy,          121
+but since Fig-     4.1.1  DATASETS
+ure 2 (Right),122
+which uses123a               • Training set: 1,000 randomly generated expressions using a limited set of numbers and
+similar setup,124               operators.
+shows around125
+84%, it’s likely            • Test set: 200 expressions not seen during training, including novel combinations of num-
+that the x-axis126              bers and operators, as well as increased operator complexity.
+of Figure 1127is
+truncated. 128     4.1.2  IMPLEMENTATION DETAILS
+          129
+                              • Models were trained for 30 epochs using the Adam optimizer and mean squared error loss.
+          130
+          131              • The compositional regularization term was weighted by λ = 0.1 unless otherwise specified.
+          132              • We evaluated model performance using test accuracy (percentage of correct predictions
+Comment:133              within a tolerance) and compositional loss.
+“Within a 134tol-                              • Experiments were repeated with different hyperparameters and operator complexities.
+erance” refers135
+to the fact that
+the model 136re-     4.2  RESULTS
+gresses its 137out-
+put to match138                  4.2.1  BASELINE PERFORMANCE
+the ground          139
+truth numerical          140   We first trained the baseline LSTM model without compositional regularization. Figure 1 shows the   Comment:answer. See
+the Code Re-141      training and test loss, test accuracy, and compositional loss over epochs. As training progresses, both   The figure
+view section.142      training and test loss decrease, and test accuracy increases, reaching approximately 84% accuracy.    lacks an ex-
+               The compositional loss remains relatively steady, indicating that without regularization, the model    planation for          143
+Comment:144     does not inherently develop compositional representations.                                            the shadowed
+This section                                                                                                                   area, which
+is meant to145                  4.2.2  IMPACT OF COMPOSITIONAL REGULARIZATION                                        should be clar-
+show the base-146                                                                                                                                          ified as rep-line perfor-
+          147   We introduced the compositional regularization term with different weights λ and assessed its im-    resenting themance, but it
+also includes148      pact. Figure 2 illustrates the effects of varying λ on training loss, compositional loss, and final test    standard devi-
+the compo-149     accuracy. Higher values of λ led to a lower compositional loss but did not improve test accuracy.    ation across 3
+sitional loss150     In some cases, the test accuracy decreased. This suggests that while compositional regularization    or 4 indepen-
+plot, which               is     encourages the learning of compositional representations as measured by the regularization term, it   dent runs.          151
+confusing.
+          152    may interfere with the main learning objective by constraining the model’s capacity to fit the training
+                    data.                                                                      Comment:          153
+                                                                                                              This claim
+          154                                                                                                              cannot be in-                  4.2.3  IMPACT OF OPERATOR COMPLEXITY
+          155                                                                                                             ferred from
+          156   We investigated how increasing the operator complexity of arithmetic expressions affects model   Figure 1
+          157     performance. Figure 3 presents the training loss, validation loss, and final validation accuracy for    (Right).
+          158     expressions with varying numbers of operators. Our results show that as the complexity of the ex-
+          159     pressions increases, the models’ ability to generalize diminishes significantly. Neither the baseline
+          160    model nor the model with compositional regularization could handle expressions with higher opera-
+          161      tor complexity effectively. This finding emphasizes that compositional regularization alone may not
+                  address the challenges posed by complex compositional structures.
+
+
+                                                       3
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          162
+          163
+
+          164
+          165
+          166
+          167
+          168
+          169
+          170     Figure 2: Impact of compositional weight λ on model performance. Left: Training loss over epochs
+          171      for different λ. Higher λ values slightly increase training loss. Middle: Compositional loss de-
+          172     creases with higher λ,  indicating the regularization term effectively enforces compositionality.Comment:
+This is a  173     Right: Final test accuracy does not improve with higher λ and may decrease, suggesting a trade-off
+stretch because174     between compositional regularization and the primary learning objective.
+the paper has
+not rigorously175
+shown that176
+lower compo-177
+sitional loss178
+leads to more
+compositional-179
+ity.       180
+          181
+          182
+          183
+          184
+          185
+                  Figure 3: Model performance on expressions with varying operator complexity.  Left: Training
+          186      loss increases with operator complexity, indicating the models struggle to fit more complex data.
+          187     Middle: Validation loss is higher for complex expressions, reflecting poor generalization. Right:
+          188     Final validation accuracy decreases significantly as operator complexity increases, underscoringComment:
+This should189     inherent limitations in handling complex compositional structures with compositional regularization
+be “Final val-190     alone.
+idation loss
+increases” 191to
+match the 192fig-
+ure, although193
+the mean- 194ing remains     5  CONCLUSION
+roughly the195
+same.    196
+          197     In this work, we introduced a compositional regularization term with the intention of enhancing
+          198     compositional generalization in neural networks. Our experiments on synthetic arithmetic expres-
+          199     sion datasets revealed that compositional regularization did not lead to the expected improvements
+          200      in generalization performance. In some cases, it even hindered the learning process. Additionally,
+          201    we found that increasing the complexity of arithmetic expressions exacerbates the models’ general-
+          202      ization difficulties, highlighting inherent limitations.
+          203     These findings highlight the challenges of enforcing compositional structures in neural networks
+          204     through regularization. Possible reasons for the lack of improvement include conflicts between the
+          205     regularization term and the primary learning objective, which may cause the network to prioritize
+          206     minimizing the compositional loss over fitting the data. Additionally, the measure of composition-
+          207      ality used in the regularization term may not align with the aspects of compositionality that are
+          208      critical for generalization. The synthetic dataset may also not adequately capture the complexities
+          209     of compositional generalization in real-world tasks, and increased operator complexity introduces
+          210     additional challenges that compositional regularization alone cannot overcome.
+          211     For future work, we suggest exploring alternative regularization strategies, refining the definition of
+          212     compositionality in the context of neural networks, and testing on more complex datasets. Investi-
+          213     gating models that can inherently handle higher operator complexity, such as those with recursive or
+          214      hierarchical structures, may also be beneficial. Our findings underscore the importance of rigorously
+          215     evaluating proposed methods and openly reporting negative or inconclusive results to advance our
+                  understanding of the challenges in deep learning.
+
+
+                                                       4
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+          216   REFERENCES
+          217
+          218     Chelsea Finn, P. Abbeel, and S. Levine. Model-agnostic meta-learning for fast adaptation of deep
+          219       networks. pp. 1126–1135, 2017.
+          220     Ian Goodfellow, Yoshua Bengio, Aaron Courville, and Yoshua Bengio. Deep learning, volume 1.
+          221     MIT Press, 2016.
+          222
+                Takuya Ito, Tim Klinger, D. Schultz, J. Murray, Michael W. Cole, and Mattia Rigotti. Compositional
+          223
+                      generalization through abstract representations in human and artificial neural networks. 2022.
+          224
+          225    Tim Klinger, D. Adjodah, Vincent Marois, Joshua Joseph, M. Riemer, A. Pentland, and Murray
+          226       Campbell. A study of compositional generalization in neural models. ArXiv, abs/2006.09437,
+          227       2020.
+          228     Michael A. Lepori, Thomas Serre, and Ellie Pavlick. Break it down: Evidence for structural com-
+          229        positionality in neural networks. ArXiv, abs/2301.10884, 2023.
+          230
+                 Carolyn Qu, Rodrigo Nieto, •. Mentor, and John Hewitt. Compositional generalization based on          231
+                    semantic interpretation: Where can neural networks improve? 2023.
+          232
+          233     Ashish Vaswani, Noam M. Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez,
+          234       Lukasz Kaiser, and Illia Polosukhin. Attention is all you need. pp. 5998–6008, 2017.
+          235
+                 Yongjing Yin, Jiali Zeng, Yafu Li, Fandong Meng, Jie Zhou, and Yue Zhang. Consistency regular-
+          236        ization training for compositional generalization. pp. 1294–1308, 2023.
+          237
+          238
+          239  SUPPLEMENTARY MATERIAL          240
+
+          241
+          242   A  EFFECT OF EMBEDDING DIMENSION
+          243
+            We explored the impact of different embedding dimensions on model performance. Figure 4 shows
+          244
+                   the training loss, compositional loss, and final test accuracy for embedding dimensions 16, 32, 64,
+          245
+Comment:       and 128. Increasing the embedding dimension did not consistently improve test accuracy. While          246
+Increasing           the     larger embedding dimensions provide the model with greater capacity, our results indicate that
+embedding247     simply increasing model capacity is not sufficient to enhance compositional generalization in this   Comment:
+dimension 248did     context. This suggests that the bottleneck may lie in the model’s ability to capture compositional   This could
+improve test249      structures rather than in its representational capacity.                                           be viewed as
+accuracy, but it          250                                                                                                           hinting that
+appears to be
+          251                                                                                                           the regularizerplateauing.
+          252                                                                                                                                  is applied to
+          253                                                                                                           the embedding
+          254                                                                                                hidden state.
+          255
+          256
+          257
+
+          258
+          259     Figure 4: Effect of embedding dimension on model performance.  Left: Training loss decreases
+          260     similarly across embedding dimensions, indicating comparable learning progress. Middle: Compo-
+                     sitional loss trends are similar, suggesting embedding size has limited impact on compositionality          261
+                   as measured. Right: Final test accuracy does not consistently improve with larger embedding di-
+          262
+                 mensions, highlighting that increasing model capacity alone does not enhance compositional gener-
+          263
+                     alization.
+          264
+          265
+          266   B  INTEGRATION OF ATTENTION MECHANISM
+          267
+          268   We compared the baseline model with an enhanced model that incorporates an attention mecha-
+          269    nism Vaswani et al. (2017). The attention mechanism is known to improve performance in various
+                  sequence-to-sequence tasks by allowing the model to focus on relevant parts of the input sequence.
+
+
+                                                       5
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          270
+               B.1  EXPERIMENTAL SETUP
+          271
+          272   We modified the baseline LSTM model to include an attention layer after the LSTM outputs. The
+          273      attention weights were calculated based on the hidden states, and a context vector was formed to aid
+          274      in the final output prediction.
+          275
+          276
+               B.2  RESULTS
+          277
+          278    The attention model achieves a test accuracy similar to the baseline, as shown in Figure 5. While the   Comment:
+          279      attention mechanism slightly improved the training dynamics, it did not lead to significant improve-   The conclusion
+          280     ments in generalization performance. This suggests that the challenges in compositional generaliza-   here seems
+          281      tion are not primarily due to the model’s ability to focus on relevant parts of the input sequence but   wrong. From
+          282    may be related to deeper architectural limitations or the need for more sophisticated mechanisms to    the figure,
+          283     capture compositionality.                                                                            the attention-
+          284                                                                                         augmented
+          285                                                                 LSTM per-
+                                                                                                         forms much          286
+                                                                                                                                 better than
+          287
+                                                                                                                        the baseline
+          288
+                                                                                    LSTM, where
+          289                                                                                                           the former re-
+          290                                                                                                            ports 100%
+          291                                                                                                                          final test accu-
+          292                                                                                                                   racy. See the
+          293     Figure 5: Comparison of baseline and attention models. Left: Training loss over epochs shows sim-   Code Review
+          294      ilar convergence for both models. Middle: Compositional loss remains comparable, indicating that    for more de-
+          295      attention does not significantly enhance compositional representations. Right: Final test accuracy is     tails.
+          296     similar for both models, suggesting that the attention mechanism does not address the compositional
+Comment:297     generalization challenges.
+The gener-          298
+ated caption
+seems to be299
+strongly influ-300   C  ADDITIONAL EXPERIMENTS
+enced by the301
+conclusion302in
+the main text.    C.1  ABLATION STUDY ON COMPOSITIONAL WEIGHT
+For example,303
+even though304            We conducted an ablation study on the compositional weight λ to further investigate its impact on
+attention out-305    model performance. Figures 6 and 7 show the training loss and final test accuracy for various valuesperforms
+          306     of λ. Higher λ values effectively reduce the compositional loss but adversely affect test accuracy.the base-
+line LSTM,307     This reinforces the conclusion that emphasizing compositional regularization may conflict with the
+it states that308     primary learning objective.
+the two are
+roughly simi-309
+lar.       310    C.2  COMPARISON OF LSTM AND RNN ARCHITECTURES
+          311
+          312   We compared the performance of LSTM and simple RNN architectures to assess the influence of
+          313    model choice on compositional generalization. Figure 8 illustrates the training loss and final test
+          314     accuracy for both models. The LSTM model showed marginal improvements over the simple RNN,
+          315     but both architectures struggled with compositional generalization, indicating that the limitations
+          316     are not solely due to the recurrent unit type.
+          317
+          318    C.3 DROPOUT IMPACT
+          319
+          320   We investigated the impact of dropout on model performance. Figure 9 shows the final test accuracy
+          321      for different dropout rates. We found that increasing the dropout rate did not lead to significant
+          322     improvements in generalization, suggesting that regularization techniques like dropout may not ad-
+          323     dress compositional generalization challenges. This indicates that standard regularization methods
+              may not be sufficient to overcome the inherent difficulties in learning compositional structures.
+
+
+                                                       6
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          324
+          325
+
+          326
+          327
+          328
+          329
+          330
+          331
+
+          332
+          333
+          334
+          335
+          336
+          337
+
+          338
+          339
+          340     Figure 6: Training loss over epochs for different values of compositional weight λ.  Increasing
+          341    λ leads to slightly higher training loss, indicating potential interference with the primary learning
+          342      objective.
+          343
+          344
+          345
+          346
+          347
+          348
+
+          349
+          350
+          351
+          352
+          353
+          354
+          355     Figure 7: Final test accuracy for different values of compositional weight λ. Higher λ values do
+          356     not improve test accuracy and may lead to decreased performance, suggesting a trade-off between
+Comment:357     compositional regularization and generalization.
+Hard to draw358
+any conclusion          359
+from this plot
+alone.    360
+          361
+          362
+          363
+          364
+          365
+
+          366
+          367
+          368
+          369     Figure 8: Comparison of LSTM and RNN architectures. Left: Training loss over epochs shows
+          370     similar convergence patterns, with LSTM performing slightly better. Right: Final test accuracy is
+          371     marginally higher for LSTM, but both models struggle with compositional generalization, suggest-
+          372     ing that recurrent unit choice does not resolve the underlying challenges.
+          373
+          374
+          375   D  HYPERPARAMETERS AND TRAINING DETAILS
+          376
+          377   We provide additional details on the hyperparameters and training procedures used in our experi-
+                 ments:
+
+
+                                                       7
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          378
+          379
+
+          380
+          381
+          382
+          383
+          384
+          385
+
+          386
+          387
+          388     Figure 9: Final test accuracy for different dropout rates.  Higher dropout rates did not enhanceComment:
+The figure 389     compositional generalization, indicating limited effectiveness of dropout in this context.
+only shows390
+the best con-391
+figuration,          392              • Learning rate: 0.001
+even though
+the caption393              • Batch size: 32
+suggests that394              • Embedding dimensions: Tested values of 16, 32, 64, 128
+results for 395dif-
+ferent dropout              • Hidden units: 64 for LSTM layers          396
+rates are in-                              • Optimizer: Adamcluded.   397
+          398              • Activation functions: ReLU for hidden layers                                  Comment:
+          399                                                                       ReLU is not                              • Dropout rates: Tested values of 0.0, 0.2, and 0.5
+          400                                                                                               used
+                              • Loss function: Mean squared error for main loss
+          401
+          402              • Regularization weight (λ): Tested values of 0.0 (baseline), 0.1, 0.3, 0.5, 0.7, 1.0         Comment: 0.3
+                                                                                                                         instead of 0.2
+          403              • Number of epochs: 30
+          404                                                                             Comment:
+          405                                                                                                   0.01 instead of           E  ADDITIONAL NOTES
+          406                                                                                                        0.3 and 0.7
+          407              • All experiments were implemented using PyTorch.
+                                                                                       Comment:
+          408              • Training was conducted on a single NVIDIA GPU.                                     Minor: tested
+          409
+                              • Early stopping was not used; models were trained for a fixed number of epochs.              10, 30, and 50
+          410
+          411              • The synthetic dataset was generated with a predefined random seed for reproducibility.
+          412
+          413
+          414
+
+          415
+          416
+          417
+          418
+          419
+
+          420
+          421
+          422
+          423
+          424
+          425
+
+          426
+          427
+          428
+          429
+          430
+          431
+
+
+
+                                                       8

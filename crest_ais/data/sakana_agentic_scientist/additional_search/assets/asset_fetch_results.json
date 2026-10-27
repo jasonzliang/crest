@@ -1,0 +1,44 @@
+[
+  {
+    "file": "paper_gallery_scroll.js",
+    "url": "https://pub.sakana.ai/agentic-scientist/paper_gallery_scroll.js?v=5",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "file": "paper_viewer.js",
+    "url": "https://pub.sakana.ai/agentic-scientist/paper_viewer.js?v=2",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "file": "scroll_play.js",
+    "url": "https://pub.sakana.ai/agentic-scientist/scroll_play.js",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "file": "controller.js",
+    "url": "https://pub.sakana.ai/agentic-scientist/lib/controller.js",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "file": "repo_commits.json",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/commits?per_page=100",
+    "returncode": 0,
+    "error": ""
+  },
+  {
+    "file": "site_robots.txt",
+    "url": "https://pub.sakana.ai/robots.txt",
+    "returncode": 56,
+    "error": "curl: (56) The requested URL returned error: 404\n"
+  },
+  {
+    "file": "site_sitemap.xml",
+    "url": "https://pub.sakana.ai/sitemap.xml",
+    "returncode": 56,
+    "error": "curl: (56) The requested URL returned error: 404\n"
+  }
+]

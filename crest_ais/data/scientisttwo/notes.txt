@@ -1,0 +1,31 @@
+ScientistTwo corpus research notes
+Retrieved: 2026-10-26
+
+Identity and primary sources:
+ScientistTwo is the autonomous scientific research system of Jaehyun Nam, Jinsung Yoon, Yanzhou Pan, Yubo Wang, Rui Meng, Parthasarathy Ranganathan and Tomas Pfister, Google Cloud AI Research.
+The author-submitted description is arXiv:2609.19644, submitted September 17, 2026:
+https://arxiv.org/abs/2609.19644
+Its abstract directly links the project website:
+https://scientist-two.github.io/
+The website source and output PDFs are in:
+https://github.com/scientist-two/scientist-two.github.io
+The unrelated smirnovlad/GoogleScientistTwo repository calls itself a replication and was not selected.
+
+Collection:
+The official page's embedded paperData gallery contains 86 entries in eight categories. The current GitHub recursive tree contains the identical 86 generated-papers PDFs. The only additional PDFs are overview/teaser figure assets; no additional generated manuscript candidates were found. Downloaded all 86 manuscripts as exact bytes from the live official website. Each file starts with a PDF signature, opens with PyMuPDF and matches the corresponding Git blob SHA1. SHA256, page count and exact byte length are recorded per paper. No SHA256 duplicates. Total PDF bytes: 235533685.
+
+Counts by project category: Applications 15; Deep Learning 24; General ML 14; Optimization 5; Probabilistic 10; RL 3; Social Aspects 9; Theory 6.
+
+Exclusions and caveats:
+The description preprint, website figure assets, and other systems' papers are excluded. The 107 research tasks discussed by authors are benchmark inputs; only the 86 released generated outputs are included.
+Individual publication dates are unavailable. Do not substitute PDF creation metadata or preprint date. Some PDF templates claim conference publication or under-review status for ICLR 2025; these strings do not establish actual venue acceptance. Anonymous/generic author fields remain in source PDFs. The collection records authors' explicit generated-output provenance, without independently validating scientific claims or autonomy.
+The repository has an Apache-2.0 root license saved as LICENSE.txt. No distinct per-PDF licenses were identified. Titles were read from PDF first-page text; line wrapping, discretionary hyphenation and detached accents were normalized in manifest titles.
+
+Reproducibility artifacts:
+project_page.html: exact downloaded official gallery HTML.
+repository_tree.json: GitHub recursive tree response, including recorded commit.
+gallery_entries.json: parsed official gallery list.
+download_results.json: download URLs, byte lengths and SHA256.
+extracted_titles.json: first-page title lines before normalization.
+manifest.json: evaluation corpus manifest.
+No repository scripts were executed, no paid calls made, and no secrets or environment files accessed.

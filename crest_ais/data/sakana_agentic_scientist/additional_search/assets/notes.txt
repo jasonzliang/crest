@@ -1,0 +1,22 @@
+Official Agentic Scientist public asset search
+
+Result: zero additional full generated manuscripts found beyond the two case studies and the human-assisted Diffusing Blame paper.
+
+Verified filenames and full PDFs:
+  papers/doc_to_lora_multi_needle_claude.pdf — Addressing Beats Architecture: Query-Conditioned Merge-Time Selection for Context-to-LoRA Hypernetworks on Multi-Needle Retrieval. 12 pages. Agentic Scientist System author line.
+  papers/metaevo_paper-1.pdf — How Much of a Learned Evolution Strategy Is the Algorithm It Was Anchored To? 13 pages. Agentic Scientist author line. This is the actual site filename, correcting the unverified meta_learned_cmaes.pdf name supplied in the assignment.
+  papers/alife2026_camera_ready-1.pdf — Diffusing Blame: Task-Dependent Credit Assignment in Biologically Plausible Dual-Stream Networks. 10 pages. Human researchers are named as authors; the project describes human steering, verification and revision. Classified separately as human-assisted collaboration.
+
+All three PDFs were retrieved through exact links in the official HTML and checked with pdfinfo and pdftotext. They have complete text ending in references, with page counts above. Their SHA-256 hashes, sizes, URL provenance and extraction evidence are in candidates.json and known_pdf_verification.json. They are known items, not additions.
+
+The gallery has only three data-paper-src attributes. paper_gallery.js loads each corresponding full PDF through PDF.js, iterates from page 1 through pdf.numPages, and renders browser-generated thumbnails. paper_viewer.js opens those same URLs. These are previews of the known full PDFs, not separate papers. No hidden paper data endpoint or extra catalog appeared in the first-party application scripts.
+
+The 6,796,349-byte reviewer_release_and_performance.html is self-contained Plotly output linked by the official page. Its 14 Plotly traces were parsed as JSON into plot_data.json and plot_layout.json. The right-panel customdata provides harness, model, performance percentile, review percentile and task slug only. The five tasks are hyperparam_opt_manual, learned_optimizer_manual, sae_mech_interp_manual, tabular_distribution_shift_manual, and world_models_manual. There are 69 right-panel records in this asset (14/14/14/13/14), while its annotation and surrounding website describe n=70 campaigns. No record contains a paper title, paper URL, run directory, or artifact link. Its custom hover callback creates a plain text caption. The application code has no click-to-manuscript handler or campaign-data fetch. The four case-insensitive .pdf strings elsewhere in the large document are Plotly Unicode bidi r.PDF enum references rather than file links.
+
+GitHub public metadata: main commit df8313889a004f8a44a472e19a833cd547bb828a; full recursive tree has 668 entries and truncated=false. Only branch main; release API returns []. All eight public commit records (six unique trees) were checked recursively, with none containing a PDF or published results/campaign-artifact tree. The repository tarball was read as inert source data, without execution. Source URLs and paper/result path references were inventoried into repo_link_evidence.json. These describe how users generate local results/.../paper/paper.pdf, not downloadable campaign manuscripts. The repository contains implementation, tests, prompts and examples, not the website source or 70 campaign output bundle.
+
+The SakanaAI public repository list (org_repos.json) contains 67 repositories and no identifiable project-site source repository. Public robots.txt and sitemap.xml on pub.sakana.ai return 404. Supplemental web searches for the chart filename, task slugs and manuscript basename found no official manuscript links. A third-party review mentioned embedded manuscripts and revision diffs in the system paper; that lead was sent to the parent collector for a separate compiled-PDF check and is not treated as proof of additional public PDFs here.
+
+Evidence files include original HTML, linked application JavaScript, full chart HTML, parsed chart JSON, exact-link known PDFs and text extracts, GitHub tree/history/branch/release metadata, original source tarball, URL inventories and fetch results. No private paths, credentials, paid calls, execution of downloaded repository code, access circumvention or author contact were used.
+
+Scope limit: this is a negative finding for these public linked assets and repository snapshots, not a claim that all other generated manuscripts are unavailable everywhere.

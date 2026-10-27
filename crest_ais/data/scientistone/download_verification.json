@@ -1,0 +1,153 @@
+{
+  "repository": "scientist-one/generated-artifacts",
+  "commit": "721f1fbe3b39a558dff13386c50621a357e6f9a7",
+  "files": [
+    {
+      "path": "generated-papers/adrs/cloudcast-seed1.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/cloudcast-seed1.pdf",
+      "size": 2934412,
+      "sha256": "ea5827dfbf884717209cab463264f525f24edca8254daac9eecf1be3f93ca243",
+      "git_blob_sha": "2b488856fcc096fdb4334ae1d190849493fd3718"
+    },
+    {
+      "path": "generated-papers/adrs/cloudcast-seed2.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/cloudcast-seed2.pdf",
+      "size": 3342008,
+      "sha256": "c95b28400a6742ed4669ce2d52c8c1d3b88c876349c07136f0e59c210e5cbc5b",
+      "git_blob_sha": "12806a34e1cf8fb40a7d4b27c86b9e46a8cf10f4"
+    },
+    {
+      "path": "generated-papers/adrs/cloudcast-seed3.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/cloudcast-seed3.pdf",
+      "size": 2796545,
+      "sha256": "a311c21bd14b35ab40072eb90ceacf0ae3d95cadb0f32bca4b544f40f06728f2",
+      "git_blob_sha": "7e3bf725ebdf47aed85731f19c40bb5a006c6bd5"
+    },
+    {
+      "path": "generated-papers/adrs/eplb-seed1.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/eplb-seed1.pdf",
+      "size": 2435834,
+      "sha256": "d7d7f6ad65677e05c50f161f16afdd3face72a320637adb8cc03b8f3ad08dc26",
+      "git_blob_sha": "431c5b404374efb4ded6da0a74025cd7b4fec92a"
+    },
+    {
+      "path": "generated-papers/adrs/eplb-seed2.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/eplb-seed2.pdf",
+      "size": 3215426,
+      "sha256": "d83e9e4d16be1456f1883ffbd8ee8e92f7de05276e7ee02a042fa3ccdf7d355e",
+      "git_blob_sha": "5cb727d68f74bf7023938aebe205693d9b6ee354"
+    },
+    {
+      "path": "generated-papers/adrs/eplb-seed3.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/eplb-seed3.pdf",
+      "size": 2954675,
+      "sha256": "911e3ece4619de248779c815fdfc70c532a137709f061c162dcd4d33c6932d4d",
+      "git_blob_sha": "da4c35e62b7719a54d3413d9a197007ec296fbae"
+    },
+    {
+      "path": "generated-papers/adrs/llm_sql-seed1.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/llm_sql-seed1.pdf",
+      "size": 2175027,
+      "sha256": "09953493af4997edd911e877c59de5a22b9931e28e6635aea41cc1ddc15836f4",
+      "git_blob_sha": "92f55108217dd68ba7f70455075f58d0b7b3d67e"
+    },
+    {
+      "path": "generated-papers/adrs/llm_sql-seed2.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/llm_sql-seed2.pdf",
+      "size": 3286124,
+      "sha256": "1b74ea9fe664fca7ef60f73c35b59d4639c2a62b16a5918b95c3430c5761ee22",
+      "git_blob_sha": "b5876049a98310a0aba7dfcd9a034c376d0bd94d"
+    },
+    {
+      "path": "generated-papers/adrs/llm_sql-seed3.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/llm_sql-seed3.pdf",
+      "size": 2601573,
+      "sha256": "dba193e0d8a7c6b6e75723520fa54c71eafa55f4117328b996925e9b9f38be3c",
+      "git_blob_sha": "422e464c111533f69f77c344db1b79f6b5c75fd9"
+    },
+    {
+      "path": "generated-papers/adrs/prism-seed1.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/prism-seed1.pdf",
+      "size": 2781758,
+      "sha256": "1f40d3242ce715b0068eee9e01ad5824cf62bc3fec0c1b4bf90b87d7f8f62132",
+      "git_blob_sha": "b2ff0c5f14264cd4e8a368b0a757fe05ead243ba"
+    },
+    {
+      "path": "generated-papers/adrs/prism-seed2.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/prism-seed2.pdf",
+      "size": 3645473,
+      "sha256": "8eba40b1085f55f05197912e0de6d42dead8645d767ebc6e287ed1d7ad5fa94b",
+      "git_blob_sha": "a115e133124d77d34806f47cad8c562f3664557f"
+    },
+    {
+      "path": "generated-papers/adrs/prism-seed3.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/prism-seed3.pdf",
+      "size": 2694792,
+      "sha256": "02dc0353c7a501980bd0afe567cd1300fe94ac3022fa13c83d86951769185fee",
+      "git_blob_sha": "bcdec87c9281c2ecfa579d5ec8edff61768b2e00"
+    },
+    {
+      "path": "generated-papers/adrs/txn_scheduling-seed1.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/txn_scheduling-seed1.pdf",
+      "size": 3032296,
+      "sha256": "a7fe50bc6bbebe6501c20c675c7a16f319ab8e4eb389ade9f498ca5439e97803",
+      "git_blob_sha": "c57f951784700c2fb04003e5899ee4277bf095c8"
+    },
+    {
+      "path": "generated-papers/adrs/txn_scheduling-seed2.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/txn_scheduling-seed2.pdf",
+      "size": 2896630,
+      "sha256": "ddfb4e8d2be8f28f315d8aceff29dc8fd02a91a38a036a0333befd00202f69ac",
+      "git_blob_sha": "9f7ad764b0f92c08a2ae27c6baafdbd4b3c91b4f"
+    },
+    {
+      "path": "generated-papers/adrs/txn_scheduling-seed3.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/adrs/txn_scheduling-seed3.pdf",
+      "size": 3833321,
+      "sha256": "52a90e016cc51f59c5cdf937dee72383ee4b1da898bf777ccda7de297089937e",
+      "git_blob_sha": "f410eb232b02a243b75b299a9630ad136d54dada"
+    },
+    {
+      "path": "generated-papers/mle/3d-object-detection-for-autonomous-vehicles.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/mle/3d-object-detection-for-autonomous-vehicles.pdf",
+      "size": 4168671,
+      "sha256": "079b7bd3bfbff4814bd0a4bac8c8d89e7ea03741f92b34ebb53dd3963c5d5223",
+      "git_blob_sha": "e5853083f3ddc41a069cad62f73686db2976562f"
+    },
+    {
+      "path": "generated-papers/mle/ai4code.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/mle/ai4code.pdf",
+      "size": 3095418,
+      "sha256": "212ea35a8b21886d68dc88cb4a1aa39401878bb41f091acf18229a07c80704ea",
+      "git_blob_sha": "d38e8075cb69f1632b0e63c9a05ac5a13667a525"
+    },
+    {
+      "path": "generated-papers/mle/imet-2020-fgvc7.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/mle/imet-2020-fgvc7.pdf",
+      "size": 3347343,
+      "sha256": "4c42d24a221c5dc1f697dcbf5a677e5d51420aa4a492edfa717f8a8fa2aa0b29",
+      "git_blob_sha": "994ad27833186238c2423e7ea7c6617d53b7802e"
+    },
+    {
+      "path": "generated-papers/mle/inaturalist-2019-fgvc6.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/mle/inaturalist-2019-fgvc6.pdf",
+      "size": 3342855,
+      "sha256": "2f6b3f0ea4e23dcdf3ffcf3818908aa8bcddf8fb4975c55a8b12df07c96f0a56",
+      "git_blob_sha": "2c7ce904a5acb0e7399e8a6a3f5ac46646af659f"
+    },
+    {
+      "path": "generated-papers/mle/rsna-miccai-brain-tumor-radiogenomic-classification.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/mle/rsna-miccai-brain-tumor-radiogenomic-classification.pdf",
+      "size": 3273781,
+      "sha256": "aedad764764892c03cdfc2abd613886ed2d4b8a258e330aa17cbe312f8e5f01a",
+      "git_blob_sha": "8db191ec30df503e46bbb05fe2434e5f36f0cce7"
+    },
+    {
+      "path": "generated-papers/pg/parameter_golf.pdf",
+      "local": "/Users/jason/Desktop/crest/crest_ais/data/scientistone/papers/pg/parameter_golf.pdf",
+      "size": 2118608,
+      "sha256": "864a1c557eda79eb97bde5c6262c3a160b516ea23d8eb2f55438922e62b593a0",
+      "git_blob_sha": "fef971203059cf37c41093eb809d9cbcea53a7a8"
+    }
+  ]
+}

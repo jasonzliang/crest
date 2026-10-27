@@ -1,0 +1,238 @@
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+Under review as a workshop paper at ICLR 2025
+AI SCIENTIST TEAM REVIEW
+Paper Summary
+This paper studies the application of Deep Learning models for a real-world ap-
+plication to pest prediction. It introduces an Environmental Robustness Score that leverages various
+data augmentation techniques mimicing environmental factors affecting data collection. It compares
+various learning rates and compares the impact of out-of-distribution testing settings across non-pest
+vision datasets.
+Strengths
+• The paper ﬁts the ICBNB workshop topic especially well. It discusses a real-world appli-
+cation of Deep Learning methods to pest prediction.
+• Understanding the differential impact of training and out-of-distribution data augmentation
+techniques settings across datasets is interesting.
+Weaknesses
+• The paper multiple times refers to domain adaptation being studied. The experiments, on
+the other hand, only investigate the usage of data augmentation methods (such as lighting,
+blurring, and contrast manipulation). Furthermore, studying the impact of the learning rate
+on generalization is fairly trivial.
+• It is hard to motivate that the Eurosat, Medmnist and CIFAR-10 results are related to the
+pest prediction problem. Why should a result on these datasets transfer to pest prediction?
+• Some of the statements regarding multi-dataset training are misleading. There are no results
+in the paper that result from such a training setup. Instead, multiple models are trained on
+individual datasets.
+Scores
+• Soundness: 2 fair. ) Interesting research question with potentially simple empirical eval-
+uation setup.
+• Presentation: 1 poor. ) Wrong description and duplication of ﬁgures. Missing citation
+and downplaying of related work.
+• Contribution: 1 poor. ) While the question considered is important, the displayed results
+do not provide enough evidence for the conclusions drawn.
+• Overall - Workshop: 3/10 (Reject): For instance, a paper with technical ﬂaws, weak evalu-
+ation, inadequate reproducibility and incompletely addressed ethical considerations.
+• Overall - Conference: 2/10: (Strong reject): For instance, a paper with major technical
+ﬂaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed
+ethical considerations.
+• Conﬁdence: 4/5. You are conﬁdent in your assessment, but not absolutely certain. It is
+unlikely, but not impossible, that you did not understand some parts of the submission or
+that you are unfamiliar with some pieces of related work.
+Additional Comments
+• The presentation of the results needs signiﬁcant improvement. There are multiple missing
+citations (?) and the interpretation of the results can be misleading. This includes the
+conclusions with regards to the impact of a lower learning rate on overﬁtting or naming the
+multi-model-single-dataset experiment ”mulit-dataset”.
+Potential Violation of Code of Ethics:
+No.
+7
+
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+Under review as a workshop paper at ICLR 2025
+AI SCIENTIST TEAM CODE REVIEW
+B.1
+DOMAIN ADAPTATION AND MULTI-DATASET TRAINING
+The paper seems to describe the “Domain Adaptation” experiment as primarily focused on trans-
+ferring ImageNet-pretrained models to other vision datasets. After reviewing the code, we found
+attempts to implement a domain adaptation technique by training a separate classiﬁer to distinguish
+different domains, but these attempts were unsuccessful. In the end, the AI Scientist opted for an
+implementation that does not include this domain adaptation technique.
+Moreover, in the code where this domain adaptation technique was implemented, multi-dataset train-
+ing was correctly performed as well–training a single model on all three datasets with domain dis-
+criminator loss, as shown in Figure 6. Had this code run successfully, the AI Scientist would likely
+have chosen it over the one ultimately selected, which lacked proper multi-dataset training but ran
+without errors.
+Figure 6: Domain discriminator and multi-dataset training loop.
+B.2
+ENVIRONMENTAL NOISE IMPLEMENTATION
+The paper states, “To simulate challenging environmental conditions, we applied data augmentations
+during testing, including brightness and contrast adjustments, Gaussian blur, and random afﬁne
+transformations.” This is conﬁrmed in the code, as shown in Figure 8.
+Figure 7: Environment noise simulation implementation.
+The calculation of the Environmental Robustness Score–a metric introduced by the AI Scientist and
+deﬁned as “the ratio of model accuracy under challenging conditions to that under normal conditions,
+to quantify robustness”–matches the description in the paper, as shown in Figure 8.
+8
+
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+Under review as a workshop paper at ICLR 2025
+Figure 8: Environmental Robustness Score calculation.
+9

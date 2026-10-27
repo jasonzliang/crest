@@ -1,0 +1,59 @@
+[
+  {
+    "paper_id": "compositional-regularization",
+    "github_page_count": 8,
+    "arxiv_page_count": 8,
+    "github_comment_occurrences": 22,
+    "arxiv_comment_occurrences": 22,
+    "github_annotations": 0,
+    "arxiv_annotations": 0,
+    "exact_page_text_equal": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "text_diff_first_1500": "--- \n\n+++ \n\n@@ -1,62 +1,12 @@\n\n-000\n-001\n-002\n-003\n-004\n-005\n-006\n-007\n-008\n-009\n-010\n-011\n-012\n-013\n-014\n-015\n-016\n-017\n-018\n-019\n-020\n-021\n-022\n-023\n-024\n-025\n-026\n-027\n-028\n-029\n-030\n-031\n-032\n-033\n-034\n-035\n-036\n-037\n-038\n-039\n-040\n-041\n-042\n-043\n-044\n-045\n-046\n-047\n-048\n-049\n-050\n-051\n-052\n-053\n-Under review as a workshop paper at ICLR 2025\n+CAUTION!!\n+THIS PAPER WAS\n+AUTONOMOUSLY GENERATED\n+BY THE AI SCIENTIST-V2\n+AI Scientist-v2 Generated Preprint\n COMPOSITIONAL REGULARIZATION:\n UNEXPECTED OBSTACLES IN ENHANCING NEURAL\n NETWORK GENERALIZATION\n-Anonymous authors\n+AI Scientist-v2\n Paper under double-blind review\n ABSTRACT\n Neural networks excel in many tasks but often struggle with compositional gener-\n@@ -126,61 +76,11 @@\n\n why compositional regularization did not yield the anticipated benefits.\n 1\n \n-054\n-055\n-056\n-057\n-058\n-059\n-060\n-061\n-062\n-063\n-064\n-065\n-066\n-067\n-068\n-069\n-070\n-071\n-072\n-073\n-074\n-075\n-076\n-077\n-078\n-079\n-080\n-081\n-082\n-083\n-084\n-085\n-086\n-087\n-088\n-089\n-090\n-091\n-092\n-093\n-094\n-095\n-096\n-097\n-098\n-099\n-100\n-101\n-102\n-103\n-104\n-105\n-106\n-107\n-Under review as a workshop paper at ICLR 2025\n+CAUTION!!\n+THIS PAPER WAS\n+AUTONOMOUSLY GENERATED\n+BY THE AI SCIENTIST-V2\n+AI Scientist-v2 Generated Preprint\n 2\n RELATED WORK\n Comment: An\n@@ -260,61 +160,11 @@\n\n tectural choices.\n 2\n \n-108\n-109\n-110\n-111\n-112\n-113\n-114\n-115\n-116\n-117\n-118\n-119\n-120\n-121\n-122\n-123\n-124\n-125\n-126\n-127\n-128\n-129\n-130\n-131\n-132\n-133\n-134\n-135\n-136\n-137\n-138\n-139\n-140\n-141\n-142\n-1"
+  },
+  {
+    "paper_id": "label-noise",
+    "github_page_count": 7,
+    "arxiv_page_count": 7,
+    "github_comment_occurrences": 23,
+    "arxiv_comment_occurrences": 23,
+    "github_annotations": 0,
+    "arxiv_annotations": 0,
+    "exact_page_text_equal": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "text_diff_first_1500": "--- \n\n+++ \n\n@@ -1,61 +1,11 @@\n\n-000\n-001\n-002\n-003\n-004\n-005\n-006\n-007\n-008\n-009\n-010\n-011\n-012\n-013\n-014\n-015\n-016\n-017\n-018\n-019\n-020\n-021\n-022\n-023\n-024\n-025\n-026\n-027\n-028\n-029\n-030\n-031\n-032\n-033\n-034\n-035\n-036\n-037\n-038\n-039\n-040\n-041\n-042\n-043\n-044\n-045\n-046\n-047\n-048\n-049\n-050\n-051\n-052\n-053\n-Under review as a workshop paper at ICLR 2025\n+CAUTION!!\n+THIS PAPER WAS\n+AUTONOMOUSLY GENERATED\n+BY THE AI SCIENTIST-V2\n+AI Scientist-v2 Generated Preprint\n UNVEILING THE IMPACT OF LABEL NOISE ON MODEL\n CALIBRATION IN DEEP LEARNING\n-Anonymous authors\n+AI Scientist-v2\n Paper under double-blind review\n ABSTRACT\n Label noise is a prevalent issue in real-world datasets, where incorrect annotations\n@@ -122,61 +72,11 @@\n\n Our contributions are as follows:\n 1\n \n-054\n-055\n-056\n-057\n-058\n-059\n-060\n-061\n-062\n-063\n-064\n-065\n-066\n-067\n-068\n-069\n-070\n-071\n-072\n-073\n-074\n-075\n-076\n-077\n-078\n-079\n-080\n-081\n-082\n-083\n-084\n-085\n-086\n-087\n-088\n-089\n-090\n-091\n-092\n-093\n-094\n-095\n-096\n-097\n-098\n-099\n-100\n-101\n-102\n-103\n-104\n-105\n-106\n-107\n-Under review as a workshop paper at ICLR 2025\n+CAUTION!!\n+THIS PAPER WAS\n+AUTONOMOUSLY GENERATED\n+BY THE AI SCIENTIST-V2\n+AI Scientist-v2 Generated Preprint\n \u2022 We provide a systematic analysis of the impact of label noise on model calibration across\n Comment:\n Are the experi-\n@@ -270,61 +170,11 @@\n\n Noise rates ranged from 10% to 50% to analyze the sensitivity of models to different noise levels.\n 2\n \n-108\n-109\n-110\n-111\n-112\n-113\n-114\n-115\n-116\n-117\n-118\n-119\n-1"
+  },
+  {
+    "paper_id": "pest-detection",
+    "github_page_count": 6,
+    "arxiv_page_count": 6,
+    "github_comment_occurrences": 21,
+    "arxiv_comment_occurrences": 21,
+    "github_annotations": 0,
+    "arxiv_annotations": 0,
+    "exact_page_text_equal": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "text_diff_first_1500": "--- \n\n+++ \n\n@@ -1,62 +1,12 @@\n\n-000\n-001\n-002\n-003\n-004\n-005\n-006\n-007\n-008\n-009\n-010\n-011\n-012\n-013\n-014\n-015\n-016\n-017\n-018\n-019\n-020\n-021\n-022\n-023\n-024\n-025\n-026\n-027\n-028\n-029\n-030\n-031\n-032\n-033\n-034\n-035\n-036\n-037\n-038\n-039\n-040\n-041\n-042\n-043\n-044\n-045\n-046\n-047\n-048\n-049\n-050\n-051\n-052\n-053\n-Under review as a workshop paper at ICLR 2025\n+CAUTION!!\n+THIS PAPER WAS\n+AUTONOMOUSLY GENERATED\n+BY THE AI SCIENTIST-V2\n+AI Scientist-v2 Generated Preprint\n REAL-WORLD CHALLENGES IN PEST DETECTION US-\n ING DEEP LEARNING: AN INVESTIGATION INTO FAIL-\n URES AND SOLUTIONS\n-Anonymous authors\n+AI Scientist-v2\n Paper under double-blind review\n ABSTRACT\n Deep learning models have shown significant promise in pest detection tasks\n@@ -144,61 +94,11 @@\n\n techniques have been employed to enhance dataset diversity and reduce overfitting (Abdulkareem\n 1\n \n-054\n-055\n-056\n-057\n-058\n-059\n-060\n-061\n-062\n-063\n-064\n-065\n-066\n-067\n-068\n-069\n-070\n-071\n-072\n-073\n-074\n-075\n-076\n-077\n-078\n-079\n-080\n-081\n-082\n-083\n-084\n-085\n-086\n-087\n-088\n-089\n-090\n-091\n-092\n-093\n-094\n-095\n-096\n-097\n-098\n-099\n-100\n-101\n-102\n-103\n-104\n-105\n-106\n-107\n-Under review as a workshop paper at ICLR 2025\n+CAUTION!!\n+THIS PAPER WAS\n+AUTONOMOUSLY GENERATED\n+BY THE AI SCIENTIST-V2\n+AI Scientist-v2 Generated Preprint\n et al., 2024). Domain adaptation strategies have been proposed to address domain shifts and im-\n prove performance in new environments (Prasad & Agniraj, 2024; Li et al., 2023a). However, these\n approaches often do not f"
+  }
+]

@@ -1,0 +1,896 @@
+{
+  "sha": "aaf25a7f5eca646bcc45c5dea1d885ff8bf6bf22",
+  "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/aaf25a7f5eca646bcc45c5dea1d885ff8bf6bf22",
+  "tree": [
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "size": 11357,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+    },
+    {
+      "path": "generated-papers",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "aae5a1e65c70764d5a909c7789397246875a057c",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/aae5a1e65c70764d5a909c7789397246875a057c"
+    },
+    {
+      "path": "generated-papers/applications",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "f156654bbe45cfcb352e90b5f933e52456e1facc",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/f156654bbe45cfcb352e90b5f933e52456e1facc"
+    },
+    {
+      "path": "generated-papers/applications/Health_Cartan-DEC-MiAE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9f44ab8bac7702a62757f01d715b74c2566a92f8",
+      "size": 427834,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9f44ab8bac7702a62757f01d715b74c2566a92f8"
+    },
+    {
+      "path": "generated-papers/applications/Neuroscience_FCD-Engram.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4a481765959d9c383411dfe044b91a54eeb55b39",
+      "size": 2551163,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/4a481765959d9c383411dfe044b91a54eeb55b39"
+    },
+    {
+      "path": "generated-papers/applications/Neuroscience_ST-FacRNN.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dcbafbfec6e13c53d25b75f0af7eaa38883a1c9d",
+      "size": 2498489,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/dcbafbfec6e13c53d25b75f0af7eaa38883a1c9d"
+    },
+    {
+      "path": "generated-papers/applications/Neuroscience_Simplified DWGR-SVL.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3d0d673cdcf962104da6ae6e3491e47351eff929",
+      "size": 2357901,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/3d0d673cdcf962104da6ae6e3491e47351eff929"
+    },
+    {
+      "path": "generated-papers/applications/Neuroscience_TA-FATA-CSBrain.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "58bd7e8dc2312cc56af15795e51b454163573190",
+      "size": 3652060,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/58bd7e8dc2312cc56af15795e51b454163573190"
+    },
+    {
+      "path": "generated-papers/applications/Others_AnisoSPD.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c033c17e03633695d70a9d54e1a4aac35c71a854",
+      "size": 3586482,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/c033c17e03633695d70a9d54e1a4aac35c71a854"
+    },
+    {
+      "path": "generated-papers/applications/Others_DR-LEF.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dea021d0b809f461fbc0b7ea507a7d66944f991b",
+      "size": 3431202,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/dea021d0b809f461fbc0b7ea507a7d66944f991b"
+    },
+    {
+      "path": "generated-papers/applications/Others_DiffTrop-Bitween.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9cd584bda0f593e28cc5b50c4d7619abb90db702",
+      "size": 2803912,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9cd584bda0f593e28cc5b50c4d7619abb90db702"
+    },
+    {
+      "path": "generated-papers/applications/Others_SAVVY-Vortex.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "aee4973a4b84422a45342993d76267a0228577ed",
+      "size": 3904827,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/aee4973a4b84422a45342993d76267a0228577ed"
+    },
+    {
+      "path": "generated-papers/applications/Others_TVCS-IF.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f0602067f16fccee4ea39626255d030a063c2c74",
+      "size": 2995561,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/f0602067f16fccee4ea39626255d030a063c2c74"
+    },
+    {
+      "path": "generated-papers/applications/Robotics_KinemaAnchor-Manifold.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1e169c506da1ad810431d70b16e24005c0f61742",
+      "size": 391022,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/1e169c506da1ad810431d70b16e24005c0f61742"
+    },
+    {
+      "path": "generated-papers/applications/Sciences_ErtelHodge-STELLA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d5397c69ddf237e7fc264bd3410c8d1fc4788c93",
+      "size": 1788109,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/d5397c69ddf237e7fc264bd3410c8d1fc4788c93"
+    },
+    {
+      "path": "generated-papers/applications/Sciences_SYMP-MONGE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cb4a31a95327f0e6e00e2209903dcfec53712432",
+      "size": 1963070,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/cb4a31a95327f0e6e00e2209903dcfec53712432"
+    },
+    {
+      "path": "generated-papers/applications/Speech_CHAMPS-RAG.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4ed677405b0984c445b71de4055f9667fb899f4a",
+      "size": 3558130,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/4ed677405b0984c445b71de4055f9667fb899f4a"
+    },
+    {
+      "path": "generated-papers/applications/Time Series_PG-CDIG.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f2e15b665a5c69451537b8db7404e5164cecebfa",
+      "size": 2775741,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/f2e15b665a5c69451537b8db7404e5164cecebfa"
+    },
+    {
+      "path": "generated-papers/deep_learning",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "650c954ad54d5047a50a68420d1b75306151dbcb",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/650c954ad54d5047a50a68420d1b75306151dbcb"
+    },
+    {
+      "path": "generated-papers/deep_learning/Algorithms_RMTS.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9313294c1c216df687e3c5ca8f9852b8bced3309",
+      "size": 4068846,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9313294c1c216df687e3c5ca8f9852b8bced3309"
+    },
+    {
+      "path": "generated-papers/deep_learning/Foundation_TABHARMONY.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7a4cc7926acf4f44bc06788b7e45b4160c692610",
+      "size": 1095403,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/7a4cc7926acf4f44bc06788b7e45b4160c692610"
+    },
+    {
+      "path": "generated-papers/deep_learning/Foundation_UNI-XDLM.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "221a9799d46467fdd7e0bf108df8eb3cd083bd26",
+      "size": 524424,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/221a9799d46467fdd7e0bf108df8eb3cd083bd26"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_CS-HLA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "399db06d39ecf62cb4ee0a255c8e614490ebe131",
+      "size": 3683004,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/399db06d39ecf62cb4ee0a255c8e614490ebe131"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_DNLP-LCBC.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7828feb2cefb3814bc419478dbe312c82df89a0d",
+      "size": 1468218,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/7828feb2cefb3814bc419478dbe312c82df89a0d"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_Mem-MaxRL.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5fc16af583faf842977a62e7ed5f4407b2120a23",
+      "size": 724452,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/5fc16af583faf842977a62e7ed5f4407b2120a23"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_Poisson-Top-W.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0d9770ef535be0f7acedafbe4c3a354877bd2338",
+      "size": 3924863,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/0d9770ef535be0f7acedafbe4c3a354877bd2338"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_RES-TRACE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4264ac58e27e04bb3a8695f5c71e577eb423ef6c",
+      "size": 3333024,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/4264ac58e27e04bb3a8695f5c71e577eb423ef6c"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_SDDF-RKHS.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "945aeae7048f975551936f4ab15b550c9b142dd2",
+      "size": 3290871,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/945aeae7048f975551936f4ab15b550c9b142dd2"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_SymCrooks-Steering.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fc79ac5446da2e8919c14d211a3d74a3ad747723",
+      "size": 1766244,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/fc79ac5446da2e8919c14d211a3d74a3ad747723"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_TPH-Lock.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "531cbef52f9c85746027da8f92b77822104b1d26",
+      "size": 614641,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/531cbef52f9c85746027da8f92b77822104b1d26"
+    },
+    {
+      "path": "generated-papers/deep_learning/LLMs_VD-STrans.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f47a3b6ffea74bd8586e575f9471ea1074664c92",
+      "size": 4085766,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/f47a3b6ffea74bd8586e575f9471ea1074664c92"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_BF-DFN.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "395b52600f058b7314438a1bd47d73244051f5c0",
+      "size": 2927042,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/395b52600f058b7314438a1bd47d73244051f5c0"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_DynaSpec-RAG.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "796417c8f7014805b6446656a0c301dc0d291f18",
+      "size": 1650850,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/796417c8f7014805b6446656a0c301dc0d291f18"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_Fed-LanczosSAM.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd9aab23e66fe2e0aacd247a6675586d6e7a18c7",
+      "size": 3475408,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/fd9aab23e66fe2e0aacd247a6675586d6e7a18c7"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_HARMONIC-MoP.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6d2ae891036f7c059155c31526edc141a8e0b3c0",
+      "size": 2450267,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/6d2ae891036f7c059155c31526edc141a8e0b3c0"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_InfoOptim.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "83c047e13aa348b1d80f01ab6f5c1e0e78a21a21",
+      "size": 4044411,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/83c047e13aa348b1d80f01ab6f5c1e0e78a21a21"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_Koopman-DMD.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9a9760c6cba229f3bf300cfa9319b3a72f6f96d5",
+      "size": 1544341,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9a9760c6cba229f3bf300cfa9319b3a72f6f96d5"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_NSK.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "da4c1d5e9700a5b40069186c6192c71e899958d0",
+      "size": 3363567,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/da4c1d5e9700a5b40069186c6192c71e899958d0"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_Neural-MMA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1ba19f0a7179731ced169fe7c21e3a65f017dec8",
+      "size": 2949278,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/1ba19f0a7179731ced169fe7c21e3a65f017dec8"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_PhySense-AdjointFlow.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4b0f3be3f2cb136dd2cef72264b3df0cb29b7eee",
+      "size": 612668,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/4b0f3be3f2cb136dd2cef72264b3df0cb29b7eee"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_Soft-VSM.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fd505b56d2bebcc7d506cf245b06a997d84c80ea",
+      "size": 2926840,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/fd505b56d2bebcc7d506cf245b06a997d84c80ea"
+    },
+    {
+      "path": "generated-papers/deep_learning/Others_TKFS-Attention.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1367b3ef878c8400fed0b1caa39d62f80033af82",
+      "size": 1658128,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/1367b3ef878c8400fed0b1caa39d62f80033af82"
+    },
+    {
+      "path": "generated-papers/deep_learning/Robustness_ResoKoopman.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9607327bc68bdd88480a9c82bd52fa6caeebb369",
+      "size": 2614257,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9607327bc68bdd88480a9c82bd52fa6caeebb369"
+    },
+    {
+      "path": "generated-papers/general_ml",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "772334b3d27f9aa9dc6651733d4598263af658d7",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/772334b3d27f9aa9dc6651733d4598263af658d7"
+    },
+    {
+      "path": "generated-papers/general_ml/Algorithms_Flash-Newton.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7ce663a4d360cbd25c2772d27e289ad61f85e924",
+      "size": 1742870,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/7ce663a4d360cbd25c2772d27e289ad61f85e924"
+    },
+    {
+      "path": "generated-papers/general_ml/Causality_SPECTRA-HET SPLIT UP.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "620451552e173c2b5b6ba926c7593b8fb7635c33",
+      "size": 2038230,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/620451552e173c2b5b6ba926c7593b8fb7635c33"
+    },
+    {
+      "path": "generated-papers/general_ml/Evaluation_DR-Schervish.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5cdc305bed1d69b0a26efaa599a9bbaacebdeadd",
+      "size": 4250496,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/5cdc305bed1d69b0a26efaa599a9bbaacebdeadd"
+    },
+    {
+      "path": "generated-papers/general_ml/Infrastructure_RDF-VG.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "84b29fa9f8c4bcbb640e74be48dddb2bc0ba2d00",
+      "size": 3371518,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/84b29fa9f8c4bcbb640e74be48dddb2bc0ba2d00"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_BAM-Val.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "035365a74dfe65022a428192c5dd32885c4e8cd8",
+      "size": 3185703,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/035365a74dfe65022a428192c5dd32885c4e8cd8"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_CIQS-PC.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a6ab872706792a4e6141523acb7d4faa58bb849f",
+      "size": 4658736,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/a6ab872706792a4e6141523acb7d4faa58bb849f"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_ECTS-HFD.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cf25cb0bbc12abc3019e3be47c8556fb3b723f63",
+      "size": 3828394,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/cf25cb0bbc12abc3019e3be47c8556fb3b723f63"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_FR-MSH-GGAD.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "152e9eb413f53221b6dc80b117b09ad19abe7b96",
+      "size": 2948526,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/152e9eb413f53221b6dc80b117b09ad19abe7b96"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_NEM-SPKN.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b2b69c4ca9690e8d3ca736e8e823b866f0c0c522",
+      "size": 3323573,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/b2b69c4ca9690e8d3ca736e8e823b866f0c0c522"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_Procrustes-DS.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "73178f4de6b389d9ed30bb41436860190949e275",
+      "size": 375916,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/73178f4de6b389d9ed30bb41436860190949e275"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_QAMT-Transfer.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "78bcd112b2ccfb7e705083e29757f7e05cad9325",
+      "size": 2954303,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/78bcd112b2ccfb7e705083e29757f7e05cad9325"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_SD-TTC.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9e89f8f1101024c9a6dcd08c0362f0966c91a39f",
+      "size": 668224,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9e89f8f1101024c9a6dcd08c0362f0966c91a39f"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_Sheaf-PartialTSW.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a0889a61cef09874874417d33be11183c510411a",
+      "size": 2403560,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/a0889a61cef09874874417d33be11183c510411a"
+    },
+    {
+      "path": "generated-papers/general_ml/Others_TBOC-ANOVA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ad77d5df4f35f18d205f3a62bd650dafcd494387",
+      "size": 2890440,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/ad77d5df4f35f18d205f3a62bd650dafcd494387"
+    },
+    {
+      "path": "generated-papers/optimization",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "013d5299a3714bd459a535ccbfe11bbef01c2d54",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/013d5299a3714bd459a535ccbfe11bbef01c2d54"
+    },
+    {
+      "path": "generated-papers/optimization/Convex_OFP-Shadow.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0fb129fae01efccf5fe426f60355bfd406d8f0e7",
+      "size": 3374090,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/0fb129fae01efccf5fe426f60355bfd406d8f0e7"
+    },
+    {
+      "path": "generated-papers/optimization/Discrete_LD-RPB-OM.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5748b1893a77eb9dc819bfe1af5200904ee70346",
+      "size": 2649016,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/5748b1893a77eb9dc819bfe1af5200904ee70346"
+    },
+    {
+      "path": "generated-papers/optimization/Non-Convex_ALOT-DRO.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2fd2cdd6b3142b2894b8484cb8c29c0e9083d3e4",
+      "size": 518571,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/2fd2cdd6b3142b2894b8484cb8c29c0e9083d3e4"
+    },
+    {
+      "path": "generated-papers/optimization/Others_ANSE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c31f8979d979dd938c94893610a8641f22703fa7",
+      "size": 3743146,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/c31f8979d979dd938c94893610a8641f22703fa7"
+    },
+    {
+      "path": "generated-papers/optimization/Others_LC-FTT.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "661b2a4cbdbe0786d8f19bf1b5ba5caaac92f952",
+      "size": 3708495,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/661b2a4cbdbe0786d8f19bf1b5ba5caaac92f952"
+    },
+    {
+      "path": "generated-papers/probabilistic",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "da3e9a79dead0b61c3309a1935268cdd80731364",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/da3e9a79dead0b61c3309a1935268cdd80731364"
+    },
+    {
+      "path": "generated-papers/probabilistic/Bayesian_DAGP-HDP-HMM.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c3e66a24017559bc38b7a4df107fd8f69d67dcd7",
+      "size": 3163236,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/c3e66a24017559bc38b7a4df107fd8f69d67dcd7"
+    },
+    {
+      "path": "generated-papers/probabilistic/Others_AD-LSVI.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b590baba15fabea374719af0d33adfc04fe023d9",
+      "size": 2840650,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/b590baba15fabea374719af0d33adfc04fe023d9"
+    },
+    {
+      "path": "generated-papers/probabilistic/Others_AWF-CP.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "65ed792dde03dfd73cc0b55f755326e7f05fbd46",
+      "size": 3153233,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/65ed792dde03dfd73cc0b55f755326e7f05fbd46"
+    },
+    {
+      "path": "generated-papers/probabilistic/Others_BTV-RDRO.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "61a9fcbdf538422598f4eed68465fd37cd3d5ad4",
+      "size": 3525823,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/61a9fcbdf538422598f4eed68465fd37cd3d5ad4"
+    },
+    {
+      "path": "generated-papers/probabilistic/Others_COFM-SIB.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7ffccacff3578a0bcbd837e1c462b17e8d11687f",
+      "size": 3991347,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/7ffccacff3578a0bcbd837e1c462b17e8d11687f"
+    },
+    {
+      "path": "generated-papers/probabilistic/Others_DosePFN.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f6b1af9278bd338d761e77b4c129e8a903ca2e66",
+      "size": 4162843,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/f6b1af9278bd338d761e77b4c129e8a903ca2e66"
+    },
+    {
+      "path": "generated-papers/probabilistic/Others_PH-CNR-OLLA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "beea4ff6649213179462b743153cc2afe1d1fd3b",
+      "size": 7661163,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/beea4ff6649213179462b743153cc2afe1d1fd3b"
+    },
+    {
+      "path": "generated-papers/probabilistic/Others_ScaleMode-NeuralSurv.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1020895c71c29873c97e1b1a6f7eb90475326b12",
+      "size": 3303088,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/1020895c71c29873c97e1b1a6f7eb90475326b12"
+    },
+    {
+      "path": "generated-papers/probabilistic/Sampling_SMBTT-CCDB.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9b09848b3318e80d64ad985babfe28580f719ba6",
+      "size": 2170002,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9b09848b3318e80d64ad985babfe28580f719ba6"
+    },
+    {
+      "path": "generated-papers/probabilistic/Sampling_SpecAttn-Div.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3781b63a58bfd06f1d2a4ff228fd283bdd921230",
+      "size": 3689041,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/3781b63a58bfd06f1d2a4ff228fd283bdd921230"
+    },
+    {
+      "path": "generated-papers/rl",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "09ef92d1c4b4be915e214b502782459455ca198f",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/09ef92d1c4b4be915e214b502782459455ca198f"
+    },
+    {
+      "path": "generated-papers/rl/Others_CSX-MoE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5b2e6f8686ba7eb5020625606c9d12d60e382823",
+      "size": 1805029,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/5b2e6f8686ba7eb5020625606c9d12d60e382823"
+    },
+    {
+      "path": "generated-papers/rl/Others_DisCoRe-IQA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "feff0489b00c1b7cac4808ff61b5b54eee2faff7",
+      "size": 5061097,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/feff0489b00c1b7cac4808ff61b5b54eee2faff7"
+    },
+    {
+      "path": "generated-papers/rl/Others_Exact-CPWL CvaR.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dff27730bfb4075b2727953432f17a73fead622e",
+      "size": 1053413,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/dff27730bfb4075b2727953432f17a73fead622e"
+    },
+    {
+      "path": "generated-papers/social_aspects",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "974fecedfd0fdaed8fabfd63d98a9a078b62f84c",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/974fecedfd0fdaed8fabfd63d98a9a078b62f84c"
+    },
+    {
+      "path": "generated-papers/social_aspects/Alignment_CHVA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5ae94d9916a69c608d1805f2282d82dbc34e08e2",
+      "size": 4133731,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/5ae94d9916a69c608d1805f2282d82dbc34e08e2"
+    },
+    {
+      "path": "generated-papers/social_aspects/Interpretability_CP-GRASSMANN.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "098b294ac891f67ccf88747fcde81a77ee42158d",
+      "size": 3156712,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/098b294ac891f67ccf88747fcde81a77ee42158d"
+    },
+    {
+      "path": "generated-papers/social_aspects/Interpretability_Flex-Dot.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "978fc283badd2cfc33735daff505cddf1ef09021",
+      "size": 480043,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/978fc283badd2cfc33735daff505cddf1ef09021"
+    },
+    {
+      "path": "generated-papers/social_aspects/Interpretability_Overdamped DAVE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "04e23a62f1fa38a533d61a57757b9e8f46be07c0",
+      "size": 2950284,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/04e23a62f1fa38a533d61a57757b9e8f46be07c0"
+    },
+    {
+      "path": "generated-papers/social_aspects/Interpretability_SHEAF-SAE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "be12d2cd777255e2a2afcdb42d5a73a1bfe81882",
+      "size": 4695286,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/be12d2cd777255e2a2afcdb42d5a73a1bfe81882"
+    },
+    {
+      "path": "generated-papers/social_aspects/Interpretability_SLT-MDA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f8647d83041dc803d7bccab23b60fd16daff7dc8",
+      "size": 510409,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/f8647d83041dc803d7bccab23b60fd16daff7dc8"
+    },
+    {
+      "path": "generated-papers/social_aspects/Others_VIGN-SDA-PMSVM.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ccc3b419c067376d7896cf76d6541a90cf5ace78",
+      "size": 4210508,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/ccc3b419c067376d7896cf76d6541a90cf5ace78"
+    },
+    {
+      "path": "generated-papers/social_aspects/Privacy_DP-EBS-BB.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1501cd4be41d6714695903a11d70765808c09476",
+      "size": 418069,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/1501cd4be41d6714695903a11d70765808c09476"
+    },
+    {
+      "path": "generated-papers/social_aspects/Robusntess_IMD-GV.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2cacc544c67314dd8295966f5095fbb5e0a2faa4",
+      "size": 1639386,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/2cacc544c67314dd8295966f5095fbb5e0a2faa4"
+    },
+    {
+      "path": "generated-papers/theory",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "24999fad7f7c63562fda97c42a1850964c026b75",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/24999fad7f7c63562fda97c42a1850964c026b75"
+    },
+    {
+      "path": "generated-papers/theory/Bandits_FVTG-CP.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7e72778915a6d6a659e2a0882faca3ff3ca99cf2",
+      "size": 3470904,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/7e72778915a6d6a659e2a0882faca3ff3ca99cf2"
+    },
+    {
+      "path": "generated-papers/theory/Game Theory_NTW-KPA.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "820f7ff124ba330e23094190bbafc8bcd595da02",
+      "size": 649204,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/820f7ff124ba330e23094190bbafc8bcd595da02"
+    },
+    {
+      "path": "generated-papers/theory/Optimization_PLL-ICE.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5c6db764537836fd9c480b013551c19944af317b",
+      "size": 3397585,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/5c6db764537836fd9c480b013551c19944af317b"
+    },
+    {
+      "path": "generated-papers/theory/Optimization_SSH-ED-SDP.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "74f53614471eb1d239dbf8861d778f8c5e0c760f",
+      "size": 1852260,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/74f53614471eb1d239dbf8861d778f8c5e0c760f"
+    },
+    {
+      "path": "generated-papers/theory/Others_DR-COCO.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5d9a8e8a30b4743223c0bb4a3ca29dd00d225959",
+      "size": 3078105,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/5d9a8e8a30b4743223c0bb4a3ca29dd00d225959"
+    },
+    {
+      "path": "generated-papers/theory/Probabilistic_DRO-ROCP.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9b33bf429e8b046fb6519c32782fde400ba7f291",
+      "size": 5195111,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/9b33bf429e8b046fb6519c32782fde400ba7f291"
+    },
+    {
+      "path": "index.html",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a18225d01d587d84b325688e78a202df03ed7c28",
+      "size": 79647,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/a18225d01d587d84b325688e78a202df03ed7c28"
+    },
+    {
+      "path": "static",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "db4c7640c8ff226d6332276cae1540ad99220d77",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/db4c7640c8ff226d6332276cae1540ad99220d77"
+    },
+    {
+      "path": "static/css",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "3d4c6a4ebf5b0f70e333617cd666085d5522efae",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/3d4c6a4ebf5b0f70e333617cd666085d5522efae"
+    },
+    {
+      "path": "static/css/bulma.min.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "86ad2ff1408bdec4069ed2ea355bb5e32e356d96",
+      "size": 207302,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/86ad2ff1408bdec4069ed2ea355bb5e32e356d96"
+    },
+    {
+      "path": "static/css/index.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2b0ce1ca5c0e7e2b16ecb0aa9f16aee9bf9c4d49",
+      "size": 5996,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/2b0ce1ca5c0e7e2b16ecb0aa9f16aee9bf9c4d49"
+    },
+    {
+      "path": "static/figures",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "a47e3b65d22d5517ad8acfc4a4f2d9276b7c2abe",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/a47e3b65d22d5517ad8acfc4a4f2d9276b7c2abe"
+    },
+    {
+      "path": "static/figures/overview.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "337fbb98a402a78504fb155429a139b8f0a8b070",
+      "size": 733791,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/337fbb98a402a78504fb155429a139b8f0a8b070"
+    },
+    {
+      "path": "static/figures/teaser.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e1e6a28cfb77878872faca264395dd757d611f77",
+      "size": 529682,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/e1e6a28cfb77878872faca264395dd757d611f77"
+    },
+    {
+      "path": "static/images",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "98e2c4397985f156d3ca117c88951716b404356a",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/98e2c4397985f156d3ca117c88951716b404356a"
+    },
+    {
+      "path": "static/images/favicon.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f866c66e9fc3abda66b7f28ccfedaf1442aae910",
+      "size": 469,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/f866c66e9fc3abda66b7f28ccfedaf1442aae910"
+    },
+    {
+      "path": "static/images/overview.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b5ce0a2cc1aae668a975378b1a3dd4ea3d912a77",
+      "size": 75004,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/b5ce0a2cc1aae668a975378b1a3dd4ea3d912a77"
+    },
+    {
+      "path": "static/images/polarisgo-poster.jpg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c4dcf37b953a28c7bef25e1c5ee349643784ce73",
+      "size": 98813,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/c4dcf37b953a28c7bef25e1c5ee349643784ce73"
+    },
+    {
+      "path": "static/images/teaser.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "875bf0cef6bfca14e03deffc3db39ca0b4e115f9",
+      "size": 229523,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/875bf0cef6bfca14e03deffc3db39ca0b4e115f9"
+    },
+    {
+      "path": "static/js",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "8a2ce5ed22205d51b282681220d36813375229d9",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/8a2ce5ed22205d51b282681220d36813375229d9"
+    },
+    {
+      "path": "static/js/index.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "aea32aef77e956dd06dbc9ba2874eded29ca6a91",
+      "size": 4522,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/aea32aef77e956dd06dbc9ba2874eded29ca6a91"
+    },
+    {
+      "path": "static/videos",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "faf687f09020d5e5c26fa47df3f8c4f5b4daf19d",
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/trees/faf687f09020d5e5c26fa47df3f8c4f5b4daf19d"
+    },
+    {
+      "path": "static/videos/polarisgo-demo.mp4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fb9911576a61dfdf53fb8c885f3fd4e84719d269",
+      "size": 19621364,
+      "url": "https://api.github.com/repos/scientist-two/scientist-two.github.io/git/blobs/fb9911576a61dfdf53fb8c885f3fd4e84719d269"
+    }
+  ],
+  "truncated": false
+}

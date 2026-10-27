@@ -1,0 +1,26 @@
+[
+  {
+    "repository_path": "compositional-regularization/annotated_paper.pdf",
+    "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/c05036b2e0dcc17056abfba398184f51a93087ca/compositional-regularization/annotated_paper.pdf",
+    "pdf_path": "data/sakana_ai_scientist_v2/pdfs/compositional-regularization.pdf",
+    "sha256": "8d5477b165639ed7339b77677da355496778b081c0086d7185a906fbcbbcd40f",
+    "byte_size": 859369,
+    "git_blob_sha": "fefaf5060b68f2cd24dff2e965048f63260fac61"
+  },
+  {
+    "repository_path": "label-noise/annotated_paper.pdf",
+    "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/c05036b2e0dcc17056abfba398184f51a93087ca/label-noise/annotated_paper.pdf",
+    "pdf_path": "data/sakana_ai_scientist_v2/pdfs/label-noise.pdf",
+    "sha256": "20b77a6ea8748d2bf5a0fd10ac589bcb6446fe50d5487632682fa87e324308b2",
+    "byte_size": 1997591,
+    "git_blob_sha": "32dd4367bddae4fa257ec1c32c1fa6da43bdff19"
+  },
+  {
+    "repository_path": "pest-detection/annotated_paper.pdf",
+    "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/c05036b2e0dcc17056abfba398184f51a93087ca/pest-detection/annotated_paper.pdf",
+    "pdf_path": "data/sakana_ai_scientist_v2/pdfs/pest-detection.pdf",
+    "sha256": "4ed38075f76698bda3b3d21d3d792286aa1d45124398277119c8cca86ddbdf6f",
+    "byte_size": 1772982,
+    "git_blob_sha": "ee9ef9fbe03cbcbc340a6fe2f026efdd607e48c4"
+  }
+]

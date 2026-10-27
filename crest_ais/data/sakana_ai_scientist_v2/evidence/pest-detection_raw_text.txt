@@ -1,0 +1,448 @@
+                Under review as a workshop paper at ICLR 2025
+
+
+          000  REAL-WORLD CHALLENGES IN PEST DETECTION US-          001
+          002   ING DEEP LEARNING: AN INVESTIGATION INTO FAIL-
+          003
+          004  URES AND SOLUTIONS
+          005
+          006
+               Anonymous authors
+          007
+                   Paper under double-blind review
+          008
+          009
+          010
+          011                            ABSTRACT
+          012
+          013           Deep learning models have shown significant promise in pest detection tasks
+          014              within controlled environments, but their performance often degrades when de-
+          015             ployed in real-world agricultural settings. This study investigates the challenges
+                           hindering the generalization of these models, focusing on data quality issues, en-          016
+                          vironmental variability, and inherent model limitations. Through extensive ex-         Comment:          017
+                           periments, including learning rate optimization and multi-dataset training, we          The rest of the
+          018
+                          demonstrate that while lower learning rates can enhance generalization, models           paper primar-
+          019                   still struggle with robustness to environmental changes. Our findings highlight              ily focuses on
+          020                 critical pitfalls in deploying deep learning models for pest detection and offer in-            environmental
+          021               sights into potential solutions for improving their real-world applicability.                      variability and
+          022                                                                                                       noise in im-
+          023                                                                                                           ages.
+          024    1  INTRODUCTION
+          025                                                                             Comment:
+                                                                                                              This might          026     Accurate pest detection is crucial for protecting crops and ensuring global food security. Deep
+                                                                                                        be setting an
+          027     learning models have emerged as powerful tools for automating pest detection tasks, achieving high
+                                                                                                                     unnecessarily
+          028     accuracy in controlled environments. However, their performance often degrades significantly when
+                                                                                                              high bar.
+Comment:029     deployed in real-world agricultural settings . This gap between controlled experiments and real-
+Both sentences030     world applications poses a serious challenge for precision agriculture and highlights the need for
+require cita-          031      robust, generalizable models. Understanding and addressing the reasons behind these performance
+tions to be          032     drops is essential for advancing AI in agriculture.substantiated.
+          033     In this work, we investigate the factors contributing to the failures of deep learning models in real-
+          034     world pest detection scenarios. We hypothesize that issues such as data quality, environmental
+          035      variability, and inherent model limitations play significant roles in hindering model generalization.
+          036    Through a series of experiments, we explore these challenges in depth. Our findings reveal that while   Comment:
+          037     optimizing hyperparameters, such as the learning rate, can lead to improved validation accuracy,    Is it really in
+          038     deep learning models still struggle to maintain robustness under environmental changes. Moreover,   depth?
+                   multi-dataset training and domain adaptation techniques, aimed at enhancing generalization across          039
+                    different datasets, present their own set of challenges, including increased computational demands   Comment:
+          040
+                and inconsistent performance gains.                                                    The domain
+          041
+                                                                                                                      adaptation ex-
+          042    By presenting these negative and inconclusive results, we aim to highlight the real-world pitfalls and                                                                                                              periment in
+          043     challenges in deploying deep learning models for pest detection. Our research provides valuable                                                                                                                  Section 5.2
+          044      insights for the agricultural and machine learning communities, contributing to the development of   appears to
+               more reliable AI tools for precision farming.
+          045                                                                                                            highlight the
+          046                                                                                                       challenges
+          047    2  RELATED WORK                                                                          of adapting
+          048                                                                                           ImageNet-
+                                                                                                                            trained mod-
+          049    Deep learning has been widely applied in agricultural contexts for tasks such as pest and disease
+                                                                                                                                    els to other
+          050      detection, showing high accuracy in controlled settings (Mustakim et al., 2024; Kumar et al., 2022).
+                                                                                                                        vision datasets
+          051     Li et al. (2023b) highlighted the limitations of traditional deep learning methods in practical ap-
+                                                                                           when environ-
+          052      plications, noting issues such as overfitting and sensitivity to environmental variations.  Several
+                                                                                                            mental noise
+          053     studies have explored methods to improve model robustness and generalization. Data augmentation                                                                                                                                                   is present, but
+                  techniques have been employed to enhance dataset diversity and reduce overfitting (Abdulkareem
+                                                                                                                                        this experiment
+                                                                                                                                           isn’t directly
+                                                       1                                                      related to the
+                                                                                                  main focus of
+                                                                                                                        the paper.
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          054
+                      et al., 2024). Domain adaptation strategies have been proposed to address domain shifts and im-
+          055     prove performance in new environments (Prasad & Agniraj, 2024; Li et al., 2023a). However, these
+          056     approaches often do not fully address the challenges faced in real-world deployment.
+          057
+                Reviews like Teixeira et al. (2023) and Hu (2023) have identified gaps in current research, empha-          058
+                    sizing the need for models that generalize well to diverse, real-world conditions. Additionally, Amir
+          059
+                      et al. (2024) discussed the limitations of deep learning models when encountering out-of-distribution
+          060
+                    inputs, underscoring the importance of verifying model generalization. Our work distinguishes it-
+          061      self by focusing on the failures and limitations of deep learning models in real-world pest detection
+          062     scenarios, providing an in-depth investigation into the underlying causes and proposing insights for
+          063     improvement.
+          064
+          065
+          066    3  METHODOLOGY
+          067
+          068   We employed deep learning models for pest detection, focusing on evaluating their performance and
+          069     robustness in real-world agricultural settings. We utilized the ResNet-18 architecture (?), pretrained   Comment:
+Comment:070    on ImageNet , and fine-tuned it on the Crop Pest and Disease dataset , which includes 22 classes   The cita-
+Cite. Also071     of pests and diseases collected from local farms. To investigate the challenges, we designed experi-    tion key
+would be nice072     ments to assess the impact of learning rates on model performance. We hypothesized that optimizing   ‘he2016deep‘
+to show some          073     the learning rate could improve generalization. We also implemented data augmentation techniques    exists in theexample im-
+                    to simulate environmental variability, such as brightness and contrast changes, Gaussian blur, and    latex file butages in the074
+               random affine transformations, to evaluate the models’ robustness. Additionally, we explored multi-   not in refer-appendix. 075
+                    dataset training using datasets such as EuroSAT (?), MedMNIST (?), and CIFAR-10 (?) to assess    ences.bib.
+          076
+Comment:        the potential of domain adaptation and transfer learning in improving model generalization across
+          077      different agricultural domains.                                                    Comment: AllEuroSAT
+might make078                                                                                                             three datasets
+sense but using079                                                                                                                    citation key
+MedMNIST080    4  EXPERIMENTAL SETUP                                                                          exist in theand CIFAR-10          081                                                                                                                latex file butto “assess the
+potential of082                                                                                                      not in the bib               The Crop Pest and Disease dataset comprises 25,126 images across 22 classes of pests and diseases
+domain adap-083                                                                                                                                              file.                    affecting crops such as cashew, cassava, maize, and tomato. We split the dataset into training (70%),tation...across
+          084     validation (15%), and testing (15%) sets. For the baseline experiments, we conducted a grid searchdifferent agri-
+cultural do-085      to optimize the learning rate, evaluating values of {1e−4, 5e−4, 1e−3, 5e−3, 1e−2}. We trained the   Comment:
+mains” is a086     ResNet-18 model for 10 epochs for each learning rate, using a batch size of 32 and the Adam op-   used a subset
+stretch b/c 087      timizer. To simulate challenging environmental conditions, we applied data augmentations during   (around 2500
+these two are
+clearly not088      testing, including brightness and contrast adjustments, Gaussian blur, and random affine transforma-   images)
+from the agri-089      tions. We introduced the Environmental Robustness Score (ERS), calculated as the ratio of model
+cultural do-090     accuracy under challenging conditions to that under normal conditions, to quantify robustness.
+main.
+          091     In the research experiments, we trained models on additional datasets—EuroSAT, MedMNIST, and
+          092    CIFAR-10—to investigate the effects of multi-dataset training on model generalization. We used
+          093     similar training settings and evaluated models using accuracy, loss, and ERS.
+          094
+          095
+          096    5  EXPERIMENTS AND RESULTS
+          097
+          098     5.1  IMPACT OF LEARNING RATE ON MODEL PERFORMANCE
+          099
+          100    To evaluate the impact of learning rates on model performance, we trained the ResNet-18 model on
+          101     the Crop Pest and Disease dataset using different learning rates. Figure 1 illustrates the aggregated
+          102     accuracy, loss, and ERS across different learning rates.
+          103    As shown in Figure 1, lower learning rates (1e−4 and 5e−4) result in smoother convergence of
+          104      training and validation accuracy, and a steady decrease in training loss. The ERS remains more stable
+          105      for these learning rates, suggesting enhanced robustness to environmental variability. In contrast,   Comment:
+Comment:106     higher learning rates lead to overfitting and unstable loss patterns, with significant fluctuations in   only in this
+The figure 107    ERS scores. These results indicate that optimizing hyperparameters like learning rate is crucial for    specific con-
+seems to sug-     improving model generalization and robustness in real-world settings.                                  dition and
+gest the lower                                                                                                                 definition of
+lr group over-                                                                                                               environmental
+fits more                                                2                                                                                                                     robustness
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          108
+          109
+
+          110
+          111
+          112
+          113
+          114
+          115
+
+          116
+          117
+                  Figure 1: Baseline model performance across learning rates. Aggregated training and validation ac-
+          118
+                   curacy, training loss, and Environmental Robustness Score (ERS) over epochs for different learning
+          119
+                      rates. Lower learning rates yield higher validation accuracy and more stable ERS scores, indicating
+          120      better generalization and robustness.
+          121
+
+          122
+          123
+          124
+          125
+          126
+
+          127
+          128
+          129
+          130
+          131
+          132
+
+          133
+          134
+          135
+          136
+          137
+          138
+
+          139
+                  Figure 2: Comparison of training and validation accuracy across different datasets. Models trained
+          140
+                on EuroSAT and CIFAR-10 exhibit stable and high accuracy, whereas the model trained on MedM-
+          141
+Comment:142    NIST shows erratic accuracy patterns, indicating challenges in generalization due to domain dis-
+Should ex-        crepancies.
+plain that this143
+is more about144
+generalization145
+from ImageNet    5.2  CHALLENGES IN MULTI-DATASET TRAINING
+          146
+to EuroSAT,
+MedMNIST,147or               To investigate model generalization across different domains, we trained the ResNet-18 model on
+CIFAR.   148                   additional datasets: EuroSAT, MedMNIST, and CIFAR-10. Figure 2 presents the comparison of
+          149      training and validation accuracy across these datasets.
+          150
+              From Figure 2, the models trained on EuroSAT and CIFAR-10 achieve high and stable training and          151
+                    validation accuracy over epochs, suggesting effective learning and better generalization. In contrast,
+          152
+Comment:153a      the MedMNIST model displays fluctuating accuracy, highlighting difficulties in adapting to the pest
+stretched ar-       detection task. This suggests that significant domain shifts can negatively impact learning, leading
+gument. Diffi-154      to overfitting and decreased robustness.
+culty of adopt-155
+ing ResNet-156    To further examine the robustness of these models, we analyzed the ERS across epochs, as shown
+18 to MedM-157      in Figure 3.
+NIST doesn’t
+immediately158     Figure 3 illustrates that the models trained on EuroSAT and CIFAR-10 maintain higher ERS scores
+suggest it’s159     across epochs, suggesting robustness to environmental augmentations applied during testing. The   Comment:
+also difficult160to   MedMNIST model’s low ERS scores indicate vulnerability to such changes, underscoring the chal-   Should refer to
+adapting to the          161     lenges posed by domain differences. These findings highlight the varying impact of dataset charac-   Appendix B,
+pest detection                       teristics on model generalization and robustness. While multi-dataset training and domain adapta-    as it provides
+task. At least
+                                                                                               more detailedit needs more
+explanation.                                                                                                       information on
+                                                       3                                                                                                                        the noise used
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          162
+          163
+
+          164
+          165
+          166
+          167
+          168
+          169
+
+          170
+          171
+          172
+          173
+          174
+          175
+
+          176
+          177
+          178
+          179     Figure 3: Environmental Robustness Score (ERS) comparison across different datasets. The Eu-Comment:
+The legend180can   roSAT and CIFAR-10 models maintain higher and more stable ERS scores, indicating better ro-
+be improved181     bustness to environmental variability. The MedMNIST model shows low and unstable ERS scores,
+          182      reflecting sensitivity to environmental changes.
+          183
+          184
+                    tion can offer potential improvements, they also present challenges, such as increased computational          185
+               demands and inconsistent performance gains, which must be carefully managed.
+          186
+
+          187
+          188    6  DISCUSSION
+          189
+          190    Our experiments reveal significant challenges in deploying deep learning models for pest detection
+          191      in real-world agricultural settings. Optimizing hyperparameters like learning rates enhances model
+          192     generalization and robustness to some extent, as evidenced by the improved performance and stable
+          193    ERS scores at lower learning rates. However, models still struggle with environmental variabil-
+          194       ity, indicating that hyperparameter optimization alone is insufficient to achieve robust real-world
+                  performance.          195
+Comment:196    The exploration of multi-dataset training provides valuable insights into domain adaptation chal-
+This can be197     lenges. The varying performance across datasets underscores the importance of dataset selection and
+misleading,198     the potential pitfalls of naively combining datasets with different characteristics. The model’s poor   Comment:
+since multi-          199     performance on MedMNIST suggests that significant domain shifts can negatively impact learning,   This only
+dataset training
+          200     leading to overfitting and decreased robustness.                                            makes sensecould mean a
+model trained201     These findings emphasize the need for specialized strategies to address data quality issues and envi-     if “combining”
+on multiple                                                                                                                     refers to Ima-          202     ronmental variability. Data augmentation techniques that more accurately reflect real-world condi-
+datasets, but                                                                                            geNet pretrain-
+here multiple203      tions, robust training methods, and domain-specific model adaptations may be necessary to improve   ing followed
+models are204    model performance in practical applications.                                                                                                  by fine-tuning
+trained, where205
+each model is                                                                                       on a different
+trained on 206a     7  CONCLUSION                                                                                      dataset, but it
+single dataset207                                                                                                         usually gives
+          208                                                                                                           the impression               Our study highlights critical pitfalls in deploying deep learning models for pest detection in real-
+          209                                                                                                                    that the model                 world agricultural settings. While optimizing hyperparameters like learning rates can enhance model
+          210                                                                                                                                  is trained                   generalization and robustness, challenges remain due to environmental variability and domain dis-
+                                                                                                  on multiple          211     crepancies. Multi-dataset training introduces additional complexities, and its benefits depend on the
+                                                                                                                                 datasets.          212     compatibility of the datasets involved. Future work should focus on developing advanced techniques
+          213      tailored to real-world conditions, such as improved data augmentation strategies that mimic environ-
+          214     mental changes, robust training methods that enhance model resilience, and architectures designed
+          215      for adaptability. By addressing these challenges, we can move closer to deploying reliable AI tools
+                    in precision agriculture that are resilient to real-world variability.
+
+
+                                                       4
+
+       Under review as a workshop paper at ICLR 2025
+
+
+
+216   REFERENCES
+217
+218     Ismael M. Abdulkareem, Faris K. Al-Shammri, Noor Aldeen A. Khalid, and Natiq A. Omran. Pro-
+219       posed approach for object detection and recognition by deep learning models using data augmen-
+220         tation. Int. J. Online Biomed. Eng., 20:31–43, 2024.
+221    Guy Amir, Osher Maayan, Tom Zelazny, Guy Katz, and Michael Schapira. Verifying the general-
+222        ization of deep learning to out-of-distribution domains. ArXiv, abs/2406.02024, 2024.
+223
+224     Jiangfeng Hu. Application of deep learning in smart agriculture research. Applied and Computa-
+225        tional Engineering, 2023.
+226
+        Raj Kumar, Dinesh Singh, A. Chug, and A. Singh.  Evaluation of deep learning based resnet-50
+227
+            for plant disease classification with stability analysis.  In International Conference Intelligent
+228      Computing and Control Systems, pp. 1280–1287, 2022.
+229
+230    A. Li, Elisa Bertino, Rih-Teng Wu, and Ting Wu. Building manufacturing deep learning models
+231       with minimal and imbalanced training data using domain adaptation and data augmentation. 2023
+232      IEEE International Conference on Industrial Technology (ICIT), pp. 1–8, 2023a.
+233
+      Manzhou Li, Siyu Cheng, Jingyi Cui, Changxiang Li, Zeyu Li, Chang Zhou, and Chunli Lv. High-
+234       performance plant pest and disease detection based on model ensemble with inception module
+235       and cluster algorithm. Plants, 12, 2023b.
+236
+237    M. Mustakim, Aditya Rezky Pratama, Imam Ahmad, Teguh Arifianto, Kelik Sussolaikah, and Sepri-
+238       ano Sepriano. Image classification of corn leaf diseases using cnn architecture resnet-50 and data
+239       augmentation.  In 2024 International Conference on Decision Aid Sciences and Applications
+         (DASA), pp. 1–6, 2024.240
+241     Pulicherla Siva Prasad and Senthilrajan Agniraj.  Cross-domain adaptation techniques for robust
+242        plant disease detection: A dann-coral hybrid approach.  International Journal of Experimental
+243       Research and Review, 2024.
+244
+245    A. Teixeira, Jos´e Ribeiro, R. Morais, J. Sousa, and Ant´onio Cunha. A systematic review on auto-
+          matic insect detection using deep learning. Agriculture, 2023.246
+
+247
+248
+249    SUPPLEMENTARY MATERIAL
+250
+251   A  ADDITIONAL FIGURES AND DETAILED RESULTS
+252
+253   We provide additional figures and detailed results to supplement the main text. These figures offer
+254     deeper insights into the models’ behaviors under different experimental conditions.
+255
+        Figure 4 shows that the EuroSAT and CIFAR-10 models show consistent decreases in training loss,256
+         reflecting effective learning. The MedMNIST model’s erratic loss suggests that the model struggles
+257
+         to minimize the loss function, possibly due to significant differences between medical images and
+258
+         agricultural pest images.                                                        Comment:
+259                                                                                                  This should
+260                                                                                            be ImageNet
+261   B  IMPLEMENTATION DETAILS                                                     images
+262
+263     All models were implemented using PyTorch 1.9.0. The ResNet-18 architecture was initialized
+264     with ImageNet pretrained weights. For optimization, we used the Adam optimizer with β1 = 0.9,
+265    β2 = 0.999, and a weight decay of 1e−4. No learning rate schedules or gradient clipping were   Comment:
+         applied.                                                                                    weight decay266
+                                                                                                                                      is 0.01 instead
+267     Data augmentations for simulating challenging conditions included ColorJitter with brightness                                                                                                           of 1e−4.
+268    and contrast factors of 0.5, GaussianBlur with a kernel size of 3, and RandomAffine transfor-
+269     mations with degrees up to 15 and translation up to 10%. These augmentations were applied during
+         testing to evaluate the Environmental Robustness Score (ERS).
+
+
+                                              5
+
+                Under review as a workshop paper at ICLR 2025
+
+
+
+
+
+          270
+          271
+
+          272
+          273
+          274
+          275
+          276
+          277
+
+          278
+          279
+          280
+          281
+          282
+          283
+
+          284
+          285
+          286
+          287     Figure 4: Comparison of training loss across different datasets. Models trained on EuroSAT and
+          288    CIFAR-10 datasets demonstrate a steady decrease in loss, while the model trained on MedMNIST
+          289     exhibits erratic loss curves, indicating instability during training due to domain mismatch.
+          290
+          291
+          292
+          293
+          294
+
+          295
+          296
+          297
+          298
+          299     Figure 5: Performance metrics for the model trained on MedMNIST dataset. The erratic behavior
+          300      in accuracy and loss indicates challenges in model convergence and generalization when applying
+          301     the MedMNIST dataset to pest detection tasks.Comment:
+This state- 302
+ment is in-303
+correct again.          304    The Environmental Robustness Score (ERS) is defined as:
+It should say
+something 305                                 Accuracy under challenging conditions
+like ”...apply-306                    ERS =                                                                 (1)                                               Accuracy under normal conditions
+ing/using the307
+MedMNIST308     This metric quantifies the model’s robustness to environmental changes by comparing its perfor-
+dataset with          309    mance under augmented test sets to that under standard conditions.the ImageNet-
+pretrained 310    The additional datasets used for multi-dataset training were:
+model.” Also,311
+the figure isn’t          312              • EuroSAT: A dataset consisting of 27,000 labeled Sentinel-2 satellite images covering 10
+mentioned in
+          313               classes (?).the main text.
+          314              • MedMNIST: A collection of lightweight medical image datasets covering various tasks
+          315                (?).
+          316              • CIFAR-10: A well-known dataset consisting of 60,000 32x32 color images in 10 classes
+          317                (?).
+          318
+          319     For the multi-dataset training, we used a batch size of 64 to accommodate the increased data volume.
+          320     Training was conducted for 30 epochs, and early stopping was applied if validation loss did not
+          321     decrease for 5 consecutive epochs.
+          322
+          323
+
+
+
+                                                       6

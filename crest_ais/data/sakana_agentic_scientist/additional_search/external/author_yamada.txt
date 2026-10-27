@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yutaro Yamada</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- For social media icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="name-and-social">
+                <h1>Yutaro Yamada</h1>
+                <div class="social-links">
+                    <a href="https://x.com/_yutaroyamada" target="_blank"><i class="fab fa-twitter"></i></a>
+                    <a href="https://github.com/runopti" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://scholar.google.com/citations?user=DPf8O7EAAAAJ&hl=en" target="_blank"><i class="fas fa-graduation-cap"></i></a>
+                    <a href="https://www.linkedin.com/in/yutaro-yamada-7393958a/" target="_blank"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+            <img src="assets/img/self.png" alt="profile_image">
+        </div>
+
+        <p>
+        I am a research scientist at <a href="https://deepmind.google/" target="_blank">Google DeepMind</a> in London.
+        Previously I was a research scientist at <a href="https://sakana.ai" target="_blank">Sakana AI</a>.
+        Before that, I completed my PhD in Statistics and Data Science at Yale.
+        My current interests include recursive self-improvement and automated scientific discovery.
+        </p>
+        <h2>Research</h2>
+        <ul>
+            <li><p>
+                <a href="https://www.nature.com/articles/s41586-026-10265-5">
+                    Towards end-to-end automation of AI research
+                </a>
+                <br>
+                Chris Lu*, Cong Lu*, Robert Tjarko Lange*, <b>Yutaro Yamada*†</b>, Shengran Hu, Jakob Foerster, David Ha†, Jeff Clune†
+                <br>
+                Nature 2026
+                <br>
+                <small>* Equal contribution. † Corresponding authors.</small>
+            </p></li>
+            <li><p>
+                <a href="https://arxiv.org/abs/2504.08066">
+                    The AI Scientist-v2: Workshop-Level Automated Scientific Discovery via Agentic Tree Search
+                </a>
+                <br>
+                <b>Yutaro Yamada*</b>, Robert Tjarko Lange*, Cong Lu*, Shengran Hu, Chris Lu, Jakob Foerster, Jeff Clune, David Ha
+                <br>
+                Preprint, 2025   <a style="margin-left: 5px;" href="https://github.com/SakanaAI/AI-Scientist-v2" target="_blank">[Code]</a>
+                <a style="margin-left: 5px;" href="https://sakana.ai/ai-scientist-first-publication/" target="_blank">[Blog Post]</a>
+                <a style="margin-left: 5px;" href="https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment" target="_blank">[ICLR2025 Workshop Experiment]</a>
+                <a style="margin-left: 5px;" href="/doc/ai_scientist_2026_nlp_colloquium_talk_fin.pdf" target="_blank">[Slides for NLP Colloquium (in Japanese)]</a>
+                <br>
+                Invited talks at ICLR 2025 ICBINB Workshop, PyTorch Conference 2025, MIT FutureTech Conference 2025, ICONIP 2025, and NeurIPS 2025 Social.
+            </p></li>
+            <li><p>
+                <a href="https://arxiv.org/abs/2402.09052">
+                    L3GO: Language Agents with Chain-of-3D-Thoughts for Generating Unconventional Objects
+                </a>
+                <br>
+                <b>Yutaro Yamada</b>, Khyathi Chandu, Bill Yuchen Lin, Jack Hessel, Ilker Yildirim, Yejin Choi
+                <br>
+                NAACL 2025, System Demonstration track  <a style="margin-left: 5px;" href="https://www.youtube.com/watch?v=Yu5XMs00nh8&authuser=0" target="_blank">[Demo Video]</a>
+            </p></li>
+            <li>
+                <a href="https://www.mdpi.com/1099-4300/26/3/258">
+                    Three-Dimensional Reconstruction Pre-Training as a Prior to Improve Robustness to Adversarial Attacks and Spurious Correlation
+                </a>
+                <br>
+                <b>Yutaro Yamada</b>, Fred Weiying Zhang, Yuval Kluger, Ilker Yildirim
+                <br>
+                Entropy 2024
+            </p></li>
+            <li><p>
+                <a href="https://arxiv.org/abs/2310.14540">
+                    Evaluating Spatial Understanding of Large Language Models
+                </a>
+                <br>
+                <b>Yutaro Yamada*</b>, Yihan Bao*, Andrew K. Lampinen, Jungo Kasai, Ilker Yildirim
+                <br>
+                TMLR 2024
+            </p></li>
+            <li><p>
+                <a href="https://arxiv.org/abs/2303.18027">
+                    Evaluating gpt-4 and chatgpt on japanese medical licensing examinations
+                </a>
+                <br>
+                Jungo Kasai, Yuhei Kasai, Keisuke Sakaguchi, <b>Yutaro Yamada</b>, Dragomir Radev
+                <br>
+                Preprint, 2023
+            </p></li>
+            <li>
+                <p>
+                <a href="https://arxiv.org/abs/2212.12043">When are Lemons Purple? The Concept Association Bias of Vision-Language Models</a>
+                <br>
+                <b>Yutaro Yamada*</b>, Yingtian Tang*, Yoyo Zhang, Ilker Yildirim
+                <br>
+                EMNLP 2023   <a style="margin-left: 5px;" href="/doc/NLP_colloquium_presentation_Jan24.pdf" target="_blank">[Slides]</a>
+            </p></li>
+            <li><p>
+                <a href="https://www.sciencedirect.com/science/article/pii/S0165168423002670">Support Recovery with Stochastic Gates: Theory and Application for Linear Models</a>
+                <br>
+                Soham Jana, Henry Li, <b>Yutaro Yamada</b>, Ofir Lindenbaum
+                <br>
+                Signal Processing 2023
+            </p></li>
+            <li><p>
+                <a href="https://arxiv.org/abs/2201.12122">
+                    Can Wikipedia Help Offline Reinforcement Learning?
+                </a>
+            <br>
+            Machel Reid, <b>Yutaro Yamada</b>, Shixiang Shane Gu
+            <br>
+            Preprint, 2022
+            </p>
+            <li><p>
+                <a href="https://arxiv.org/abs/2203.03443">Does Robustness on ImageNet Transfer to Downstream Tasks?</a>
+                <br>
+                <b>Yutaro Yamada</b>, Mayu Otani
+                <br>
+                CVPR 2022
+            </p></li>
+            <li><p>
+                <a href="https://openreview.net/forum?id=2OU0qmy4JnC">Exploiting 3D Shape Bias towards Robust Vision</a>
+                <br>
+                <b>Yutaro Yamada</b>, Sahand Negahban, Yuval Kluger, Ilker Yildirim
+                <br>
+                NeurIPS 2021 Workshop SVRHM
+            </p></li>
+            <li><p>
+                <a href="https://arxiv.org/abs/1810.04247">Feature Selection using Stochastic Gates</a>
+                <br>
+                <b>Yutaro Yamada*</b>, Ofir Lindenbaum*, Sahand Negahban, Yuval Kluger
+                <br>
+                ICML 2020
+            </p></li>
+            <li><p>
+                <a href="https://www.sciencedirect.com/science/article/pii/S0925231218304557">Understanding Adversarial Training: Increasing local stability of supervised models through robust optimization</a>
+                <br>
+                Uri Shaham, <b>Yutaro Yamada</b>, Sahand Negahban
+                <br>
+                Neurocomputing 2018
+            </p></li>
+        </ul>
+
+    </div>
+    <footer>
+        <p>© 2026 Yutaro Yamada</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,563 @@
+{
+  "agent_id": "sakana_ai_scientist_v2",
+  "display_name": "Sakana AI Scientist (v2)",
+  "official_source_urls": [
+    "https://github.com/SakanaAI/AI-Scientist-v2",
+    "https://sakana.ai/ai-scientist-first-publication/",
+    "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment",
+    "https://arxiv.org/abs/2504.08066",
+    "https://arxiv.org/src/2504.08066v1",
+    "https://sakana.ai/ai-scientist-nature/",
+    "https://www.nature.com/articles/s41586-026-10265-5",
+    "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf"
+  ],
+  "identity_confidence": "high",
+  "identity_notes": "Separate official Sakana AI Scientist-v2 (template-free, agentic tree search) system. Do not merge with original 2024/v1 or Agentic Scientist/v3.",
+  "selection_notes": "Collected every distinct generated full manuscript located in official v2 repository/history, official ICLR2025 workshop repository/history, official blog, arXiv full source archive and 2026 Nature supplement. All 3 released manuscripts retained, including 2 rejected papers. The accepted-threshold paper was withdrawn before proceedings publication. Humans originally selected these 3 from multiple runs, so this is the complete located public official-release corpus, not a random or complete all-run sample. Third-party deployments remain separate search leads, not silently mixed into this official Sakana release.",
+  "retrieved_date": "2026-10-26",
+  "retrieved_at_utc": "2026-10-27T03:49:03.258602+00:00",
+  "system_release_date": "2025-04-07",
+  "system_release_date_basis": "Official first-publication blog April 7 update says v2 was open-sourced.",
+  "initial_manuscript_release_date": "2025-03-12",
+  "repository_commit": "96bd51617cfdbb494a9fc283af00fe090edfae48",
+  "workshop_repository_commit": "c05036b2e0dcc17056abfba398184f51a93087ca",
+  "unique_manuscript_count": 3,
+  "paper_count": 3,
+  "primary_paper_count": 3,
+  "candidate_standalone_pdf_artifact_count": 10,
+  "downloaded_unique_standalone_pdf_artifact_count": 10,
+  "deduplicated_standalone_variant_count": 7,
+  "embedded_duplicate_manuscript_count": 3,
+  "incomplete_pdf_artifact_count": 0,
+  "deduplication_method": "SHA256 deduplication, then complete generated-content equivalence with exact page-text/diff evidence. Three arXiv variants differ only in publication header, author, line numbering and AI watermark. Four older workshop artifacts differ only in compilation/font encoding or human review commentary. Nature embedded pages exactly equal arXiv variant complete page text except one supplemental document line counter appended per page. No title-only deduplication.",
+  "scope_limitations": [
+    "Official report says multiple complete manuscripts per initial idea were generated across seeds, but only selected 3 full manuscripts are publicly located; number and availability of unselected runs unknown.",
+    "No public all-run Drive/ZIP corpus linked by inspected official sources was found. Repository history/release/tag audit is preserved in search_audit.",
+    "Original PDFs contain flattened human review annotations. Their scientific content requires audited annotation removal before judging.",
+    "Pest detection used human-prepared dataset inputs, recorded per paper; source claims selected scientific code/results/figures/text were unedited."
+  ],
+  "papers": [
+    {
+      "repository_path": "compositional-regularization/annotated_paper.pdf",
+      "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/c05036b2e0dcc17056abfba398184f51a93087ca/compositional-regularization/annotated_paper.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/pdfs/compositional-regularization.pdf",
+      "sha256": "8d5477b165639ed7339b77677da355496778b081c0086d7185a906fbcbbcd40f",
+      "byte_size": 859369,
+      "git_blob_sha": "fefaf5060b68f2cd24dff2e965048f63260fac61",
+      "id": "sakana_v2_compositional_regularization",
+      "title": "Compositional Regularization: Unexpected Obstacles in Enhancing Neural Network Generalization",
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/c05036b2e0dcc17056abfba398184f51a93087ca/compositional-regularization/annotated_paper.pdf",
+      "published_date": null,
+      "public_release_date": "2025-03-12",
+      "public_release_date_basis": "Official Sakana blog announcement; Git commit metadata is separately retained and is not assumed to prove a public-release date.",
+      "topic": "Machine learning; compositional generalization; sequence models; regularization; synthetic arithmetic",
+      "provenance": {
+        "system": "The AI Scientist-v2",
+        "release": "Official SakanaAI ICLR 2025 workshop experiment generated manuscripts",
+        "discovery_urls": [
+          "https://github.com/SakanaAI/AI-Scientist-v2",
+          "https://sakana.ai/ai-scientist-first-publication/",
+          "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment"
+        ],
+        "title_source": "Official workshop repository README, corroborated by PDF first page",
+        "repository_commit": "c05036b2e0dcc17056abfba398184f51a93087ca",
+        "system_generation_claim_source": "https://arxiv.org/html/2504.08066v1#S4.SS2",
+        "unmodified_scientific_content_claim": "Report section 4.2 says no human edited generated code, experimental results, figures or manuscript text of selected final manuscripts.",
+        "human_meta_selection": "Humans provided workshop theme, selected three AI-generated ideas from approximately forty, ran multiple seeds and selected one complete manuscript per idea; no selected scientific content edits reported.",
+        "human_review_annotations": "Released PDFs include flattened human margin comments after generation. These are reviewer commentary, not AI manuscript scientific content.",
+        "official_showcase": true
+      },
+      "license": null,
+      "license_notes": "No manuscript-specific reuse license established for canonical workshop repository artifact. Repository source-code licensing is not assumed to cover this manuscript.",
+      "page_count": 8,
+      "pdf_signature_verified": true,
+      "extracted_text_sha256": "365456355eb1a0495b4c4862e4789de7599ce003698fa95ae583758e6910f698",
+      "generation_mode": "autonomous",
+      "human_assistance": "none_reported",
+      "human_assistance_scope": "No human modifications to generated code/results/figures/manuscript reported; excludes task/data setup, output selection, and post-generation reviewer annotations, which are disclosed separately.",
+      "human_setup_assistance": false,
+      "human_setup_notes": "Workshop theme and high-level research direction supplied by humans; initial idea and final complete-run selection performed by humans.",
+      "human_setup_source_url": "https://arxiv.org/html/2504.08066v1#S4.SS2",
+      "eligible_primary": true,
+      "sample_group": "autonomous_primary",
+      "manuscript_status": "Complete final submitted AI-generated manuscript released with post-generation human reviewer annotations; withdrawn from proceedings under pre-arranged experiment protocol.",
+      "incomplete_draft": false,
+      "workshop_review_scores": [
+        6,
+        7,
+        6
+      ],
+      "workshop_review_outcome": "above_workshop_review_threshold_then_withdrawn",
+      "review_outcome_notes": "Received scores above average workshop acceptance threshold, then withdrawn before publication. No additional meta-review was performed, and blog explicitly says meta-review could in theory have rejected it.",
+      "human_review_annotations_flattened": true,
+      "interactive_pdf_annotation_count": 0,
+      "reviewer_comment_count": 22,
+      "reviewer_comment_line_count": 203,
+      "extraction_profile": "sakana_v2_annotated_workshop",
+      "reviewer_annotation_geometry_path": "data/sakana_ai_scientist_v2/evidence/reviewer_comment_geometry.json",
+      "extraction_warnings": [
+        "Released original PDF contains flattened human review comments in both margins. Remove only audited reviewer-comment lines/words before scientific judging and retain full original extraction.",
+        "Original PDF also includes ICLR workshop review headers and 3-digit review line numbers."
+      ],
+      "observed_artifact_issues": [],
+      "alternate_sources": [
+        {
+          "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/887008944e8d0e9669a442ddc63617f25e54fb8b/compositional-regularization/annotated_paper.pdf",
+          "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/887008944e8d0e9669a442ddc63617f25e54fb8b/compositional-regularization/annotated_paper.pdf",
+          "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/f6775bd7e8e56124cdc7a7d5f57c97f5ef31b741.pdf",
+          "sha256": "d9eeaf93efb1dc639de91f51ec9f8007fe2f01ab2610ea8aa7422d259df8d7f1",
+          "byte_size": 1096288,
+          "page_count": 8,
+          "git_blob_sha": "f6775bd7e8e56124cdc7a7d5f57c97f5ef31b741",
+          "classification": "duplicate_publication_or_human_review_annotation_variant",
+          "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+        },
+        {
+          "source_url": "https://arxiv.org/html/2504.08066v1#A3",
+          "pdf_url": "https://arxiv.org/src/2504.08066v1",
+          "pdf_url_kind": "official_tar_container",
+          "archive_member_path": "generated_papers/aisci_compositional_regularization_watermark.pdf",
+          "pdf_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_compositional_regularization_watermark.pdf",
+          "sha256": "1ed8c159a052a59716b8b7232e3fe08fee4409b1be21fb0d3d8da9bac954aee9",
+          "byte_size": 844168,
+          "page_count": 8,
+          "public_release_date": "2025-04-10",
+          "classification": "duplicate_watermarked_publication_variant",
+          "equivalence_basis": "Complete page text equals canonical after removing only known publication headers, authors, watermark and line numbers; human reviewer comments match too. Evidence search_audit/normalized_pdf_body_comparison.json."
+        },
+        {
+          "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+          "pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+          "pdf_url_kind": "official_supplement_container",
+          "pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+          "sha256": "c34594759b6fa9047d57197c9abdaea47b9000419b6119570c4a8cd5cbdf3b6a",
+          "container_page_count": 200,
+          "first_manuscript_page_1based": 153,
+          "last_manuscript_page_1based": 160,
+          "public_release_date": "2026-03-25",
+          "classification": "duplicate_embedded_publication_variant",
+          "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed.",
+          "verification_evidence": "data/sakana_ai_scientist_v2/evidence/nature_embedded_manuscript_comparison.json"
+        }
+      ]
+    },
+    {
+      "repository_path": "label-noise/annotated_paper.pdf",
+      "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/c05036b2e0dcc17056abfba398184f51a93087ca/label-noise/annotated_paper.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/pdfs/label-noise.pdf",
+      "sha256": "20b77a6ea8748d2bf5a0fd10ac589bcb6446fe50d5487632682fa87e324308b2",
+      "byte_size": 1997591,
+      "git_blob_sha": "32dd4367bddae4fa257ec1c32c1fa6da43bdff19",
+      "id": "sakana_v2_label_noise",
+      "title": "Unveiling the Impact of Label Noise on Model Calibration in Deep Learning",
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/c05036b2e0dcc17056abfba398184f51a93087ca/label-noise/annotated_paper.pdf",
+      "published_date": null,
+      "public_release_date": "2025-03-12",
+      "public_release_date_basis": "Official Sakana blog announcement; Git commit metadata is separately retained and is not assumed to prove a public-release date.",
+      "topic": "Machine learning; label noise; neural-network calibration; image classification",
+      "provenance": {
+        "system": "The AI Scientist-v2",
+        "release": "Official SakanaAI ICLR 2025 workshop experiment generated manuscripts",
+        "discovery_urls": [
+          "https://github.com/SakanaAI/AI-Scientist-v2",
+          "https://sakana.ai/ai-scientist-first-publication/",
+          "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment"
+        ],
+        "title_source": "Official workshop repository README, corroborated by PDF first page",
+        "repository_commit": "c05036b2e0dcc17056abfba398184f51a93087ca",
+        "system_generation_claim_source": "https://arxiv.org/html/2504.08066v1#S4.SS2",
+        "unmodified_scientific_content_claim": "Report section 4.2 says no human edited generated code, experimental results, figures or manuscript text of selected final manuscripts.",
+        "human_meta_selection": "Humans provided workshop theme, selected three AI-generated ideas from approximately forty, ran multiple seeds and selected one complete manuscript per idea; no selected scientific content edits reported.",
+        "human_review_annotations": "Released PDFs include flattened human margin comments after generation. These are reviewer commentary, not AI manuscript scientific content.",
+        "official_showcase": true
+      },
+      "license": null,
+      "license_notes": "No manuscript-specific reuse license established for canonical workshop repository artifact. Repository source-code licensing is not assumed to cover this manuscript.",
+      "page_count": 7,
+      "pdf_signature_verified": true,
+      "extracted_text_sha256": "9afef260d478cafc0628da93f346ae57c573299034965fb6cf1e197226c279ab",
+      "generation_mode": "autonomous",
+      "human_assistance": "none_reported",
+      "human_assistance_scope": "No human modifications to generated code/results/figures/manuscript reported; excludes task/data setup, output selection, and post-generation reviewer annotations, which are disclosed separately.",
+      "human_setup_assistance": false,
+      "human_setup_notes": "Workshop theme and high-level research direction supplied by humans; initial idea and final complete-run selection performed by humans.",
+      "human_setup_source_url": "https://arxiv.org/html/2504.08066v1#S4.SS2",
+      "eligible_primary": true,
+      "sample_group": "autonomous_primary",
+      "manuscript_status": "Complete final submitted AI-generated manuscript released with post-generation human reviewer annotations; withdrawn from proceedings under pre-arranged experiment protocol.",
+      "incomplete_draft": false,
+      "workshop_review_scores": [
+        3,
+        3,
+        3
+      ],
+      "workshop_review_outcome": "rejected",
+      "review_outcome_notes": "Failed workshop acceptance bar; retained without quality/outcome-based exclusion and withdrawn from further consideration under experiment protocol.",
+      "human_review_annotations_flattened": true,
+      "interactive_pdf_annotation_count": 0,
+      "reviewer_comment_count": 23,
+      "reviewer_comment_line_count": 229,
+      "extraction_profile": "sakana_v2_annotated_workshop",
+      "reviewer_annotation_geometry_path": "data/sakana_ai_scientist_v2/evidence/reviewer_comment_geometry.json",
+      "extraction_warnings": [
+        "Released original PDF contains flattened human review comments in both margins. Remove only audited reviewer-comment lines/words before scientific judging and retain full original extraction.",
+        "Original PDF also includes ICLR workshop review headers and 3-digit review line numbers."
+      ],
+      "observed_artifact_issues": [],
+      "alternate_sources": [
+        {
+          "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/887008944e8d0e9669a442ddc63617f25e54fb8b/label-noise/annotated_paper.pdf",
+          "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/887008944e8d0e9669a442ddc63617f25e54fb8b/label-noise/annotated_paper.pdf",
+          "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/03b53bb2ca2b1da68ece46fd243ebfaa31be9bf3.pdf",
+          "sha256": "55dc536e41e96adcf1de6e13fcf59093352fe1b31832ac0e75e32a1016766f1c",
+          "byte_size": 2963251,
+          "page_count": 7,
+          "git_blob_sha": "03b53bb2ca2b1da68ece46fd243ebfaa31be9bf3",
+          "classification": "duplicate_publication_or_human_review_annotation_variant",
+          "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+        },
+        {
+          "source_url": "https://arxiv.org/html/2504.08066v1#A3",
+          "pdf_url": "https://arxiv.org/src/2504.08066v1",
+          "pdf_url_kind": "official_tar_container",
+          "archive_member_path": "generated_papers/aisci_label_noise_watermark.pdf",
+          "pdf_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_label_noise_watermark.pdf",
+          "sha256": "df72bd0b3ada59c74a3b632e1e8b443d980e725fe4e49a578d342efa711dd849",
+          "byte_size": 1984024,
+          "page_count": 7,
+          "public_release_date": "2025-04-10",
+          "classification": "duplicate_watermarked_publication_variant",
+          "equivalence_basis": "Complete page text equals canonical after removing only known publication headers, authors, watermark and line numbers; human reviewer comments match too. Evidence search_audit/normalized_pdf_body_comparison.json."
+        },
+        {
+          "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+          "pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+          "pdf_url_kind": "official_supplement_container",
+          "pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+          "sha256": "c34594759b6fa9047d57197c9abdaea47b9000419b6119570c4a8cd5cbdf3b6a",
+          "container_page_count": 200,
+          "first_manuscript_page_1based": 169,
+          "last_manuscript_page_1based": 175,
+          "public_release_date": "2026-03-25",
+          "classification": "duplicate_embedded_publication_variant",
+          "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed.",
+          "verification_evidence": "data/sakana_ai_scientist_v2/evidence/nature_embedded_manuscript_comparison.json"
+        }
+      ]
+    },
+    {
+      "repository_path": "pest-detection/annotated_paper.pdf",
+      "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/c05036b2e0dcc17056abfba398184f51a93087ca/pest-detection/annotated_paper.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/pdfs/pest-detection.pdf",
+      "sha256": "4ed38075f76698bda3b3d21d3d792286aa1d45124398277119c8cca86ddbdf6f",
+      "byte_size": 1772982,
+      "git_blob_sha": "ee9ef9fbe03cbcbc340a6fe2f026efdd607e48c4",
+      "id": "sakana_v2_pest_detection",
+      "title": "Real-World Challenges in Pest Detection Using Deep Learning: An Investigation into Failures and Solutions",
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/c05036b2e0dcc17056abfba398184f51a93087ca/pest-detection/annotated_paper.pdf",
+      "published_date": null,
+      "public_release_date": "2025-03-12",
+      "public_release_date_basis": "Official Sakana blog announcement; Git commit metadata is separately retained and is not assumed to prove a public-release date.",
+      "topic": "Computer vision; agricultural pest detection; domain adaptation; environmental robustness",
+      "provenance": {
+        "system": "The AI Scientist-v2",
+        "release": "Official SakanaAI ICLR 2025 workshop experiment generated manuscripts",
+        "discovery_urls": [
+          "https://github.com/SakanaAI/AI-Scientist-v2",
+          "https://sakana.ai/ai-scientist-first-publication/",
+          "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment"
+        ],
+        "title_source": "Official workshop repository README, corroborated by PDF first page",
+        "repository_commit": "c05036b2e0dcc17056abfba398184f51a93087ca",
+        "system_generation_claim_source": "https://arxiv.org/html/2504.08066v1#S4.SS2",
+        "unmodified_scientific_content_claim": "Report section 4.2 says no human edited generated code, experimental results, figures or manuscript text of selected final manuscripts.",
+        "human_meta_selection": "Humans provided workshop theme, selected three AI-generated ideas from approximately forty, ran multiple seeds and selected one complete manuscript per idea; no selected scientific content edits reported.",
+        "human_review_annotations": "Released PDFs include flattened human margin comments after generation. These are reviewer commentary, not AI manuscript scientific content.",
+        "official_showcase": true
+      },
+      "license": null,
+      "license_notes": "No manuscript-specific reuse license established for canonical workshop repository artifact. Repository source-code licensing is not assumed to cover this manuscript.",
+      "page_count": 6,
+      "pdf_signature_verified": true,
+      "extracted_text_sha256": "fb2d642695737299bd4c8e6cbb11922e58278567a678d14602de16e9f9664ff3",
+      "generation_mode": "autonomous",
+      "human_assistance": "none_reported",
+      "human_assistance_scope": "No human modifications to generated code/results/figures/manuscript reported; excludes task/data setup, output selection, and post-generation reviewer annotations, which are disclosed separately.",
+      "human_setup_assistance": true,
+      "human_setup_notes": "Humans manually downloaded relevant Kaggle Crop Pest and Disease Detection dataset and reduced it to one tenth to speed experiments; this input preparation is disclosed and does not exclude the unedited generated manuscript under the shared comparison rule.",
+      "human_setup_source_url": "https://arxiv.org/html/2504.08066v1#A3.SS3.SSS1",
+      "eligible_primary": true,
+      "sample_group": "autonomous_primary",
+      "manuscript_status": "Complete final submitted AI-generated manuscript released with post-generation human reviewer annotations; withdrawn from proceedings under pre-arranged experiment protocol.",
+      "incomplete_draft": false,
+      "workshop_review_scores": [
+        3,
+        7,
+        4
+      ],
+      "workshop_review_outcome": "rejected",
+      "review_outcome_notes": "Failed workshop acceptance bar; retained without quality/outcome-based exclusion and withdrawn from further consideration under experiment protocol.",
+      "human_review_annotations_flattened": true,
+      "interactive_pdf_annotation_count": 0,
+      "reviewer_comment_count": 21,
+      "reviewer_comment_line_count": 189,
+      "extraction_profile": "sakana_v2_annotated_workshop",
+      "reviewer_annotation_geometry_path": "data/sakana_ai_scientist_v2/evidence/reviewer_comment_geometry.json",
+      "extraction_warnings": [
+        "Released original PDF contains flattened human review comments in both margins. Remove only audited reviewer-comment lines/words before scientific judging and retain full original extraction.",
+        "Original PDF also includes ICLR workshop review headers and 3-digit review line numbers."
+      ],
+      "observed_artifact_issues": [],
+      "alternate_sources": [
+        {
+          "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/887008944e8d0e9669a442ddc63617f25e54fb8b/pest-detection/annotated_paper.pdf",
+          "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/887008944e8d0e9669a442ddc63617f25e54fb8b/pest-detection/annotated_paper.pdf",
+          "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/eb98934fcfeb168576f454e7ca235a485bca3f5a.pdf",
+          "sha256": "2893ca79ff5063ced8adcfa3593e8f9cf3921969583dcc36668ff4d2dc0c6be6",
+          "byte_size": 2457521,
+          "page_count": 6,
+          "git_blob_sha": "eb98934fcfeb168576f454e7ca235a485bca3f5a",
+          "classification": "duplicate_publication_or_human_review_annotation_variant",
+          "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+        },
+        {
+          "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/12c01e67b5ecedfae6b02e1845931c5cec5b073d/pest-detection/annotated_paper.pdf",
+          "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/12c01e67b5ecedfae6b02e1845931c5cec5b073d/pest-detection/annotated_paper.pdf",
+          "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/198a5378e5befcd41d77b1c04809c0bf30c89765.pdf",
+          "sha256": "dd2c9505da902dc1372a83d4b0e2a5f6fb5c84b877853fb8228ac5e757402d33",
+          "byte_size": 2457199,
+          "page_count": 6,
+          "git_blob_sha": "198a5378e5befcd41d77b1c04809c0bf30c89765",
+          "classification": "duplicate_publication_or_human_review_annotation_variant",
+          "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+        },
+        {
+          "source_url": "https://arxiv.org/html/2504.08066v1#A3",
+          "pdf_url": "https://arxiv.org/src/2504.08066v1",
+          "pdf_url_kind": "official_tar_container",
+          "archive_member_path": "generated_papers/aisci_pest_prediction_watermark.pdf",
+          "pdf_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_pest_prediction_watermark.pdf",
+          "sha256": "2d5a6c5ab6c61fbae7df12bc07af8e8b87e45c2c253b5857c7c9731aebac340e",
+          "byte_size": 1758113,
+          "page_count": 6,
+          "public_release_date": "2025-04-10",
+          "classification": "duplicate_watermarked_publication_variant",
+          "equivalence_basis": "Complete page text equals canonical after removing only known publication headers, authors, watermark and line numbers; human reviewer comments match too. Evidence search_audit/normalized_pdf_body_comparison.json."
+        },
+        {
+          "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+          "pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+          "pdf_url_kind": "official_supplement_container",
+          "pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+          "sha256": "c34594759b6fa9047d57197c9abdaea47b9000419b6119570c4a8cd5cbdf3b6a",
+          "container_page_count": 200,
+          "first_manuscript_page_1based": 183,
+          "last_manuscript_page_1based": 188,
+          "public_release_date": "2026-03-25",
+          "classification": "duplicate_embedded_publication_variant",
+          "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed.",
+          "verification_evidence": "data/sakana_ai_scientist_v2/evidence/nature_embedded_manuscript_comparison.json"
+        }
+      ]
+    }
+  ],
+  "duplicate_variants": [
+    {
+      "canonical_id": "sakana_v2_compositional_regularization",
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/887008944e8d0e9669a442ddc63617f25e54fb8b/compositional-regularization/annotated_paper.pdf",
+      "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/887008944e8d0e9669a442ddc63617f25e54fb8b/compositional-regularization/annotated_paper.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/f6775bd7e8e56124cdc7a7d5f57c97f5ef31b741.pdf",
+      "sha256": "d9eeaf93efb1dc639de91f51ec9f8007fe2f01ab2610ea8aa7422d259df8d7f1",
+      "byte_size": 1096288,
+      "page_count": 8,
+      "git_blob_sha": "f6775bd7e8e56124cdc7a7d5f57c97f5ef31b741",
+      "classification": "duplicate_publication_or_human_review_annotation_variant",
+      "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+    },
+    {
+      "canonical_id": "sakana_v2_compositional_regularization",
+      "source_url": "https://arxiv.org/html/2504.08066v1#A3",
+      "pdf_url": "https://arxiv.org/src/2504.08066v1",
+      "pdf_url_kind": "official_tar_container",
+      "archive_member_path": "generated_papers/aisci_compositional_regularization_watermark.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_compositional_regularization_watermark.pdf",
+      "sha256": "1ed8c159a052a59716b8b7232e3fe08fee4409b1be21fb0d3d8da9bac954aee9",
+      "byte_size": 844168,
+      "page_count": 8,
+      "public_release_date": "2025-04-10",
+      "classification": "duplicate_watermarked_publication_variant",
+      "equivalence_basis": "Complete page text equals canonical after removing only known publication headers, authors, watermark and line numbers; human reviewer comments match too. Evidence search_audit/normalized_pdf_body_comparison.json."
+    },
+    {
+      "canonical_id": "sakana_v2_compositional_regularization",
+      "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+      "pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+      "pdf_url_kind": "official_supplement_container",
+      "pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+      "sha256": "c34594759b6fa9047d57197c9abdaea47b9000419b6119570c4a8cd5cbdf3b6a",
+      "container_page_count": 200,
+      "first_manuscript_page_1based": 153,
+      "last_manuscript_page_1based": 160,
+      "public_release_date": "2026-03-25",
+      "classification": "duplicate_embedded_publication_variant",
+      "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed.",
+      "verification_evidence": "data/sakana_ai_scientist_v2/evidence/nature_embedded_manuscript_comparison.json"
+    },
+    {
+      "canonical_id": "sakana_v2_label_noise",
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/887008944e8d0e9669a442ddc63617f25e54fb8b/label-noise/annotated_paper.pdf",
+      "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/887008944e8d0e9669a442ddc63617f25e54fb8b/label-noise/annotated_paper.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/03b53bb2ca2b1da68ece46fd243ebfaa31be9bf3.pdf",
+      "sha256": "55dc536e41e96adcf1de6e13fcf59093352fe1b31832ac0e75e32a1016766f1c",
+      "byte_size": 2963251,
+      "page_count": 7,
+      "git_blob_sha": "03b53bb2ca2b1da68ece46fd243ebfaa31be9bf3",
+      "classification": "duplicate_publication_or_human_review_annotation_variant",
+      "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+    },
+    {
+      "canonical_id": "sakana_v2_label_noise",
+      "source_url": "https://arxiv.org/html/2504.08066v1#A3",
+      "pdf_url": "https://arxiv.org/src/2504.08066v1",
+      "pdf_url_kind": "official_tar_container",
+      "archive_member_path": "generated_papers/aisci_label_noise_watermark.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_label_noise_watermark.pdf",
+      "sha256": "df72bd0b3ada59c74a3b632e1e8b443d980e725fe4e49a578d342efa711dd849",
+      "byte_size": 1984024,
+      "page_count": 7,
+      "public_release_date": "2025-04-10",
+      "classification": "duplicate_watermarked_publication_variant",
+      "equivalence_basis": "Complete page text equals canonical after removing only known publication headers, authors, watermark and line numbers; human reviewer comments match too. Evidence search_audit/normalized_pdf_body_comparison.json."
+    },
+    {
+      "canonical_id": "sakana_v2_label_noise",
+      "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+      "pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+      "pdf_url_kind": "official_supplement_container",
+      "pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+      "sha256": "c34594759b6fa9047d57197c9abdaea47b9000419b6119570c4a8cd5cbdf3b6a",
+      "container_page_count": 200,
+      "first_manuscript_page_1based": 169,
+      "last_manuscript_page_1based": 175,
+      "public_release_date": "2026-03-25",
+      "classification": "duplicate_embedded_publication_variant",
+      "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed.",
+      "verification_evidence": "data/sakana_ai_scientist_v2/evidence/nature_embedded_manuscript_comparison.json"
+    },
+    {
+      "canonical_id": "sakana_v2_pest_detection",
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/887008944e8d0e9669a442ddc63617f25e54fb8b/pest-detection/annotated_paper.pdf",
+      "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/887008944e8d0e9669a442ddc63617f25e54fb8b/pest-detection/annotated_paper.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/eb98934fcfeb168576f454e7ca235a485bca3f5a.pdf",
+      "sha256": "2893ca79ff5063ced8adcfa3593e8f9cf3921969583dcc36668ff4d2dc0c6be6",
+      "byte_size": 2457521,
+      "page_count": 6,
+      "git_blob_sha": "eb98934fcfeb168576f454e7ca235a485bca3f5a",
+      "classification": "duplicate_publication_or_human_review_annotation_variant",
+      "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+    },
+    {
+      "canonical_id": "sakana_v2_pest_detection",
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/blob/12c01e67b5ecedfae6b02e1845931c5cec5b073d/pest-detection/annotated_paper.pdf",
+      "pdf_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/12c01e67b5ecedfae6b02e1845931c5cec5b073d/pest-detection/annotated_paper.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/search_audit/historical_workshop_pdf_variants/198a5378e5befcd41d77b1c04809c0bf30c89765.pdf",
+      "sha256": "dd2c9505da902dc1372a83d4b0e2a5f6fb5c84b877853fb8228ac5e757402d33",
+      "byte_size": 2457199,
+      "page_count": 6,
+      "git_blob_sha": "198a5378e5befcd41d77b1c04809c0bf30c89765",
+      "classification": "duplicate_publication_or_human_review_annotation_variant",
+      "equivalence_basis": "Same generated manuscript; historical differences limited to PDF typography, font/text encoding or flattened human review annotations. Preserved complete extracted diffs in search_audit/workshop_history_manuscript_variants.json. No generated scientific-content revision identified."
+    },
+    {
+      "canonical_id": "sakana_v2_pest_detection",
+      "source_url": "https://arxiv.org/html/2504.08066v1#A3",
+      "pdf_url": "https://arxiv.org/src/2504.08066v1",
+      "pdf_url_kind": "official_tar_container",
+      "archive_member_path": "generated_papers/aisci_pest_prediction_watermark.pdf",
+      "pdf_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_pest_prediction_watermark.pdf",
+      "sha256": "2d5a6c5ab6c61fbae7df12bc07af8e8b87e45c2c253b5857c7c9731aebac340e",
+      "byte_size": 1758113,
+      "page_count": 6,
+      "public_release_date": "2025-04-10",
+      "classification": "duplicate_watermarked_publication_variant",
+      "equivalence_basis": "Complete page text equals canonical after removing only known publication headers, authors, watermark and line numbers; human reviewer comments match too. Evidence search_audit/normalized_pdf_body_comparison.json."
+    },
+    {
+      "canonical_id": "sakana_v2_pest_detection",
+      "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+      "pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+      "pdf_url_kind": "official_supplement_container",
+      "pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+      "sha256": "c34594759b6fa9047d57197c9abdaea47b9000419b6119570c4a8cd5cbdf3b6a",
+      "container_page_count": 200,
+      "first_manuscript_page_1based": 183,
+      "last_manuscript_page_1based": 188,
+      "public_release_date": "2026-03-25",
+      "classification": "duplicate_embedded_publication_variant",
+      "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed.",
+      "verification_evidence": "data/sakana_ai_scientist_v2/evidence/nature_embedded_manuscript_comparison.json"
+    }
+  ],
+  "excluded_candidates": [
+    {
+      "source_url": "https://arxiv.org/abs/2504.08066",
+      "title": "The AI Scientist-v2: Workshop-Level Automated Scientific Discovery via Agentic Tree Search",
+      "reason": "Human-authored system/overview report; not a generated research manuscript. Generated Appendix C papers are separately deduplicated."
+    },
+    {
+      "source_url": "https://www.nature.com/articles/s41586-026-10265-5",
+      "title": "Towards end-to-end automation of AI research",
+      "reason": "Human-authored system/overview report. Supplement D.2 reproduces same three v2 manuscripts; D.1 contains original/v1 papers excluded from v2."
+    },
+    {
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment",
+      "repository_paths": [
+        "compositional-regularization/sakana_review.pdf",
+        "label-noise/sakana_review.pdf",
+        "pest-detection/sakana_review.pdf"
+      ],
+      "reason": "Human-authored reviews, not generated research manuscripts."
+    },
+    {
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-v2/blob/96bd51617cfdbb494a9fc283af00fe090edfae48/ai_scientist/fewshot_examples/132_automated_relational.pdf",
+      "reason": "Human-authored few-shot review/example paper; no generated output attribution. Also duplicated in official workshop review code."
+    },
+    {
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-v2/blob/96bd51617cfdbb494a9fc283af00fe090edfae48/ai_scientist/fewshot_examples/2_carpe_diem.pdf",
+      "reason": "Human-authored few-shot review/example paper; no generated output attribution. Also duplicated in official workshop review code."
+    },
+    {
+      "source_url": "https://github.com/SakanaAI/AI-Scientist-v2/blob/96bd51617cfdbb494a9fc283af00fe090edfae48/ai_scientist/fewshot_examples/attention.pdf",
+      "reason": "Human-authored few-shot review/example paper; no generated output attribution. Also duplicated in official workshop review code."
+    }
+  ],
+  "unavailable_candidates": [
+    {
+      "description": "Additional full manuscripts generated for other seeds of the three selected research ideas",
+      "source_url": "https://arxiv.org/html/2504.08066v1#S4.SS2",
+      "status": "mentioned_not_publicly_located",
+      "candidate_count": null,
+      "reason": "Official report discloses multiple generated complete manuscripts per initial idea; no public archive or specific PDF URLs located."
+    }
+  ],
+  "access_limitations": [
+    {
+      "url": "https://pub.sakana.ai/ai-scientist-v2/",
+      "status": "HTTP 403",
+      "resolution": "Read official arXiv alternatives; no access restriction bypassed."
+    },
+    {
+      "url": "https://pub.sakana.ai/ai-scientist-v2/paper/paper.pdf",
+      "status": "HTTP 403",
+      "resolution": "Downloaded official arXiv PDF and source successfully; no access restriction bypassed."
+    },
+    {
+      "url": "https://openreview.net/",
+      "status": "Submissions intentionally unpublished under experiment protocol",
+      "source_url": "https://sakana.ai/ai-scientist-first-publication/",
+      "resolution": "Use official workshop GitHub releases."
+    }
+  ],
+  "search_audit_path": "data/sakana_ai_scientist_v2/search_audit/notes.txt",
+  "source_evidence_directory": "data/sakana_ai_scientist_v2/evidence"
+}

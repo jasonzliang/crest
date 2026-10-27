@@ -1,0 +1,17 @@
+[
+  {
+    "paper_id": "compositional-regularization",
+    "body_text_equal_after_removing_only_known_publication_headers_authors_watermark_line_numbers": true,
+    "remaining_diff": ""
+  },
+  {
+    "paper_id": "label-noise",
+    "body_text_equal_after_removing_only_known_publication_headers_authors_watermark_line_numbers": true,
+    "remaining_diff": ""
+  },
+  {
+    "paper_id": "pest-detection",
+    "body_text_equal_after_removing_only_known_publication_headers_authors_watermark_line_numbers": true,
+    "remaining_diff": ""
+  }
+]

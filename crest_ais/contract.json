@@ -1,0 +1,32 @@
+{
+  "version": "crest-ais-overall-v2",
+  "design": "Freeze eligible released-paper pools. Uniformly sample min(M,Na*Nb) paper pairs per scientist matchup, M=10 seed2026. All scientist matchups (ten for five scientists), two judges, both orders. Each judge gives ONE overall A/B creativity winner guided jointly by N/U/S; no criterion winners, criterion voting or numeric weighting. Average overall votes within matchups and weight opponents equally. Explicitly labeled human-AI co-discovery papers excluded from the primary pool. No fabricated missing votes. No Markdown files.",
+  "plan_fields": "version,created_at,seed,pairs_per_matchup,agents (id->display),judges (id->settings),papers (selected records),catalog (all records),strata,selection,jobs",
+  "paper_fields": "id,agent,title,pdf_path relative to crest_ais,source_url,pdf_url,sha256,topic,pages,blind_text_path,extraction_warnings,eligible_primary; preserve other metadata",
+  "strata_fields": "agents [a,b],population_pairs,sampled_pairs",
+  "job_fields": "key,pair_id,agents [canonical a,b],papers [canonical paper_a,paper_b],order [paper_for_A,paper_for_B],judge,settings,prompt",
+  "results": "list of {key,verdict:{reason:nonempty str,winner:A|B},cost_usd:float|null,usage,model,warnings}; failed jobs absent",
+  "analysis_api": "analyze(plan:dict,results:list[dict])->dict",
+  "report_fields": {
+    "version": "str",
+    "generated_at": "ISO UTC",
+    "status": "complete|partial|not_judged",
+    "agents": "id->display",
+    "judges": "id->settings",
+    "selection": "dict from plan",
+    "coverage": "expected_jobs,completed_jobs,usable_jobs,expected_pairs,complete_pairs,expected_decisions,used_decisions,downloaded_papers,eligible_papers,selected_papers,per_agent:{id:{downloaded,eligible,selected}}",
+    "rankings": "[{agent,rank:int|null,overall_pct:float|null,intervals:{overall:{low,high}|null},paper_count,decision_count}]; no primary ranks until all jobs complete",
+    "comparisons": "[{agents:[a,b],overall_pct_a,complete_pairs,population_pairs,decision_count}]",
+    "diagnostics": "position_a_pct,swapped_inconsistency_pct,judge_disagreement_pct,denominators:{}",
+    "costs": "known_usd,unknown_jobs,completed_jobs",
+    "papers": "selected records",
+    "catalog": "all records",
+    "judgments": "joined results including key,pair_id,order,judge,verdict,model,cost_usd",
+    "uncertainty": "method,note",
+    "limitations": "list"
+  },
+  "report_api": "write_report(report:dict,destination:Path,*,data_root:Path)->None. Self-contained shared HTML styling, overall-ranking bars, matchup heatmap, judge comparison, coverage, selected PDFs, and verbatim joint reasons. No N/U/S score charts. Escape text. Null means unavailable. All numbers derive from saved analysis.",
+  "limits": "Fixed public-paper comparison, not a controlled benchmark of future systems. Topic/date/backbone/compute/publication-selection confounds. PDF text excludes visual plot inspection. Small pools include two eligible v3 papers and three v2 papers; show these limits prominently. Sampling uncertainty conditional on fixed released pool and judge instrument, not system generalization.",
+  "test_plan": "Meaningful tests before implementation: sample reproducibility/inclusion; A/B remapping; matchup macro averages under unequal counts; partial blocks/no fake ranks; malformed/duplicate results; HTML no-results/escaping; cached resume and content changes. Then real bounded judging and reproducible report.",
+  "execution": "Default2 workers perprovider; explicit --workers-per-judge1..16 is an operational override recorded in judging.json without changing frozen prompts/settings/job keys. Respect provider backoff. Paid prior attempts remain accounted but never contribute new ranking decisions."
+}

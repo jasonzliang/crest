@@ -1,0 +1,13 @@
+{
+  "data_root": ".",
+  "output_dir": "results",
+  "rubric": "rubric.txt",
+  "inherit_judges": "../crest.yaml",
+  "pairs_per_matchup": 10,
+  "seed": 2026,
+  "max_spend_usd": 100,
+  "judges": {
+    "openai": {"concurrency": 2, "initial_concurrency": 2, "timeout_seconds": 900, "poll_interval_seconds": 5},
+    "gemini": {"concurrency": 2, "initial_concurrency": 2, "timeout_seconds": 900, "poll_interval_seconds": 5}
+  }
+}

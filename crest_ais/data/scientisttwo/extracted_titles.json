@@ -1,0 +1,976 @@
+[
+  {
+    "file": "applications/Health_Cartan-DEC-MiAE.pdf",
+    "title": "CARTAN MOVING FRAMES AND DISCRETE EXTERIOR CALCULUS FOR SELF-SUPERVISED PROTEIN STRUC-TURE REPRESENTATION",
+    "title_lines": [
+      "CARTAN MOVING FRAMES AND DISCRETE EXTERIOR",
+      "CALCULUS FOR SELF-SUPERVISED PROTEIN STRUC-",
+      "TURE REPRESENTATION"
+    ],
+    "pages": 11
+  },
+  {
+    "file": "applications/Neuroscience_FCD-Engram.pdf",
+    "title": "FISHER CHANNEL-DAMPED ENGRAM: CURVATURE-AWARE CLOSED-FORM MACHINE UNLEARNING IN LARGE LANGUAGE MODELS",
+    "title_lines": [
+      "FISHER CHANNEL-DAMPED ENGRAM: CURVATURE-",
+      "AWARE CLOSED-FORM MACHINE UNLEARNING IN",
+      "LARGE LANGUAGE MODELS"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "applications/Neuroscience_ST-FacRNN.pdf",
+    "title": "SPATIO-TEMPORAL DISENTANGLED FACTORED RE-CURRENT NEURAL NETWORKS FOR NEURAL POPULA-TION DYNAMICS",
+    "title_lines": [
+      "SPATIO-TEMPORAL DISENTANGLED FACTORED RE-",
+      "CURRENT NEURAL NETWORKS FOR NEURAL POPULA-",
+      "TION DYNAMICS"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "applications/Neuroscience_Simplified DWGR-SVL.pdf",
+    "title": "SIMPLIFIED DWGR-SVL: STREAMLINED SPIKE-DRIVEN VISION-LANGUAGE PRETRAINING FOR 3D OPEN-WORLD UNDERSTANDING",
+    "title_lines": [
+      "SIMPLIFIED",
+      "DWGR-SVL:",
+      "STREAMLINED",
+      "SPIKE-",
+      "DRIVEN VISION-LANGUAGE PRETRAINING FOR 3D",
+      "OPEN-WORLD UNDERSTANDING"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "applications/Neuroscience_TA-FATA-CSBrain.pdf",
+    "title": "TASK-ADAPTIVE FUNCTIONAL-AFFINITY TOKENIZA-TION AND PHASE-ADAPTIVE REGIONAL ATTENTION FOR EEG FOUNDATION MODELS",
+    "title_lines": [
+      "TASK-ADAPTIVE FUNCTIONAL-AFFINITY TOKENIZA-",
+      "TION AND PHASE-ADAPTIVE REGIONAL ATTENTION",
+      "FOR EEG FOUNDATION MODELS"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "applications/Others_AnisoSPD.pdf",
+    "title": "ANISOTROPIC LOG-EUCLIDEAN SPD-METRIC IMPU-TATION FOR TABULAR MISSING DATA",
+    "title_lines": [
+      "ANISOTROPIC LOG-EUCLIDEAN SPD-METRIC IMPU-",
+      "TATION FOR TABULAR MISSING DATA"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "applications/Others_DR-LEF.pdf",
+    "title": "DR-LEF: LOG-EUCLIDEAN SPD RIEMANNIAN GEOM-ETRY AND CALIBRATED TSALLIS ENTROPIC DISCREP-ANCY FOR ANY-TO-ANY MULTI-SPECTRAL OBJECT RE-IDENTIFICATION",
+    "title_lines": [
+      "DR-LEF: LOG-EUCLIDEAN SPD RIEMANNIAN GEOM-",
+      "ETRY AND CALIBRATED TSALLIS ENTROPIC DISCREP-",
+      "ANCY FOR ANY-TO-ANY MULTI-SPECTRAL OBJECT",
+      "RE-IDENTIFICATION"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "applications/Others_DiffTrop-Bitween.pdf",
+    "title": "DIFFTROP-BITWEEN: DIFFERENTIAL-ALGEBRAIC GALOIS REDUCTION AND TROPICAL-IDEMPOTENT SEMIRING DECOMPOSITION FOR EXACT RANDOM-IZED SELF-REDUCTION DISCOVERY",
+    "title_lines": [
+      "DIFFTROP-BITWEEN:",
+      "DIFFERENTIAL-ALGEBRAIC",
+      "GALOIS REDUCTION",
+      "AND TROPICAL-IDEMPOTENT",
+      "SEMIRING DECOMPOSITION FOR EXACT RANDOM-",
+      "IZED SELF-REDUCTION DISCOVERY"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "applications/Others_SAVVY-Vortex.pdf",
+    "title": "SAVVY-Vortex: Robust Multimodal Spatial Reasoning via Circular Orientation Pooling, Anisotropic Precision Tracking, and Boundary Soft-Margin Decoding",
+    "title_lines": [
+      "SAVVY-Vortex: Robust Multimodal Spatial Reasoning",
+      "via Circular Orientation Pooling, Anisotropic Precision",
+      "Tracking, and Boundary Soft-Margin Decoding"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "applications/Others_TVCS-IF.pdf",
+    "title": "TIME-VARYING COMPLEX SPECTRAL MODULATION IMPLICIT FORECASTER FOR NON-STATIONARY TIME SERIES FORECASTING",
+    "title_lines": [
+      "TIME-VARYING COMPLEX SPECTRAL MODULATION",
+      "IMPLICIT FORECASTER FOR NON-STATIONARY TIME",
+      "SERIES FORECASTING"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "applications/Robotics_KinemaAnchor-Manifold.pdf",
+    "title": "KINEMAANCHOR-MANIFOLD: FUNCTIONAL FEA-SIBILITY POST-PROCESSING FOR ARTICULATED, SIMULATION-READY SCENE GENERATION",
+    "title_lines": [
+      "KINEMAANCHOR-MANIFOLD:",
+      "FUNCTIONAL",
+      "FEA-",
+      "SIBILITY",
+      "POST-PROCESSING",
+      "FOR",
+      "ARTICULATED,",
+      "SIMULATION-READY SCENE GENERATION"
+    ],
+    "pages": 12
+  },
+  {
+    "file": "applications/Sciences_ErtelHodge-STELLA.pdf",
+    "title": "ERTELHODGE-STELLA: A 3D ERTEL POTENTIAL-VORTICITY AND BAROCLINIC THERMAL-FRONT HODGE-DE RHAM NETWORK FOR ATMOSPHERIC TIME SERIES FORECASTING",
+    "title_lines": [
+      "ERTELHODGE-STELLA: A 3D ERTEL POTENTIAL-",
+      "VORTICITY",
+      "AND",
+      "BAROCLINIC",
+      "THERMAL-FRONT",
+      "HODGE-DE RHAM NETWORK",
+      "FOR ATMOSPHERIC",
+      "TIME SERIES FORECASTING"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "applications/Sciences_SYMP-MONGE.pdf",
+    "title": "SYMP-MONGE: CONTINUOUS SYMPLECTIC CON-TACT DYNAMICS AND MONGE-AMP`ERE DENSITY TRANSPORT FOR VIRTUAL SCREENING UNDER STRUCTURAL UNCERTAINTY",
+    "title_lines": [
+      "SYMP-MONGE: CONTINUOUS SYMPLECTIC CON-",
+      "TACT DYNAMICS",
+      "AND MONGE-AMP`ERE DENSITY",
+      "TRANSPORT",
+      "FOR",
+      "VIRTUAL",
+      "SCREENING",
+      "UNDER",
+      "STRUCTURAL UNCERTAINTY"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "applications/Speech_CHAMPS-RAG.pdf",
+    "title": "CHAMPS-RAG: CONTINUOUS ENERGY-GUIDED AT-TENTION MODULATION AND HYPERBOLIC PATH FIL-TERING FOR ZERO-LATENCY PROCEDURAL STEERING",
+    "title_lines": [
+      "CHAMPS-RAG: CONTINUOUS ENERGY-GUIDED AT-",
+      "TENTION MODULATION AND HYPERBOLIC PATH FIL-",
+      "TERING FOR ZERO-LATENCY PROCEDURAL STEERING"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "applications/Time Series_PG-CDIG.pdf",
+    "title": "POLAR-GEODESIC PHASE-CONSISTENT CROSS-DOMAIN INTEGRATED GRADIENTS",
+    "title_lines": [
+      "POLAR-GEODESIC",
+      "PHASE-CONSISTENT",
+      "CROSS-",
+      "DOMAIN INTEGRATED GRADIENTS"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "deep_learning/Algorithms_RMTS.pdf",
+    "title": "RIEMANNIAN MOMENTUM-TRANSPORTED SPECTRAL OPTIMIZATION FOR LANGUAGE MODEL PRETRAINING",
+    "title_lines": [
+      "RIEMANNIAN MOMENTUM-TRANSPORTED SPECTRAL",
+      "OPTIMIZATION FOR LANGUAGE MODEL PRETRAINING"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "deep_learning/Foundation_TABHARMONY.pdf",
+    "title": "TABHARMONY: IN-CONTEXT HARMONIC FEATURE EXPANSION AND CONFORMAL RISK-GATED EARLY EXIT FOR TABU-LAR FOUNDATION MODELS",
+    "title_lines": [
+      "TABHARMONY: IN-CONTEXT HARMONIC FEATURE",
+      "EXPANSION AND",
+      "CONFORMAL RISK-GATED EARLY EXIT FOR TABU-",
+      "LAR FOUNDATION MODELS"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "deep_learning/Foundation_UNI-XDLM.pdf",
+    "title": "UNIGRAM-CALIBRATED STATIONARY DISCRETE DIF-FUSION LANGUAGE MODELS",
+    "title_lines": [
+      "UNIGRAM-CALIBRATED STATIONARY DISCRETE DIF-",
+      "FUSION LANGUAGE MODELS"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "deep_learning/LLMs_CS-HLA.pdf",
+    "title": "CELLULAR SHEAF HARMONIC LATENT ALIGNMENT: TEST-TIME PROMPT ROBUSTNESS VIA RESIDUAL-STREAM TOPOLOGICAL DIFFUSION",
+    "title_lines": [
+      "CELLULAR SHEAF HARMONIC LATENT ALIGNMENT:",
+      "TEST-TIME PROMPT ROBUSTNESS",
+      "VIA RESIDUAL-",
+      "STREAM TOPOLOGICAL DIFFUSION"
+    ],
+    "pages": 20
+  },
+  {
+    "file": "deep_learning/LLMs_DNLP-LCBC.pdf",
+    "title": "EVOLVING DUAL INFORMATION-GEOMETRIC LEGEN-DRE PERTURBATION WITH LOGIT-CALIBRATED DUAL BARYCENTRIC CONSOLIDATION",
+    "title_lines": [
+      "EVOLVING DUAL INFORMATION-GEOMETRIC LEGEN-",
+      "DRE PERTURBATION WITH LOGIT-CALIBRATED DUAL",
+      "BARYCENTRIC CONSOLIDATION"
+    ],
+    "pages": 20
+  },
+  {
+    "file": "deep_learning/LLMs_Mem-MaxRL.pdf",
+    "title": "MEM-MAXRL: MEMORY-AUGMENTED MAXIMUM LIKELIHOOD REINFORCEMENT LEARNING FOR PRE-VENTING COVERAGE COLLAPSE IN LLM REASONING",
+    "title_lines": [
+      "MEM-MAXRL:",
+      "MEMORY-AUGMENTED",
+      "MAXIMUM",
+      "LIKELIHOOD REINFORCEMENT LEARNING FOR PRE-",
+      "VENTING COVERAGE COLLAPSE IN LLM REASONING"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "deep_learning/LLMs_Poisson-Top-W.pdf",
+    "title": "GRAPH POISSON OPTIMAL TRANSPORT DECODING: SINGLE-PASS GEOMETRY-AWARE TRUNCATION FOR LLMS",
+    "title_lines": [
+      "GRAPH POISSON OPTIMAL TRANSPORT DECODING:",
+      "SINGLE-PASS GEOMETRY-AWARE TRUNCATION FOR",
+      "LLMS"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "deep_learning/LLMs_RES-TRACE.pdf",
+    "title": "RES-TRACE: RESIDUAL-STREAM LAYER-WISE PROXIMITY FLOW FOR EFFICIENT AND FAITHFUL LONG-CONTEXT ATTRIBUTION",
+    "title_lines": [
+      "RES-TRACE:",
+      "RESIDUAL-STREAM",
+      "LAYER-WISE",
+      "PROXIMITY FLOW",
+      "FOR EFFICIENT",
+      "AND FAITHFUL",
+      "LONG-CONTEXT ATTRIBUTION"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "deep_learning/LLMs_SDDF-RKHS.pdf",
+    "title": "STOCHASTIC DELAY DIFFERENTIAL FLOWS AND RKHS TRAJECTORY TRANSPORT FOR PARALLEL IN-FERENCE IN RECURRENT-DEPTH LANGUAGE MODELS",
+    "title_lines": [
+      "STOCHASTIC",
+      "DELAY",
+      "DIFFERENTIAL",
+      "FLOWS",
+      "AND",
+      "RKHS TRAJECTORY TRANSPORT FOR PARALLEL IN-",
+      "FERENCE IN RECURRENT-DEPTH LANGUAGE MODELS"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "deep_learning/LLMs_SymCrooks-Steering.pdf",
+    "title": "SYMCROOKS-STEERING: UNBIASED RARE EVENT PROBABILITY DENSITY ESTIMATION IN LANGUAGE MODELS VIA PARALLEL REPLICA EXCHANGE AND BIDIRECTIONAL CROOKS REWEIGHTING",
+    "title_lines": [
+      "SYMCROOKS-STEERING:",
+      "UNBIASED RARE EVENT",
+      "PROBABILITY DENSITY ESTIMATION IN LANGUAGE",
+      "MODELS VIA PARALLEL REPLICA EXCHANGE AND",
+      "BIDIRECTIONAL CROOKS REWEIGHTING"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "deep_learning/LLMs_TPH-Lock.pdf",
+    "title": "TOPOLOGICAL PERSISTENCE COHERENCE LOCKING FOR EFFICIENT MIXTURE-MODEL LLM ENSEMBLING",
+    "title_lines": [
+      "TOPOLOGICAL PERSISTENCE COHERENCE LOCKING",
+      "FOR EFFICIENT MIXTURE-MODEL LLM ENSEMBLING"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "deep_learning/LLMs_VD-STrans.pdf",
+    "title": "VD-STRANS: ULTRA-LOW-LATENCY INCREMENTAL BYTE PAIR ENCODING VIA VECTORIZED DIRECT-INTERVAL SUFFIX TRANSDUCTION",
+    "title_lines": [
+      "VD-STRANS: ULTRA-LOW-LATENCY INCREMENTAL",
+      "BYTE PAIR ENCODING",
+      "VIA VECTORIZED DIRECT-",
+      "INTERVAL SUFFIX TRANSDUCTION"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "deep_learning/Others_BF-DFN.pdf",
+    "title": "BALANCED-FLOW DEEP FLOW NETWORKS: ZERO-SUM MATRIX PARAMETERIZATION AND DUAL-PRIORITIZED SEARCH FOR DISCRETE OPTIMIZATION SURROGATES",
+    "title_lines": [
+      "BALANCED-FLOW DEEP FLOW NETWORKS:",
+      "ZERO-",
+      "SUM",
+      "MATRIX",
+      "PARAMETERIZATION",
+      "AND",
+      "DUAL-",
+      "PRIORITIZED SEARCH FOR DISCRETE OPTIMIZATION",
+      "SURROGATES"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "deep_learning/Others_DynaSpec-RAG.pdf",
+    "title": "DYNASPEC-RAG: DYNAMIC SPECTRAL RESIDUAL FUSION WITH MULTI-SCALE SAFETY GATING FOR ZERO-SHOT TIME SERIES FORECASTING",
+    "title_lines": [
+      "DYNASPEC-RAG: DYNAMIC SPECTRAL RESIDUAL",
+      "FUSION WITH MULTI-SCALE SAFETY GATING FOR",
+      "ZERO-SHOT TIME SERIES FORECASTING"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "deep_learning/Others_Fed-LanczosSAM.pdf",
+    "title": "FED-LANCZOSSAM: STREAMING KRYLOV SUBSPACE SPECTRAL SHARPNESS-AWARE MINIMIZATION FOR EFFICIENT FEDERATED LEARNING",
+    "title_lines": [
+      "FED-LANCZOSSAM: STREAMING KRYLOV SUBSPACE",
+      "SPECTRAL SHARPNESS-AWARE MINIMIZATION FOR",
+      "EFFICIENT FEDERATED LEARNING"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "deep_learning/Others_HARMONIC-MoP.pdf",
+    "title": "HARMONIC-MOP: HARMONIC-PRESERVING SPEC-TRAL DECOMPOSITION AND DUAL-CONTEXT PROMPTING FOR TIME SERIES FOUNDATION MODELS",
+    "title_lines": [
+      "HARMONIC-MOP: HARMONIC-PRESERVING SPEC-",
+      "TRAL",
+      "DECOMPOSITION",
+      "AND",
+      "DUAL-CONTEXT",
+      "PROMPTING FOR TIME SERIES FOUNDATION MODELS"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "deep_learning/Others_InfoOptim.pdf",
+    "title": "INFOOPTIM: FORMAT-AGNOSTIC SCALE-SPACE WEIGHT SPLITTING AND HYPERBOLIC STATE COM-PANDING FOR MEMORY-EFFICIENT TRAINING",
+    "title_lines": [
+      "INFOOPTIM:",
+      "FORMAT-AGNOSTIC",
+      "SCALE-SPACE",
+      "WEIGHT SPLITTING AND HYPERBOLIC STATE COM-",
+      "PANDING FOR MEMORY-EFFICIENT TRAINING"
+    ],
+    "pages": 20
+  },
+  {
+    "file": "deep_learning/Others_Koopman-DMD.pdf",
+    "title": "KOOPMAN-DMD: LATENT SPECTRAL STEERING AND DYNAMICAL MODE CONTROL FOR PARALLEL LLM INFERENCE",
+    "title_lines": [
+      "KOOPMAN-DMD: LATENT SPECTRAL STEERING AND",
+      "DYNAMICAL MODE CONTROL FOR PARALLEL LLM",
+      "INFERENCE"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "deep_learning/Others_NSK.pdf",
+    "title": "NULL-SPACE KERNEL VECTOR-BALANCED ACTIVE INFERENCE FOR PREDICTION-POWERED ESTIMATION",
+    "title_lines": [
+      "NULL-SPACE KERNEL VECTOR-BALANCED ACTIVE",
+      "INFERENCE FOR PREDICTION-POWERED ESTIMATION"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "deep_learning/Others_Neural-MMA.pdf",
+    "title": "NEURAL MIXTURE-MODE ALIGNED MERTON JUMP DIFFUSION FOR CONTINUOUS-TIME PROBABILISTIC FORECASTING",
+    "title_lines": [
+      "NEURAL MIXTURE-MODE ALIGNED MERTON JUMP",
+      "DIFFUSION FOR",
+      "CONTINUOUS-TIME PROBABILISTIC FORECASTING"
+    ],
+    "pages": 12
+  },
+  {
+    "file": "deep_learning/Others_PhySense-AdjointFlow.pdf",
+    "title": "PhySense-AdjointFlow: Direct Endpoint Trajectory Op-timization via Differentiable ODE Unrolling for Sparse Physical Sensing",
+    "title_lines": [
+      "PhySense-AdjointFlow: Direct Endpoint Trajectory Op-",
+      "timization via Differentiable ODE Unrolling for Sparse",
+      "Physical Sensing"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "deep_learning/Others_Soft-VSM.pdf",
+    "title": "SOFT-VSM: THRESHOLD-FREE VISUAL CONSISTENCY EVALUATION FOR SUBJECT-DRIVEN IMAGE GENERA-TION",
+    "title_lines": [
+      "SOFT-VSM: THRESHOLD-FREE VISUAL CONSISTENCY",
+      "EVALUATION FOR SUBJECT-DRIVEN IMAGE GENERA-",
+      "TION"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "deep_learning/Others_TKFS-Attention.pdf",
+    "title": "SCALE-INVARIANT ROBUST FENCHEL TROPICAL AT-TENTION FOR OUT-OF-DISTRIBUTION ALGORITHMIC EXECUTION",
+    "title_lines": [
+      "SCALE-INVARIANT ROBUST FENCHEL TROPICAL AT-",
+      "TENTION FOR OUT-OF-DISTRIBUTION ALGORITHMIC",
+      "EXECUTION"
+    ],
+    "pages": 13
+  },
+  {
+    "file": "deep_learning/Robustness_ResoKoopman.pdf",
+    "title": "CANONICAL RESONANT KOOPMAN SPECTRAL FLOW FOR SCALABLE AND STABILIZED LANGUAGE MODEL REASONING",
+    "title_lines": [
+      "CANONICAL RESONANT KOOPMAN SPECTRAL FLOW",
+      "FOR SCALABLE AND STABILIZED LANGUAGE MODEL",
+      "REASONING"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "general_ml/Algorithms_Flash-Newton.pdf",
+    "title": "FLASH-NEWTON: FUSED IO-AWARE DUAL NEWTON-CG FOR FAST CONVERGENCE IN ULTRA-SMALL REG-ULARIZATION ENTROPIC OPTIMAL TRANSPORT",
+    "title_lines": [
+      "FLASH-NEWTON: FUSED IO-AWARE DUAL NEWTON-",
+      "CG FOR FAST CONVERGENCE IN ULTRA-SMALL REG-",
+      "ULARIZATION ENTROPIC OPTIMAL TRANSPORT"
+    ],
+    "pages": 10
+  },
+  {
+    "file": "general_ml/Causality_SPECTRA-HET SPLIT UP.pdf",
+    "title": "SPECTRA-HET SPLIT UP: EXACT U-STATISTIC HETEROSKEDASTIC LINEAR-SHRINKAGE ADAPTIVE GMM FOR UNPAIRED CAUSAL INFERENCE",
+    "title_lines": [
+      "SPECTRA-HET SPLIT UP: EXACT U-STATISTIC",
+      "HETEROSKEDASTIC LINEAR-SHRINKAGE ADAPTIVE",
+      "GMM FOR UNPAIRED CAUSAL INFERENCE"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "general_ml/Evaluation_DR-Schervish.pdf",
+    "title": "DOUBLY ROBUST SEMI-PARAMETRIC SCHERVISH SCORE: SUBGROUP-ADAPTIVE CLINICAL DECISION EVALUATION UNDER DISTRIBUTION SHIFT",
+    "title_lines": [
+      "DOUBLY",
+      "ROBUST",
+      "SEMI-PARAMETRIC",
+      "SCHERVISH",
+      "SCORE: SUBGROUP-ADAPTIVE CLINICAL DECISION",
+      "EVALUATION UNDER DISTRIBUTION SHIFT"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "general_ml/Infrastructure_RDF-VG.pdf",
+    "title": "REGULARIZED DUAL-FLOW ROUTING WITH VALUE-GATED FEASIBILITY FALLBACK FOR BUDGET-CONSTRAINED MULTI-LLM SERVING",
+    "title_lines": [
+      "REGULARIZED DUAL-FLOW ROUTING WITH VALUE-",
+      "GATED",
+      "FEASIBILITY",
+      "FALLBACK",
+      "FOR",
+      "BUDGET-",
+      "CONSTRAINED MULTI-LLM SERVING"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "general_ml/Others_BAM-Val.pdf",
+    "title": "BOUNDARY-WEIGHTED ADAPTIVE MULTI-RADIUS SUBMODULAR COVER FOR SEQUENTIAL DATA SE-LECTION",
+    "title_lines": [
+      "BOUNDARY-WEIGHTED",
+      "ADAPTIVE",
+      "MULTI-RADIUS",
+      "SUBMODULAR COVER FOR SEQUENTIAL DATA SE-",
+      "LECTION"
+    ],
+    "pages": 22
+  },
+  {
+    "file": "general_ml/Others_CIQS-PC.pdf",
+    "title": "CONFORMAL IMPLICIT QUANTILE STEERING POLICY CONTROL: NON-ASYMPTOTIC SAFETY GUARANTEES FOR GENERATIVE MODELS",
+    "title_lines": [
+      "CONFORMAL IMPLICIT QUANTILE STEERING POLICY",
+      "CONTROL: NON-ASYMPTOTIC SAFETY GUARANTEES",
+      "FOR GENERATIVE MODELS"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "general_ml/Others_ECTS-HFD.pdf",
+    "title": "GLOBAL ENSEMBLE-COUPLED TREE-SPLINE HO-EFFDING DECOMPOSITION FOR TREE ENSEMBLES",
+    "title_lines": [
+      "GLOBAL",
+      "ENSEMBLE-COUPLED",
+      "TREE-SPLINE",
+      "HO-",
+      "EFFDING DECOMPOSITION FOR TREE ENSEMBLES"
+    ],
+    "pages": 20
+  },
+  {
+    "file": "general_ml/Others_FR-MSH-GGAD.pdf",
+    "title": "FR-MSH-GGAD: ZERO-SHOT GENERALIST GRAPH ANOMALY DETECTION VIA FORMAN-RICCI CURVA-TURE AND MULTI-SCALE HODGE HEAT-KERNEL DIF-FUSION",
+    "title_lines": [
+      "FR-MSH-GGAD: ZERO-SHOT GENERALIST GRAPH",
+      "ANOMALY DETECTION VIA FORMAN-RICCI CURVA-",
+      "TURE AND MULTI-SCALE HODGE HEAT-KERNEL DIF-",
+      "FUSION"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "general_ml/Others_NEM-SPKN.pdf",
+    "title": "NEIGHBORHOOD-ENRICHED MULTI-SCALE SHORTEST-PATH KERNEL NETWORKS",
+    "title_lines": [
+      "NEIGHBORHOOD-ENRICHED",
+      "MULTI-SCALE",
+      "SHORTEST-PATH KERNEL NETWORKS"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "general_ml/Others_Procrustes-DS.pdf",
+    "title": "PROCRUSTES-DS: OUT-OF-DISTRIBUTION DETECTION VIA CLASS-AWARE FISHER LAYER WEIGHTING AND ASYMMETRIC LOG-EVIDENCE FUSION",
+    "title_lines": [
+      "PROCRUSTES-DS: OUT-OF-DISTRIBUTION DETECTION",
+      "VIA CLASS-AWARE FISHER LAYER WEIGHTING AND",
+      "ASYMMETRIC LOG-EVIDENCE FUSION"
+    ],
+    "pages": 12
+  },
+  {
+    "file": "general_ml/Others_QAMT-Transfer.pdf",
+    "title": "QUERY-ADAPTIVE MONGE TANGENT TRANSFER FOR MULTI-SOURCE DISTRIBUTIONAL REGRESSION IN WASSERSTEIN SPACE",
+    "title_lines": [
+      "QUERY-ADAPTIVE MONGE TANGENT TRANSFER FOR",
+      "MULTI-SOURCE DISTRIBUTIONAL REGRESSION",
+      "IN",
+      "WASSERSTEIN SPACE"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "general_ml/Others_SD-TTC.pdf",
+    "title": "SHEAF-DIFFUSION TSALLIS-ENTROPY TODA-LATTICE COMPRESSION: EFFICIENT SINGLE-PASS NON-BACKPROPAGATION LEARNING",
+    "title_lines": [
+      "SHEAF-DIFFUSION",
+      "TSALLIS-ENTROPY",
+      "TODA-",
+      "LATTICE COMPRESSION:",
+      "EFFICIENT",
+      "SINGLE-PASS",
+      "NON-BACKPROPAGATION",
+      "LEARNING"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "general_ml/Others_Sheaf-PartialTSW.pdf",
+    "title": "CELLULAR SHEAF-GATED MULTI-SCALE PARTIAL TREE-SLICED WASSERSTEIN",
+    "title_lines": [
+      "CELLULAR SHEAF-GATED MULTI-SCALE PARTIAL",
+      "TREE-SLICED WASSERSTEIN"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "general_ml/Others_TBOC-ANOVA.pdf",
+    "title": "TIER-BLOCK ORTHOGONAL CONTRAST FUNCTIONAL ANOVA: FAST, DIVISION-FREE, EXACT DECOMPOSI-TIONS FOR HIGH-DIMENSIONAL CATEGORICAL DATA",
+    "title_lines": [
+      "TIER-BLOCK ORTHOGONAL CONTRAST FUNCTIONAL",
+      "ANOVA: FAST, DIVISION-FREE, EXACT DECOMPOSI-",
+      "TIONS FOR HIGH-DIMENSIONAL CATEGORICAL DATA"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "optimization/Convex_OFP-Shadow.pdf",
+    "title": "OPERATOR FIXED-POINT SHADOW PROPAGATION: SINGLE-SOLVE DUAL-FREE DIFFERENTIATION OF CONVEX OPTIMIZATION LAYERS",
+    "title_lines": [
+      "OPERATOR FIXED-POINT SHADOW PROPAGATION:",
+      "SINGLE-SOLVE",
+      "DUAL-FREE",
+      "DIFFERENTIATION",
+      "OF",
+      "CONVEX OPTIMIZATION LAYERS"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "optimization/Discrete_LD-RPB-OM.pdf",
+    "title": "LAYER-DISCOUNTED RPB-ONOPT: ROBUST LEARNING-AUGMENTED PAGING VIA WORK-FUNCTION GEOMETRY",
+    "title_lines": [
+      "LAYER-DISCOUNTED",
+      "RPB-ONOPT:",
+      "ROBUST",
+      "LEARNING-AUGMENTED",
+      "PAGING",
+      "VIA",
+      "WORK-",
+      "FUNCTION GEOMETRY"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "optimization/Non-Convex_ALOT-DRO.pdf",
+    "title": "LOSS-AWARE OPTIMAL-TRANSPORT DISTRIBUTION-ALLY ROBUST OPTIMIZATION WITH AMORTIZED, COVERAGE-CALIBRATED AMBIGUITY SETS",
+    "title_lines": [
+      "LOSS-AWARE OPTIMAL-TRANSPORT DISTRIBUTION-",
+      "ALLY ROBUST OPTIMIZATION",
+      "WITH AMORTIZED,",
+      "COVERAGE-CALIBRATED AMBIGUITY SETS"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "optimization/Others_ANSE.pdf",
+    "title": "AMORTIZED NULLSPACE STIEFEL EMBEDDING WITH DIFFEOMORPHIC LOG-BARRIER FLOW FOR HARD-CONSTRAINED DEEP LEARNING",
+    "title_lines": [
+      "AMORTIZED NULLSPACE STIEFEL EMBEDDING WITH",
+      "DIFFEOMORPHIC LOG-BARRIER FLOW",
+      "FOR HARD-",
+      "CONSTRAINED DEEP LEARNING"
+    ],
+    "pages": 10
+  },
+  {
+    "file": "optimization/Others_LC-FTT.pdf",
+    "title": "Legendrian Contact-Geometric Discount Optimization with Dimension-Adaptive Dirichlet Regularization for High-Dimensional Quality-Diversity",
+    "title_lines": [
+      "Legendrian Contact-Geometric Discount Optimization",
+      "with Dimension-Adaptive Dirichlet Regularization for",
+      "High-Dimensional Quality-Diversity"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "probabilistic/Bayesian_DAGP-HDP-HMM.pdf",
+    "title": "DYNAMIC GAMMA-POISSON HAZARD HDP-HMM FOR ACCELERATED OBSERVATION-DEPENDENT TIME SERIES SEGMENTATION",
+    "title_lines": [
+      "DYNAMIC GAMMA-POISSON HAZARD HDP-HMM",
+      "FOR ACCELERATED OBSERVATION-DEPENDENT TIME",
+      "SERIES SEGMENTATION"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "probabilistic/Others_AD-LSVI.pdf",
+    "title": "ASKEY-DECORRELATED AND PRECONDITIONED LEAST SQUARES VARIATIONAL INFERENCE",
+    "title_lines": [
+      "ASKEY-DECORRELATED",
+      "AND",
+      "PRECONDITIONED",
+      "LEAST SQUARES VARIATIONAL INFERENCE"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "probabilistic/Others_AWF-CP.pdf",
+    "title": "AWF-CP: ADAPTIVE WHITENED AND FLOOR-DAMPED FEATURE CONFORMAL PREDICTION",
+    "title_lines": [
+      "AWF-CP:",
+      "ADAPTIVE",
+      "WHITENED",
+      "AND",
+      "FLOOR-",
+      "DAMPED FEATURE CONFORMAL PREDICTION"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "probabilistic/Others_BTV-RDRO.pdf",
+    "title": "BULK-RESTRICTED TOTAL VARIATION R\u00b4ENYI-DUAL DRO: ROBUST DECISION-MAKING UNDER HEAVY TAILS AND OUT-OF-SAMPLE CONTAMINATION",
+    "title_lines": [
+      "BULK-RESTRICTED TOTAL VARIATION R\u00b4ENYI-DUAL",
+      "DRO: ROBUST DECISION-MAKING",
+      "UNDER HEAVY",
+      "TAILS AND OUT-OF-SAMPLE CONTAMINATION"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "probabilistic/Others_COFM-SIB.pdf",
+    "title": "CONTINUOUS OPTIMAL-TRANSPORT FLOW MATCH-ING & SPECTRAL INFORMATION-BOTTLENECK FOR ANTI-CAUSAL REPRESENTATION LEARNING",
+    "title_lines": [
+      "CONTINUOUS OPTIMAL-TRANSPORT FLOW MATCH-",
+      "ING & SPECTRAL INFORMATION-BOTTLENECK FOR",
+      "ANTI-CAUSAL REPRESENTATION LEARNING"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "probabilistic/Others_DosePFN.pdf",
+    "title": "DOSEPFN: AMORTIZED IN-CONTEXT CONTINUOUS DOSE-RESPONSE AND MARGINAL CAUSAL EFFECT ESTIMATION",
+    "title_lines": [
+      "DOSEPFN: AMORTIZED IN-CONTEXT CONTINUOUS",
+      "DOSE-RESPONSE AND MARGINAL CAUSAL EFFECT",
+      "ESTIMATION"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "probabilistic/Others_PH-CNR-OLLA.pdf",
+    "title": "PORT-HAMILTONIAN DISSIPATIVE LANDING WITH CONFORMAL METRIC BARRIERS AND RANDOMIZED NYSTR \u00a8OM PROJECTIONS",
+    "title_lines": [
+      "PORT-HAMILTONIAN",
+      "DISSIPATIVE",
+      "LANDING",
+      "WITH",
+      "CONFORMAL METRIC BARRIERS AND RANDOMIZED",
+      "NYSTR \u00a8OM PROJECTIONS"
+    ],
+    "pages": 21
+  },
+  {
+    "file": "probabilistic/Others_ScaleMode-NeuralSurv.pdf",
+    "title": "SCALEMODE-NEURALSURV: MULTI-MODE SUB-SPACE LINEARIZATION AND COVARIATE SCALE-TILTING FOR CONTINUOUS-TIME BAYESIAN SUR-VIVAL ANALYSIS",
+    "title_lines": [
+      "SCALEMODE-NEURALSURV:",
+      "MULTI-MODE",
+      "SUB-",
+      "SPACE",
+      "LINEARIZATION",
+      "AND",
+      "COVARIATE",
+      "SCALE-",
+      "TILTING",
+      "FOR CONTINUOUS-TIME BAYESIAN SUR-",
+      "VIVAL ANALYSIS"
+    ],
+    "pages": 17
+  },
+  {
+    "file": "probabilistic/Sampling_SMBTT-CCDB.pdf",
+    "title": "STOCHASTIC MAGNUS-BESSEL TENSOR-TRAIN SELF-CONSISTENCY BRIDGES FOR ELLIPTIC AND HYPOEL-LIPTIC DIFFUSIONS",
+    "title_lines": [
+      "STOCHASTIC MAGNUS-BESSEL TENSOR-TRAIN SELF-",
+      "CONSISTENCY BRIDGES FOR ELLIPTIC AND HYPOEL-",
+      "LIPTIC DIFFUSIONS"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "probabilistic/Sampling_SpecAttn-Div.pdf",
+    "title": "SPECATTN-DIV: SPECTRAL CROSS-ATTENTION DISPERSAL WITH SPHERICAL FIDELITY-GUARDED LANGEVIN DYNAMICS",
+    "title_lines": [
+      "SPECATTN-DIV:",
+      "SPECTRAL",
+      "CROSS-ATTENTION",
+      "DISPERSAL",
+      "WITH SPHERICAL FIDELITY-GUARDED",
+      "LANGEVIN DYNAMICS"
+    ],
+    "pages": 20
+  },
+  {
+    "file": "rl/Others_CSX-MoE.pdf",
+    "title": "CSX-MOE: CONSTRAINT-STATE AWARE CROSS-EXPERT ATTENTION FUSION FOR MULTI-TASK VEHI-CLE ROUTING",
+    "title_lines": [
+      "CSX-MOE:",
+      "CONSTRAINT-STATE",
+      "AWARE",
+      "CROSS-",
+      "EXPERT ATTENTION FUSION FOR MULTI-TASK VEHI-",
+      "CLE ROUTING"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "rl/Others_DisCoRe-IQA.pdf",
+    "title": "DISCORE-IQA: DISENTANGLED CONTENT-QUALITY REPRESENTATION AND REGION-LEVEL SEGMENTA-TION FOR LIGHTWEIGHT IMAGE QUALITY ASSESS-MENT",
+    "title_lines": [
+      "DISCORE-IQA: DISENTANGLED CONTENT-QUALITY",
+      "REPRESENTATION AND REGION-LEVEL SEGMENTA-",
+      "TION FOR LIGHTWEIGHT IMAGE QUALITY ASSESS-",
+      "MENT"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "rl/Others_Exact-CPWL CvaR.pdf",
+    "title": "EXACT KINK-PROPAGATED CONTINUOUS PIECEWISE-LINEAR DYNAMIC PROGRAMMING FOR STATIC CVAR",
+    "title_lines": [
+      "EXACT KINK-PROPAGATED CONTINUOUS PIECEWISE-",
+      "LINEAR",
+      "DYNAMIC PROGRAMMING FOR STATIC CVAR"
+    ],
+    "pages": 16
+  },
+  {
+    "file": "social_aspects/Alignment_CHVA.pdf",
+    "title": "CALIBRATED HIERARCHICAL VALUE ALIGNMENT FOR LARGE LANGUAGE MODELS",
+    "title_lines": [
+      "CALIBRATED",
+      "HIERARCHICAL",
+      "VALUE",
+      "ALIGNMENT",
+      "FOR LARGE LANGUAGE MODELS"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "social_aspects/Interpretability_CP-GRASSMANN.pdf",
+    "title": "CP-GRASSMANN: COUNTERFACTUAL-FREE CIR-CUIT DISCOVERY VIA FLOW-MATCHING TRAJECTO-RIES AND CP-TENSOR FACTORIZATION",
+    "title_lines": [
+      "CP-GRASSMANN: COUNTERFACTUAL-FREE CIR-",
+      "CUIT DISCOVERY VIA FLOW-MATCHING TRAJECTO-",
+      "RIES AND CP-TENSOR FACTORIZATION"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "social_aspects/Interpretability_Flex-Dot.pdf",
+    "title": "FLEX-DOT: END-TO-END DIFFERENTIABLE OPERA-TOR NETWORKS FOR SELF-EXTRACTING CONCEPT BOTTLENECK EXPERTS",
+    "title_lines": [
+      "FLEX-DOT: END-TO-END DIFFERENTIABLE OPERA-",
+      "TOR NETWORKS FOR SELF-EXTRACTING CONCEPT",
+      "BOTTLENECK EXPERTS"
+    ],
+    "pages": 14
+  },
+  {
+    "file": "social_aspects/Interpretability_Overdamped DAVE.pdf",
+    "title": "OVERDAMPED CONCENTRATION FLOW FOR SAMPLE-EFFICIENT AND RANK-PRESERVING VISION TRANSFORMER ATTRIBUTION",
+    "title_lines": [
+      "OVERDAMPED CONCENTRATION FLOW FOR SAMPLE-",
+      "EFFICIENT",
+      "AND",
+      "RANK-PRESERVING",
+      "VISION",
+      "TRANSFORMER ATTRIBUTION"
+    ],
+    "pages": 22
+  },
+  {
+    "file": "social_aspects/Interpretability_SHEAF-SAE.pdf",
+    "title": "CELLULAR SHEAF LAPLACIAN AND SPECTRAL KOOPMAN-INVARIANT TEMPORAL SPARSE AUTOEN-CODERS",
+    "title_lines": [
+      "CELLULAR",
+      "SHEAF",
+      "LAPLACIAN",
+      "AND",
+      "SPECTRAL",
+      "KOOPMAN-INVARIANT TEMPORAL SPARSE AUTOEN-",
+      "CODERS"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "social_aspects/Interpretability_SLT-MDA.pdf",
+    "title": "SHEAF LAPLACIAN TRANSPORT ATTRIBUTION: CROSS-LAYER MECHANISTIC DATA ATTRIBUTION VIA CELLULAR SHEAF COHOMOLOGY",
+    "title_lines": [
+      "SHEAF",
+      "LAPLACIAN",
+      "TRANSPORT",
+      "ATTRIBUTION:",
+      "CROSS-LAYER",
+      "MECHANISTIC",
+      "DATA",
+      "ATTRIBUTION",
+      "VIA CELLULAR SHEAF COHOMOLOGY"
+    ],
+    "pages": 11
+  },
+  {
+    "file": "social_aspects/Others_VIGN-SDA-PMSVM.pdf",
+    "title": "VIOLATION-INVARIANT GRADIENT NORMALIZATION FOR DIFFERENTIALLY PRIVATE MULTI-CLASS SUPPORT VECTOR MACHINES",
+    "title_lines": [
+      "VIOLATION-INVARIANT GRADIENT NORMALIZATION",
+      "FOR",
+      "DIFFERENTIALLY PRIVATE MULTI-CLASS SUPPORT",
+      "VECTOR MACHINES"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "social_aspects/Privacy_DP-EBS-BB.pdf",
+    "title": "DIFFERENTIALLY PRIVATE EMPIRICAL-BAYES SPEC-TRAL SHRINKAGE QUASI-NEWTON OPTIMIZATION",
+    "title_lines": [
+      "DIFFERENTIALLY PRIVATE EMPIRICAL-BAYES SPEC-",
+      "TRAL SHRINKAGE QUASI-NEWTON OPTIMIZATION"
+    ],
+    "pages": 12
+  },
+  {
+    "file": "social_aspects/Robusntess_IMD-GV.pdf",
+    "title": "IMPLICIT MULTI-RESOLUTION DUAL-GRAPH VERIFICATION FOR DECISION TREE ENSEMBLES",
+    "title_lines": [
+      "IMPLICIT",
+      "MULTI-RESOLUTION",
+      "DUAL-GRAPH",
+      "VERIFICATION FOR DECISION TREE ENSEMBLES"
+    ],
+    "pages": 12
+  },
+  {
+    "file": "theory/Bandits_FVTG-CP.pdf",
+    "title": "THERMODYNAMICALLY STABILIZED ONLINE CONFOR-MAL PREDICTION: A NOS\u00b4E\u2013HOOVER APPROACH TO BOUNDED, ASYMMETRIC PREDICTION INTERVALS",
+    "title_lines": [
+      "THERMODYNAMICALLY STABILIZED ONLINE CONFOR-",
+      "MAL PREDICTION: A NOS\u00b4E\u2013HOOVER APPROACH TO",
+      "BOUNDED, ASYMMETRIC PREDICTION INTERVALS"
+    ],
+    "pages": 18
+  },
+  {
+    "file": "theory/Game Theory_NTW-KPA.pdf",
+    "title": "NEURAL TANGENT WOODBURY EXACT AUCTIONS WITH INEQUALITY-AVERSE SOCIAL WELFARE",
+    "title_lines": [
+      "NEURAL TANGENT WOODBURY EXACT AUCTIONS",
+      "WITH INEQUALITY-AVERSE SOCIAL WELFARE"
+    ],
+    "pages": 19
+  },
+  {
+    "file": "theory/Optimization_PLL-ICE.pdf",
+    "title": "PREDICTIVE LEAD-LAG INTEGRAL-COMPENSATED EXTRAGRADIENT FOR EXACT LAST-ITERATE CON-VERGENCE IN EXTENSIVE-FORM GAMES",
+    "title_lines": [
+      "PREDICTIVE",
+      "LEAD-LAG",
+      "INTEGRAL-COMPENSATED",
+      "EXTRAGRADIENT FOR EXACT LAST-ITERATE CON-",
+      "VERGENCE IN EXTENSIVE-FORM GAMES"
+    ],
+    "pages": 12
+  },
+  {
+    "file": "theory/Optimization_SSH-ED-SDP.pdf",
+    "title": "STEREOGRAPHIC SPHERICAL-HARMONIC SEMIDEFINITE OPTIMIZATION FOR ROBUST MIXTURE ESTIMATION",
+    "title_lines": [
+      "STEREOGRAPHIC",
+      "SPHERICAL-HARMONIC",
+      "SEMIDEFINITE OPTIMIZATION FOR ROBUST MIXTURE",
+      "ESTIMATION"
+    ],
+    "pages": 15
+  },
+  {
+    "file": "theory/Others_DR-COCO.pdf",
+    "title": "DR-COCO: DOUBLY ROBUST CO-ADAPTIVE VERIFI-CATION FOR EFFICIENT LLM REASONING",
+    "title_lines": [
+      "DR-COCO: DOUBLY ROBUST CO-ADAPTIVE VERIFI-",
+      "CATION FOR EFFICIENT LLM REASONING"
+    ],
+    "pages": 21
+  },
+  {
+    "file": "theory/Probabilistic_DRO-ROCP.pdf",
+    "title": "DISTRIBUTIONALLY ROBUST EPISTEMIC RISK-OPTIMAL CONFORMAL PREDICTION",
+    "title_lines": [
+      "DISTRIBUTIONALLY",
+      "ROBUST",
+      "EPISTEMIC",
+      "RISK-",
+      "OPTIMAL CONFORMAL PREDICTION"
+    ],
+    "pages": 12
+  }
+]

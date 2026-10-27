@@ -1,0 +1,85 @@
+EXTERNAL PRIMARY-ARCHIVE SEARCH
+Checked at UTC: 2026-10-27T02:02:17.609010+00:00
+Workspace restriction: All artifacts written only under /Users/jason/Desktop/crest/crest_ais/data/sakana_agentic_scientist/additional_search/external
+Genuinely additional verified full generated manuscripts: 0
+Additional full manuscripts downloaded: 0
+
+Scope and deduplication
+Target only SakanaAI/AI-Scientist-v3 (The Agentic Scientist), arXiv2610.18933, released October2026. Do not count the system-description paper, previous v1/v2 papers, figure previews, independent name-collision projects, or the already known two autonomous papers plus Diffusing Blame. Candidates and exclusions are enumerated in candidates.json. No authentication, paid API calls, author contact, repository-code execution, secrets reads, or denied env-file reads.
+
+Findings from official blog and system paper
+https://pub.sakana.ai/agentic-scientist/ raw HTML saved in blog_html.txt. Its paper-gallery references exactly these three PDF paths: papers/alife2026_camera_ready-1.pdf, papers/doc_to_lora_multi_needle_claude.pdf, papers/metaevo_paper-1.pdf. All are already in baseline.
+https://arxiv.org/html/2610.18933v1 raw HTML saved in arxiv_html.txt. Appendix C includes the same three highlighted manuscripts. Figure19 consists only of the first pages of five aggregate-task papers. The five titles are transcribed into candidates.json as preview-only leads. No additional full PDF URL is linked by that HTML. The image is saved solely as search evidence, never counted as a manuscript. Figure19 image SHA256: 08218144413f10da80512f1271abc5b9c75470760955f77ea8164ce3d97278fc.
+The official blog and system paper state 70 research campaigns and explain that generated manuscripts other than the single Error Diffusion paper served as internal evaluation artifacts. This language does not establish a public release of all campaign manuscripts.
+
+Hugging Face public API coverage
+https://huggingface.co/api/datasets?author=SakanaAI&limit=1000&full=true returned19 public datasets. None is a v3 manuscript archive. Entire response saved in hf_sakana_datasets.txt.
+https://huggingface.co/api/datasets?search=AI-Scientist-v3&limit=100 returned[]; hf_v3_datasets.txt.
+https://huggingface.co/api/datasets?search=agentic-scientist&limit=100 returned[]; hf_agentic_datasets.txt.
+https://huggingface.co/api/datasets?search=Agentic%20Scientist&limit=1000 returned[]; hf_title_agentic_datasets.txt.
+https://huggingface.co/api/datasets?search=scientist&limit=1000 returned36 public datasets; hf_scientist_all.txt. No verified Sakana v3 generated-manuscript corpus identified. This is a metadata/name search, not a content scan of every dataset.
+Author-filter public dataset API searches returned[] for RobertTLange, Rujikorn, runopti, Lookatator, hardmaru, 51616, yutaroyamada. Author handles are derived from their official links where available; empty results do not imply an author has no other HF handle.
+HF name-collision result alexshengzhili/ai-scientist-blog-assets was excluded. The author's March2026 blog explicitly links findalexli/ai-scientist-v3, a separate project predating Sakana v3.
+
+Official GitHub and author-repository metadata coverage
+Public GitHub API listings were complete single pages (per_page100, each fewer than100 repositories): SakanaAI67 repos; RobertTLange45; Lookatator/LucaGrillotti32; runopti/YutaroYamada29; 51616/RujikornCharakorn39; hardmaru/DavidHa75. Responses saved as github_org_repos.txt and github_author_*.txt. Names and descriptions reviewed for v3/campaign/manuscript archives. No additional primary archive located. No claim is made that the entire contents of all220 author repos were inspected.
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/releases returned[]; github_releases.txt.
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/main?recursive=1 returned668 entries, truncated=false, no PDFs or results corpus; github_tree.txt. Template paper.tex files and paper-writing code are not completed generated manuscripts.
+https://api.github.com/repos/SakanaAI/doc-to-lora/git/trees/main?recursive=1 returned117 entries, truncated=false, no PDFs; github_doc_to_lora_tree.txt.
+https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v3/main/README.md saved in github_readme.txt. It documents results/<task>/<agent>/<run_id>/paper/paper.pdf as a local output layout; this is not a public manuscript archive link.
+
+Author website coverage
+Fetched and inspected public links on all five author homepages: https://roberttlange.com/ ; https://luca.grillotti.com/ ; https://yutaroyamada.com/ ; https://www.rujikorn.com/ ; https://otoro.net/ . No additional v3 generated manuscript links found. Lange links system arXiv2610.18933; Yamada's scientist links concern v2/workshop; Luca's PDF links are older robotics papers/posters; Rujikorn links Doc-to-LoRA and Text-to-LoRA baseline research repositories. Raw HTML responses saved as author_*.txt. Initial guessed https://luca-grillotti.github.io/ and https://rujike.github.io/ returned404 and were corrected using primary profile links.
+
+OpenReview public exact-phrase API coverage
+Public endpoint https://api2.openreview.net/notes/search?term=<URL-encoded quoted phrase>&limit=100. Exact phrase requests returned count0 and notes[] for: The Agentic Scientist; Diffusing Blame; Addressing Beats Architecture; Train the Rollout You Evaluate; Task-Distribution Breadth; Encode-Time Sparse Coding; Aligning Deployment, Not the Prior; Target-Space Design; How Much of a Learned Evolution Strategy Is the Algorithm It Was Anchored To? Responses saved as openreview_exact_*.txt and final five summarized in openreview_summary.json.
+An unquoted AI-Scientist-v3 request also returned count0. Unquoted The Agentic Scientist and Diffusing Blame searches produced broad common-word overmatches (100 returned of reported10000 and758 respectively); these are not treated as evidence of completeness or of relevant records. Their raw responses are preserved separately.
+
+Zenodo coverage and limitation
+Direct exact phrase API queries returned400; plain API and website search endpoints returned403. Saved zenodo_invenio_error.txt and zenodo_v3_web_error.txt show unusual-network-traffic restriction. No bypass attempted. Search-engine domain/exact project queries did not locate a relevant primary record. Cannot conclude that Zenodo contains no unpublished or unindexed public record; direct search was unavailable from this environment.
+Attempted endpoints: https://zenodo.org/api/records?q=%22The%20Agentic%20Scientist%22&size=100 ; https://zenodo.org/api/records?q=%22AI-Scientist-v3%22&size=100 ; https://zenodo.org/api/records/?q=agentic%20scientist&size=25 ; https://zenodo.org/search?q=%22The%20Agentic%20Scientist%22 ; https://zenodo.org/api/records?q=agentic&size=10 ; https://zenodo.org/search?q=AI-Scientist-v3 .
+
+Search-engine coverage
+39 submitted queries below. Search results sometimes relaxed quoted terms or returned unrelated pages; only relevant primary results were used. No result count is interpreted as exhaustive archive coverage.
+1. "Sakana" "Agentic Scientist" papers dataset
+2. "AI-Scientist-v3" "Zenodo"
+3. "AI-Scientist-v3" "huggingface"
+4. site:zenodo.org "The Agentic Scientist"
+5. site:huggingface.co/datasets "SakanaAI" "Scientist"
+6. "The Agentic Scientist" "papers" "Lange"
+7. site:openreview.net "The Agentic Scientist"
+8. site:zenodo.org Sakana "Scientist" "2026"
+9. site:huggingface.co "The Agentic Scientist"
+10. site:openreview.net "Diffusing Blame"
+11. "The Agentic Scientist" "dataset" "papers"
+12. "Luca Grillotti" homepage
+13. "Rujikorn Charakorn" homepage
+14. "The Agentic Scientist" site:roberttlange.com
+15. "The Agentic Scientist" "generated" "papers" "download"
+16. "AI-Scientist-v3" site:zenodo.org/records
+17. "2610.18933" site:huggingface.co
+18. "2610.18933" site:openreview.net
+19. "The Agentic Scientist" "manuscripts" "archive"
+20. "Luca Grillotti" "github.io"
+21. "The Agentic Scientist" site:zenodo.org
+22. "AI-Scientist-v3" site:openreview.net
+23. "Addressing Beats Architecture" -site:pub.sakana.ai
+24. "The Agentic Scientist" [domain filter zenodo.org]
+25. "The Agentic Scientist" [domain filter openreview.net]
+26. "AI-Scientist-v3" [domain filter huggingface.co]
+27. "Luca Grillotti" "homepage" [domain filter openreview.net]
+28. "Task-Distribution Breadth" "Learned Optimizers"
+29. "Encode-Time Sparse Coding" "Scientist"
+30. "Train the Rollout You Evaluate"
+31. "Aligning Deployment, Not the Prior"
+32. "Target-Space Design" "Kernel-Hyperparameter"
+33. "Task-Distribution Breadth" "Sakana"
+34. "Encode-Time Sparse Coding"
+35. "Train the Rollout You Evaluate" "Sakana"
+36. "The Agentic Scientist" "papers" "drive.google.com"
+37. "AI-Scientist-v3" "results" "pdf"
+38. "The Agentic Scientist" "Zenodo" "Lange"
+39. "The Agentic Scientist" "manuscripts" site:github.com
+
+Conclusion
+This external search adds zero verified full generated papers. It independently reconfirms the three known official PDFs and documents five preview-only task titles. It does not turn the70 reported campaigns into70 public manuscripts, and it does not prove that no additional public manuscripts exist.

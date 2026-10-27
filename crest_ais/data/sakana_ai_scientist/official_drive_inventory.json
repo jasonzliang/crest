@@ -1,0 +1,2384 @@
+[
+  {
+    "url": "https://drive.google.com/drive/folders/1XmVQbjKJZUIg41Jt-AFuO34pvb52iv1g",
+    "path": "all_pdfs",
+    "entries": [
+      {
+        "drive_id": "1Mmpz6M1FK4q8e-SewgZcUzdeD0Q2zC39",
+        "name": "claude",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/claude",
+        "parent_folder_id": "1XmVQbjKJZUIg41Jt-AFuO34pvb52iv1g"
+      },
+      {
+        "drive_id": "16fwS3Rc3-_BtXEiK6TgCrqsgX4LA0ZBP",
+        "name": "deepseek",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/deepseek",
+        "parent_folder_id": "1XmVQbjKJZUIg41Jt-AFuO34pvb52iv1g"
+      },
+      {
+        "drive_id": "1OhLioC3wIkIvmqBBx71ccu5wBqA_QpMP",
+        "name": "gpt4o",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/gpt4o",
+        "parent_folder_id": "1XmVQbjKJZUIg41Jt-AFuO34pvb52iv1g"
+      },
+      {
+        "drive_id": "1OeQfyICd1a2DCnLevkTqeZwW7Mew6SvS",
+        "name": "llama3.1",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/llama3.1",
+        "parent_folder_id": "1XmVQbjKJZUIg41Jt-AFuO34pvb52iv1g"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1Mmpz6M1FK4q8e-SewgZcUzdeD0Q2zC39",
+    "path": "all_pdfs/claude",
+    "entries": [
+      {
+        "drive_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz",
+        "name": "claude_runs_diffusion",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/claude/claude_runs_diffusion",
+        "parent_folder_id": "1Mmpz6M1FK4q8e-SewgZcUzdeD0Q2zC39"
+      },
+      {
+        "drive_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG",
+        "name": "claude_runs_grokking",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/claude/claude_runs_grokking",
+        "parent_folder_id": "1Mmpz6M1FK4q8e-SewgZcUzdeD0Q2zC39"
+      },
+      {
+        "drive_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX",
+        "name": "claude_runs_nanogpt",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/claude/claude_runs_nanogpt",
+        "parent_folder_id": "1Mmpz6M1FK4q8e-SewgZcUzdeD0Q2zC39"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/16fwS3Rc3-_BtXEiK6TgCrqsgX4LA0ZBP",
+    "path": "all_pdfs/deepseek",
+    "entries": [
+      {
+        "drive_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb",
+        "name": "deepseek_runs_diffusion",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion",
+        "parent_folder_id": "16fwS3Rc3-_BtXEiK6TgCrqsgX4LA0ZBP"
+      },
+      {
+        "drive_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF",
+        "name": "deepseek_runs_grokking",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking",
+        "parent_folder_id": "16fwS3Rc3-_BtXEiK6TgCrqsgX4LA0ZBP"
+      },
+      {
+        "drive_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy",
+        "name": "deepseek_runs_nanogpt",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt",
+        "parent_folder_id": "16fwS3Rc3-_BtXEiK6TgCrqsgX4LA0ZBP"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1OhLioC3wIkIvmqBBx71ccu5wBqA_QpMP",
+    "path": "all_pdfs/gpt4o",
+    "entries": [
+      {
+        "drive_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz",
+        "name": "gpt4o_runs_diffusion",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion",
+        "parent_folder_id": "1OhLioC3wIkIvmqBBx71ccu5wBqA_QpMP"
+      },
+      {
+        "drive_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd",
+        "name": "gpt4o_runs_grokking",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking",
+        "parent_folder_id": "1OhLioC3wIkIvmqBBx71ccu5wBqA_QpMP"
+      },
+      {
+        "drive_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN",
+        "name": "gpt4o_runs_nanogpt",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt",
+        "parent_folder_id": "1OhLioC3wIkIvmqBBx71ccu5wBqA_QpMP"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1OeQfyICd1a2DCnLevkTqeZwW7Mew6SvS",
+    "path": "all_pdfs/llama3.1",
+    "entries": [
+      {
+        "drive_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i",
+        "name": "llama_runs_diffusion",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion",
+        "parent_folder_id": "1OeQfyICd1a2DCnLevkTqeZwW7Mew6SvS"
+      },
+      {
+        "drive_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD",
+        "name": "llama_runs_grokking",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking",
+        "parent_folder_id": "1OeQfyICd1a2DCnLevkTqeZwW7Mew6SvS"
+      },
+      {
+        "drive_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl",
+        "name": "llama_runs_nanogpt",
+        "mime_type": "application/vnd.google-apps.folder",
+        "size": null,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt",
+        "parent_folder_id": "1OeQfyICd1a2DCnLevkTqeZwW7Mew6SvS"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1J1Rc7QNsxap79x62yUAbc4bouwE9moyz",
+    "path": "all_pdfs/claude/claude_runs_diffusion",
+    "entries": [
+      {
+        "drive_id": "1uTqWpaae17FdGKha-ymCFmJZdVjVdkYh",
+        "name": "adaptive_disentangled_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 567508,
+        "path": "all_pdfs/claude/claude_runs_diffusion/adaptive_disentangled_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "12K3B5B5DoJTfSh34Yw74-EEXpyO_JXt_",
+        "name": "adaptive_local_complexity_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 384879,
+        "path": "all_pdfs/claude/claude_runs_diffusion/adaptive_local_complexity_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1AZBgeKg08FqQdbD54tInw0Z1mcIlvJO3",
+        "name": "adaptive_multi_scale_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1130803,
+        "path": "all_pdfs/claude/claude_runs_diffusion/adaptive_multi_scale_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "12TgU64KRrMhUZz3gECkc24cMOWxjjD7Y",
+        "name": "adaptive_temporal_consistency.pdf",
+        "mime_type": "application/pdf",
+        "size": 1034884,
+        "path": "all_pdfs/claude/claude_runs_diffusion/adaptive_temporal_consistency.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "10HOfo1Lv-vuSwGoruw6wI0Q8c0bbcqjK",
+        "name": "auxiliary_latent_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 2973697,
+        "path": "all_pdfs/claude/claude_runs_diffusion/auxiliary_latent_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1TKtTF9xK00WPRnaW4oZQ3iRicyOE53ce",
+        "name": "comparative_embedding_study.pdf",
+        "mime_type": "application/pdf",
+        "size": 945828,
+        "path": "all_pdfs/claude/claude_runs_diffusion/comparative_embedding_study.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1u2cRqk3GtUvYfrKkErBu76wNt13mdXE8",
+        "name": "connected_component_tracking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1047209,
+        "path": "all_pdfs/claude/claude_runs_diffusion/connected_component_tracking.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "138k5NWv_qU3hqNBhC8WVhoufINpVaFZc",
+        "name": "curriculum_diffusion_learning.pdf",
+        "mime_type": "application/pdf",
+        "size": 369343,
+        "path": "all_pdfs/claude/claude_runs_diffusion/curriculum_diffusion_learning.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1LHQyB8kSnd0YIg_1v1TMxkkylOk9WtEh",
+        "name": "data_complexity_evolution.pdf",
+        "mime_type": "application/pdf",
+        "size": 1041630,
+        "path": "all_pdfs/claude/claude_runs_diffusion/data_complexity_evolution.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1hYe9wigNP0TYiifJ-RI0znGO7YrYR5e-",
+        "name": "diffusion_augmented_density_estimation.pdf",
+        "mime_type": "application/pdf",
+        "size": 507101,
+        "path": "all_pdfs/claude/claude_runs_diffusion/diffusion_augmented_density_estimation.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1H5QFT2nd-KJO9DGGrL9Wvj68G1ssh5aw",
+        "name": "diffusion_trajectory_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 1005395,
+        "path": "all_pdfs/claude/claude_runs_diffusion/diffusion_trajectory_analysis.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1EZfYwcGHTVBjz2Kjv1URt16mWl37tpha",
+        "name": "dual_expert_denoiser.pdf",
+        "mime_type": "application/pdf",
+        "size": 847653,
+        "path": "all_pdfs/claude/claude_runs_diffusion/dual_expert_denoiser.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1ALHRaRpwPp1OCm9AwZ3oSDhAz5PHW4m6",
+        "name": "dual_resolution_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 869978,
+        "path": "all_pdfs/claude/claude_runs_diffusion/dual_resolution_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1z5mOV8D1bCl8Jj6xmXhHdSCi2D_UfYN3",
+        "name": "dual_scale_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1020004,
+        "path": "all_pdfs/claude/claude_runs_diffusion/dual_scale_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1O6e_5iMs-6dmSzfgP7cOEiO5IVM2nb6A",
+        "name": "entropy_flow_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 1079819,
+        "path": "all_pdfs/claude/claude_runs_diffusion/entropy_flow_analysis.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1PtaXVh00RyiMV0fg511v4Dn070eJijDn",
+        "name": "geometric_flow_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 1855199,
+        "path": "all_pdfs/claude/claude_runs_diffusion/geometric_flow_analysis.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "19tbwTh8MZXAoSDbxyr_1dsqFEta47jbw",
+        "name": "grid_based_noise_adaptation.pdf",
+        "mime_type": "application/pdf",
+        "size": 1023132,
+        "path": "all_pdfs/claude/claude_runs_diffusion/grid_based_noise_adaptation.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1jDRAIKVIBuaapfOXPLVSxCTJB4LxrWFX",
+        "name": "information_bottleneck_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 549196,
+        "path": "all_pdfs/claude/claude_runs_diffusion/information_bottleneck_analysis.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1PvGJ7rlsU-nfhWpWdOgRudieF_ho3QQ2",
+        "name": "input_perturbation_robustness.pdf",
+        "mime_type": "application/pdf",
+        "size": 179753,
+        "path": "all_pdfs/claude/claude_runs_diffusion/input_perturbation_robustness.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "16xw2inOMZvJwfMq7FmSVvI0GvBYA7Al0",
+        "name": "intrinsic_dimensionality_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1779202,
+        "path": "all_pdfs/claude/claude_runs_diffusion/intrinsic_dimensionality_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1efkHgYgfEFL1v_lMbyDntYYKQczLK_Ub",
+        "name": "intrinsic_dimensionality_tracking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1359685,
+        "path": "all_pdfs/claude/claude_runs_diffusion/intrinsic_dimensionality_tracking.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1xO21D1huEVf7qgvmn7qoKGqrNAVxSuVP",
+        "name": "iterative_diffusion_augmentation.pdf",
+        "mime_type": "application/pdf",
+        "size": 945558,
+        "path": "all_pdfs/claude/claude_runs_diffusion/iterative_diffusion_augmentation.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1ONk79UR7D_8oyqBDJG41SYSsnYR6D3p0",
+        "name": "learning_rate_schedule.pdf",
+        "mime_type": "application/pdf",
+        "size": 1001308,
+        "path": "all_pdfs/claude/claude_runs_diffusion/learning_rate_schedule.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1ASK6ssaD2aLlIvwORme5YQoGn-k2EGoM",
+        "name": "linear_diffusion_steering.pdf",
+        "mime_type": "application/pdf",
+        "size": 667759,
+        "path": "all_pdfs/claude/claude_runs_diffusion/linear_diffusion_steering.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1tuqAGvFpuzhNa_dJpwuRxqX3hR4Jzo_m",
+        "name": "local_structure_preservation.pdf",
+        "mime_type": "application/pdf",
+        "size": 518445,
+        "path": "all_pdfs/claude/claude_runs_diffusion/local_structure_preservation.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1J4d9fR7AXm0jAxFQXQ5o8Di7nRbh738z",
+        "name": "manifold_navigation_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 876108,
+        "path": "all_pdfs/claude/claude_runs_diffusion/manifold_navigation_analysis.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1gyPbQ377SsQbW_0Ey7jKxlD0BDesXC0X",
+        "name": "manifold_preserving_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 430721,
+        "path": "all_pdfs/claude/claude_runs_diffusion/manifold_preserving_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1LcTyKO1U0xABpsn1lrDwLcIbnmycuhKd",
+        "name": "moment_guided_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1041473,
+        "path": "all_pdfs/claude/claude_runs_diffusion/moment_guided_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1iusGdxmXWX-HxIgdCguNL4zzfJVZoTN_",
+        "name": "pca_aligned_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 304383,
+        "path": "all_pdfs/claude/claude_runs_diffusion/pca_aligned_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1SyIuXABA_Vvnez7ALyGWQVrPlpWbAkxg",
+        "name": "pdf_guided_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1216388,
+        "path": "all_pdfs/claude/claude_runs_diffusion/pdf_guided_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1aDKdj1FdGAqFvj5YaBCrYS8qXR_hOUfk",
+        "name": "quadrant_conditional_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 899147,
+        "path": "all_pdfs/claude/claude_runs_diffusion/quadrant_conditional_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1M5wrNakdcpdVqTWSaqLyu28x_E1ETAJb",
+        "name": "score_based_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1422896,
+        "path": "all_pdfs/claude/claude_runs_diffusion/score_based_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1NfZGsFr3m1bmT5txk6N0BvQLC6pQReRA",
+        "name": "semantic_latent_interpolation.pdf",
+        "mime_type": "application/pdf",
+        "size": 1687990,
+        "path": "all_pdfs/claude/claude_runs_diffusion/semantic_latent_interpolation.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1BFP0CJIWfOpGIP_tgGFCD28YKSvSPeUN",
+        "name": "symmetry_guided_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 708656,
+        "path": "all_pdfs/claude/claude_runs_diffusion/symmetry_guided_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1OYnzUW6Km48YW834kplKSsy28uFLbL0t",
+        "name": "temporal_sensitivity_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 1016133,
+        "path": "all_pdfs/claude/claude_runs_diffusion/temporal_sensitivity_analysis.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1uVhVgNEQYTBDvMZYuUwe5xkhFkWXeg_o",
+        "name": "transfer_learning_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1020287,
+        "path": "all_pdfs/claude/claude_runs_diffusion/transfer_learning_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      },
+      {
+        "drive_id": "1msnJd-F8UbZ_VWjOaufTY23vHv-utMfp",
+        "name": "uncertainty_quantification_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1059231,
+        "path": "all_pdfs/claude/claude_runs_diffusion/uncertainty_quantification_diffusion.pdf",
+        "parent_folder_id": "1J1Rc7QNsxap79x62yUAbc4bouwE9moyz"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG",
+    "path": "all_pdfs/claude/claude_runs_grokking",
+    "entries": [
+      {
+        "drive_id": "1KrmyVDpe-JrOg2dCXl35rMm5D7k3oQYj",
+        "name": "adaptive_grokking_critical_periods.pdf",
+        "mime_type": "application/pdf",
+        "size": 988039,
+        "path": "all_pdfs/claude/claude_runs_grokking/adaptive_grokking_critical_periods.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1na2HwfNi2WOS-Txi3_eJvQaWF3RBlQZK",
+        "name": "adversarial_robustness_evolution_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 643697,
+        "path": "all_pdfs/claude/claude_runs_grokking/adversarial_robustness_evolution_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1SEPpbO59B9VMM6K5jzfLQuQUbi38KjfW",
+        "name": "batch_size_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 2167599,
+        "path": "all_pdfs/claude/claude_runs_grokking/batch_size_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1rEkh_P_5bQ2OvRkc0S-rFjUGaHpVBWh6",
+        "name": "critical_period_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 743590,
+        "path": "all_pdfs/claude/claude_runs_grokking/critical_period_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1xCKPuqUUjR-NN9rngpCCi1s-TF0VVt66",
+        "name": "cyclic_lr_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 371264,
+        "path": "all_pdfs/claude/claude_runs_grokking/cyclic_lr_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1njBAEFWlgvZD8V_SDFDh9aglK9n0zHgC",
+        "name": "data_augmentation_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1011153,
+        "path": "all_pdfs/claude/claude_runs_grokking/data_augmentation_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1lcFZto-4Hx4OL_O-C5ke8FbiblwCPMOX",
+        "name": "effective_capacity_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 722504,
+        "path": "all_pdfs/claude/claude_runs_grokking/effective_capacity_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1XsFUMeeGs0PVPlEOv4lBU2bs9pAuCj3X",
+        "name": "gradient_accumulation_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1833822,
+        "path": "all_pdfs/claude/claude_runs_grokking/gradient_accumulation_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1rUCsaXc2riyoEhnWSh5Xig-Rwq-vAD7y",
+        "name": "gradient_flow_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 593688,
+        "path": "all_pdfs/claude/claude_runs_grokking/gradient_flow_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1Dd-ZwUDNXcPmSCUXKSicu9qjYpswl1IL",
+        "name": "initialization_impact_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 489320,
+        "path": "all_pdfs/claude/claude_runs_grokking/initialization_impact_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1x_U3CZIEmyGWofhTNVgKdVKcCWYM1nl2",
+        "name": "input_encoding_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 657289,
+        "path": "all_pdfs/claude/claude_runs_grokking/input_encoding_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1yFDL0dQI8DXJ9YNYqGtVXQnaRonDC4EC",
+        "name": "invariance_learning_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1076895,
+        "path": "all_pdfs/claude/claude_runs_grokking/invariance_learning_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "148JW-sXLVdu7mGWCpkMB1RdYNqIr9GdY",
+        "name": "lottery_ticket_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 574543,
+        "path": "all_pdfs/claude/claude_runs_grokking/lottery_ticket_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1AO1lxVImQJmp79WYXYdwW6hzUYIATB0D",
+        "name": "mdl_grokking_correlation.pdf",
+        "mime_type": "application/pdf",
+        "size": 668441,
+        "path": "all_pdfs/claude/claude_runs_grokking/mdl_grokking_correlation.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1Sjjgof4c0ZYVC7hLLSCPkXElddbe4gWv",
+        "name": "model_architecture_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 616217,
+        "path": "all_pdfs/claude/claude_runs_grokking/model_architecture_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1nrmqpBMoq78GUgNWzyqmi9EihD0Umj2e",
+        "name": "mutual_information_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 612915,
+        "path": "all_pdfs/claude/claude_runs_grokking/mutual_information_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1ZAi7VL_HCNKqXaUlU0f_ZWUbKBYmi0F1",
+        "name": "noisy_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 389329,
+        "path": "all_pdfs/claude/claude_runs_grokking/noisy_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1N0Su5TXpF4Cvbhh425Pgmt4GGTzY4LMN",
+        "name": "optimizer_impact_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1467487,
+        "path": "all_pdfs/claude/claude_runs_grokking/optimizer_impact_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "12QMjRpJmAXgg5OGMeHWHnf79nSUE14eI",
+        "name": "positional_encoding_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 919630,
+        "path": "all_pdfs/claude/claude_runs_grokking/positional_encoding_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1w7TMuLh2q6FuF5CKe-KRqqMrA6ofQP9h",
+        "name": "proto_lottery_tickets_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 800596,
+        "path": "all_pdfs/claude/claude_runs_grokking/proto_lottery_tickets_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1ocZ46QntTMqg2vvWGUEKleCkRRmBjr_D",
+        "name": "pruning_grokking_dynamics.pdf",
+        "mime_type": "application/pdf",
+        "size": 1121561,
+        "path": "all_pdfs/claude/claude_runs_grokking/pruning_grokking_dynamics.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1WnJgxYDftYpYoMK1RV3ipkzjhV_HaT0p",
+        "name": "relational_complexity_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 732477,
+        "path": "all_pdfs/claude/claude_runs_grokking/relational_complexity_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1QkEBk24HOdbsyvCPf866BlKhyOIAJZmK",
+        "name": "robustness_grokking_correlation.pdf",
+        "mime_type": "application/pdf",
+        "size": 1414196,
+        "path": "all_pdfs/claude/claude_runs_grokking/robustness_grokking_correlation.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "1kVEu3SwfsOfN6d83WNfGwcDYmpREdEqk",
+        "name": "scheduled_regularization_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 461597,
+        "path": "all_pdfs/claude/claude_runs_grokking/scheduled_regularization_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      },
+      {
+        "drive_id": "12tCFv-H2ltyy3LGGlMS-qU2YIN24rgpT",
+        "name": "simplicity_bias_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1746039,
+        "path": "all_pdfs/claude/claude_runs_grokking/simplicity_bias_grokking.pdf",
+        "parent_folder_id": "1OfyPud8AE4uNB4aK4Gu90h44VgX-AmtG"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX",
+    "path": "all_pdfs/claude/claude_runs_nanogpt",
+    "entries": [
+      {
+        "drive_id": "17lKeR6F78yHtKCfJHvRBfh_6eYsI9mEz",
+        "name": "adaptive_char_curriculum.pdf",
+        "mime_type": "application/pdf",
+        "size": 248619,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/adaptive_char_curriculum.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1R393TutnTwMtj5c2-Xj2ufQX28RPW-6w",
+        "name": "adaptive_cyclic_char_encoding.pdf",
+        "mime_type": "application/pdf",
+        "size": 281816,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/adaptive_cyclic_char_encoding.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1QxQvZ3TVY3ZW1YrPngNmJBH9l6LEHkrV",
+        "name": "adaptive_layer_fusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 258670,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/adaptive_layer_fusion.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1zHpT3votkSTrKcHQ3R2siMbne_IP7ZoU",
+        "name": "adaptive_neuron_gating.pdf",
+        "mime_type": "application/pdf",
+        "size": 427566,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/adaptive_neuron_gating.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1ybcgRA4o2-WCnteuXwyGW1GNAfNbantO",
+        "name": "adaptive_style_attention.pdf",
+        "mime_type": "application/pdf",
+        "size": 262458,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/adaptive_style_attention.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1JBKNMiLDKYwgEaNXe9nlfY6lUp-_Rbc-",
+        "name": "char_level_activation_study.pdf",
+        "mime_type": "application/pdf",
+        "size": 255810,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/char_level_activation_study.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1bpIxbVPHTqvGOdb5hahrWG4FGKjYsY34",
+        "name": "discrete_context_activations.pdf",
+        "mime_type": "application/pdf",
+        "size": 256086,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/discrete_context_activations.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1XAXL6HLuXTKmIFVDuCRqYL0biukZzX7b",
+        "name": "dual_aspect_char_embedding.pdf",
+        "mime_type": "application/pdf",
+        "size": 279633,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/dual_aspect_char_embedding.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1Im9T-ilg-MO3W6CYmSC1sbM28N0b9SAw",
+        "name": "dual_tier_adaptive_dimensionality.pdf",
+        "mime_type": "application/pdf",
+        "size": 291719,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/dual_tier_adaptive_dimensionality.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1q2fusmFeJLzVNxRXn7R4hXiPNc9sy43I",
+        "name": "emergent_syntax_attention.pdf",
+        "mime_type": "application/pdf",
+        "size": 244047,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/emergent_syntax_attention.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1wfDouwBd45Hj1-VwtC8JS_2d6oCQtLsh",
+        "name": "fixed_interval_semantic_summaries.pdf",
+        "mime_type": "application/pdf",
+        "size": 226375,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/fixed_interval_semantic_summaries.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1Ac0Uyctsp0Xq_ZMAmSEqtwf_gPraduO1",
+        "name": "global_context_vector.pdf",
+        "mime_type": "application/pdf",
+        "size": 270224,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/global_context_vector.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1c5c88zj2cgEADN2w6jUt3Bgi2o1JpGtm",
+        "name": "gradient_noise_scaling.pdf",
+        "mime_type": "application/pdf",
+        "size": 299772,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/gradient_noise_scaling.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1MA3Wn9J5ByyxFufoWSNRnme_nWqyxsW_",
+        "name": "hierarchical_char_positional_encoding.pdf",
+        "mime_type": "application/pdf",
+        "size": 527413,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/hierarchical_char_positional_encoding.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1RuwNCl7jG0D9-FHUGQd-IzVGaiLFUzjZ",
+        "name": "hierarchical_chunk_attention.pdf",
+        "mime_type": "application/pdf",
+        "size": 318764,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/hierarchical_chunk_attention.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1sCQ9MHOj6SJOI9_KSCXiagvXS74wgwbO",
+        "name": "hybrid_char_bigram_tokenization.pdf",
+        "mime_type": "application/pdf",
+        "size": 472141,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/hybrid_char_bigram_tokenization.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1vNATkCNFzudb5CCJ2CxmOqi22QhLl_0R",
+        "name": "power_of_two_sparse_attention.pdf",
+        "mime_type": "application/pdf",
+        "size": 488040,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/power_of_two_sparse_attention.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1l8njMdoH_bgsvPzjrA6NGYzzDeZCDzNt",
+        "name": "progressive_character_unfolding.pdf",
+        "mime_type": "application/pdf",
+        "size": 239276,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/progressive_character_unfolding.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      },
+      {
+        "drive_id": "1VbQHNI4qiP0R8XMyqjwXc_EcatwXtbSV",
+        "name": "simplified_sam_optimization.pdf",
+        "mime_type": "application/pdf",
+        "size": 432108,
+        "path": "all_pdfs/claude/claude_runs_nanogpt/simplified_sam_optimization.pdf",
+        "parent_folder_id": "1b7z0DeXKeJhpoSF0kSupz7H-n39egoRX"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb",
+    "path": "all_pdfs/deepseek/deepseek_runs_diffusion",
+    "entries": [
+      {
+        "drive_id": "1pakUHYRFWgOxMRkS32oIZ4TxgZ_X_yzE",
+        "name": "activation_function_impact.pdf",
+        "mime_type": "application/pdf",
+        "size": 945859,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/activation_function_impact.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1ybWEpq-pEtYOdvjFjhwJB0IlkKtXPNxP",
+        "name": "adaptive_data_curriculum.pdf",
+        "mime_type": "application/pdf",
+        "size": 795755,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/adaptive_data_curriculum.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1Gx0J1yIRH-E6xhptmy_Ceqdx0u13L99_",
+        "name": "adaptive_timesteps_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 111845,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/adaptive_timesteps_diffusion.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1PWauKbtatsg75tqCKqMMhSXChrVhSbuR",
+        "name": "batch_dynamics_impact.pdf",
+        "mime_type": "application/pdf",
+        "size": 988921,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/batch_dynamics_impact.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1aaMETBSEzKETCToF-lsRjr5WvUsRle_T",
+        "name": "curriculum_learning_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1016183,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/curriculum_learning_diffusion.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1bUAqyCp0al-7S6zDP3C8eCe732bbic-r",
+        "name": "custom_evaluation_metrics.pdf",
+        "mime_type": "application/pdf",
+        "size": 571738,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/custom_evaluation_metrics.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1X4bkSxqd8u93ONcbf66q1fI_eWeElqC_",
+        "name": "data_transformation_for_controllability.pdf",
+        "mime_type": "application/pdf",
+        "size": 529092,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/data_transformation_for_controllability.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1MwWS3aPsePDJMCGv13WNRpCZcyxykXkr",
+        "name": "data_transformation_impact.pdf",
+        "mime_type": "application/pdf",
+        "size": 827166,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/data_transformation_impact.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1bVcWYGXT2-aQGKSQXcrVUCLvmbhP-Wq2",
+        "name": "diverse_noise_types.pdf",
+        "mime_type": "application/pdf",
+        "size": 976079,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/diverse_noise_types.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1tz7hKosklZPyd0GyTQTvKVgho0tKtaqL",
+        "name": "dynamic_curriculum_learning.pdf",
+        "mime_type": "application/pdf",
+        "size": 778367,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/dynamic_curriculum_learning.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1WrKVtJEsgAtgpib0h6PHmySL0uD7t64x",
+        "name": "enhanced_positional_encoding.pdf",
+        "mime_type": "application/pdf",
+        "size": 99295,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/enhanced_positional_encoding.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1QRpJimmk48MqP5kdLxNBgr-eVPWiXwIU",
+        "name": "guided_clustering_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 134850,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/guided_clustering_diffusion.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1pcwnd_Ln7kU-QkEPDxb1YljY-7GZlVvH",
+        "name": "initialization_strategies_impact.pdf",
+        "mime_type": "application/pdf",
+        "size": 136342,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/initialization_strategies_impact.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1KzBI7DmWS0lNANalbjqSlXgobfpTsEO-",
+        "name": "loss_functions_for_controllable_generation.pdf",
+        "mime_type": "application/pdf",
+        "size": 536510,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/loss_functions_for_controllable_generation.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1pYM8NjgUyaUq82UK8eRGIQvQLgiLhT4J",
+        "name": "model_depth_controllability.pdf",
+        "mime_type": "application/pdf",
+        "size": 769164,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/model_depth_controllability.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1KIkVYHuV4Z3I7DnmocTOqxjcDyb61xv4",
+        "name": "optimizer_impact_on_controllability.pdf",
+        "mime_type": "application/pdf",
+        "size": 650896,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/optimizer_impact_on_controllability.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1K6okZ0aAmMOwa86jKI-dHPqc4Gwc1wQt",
+        "name": "preference_based_evaluation.pdf",
+        "mime_type": "application/pdf",
+        "size": 791435,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/preference_based_evaluation.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1ykRKjs5Oyk1sGd3ntyoX_8W77M6uuoFq",
+        "name": "regularization_impact.pdf",
+        "mime_type": "application/pdf",
+        "size": 735776,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/regularization_impact.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1h-YXWhotBNa5Lf4gcMbqlhAeC5A4ZKXP",
+        "name": "rnn_lstm_denoiser.pdf",
+        "mime_type": "application/pdf",
+        "size": 992774,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/rnn_lstm_denoiser.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "174Uhypzujpy0AFEgB3TGqR75cTYW7BXR",
+        "name": "rule_based_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 132121,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/rule_based_diffusion.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1K7qzfd2GDNmQRncDnZ6IapaoUh8NaK-2",
+        "name": "sampling_strategies_impact.pdf",
+        "mime_type": "application/pdf",
+        "size": 1030718,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/sampling_strategies_impact.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1MHCixFP1JAfV1hbgM8K1x3pQEG3BUV-J",
+        "name": "simplified_data_encodings.pdf",
+        "mime_type": "application/pdf",
+        "size": 140208,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/simplified_data_encodings.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1I9Jo16m1h1Lj8ycSPLs1dLDreCdRu6Xv",
+        "name": "simplified_moe_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 825707,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/simplified_moe_diffusion.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1s5Nkvq9Ef4yIS64D27bDgrrgoClstfhE",
+        "name": "stochastic_timestep_selection.pdf",
+        "mime_type": "application/pdf",
+        "size": 127386,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/stochastic_timestep_selection.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1FVFXFlI6dVPlLM3_qZeut4PEN6nSHRDl",
+        "name": "targeted_adaptive_noise_scheduling.pdf",
+        "mime_type": "application/pdf",
+        "size": 141802,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/targeted_adaptive_noise_scheduling.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1YnYWygHhldIULXeEPMrO8lR3pNtA5xAi",
+        "name": "training_dynamics_generalization.pdf",
+        "mime_type": "application/pdf",
+        "size": 1028689,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/training_dynamics_generalization.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1cky1wjQRCWlIUGZ5ow8QHTYRBNd_Zray",
+        "name": "training_regime_generalization.pdf",
+        "mime_type": "application/pdf",
+        "size": 915019,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/training_regime_generalization.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      },
+      {
+        "drive_id": "1CLrmnWi68yOKDKiw8OszQLXFHotasUG6",
+        "name": "userguided_sampling_strategies.pdf",
+        "mime_type": "application/pdf",
+        "size": 833373,
+        "path": "all_pdfs/deepseek/deepseek_runs_diffusion/userguided_sampling_strategies.pdf",
+        "parent_folder_id": "150b8hVEWQlHHFYx7g1qR6PofG7R_8jNb"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF",
+    "path": "all_pdfs/deepseek/deepseek_runs_grokking",
+    "entries": [
+      {
+        "drive_id": "1l6gx-kG1E3Cuw2XA_XHIibxPwjLzdUwH",
+        "name": "activation_function_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 411707,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/activation_function_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1J7JG8XWVIpWA7T9AAUo3pePSC43CfFdV",
+        "name": "adaptive_interruption_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 297085,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/adaptive_interruption_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1TzIyeuIdM9JBD6mCkeP5arwtYSKv29-e",
+        "name": "adaptive_lr_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 726152,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/adaptive_lr_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "11Ldt2XbX57GQcULtxEoWoO6jxQDC0Ol-",
+        "name": "attention_config_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 104373,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/attention_config_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1fbxiCcopaABdBT89aJ110_QiUDdBe-vG",
+        "name": "batch_mix_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 209191,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/batch_mix_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1rCe_KyN4_XeYbV-c_JOamwbBkIDidL44",
+        "name": "batch_size_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 689387,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/batch_size_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1o_DPZtEXNLUDwG9aYCBexIxEecs_DScj",
+        "name": "custom_loss_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 231751,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/custom_loss_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1nmG7LZa-kF9x2O1OLf2ONq1gW6KasBn_",
+        "name": "cyclical_lr_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 58122,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/cyclical_lr_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1FeDyElCVllVkAhsyt3aETBpA-_MXu5YU",
+        "name": "data_augmentation_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 86007,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/data_augmentation_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1A-vZX1CNAs4yvRD6Orw63z0sRFIkr75h",
+        "name": "dynamic_training_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 244789,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/dynamic_training_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1XeXlgRGZpRmER4yaUVxkTDtWiDSy6FmH",
+        "name": "dynamic_update_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 370082,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/dynamic_update_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1Uch4bWxkh3T8gM8a61ZUYXCJee8gPCRt",
+        "name": "early_stopping_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 208625,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/early_stopping_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1oM3U17PCOTeT7hmoKQNhtk0qfPAdP4s3",
+        "name": "fixed_interval_reset_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 230692,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/fixed_interval_reset_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1p9taN-5vVIiNPQNC4JllaH3Pc-iqGFSq",
+        "name": "initialization_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 246550,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/initialization_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1sNx44ULLTttFsEKobhEJ8NsQM7wbl05Z",
+        "name": "intermittent_training_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 444061,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/intermittent_training_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1myvg8HIPrFXgUCKKSEFsEPO76IHMlZ5Z",
+        "name": "learning_rate_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 451198,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/learning_rate_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1Ya-Yzv1SUgKUxWCVycjE6_DAMB0wFlC_",
+        "name": "loss_function_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 630783,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/loss_function_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1giTywUY7Elzc2OnrR_23kC0wtZfLK-uz",
+        "name": "model_size_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 380123,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/model_size_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "11o6nu0LjXZcyNwLuZ1Xjffgqrs-tMb2p",
+        "name": "periodic_reset_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 173527,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/periodic_reset_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1rhFdk97n23loS6O8s1FxlTvlBdGh5BY0",
+        "name": "refined_dynamic_training_rhythm_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 791078,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/refined_dynamic_training_rhythm_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "13MXkn_C5KRFMOl9tfxw4Rkn9lBIoiRk2",
+        "name": "regularization_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 200435,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/regularization_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "11QmpU8cfEs-eOG0WL85O6vr9VFVekA9n",
+        "name": "skip_connections_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 679780,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/skip_connections_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1QfRu5NcQsJ36RJYVPJFAkxfpULPnVwSH",
+        "name": "sleep_wake_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 509643,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/sleep_wake_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1wnZ5AHNa1APWLhjkdA2F2o70E_6XrZWC",
+        "name": "sparsity_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 270779,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/sparsity_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1j8CEfcaTML6AxvrOSO874dFSAs50a_kQ",
+        "name": "structured_interruption_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 629306,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/structured_interruption_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1wsW6wb7SRDmIeNLyrZ0CJ_Eb9h5PwpqZ",
+        "name": "systematic_lr_holidays_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 633051,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/systematic_lr_holidays_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1_y8lgxOPxXbeKGWYjrktN-EeLB9FmelJ",
+        "name": "targeted_noise_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 484732,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/targeted_noise_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1Db1s0dZVRVrbIv6fq5NU9Keon1Vwso5z",
+        "name": "targeted_perturbation_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 243866,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/targeted_perturbation_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "13BB_augozyQyGokz0MCIhUbOBYP5fDfE",
+        "name": "task_complexity_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 764236,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/task_complexity_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1JLwn7ZznSpKy8APIbrzF4-KtOu3TLxG5",
+        "name": "training_duration_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 512965,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/training_duration_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1CUNgtBdaIYu9B9hYWt0wExDtsPklC6Lj",
+        "name": "training_intensity_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 176711,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/training_intensity_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      },
+      {
+        "drive_id": "1etExWJs0Pm-dGY4nUkefpYSPIAzqM5v7",
+        "name": "weight_init_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 80931,
+        "path": "all_pdfs/deepseek/deepseek_runs_grokking/weight_init_grokking.pdf",
+        "parent_folder_id": "1CIj7l4VN3CbEs4c8y9kZKQdoz5w_ejZF"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy",
+    "path": "all_pdfs/deepseek/deepseek_runs_nanogpt",
+    "entries": [
+      {
+        "drive_id": "1UMDOg59bSd-xNYYVKLGaVt8soTPVvahb",
+        "name": "activation_interpretability_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 58740,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/activation_interpretability_analysis.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1tmd6vU4eGd5dRw0gampZh6wFr_1qLK9O",
+        "name": "adaptive_block_size.pdf",
+        "mime_type": "application/pdf",
+        "size": 144921,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/adaptive_block_size.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1R5-vN8IWWR_2DgzcG9DSefLwEGy1_GB-",
+        "name": "advanced_char_tokenization.pdf",
+        "mime_type": "application/pdf",
+        "size": 172595,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/advanced_char_tokenization.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "11IFJN46a8FeCNR4b8LKNYrOqegEF9_R1",
+        "name": "advanced_weight_init.pdf",
+        "mime_type": "application/pdf",
+        "size": 62362,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/advanced_weight_init.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "113m8WXMwg-86zwzpwfspnuYUXDg7XOyV",
+        "name": "batch_lr_interaction.pdf",
+        "mime_type": "application/pdf",
+        "size": 69794,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/batch_lr_interaction.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1vM0IND9Kb9YHzIoO3Kz4_OxS4Za0gNo2",
+        "name": "cyclical_lr_batch_size_opt.pdf",
+        "mime_type": "application/pdf",
+        "size": 136882,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/cyclical_lr_batch_size_opt.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1VrnzxO-dlqow6Mr53JWvqFvp27BXvG9o",
+        "name": "data_sampling_strategies.pdf",
+        "mime_type": "application/pdf",
+        "size": 136000,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/data_sampling_strategies.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1z3obcThGsfMfzCvktKjeQJkjFoUBBt9d",
+        "name": "efficient_auxiliary_tasks.pdf",
+        "mime_type": "application/pdf",
+        "size": 117251,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/efficient_auxiliary_tasks.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1Hmf7NisaPYEnykX7f3Bdp8zbYWlzPXxl",
+        "name": "enhanced_attention_exploration.pdf",
+        "mime_type": "application/pdf",
+        "size": 70886,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/enhanced_attention_exploration.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1SmyiZOuaTXa9v9VeAHZuShgpFwevWgn_",
+        "name": "holistic_normalization_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 84966,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/holistic_normalization_analysis.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "11b2FN5w9CRZ2Dt28HsIOYE9t0w2IUBGz",
+        "name": "interpretability_normalization.pdf",
+        "mime_type": "application/pdf",
+        "size": 257435,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/interpretability_normalization.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1p1QVXzZlMiPXyUWOWhIoUiy-sWghzg2P",
+        "name": "mixed_precision_training.pdf",
+        "mime_type": "application/pdf",
+        "size": 333769,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/mixed_precision_training.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1mIN7CXZZKxdfPMoBo-Rlk5_gR66es2pS",
+        "name": "norm_tech_interpretability.pdf",
+        "mime_type": "application/pdf",
+        "size": 69281,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/norm_tech_interpretability.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "16GDeL__FH8tFRjB03JgKDegca7z_3mLW",
+        "name": "normalization_techniques.pdf",
+        "mime_type": "application/pdf",
+        "size": 350286,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/normalization_techniques.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1CO4XmZItYJ5c42ZjsvWwjN-HvxU7-Ecc",
+        "name": "optimizer_comparison.pdf",
+        "mime_type": "application/pdf",
+        "size": 228088,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/optimizer_comparison.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1nDzSqBqyf2UAp5zRHDDlEFkycaEIla2U",
+        "name": "positional_encoding_strategies.pdf",
+        "mime_type": "application/pdf",
+        "size": 187961,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/positional_encoding_strategies.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1-mx8SdgTfsvrXuqqn44OeYh1SaIYTPgV",
+        "name": "reverse_curriculum_learning.pdf",
+        "mime_type": "application/pdf",
+        "size": 427780,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/reverse_curriculum_learning.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1U8RSaFzXFFKwVfC3LPlVimIHqUEEI-Tz",
+        "name": "transformer_init_strategies.pdf",
+        "mime_type": "application/pdf",
+        "size": 191339,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/transformer_init_strategies.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      },
+      {
+        "drive_id": "1UhX-FCws9B5zsSOK3Q7AD85q7B6xEOxj",
+        "name": "weight_decay_schedules.pdf",
+        "mime_type": "application/pdf",
+        "size": 144542,
+        "path": "all_pdfs/deepseek/deepseek_runs_nanogpt/weight_decay_schedules.pdf",
+        "parent_folder_id": "1ai0BJCnwMSYIFi7dJ2m4iAafoev_-0wy"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz",
+    "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion",
+    "entries": [
+      {
+        "drive_id": "1ZGGAqaIzZCKrwbDcL-BxxYnNPzEVR-Ju",
+        "name": "attention_mechanism.pdf",
+        "mime_type": "application/pdf",
+        "size": 1027706,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/attention_mechanism.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1xS2GFPqy3C_Oq5_2XrZRRJDT2oQulZ4M",
+        "name": "contrastive_learning.pdf",
+        "mime_type": "application/pdf",
+        "size": 977961,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/contrastive_learning.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1_E61FwmNkiWLwSJhhqIJPpy5esXk9a4Z",
+        "name": "dendritic_computation.pdf",
+        "mime_type": "application/pdf",
+        "size": 1072555,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/dendritic_computation.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1nwy2RNChuqYgbpcR8cy83Fd8wM79xVjv",
+        "name": "distributionally_robust_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 116780,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/distributionally_robust_diffusion.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "18jmuDd9aHciIaCVoHF9HehKfiIvpUPff",
+        "name": "ebm_refinement.pdf",
+        "mime_type": "application/pdf",
+        "size": 385840,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/ebm_refinement.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "17zqAOBhdVb4s_5vwxiJjxqW43VAIicEk",
+        "name": "evolutionary_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1236028,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/evolutionary_diffusion.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1sXZNbY3vV3IPq6oz4CvZ07LYBfiNMWOm",
+        "name": "integrated_gradients_interpretability.pdf",
+        "mime_type": "application/pdf",
+        "size": 863169,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/integrated_gradients_interpretability.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1jTOYg0PcgQc-uQoIHXoEBhmC33hRxg77",
+        "name": "invariance_learning.pdf",
+        "mime_type": "application/pdf",
+        "size": 838190,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/invariance_learning.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1quum_mKIoRX6N6zuisXtIGJZD23SgHug",
+        "name": "latent_variable_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 960124,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/latent_variable_diffusion.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1LpxL9WTp-fyjVMDXJ9UpdyyJmIsPZWNg",
+        "name": "learned_embeddings.pdf",
+        "mime_type": "application/pdf",
+        "size": 976863,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/learned_embeddings.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1TgXq69WvDJoFGsaY_PCvZs25cYj5wSDU",
+        "name": "manifold_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 1023473,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/manifold_diffusion.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1JRzlFYkSm0AM88rGBWCjVcQW83FzN6sT",
+        "name": "mixture_of_experts.pdf",
+        "mime_type": "application/pdf",
+        "size": 155254,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/mixture_of_experts.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "16K6V2jI6CHJs2SsHONBPcSfJ_sVu-Dbp",
+        "name": "mode_specific_generation.pdf",
+        "mime_type": "application/pdf",
+        "size": 1002763,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/mode_specific_generation.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1ww8Y5bwih23z11OncfdYzeAP8wcgYWxt",
+        "name": "progressive_noise_schedule.pdf",
+        "mime_type": "application/pdf",
+        "size": 642276,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/progressive_noise_schedule.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1GUFWanOIPYlhKJD42z081nI1R3Gu7zmn",
+        "name": "rl_dynamic_noise_schedule.pdf",
+        "mime_type": "application/pdf",
+        "size": 548614,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/rl_dynamic_noise_schedule.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      },
+      {
+        "drive_id": "1gdSl3Qs04mDqfeD7o-Dl9G2vKk-BVXVZ",
+        "name": "transformer_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 372218,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_diffusion/transformer_diffusion.pdf",
+        "parent_folder_id": "1iPFuExU9hIsQzEu3AE34Z10O7rE6R3Yz"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd",
+    "path": "all_pdfs/gpt4o/gpt4o_runs_grokking",
+    "entries": [
+      {
+        "drive_id": "1jwGX3QHS8lnQ84wUBIFNQW5DU1kOpNyM",
+        "name": "adversarial_training.pdf",
+        "mime_type": "application/pdf",
+        "size": 282205,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/adversarial_training.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1qVFxKCOrV8NSm4oUU_0_BSu5pU5XOQWM",
+        "name": "architecture_variation.pdf",
+        "mime_type": "application/pdf",
+        "size": 3579019,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/architecture_variation.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "18r6uOHECZfyP9YSi1hZHePjOCZNERwTa",
+        "name": "batch_size_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 1739325,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/batch_size_grokking.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1ijhcSirYIIo90gfxj3673LjJi2hKmjYT",
+        "name": "capacity_task_complexity.pdf",
+        "mime_type": "application/pdf",
+        "size": 1317358,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/capacity_task_complexity.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "11kUzsXbd_ur_TyonUAELVXCFnkxWaY_X",
+        "name": "catastrophic_forgetting.pdf",
+        "mime_type": "application/pdf",
+        "size": 143902,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/catastrophic_forgetting.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1ToD8KIWMVBe86Mxl3Rx-9cOTpReM2Lc7",
+        "name": "data_augmentation.pdf",
+        "mime_type": "application/pdf",
+        "size": 453572,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/data_augmentation.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1-IqV9znYuQU-aP5fAO3BzgWsA-GLz4rZ",
+        "name": "data_distribution.pdf",
+        "mime_type": "application/pdf",
+        "size": 2017674,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/data_distribution.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1jbysAMgGDlx5Q-Z4BkFpTx6zB91NDRl1",
+        "name": "initialization_schemes.pdf",
+        "mime_type": "application/pdf",
+        "size": 636641,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/initialization_schemes.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1H-dnzg0ODWjHzPRobnaM4GP1uvZZ725C",
+        "name": "input_transformations.pdf",
+        "mime_type": "application/pdf",
+        "size": 974122,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/input_transformations.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1xXfyQ-mnXJ6gu1tMnY1DP2v7ttztHEHG",
+        "name": "latent_space_manipulation.pdf",
+        "mime_type": "application/pdf",
+        "size": 1349733,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/latent_space_manipulation.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1220CG-OrcKj7V78wJbtqbAKQsDK9RfUe",
+        "name": "optimizer_choice.pdf",
+        "mime_type": "application/pdf",
+        "size": 368077,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/optimizer_choice.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      },
+      {
+        "drive_id": "1qECgxfuUXw27NPIvb1pa0P-9YzlsjCh0",
+        "name": "predictive_uncertainty.pdf",
+        "mime_type": "application/pdf",
+        "size": 365258,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_grokking/predictive_uncertainty.pdf",
+        "parent_folder_id": "1mf3w7xlQIt2TX44NEjt65E4-hWT4aKvd"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN",
+    "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt",
+    "entries": [
+      {
+        "drive_id": "1zL1g_dn6FvE7tOi2KY3_OdY1nPQgHZI4",
+        "name": "active_learning.pdf",
+        "mime_type": "application/pdf",
+        "size": 377849,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/active_learning.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "121w9LLbyU92MlnhPOzBBQqpsmM-hy_VH",
+        "name": "adaptive_computation_reduction.pdf",
+        "mime_type": "application/pdf",
+        "size": 582556,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/adaptive_computation_reduction.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1COSiQQl_Cy5ZBQrXuydrBm4zL7helfuE",
+        "name": "adaptive_input_length.pdf",
+        "mime_type": "application/pdf",
+        "size": 512899,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/adaptive_input_length.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "12l2oU86bBKLWzfZF29hibnknCQQ-dc5E",
+        "name": "attention_re_routing.pdf",
+        "mime_type": "application/pdf",
+        "size": 364017,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/attention_re_routing.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "16EzzrfjjP3sQ-GW7fMPzjVibpgF5bxza",
+        "name": "complexity_based_dynamic_capacity.pdf",
+        "mime_type": "application/pdf",
+        "size": 354949,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/complexity_based_dynamic_capacity.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1Z0004J5ix-24U6TlZBQ5UlVdy_TthBpc",
+        "name": "dynamic_batch_size.pdf",
+        "mime_type": "application/pdf",
+        "size": 457856,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/dynamic_batch_size.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1ZQbph_flvthz1azYDsZhsxlD3CRtOmCM",
+        "name": "dynamic_dropout_adaptation.pdf",
+        "mime_type": "application/pdf",
+        "size": 379234,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/dynamic_dropout_adaptation.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1R_ZpfasO7pflCdDqqw9YwvF_v5D5VtZ8",
+        "name": "embedding_refinement.pdf",
+        "mime_type": "application/pdf",
+        "size": 394825,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/embedding_refinement.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1DKFiRhNnGEq1QwC2COPr-vtA4kTw6r_S",
+        "name": "gradient_noise_injection.pdf",
+        "mime_type": "application/pdf",
+        "size": 501478,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/gradient_noise_injection.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1xs8MkBQgDqpJXdzwyEwB7cDKYdYfTD-M",
+        "name": "layerwise_learning_rates.pdf",
+        "mime_type": "application/pdf",
+        "size": 419692,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/layerwise_learning_rates.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1cuxUXdP6jmPvk5x_ZLDynj1kAc6-WhzE",
+        "name": "learned_positional_encodings.pdf",
+        "mime_type": "application/pdf",
+        "size": 512856,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/learned_positional_encodings.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1BIiWYlRzLPfIPTHeym6CbmPguC853jzq",
+        "name": "memory_augmentation.pdf",
+        "mime_type": "application/pdf",
+        "size": 492047,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/memory_augmentation.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1F6xBvqI_AugATH214wuuojw9SsDMAD4l",
+        "name": "meta_learning_hyperparameters.pdf",
+        "mime_type": "application/pdf",
+        "size": 247645,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/meta_learning_hyperparameters.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1EznTgve_dwxN51M7ht-WCtXYP6wpFSyc",
+        "name": "targeted_regularization.pdf",
+        "mime_type": "application/pdf",
+        "size": 451476,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/targeted_regularization.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      },
+      {
+        "drive_id": "1i4jVz5_MutWsYbgwg8ihKYPnSAWs8fHD",
+        "name": "temporal_dynamic_capacity.pdf",
+        "mime_type": "application/pdf",
+        "size": 413734,
+        "path": "all_pdfs/gpt4o/gpt4o_runs_nanogpt/temporal_dynamic_capacity.pdf",
+        "parent_folder_id": "19eiYcWAUe6PAjE31pM8z6rUyCxkN7WVN"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i",
+    "path": "all_pdfs/llama3.1/llama_runs_diffusion",
+    "entries": [
+      {
+        "drive_id": "1ghEwEeJS-Om2cHUSR22SA9hf5xD-odp9",
+        "name": "dataset_agnostic_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 263729,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/dataset_agnostic_diffusion.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1piqcVZhcbo9Mf7GmhgtfY7XqaMHULwnu",
+        "name": "dataset_distribution_fingerprinting.pdf",
+        "mime_type": "application/pdf",
+        "size": 622413,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/dataset_distribution_fingerprinting.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1K_anZatMWde6l93PI9SXecrz5Ye0o7eE",
+        "name": "diffusion_confidence.pdf",
+        "mime_type": "application/pdf",
+        "size": 814975,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/diffusion_confidence.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "179PZP90-bpwuZMVD9M_QlxwB7joUNNlQ",
+        "name": "diffusion_model_masking.pdf",
+        "mime_type": "application/pdf",
+        "size": 755069,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/diffusion_model_masking.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1Bg3PJAx0fjVbSAO56kfJbRrWq5vStQBm",
+        "name": "diffusion_model_temporal_adaptation.pdf",
+        "mime_type": "application/pdf",
+        "size": 746255,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/diffusion_model_temporal_adaptation.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1VvttXlhThRRuV3FYiqKLf-aM4PG94bbZ",
+        "name": "diffusion_perturbations.pdf",
+        "mime_type": "application/pdf",
+        "size": 815122,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/diffusion_perturbations.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "186EgaOgCA2qH8v3JADhcMuXuhHbyk1Ap",
+        "name": "diffusion_trajectory_control.pdf",
+        "mime_type": "application/pdf",
+        "size": 610896,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/diffusion_trajectory_control.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1qgk_Hy1MkQEIbH9wh9RAmKFYfRrnP3cz",
+        "name": "diffusion_trajectory_quality.pdf",
+        "mime_type": "application/pdf",
+        "size": 782397,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/diffusion_trajectory_quality.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "167NgtdQS-VjeBHuVdABkLMFwGkMwJZUG",
+        "name": "geometric_constraints.pdf",
+        "mime_type": "application/pdf",
+        "size": 958330,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/geometric_constraints.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "13VUXDtbKXQsldxyVMsOOptDFCXlk_DBc",
+        "name": "hybrid_embedding.pdf",
+        "mime_type": "application/pdf",
+        "size": 803470,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/hybrid_embedding.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1qUghF3COcsk5usYO7RDmUwzu4ThLSsgu",
+        "name": "learning_rate_schedule.pdf",
+        "mime_type": "application/pdf",
+        "size": 843942,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/learning_rate_schedule.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1ZjXt5ap3InU5RfZ_-2A72TALfOV_qKEr",
+        "name": "mode_signatures.pdf",
+        "mime_type": "application/pdf",
+        "size": 735303,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/mode_signatures.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1z81IVgouwg2jn6AsarrLOTTkIQMzKRq8",
+        "name": "mode_specific_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 821265,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/mode_specific_diffusion.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1pBRBSVyZByBoz5J-C6Ae5I-xSxjuEss7",
+        "name": "mode_transition.pdf",
+        "mime_type": "application/pdf",
+        "size": 812175,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/mode_transition.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1UQfeJ5gcav-KpH_pwcBtS5cuHAyqCtMs",
+        "name": "noise_schedule_analysis.pdf",
+        "mime_type": "application/pdf",
+        "size": 584844,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/noise_schedule_analysis.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1YCMy8dUP3V6jMC05jurkeIFekL8MIDVc",
+        "name": "noise_schedule_interpolation.pdf",
+        "mime_type": "application/pdf",
+        "size": 796050,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/noise_schedule_interpolation.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1nyZuM8viVJ1YCaaeYXPogn9y9D7lWi98",
+        "name": "noise_schedule_signatures.pdf",
+        "mime_type": "application/pdf",
+        "size": 546673,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/noise_schedule_signatures.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "11-hElFvNm5hd42hLT9HPbPJa2quZpKo7",
+        "name": "noise_schedule_symmetry.pdf",
+        "mime_type": "application/pdf",
+        "size": 690616,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/noise_schedule_symmetry.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1g60UaFzSONIF-uskUuybvbmEbhci77Ha",
+        "name": "resolution_conditioned_diffusion.pdf",
+        "mime_type": "application/pdf",
+        "size": 525292,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/resolution_conditioned_diffusion.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      },
+      {
+        "drive_id": "1K0OXoVyTdH876yL-1u5-MlkgEoIGxcub",
+        "name": "symmetry_invariant_loss.pdf",
+        "mime_type": "application/pdf",
+        "size": 816786,
+        "path": "all_pdfs/llama3.1/llama_runs_diffusion/symmetry_invariant_loss.pdf",
+        "parent_folder_id": "1AtUnkYGL5O6UOrCnRAFoPi6ee0AOjf_i"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD",
+    "path": "all_pdfs/llama3.1/llama_runs_grokking",
+    "entries": [
+      {
+        "drive_id": "1JSoLEw8OsZYw7x2GiwzcWanmwycrHkIb",
+        "name": "abstract_algebra_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 265538,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/abstract_algebra_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1k_2ti4Cg_Z9uhIEvq3zDlt94huRy4m-S",
+        "name": "abstractness_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 158520,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/abstractness_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1hAaKHusV1xot5CR6EKvNqn71TVQO8Bls",
+        "name": "arithmetic_decomposition.pdf",
+        "mime_type": "application/pdf",
+        "size": 176179,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/arithmetic_decomposition.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1fs7dtJSTW2R5Rpu5Czo8G7EPkOsI8cnl",
+        "name": "cognitive_demand_generalization.pdf",
+        "mime_type": "application/pdf",
+        "size": 190777,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/cognitive_demand_generalization.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1pohfoKvna4Wi_us-iIRc8NgYuGfpPwdO",
+        "name": "controlled_concept_drift_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 350328,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/controlled_concept_drift_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1jhsGE3R2sk-GW28hj2NkFukNlCWQdqLA",
+        "name": "distracting_patterns_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 281325,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/distracting_patterns_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1bvUFzVnftEnJN_ZrvSBUK2Owv4r4Ld5Q",
+        "name": "few_shot_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 171763,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/few_shot_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1v_1tKkGPZEPIp5AuI-StgW1ZMy6S1EZT",
+        "name": "fractal_operations_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 274496,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/fractal_operations_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1dhVLojCC6Ehf59OQQKAuEOqGhMpSsVwO",
+        "name": "graph_structure_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 274344,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/graph_structure_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1imfPWIjQNJeWYk3D9oyCYHyyRIxxLjaq",
+        "name": "hierarchical_math_operations.pdf",
+        "mime_type": "application/pdf",
+        "size": 229282,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/hierarchical_math_operations.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1P4ufmhM6xkF5gUn8CMTqzT29AgL5Kyln",
+        "name": "hierarchical_meta_pattern_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 339758,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/hierarchical_meta_pattern_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1GIQdKqNjDCb8lm2Hameh3UAGWgKONbTb",
+        "name": "identity_element_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 303360,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/identity_element_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1Nh5T09pCXiq9jmhF0XOG1JtYqMg3eRKv",
+        "name": "isomorphic_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 196733,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/isomorphic_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "159sIrFaBgQIQxloJFIFAiI2w8eSNFYkI",
+        "name": "math_operation_depth_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 159149,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/math_operation_depth_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1InReT-Zlo92wfj6eXdf-LOLUfzmJ4RM0",
+        "name": "math_operation_representation_comparison.pdf",
+        "mime_type": "application/pdf",
+        "size": 264451,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/math_operation_representation_comparison.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1Pu7h9Yl6CXprSanv0vBuWoe9nwdrHTgM",
+        "name": "missing_operand_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 441979,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/missing_operand_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1aqIBIt16qwpudGDoNOTotxBDVmjQe7ax",
+        "name": "model_capacity_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 285466,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/model_capacity_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1GrFB86ICsAa2CNfuF3yDyShJYmkUGyr7",
+        "name": "modular_to_nonmodular_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 439932,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/modular_to_nonmodular_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1rL-19Eeyf1v_STISmudipKpp_SeY4DhK",
+        "name": "nested_operations.pdf",
+        "mime_type": "application/pdf",
+        "size": 433585,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/nested_operations.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1Cap1R78P0No-tbgMuEGZ4Q3Ars_zaiRy",
+        "name": "numbering_system_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 273807,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/numbering_system_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1-OGQ24cJcoRPDgsZSaz7ZkLlnnPTpPO5",
+        "name": "operation_complexity_generalization.pdf",
+        "mime_type": "application/pdf",
+        "size": 211816,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/operation_complexity_generalization.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1et8nkubs73fyAgV-kNM-xmes68ceD_4N",
+        "name": "operation_compositionality_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 282304,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/operation_compositionality_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "19JwJ_sZYBDwSYd0wYKiXi5ZT_5VrRq3w",
+        "name": "operation_invariance.pdf",
+        "mime_type": "application/pdf",
+        "size": 192343,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/operation_invariance.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1EFlUVPhzHi98PheRRvZ2QcFqmrMyEFHH",
+        "name": "operation_representation_networks.pdf",
+        "mime_type": "application/pdf",
+        "size": 234924,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/operation_representation_networks.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1y1Jhz0wTlqQic1322CubkA0VNF-V8GDQ",
+        "name": "permutation_equivariance_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 343927,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/permutation_equivariance_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1W43Rrr4RKgm0CKNn1zis4Xs-wbzIqdxG",
+        "name": "rotational_symmetry_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 224603,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/rotational_symmetry_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      },
+      {
+        "drive_id": "1B68lMT_3TLziRg15Xfdq_KTrq8QZ94jY",
+        "name": "structured_irrelevant_info_grokking.pdf",
+        "mime_type": "application/pdf",
+        "size": 224028,
+        "path": "all_pdfs/llama3.1/llama_runs_grokking/structured_irrelevant_info_grokking.pdf",
+        "parent_folder_id": "1RFcSFihitwYkTugMZQlSv_bCCs3wsMnD"
+      }
+    ]
+  },
+  {
+    "url": "https://drive.google.com/drive/folders/115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl",
+    "path": "all_pdfs/llama3.1/llama_runs_nanogpt",
+    "entries": [
+      {
+        "drive_id": "12_q1atZYv0XvZ5OePjhCI__mC3k2Sb7m",
+        "name": "adaptive_block_size.pdf",
+        "mime_type": "application/pdf",
+        "size": 95459,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/adaptive_block_size.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1wdNuzJ_rBDFXfdhmcbsl8XVzcOtM0IxG",
+        "name": "availability_heuristic_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 179336,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/availability_heuristic_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1qha13vuNKox-Gr1uXUr-fGbopiLcDlvk",
+        "name": "contrastive_forgetting_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 131825,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/contrastive_forgetting_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1xgAFa36ixT0FsSbwAM4dCuhK2JmjvEdt",
+        "name": "domain_adaptation_meta_learning.pdf",
+        "mime_type": "application/pdf",
+        "size": 118997,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/domain_adaptation_meta_learning.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1hUcp3IugHiJ4hx7dMldv_nHMdH96jwgz",
+        "name": "domain_invariant_reps.pdf",
+        "mime_type": "application/pdf",
+        "size": 106939,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/domain_invariant_reps.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "17EsKdtR5SHHW-ZROkSWw8ixW3YgvHSzE",
+        "name": "dual_scale_attention_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 393585,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/dual_scale_attention_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1mK0n-JjqqV6llgYEnosIbNfeLeKpYc-7",
+        "name": "entity_relationship_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 136801,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/entity_relationship_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1wQqmApjFdT3lBySRsh_lXs2tytTIbf97",
+        "name": "frequency_based_forgetting_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 177425,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/frequency_based_forgetting_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1S18H-mlwNrTBKYIwcnRxfbcQNrP_oykv",
+        "name": "idiomatic_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 112816,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/idiomatic_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1JgGgN0DoYcuYy-8mHACKvhhnChWkTlyU",
+        "name": "interpretable_dynamic_attention_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 181345,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/interpretable_dynamic_attention_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1U6k-MIPBOOWFwTOPz6g1LwalSNr8SJF9",
+        "name": "layerwise_learning_rates.pdf",
+        "mime_type": "application/pdf",
+        "size": 137822,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/layerwise_learning_rates.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1CA3ps2RrO3OYtmEV0xCQbCT8Pydp3cfF",
+        "name": "linguistic_difficulty_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 153599,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/linguistic_difficulty_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1o8Bdqar3p9GA_DWvbe51CAMvesV08OE3",
+        "name": "novelty_conditioned_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 94563,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/novelty_conditioned_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1kHRTVQhXUpTEbx_86pOW-U_CmLWof-hL",
+        "name": "primacy_effect_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 178615,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/primacy_effect_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1gjQRPbEj2oexoz3EI6jE0sbxdinLHzfn",
+        "name": "recency_effect_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 167368,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/recency_effect_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1ZT-tIS03L5BJtsjZQKcae6OiRyB2zEc5",
+        "name": "selective_forgetting_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 109693,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/selective_forgetting_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1ZnexSmvmZVtv3rNspVrqN1AVBSKhQ6Gd",
+        "name": "syntactic_complexity_aware_gpt.pdf",
+        "mime_type": "application/pdf",
+        "size": 94781,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/syntactic_complexity_aware_gpt.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1g5lLeemoD2TLEghydc2lPgrubqRyM-rh",
+        "name": "targeted_knowledge_distillation.pdf",
+        "mime_type": "application/pdf",
+        "size": 129869,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/targeted_knowledge_distillation.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      },
+      {
+        "drive_id": "1BZrczCGVMljHBeZcpa3wYy9buD1Wyr37",
+        "name": "temporal_regularization.pdf",
+        "mime_type": "application/pdf",
+        "size": 139004,
+        "path": "all_pdfs/llama3.1/llama_runs_nanogpt/temporal_regularization.pdf",
+        "parent_folder_id": "115I8qgsVIsX4Q2Zo0QcJJ1L758k1iCyl"
+      }
+    ]
+  }
+]

@@ -1,0 +1,79 @@
+"""Shared minimal header for CREST's HTML documentation."""
+from html import escape
+import os
+from pathlib import Path
+from urllib.parse import quote
+
+CSS = """
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+"""
+
+def site_header(project_root: Path, destination: Path) -> str:
+    root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
+    def link(path):
+        return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
+    return ('<header class="crest-site-header"><nav aria-label="Documentation">'
+            f'<a class="crest-brand" href="{link(root / "README.html")}">CREST</a>'
+            f'<a href="{link(root / "docs/crest-guide.html")}">Research pipeline</a>'
+            f'<a href="{link(root / "docs/ai-scientist-creativity.html")}">AI scientist comparison</a>'
+            f'<a href="{link(root / "docs/index.html")}">All documents</a>'
+            '</nav></header>')

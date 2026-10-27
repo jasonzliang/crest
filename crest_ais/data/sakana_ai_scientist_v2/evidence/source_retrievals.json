@@ -1,0 +1,38 @@
+{
+  "v2_readme.txt": {
+    "url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v2/main/README.md",
+    "final_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v2/main/README.md",
+    "bytes": 13586,
+    "status": 200
+  },
+  "workshop_readme.txt": {
+    "url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/master/README.md",
+    "final_url": "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/master/README.md",
+    "bytes": 4639,
+    "status": 200
+  },
+  "first_publication_blog.html": {
+    "url": "https://sakana.ai/ai-scientist-first-publication/",
+    "final_url": "https://sakana.ai/ai-scientist-first-publication/",
+    "bytes": 25699,
+    "status": 200
+  },
+  "v2_repo_tree.json": {
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v2/git/trees/main?recursive=1",
+    "final_url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v2/git/trees/main?recursive=1",
+    "bytes": 20357,
+    "status": 200
+  },
+  "workshop_repo_tree.json": {
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/git/trees/master?recursive=1",
+    "final_url": "https://api.github.com/repos/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment/git/trees/master?recursive=1",
+    "bytes": 10539,
+    "status": 200
+  },
+  "v2_technical_report.html": {
+    "url": "https://arxiv.org/html/2504.08066v1",
+    "final_url": "https://arxiv.org/html/2504.08066v1",
+    "bytes": 301164,
+    "status": 200
+  }
+}

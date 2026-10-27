@@ -1,0 +1,91 @@
+{
+  "checked_at_utc": "2026-10-27T02:01:13.323753+00:00",
+  "scope": "Official SakanaAI/AI-Scientist-v3 repository and public history/ref/artifact surfaces, with 8 selected or representative fork heads inspected as an additional lead.",
+  "official_head": "df8313889a004f8a44a472e19a833cd547bb828a",
+  "additional_unique_eligible_papers": 0,
+  "downloaded_eligible_manuscripts": [],
+  "counts": {
+    "branches": 1,
+    "tags": 0,
+    "releases": 0,
+    "reachable_commits": 8,
+    "current_tree_entries": 668,
+    "pdf_paths_in_any_official_commit": 0,
+    "submodules_in_any_official_commit": 0,
+    "current_lfs_pointers": 0,
+    "actions_artifacts": 0,
+    "pull_request_heads": 2,
+    "forks_returned_by_api": 77,
+    "fork_heads_scanned": 8
+  },
+  "checked_urls": [
+    "https://github.com/SakanaAI/AI-Scientist-v3",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/branches?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/tags?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/releases?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/commits?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/main?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/matching-refs/",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/actions/artifacts?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/actions/workflows?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/issues?state=all&per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/pulls?state=all&per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/issues/comments?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/comments?per_page=100",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/forks?per_page=100",
+    "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v3/main/README.md",
+    "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v3/main/.gitattributes",
+    "https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v3/main/.gitignore",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/tarball/df8313889a004f8a44a472e19a833cd547bb828a",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/df8313889a004f8a44a472e19a833cd547bb828a?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/322f7a8717849211b145d78fceaa0df901de947d?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/e49408e937115081f68d90838a79483f4f1c1d35?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/7eca5af83b66691477a687aff8fde318e30c3999?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/9ed986dea4f55cbd99680cb5c2a20e0abc247f2b?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/8236a6f71e4f754986fcae5a8af4c89620f53541?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/7ac627e6e9ece605525ea869e62f60acdd415531?recursive=1",
+    "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/2b8aa39285c35aaca3b0e06dd121061ef8a2d854?recursive=1",
+    "https://api.github.com/repos/satputekuldip/AI-Scientist-v3/git/trees/main?recursive=1",
+    "https://api.github.com/repos/SUN-1024/AI-Scientist-v3/git/trees/codex%2Funified-research-agent?recursive=1",
+    "https://api.github.com/repos/DavinciDreams/AI-Scientist-v3/git/trees/main?recursive=1",
+    "https://api.github.com/repos/astoreyai/AI-Scientist-v3/git/trees/main?recursive=1",
+    "https://api.github.com/repos/sk-surya/ai-scientist-v3/git/trees/main?recursive=1",
+    "https://api.github.com/repos/danielsimonjr/Agentic-Scientist/git/trees/main?recursive=1",
+    "https://api.github.com/repos/interactivetech/AI-Scientist-v3/git/trees/main?recursive=1",
+    "https://api.github.com/repos/theainerd/AI-Scientist-v3/git/trees/main?recursive=1"
+  ],
+  "excluded_candidates": [
+    {
+      "url": "https://arxiv.org/pdf/2610.18933",
+      "title": "The Agentic Scientist: Orchestrating Coding Agents for Automated Scientific (Co-)Discovery",
+      "reason": "System description paper, not an output manuscript; README links it."
+    },
+    {
+      "url": "https://arxiv.org/pdf/2206.14858.pdf",
+      "reason": "Pre-existing reference linked in GRPO grading code; predates v3 and is not generated output."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/astoreyai/AI-Scientist-v3/main/tests/scoping_review/fixtures/openalex_2026-10-16/hilkenmeier_2026.pdf",
+      "bytes": 1360442,
+      "sha256": "9f107325eb6475be8b22117d3370b776678cd71aa5fb173c660daf05db1ae82f",
+      "title": "Using full agreement across multiple large language models for title-and-abstract screening in systematic reviews: a proof-of-concept",
+      "doi": "10.1186/s13643-026-03228-4",
+      "pages": 15,
+      "decision": "excluded",
+      "reason": "Human-authored 2026 systematic-review article included as a test input in an independently modified fork; not a paper generated by Sakana Agentic Scientist."
+    }
+  ],
+  "access_limitations": [
+    "Public unauthenticated GitHub REST requests succeeded; browser tool could not render API routes, so these were fetched through Python urllib over HTTPS.",
+    "No private branches, deleted/unreachable objects, non-public local run directories, or authenticated-only artifacts can be ruled out. No authentication bypass attempted.",
+    "No tagged releases or currently listed GitHub Actions artifacts exist to download. Current public API state does not establish whether an artifact existed previously and expired.",
+    "77 fork records were returned despite repository metadata reporting 78 forks; selected modified or representative fork heads were inspected, not every fork branch or historical fork commit."
+  ],
+  "source_snapshot": {
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/tarball/df8313889a004f8a44a472e19a833cd547bb828a",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_agentic_scientist/additional_search/repository/source_snapshot.tar.gz",
+    "sha256": "162d67b19c966383a62462d3c97b412ffe43c775bf592a536d60930d86070980"
+  },
+  "notes": "No repository code was executed. Source snapshot was inspected in memory. Unrelated fork fixture PDF was downloaded for metadata/text identification, then deleted to avoid mixing excluded papers with outputs; checksum retained."
+}

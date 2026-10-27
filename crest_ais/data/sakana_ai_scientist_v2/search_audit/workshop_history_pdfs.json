@@ -1,0 +1,114 @@
+[
+  {
+    "git_blob_sha": "fefaf5060b68f2cd24dff2e965048f63260fac61",
+    "path": "compositional-regularization/annotated_paper.pdf",
+    "sha256": "8d5477b165639ed7339b77677da355496778b081c0086d7185a906fbcbbcd40f",
+    "bytes": 859369,
+    "pages": 8,
+    "text_start": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a workshop paper at ICLR 2025\nCOMPOSITIONAL REGULARIZATION:\nUNEXPECT"
+  },
+  {
+    "git_blob_sha": "f75769521dd202e6b56a9fe3ffe5a5adff9d3cbd",
+    "path": "compositional-regularization/sakana_review.pdf",
+    "sha256": "0717c5a6624b10ae0c0ac2251af990088b168e7b1553caf6c202a9c44030313d",
+    "bytes": 426825,
+    "pages": 3,
+    "text_start": "432\n433\n434\n435\n436\n437\n438\n439\n440\n441\n442\n443\n444\n445\n446\n447\n448\n449\n450\n451\n452\n453\n454\n455\n456\n457\n458\n459\n460\n461\n462\n463\n464\n465\n466\n467\n468\n469\n470\n471\n472\n473\n474\n475\n476\n477\n478\n479\n480\n481\n482\n483\n484\n485\nUnder review as a workshop paper at ICLR 2025\nAI SCIENTIST TEAM REVIEW\nPaper Summary"
+  },
+  {
+    "git_blob_sha": "32dd4367bddae4fa257ec1c32c1fa6da43bdff19",
+    "path": "label-noise/annotated_paper.pdf",
+    "sha256": "20b77a6ea8748d2bf5a0fd10ac589bcb6446fe50d5487632682fa87e324308b2",
+    "bytes": 1997591,
+    "pages": 7,
+    "text_start": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a workshop paper at ICLR 2025\nUNVEILING THE IMPACT OF LABEL NOISE ON"
+  },
+  {
+    "git_blob_sha": "c82a75ac9e80b6e2b28f3e85517cfb6d44384f77",
+    "path": "label-noise/sakana_review.pdf",
+    "sha256": "ef60d8525c1db2a4b7b958daad7cc15d3217f43e71c5722d7ac365668899bb7f",
+    "bytes": 431528,
+    "pages": 3,
+    "text_start": "378\n379\n380\n381\n382\n383\n384\n385\n386\n387\n388\n389\n390\n391\n392\n393\n394\n395\n396\n397\n398\n399\n400\n401\n402\n403\n404\n405\n406\n407\n408\n409\n410\n411\n412\n413\n414\n415\n416\n417\n418\n419\n420\n421\n422\n423\n424\n425\n426\n427\n428\n429\n430\n431\nUnder review as a workshop paper at ICLR 2025\nAI SCIENTIST TEAM REVIEW\nPaper Summary"
+  },
+  {
+    "git_blob_sha": "ee9ef9fbe03cbcbc340a6fe2f026efdd607e48c4",
+    "path": "pest-detection/annotated_paper.pdf",
+    "sha256": "4ed38075f76698bda3b3d21d3d792286aa1d45124398277119c8cca86ddbdf6f",
+    "bytes": 1772982,
+    "pages": 6,
+    "text_start": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a workshop paper at ICLR 2025\nREAL-WORLD CHALLENGES IN PEST DETECTIO"
+  },
+  {
+    "git_blob_sha": "b5617e5151fd0651916bc0f693a5119bb6844d09",
+    "path": "pest-detection/sakana_review.pdf",
+    "sha256": "cb486a2c447e5ec2a9c8907d774ed35e9e7f06eec4828bbf5f01f0c9b2d98ff3",
+    "bytes": 452751,
+    "pages": 3,
+    "text_start": "324\n325\n326\n327\n328\n329\n330\n331\n332\n333\n334\n335\n336\n337\n338\n339\n340\n341\n342\n343\n344\n345\n346\n347\n348\n349\n350\n351\n352\n353\n354\n355\n356\n357\n358\n359\n360\n361\n362\n363\n364\n365\n366\n367\n368\n369\n370\n371\n372\n373\n374\n375\n376\n377\nUnder review as a workshop paper at ICLR 2025\nAI SCIENTIST TEAM REVIEW\nPaper Summary"
+  },
+  {
+    "git_blob_sha": "f6775bd7e8e56124cdc7a7d5f57c97f5ef31b741",
+    "path": "compositional-regularization/annotated_paper.pdf",
+    "sha256": "d9eeaf93efb1dc639de91f51ec9f8007fe2f01ab2610ea8aa7422d259df8d7f1",
+    "bytes": 1096288,
+    "pages": 8,
+    "text_start": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a workshop paper at ICLR 2025\nCOMPOSITIONAL REGULARIZATION:\nUNEXPECT"
+  },
+  {
+    "git_blob_sha": "d5f586c374d6a9488ad4b0df97875772214fdf87",
+    "path": "compositional-regularization/sakana_review.pdf",
+    "sha256": "0cdd21758cdea191c2613c474f912571815d6d4b63276c23f8ce515a039490fc",
+    "bytes": 498817,
+    "pages": 3,
+    "text_start": "432\n433\n434\n435\n436\n437\n438\n439\n440\n441\n442\n443\n444\n445\n446\n447\n448\n449\n450\n451\n452\n453\n454\n455\n456\n457\n458\n459\n460\n461\n462\n463\n464\n465\n466\n467\n468\n469\n470\n471\n472\n473\n474\n475\n476\n477\n478\n479\n480\n481\n482\n483\n484\n485\nUnder review as a workshop paper at ICLR 2025\nAI SCIENTIST TEAM REVIEW\nPaper Summary"
+  },
+  {
+    "git_blob_sha": "03b53bb2ca2b1da68ece46fd243ebfaa31be9bf3",
+    "path": "label-noise/annotated_paper.pdf",
+    "sha256": "55dc536e41e96adcf1de6e13fcf59093352fe1b31832ac0e75e32a1016766f1c",
+    "bytes": 2963251,
+    "pages": 7,
+    "text_start": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a workshop paper at ICLR 2025\nUNVEILING THE IMPACT OF LABEL NOISE ON"
+  },
+  {
+    "git_blob_sha": "0df072fa6db7024146a9843833444cc40b1527ce",
+    "path": "label-noise/sakana_review.pdf",
+    "sha256": "d0558cd4220e81ef56dc4bf88f2d25fac6f7594e6eebf05bea1d794a74571d1a",
+    "bytes": 504729,
+    "pages": 3,
+    "text_start": "378\n379\n380\n381\n382\n383\n384\n385\n386\n387\n388\n389\n390\n391\n392\n393\n394\n395\n396\n397\n398\n399\n400\n401\n402\n403\n404\n405\n406\n407\n408\n409\n410\n411\n412\n413\n414\n415\n416\n417\n418\n419\n420\n421\n422\n423\n424\n425\n426\n427\n428\n429\n430\n431\nUnder review as a workshop paper at ICLR 2025\nAI SCIENTIST TEAM REVIEW\nPaper Summary"
+  },
+  {
+    "git_blob_sha": "eb98934fcfeb168576f454e7ca235a485bca3f5a",
+    "path": "pest-detection/annotated_paper.pdf",
+    "sha256": "2893ca79ff5063ced8adcfa3593e8f9cf3921969583dcc36668ff4d2dc0c6be6",
+    "bytes": 2457521,
+    "pages": 6,
+    "text_start": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a workshop paper at ICLR 2025\nREAL-WORLD CHALLENGES IN PEST DETECTIO"
+  },
+  {
+    "git_blob_sha": "8372dbdaa3e229e9ceea8e039804753f56366183",
+    "path": "pest-detection/sakana_review.pdf",
+    "sha256": "f303cca72ddbcb6bbd3aba38495d40ba9dcae6ad6481a6d21aeba6e8da67f231",
+    "bytes": 535481,
+    "pages": 3,
+    "text_start": "324\n325\n326\n327\n328\n329\n330\n331\n332\n333\n334\n335\n336\n337\n338\n339\n340\n341\n342\n343\n344\n345\n346\n347\n348\n349\n350\n351\n352\n353\n354\n355\n356\n357\n358\n359\n360\n361\n362\n363\n364\n365\n366\n367\n368\n369\n370\n371\n372\n373\n374\n375\n376\n377\nUnder review as a workshop paper at ICLR 2025\nAI SCIENTIST TEAM REVIEW\nPaper Summary"
+  },
+  {
+    "git_blob_sha": "198a5378e5befcd41d77b1c04809c0bf30c89765",
+    "path": "pest-detection/annotated_paper.pdf",
+    "sha256": "dd2c9505da902dc1372a83d4b0e2a5f6fb5c84b877853fb8228ac5e757402d33",
+    "bytes": 2457199,
+    "pages": 6,
+    "text_start": "000\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n014\n015\n016\n017\n018\n019\n020\n021\n022\n023\n024\n025\n026\n027\n028\n029\n030\n031\n032\n033\n034\n035\n036\n037\n038\n039\n040\n041\n042\n043\n044\n045\n046\n047\n048\n049\n050\n051\n052\n053\nUnder review as a workshop paper at ICLR 2025\nREAL-WORLD CHALLENGES IN PEST DETECTIO"
+  },
+  {
+    "git_blob_sha": "418e01317df8564bd4bea16c4af130cfafc8e52d",
+    "path": "pest-detection/sakana_review.pdf",
+    "sha256": "403b04d1a0fcbe077e675f1ff1a36f0ecff3ab145cdd37a0123c1e94f918a474",
+    "bytes": 535481,
+    "pages": 3,
+    "text_start": "324\n325\n326\n327\n328\n329\n330\n331\n332\n333\n334\n335\n336\n337\n338\n339\n340\n341\n342\n343\n344\n345\n346\n347\n348\n349\n350\n351\n352\n353\n354\n355\n356\n357\n358\n359\n360\n361\n362\n363\n364\n365\n366\n367\n368\n369\n370\n371\n372\n373\n374\n375\n376\n377\nUnder review as a workshop paper at ICLR 2025\nAI SCIENTIST TEAM REVIEW\nPaper Summary"
+  }
+]

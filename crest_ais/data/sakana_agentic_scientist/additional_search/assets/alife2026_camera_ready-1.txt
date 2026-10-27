@@ -1,0 +1,606 @@
+                        Diffusing Blame: Task-Dependent Credit Assignment
+                           in Biologically Plausible Dual-Stream Networks
+   Yutaro Yamada, Luca Grillotti, Rujikorn Charakorn, Sebastian Risi, David Ha, Robert Tjarko Lange
+                                                     Sakana AI, Tokyo, Japan
+                                          yutaro.yamada.y@gmail.com, robert@sakana.ai
+
+
+                           Abstract                                (Dale, 1935; Eccles, 1976; Strata and Harvey, 1999). This
+                                                                   constraint shapes cortical computation through balanced ex-
+  Biological neural circuits obey Dale’s principle: each neu-
+  ron’s synapses are uniformly excitatory or inhibitory. Arti-     citation and inhibition (Markram et al., 2004). Artificial neu-
+  ficial networks that respect this constraint must coordinate     ral networks, by contrast, freely assign positive and negative
+  separate excitatory and inhibitory populations, fundamen-        weights to any connection, a simplification that enables effi-
+  tally changing how credit is assigned during learning. Sev-      cient credit assignment via backpropagation but bears little
+  eral biologically plausible learning rules avoid backpropa-      resemblance to biological learning. Training deep networks
+  gation’s weight transport requirement, but it has been dif-
+  ficult to achieve strong performance under Dale’s princi-        with backpropagation requires the backward pass to use ex-
+  ple beyond MNIST. Error Diffusion (ED) was originally            act transposes of forward weight matrices, the weight trans-
+  proposed in a dual-stream excitatory/inhibitory architecture,    port problem, which lacks biological support (Crick, 1989;
+  where learning is driven by routing global error signals to      Bengio et al., 2015). Several alternatives address this con-
+  all layers without transporting transposed forward weights       cern. Feedback Alignment (FA) replaces backward weights
+  or relying on random feedback matrices. Whether such
+  a rule can scale under Dale’s principle across both super-       with fixed random matrices (Lillicrap et al., 2016), Direct
+  vised classification and reinforcement learning remains un-      Feedback Alignment (DFA) routes output errors directly to
+  known. Here, we introduce modulo error routing to extend         each hidden layer through fixed random matrices (Nøkland,
+  Error Diffusion beyond binary classification, and show that      2016), and predictive coding frameworks approximate back-
+  a dual-stream excitatory/inhibitory architecture trained with    propagation through local Hebbian updates (Whittington
+  this method achieves 96.7% on MNIST and establishes a
+  61.7% baseline on CIFAR-10, demonstrating that representa-       and Bogacz, 2017; Sacramento et al., 2018). While these
+  tion learning is possible even when strictly enforcing Dale’s    methods avoid weight transport, none enforce Dale’s princi-
+  principle. For the classification setting, we introduce three    ple: all allow arbitrary sign weights. Error Diffusion (ED),
+  domain-specific innovations: layer-specific sigmoid widths,      originally proposed by (Kaneko, 2000), is a local learn-
+  batch-centered class error signals, and asymmetric initial-      ing rule in which weight updates depend on presynaptic
+  ization, and ablation analysis reveals that their relative im-
+  portance reverses between MNIST and CIFAR-10, expos-             activity, a postsynaptic activation derivative, and a single
+  ing task-dependent credit-assignment bottlenecks invisible to    global error sign (Fujita, 2026). This locality makes ED
+  single-benchmark evaluation. In reinforcement learning, we       naturally compatible with biological constraints, but prior
+  integrate ED with Proximal Policy Optimization (PPO) and         work demonstrated its effectiveness only on binary classifi-
+  evaluate it on continuous-control tasks in Google Brax and       cation and a simple classification task like MNIST (Fujita,
+  on Craftax, an open-ended exploration task. We show that
+  ED-PPO achieves competitive performance relative to Direct       2026). The central question we address is whether a bio-
+  Feedback Alignment, a backpropagation-free baseline.             logically plausible architecture that enforces Dale’s princi-
+                                                                   ple can achieve competitive performance across both super-
+                                                                   vised classification and reinforcement learning, and what the
+                                                                   task-dependent importance of its components reveals about
+                       Introduction                                credit assignment under biological constraints. We make
+In biological neural circuits, the separation of excitatory and    three contributions:
+inhibitory neuronal populations is a fundamental organiza-
+tional principle, formalized as Dale’s principle: each neu-
+ron releases the same neurotransmitter at all of its synapses      1. A dual-stream excitatory/inhibitory ED architecture that
+                                                                      maintains non-negative weights across classification
+    ©2026 Yutaro Yamada, Luca Grillotti, Rujikorn Charakorn,
+Sebastian Risi, David Ha, Robert Tjarko Lange. Published under        (MNIST, CIFAR-10) and reinforcement learning (Brax
+a Creative Commons Attribution 4.0 International (CC BY 4.0) li-      locomotion tasks, Craftax) by extending the original ED
+cense.                                                                via modulo error routing.
+2. For the classification setting, three domain-specific in-     dom feedback. Building on this framework, our work ex-
+   novations: layer-specific sigmoid widths, batch-centered      tends Error Diffusion to multi-class classification and rein-
+   class error, and asymmetric initialization, whose cross-      forcement learning.
+   task ablation reveals that credit-assignment bottlenecks
+   shift qualitatively with task difficulty.                     Reinforcement learning without backpropagation.
+3. Cross-domain evaluation shows that ED-PPO achieves            Evolution Strategies (ES) provide a gradient-free alternative
+   returns comparable to backpropagation-based and DFA-          to policy gradient methods (Salimans et al., 2017), but scale
+   based PPO on continuous control tasks such as Ant, Hu-        poorly with parameter count. Proximal Policy Optimization
+   manoid, and HalfCheetah. On the more complex Craftax          (PPO) is a widely used policy gradient method (Schulman
+   task, ED-PPO achieves performance comparable to DFA.          et al., 2017) that typically relies on backpropagation for
+                                                                 gradient computation. Biologically plausible alternatives
+                                                                 for RL credit assignment have been proposed—reward-
+                     Related Work                                modulated Hebbian rules can solve decision-making tasks
+                                                                 by gating synaptic updates with a global reward signal
+Biologically plausible learning rules. The weight trans-
+                                                                 (Pfeiffer et al., 2010), and Izhikevich (2007) showed that
+port problem has motivated a family of alternatives to back-
+                                                                 linking spike-timing-dependent plasticity with dopamine
+propagation (Crick, 1989; Bengio et al., 2015). Feedback
+                                                                 signaling addresses the distal reward problem—but these
+Alignment uses fixed random backward weights (Lillicrap
+                                                                 methods have not been demonstrated with deep networks
+et al., 2016), and Liao et al. (2016) showed that approxi-
+                                                                 on continuous-control benchmarks. We replace backpropa-
+mate weight symmetry can support learning in deeper net-
+                                                                 gation in PPO’s gradient computation with Error Diffusion,
+works. DFA projects output errors directly to hidden lay-
+                                                                 evaluating on Brax physics tasks (Freeman et al., 2021) and
+ers (Nøkland, 2016), and Launay et al. (2020) demonstrated
+                                                                 Craftax (Matthews et al., 2024).
+that DFA scales to modern architectures, including trans-
+formers and convnets. Difference target propagation com-
+                                                                                          Method
+putes layer-wise learning targets instead of gradients (Lee
+et al., 2015). Predictive coding provides a complemen-           Dual-Stream Architecture
+tary framework through local Hebbian updates (Whittington        We adopt the original Error Diffusion formulation proposed
+and Bogacz, 2017), and dendritic cortical microcircuit mod-      by (Kaneko, 2000). To enforce Dale’s principle, we split
+els approximate backpropagation with segregated dendrites        each layer into an excitatory (p) and inhibitory (n) stream.
+(Sacramento et al., 2018). Bartunov et al. (2018) found that     The forward pass for layer i computes:
+biologically motivated algorithms generally struggle to scale
+beyond simple benchmarks, and Richards et al. (2019) ar-                  pi = ϕi (+pi−1 Wpp − ni−1 Wnp + bp )
+gued that biological plausibility and computational perfor-               ni = ϕi (+ni−1 Wnn − pi−1 Wpn + bn )
+mance need not be in tension if the right architectural prin-
+ciples are identified. Filipovich et al. (2022) demonstrated     where all weight matrices Wpp , Wnp , Wnn , Wpn ≥ 0
+DFA on photonic hardware, showing that bioplausible rules        element-wise, bias parameters bp and bn are not neces-
+can enable novel computing substrates.                           sary non-negative, ϕi is a layer-specific activation function.
+                                                                 The negation signs in front of Wnp and Wpn are structural
+Dale’s principle in neural networks. Song et al. (2016)          (hardcoded), ensuring that cross-stream connections are in-
+introduced a framework for training excitatory-inhibitory re-    hibitory while all learnable parameters remain non-negative.
+current networks with Dale’s principle, separating synap-        This dual-stream design requires four weight sub-matrices
+tic magnitudes from signs by parameterizing weights as           per layer, resulting in ∼4× more parameters than an un-
+W = W + ⊙ M , where W + ≥ 0 contains trainable con-              constrained single-stream network of the same width (e.g.,
+nection magnitudes and M is a fixed sign mask encoding           ∼32M vs ∼8M for DFA on the same architecture).
+each unit’s excitatory or inhibitory identity. Cornford et al.
+(2021) proposed Dale’s ANNs, feedforward architectures           Error Diffusion Update Rule
+with separate excitatory and inhibitory populations that can     The ED update replaces backpropagated layerwise errors
+learn comparably to standard ANNs by treating inhibition         with an output-space error signal that is routed directly to
+as a normalization mechanism. Grossberg (1987) explored          hidden units. While the original formulation was developed
+competitive learning in networks with separate excitatory        for binary classification (Kaneko, 2000; Fujita, 2026), we
+and inhibitory interactions. Error Diffusion (Fujita, 2026;      extend ED to multi-output prediction by assigning each hid-
+Kaneko, 2000) is also naturally Dalean, representing posi-       den unit a fixed output channel. For a hidden unit i, we de-
+tive and negative components through separate non-negative       fine r(i) = i mod C, where C is the output dimension, and
+populations while avoiding both weight transport and ran-        use the routed error component sr(i) as its learning signal.
+Figure 1: Overview of the dual-stream Error Diffusion framework. Left: The excitatory/inhibitory architecture maintains
+separate streams (p, n) with four non-negative weight matrices per layer, enforcing Dale’s principle structurally. Center: The
+Error Diffusion update broadcasts output error directly to hidden layers without weight transport or random feedback matrices.
+Right: The shared architecture is applied to classification (with domain-specific sigmoid widths, batch-centered class error,
+and asymmetric initialization) and reinforcement learning (with PPO integration).
+
+
+(For other design choices of this error routing and why, see      This deterministic modulo routing provides coarse output-
+Figure 4)                                                         associated credit assignment without transporting forward
+   For a mini-batch, let S ∈ RB×C denote the output error         weights or using random feedback matrices. Unlike DFA,
+signal, and let M ∈ {0, 1}H×C be the fixed routing matrix         whose fixed feedback matrices are random, ED uses a struc-
+with Mic = 1 iff r(i) = c. The routed hidden error is             tured correspondence between hidden units and output di-
+                                                                  mensions.
+                         R = SM ⊤ ,                        (1)
+                                                                  Classification-Specific Innovations
+and the corresponding matrix of local postsynaptic drives is
+                                                                  For the classification setting (MNIST, CIFAR-10), we in-
+                     Up = ϕ′ (Zp ) ⊙ R,                    (2)    troduce three domain-specific innovations that address fail-
+                                                                  ure modes specific to multi-class classification under Dale’s
+where Zp ∈ RB×H is the positive-stream preactivation ma-          principle. These three innovations are specific to the classi-
+trix.                                                             fication setting and are not used in the RL extension.
+   Let Ap ∈ RB×K denote the positive-stream presynaptic
+activations feeding the layer. In fully connected notation, the
+positive-to-positive ED update is                                 Layer-specific sigmoid widths. In the classification archi-
+                                                                  tecture, ϕi (z) = 1/(1 + e−2z/αi ) with layer-type-specific
+                      ∆Wpp ∝ A⊤
+                              p Up .                       (3)    sigmoid width αi . The vanishing gradient problem in
+                                                                  sigmoid networks is well documented (Roodschild et al.,
+   In the supervised image classifiers, C = 10 and S is the       2020; Ding et al., 2018), and various parameterized activa-
+batch-centered one-vs-all classification error. In Craftax pol-   tions have been proposed (Szandała, 2020; Hammad, 2024).
+icy networks, C is the number of discrete action logits. In       Since the sigmoid derivative directly gates the error signal in
+MuJoCo policy networks, C is the policy distribution pa-          ED (Eq. 3), gradient attenuation is especially severe: post-
+rameter dimension for the TanhNormal policy.                      hoc analysis reveals a 25× decay from output to first hidden
+   Each local weight update is proportional to presynaptic        layer. Wider sigmoids (larger αi ) maintain larger deriva-
+activity, and this routed postsynaptic drive, with stream-        tives, preventing premature saturation. We set α = 3.0 for
+specific signs for the dual positive/negative pathways.           CIFAR-10 convolutional layers and α = 6.0 for fully con-
+nected layers, including the output layer; MNIST uses only          Experimental Protocol
+the α = 6.0 fully connected setting.                                Classification. We evaluate six variants on MNIST and
+                                                                    CIFAR-10: (1) the proposed ED with all three innovations,
+Batch-centered class error signals. For the 10-way clas-            (2) a DFA baseline using fixed random feedback matrices
+sification tasks, the ED update uses independent sigmoid            without Dale’s constraints, (3) the seed ED (the dual-stream
+output activations rather than a softmax. For a mini-batch          architecture without any of the three innovations, i.e., using
+of size B, we form a one-vs-all output error Eb,c = 1[yb =          uniform sigmoid width α = 1.0, raw error signals, and sym-
+c] − ŷb,c , where ŷb,c is the positive-stream output activation   metric initialization), and three ablations removing one in-
+for class c. Since each example contributes one target class        novation each: (4) no batch-centered class error, (5) sym-
+and nine non-target classes, the raw one-vs-all error can con-      metric init, and (6) uniform sigmoid width. Each variant
+tain a strong class-wise offset, especially early in training.      is trained for 250 epochs with five random seeds per task (60
+We therefore subtract the mini-batch
+                                   PB        mean separately for    runs total). For classification, weights are clamped to a floor
+each class: Ẽb,c = Eb,c − B1 b′ =1 Eb′ ,c . This makes the         of 10−4 after each update to enforce Dale’s principle.
+error signal zero-mean across the batch for every class, re-
+ducing persistent suppression or excitation of class channels       Reinforcement learning. We compare ED-PPO against
+caused by the one-vs-all target imbalance. The centered sig-        BP-PPO (standard backpropagation), DFA-PPO (Direct
+nal is then applied directly to the output layer, with the neg-     Feedback Alignment) (Nøkland, 2016), and ES (Sali-
+ative stream receiving the opposite sign; hidden fully con-         mans et al., 2017) on three Brax (Freeman et al., 2021)
+nected units and convolutional channels receive class-routed        locomotion tasks (Ant, HalfCheetah, Humanoid). On
+copies of the same centered error.                                  Craftax (Matthews et al., 2024), we compare against BP-
+                                                                    PPO and DFA-PPO. Additionally, we evaluate a non-Dalean
+Asymmetric E/I initialization. For convolutional and                variant of ED-PPO, in which weights are not constrained to
+fully connected layers, weight parameters are initialized           be non-negative, and denote it as “ED-PPO (non-Dalean)”.
+from a non-negative uniform distribution in [0, 1) and scaled       Each algorithm is evaluated with five random seeds per
+by the inverse square root of the fan-in. Hidden excita-            environment. We report the final episode reward (the re-
+tory weights (Wpp , Wnn ) are then scaled by 1.5×, while in-        ward at the last evaluation checkpoint) averaged over seeds;
+hibitory weights (Wnp , Wpn ) are scaled by 0.5×, giving an         statistical comparisons use Welch’s t-test with α = 0.05.
+expected E/I scale ratio of 3 : 1. The final fully connected        The RL experiments use a separate training and evalua-
+output layer uses symmetric initialization (1.0× for both ex-       tion pipeline from the classification experiments, with both
+citatory and inhibitory weights) to avoid output saturation.        pipelines sharing the same dual-stream ED architecture but
+                                                                    differing in activation functions, normalization, and opti-
+RL Extension: ED-PPO                                                mization procedure as described above.
+For reinforcement learning, we integrate a Dale-constrained
+dual-stream Error Diffusion (ED) architecture into PPO.                                        Results
+The policy and value networks are both dual-stream MLPs             Classification: Main Comparison
+with separate positive and negative pathways and non-               Figure 2 summarizes accuracy across all six classification
+negative synaptic weights. Each layer computes excitatory-          variants. The proposed ED achieves 96.7 ± 0.1% on MNIST
+minus-inhibitory preactivations for the positive and negative       and 61.7 ± 0.7% on CIFAR-10, a substantial improvement
+streams, applies a width-scaled sigmoid nonlinearity, and           over seed ED (50.4 ± 9.8% and 11.6 ± 2.2%). DFA achieves
+combines the final streams as ŷ = y + − y − . Both Dale im-        higher accuracy on both tasks (97.6% and 69.1%) but vio-
+plementations initialize the two streams symmetrically from         lates Dale’s principle, requiring ∼2.84M negative weights.
+the same observation, p0 = n0 = x, after optional stream            The accuracy gap between ED and DFA widens from 0.9
+normalization, rather than splitting inputs with ReLU.              pp on MNIST to 7.4 pp on CIFAR-10, suggesting that the
+   ED replaces backpropagation through hidden layers after          cost of maintaining non-negative weights grows with task
+the PPO’s objective function supplies an output-level error         difficulty. We note that ∼62% test accuracy on CIFAR-10 is
+signal. For vector-valued policy outputs, the error is routed       still far from competitive compared to traditional gradient-
+to hidden units by output class/channel assignment; for the         based methods. That being said, this is the first time ED has
+scalar value network, the error is broadcast to all hidden          been successfully applied to convolutional neural networks.
+units. All weight matrices are initialized non-negative us-         Previously, Fujita (2026) obtained ∼55.2% test accuracy on
+ing absolute Gaussian samples, with separate scaling for ex-        CIFAR-10 using a purely feedforward MLP with flattening.
+citatory and inhibitory pathways, and weights are clamped
+non-negative after optimizer updates.                               Classification: Cross-Task Ablation Reversal
+   Figure 1 summarizes the error diffusion training proce-          In the classification setting, ablation analysis reveals that the
+dure and methodological contributions.                              importance hierarchy of the three innovations reverses be-
+Table 1: Ablation effect sizes (∆ = proposed ED minus abla-       ED-PPO (non-Dalean) (p = 0.010), demonstrating that ran-
+tion, in percentage). Negative values indicate accuracy loss.     dom feedback pathways that suffice for simpler tasks fail on
+                                                                  complex, open-ended environments.
+      Removed Component       MNIST ∆      CIFAR-10 ∆               ED-PPO (non-Dalean) exhibits higher variance than BP-
+      Batch-Centered Error          −0.3          −47.9           PPO on Ant and HalfCheetah, though on Humanoid its
+      Layer-Specific Widths        −71.4          −15.1           variance is lower (1144 vs 3252), suggesting that the ED
+      Asymmetric Init               +0.0           −5.5           gradient signal can introduce additional stochasticity. The
+                                                                  Craftax shortfall (−4.0, p = 0.002) and higher variance
+                                                                  across environments suggest that the coarse modular error
+tween tasks (Figure 2, Table 1).                                  routing of ED may be less reliable for tasks requiring fine-
+                                                                  grained temporal credit assignment or stable convergence.
+MNIST. Removing layer-specific sigmoid widths is catas-
+trophic (96.7% → 25.3%, ∆ = −71.4 pp), collapsing ac-             DFA Across Domains
+curacy to near-chance. Removing batch-centered class error
+                                                                  DFA provides an informative comparison point across both
+causes only ∆ = −0.3 pp, and symmetric initialization has
+                                                                  classification and RL. In classification, DFA achieves the
+no measurable effect (∆ = +0.0 pp). Gradient flow regula-
+                                                                  highest accuracy (97.6% MNIST, 69.1% CIFAR-10) but vi-
+tion is the sole bottleneck on this easier task.
+                                                                  olates Dale’s principle. On Craftax, DFA-PPO is the weak-
+                                                                  est method (19.8 vs BP-PPO 27.0, ED-PPO 23.0), demon-
+CIFAR-10. The hierarchy reverses. Removing batch-                 strating that random feedback pathways that work for super-
+centered error is now the most destructive ablation               vised learning can fail for complex RL. This cross-domain
+(61.7% → 13.8%, ∆ = −47.9 pp), causing four of five               pattern—DFA strong on classification, weak on complex
+seeds to collapse. Uniform sigmoid width causes ∆ =               RL—parallels the finding that method components assume
+−15.1 pp, and symmetric initialization causes ∆ = −5.5            different importance under different task demands.
+pp. All three innovations contribute, but their relative order-
+ing changes fundamentally.                                        Post-hoc Analysis
+                                                                  Surrogate gradient attenuation. Post-hoc analysis of
+Interpretation. This reversal reflects qualitatively differ-
+                                                                  training dynamics on CIFAR-10 (Figure 6a) reveals local
+ent credit-assignment bottlenecks. MNIST’s well-separated
+                                                                  surrogate gradient magnitudes dropping from 6.6 × 10−3 at
+features allow learning even without error centering; but
+                                                                  the output layer to 2.7 × 10−4 at the first hidden layer—a
+without wide sigmoids, the derivatives vanish entirely. On
+                                                                  25× attenuation. This pattern is visible from epoch 3, in-
+CIFAR-10, higher inter-class similarity makes the 9:1 er-
+                                                                  dicating a structural property of sigmoid-gated error diffu-
+ror imbalance overwhelming: batch-centering becomes es-
+                                                                  sion that motivates layer-specific widths. Per-layer learn-
+sential to prevent uniform output suppression. The reversal
+                                                                  ing rate multipliers (3.0× early, 0.5× output) partially com-
+demonstrates that evaluating biologically plausible methods
+                                                                  pensate but cannot substitute for wider sigmoid derivatives.
+on a single benchmark may obscure critical trade-offs.
+                                                                  The near-zero generalization gap (0.98%) despite ∼32M
+RL: Cross-Domain Generalization                                   nominal parameters is consistent with underfitting rather
+                                                                  than overfitting, but the cause is ambiguous: the 37.3%
+Figures 3 and 5 report performance across four RL tasks.
+                                                                  of weights at floor (10−4 ) reduces effective capacity well
+ED-PPO is strongest on HalfCheetah, where it outperforms
+                                                                  below the nominal parameter count, so the limitation may
+BP-PPO (5494 ± 691 vs 3520 ± 485; p < 0.001), ED-
+                                                                  reflect constrained capacity rather than (or in addition to)
+PPO (non-Dalean) (p = 0.028), and ES (p = 0.003), while
+                                                                  credit assignment quality.
+matching DFA-PPO (5581 ± 359). On Ant it is on par with
+both PPO variants (6891±835), significantly exceeding only
+ES (p = 0.004). On Humanoid (6670 ± 2592) and Craftax             Emergent E/I balance. Weight-level E/I ratios (Fig-
+(20.9 ± 2.9) it trails BP-PPO and ED-PPO (non-Dalean),            ure 6b) reveal that training drives the 3:1 asymmetric ini-
+though the Craftax gap to the latter is not significant.          tialization toward near-balanced ratios (∼1.0) in hidden lay-
+   ED-PPO (non-Dalean) also performs competitively                ers. A depth-dependent gradient emerges: the first layer
+across the same four environments, on par with BP-PPO on          reaches near-perfect balance (E/I = 1.03), the second be-
+Humanoid (9804 ± 1144 vs 8478 ± 3252). On Ant, ED-                comes slightly inhibitory-dominant (0.90), and the third de-
+PPO (non-Dalean) achieves a higher mean (7616 ± 2031 vs           velops the strongest inhibitory bias (0.81). This increasing
+6740 ± 1781) but the difference is not significant due to high    inhibition with depth is loosely consistent with biological
+variance. On HalfCheetah, ED-PPO (non-Dalean) achieves            observations that inhibitory circuitry and E/I balance vary
+a similar score (3498 ± 1703 vs 3520 ± 485). Notably, DFA-        systematically across cortical hierarchies (Markram et al.,
+PPO on Craftax achieves only 19.8±1.5, significantly below        2004), though weight-level E/I ratios are an indirect proxy
+                                                                         MNIST                                                                                                                                             CIFAR-10
+                     1.0          96.7%           97.6%                          96.4%                         96.7%                                          1.0
+                                                                                                                                      95%
+
+
+                     0.8                                                                                                                                      0.8
+                                                                                                                                                                                               69.1%
+
+
+
+   Test Accuracy                                                                                                                              Test Accuracy
+                                                                 50.4%                                                                                                         61.7%
+                     0.6                                                                                                                                      0.6                                                                                        56.2%            46.6%
+
+
+                     0.4                                                                                                     25.3%                            0.4
+                                                                                                                                                                                                                                         13.8%
+                     0.2                                                                                                                                      0.2                                                         11.6%
+
+
+                     0.0                                                                                                                                      0.0
+                                 Proposed          DFA            Seed            No                           Sym.          Unif.                                        Proposed              DFA                       Seed           No              Sym.             Unif.
+                                    ED                             ED             MCE                           Init         Width                                           ED                                            ED            MCE              Init            Width
+
+    Figure 2: Classification accuracy across all six variants on MNIST (left) and CIFAR-10 (right). Error bars: ±1 std over 5
+    seeds. The ablation importance hierarchy reverses between tasks: layer-specific widths dominate on MNIST, batch-centered
+    class error dominates on CIFAR-10.
+
+                                                                                                      12K
+                                                                                                                                                                                                              6K
+
+
+             8K
+                                                                                                      10K
+                                                                                                                                                                                                              5K
+
+
+
+
+Episode Return                                                                           Episode Return                                                                                          Episode Return
+             6K                                                                                           8K                                                                                                  4K
+
+
+
+                                                                                                          6K                                                                                                  3K
+             4K
+
+
+
+                                                                 BP-PPO                                   4K                                                          BP-PPO                                  2K
+                                                                                                                                                                                                                                                                  BP-PPO
+             2K                                                  ED-PPO (non-Dalean)                                                                                  ED-PPO (non-Dalean)                                                                         ED-PPO (non-Dalean)
+                                                                 ED-PPO                                   2K
+                                                                                                                                                                      ED-PPO                                  1K                                                  ED-PPO
+                                                                 ES                                                                                                   ES                                                                                          ES
+                 0
+                                                                 DFA-PPO                                                                                              DFA-PPO                                     0                                               DFA-PPO
+                                                                                                           0
+
+
+                                          Environment steps                                                                          Environment steps                                                                                   Environment steps
+                     0     50M     100M    150M    200M   250M    300M    350M    400M                          0      50M   100M      150M     200M           250M     300M     350M   400M                          0     50M   100M     150M   200M     250M    300M    350M    400M
+
+
+
+
+                                             (a) Ant                                                                                (b) Humanoid                                                                                     (c) HalfCheetah
+
+                           Figure 3: Episode return across three RL environments. Error bars indicate ±1 standard deviation over 5 seeds.
+
+
+    for biological E/I balance, which involves cell counts, fir-                                                                                                                                                      Discussion
+    ing rates, and synaptic strengths jointly. The convergence                                                                                            Summary. The central finding of this work is that the
+    toward balance explains the task-dependent importance of                                                                                              dual-stream ED architecture is viable across both classifi-
+    asymmetric initialization: on MNIST, balance is reached                                                                                               cation and reinforcement learning, but the auxiliary mech-
+    quickly regardless of initial conditions (∆ = +0.0 pp); on                                                                                            anisms required for competitive performance are domain-
+    CIFAR-10, the asymmetric head start prevents early insta-                                                                                             dependent. In classification, batch-centered class error and
+    bility (∆ = −5.5 pp).                                                                                                                                 layer-specific sigmoid widths are critical stabilizers whose
+                                                                                                                                                          relative importance reverses between MNIST and CIFAR-
+    Implicit sparsity. The non-negative weight floor induces                                                                                              10. In RL, the same dual-stream architecture with ReLU
+    substantial implicit sparsity: 37.3% of weights reach the                                                                                             activations and RMS normalization, without sigmoid widths
+    floor (10−4 ) after training. Inhibitory (cross-stream) FC                                                                                            or batch-centering, achieves competitive performance on lo-
+    connections are pruned most aggressively (up to 68.8%                                                                                                 comotion tasks, showing comparable but variable rewards
+    at the floor), compared to 26–49% for excitatory connec-                                                                                              on Ant, Humanoid, and HalfCheetah.
+    tions. Convolutional layers are much less affected (<1%
+    to 18%). This asymmetric pruning suggests that the non-                                                                                               Implications for biological plausibility research.
+    negative Dale-style parameterization introduces a structured                                                                                          Single-benchmark evaluations can produce misleading
+    capacity bottleneck that preferentially suppresses inhibitory                                                                                         conclusions about which architectural features matter.
+    connections in deeper layers.                                                                                                                         The ablation reversal between MNIST and CIFAR-10
+                                                            Ant                                                              Humanoid                                            Half-Cheetah
+                        1.0
+
+                        0.8
+
+                        0.6
+
+              cosine    0.4
+
+                        0.2
+
+                        0.0
+                              0    50     100    150        200     250   300         350    400      0     50         100   150   200    250   300   350   400   0   50   100    150   200   250   300   350   400
+                                       Environment steps (millions)                                          Environment steps (millions)                              Environment steps (millions)
+                                                                  modulo                          scalar_broadcast                       random_sparse                 random_dense
+
+Figure 4: Cosine similarity between the ED local update direction and the BP gradient direction, restricted to policy trunk
+parameters and excluding the policy in a dual-stream architecture, over PPO training on Ant, Humanoid, and Half-Cheetah.
+Lines show the mean over 5 seeds; shaded regions show the seed-wise min-max range. modulo uses deterministic one-
+output-per-hidden-unit routing, random sparse uses random one-output-per-hidden-unit routing, scalar broadcast
+sends the same normalized sum of output errors to every hidden unit, and random dense denotes the normalized dense
+random feedback variant used in (Launay et al., 2019). Higher cosine indicates closer agreement between ED and BP trunk
+parameter-gradient directions.
+
+                30
+                                                                                                                                         RL, ReLU’s unbounded positive derivative may provide
+                25                                                                                                                       a natural gradient pathway that avoids the attenuation
+                                                                                                                                         problem without requiring layer-specific tuning. This
+
+
+
+   Episode Return
+                20
+                                                                                                                                         activation-dependent difference in error flow may partially
+                15                                                                                                                       explain why the classification-specific innovations are
+                                                                                                                                         unnecessary in the RL setting.
+                10
+
+                                                                                      BP-PPO
+                    5                                                                 ED-PPO (non-Dalean)                                Limitations. The classification innovations (sigmoid
+                                                                                      DFA-PPO
+                                                                                      ED-PPO                                             widths, MCE, asymmetric init) are specific to the classifica-
+                    0
+                                                                                                                                         tion setting; we do not claim they transfer to RL. ED-PPO
+                                                 Environment steps
+                        0         2K        4K         6K           8K          10K         12K       14K        16K
+
+                                                                                                                                         shows substantially higher variance than BP-PPO across all
+                                                                                                                                         environments, suggesting that the coarse error routing in-
+Figure 5: Episode return on Craftax comparing ED-PPO,                                                                                    troduces stochasticity that may limit reliability. The Craftax
+BP-PPO, and DFA. Error bars: ±1 std over 5 seeds.                                                                                        shortfall (−4.0 reward vs BP-PPO) indicates that ED’s
+                                                                                                                                         modular credit assignment may be insufficient for tasks
+                                                                                                                                         requiring fine-grained temporal reasoning. The accuracy
+demonstrates that a component critical for one task can be
+                                                                                                                                         gap between ED and DFA on classification (−0.9 to −7.4
+negligible for another, and the DFA cross-domain pattern
+                                                                                                                                         pp) quantifies the current cost of enforcing Dale’s principle.
+(strong on classification, weak on complex RL) reinforces
+                                                                                                                                         On Craftax, DFA underperforms ED-PPO, suggesting that
+this point. The emergent E/I balance convergence, from 3:1
+                                                                                                                                         the cost of Dale’s principle is task-dependent. Finally, the
+toward ∼1:1 with a depth-dependent inhibitory gradient,
+                                                                                                                                         dual-stream architecture’s ∼4× parameter overhead may
+provides a connection to biological self-organization. Corti-
+                                                                                                                                         itself limit effective capacity, particularly on classification
+cal circuits are known to develop balanced E/I ratios during
+                                                                                                                                         where 37.3% of weights are pruned to the floor. From
+maturation through intrinsic and synaptic homeostatic
+                                                                                                                                         the perspective of adaptive computation, the emergent
+mechanisms (Markram et al., 2004; Turrigiano, 2011),
+                                                                                                                                         behaviors we observe—E/I balance self-organization,
+and our results suggest that a similar homeostatic process
+                                                                                                                                         asymmetric pathway pruning, and task-dependent com-
+can emerge from gradient-driven learning under Dale’s
+                                                                                                                                         ponent criticality—suggest that biologically constrained
+principle constraints, without explicit balance-enforcing
+                                                                                                                                         architectures may develop internal regulatory mechanisms
+mechanisms. The success of ED-PPO on locomotion tasks
+                                                                                                                                         analogous to those found in living systems.
+despite using ReLU rather than sigmoid activations raises
+an interesting question about the relationship between
+activation function choice and credit assignment quality.                                                                                Future Work. Several directions follow naturally from
+In classification, the sigmoid derivative explicitly gates                                                                               the results presented here. First, Dale’s principle may of-
+the error signal, making the width parameter critical. In                                                                                fer hardware advantages by constraining synaptic weights
+                              Epoch 3                                                                    3.5
+                                                                                                                                                              E/I Balance (1.0)
+                              Epoch 250                                                                                                                       Initialization
+                                                                                                         3.0                                                  After Training
+                                                                                                         2.5
+
+
+Mean |Gated Error|            25× attenuation                                         E/I Weight Ratio
+                                                                                                         2.0
+                                                                                                                                                         1.65
+                     10 3                                                                                                                                               1.50
+                                                                                                         1.5
+                                                                                                                 1.03                            1.08
+                                                                                                         1.0              0.90       0.81
+
+                                                                                                         0.5
+                                                                                                         0.0
+                            conv1               conv2   conv3       fc1   fc2   fc3                            conv1    conv2      conv3        fc1     fc2           fc3
+                                                            Layer                                                                       Layer
+(a) Per-layer local surrogate-gradient magnitudes at epochs 3 and                     (b) E/I weight ratio at init (3:1 for hidden layers) vs. after 250
+250 on CIFAR-10 (log scale). The 25× attenuation from output to                       epochs. Hidden layers converge toward balance; deeper layers be-
+first hidden layer motivates layer-specific sigmoid widths.                           come inhibitory-dominant.
+
+Figure 6: Post-hoc analyses of the proposed ED model on CIFAR-10. (a) Local surrogate gradient attenuation across layers.
+(b) Emergent E/I balance from asymmetric initialization toward biological-like equilibrium.
+
+
+themselves to be non-negative. In our Error Diffusion for-                                the excitatory stream or insufficiently suppressed by the in-
+mulation, negative contributions are still required, but their                            hibitory stream, providing a more mechanistic form of attri-
+sign is determined by fixed excitatory/inhibitory pathway                                 bution than gradient-based saliency on sign-unconstrained
+structure rather than by arbitrary signed weights. Thus, the                              networks. Finally, closing the accuracy gap to DFA and
+benefit is not the elimination of subtraction or differential                             BP-PPO on the hardest tasks, whether through richer error-
+circuitry altogether, but the replacement of unconstrained                                routing schemes, learned (rather than fixed modular) output-
+signed synapses with non-negative synaptic magnitudes and                                 to-hidden projections, or hybrid activation functions that
+fixed-sign routing. This may be especially relevant for ana-                              preserve sigmoid locality while mitigating attenuation, re-
+log, photonic, or synapse-device-based neuromorphic sub-                                  mains the most direct path toward making Dale-compliant
+strates, where physical synaptic elements often naturally                                 learning competitive with unconstrained backpropagation.
+encode non-negative quantities, while sign can be imple-
+mented at the level of population identity, optical/electrical                                                                   Conclusion
+phase, or excitatory/inhibitory summation. This comple-                                   We demonstrated that a dual-stream excitatory/inhibitory ar-
+ments prior demonstrations of bioplausible rules on pho-                                  chitecture trained with Error Diffusion achieves competitive
+tonic hardware (Filipovich et al., 2022). Second, the implicit                            performance across both supervised classification and rein-
+sparsity we observe suggests that Dale-compliant training                                 forcement learning while maintaining non-negative weights
+may yield model compression “for free,” since weights                                     consistent with Dale’s principle. In the classification set-
+bounded below at zero cannot recover once suppressed,                                     ting, three domain-specific innovations enable scaling from
+turning the floor into a natural pruning mechanism that could                             binary to 10-class problems, and their cross-task ablation re-
+be exploited with structured sparsity kernels at inference                                versal reveals that credit-assignment bottlenecks shift qual-
+time. Third, we conjecture that the dual-stream architec-                                 itatively with task difficulty. In reinforcement learning, the
+ture may be unusually well-suited to continual and open-                                  same core architecture integrated with PPO achieves compa-
+ended learning settings, where catastrophic forgetting is a                               rable rewards to backpropagation-based PPO on locomotion
+central obstacle: the dedicated inhibitory stream provides a                              tasks, without requiring the classification-specific stabiliz-
+structural mechanism for dampening large gradient excur-                                  ers, though with substantially higher variance. The cross-
+sions, and the sign constraint prevents the kind of uncon-                                domain pattern, competitive performance with domain-
+strained weight sign flips that are thought to contribute to                              dependent auxiliary mechanisms, suggests that biologically
+representational overwriting. Evaluating ED on sequential                                 plausible learning rules need not be monolithic: a shared ar-
+task streams and lifelong RL benchmarks is a natural next                                 chitectural core can support diverse task demands when aug-
+step. Fourth, the segregation of computation into excitatory                              mented with appropriate domain-specific components. The
+“amplifiers” and inhibitory “suppressors” offers a potential                              accuracy gap relative to BP-PPO on the hardest tasks quan-
+interpretability handle that standard networks lack: when a                               tifies the current cost of Dale’s principle compliance and
+model makes an error, one can in principle trace whether the                              provides concrete benchmarks for future work on narrowing
+mistake originated from a feature being falsely amplified by                              this gap while preserving biological fidelity.
+                     Acknowledgement                                      Izhikevich, E. M. (2007). Solving the distal reward problem
+                                                                               through linkage of stdp and dopamine signaling. Cerebral
+Generative AI tools were used in the preparation of the                        cortex, 17(10):2443–2452.
+manuscript, including text editing, code generation, image
+generation, and data analysis assistance. Additionally, we                Kaneko, I. (2000). Sample programs of error diffusion learn-
+leveraged AI to generate ideas, run autonomous experimen-                     ing algorithm.   https://web.archive.org/web/
+                                                                              20000306212433/http://village.infoweb.
+tation, and refine hypotheses. All claims, code implemen-                     ne.jp/˜fwhz9346/ed.htm. [Online; accessed 13-
+tation, manuscript writing, and figures were either reviewed                  April-2026].
+by or created by the authors.
+                                                                          Launay, J., Poli, I., Boniface, F., and Krzakala, F. (2020). Direct
+                                                                              feedback alignment scales to modern deep learning tasks and
+                           References                                         architectures. In Proceedings of the 34th International Con-
+Bartunov, S., Santoro, A., Richards, B., Marris, L., Hinton,                  ference on Neural Information Processing Systems, NIPS ’20,
+     G. E., and Lillicrap, T. (2018). Assessing the scalability of            Red Hook, NY, USA. Curran Associates Inc.
+     biologically-motivated deep learning algorithms and archi-
+     tectures. Advances in neural information processing systems,         Launay, J., Poli, I., and Krzakala, F. (2019). Principled training of
+     31.                                                                      neural networks with direct feedback alignment.
+
+Bengio, Y., Lee, D.-H., Bornschein, J., Mesnard, T., and Lin, Z.          Lee, D.-H., Zhang, S., Fischer, A., and Bengio, Y. (2015). Dif-
+    (2015). Towards biologically plausible deep learning. arXiv                ference target propagation. In Appice, A., Rodrigues, P. P.,
+    preprint arXiv:1502.04156.                                                 Santos Costa, V., Soares, C., Gama, J., and Jorge, A., editors,
+                                                                               Machine Learning and Knowledge Discovery in Databases,
+Cornford, J., Kalajdzievski, D., Leite, M., Lamarquette, A., Kull-             pages 498–515, Cham. Springer International Publishing.
+     mann, D. M., and Richards, B. A. (2021). Learning to live            Liao, Q., Leibo, J., and Poggio, T. (2016). How important is weight
+     with dale’s principle: {ANN}s with separate excitatory and                 symmetry in backpropagation? In Proceedings of the AAAI
+     inhibitory units. In International Conference on Learning                  Conference on Artificial Intelligence, volume 30.
+     Representations.
+                                                                          Lillicrap, T. P., Cownden, D., Tweed, D. B., and Akerman, C. J.
+Crick, F. (1989). The recent excitement about neural networks.                  (2016). Random synaptic feedback weights support error
+     Nature, 337(6203):129–132.                                                 backpropagation for deep learning. Nature communications,
+                                                                                7(1):13276.
+Dale, H. (1935). Pharmacology and nerve-endings. Proceedings of
+     the Royal Society of Medicine.                                       Markram, H., Toledo-Rodriguez, M., Wang, Y., Gupta, A., Silber-
+                                                                              berg, G., and Wu, C. (2004). Interneurons of the neocortical
+Ding, B., Qian, H., and Zhou, J. (2018). Activation functions and             inhibitory system. Nature reviews neuroscience, 5(10):793–
+     their characteristics in deep neural networks. In 2018 Chi-              807.
+     nese Control And Decision Conference (CCDC), pages 1836–
+     1841.                                                                Matthews, M., Beukman, M., Ellis, B., Samvelyan, M., Jackson,
+                                                                               M., Coward, S., and Foerster, J. (2024). Craftax: A lightning-
+Eccles, J. C. (1976). From electrical to chemical transmission in the          fast benchmark for open-ended reinforcement learning. arXiv
+     central nervous system: the closing address of the sir henry              preprint arXiv:2402.16801.
+     dale centennial symposium cambridge, 19 september 1975.
+     Notes and records of the Royal Society of London, 30(2):219–         Nøkland, A. (2016). Direct feedback alignment provides learn-
+     230.                                                                      ing in deep neural networks. Advances in neural information
+                                                                               processing systems, 29.
+Filipovich, M. J., Guo, Z., Al-Qadasi, M., Marquez, B. A., Mori-
+      son, H. D., Sorger, V. J., Prucnal, P. R., Shekhar, S., and Shas-   Pfeiffer, M., Nessler, B., Douglas, R. J., and Maass, W. (2010).
+      tri, B. J. (2022). Silicon photonic architecture for training             Reward-modulated hebbian learning of decision making.
+      deep neural networks with direct feedback alignment. Op-                  Neural computation, 22(6):1399–1444.
+      tica, 9(12):1323–1332.                                              Richards, B. A., Lillicrap, T. P., Beaudoin, P., Bengio, Y., Bogacz,
+                                                                               R., Christensen, A., Clopath, C., Costa, R. P., de Berker, A.,
+Freeman, C. D., Frey, E., Raichuk, A., Girgin, S., Mordatch, I.,
+                                                                               Ganguli, S., et al. (2019). A deep learning framework for
+     and Bachem, O. (2021). Brax–a differentiable physics en-
+                                                                               neuroscience. Nature neuroscience, 22(11):1761–1770.
+     gine for large scale rigid body simulation. arXiv preprint
+     arXiv:2106.13281.                                                    Roodschild, M., Gotay&nbsp;Sardiñas, J., and Will, A. (2020). A
+                                                                              new approach for the vanishing gradient problem on sigmoid
+Fujita, K. (2026). A diagnostic evaluation of neural networks                 activation. Progress in Artificial Intelligence, 9(4):351–360.
+      trained with the error diffusion learning algorithm. Discover
+      Artificial Intelligence.                                            Sacramento, J., Ponte Costa, R., Bengio, Y., and Senn, W. (2018).
+                                                                               Dendritic cortical microcircuits approximate the backpropa-
+Grossberg, S. (1987). Competitive learning: From interactive acti-             gation algorithm. Advances in neural information processing
+     vation to adaptive resonance. Cognitive science, 11(1):23–63.             systems, 31.
+Hammad, M. (2024). Deep learning activation functions: Fixed-             Salimans, T., Ho, J., Chen, X., Sidor, S., and Sutskever, I. (2017).
+   shape, parametric, adaptive, stochastic, miscellaneous, non-                Evolution strategies as a scalable alternative to reinforcement
+   standard, ensemble. arXiv preprint arXiv:2407.11090.                        learning. arXiv preprint arXiv:1703.03864.
+Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov,
+     O. (2017). Proximal policy optimization algorithms. arXiv
+     preprint arXiv:1707.06347.
+
+Song, H. F., Yang, G. R., and Wang, X.-J. (2016). Training
+     excitatory-inhibitory recurrent neural networks for cognitive
+     tasks: a simple and flexible framework. PLoS computational
+     biology, 12(2):e1004792.
+Strata, P. and Harvey, R. (1999). Dale’s principle. Brain research
+      bulletin, 50(5-6):349–350.
+
+Szandała, T. (2020). Review and comparison of commonly used
+     activation functions for deep neural networks. In Bio-inspired
+     neurocomputing, pages 203–224. Springer.
+
+Turrigiano, G. (2011). Too many cooks? intrinsic and synaptic
+     homeostatic mechanisms in cortical circuit refinement. An-
+     nual review of neuroscience, 34(1):89–103.
+
+Whittington, J. C. and Bogacz, R. (2017). An approximation of
+     the error backpropagation algorithm in a predictive coding
+     network with local hebbian synaptic plasticity. Neural com-
+     putation, 29(5):1229–1262.
+

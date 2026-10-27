@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<title>The AI Scientist: Towards Fully Automated AI Research, Now Published in &lt;i&gt;Nature&lt;/i&gt;</title>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-W770C6CJ1J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-W770C6CJ1J');
+</script>
+<!-- Google Analytics -->
+
+<!-- FB Card data -->
+<meta property="og:title" content="Sakana AI" />
+<meta property="og:type" content="article" />
+<meta property="og:description" content="The AI Scientist: Towards Fully Automated AI Research, Now Published in &lt;i&gt;Nature&lt;/i&gt;" />
+<meta property="og:image" content="https://sakana.ai/assets/home/sakana_ogp.png" />
+<meta property="og:url" content="https://sakana.ai/" />
+  <!-- Twitter Card data -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@SakanaAILabs">
+<meta name="twitter:title" content="Sakana AI">
+<meta name="twitter:description" content="The AI Scientist: Towards Fully Automated AI Research, Now Published in &lt;i&gt;Nature&lt;/i&gt;">
+<meta name="twitter:image" content="https://sakana.ai/assets/home/sakana_ogp.png">
+<!-- End cards-->
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Sakana AI">
+<meta name="generator" content="Jekyll v4.2.2">
+<link rel="canonical" href="/ai-scientist-nature/">
+
+<link rel="stylesheet" href="/assets/css/index.css">
+
+<link rel="alternate" href="/feed.xml" type="application/atom+xml" title="Blog">
+<!-- blazy load as you go image loader -->
+<script src="/js/blazy.js"></script>
+
+
+
+
+
+
+
+<header>
+  <a href="/" class="title"><img src="/assets/home/sakana_ai_text.svg" width="40%"/></a>
+  <!--<a href="/" class="title">Blog</a>-->
+  <!--<nav><a href="/ja/" ></a></nav>
+-->
+</header>
+
+<article>
+  <header>
+  <h1><a href="/ai-scientist-nature/">The AI Scientist: Towards Fully Automated AI Research, Now Published in <i>Nature</i></a></h1>
+  <time datetime="2026-03-26T00:00:00+09:00">March 26, 2026</time>
+  
+  <!--
+  <div class="post-tags"><a class="post-tag" href="/blog/?label=research">#Research</a><a class="post-tag" href="/blog/?label=event-media">#Event & Media</a></div>
+  -->
+</header>
+
+  
+  <div class="lang-switch">
+    
+      <a href="/ai-scientist-nature-jp/">日本語版はこちら</a>
+    
+  </div>
+  
+  <center>
+<video autoplay="" muted="" playsinline="" loop="" style="display: block; margin: auto; width: 100%;"><source src="/assets/ai-scientist-nature/ai-scientist-nature.mp4" type="video/mp4" /></video>
+<!--<video class="b-lazy" autoplay="" muted="" playsinline="" loop="" style="display: block; margin: auto; width: 100%;"><source src="/assets/ai-scientist-nature/ai-scientist-nature.mp4" type="video/mp4" /></video>-->
+<br />
+</center>
+
+<!--more-->
+
+<p><br /></p>
+
+<p>When we first introduced <a href="/ai-scientist/">The AI Scientist</a> in our <a href="https://arxiv.org/abs/2408.06292">initial preprint</a>, we shared an ambitious vision: an agent powered by foundation models capable of executing the entire machine learning research lifecycle. Soon after, we shared a <a href="/ai-scientist-first-publication/">historic update</a>: the improved <a href="https://arxiv.org/abs/2504.08066">AI Scientist-v2</a> produced the first fully AI-generated paper to pass a rigorous human peer-review process.</p>
+
+<p><strong>Today, we are happy to announce that a paper describing all of this work and that includes new insights has been published in <em><a href="https://www.nature.com/articles/s41586-026-10265-5">Nature</a></em>.</strong></p>
+
+<p>This substantial milestone is the result of a close and fruitful collaboration between researchers at <strong>Sakana AI</strong>, the <strong>University of British Columbia (UBC)</strong> and the <strong>Vector Institute</strong>, and the <strong>University of Oxford</strong>.</p>
+
+<p>Building upon our previous open-source releases, this open-access <em>Nature</em> publication comprehensively details our system’s architecture, outlines several new scaling results, and discusses the promise and challenges of AI-generated science.</p>
+
+<p>Read the full <em>Nature</em> paper here: <strong><a href="https://www.nature.com/articles/s41586-026-10265-5">https://www.nature.com/articles/s41586-026-10265-5</a></strong></p>
+
+<p>Explore the code and generated papers on GitHub: <a href="https://github.com/SakanaAI/AI-Scientist">AI Scientist-v1</a>, <a href="https://github.com/SakanaAI/AI-Scientist-v2">AI Scientist-v2</a></p>
+
+<center>
+<img class="b-lazy" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/assets/ai-scientist-nature/example-sections.png" style="width: 100%;" />
+</center>
+<p><small><i>Example sections of a paper produced by The AI Scientist that passed the peer-review process for a workshop at a top-tier international AI conference.</i></small></p>
+
+<p><br /></p>
+
+<h2 id="the-journey-so-far">The Journey So Far</h2>
+
+<p>Our journey to this publication has been a 1.5-year process with distinct phases shaped by foundation model developments and our improvement to the system:</p>
+
+<ol>
+  <li><strong>Proving It’s Possible:</strong> In our first release, we gave The AI Scientist a starting code template (like a simple training run for nanoGPT). It autonomously generated novel ideas, created and ran experiments to test those ideas, and wrote a full paper. Additionally, we developed and established The Automated Reviewer, which scored the quality of the paper. This work, for the first time, highlighted that end-to-end automation of the entire Machine Learning research process was possible.</li>
+  <li><strong>The “Turing Test” of Science:</strong> In our second update, we gave the system much more freedom to investigate any broadly defined topic in AI research. We then put the system to the ultimate test. We submitted unedited, fully AI-generated papers to the rigorous, blind, human peer-review process of the ICLR 2025 <em>I Can’t Believe It’s Not Better (ICBINB)</em> workshop. One manuscript achieved an average score of 6.33 (individual scores: 6, 7, 6), surpassing the average human acceptance threshold! The paper scored higher than 55% of human-authored papers. Throughout the process, we received permission from the workshop organizers. We had predetermined that we would withdraw the paper prior to publication if accepted, which we did.</li>
+</ol>
+
+<p>This new <em>Nature</em> paper consolidates these breakthroughs and dives deep into the underlying foundation model improvements that makes them possible. Under the hood, after being given a broad research direction, it autonomously generates of novel research ideas, searches for and reads the relevant literature, designs, programs, and conducts experiments via parallelized agentic tree search, and writes the entire paper (in LaTeX, with feedback on its figures coming from a foundation model with vision capabilities).</p>
+
+<center>
+<img class="b-lazy" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/assets/ai-scientist-nature/conceptual-overview.png" style="width: 100%;" />
+</center>
+<p><small><i>Conceptual overview of The AI Scientist workflow, including coming up with research ideas, implementing experiments, executing those experiments, writing the paper, and reviewing it.</i></small></p>
+
+<p><br /></p>
+
+<h2 id="new-results-the-automated-reviewer--scaling-laws-of-science">New Results: The Automated Reviewer &amp; Scaling Laws of Science</h2>
+
+<p>To evaluate AI-generated science at scale without exhausting human reviewers, we built an <strong>Automated Reviewer</strong>. We prompted it to act as an Area Chair, ensembling five independent reviews into a final decision based on official NeurIPS guidelines. We benchmarked this Automated Reviewer against thousands of actual human decisions from the OpenReview dataset. <strong>The Automated Reviewer matches human performance.</strong> It achieved a balanced accuracy of 69% (comparable to human reviewers) and an F1-score that actually <em>exceeded</em> the inter-human agreement measured in the famous <a href="https://blog.neurips.cc/2021/12/08/the-neurips-2021-consistency-experiment/">NeurIPS 2021 consistency experiment</a>.</p>
+
+<p><br /></p>
+
+<center>
+<img class="b-lazy" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/assets/ai-scientist-nature/automated-reviewer.png" style="width: 80%;" />
+</center>
+<p><small><i>The Automated Reviewer matches human review judgments on AI papers published at a top conference (ICLR), including papers published after the model was trained (its “knowledge cutoff”). These results suggest The Automated Reviewer is as reliable as human reviewers at providing review scores for newly written AI papers.
+</i></small></p>
+
+<p><br /></p>
+
+<p>Crucially, by using this reviewer to grade papers generated by different foundation models, we discovered a clear scaling law: <strong>as the underlying foundation models improve, the quality of the generated papers increases correspondingly.</strong> This strongly implies that as compute costs decrease, and model capabilities continue to exponentially increase, future versions of The AI Scientist will be substantially more capable.</p>
+
+<p><br /></p>
+
+<center>
+<img class="b-lazy" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/assets/ai-scientist-nature/scaling-law.png" style="width: 80%;" />
+</center>
+<p><small><i>The quality of papers generated by The AI Scientist increases when using newer, more intelligent foundation models, as judged by the Automated Reviewer.
+</i></small></p>
+
+<p><br /></p>
+
+<h2 id="limitations-and-the-road-ahead">Limitations and the Road Ahead</h2>
+
+<p>While passing human peer review is a breakthrough, The AI Scientist is still in its early days. As we describe in the <em>Nature</em> paper, the system currently exhibits several limitations:</p>
+
+<ul>
+  <li>It occasionally produces naive or underdeveloped ideas.</li>
+  <li>It can struggle with deep methodological rigor and complex code implementation.</li>
+  <li>It is susceptible to hallucinations or obvious mistakes, such as generating inaccurate citations or duplicating figures in the appendix.</li>
+</ul>
+
+<p>However, there is a clear trend in machine learning: once a new capability starts to work, even with clear limitations, it becomes superhuman surprisingly soon. That is because scale and better core models rapidly push it past human performance levels. Currently, The AI Scientist is limited to computational experiments. But we expect the playbook we’ve published will be adapted to other domains and catalyze scientific advances by making truly open-ended discoveries.</p>
+
+<p><br /></p>
+
+<h2 id="a-paradigm-shift-for-scientific-discovery">A Paradigm Shift for Scientific Discovery</h2>
+
+<p>The ability to automate paper generation raises profound ethical and societal questions—from overwhelming peer-review systems to artificially inflating research credentials. We are committed to developing this technology responsibly, which we feel includes the need to inform the public that AI-generated papers are not only possible, but in some cases match human performance. We proactively withdrew our accepted AI submissions and obtained IRB approval for our experiments. We also watermark all of our papers so it is clear they were AI-generated, a practice we recommend the community adopt. Additionally, we recommend that the scientific community establish clear norms regarding how to treat AI-generated research.</p>
+
+<p>We extend our deepest gratitude to our incredible collaborators, Jeff Clune (<strong>University of British Columbia</strong>, the <strong>Vector Institute</strong>, and a <strong>CIFAR Chair</strong>) and Jakob Foerster (<strong>University of Oxford</strong>), for their invaluable contributions to this project. <br />
+ <br />
+This <em><a href="https://www.nature.com/articles/s41586-026-10265-5">Nature</a></em> publication marks the dawn of a new era where the process of discovery is no longer a solely human pursuit. With AI agents acting as tireless companions, we are accelerating toward a future where we can dramatically speed up the pace of scientific breakthroughs. If done safely, systems like The AI Scientist could thus potentially enable everything from curing all diseases and providing abundance for all humans to protecting our environment and exploring the stars.</p>
+
+<p><br /></p>
+
+<hr />
+
+<p><em>To learn more about The AI Scientist, please read our <a href="https://www.nature.com/articles/s41586-026-10265-5">Nature paper</a> or check out the open-source code on <a href="https://github.com/SakanaAI/AI-Scientist-v2">GitHub</a>.</em></p>
+
+<p><img class="b-lazy" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/assets/marlin-beta/nature-paper.jpeg" style="width: 100%;" />
+<small><i>AI scientists autonomously explore a “tree” of possibilities to discover scientific breakthroughs. Credit: Artwork by CERTO, Inc.</i></small></p>
+
+<hr />
+
+<p><br /></p>
+
+<h2 id="sakanaai">Sakana AI</h2>
+
+<p>Interested in joining us?</p>
+
+<p>Please see our <a href="/careers/#software-engineer-research-and-development">career opportunities</a> for more information.</p>
+
+<p><br /></p>
+
+<center>
+<img class="b-lazy" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="/assets/careers/applied_research_eng_high_res4.jpg" style="width: 80%;" /><br />
+</center>
+
+<p><br /></p>
+
+  
+</article>
+
+
+
+<footer>
+  <div>&copy; <a href="/">Sakana AI 株式会社</a></div>
+  <nav><a href="https://www.linkedin.com/company/sakana-ai/" ><svg aria-label="LinkedIn" class="icon"><use xlink:href="/assets/fontawesome/icons.svg#linkedin"></use></svg></a><a href="https://instagram.com/SakanaAILabs" ><svg aria-label="Instagram" class="icon"><use xlink:href="/assets/fontawesome/icons.svg#instagram"></use></svg></a><a href="https://twitter.com/SakanaAILabs" ><svg aria-label="Twitter" class="icon"><use xlink:href="/assets/fontawesome/icons.svg#twitter"></use></svg></a></nav>
+
+</footer>
+
+
+<script src="/js/blazy_init.js"></script>
+</html>

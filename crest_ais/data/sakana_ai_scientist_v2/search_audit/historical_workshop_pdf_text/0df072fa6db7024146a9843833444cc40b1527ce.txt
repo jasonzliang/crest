@@ -1,0 +1,249 @@
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+Under review as a workshop paper at ICLR 2025
+AI SCIENTIST TEAM REVIEW
+Paper Summary
+This paper studies the impact of label noise on model calibration using different
+noise models. More speciﬁcally, the paper contrasts symmetric (unstructured label perturbations)
+and asymmetric (structured label perturbations) noise. The empirical experiments consider stan-
+dard small-scale vision datasets (i.e. MNIST, Fashion-MNIST and CIFAR-10) and demonstrate that
+asymmetric noise leads to higher expected calibration error.
+Strengths
+• The research question is of real-world importance and shines light on the impact of noisy
+labels beyond their effect on prediction accuracy.
+• The study design is simple and focuses on a single key factor, i.e. the impact of different
+noise models (asymmetric noise increasing ECE more than symmetric noise). The consid-
+ered datasets are appropriate for a workshop submission.
+• The impact of the different noise models on the downstream model calibration is robust
+and consistent across the considered datasets.
+Weaknesses
+• There are multiple instances where the written interpretation of results are not substantially
+supported by the empirical results presented. E.g. the paragraph interpreting ﬁgure 3 refers
+to ECE measures, which are not displayed in the ﬁgures.
+• The paper states that it compares different calibration methods, but the paper does not
+provide any results. The same holds for the mentioned reliability diagrams.
+• Furthermore, the supplementary material includes duplicate ﬁgures, a missing citation for
+SVHN and a corresponding missing ﬁgure.
+Scores
+• Soundness: 2 fair. ) Interesting research question with potentially simple empirical eval-
+uation setup.
+• Presentation: 1 poor. ) Wrong description and duplication of ﬁgures. Missing citation
+and downplaying of related work.
+• Contribution: 1 poor. ) While the question considered is important, the displayed results
+do not provide enough evidence for the conclusions drawn.
+• Overall - Workshop: 3/10 (Reject): For instance, a paper with technical ﬂaws, weak evalu-
+ation, inadequate reproducibility and incompletely addressed ethical considerations.
+• Overall - Conference: 2/10: (Strong reject): For instance, a paper with major technical
+ﬂaws, and/or poor evaluation, limited impact, poor reproducibility and mostly unaddressed
+ethical considerations.
+• Conﬁdence: 4/5. You are conﬁdent in your assessment, but not absolutely certain. It is
+unlikely, but not impossible, that you did not understand some parts of the submission or
+that you are unfamiliar with some pieces of related work.
+Additional Comments
+• The biggest ﬂaw of this paper is the mentioning of results which are not substantiated by
+results. This includes the assessment of various methods tailored to uncertainty calibration
+as well as the usage of reliability diagrams. The paper could be substantially improved if
+these results were added and the selection of displayed ﬁgure results was better curated.
+• The readability of ﬁgure 2 should be improved by splitting the 6 plots across 2 rows. Fur-
+thermore, the related work section appears to dismiss efforts by the scientiﬁc community
+to relate calibration and noisy data.
+Potential Violation of Code of Ethics:
+No.
+8
+
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+Under review as a workshop paper at ICLR 2025
+AI SCIENTIST TEAM CODE REVIEW
+A.5
+TEMPERATURE SCALING
+In our review of the paper, we noted that it lacked experiments involving temperature scaling. Upon
+inspecting the generated code, we found that the AI Scientist had implemented temperature scaling
+but never actually used it.
+During the paper writing stage, the AI Scientist had access to a set of generated experiment code
+and its initial plans before generating the code. As a result, it is likely that the paper was inﬂuenced
+by these plans and code, which included temperature scaling, but the AI Scientist failed to realize
+that the experiments using temperature scaling were never actually conducted.
+Figure 7: Temperature scaling implementation.
+A.6
+DATASET CLASS
+We found that the initial implementation of the dataset class lacked an option for symmet-
+ric/asymmetric noise distribution, even though it was part of the initial plan. The AI Scientist
+recognized this mistake and later implemented the correct version, as shown in Figure 8.
+In the main paper, the AI Scientist wrote: “Assymetric Noise: Labels are ﬂipped to speciﬁc incor-
+rect classes based on a predeﬁned confusion matrix, simulating more realistic mislabeling.” The
+asymmetric noise implementation in the generated code always maps class i to class (i+1) % NUM
+CLASSES. While this is a valid approach, it is worth noting that there are other ways to implement
+asymmetric noise.
+Figure 8: Noisy dataset class implementation.
+A.7
+EVALUATION FUNCTION
+The evaluation function used to compute the Expected Calibration Error is shown in Figure 9. We
+manually created test cases and used the MulticlassCalibrationError function with norm=‘l1’ from
+torchmetrics as the ground truth. Since the MulticlassCalibrationError function expects probability
+inputs, we omitted the softmax operation in the ﬁrst line to align with the implementation details.
+After this adjustment, we conﬁrmed that both functions produce the same results, apart from minor
+numerical differences.
+9
+
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+Under review as a workshop paper at ICLR 2025
+Figure 9: The implementation for Expected Calibration Error.
+10

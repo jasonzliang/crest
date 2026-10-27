@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html>
+<title>otoro.net</title>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="otoro.net">
+    <meta name="author" content="hardmaru">
+
+    <title>otoro.net</title>
+
+    <!-- SEO -->
+    <meta property="og:title" content="studio otoro" />
+    <meta property="og:type" content="article" />
+    <meta property="og:description" content="I make simple things with neural networks." />
+    <meta property="og:image" content="https://otoro.net/img/card/otoro_rect.png" />
+    <meta property="og:url" content="https://otoro.net/" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="studio otoro" />
+    <meta name="twitter:description" content="I make simple things with neural networks." />
+    <meta property="og:site_name" content="studio otoro" />
+    <meta name="twitter:image" content="https://otoro.net/img/card/otoro_square_v2.png" />
+
+    <!-- Bootstrap Core CSS - Uses Bootswatch Flatly Theme: https://bootswatch.com/flatly/ -->
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">-->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+    <!-- extra glyphicons -->
+    <link href="css/bootstrap.icon-large.min.css" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"> -->
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/academicons.min.css">
+
+    <!-- roboto font -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto:100' rel='stylesheet' type='text/css'>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/mainpage.css" >
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body id="page-top" class="index">
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" id="mainNavBar">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#page-top"><emph>otoro.net</emph></a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="hidden">
+                        <a href="#page-top"></a>
+                    </li>
+
+                    <li class="page-scroll">
+                        <a href="#about">about</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#portfolio">works</a>
+                    </li>
+
+                    <li class="page-scroll">
+                        <a href="#contact">contact</a>
+                    </li>
+
+                    <li class="page-scroll">
+                        <a href="https://blog.otoro.net/">blog</a>
+                    </li>
+
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <!-- Header -->
+    <header>
+    <div id="creatureArea" style="display:none">
+        <div class="container">
+            <canvas id="topCanvas"></canvas>
+        </div>
+    </div>
+    </header>
+
+    <!-- About Section -->
+    <section class="success" id="about">
+        <div class="container">
+        <!--
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2>about</h2>
+                    <hr class="star-primary">
+                </div>
+            </div>
+            <div class="row">
+        -->
+
+                <div id="simplethings" class="col-lg-6">
+                    <!--<p><emph>studio otoro</emph>　is a design studio based in Tokyo.</p>-->
+                    <!--<p>We create interactive simulation experiments.</p>-->
+                    <!--<p>Our goal is to develop curious and creative machines.</p>-->
+                    <p style="color:#000;">I make <a href="ml/">simple things</a> with neural networks.</p>
+                </div>
+
+                <div id="p5Container" class="col-lg-12 text-center">
+                </div>
+
+            </div>
+        </div>
+
+
+        <!--
+        <div class="container">
+
+            <div class="row">
+                <div class="col-sm-12 text-left">
+                    <p><br/></p>
+                    <p><br/></p>
+                    <p><br/></p>
+                </div>
+            </div>
+
+            <div class="row">
+
+                <div class="col-sm-5 text-left">
+
+                    <p><br/></p>
+                    <h2>machine learning</h2><p><br/></p>
+                    <p><br/></p><p>
+                    We specialise in generative design and machine learning research.
+                    <br/></p><p>
+                    See our <a target="_blank" href="https://otoro.net/ml/">portfolio</a> and <a target="_blank" href="https://blog.otoro.net/">research blog</a>.
+                    </p>
+                    <p><br/></p>
+
+
+                </div>
+
+                <div class="col-sm-7">
+
+                    <img src="img/make_it_rain.gif" class="img-responsive" alt=""/>
+
+
+                    <img src="https://cdn.rawgit.com/hardmaru/resnet-cppn-gan-tensorflow/master/examples/example_sinusoid.gif" class="img-responsive" alt=""/>
+
+                </div>
+
+            </div>
+
+        </div>
+        -->
+    </section>
+    <section class="success" id="portfolio">
+        <div class="container">
+
+            <div class="row">
+
+               <div class="col-lg-4 portfolio-item">
+                    <a href="https://blog.otoro.net/" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <h2 style="color:#FFF;">blog</h2>
+                            </div>
+                        </div>
+                        <img class="b-lazy" src="img/card/otoro_square.png" style="display: block; margin: auto; width: 100%;"/>
+                    </a>
+                </div>
+
+                <div class="col-lg-4 portfolio-item">
+                    <a href="ml/" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <h2 style="color:#FFF;">machine learning projects</h2>
+                            </div>
+                        </div>
+                        <img class="b-lazy" src="img/card/slime_glass_square.png" style="display: block; margin: auto; width: 100%;"/>
+                    </a>
+                </div>
+ 
+                <div class="col-lg-4 portfolio-item">
+                    <a href="sketch-rnn/" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <h2 style="color:#FFF;">sketch-rnn</h2>
+                            </div>
+                        </div>
+                        <img class="b-lazy" src="img/make_it_rain.gif" style="display: block; margin: auto; width: 100%;"/>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- Portfolio Grid Section -->
+    <!-- ignored
+    <section id="portfolio">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2>selected works</h2>
+                    <hr class="star-primary"/>
+                </div>
+            </div>
+
+            <div class="row">
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="ml/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>machine learning portfolio</p>
+                            </div>
+                        </div>
+                        <img src="img/slime_glass2.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="ml/planks/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>creatures avoiding planks</p>
+                            </div>
+                        </div>
+                        <img src="img/avoiding_planks.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="pendulum/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>pendulum</p>
+                            </div>
+                        </div>
+                        <img src="img/pendulum_gravity.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="ml/slimevolley/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>slime volleyball</p>
+                            </div>
+                        </div>
+                        <img src="img/neural_slime_volleyball_thumb.png" class="img-responsive" alt="">
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4 portfolio-item">
+                    <a href="kanji/" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>Random Radicals:<br/>A Fake Kanji Experiment</p>
+                            </div>
+                        </div>
+                        <img src="img/random_radicals_blue.gif" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="creatures/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>creatures</p>
+                            </div>
+                        </div>
+                        <img src="img/thumbnail_creatures.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+
+                <div class="col-sm-3 portfolio-item">
+                    <a href="ml/drawnetwork/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>neural network art</p>
+                            </div>
+                        </div>
+                        <img src="img/thumbnail_ml.png" class="img-responsive" alt="">
+                    </a>
+                </div>
+                -->
+
+                <!--
+                <div class="col-sm-3 portfolio-item">
+                    <a href="ml/ball/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>ball bouncer</p>
+                            </div>
+                        </div>
+                        <img src="img/thumbnail_ball.png" class="img-responsive" alt="">
+                    </a>
+                </div>
+                -->
+
+                <!--
+                <div class="col-sm-3 portfolio-item">
+                    <a href="misc/astroids/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>asteroids</p>
+                            </div>
+                        </div>
+                        <img src="img/thumbnail_misc.png" class="img-responsive" alt="">
+                    </a>
+                </div>
+                -->
+
+                <!--
+                <div class="col-sm-3 portfolio-item">
+                    <a href="nihongo/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>nihongo</p>
+                            </div>
+                        </div>
+                        <img src="img/thumbnail_nihongo.png" class="img-responsive" alt="">
+                    </a>
+                </div>
+
+
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="https://blog.otoro.net/" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>otoro blog</p>
+                            </div>
+                        </div>
+                        <img src="img/thumbnail_blog.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="paperbox/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>box2d paper.js</p>
+                            </div>
+                        </div>
+                        <img src="img/thumbnail_paperbox.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="gallery/index.html" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>otorography</p>
+                            </div>
+                        </div>
+                        <img src="img/baby_face.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+                <div class="col-sm-4 portfolio-item">
+                    <a href="https://society6.com/otoro" class="portfolio-link" data-toggle="modal">
+                        <div class="caption">
+                            <div class="caption-content">
+                                <p>art shop</p>
+                            </div>
+                        </div>
+                        <img src="img/warhol_drone.png" class="img-responsive" alt=""/>
+                    </a>
+                </div>
+
+
+            </div>
+
+        </div>
+    </section>-->
+
+
+    <!-- featured -->
+    <!--
+    <section id="featured_in">
+
+        <div class="col-lg-12 text-center">
+          <div class="col-lg-12 text-center">
+            <h2>featured in</h2>
+            <p><br/></p>
+          </div>
+        </div>
+
+        <div class="col-lg-12 text-center">
+
+          <a target="_blank" href="https://www.theverge.com/2016/4/13/11420144/google-machine-learning-tensorflow-upgrade"><img style="width:30%;opacity:1.0;margin:1em;" src="img/featured/theverge_small.svg" alt="theverge.com"/></a>
+
+          <a target="_blank" href="https://boingboing.net/2016/02/08/creatures-avoiding-planks.html"><img style="width:30%;opacity:1.0;margin:1em;" src="img/featured/boingboing.png" alt="boingboing.net"/></a>
+
+          <a target="_blank" href="https://rue89.nouvelobs.com/rue89-culture/2016/02/01/quand-lart-contemporain-chinois-inspire-les-intelligences-artificielles-263031"><img style="width:30%;opacity:1.0;margin:1em;" src="img/featured/rue89.png" alt="Rue89"/></a>
+
+        </div>
+        <div class="col-lg-12 text-center">
+
+          <a target="_blank" href="https://www.instagram.com/p/-ifBcFRi6b/" alt="Instagram Japan Official Feed"><img style="width:30%;opacity:1.0;margin:1em;" src="img/featured/instagram.png"/></a>
+
+          <a target="_blank" href="https://www.nerdcore.de/2015/12/29/ai-generated-kanji/"><img style="width:30%;opacity:0.85;margin:1em;" src="img/featured/nerdcore_pure.png" alt="nerdcore.de"/></a>
+
+          <a target="_blank" href="https://www.businessinsider.com/programmers-love-googles-tensorflow-2016-4"><img style="width:30%;opacity:1.0;margin:1em;" src="img/featured/businessinsider_small.png" alt="Business Insider"/></a>
+
+        </div>
+
+        <div class="row">
+            <p><br/></p>
+        </div>
+
+    </section>
+-->
+
+    <!-- Contact Section -->
+    <!--
+    <section id="contact">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2>Interested in our work?</h2><br/><h2>Contact us</h2>
+                    <hr class="star-primary">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+                    <form name="sentMessage" id="contact_form" novalidate>
+                        <div class="row control-group">
+                            <div class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>name</label>
+                                <input type="text" class="form-control" placeholder="name" id="contact_name" required data-validation-required-message="enter name">
+                                <p class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <div class="row control-group">
+                            <div class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>email</label>
+                                <input type="email" class="form-control" placeholder="email" id="contact_email" required data-validation-required-message="enter email">
+                                <p class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <div class="row control-group">
+                            <div class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>message</label>
+                                <textarea rows="5" class="form-control" placeholder="message" id="contact_message" required data-validation-required-message="enter your message"></textarea>
+                                <p class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row text-center">
+                            <div class="form-group col-xs-12 text-center">
+                                <a type="submit" class="btn btn-success btn-lg" id="contact_send"><span class="glyphicon glyphicon-envelope"></span> send</a>
+                            </div>
+                            <div id="contact_success"><p class="text-success">message sent.</p></div>
+                            <div id="contact_failure"><p class="text-danger">message not sent.</p></div>
+                            <div id="contact_incomplete"><p class="text-warning">incomplete message.</p></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+    -->
+
+    <!-- Contact Section -->
+    <section id="contact_message">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <!--<h2>Interested in our work?</h2><br/>-->
+                    <h2 style="color:orange;">Contact</h2>
+                    <hr class="star-primary">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2">
+
+                    <form action="https://formspree.io/hardmaru@gmail.com" method="POST" novalidate>
+                        <input type="hidden" name="_next" value="https://otoro.net/" />
+                        <input type="hidden" name="_subject" value="otoro mail" />
+                        <div class="row control-group">
+                            <div class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>name</label>
+                                <input type="text" name="name" class="form-control" placeholder="name" required data-validation-required-message="enter name">
+                                <p class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <div class="row control-group">
+                            <div class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>email</label>
+                                <input type="text" name="_replyto" class="form-control" placeholder="email" required data-validation-required-message="enter email" />
+                                <p class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <div class="row control-group">
+                            <div class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>message</label>
+                                <textarea type="text" name="_message" rows="5" class="form-control" placeholder="message" required data-validation-required-message="enter your message"></textarea>
+                                <p class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row text-center">
+                            <input id="contact_message_button" type="submit" value="Send"/>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="social_media">
+        <div class="col-lg-12 text-center">
+
+            <a target="_blank" href="https://twitter.com/hardmaru"><i class="fa fa-twitter-square fa-4x"></i></a>
+
+            <a target="_blank" href="https://instagram.com/hardmaru/"><i class="fa fa-instagram fa-4x"></i></a>
+
+            <!--<a target="_blank" href="https://www.reddit.com/user/hardmaru"><i class="fa fa-reddit-square fa-4x"></i></a>-->
+            <a target="_blank" href="https://github.com/hardmaru/"><i class="fa fa-github-square fa-4x"></i></a>
+
+            <!--<a target="_blank" href="https://blog.otoro.net/"><i class="fa fa-wordpress fa-4x"></i></a>-->
+
+            <!--<i class="ai ai-google-scholar-square ai-3x"></i>-->
+            <a target="_blank" href="https://scholar.google.com/citations?user=N7X-kbUAAAAJ"><i class="ai ai-google-scholar-square ai-4x"></i></a>
+
+            <!--<a target="_blank" href="https://www.facebook.com/otorography/"><i class="fa fa-facebook-square fa-4x"></i>-->
+
+            <!--<a target="_blank" href="https://www.redbubble.com/people/otorography/"><i class="fa fa-paint-brush fa-4x"></i></a>-->
+
+            <a target="_blank" href="https://dribbble.com/hardmaru"><i class="fa fa-dribbble fa-4x"></i></a>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="footer-below">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        copyright &copy; <a href="https://otoro.net/"><ruby>otoro<rt>大トロ</rt></ruby>.net</a><br>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button (Only visible on small and extra-small screen sizes) -->
+    <!--
+    <div class="scroll-top page-scroll visible-xs visble-sm">
+        <a class="btn btn-primary" href="#page-top">
+            <i class="fa fa-chevron-up"></i>
+        </a>
+    </div>
+    -->
+
+    <!-- jQuery -->
+    <script src="js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/mobile-detect.min.js"></script>
+
+    <script src="js/blazy.js"></script>
+
+    <script>
+    // blazy code
+    var bLazy = new Blazy({
+      success: function(){
+        updateCounter();
+      }
+    });
+
+    // not needed, only here to illustrate amount of loaded images
+    var imageLoaded = 0;
+
+    function updateCounter() {
+      imageLoaded++;
+      console.log("blazy image loaded: "+imageLoaded);
+    }
+    </script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="js/paper-full.min.js"></script>
+    <script src="js/box2d-html5.js"></script>
+    <script src="creatures-0.03.js"></script>
+
+    <script src="mainpage-0.06.js"></script>
+    <script src="pendulum-2.00.js"></script>
+    <script src="js/p5.min.js"></script>
+    <!--<script src="js/vivus.js"></script>-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-61361005-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</body>
+</html>

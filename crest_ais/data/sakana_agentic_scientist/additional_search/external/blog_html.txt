@@ -1,0 +1,1336 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body {
+    overflow-x: hidden;
+  }
+
+  #dtbody {
+    width: min(1440px, 96vw);
+    margin: 0 auto;
+  }
+
+  p,
+  ul,
+  ol {
+    text-align: justify !important;
+  }
+
+  .responsive-media {
+    width: 100%;
+    margin: 0;
+  }
+
+  @media (min-width: 768px) {
+    .responsive-media {
+      width: 95%;
+    }
+  }
+
+  .scroll-down {
+    width: 80px;
+    height: 40px;
+    right: 10px;
+    bottom: 10px;
+    position: absolute;
+    font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: #FFFFFF;
+    opacity: 0;
+    -webkit-transition: opacity 2s ease-in;
+    -moz-transition: opacity 2s ease-in;
+    -o-transition: opacity 2s ease-in;
+    -ms-transition: opacity 2s ease-in;
+    transition: opacity 2s ease-in;
+  }
+
+  .scroll-down span {
+    margin-top: 5px;
+    position: absolute;
+    left: 50%;
+    transform: translate(-100%, 0) rotate(45deg);
+    transform-origin: 100% 100%;
+    height: 2px;
+    width: 10px;
+    background: #FFFFFF;
+  }
+
+  .scroll-down span:nth-of-type(2) {
+    transform-origin: 0 100%;
+    transform: translate(0, 0) rotate(-45deg);
+  }
+
+  .transparent {
+    opacity: 0;
+  }
+
+  figcaption {
+    padding: 0.5em;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    line-height: 1.5em;
+    text-align: left;
+  }
+
+  dt-article figcaption {
+    padding: 0.5em;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    line-height: 1.5em;
+    text-align: left;
+  }
+
+  @media(min-width: 1024px) {
+    dt-article figure figcaption {
+      font-size: 13px;
+    }
+  }
+
+  dt-article figcaption a {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  dt-article figcaption b {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 1.0);
+  }
+
+
+  pre {
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 0 1rem;
+    box-sizing: border-box;
+  }
+
+  pre code {
+    display: inline-block;
+    text-align: left;
+    padding: 10px;
+    border-radius: 5px;
+    background: #f5f5f5;
+    margin: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+  }
+
+  /* The appendix hides overflow; wrap long BibTeX fields instead of clipping them. */
+  pre.citation {
+    display: block;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  *.unselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+  }
+
+  *.svgunselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    background: none;
+    pointer-events: none;
+  }
+
+  .btn-group button {
+    background-color: orange;
+    border: 1px solid #FF6C00;
+    color: white;
+    padding: 5px 12px;
+    cursor: pointer;
+    float: center;
+  }
+
+  button {
+    margin: 10px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .output-container {
+    margin-top: 0px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  #traceChartsContainer {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
+  }
+
+  #traceChartsContainer canvas {
+    width: 100%;
+    height: auto;
+  }
+
+  #loadingSpinner {
+    position: absolute;
+    z-index: 3;
+    display: block;
+  }
+
+  .chart-container {
+    width: 90vw;
+    max-width: 400px;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 100px;
+    width: 100px;
+    z-index: 5;
+
+    -webkit-animation: rotation .6s infinite linear;
+    animation: rotation .6s infinite linear;
+
+    border-left: 6px solid rgba(0, 174, 239, .15);
+    border-right: 6px solid rgba(0, 174, 239, .15);
+    border-bottom: 6px solid rgba(0, 174, 239, .15);
+    border-top: 6px solid rgba(0, 174, 239, .8);
+    border-radius: 50%;
+  }
+
+  @keyframes rotation {
+    from {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+
+  #canvasContainer {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto;
+  }
+
+  #drawCanvas,
+  #attentionCanvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  #drawCanvas {
+    background-color: black;
+    cursor: crosshair;
+    z-index: 1;
+  }
+
+  #attentionCanvas {
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    #canvasContainer {
+      width: 280px;
+      height: 280px;
+    }
+
+    #drawCanvas,
+    #attentionCanvas {
+      width: 280px;
+      height: 280px;
+    }
+
+    .chart-container {
+      width: 400px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    #canvasContainer {
+      width: 280px;
+      height: 280px;
+    }
+
+    .chart-container {
+      width: 400px;
+    }
+  }
+
+  /* Add a background color on hover */
+  .btn-group button:hover {
+    background-color: #FF6C00;
+  }
+
+  .sak-collapse-marker {
+    display: none;
+  }
+
+  details.sak-collapsible {
+    border: 1px solid rgba(255, 108, 0, 0.28);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow:
+      0 16px 28px rgba(34, 24, 16, 0.07),
+      0 0 0 1px rgba(255, 108, 0, 0.18),
+      0 0 16px rgba(255, 108, 0, 0.2);
+    padding: 0.85rem 5rem;
+    margin-top: 2.4rem;
+    margin-bottom: 2.4rem;
+    transition: box-shadow 180ms ease, border-color 180ms ease;
+  }
+
+  details.sak-collapsible[open] {
+    border-color: rgba(255, 108, 0, 0.45);
+    box-shadow:
+      0 18px 30px rgba(34, 24, 16, 0.08),
+      0 0 0 1px rgba(255, 108, 0, 0.24),
+      0 0 22px rgba(255, 108, 0, 0.28);
+  }
+
+  details.sak-collapsible>summary {
+    cursor: pointer;
+    font-weight: 650;
+    list-style: none;
+    outline: none;
+    text-align: center;
+    display: block;
+    width: 100%;
+    padding: 0.55rem 0.4rem;
+    margin: -0.2rem -0.1rem 0;
+    border-radius: 10px;
+  }
+
+  details.sak-collapsible>summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details.sak-collapsible>summary::after {
+    content: "+";
+    float: right;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 700;
+  }
+
+  details.sak-collapsible[open]>summary::after {
+    content: "–";
+  }
+
+  details.sak-collapsible>summary:hover {
+    color: #FF6C00;
+  }
+
+  details.sak-collapsible>*:not(summary) {
+    margin-top: 0.6rem;
+  }
+
+  @media (max-width: 980px) {
+    details.sak-collapsible {
+      padding: 0.8rem 2rem;
+    }
+  }
+
+  @media (max-width: 680px) {
+    details.sak-collapsible {
+      padding: 0.75rem 1rem;
+      margin-top: 1.6rem;
+      margin-bottom: 1.6rem;
+    }
+
+    details.sak-collapsible>summary {
+      padding: 0.5rem 0.3rem;
+      margin: -0.15rem 0 0;
+    }
+  }
+
+  :root {
+    --sa-muted: rgba(0, 0, 0, .55);
+    --sa-rule: rgba(0, 0, 0, .1);
+    --sa-sans: -apple-system, "system-ui", "Segoe UI", Roboto, Oxygen, Ubuntu,
+      Cantarell, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  dt-article h1 {
+    font-size: 36px !important;
+    line-height: 1.18 !important;
+    font-weight: 700 !important;
+    letter-spacing: -.015em !important;
+  }
+
+  dt-article h1 .subtitle {
+    display: block;
+    margin-top: 10px;
+    color: var(--sa-muted);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.35;
+    letter-spacing: 0;
+  }
+
+  #authors_section {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0;
+  }
+
+  #authors_section .sa-masthead {
+    display: grid;
+    grid-template-columns: minmax(140px, .6fr) minmax(0, 2fr) minmax(140px, .6fr);
+    gap: 32px;
+    width: calc(100% - 48px);
+    max-width: 968px;
+    margin: 0 auto 40px;
+    padding: 22px 0 24px;
+    border-top: 1px solid var(--sa-rule);
+    border-bottom: 1px solid var(--sa-rule);
+    box-sizing: border-box;
+    font-family: var(--sa-sans) !important;
+  }
+
+  .tldr-intro>figcaption+figcaption {
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+  }
+
+  .tldr-intro a[href="https://sakana.ai/ai-scientist/"],
+  .tldr-intro a[href="https://sakana.ai/ai-scientist-first-publication/"],
+  .tldr-intro a[href="https://sakana.ai/ai-scientist-nature/"],
+  dt-article .paper-gallery__description a,
+  dt-article a[href="https://sakana.ai/ai-scientist/"],
+  dt-article a[href="https://github.com/SakanaAI/AI-Scientist-v3"],
+  dt-article a[href="https://github.com/SakanaAI/autoillustrate"],
+  dt-article a[href="https://sakana.ai/ai-scientist-first-publication/"],
+  dt-article a[href="https://sakana.ai/ai-scientist-nature/"] {
+    color: #FF6C00 !important;
+  }
+
+  dt-article .sa-results-figure-block {
+    width: 80%;
+    margin: 2rem auto;
+  }
+
+  dt-article .sa-results-plot {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  dt-article .sa-results-plot iframe {
+    display: block;
+    width: 1400px;
+    height: 840px;
+    border: 0;
+    transform-origin: top left;
+  }
+
+  dt-article .sa-results-figure-block figcaption {
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  dt-article>h2 {
+    text-align: left !important;
+    font-weight: 700 !important;
+  }
+
+  dt-article .sa-bottom-resources {
+    margin: 0 auto 1.5rem !important;
+    padding: 0 !important;
+    padding-inline-start: 0 !important;
+    list-style: none;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  dt-article .sa-bottom-resources li {
+    margin: 0 0 4px;
+  }
+
+  dt-article .sa-bottom-resources a,
+  dt-article .sa-bottom-resource {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #FF6C00 !important;
+    text-decoration: none !important;
+    border-bottom: 0 !important;
+  }
+
+  dt-article .sa-bottom-resource {
+    color: #FF6C00;
+    opacity: .6;
+  }
+
+  dt-article .sa-bottom-icon {
+    display: inline-flex;
+    width: 14px;
+    height: 14px;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 14px;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  #authors_section .sa-resources {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  #authors_section .sa-resources li {
+    margin: 0 0 4px;
+  }
+
+  #authors_section .sa-resources a,
+  #authors_section .sa-resource-placeholder {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #FF6C00 !important;
+    text-decoration: none !important;
+    border-bottom: 0 !important;
+  }
+
+  #authors_section .sa-resource-placeholder {
+    opacity: .6;
+  }
+
+  #authors_section .res-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+  }
+
+  #authors_section .res-icon-arxiv {
+    width: 11px;
+    height: 14px;
+    flex: 0 0 11px;
+  }
+
+  #authors_section .sa-meta-label {
+    margin: 0 0 10px;
+    color: var(--sa-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  #authors_section .sa-authors {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 18px;
+  }
+
+  #authors_section .sa-author {
+    min-width: 0;
+  }
+
+  #authors_section .sa-author .name,
+  #authors_section .sa-author .affiliation {
+    margin: 0;
+    font-family: var(--sa-sans) !important;
+    line-height: 1.4;
+  }
+
+  #authors_section .sa-author .name {
+    color: rgba(0, 0, 0, .87);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  #authors_section .sa-author .affiliation {
+    margin-top: 2px;
+    color: var(--sa-muted);
+    font-size: 12px;
+  }
+
+  #authors_section .sa-author-footnote {
+    margin: 12px 0 0;
+    color: var(--sa-muted);
+    font-family: var(--sa-sans) !important;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  #authors_section .sa-published,
+  #authors_section .sa-published .sa-meta-label {
+    text-align: right;
+  }
+
+  #authors_section .sa-pub-date {
+    margin: 0;
+    color: rgba(0, 0, 0, .87);
+    font-family: var(--sa-sans) !important;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  @media (min-width: 1080px) {
+
+    dt-article>p,
+    dt-article>h2,
+    dt-article>h4,
+    dt-article .paper-gallery__description,
+    dt-article .sa-bottom-resources {
+      width: 80% !important;
+      margin-left: 10% !important;
+      margin-right: 10% !important;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    #authors_section .sa-masthead {
+      max-width: 1008px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    dt-article .sa-results-figure-block {
+      width: auto;
+      margin-left: 24px;
+      margin-right: 24px;
+    }
+
+    dt-article .sa-bottom-resources {
+      width: calc(100% - 48px);
+    }
+
+    dt-article h1 {
+      font-size: 28px !important;
+    }
+
+    dt-article h1 .subtitle {
+      font-size: 16px;
+    }
+
+    #authors_section .sa-masthead {
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    #authors_section .sa-published,
+    #authors_section .sa-published .sa-meta-label {
+      text-align: left;
+    }
+
+    #authors_section .sa-authors {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 480px) {
+    #authors_section .sa-authors {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <!-- roboto font -->
+  <!--<link href='https://fonts.googleapis.com/css?family=Roboto:300' rel='stylesheet' type='text/css'>-->
+  <link href="https://vjs.zencdn.net/8.11.8/video-js.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/style_mazes.css">
+  <link rel="stylesheet" href="./css/style_videos.css">
+  <link rel="stylesheet" href="./css/style_experiments.css">
+  <link rel="stylesheet" href="./css/snippet.css">
+  <link rel="stylesheet" href="./css/paper_gallery.css?v=10">
+  <link rel="stylesheet" href="./css/autoillustrate_carousel.css?v=8">
+
+
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+
+  <!-- TO DO: insert google analytics -->
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-W770C6CJ1J"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-W770C6CJ1J');
+  </script>
+  <!-- Google Analytics -->
+
+  <!-- SEO -->
+
+  <!-- TO DO: put in the meta cards for social media sharing pages -->
+  <!-- SEO -->
+  <meta property="og:title"
+    content="The Agentic Scientist: Orchestrating Coding Agents for End-to-End Scientific Co-Discovery" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://pub.sakana.ai/repo" />
+  <!-- Twitter Card data -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title"
+    content="The Agentic Scientist: Orchestrating Coding Agents for End-to-End Scientific Co-Discovery" />
+  <meta name="twitter:description" content="" />
+  <meta property="og:site_name"
+    content="The Agentic Scientist: Orchestrating Coding Agents for End-to-End Scientific Co-Discovery" />
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@latest/dist/ort.min.js"></script>
+</head>
+<link rel="stylesheet" href="./css/katex.min.css">
+
+<!--<script src="./lib/jquery-1.12.4.min.js"></script>
+<script src="./lib/mobile-detect.min.js"></script>-->
+<script src="./lib/template.v1.js?v=2"></script>
+<script src="https://vjs.zencdn.net/8.11.8/video.min.js"></script>
+<script src="./results_video.js"></script>
+<script src="./scroll_play.js"></script>
+<script type="module" src="./paper_gallery.js?v=15"></script>
+<script src="./autoillustrate_carousel.js?v=8"></script>
+<script src="./scientific_plot_embed.js?v=1" defer></script>
+<script>
+  (() => {
+    const attachCollapseAnimation = (details) => {
+      const summary = details.querySelector("summary");
+      if (!summary) return;
+
+      let animation = null;
+      let isClosing = false;
+      let isExpanding = false;
+
+      const onAnimationFinish = (open) => {
+        details.open = open;
+        animation = null;
+        isClosing = false;
+        isExpanding = false;
+        details.style.height = "";
+        details.style.overflow = "";
+      };
+
+      const onAnimationCancel = () => {
+        isClosing = false;
+        isExpanding = false;
+      };
+
+      const getExpandDuration = (fromHeight, toHeight) => {
+        const delta = Math.abs(toHeight - fromHeight);
+        // Give long blocks more time so opening feels less abrupt.
+        return Math.max(360, Math.min(980, 300 + delta * 0.34));
+      };
+
+      const getCollapseDuration = (fromHeight, toHeight) => {
+        const delta = Math.abs(toHeight - fromHeight);
+        // Keep close timing in the same range as before.
+        return Math.max(280, Math.min(760, 240 + delta * 0.24));
+      };
+
+      const getClosedHeight = () => {
+        const styles = window.getComputedStyle(details);
+        const paddingY =
+          parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+        const borderY =
+          parseFloat(styles.borderTopWidth) + parseFloat(styles.borderBottomWidth);
+        return summary.offsetHeight + paddingY + borderY;
+      };
+
+      const expand = () => {
+        isExpanding = true;
+        const startHeight = `${details.offsetHeight}px`;
+        details.open = true;
+        const endHeight = `${details.offsetHeight}px`;
+        const duration = getExpandDuration(
+          parseFloat(startHeight),
+          parseFloat(endHeight)
+        );
+
+        if (animation) animation.cancel();
+        animation = details.animate(
+          { height: [startHeight, endHeight] },
+          { duration, easing: "cubic-bezier(0.42, 0, 0.58, 1)" }
+        );
+        animation.onfinish = () => onAnimationFinish(true);
+        animation.oncancel = onAnimationCancel;
+      };
+
+      const collapse = () => {
+        isClosing = true;
+        const startHeight = `${details.offsetHeight}px`;
+        const endHeight = `${getClosedHeight()}px`;
+        const duration = getCollapseDuration(
+          parseFloat(startHeight),
+          parseFloat(endHeight)
+        );
+
+        if (animation) animation.cancel();
+        animation = details.animate(
+          { height: [startHeight, endHeight] },
+          { duration, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" }
+        );
+        animation.onfinish = () => onAnimationFinish(false);
+        animation.oncancel = onAnimationCancel;
+      };
+
+      summary.addEventListener("click", (event) => {
+        event.preventDefault();
+        details.style.overflow = "hidden";
+
+        if (isClosing || !details.open) {
+          expand();
+        } else if (isExpanding || details.open) {
+          collapse();
+        }
+      });
+    };
+
+    const buildCollapse = () => {
+      const starts = Array.from(
+        document.querySelectorAll(
+          '.sak-collapse-marker[data-collapse="start"][data-collapse-id]'
+        )
+      );
+
+      starts.forEach((start) => {
+        const id = start.getAttribute("data-collapse-id");
+        if (!id) return;
+
+        let end = null;
+        let cursor = start.nextSibling;
+        while (cursor) {
+          if (
+            cursor.nodeType === 1 &&
+            cursor.classList.contains("sak-collapse-marker") &&
+            cursor.getAttribute("data-collapse") === "end" &&
+            cursor.getAttribute("data-collapse-id") === id
+          ) {
+            end = cursor;
+            break;
+          }
+          cursor = cursor.nextSibling;
+        }
+        if (!end) return;
+
+        const details = document.createElement("details");
+        details.className = "sak-collapsible l-body";
+        if (start.getAttribute("data-collapse-open") === "true") {
+          details.open = true;
+        }
+
+        const summary = document.createElement("summary");
+        summary.textContent =
+          start.getAttribute("data-collapse-summary") || "Details";
+        details.appendChild(summary);
+
+        let node = start.nextSibling;
+        while (node && node !== end) {
+          const next = node.nextSibling;
+          details.appendChild(node);
+          node = next;
+        }
+
+        start.replaceWith(details);
+        end.remove();
+        attachCollapseAnimation(details);
+      });
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", buildCollapse);
+    } else {
+      buildCollapse();
+    }
+  })();
+</script>
+
+<script type="text/front-matter">
+  title: "The Agentic Scientist: Orchestrating Coding Agents for End-to-End Scientific Co-Discovery"
+  description: ""
+</script>
+
+<body>
+  <div id="no_javasript_warning">
+    <h3>This page requires JavaScript. Please enable it to view the website.</h3>
+  </div>
+  <script>
+    document.getElementById("no_javasript_warning").style.display = "none";
+  </script>
+
+  <dt-article id="dtbody">
+
+    <dt-byline class="l-page transparent"></dt-byline>
+    <h1>The Agentic Scientist<span class="subtitle">Orchestrating Coding Agents for End-to-End Scientific
+        Co-Discovery</span></h1>
+    <div class="tldr-intro l-body" style="text-align: left;">
+      <figcaption style="text-align: left; color:#FF6C00; padding-top: 0; margin: 0;">
+        TL;DR
+      </figcaption>
+      <figcaption style="text-align: left; padding-top: 0; margin: 0;">
+        Our previous work on <strong>The AI Scientist</strong> (<a href="https://sakana.ai/ai-scientist/"
+          target="_blank" rel="noopener noreferrer">v1</a> <dt-cite key="lu2024aisciv1"></dt-cite> and <a
+          href="https://sakana.ai/ai-scientist-first-publication/" target="_blank" rel="noopener noreferrer">v2</a>
+        <dt-cite key="yamada2025aisciv2"></dt-cite>),
+        including our recent <a href="https://sakana.ai/ai-scientist-nature/" target="_blank"
+          rel="noopener noreferrer">Nature publication</a> <dt-cite key=lu2026aiscinature></dt-cite>, showed that AI
+        systems can automate substantial parts of the scientific research process, while also revealing important
+        limitations: generated ideas can be underdeveloped and implementations can contain errors.<br>
+        <strong>The Agentic Scientist</strong> is our next-generation <strong>AI Scientist</strong>, designed to address
+        these
+        limitations by
+        orchestrating modern coding agents in a more rigorous, evidence-grounded research workflow.
+        We apply the system across several machine learning research problems, including long-context model adaptation,
+        RL fine-tuning, and learned optimizers. Notably, research on biologically inspired alternatives to
+        backpropagation (called Error Diffusion) co-discovered through this process resulted in a paper accepted as an
+        <strong>ALIFE 2026 oral presentation</strong> <dt-cite key=yamada2026diffusing></dt-cite>.
+        <br>
+      </figcaption>
+    </div>
+    <div id="authors_section">
+      <div class="sa-masthead">
+        <div>
+          <p class="sa-meta-label">Resources</p>
+          <ul class="sa-resources">
+            <li>
+              <a href="https://arxiv.org/abs/2610.18933" target="_blank" rel="noopener noreferrer">
+                <svg class="res-icon res-icon-arxiv" viewBox="0 0 74.492 100.25" aria-hidden="true">
+                  <g fill="#B31B1B">
+                    <path
+                      d="M586.72,255.616a3.377,3.377,0,0,1,.448.031,5.917,5.917,0,0,1,3.581,2.79c.454,1.116.314,2.023-1.315,4.141L563.168,293.6l-8.558-10.047,29.348-26.616a4.406,4.406,0,0,1,2.762-1.321m0-1.5a5.766,5.766,0,0,0-3.69,1.643l-.041.032-.038.035L553.6,282.442l-1.077.977.943,1.107,8.558,10.047,1.145,1.344,1.141-1.348,26.267-31.022.022-.027.022-.028c1.574-2.046,2.327-3.622,1.516-5.619a7.309,7.309,0,0,0-4.779-3.714,5.083,5.083,0,0,0-.64-.043Z"
+                      transform="translate(-526.086 -245.559)" />
+                    <path
+                      d="M553.423,284.593l8.977,10.558L597.911,337.9c.873,1.093,1.419,2.186,1.047,3.418a4.092,4.092,0,0,1-2.721,2.837,3.557,3.557,0,0,1-2.687-1.124L548.01,300.808c-3.5-3.5-2.971-8.151.436-11.558l4.977-4.657m.124-2.17L552.4,283.5l-4.976,4.656c-4.192,4.191-4.372,9.816-.473,13.714l44.521,42.4a5.485,5.485,0,0,0,3.722,1.538,5.1,5.1,0,0,0,1.483-.224,5.59,5.59,0,0,0,3.719-3.838,5.176,5.176,0,0,0-1.31-4.788l-35.53-42.767-8.988-10.571-1.019-1.2Z"
+                      transform="translate(-526.086 -245.559)" />
+                    <path
+                      d="M562.4,295.151l9.556,11.5,5.761-5.356a7.926,7.926,0,0,0,.041-11.743l-43.7-41.923s-1.671-2.029-3.437-2.071a4.49,4.49,0,0,0-4.23,2.718c-.688,1.651-.194,2.809,1.315,4.97l29.306,35.565Z"
+                      transform="translate(-526.086 -245.559)" />
+                    <path
+                      d="M553.7,306.223l-17.116,21.024c-1.255,1.337-2.032,3.683-1.331,5.367a4.587,4.587,0,0,0,4.287,2.841,4.087,4.087,0,0,0,3.082-1.523l20.328-18.9Z"
+                      transform="translate(-526.086 -245.559)" />
+                  </g>
+                </svg><span>The Agentic Scientist</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2606.31700" target="_blank" rel="noopener noreferrer">
+                <svg class="res-icon res-icon-arxiv" viewBox="0 0 74.492 100.25" aria-hidden="true">
+                  <g fill="#B31B1B">
+                    <path
+                      d="M586.72,255.616a3.377,3.377,0,0,1,.448.031,5.917,5.917,0,0,1,3.581,2.79c.454,1.116.314,2.023-1.315,4.141L563.168,293.6l-8.558-10.047,29.348-26.616a4.406,4.406,0,0,1,2.762-1.321m0-1.5a5.766,5.766,0,0,0-3.69,1.643l-.041.032-.038.035L553.6,282.442l-1.077.977.943,1.107,8.558,10.047,1.145,1.344,1.141-1.348,26.267-31.022.022-.027.022-.028c1.574-2.046,2.327-3.622,1.516-5.619a7.309,7.309,0,0,0-4.779-3.714,5.083,5.083,0,0,0-.64-.043Z"
+                      transform="translate(-526.086 -245.559)" />
+                    <path
+                      d="M553.423,284.593l8.977,10.558L597.911,337.9c.873,1.093,1.419,2.186,1.047,3.418a4.092,4.092,0,0,1-2.721,2.837,3.557,3.557,0,0,1-2.687-1.124L548.01,300.808c-3.5-3.5-2.971-8.151.436-11.558l4.977-4.657m.124-2.17L552.4,283.5l-4.976,4.656c-4.192,4.191-4.372,9.816-.473,13.714l44.521,42.4a5.485,5.485,0,0,0,3.722,1.538,5.1,5.1,0,0,0,1.483-.224,5.59,5.59,0,0,0,3.719-3.838,5.176,5.176,0,0,0-1.31-4.788l-35.53-42.767-8.988-10.571-1.019-1.2Z"
+                      transform="translate(-526.086 -245.559)" />
+                    <path
+                      d="M562.4,295.151l9.556,11.5,5.761-5.356a7.926,7.926,0,0,0,.041-11.743l-43.7-41.923s-1.671-2.029-3.437-2.071a4.49,4.49,0,0,0-4.23,2.718c-.688,1.651-.194,2.809,1.315,4.97l29.306,35.565Z"
+                      transform="translate(-526.086 -245.559)" />
+                    <path
+                      d="M553.7,306.223l-17.116,21.024c-1.255,1.337-2.032,3.683-1.331,5.367a4.587,4.587,0,0,0,4.287,2.841,4.087,4.087,0,0,0,3.082-1.523l20.328-18.9Z"
+                      transform="translate(-526.086 -245.559)" />
+                  </g>
+                </svg><span>Accepted ALIFE paper</span>
+              </a>
+            </li>
+            <li><a href="https://github.com/SakanaAI/AI-Scientist-v3" target="_blank" rel="noopener noreferrer"><svg
+                  class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38-.01-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63 0 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12-.51.56-.82 1.27-.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+                </svg><span>Agentic Scientist</span></a></li>
+            <li><a href="https://github.com/SakanaAI/autoillustrate" target="_blank" rel="noopener noreferrer"><svg
+                  class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38-.01-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.52-.82-.67-.28-.15-.68-.52-.01-.53.63 0 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12-.51.56-.82 1.27-.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+                </svg><span>AutoIllustrate</span></a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="sa-meta-label">Authors</p>
+          <div class="sa-authors">
+            <div class="sa-author author">
+              <p class="name">Robert Tjarko Lange*</p>
+              <p class="affiliation">Sakana AI</p>
+            </div>
+            <div class="sa-author author">
+              <p class="name">Luca Grillotti*</p>
+              <p class="affiliation">Sakana AI</p>
+            </div>
+            <div class="sa-author author">
+              <p class="name">Yutaro Yamada*</p>
+              <p class="affiliation">Sakana AI</p>
+            </div>
+            <div class="sa-author author">
+              <p class="name">Rujikorn Charakorn</p>
+              <p class="affiliation">Sakana AI</p>
+            </div>
+            <div class="sa-author author">
+              <p class="name">David Ha</p>
+              <p class="affiliation">Sakana AI</p>
+            </div>
+          </div>
+          <p class="sa-author-footnote">* Equal contribution.</p>
+        </div>
+        <div class="sa-published">
+          <p class="sa-meta-label">Published</p>
+          <p class="sa-pub-date">October 2026</p>
+        </div>
+      </div>
+    </div><figure style="max-width: 1200px; margin: 1.5rem auto 2rem; text-align: center;">
+  <video class="sak-viewport-video" loop muted playsinline preload="metadata" style="display: block; width: 100%; height: auto;">
+    <source src="./figs/agentic-scientist.mp4" type="video/mp4" />
+  </video>
+</figure>
+<p>Modern coding agents are solving day-to-day software engineering tasks with ever-increasing time horizons. This workflow has fundamentally changed how humans write software and optimize code. Scientific research, however, is more than the sum of engineering optimizations. A useful autonomous researcher has to define tasks, propose and evaluate ideas, turn them into an experiment, check whether the implementation really tests the idea, remember failures, compare variants fairly, and finally explain what happened based on grounded evidence. If we ignore those pieces, an “AI scientist” can easily become solely a strong hyperparameter optimizer in code space (aka. autoresearch <dt-cite key=novikov2025alphaevolve,lange2026shinkaevolve,karpathy2026autoresearch></dt-cite>).</p>
+<p>Similar to our previous work on The AI Scientist (<a href="https://sakana.ai/ai-scientist/">v1</a> and <a href="https://sakana.ai/ai-scientist-first-publication/">v2</a>), The Agentic Scientist is our attempt to make the research loop itself explicit. Instead of simply asking an agent to “do science” in a single conversation, we wrap coding agents in a scaffold that controls what they see, what they write, how they are evaluated, and how their results are passed to the next stage. The Agentic Scientist is a general framework that can coordinate different coding agents across different research problems, as long as each task provides a clear, verifiable goal through a scripted evaluator.</p>
+<p>The Agentic Scientist improves upon our prior works in many ways, including incorporating agentic loops into many aspects of the scaffold, program optimization with parallel agents, rubric-based evaluation, evidence generation, a novel diagram generation method, and robust scientific paper writing. These improvements collectively allow computational scientific processes to be automated end-to-end while allowing human scientists to co-discover interesting research questions and hypotheses. Notably, the development version of The Agentic Scientist and our human scientists have co-produced a machine learning paper which has been accepted as an <strong>ALIFE 2026 oral presentation</strong> <dt-cite key=yamada2026diffusing></dt-cite>.</p>
+<hr>
+<h2>Successful Co-Discovered Paper:<br>from Error Diffusion experiments to an ALIFE paper</h2>
+<section class="paper-gallery" data-paper-gallery aria-label="ALIFE paper">
+  <div class="paper-gallery__list" data-gallery-list role="list">
+      <article class="paper-gallery__slide" data-paper-src="papers/alife2026_camera_ready-1.pdf" data-paper-title="Diffusing Blame: Task-Dependent Credit Assignment in Biologically Plausible Dual-Stream Networks" role="listitem">
+        <div class="paper-gallery__viewport" data-gallery-viewport tabindex="0" role="region" aria-label="Pages of Diffusing Blame: Task-Dependent Credit Assignment in Biologically Plausible Dual-Stream Networks">
+          <div class="paper-gallery__track" data-gallery-track>
+            <div class="paper-gallery__pages" data-gallery-pages></div>
+          </div>
+        </div>
+        <p class="paper-gallery__preview-status" data-gallery-preview-status role="status">Loading page previews&hellip;</p>
+        <p class="paper-gallery__card-hint">Click a page to preview</p>
+        <a class="paper-gallery__card-title" href="https://arxiv.org/abs/2606.31700" target="_blank" rel="noopener">Diffusing Blame: Task-Dependent Credit Assignment in Biologically Plausible Dual-Stream Networks <dt-cite key="yamada2026diffusing"></dt-cite></a>
+      </article>
+  </div>
+  <p class="paper-gallery__status" data-gallery-status role="status" aria-live="polite">Loading paper previews&hellip;</p>
+</section>
+<p>Our Error Diffusion project shows how the proposed research loop can support a co-discovery investigation between machines and humans. We used an early version of The Agentic Scientist to explore whether Error Diffusion, a biologically motivated learning rule, could extend beyond its earlier binary-classification demonstrations. We set the scientific question and the constraints a valid implementation had to preserve. The system proposed hypotheses, implemented experiments, and investigated failures. Our human scientists then used those results to choose promising directions and request further tests. This back-and-forth brought the work from an initial hypothesis toward a broader study of how the learning rule behaves, resulting in a coherent scientific paper.</p>
+<figure style="max-width: 1200px; margin: 2rem auto; text-align: center;">
+  <img src="./figs/alife_co_discovery_pipeline.png" alt="Human–machine co-discovery pipeline: human direction, agent experiments, human-guided transfer to reinforcement learning, result verification, and review revisions" width="2173" height="741" style="max-width: 100%; height: auto;" />
+  <figcaption style="text-align: center;">Human researchers defined the initial direction, baseline, and evaluation rubric; supported the transition from classification to reinforcement-learning experiments; verified results, references, and claims before submission; and incorporated reviewer feedback into the camera-ready paper. Orange boxes indicate stages involving human input.</figcaption>
+</figure>
+<p>In an early run, human inspection caught a high-scoring candidate that violated the intended learning rule, prompting us to tighten the rubrics. Within those constraints, the system developed a way to route error signals that enabled multiclass learning, then used ablations to identify which training adjustments mattered on each task. We took the strongest classification implementation into reinforcement learning and prepared the test environments. The system then adapted the method, tested variants, and analyzed where learning became less reliable. Each stage produced optimized solutions and experimental evidence, allowing human-in-the-loop to make decisions about what to try next.</p>
+<p>The system organized the experiments and analyses into a manuscript. Before submission, we independently checked the implementations, results, and references, and revised claims that exceeded the evidence. The resulting study was accepted as an ALIFE 2026 oral presentation after external peer review. This is the human-steerable, end-to-end research process we want The Agentic Scientist to support: developing ideas, testing their consequences, and turning the findings into a scientific contribution. Agents expand the experimental work researchers can undertake, while human scientists steer the investigation and remain responsible for its conclusions.</p>
+<h2>Additional Case Studies: Putting The Agentic Scientist to Work</h2>
+<p>We first showcase two sampled papers below by putting the system to the test in practice: starting from a scientific goal and an existing codebase, proposing ideas, testing them, and investigating why the strongest approach works. We asked The Agentic Scientist to (i) improve long-context adaptation with Doc-to-LoRA <dt-cite key=charakorn2026doctolora></dt-cite> and (ii) to explore learned evolution strategies built on CMA-ES <dt-cite key=hansen2016cma></dt-cite>. Together, these studies show how the same scaffold can support open-ended method development across different research problems, with experiments and ablations grounding the conclusions.</p>
+<section class="paper-gallery" data-paper-gallery aria-label="Case study papers">
+  <div class="paper-gallery__list" data-gallery-list role="list">
+      <article class="paper-gallery__slide" data-paper-src="papers/doc_to_lora_multi_needle_claude.pdf" data-paper-title="Addressing Beats Architecture: Query-Conditioned Merge-Time Selection for Context-to-LoRA Hypernetworks on Multi-Needle Retrieval" role="listitem">
+        <div class="paper-gallery__viewport" data-gallery-viewport tabindex="0" role="region" aria-label="Pages of Addressing Beats Architecture: Query-Conditioned Merge-Time Selection for Context-to-LoRA Hypernetworks on Multi-Needle Retrieval">
+          <div class="paper-gallery__track" data-gallery-track>
+            <div class="paper-gallery__pages" data-gallery-pages></div>
+          </div>
+        </div>
+        <p class="paper-gallery__preview-status" data-gallery-preview-status role="status">Loading page previews&hellip;</p>
+        <p class="paper-gallery__card-hint">Click a page to preview</p>
+        <a class="paper-gallery__card-title" data-gallery-open href="papers/doc_to_lora_multi_needle_claude.pdf" target="_blank" rel="noopener">Addressing Beats Architecture: Query-Conditioned Merge-Time Selection for Context-to-LoRA Hypernetworks on Multi-Needle Retrieval</a>
+        <p class="paper-gallery__description l-body">Starting from the <a href="https://github.com/SakanaAI/doc-to-lora">public repository of Doc-to-LoRA</a>, we asked The Agentic Scientist to improve how a language model retrieves facts from long documents. Doc-to-LoRA encodes document chunks as low-rank adapters (LoRA; <dt-cite key="hu2021lora"></dt-cite>) for a frozen model. The system explores changes to the adapter generator, training objectives, and ways of combining those adapters, using experiments to identify where retrieval breaks down. It finds that combining adapters before seeing the question causes facts to interfere, and develops a way to select the relevant adapter based on the query. Together with refinements to text selection and chunk boundaries, this raises exact-match accuracy from 52% to 98%, without adding trainable parameters or retraining. This case illustrates the loop we want to automate: investigate a bottleneck, develop a targeted change, and test which components explain the gain. The results are established on synthetic multi-needle in-a-haystack retrieval. Generalization to natural documents and more complex questions remains untested.</p>
+      </article>
+      <article class="paper-gallery__slide" data-paper-src="papers/metaevo_paper-1.pdf" data-paper-title="How Much of a Learned Evolution Strategy Is the Algorithm It Was Anchored To?" role="listitem">
+        <div class="paper-gallery__viewport" data-gallery-viewport tabindex="0" role="region" aria-label="Pages of How Much of a Learned Evolution Strategy Is the Algorithm It Was Anchored To?">
+          <div class="paper-gallery__track" data-gallery-track>
+            <div class="paper-gallery__pages" data-gallery-pages></div>
+          </div>
+        </div>
+        <p class="paper-gallery__preview-status" data-gallery-preview-status role="status">Loading page previews&hellip;</p>
+        <p class="paper-gallery__card-hint">Click a page to preview</p>
+        <a class="paper-gallery__card-title" data-gallery-open href="papers/metaevo_paper-1.pdf" target="_blank" rel="noopener">How Much of a Learned Evolution Strategy Is the Algorithm It Was Anchored To?</a>
+        <p class="paper-gallery__description l-body">For evolutionary optimization, we asked The Agentic Scientist to explore how learning could improve the design of a black-box optimizer. The system proposes optimizer variants, meta-trains their learned components on small mathematical test problems, and evaluates them on policy search for a continuous control task. It develops a CMA-ES-based strategy with learned adjustments that improves performance over the course of optimization relative to a CMA-ES reference. It then investigates where that improvement comes from by disabling the learned adjustments and comparing the resulting control with the full method. The control retains much of the advantage and achieves better final returns in longer runs, while the learned component mainly accelerates early progress. This is the evidence-generating part of the research loop: testing which innovations matter and identifying when they help. The continuous control task comparison gives researchers a concrete explanation of the gain and a starting point for testing whether the same mechanisms help on other tasks. </p>
+      </article>
+  </div>
+  <p class="paper-gallery__status" data-gallery-status role="status" aria-live="polite">Loading paper previews&hellip;</p>
+</section>
+<hr>
+<h2>What's Inside The Agentic Scientist?</h2>
+<figure style="max-width: 1200px; margin: 2rem auto; text-align: center;">
+  <img src="./figs/agentic-sci-overview.png" alt="Overview of The Agentic Scientist" style="max-width: 100%; height: auto;" />
+  <figcaption>The Agentic Scientist workflow. Given a task description, parallel coding agents conduct rubric-based empirical hypothesis testing coordinated via a shared memory layer. The resulting winner program is used to determine which baselines, ablations, and post-hoc analyses to run; the resulting evidence then grounds the manuscript.</figcaption>
+</figure>
+<p><strong>Task Setup &amp; Drafting:</strong> The workflow begins with an executable task specification and evaluation procedure. Researchers can supply these directly or ask a drafting agent to build them from a research brief. Agent-drafted tasks undergo execution checks and an independent review of whether they match the intended scientific question. Once validated, a central controller distributes a fixed budget of research cycles across parallel workers, each exploring hypotheses in its own workspace.</p>
+<p><strong>Parallel Investigation:</strong> Inside each worker, an <em>ideation agent</em> proposes a hypothesis, an implementation plan, and rubrics specifying what the experiment must demonstrate. An <em>execution agent</em> then edits candidate programs, runs evaluations, and records metrics. All workers share memory entries and distilled conclusions at cycle boundaries, so successful ideas and failed attempts can inform subsequent experiments. Periodic context resets through agentic hand-off encourage fresh hypotheses while preserving each worker’s best program. This gives the search both continuity and room to change direction, without relying on a single ever-growing conversation.</p>
+<p><strong>Evidence Generation</strong> and <strong>Paper Writing:</strong> After optimization, the system selects the best correct program across workers and ablates its components. Ablation agents propose and check controlled baselines and ablations. An analysis agent then post-hoc reasons based on the logged metrics and produces the winner’s analysis. These results, together with the underlying code, logs, and artifacts, become the evidence for manuscript writing. The writer produces a LaTeX paper, overview plots via <strong><a href="https://github.com/SakanaAI/autoillustrate">AutoIllustrate</a></strong>, comparison plots, and an explicit evidence map linking scientific claims to their sources. Automated checks and an independent audit look for unsupported numbers, inconsistent comparisons, and overclaiming. Finally, a reviewer agent assesses presentation and framing. Their feedback drives revisions, keeping the manuscript tied to what the experiments actually support.</p>
+<hr>
+<h2>Evaluating The Agentic Scientist Across Tasks, Harnesses, and LLMs</h2>
+<figure class="sa-results-figure-block">
+  <div class="sa-results-plot" data-plot-embed>
+    <iframe src="./figs/reviewer_release_and_performance.html" title="Interactive reviewer scores by model release date and research performance" loading="lazy"></iframe>
+  </div>
+  <figcaption>Pre-revision reviewer scores by model release date averaged across five tasks <b>(left)</b>. Within-task percentile ranks of final performance and reviewer scores, colored by task <b>(right)</b>.</figcaption>
+</figure>
+<p><strong>Evaluation Setup:</strong> We evaluated The Agentic Scientist on five selected diverse research topics to assess the quality of its automated research. The evaluation covered nine frontier LLMs—four <i>GPT</i> models, four <i>Claude</i> models, and one <i>DeepSeek</i> model—and four agentic harnesses: <i>Codex</i>, <i>Claude Code</i>, <i>OpenCode</i>, and <i>Pi</i>. This totals 14 model–harness combinations and 70 research campaigns across all research tasks.
+Because the tasks require different kinds and amounts of computational resources, we used a common budget of 20 idea iterations per campaign to make comparisons easier. All runs for a given task instance used the same scoring function. We also assessed the generated manuscripts using AI Reviewer <dt-cite key="lu2024aisciv1"></dt-cite>
+, treating its scores as a proxy for paper quality rather than ground-truth evidence of scientific correctness.</p>
+<p><strong>Main results and takeaways:</strong> Newer models generally received higher reviewer scores, particularly within the Claude model family, as shown in the left plot. In these evaluations, the choice of agentic harness had a smaller effect on performance than the underlying model. To compare numerical performance with manuscript reviewer scores across tasks, we converted both measures to within-task percentile ranks and pooled the results from all 70 research campaigns. The resulting positive association (r = 0.44; right plot) is consistent with reviewer scores tracking measured numerical performance.</p>
+<hr>
+<h2>AutoIllustrate: Editable Scientific Diagram Generation Pipeline</h2>
+<figure style="max-width: 1200px; margin: 2rem auto; text-align: center;">
+  <img src="./figs/autoillustrate_pipeline.png?v=2" alt="AutoIllustrate pipeline" style="max-width: 100%; height: auto;" />
+  <figcaption style="text-align: center;">The AutoIllustrate pipeline, generated by AutoIllustrate.</figcaption>
+</figure>
+<hr style="max-width: 1200px; margin: 1.5rem auto; border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.12);">
+<figure style="max-width: 1200px; margin: 2rem auto; text-align: center;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; align-items: start;">
+    <div>
+      <img src="./figs/autoillustrate/dgm_plain.webp" alt="Darwin Gödel Machine overview figure before enhancement: the plain draw.io render" width="1800" height="743" style="max-width: 100%; height: auto;" loading="lazy" />
+      <div style="margin-top: 0.4rem; font-size: 0.85rem; color: #666;"><strong>Before:</strong> deterministic <code>draw.io</code> render</div>
+    </div>
+    <div>
+      <img src="./figs/autoillustrate/dgm.webp" alt="Darwin Gödel Machine overview figure after enhancement by the image model" width="1800" height="743" style="max-width: 100%; height: auto;" loading="lazy" />
+      <div style="margin-top: 0.4rem; font-size: 0.85rem; color: #666;"><strong>After:</strong> enhanced by the image model</div>
+    </div>
+  </div>
+  <figcaption style="text-align: center;">The Darwin Gödel Machine <dt-cite key=zhang2026darwin></dt-cite> overview figure before and after the enhancement step.<br>The editable vector <code>draw.io</code> diagram remains the source of truth; the image model only restyles it.</figcaption>
+</figure>
+<p>We also built AutoIllustrate, a companion pipeline for automatic scientific figure generation. Prior approaches either produce scientific diagrams as pixel-based images, making fine-grained corrections hard, or generate editable files whose layout is only checked visually. AutoIllustrate is vector-first: an editable, vector <code>draw.io</code> diagram is the source of truth, and every pixel-based output is derived from it, so human scientists can adjust any diagram by hand. Since the diagram is a structured file, a deterministic checker can verify its geometry, rejecting overlapping shapes and badly routed arrows before any figure is emitted. An image generation model then enhances the plain <code>draw.io</code> figures, adding more details and restyling them. In our evaluation on PaperBananaBench, AutoIllustrate improved faithfulness and aesthetics over PaperBanana <dt-cite key=zhu2026paperbanana></dt-cite>, a strong raster baseline on that benchmark, while preserving an editable source for every diagram.</p>
+<p>The gallery below shows overview figures that AutoIllustrate generated for several Sakana AI papers. Click a figure to open its editable <code>draw.io</code> source next to the enhanced version.</p>
+<section class="figure-strip" data-figure-strip aria-label="AutoIllustrate figure gallery">
+  <div class="figure-strip__viewport" data-strip-viewport tabindex="0" role="region" aria-label="Figures generated by AutoIllustrate">
+    <div class="figure-strip__track" data-strip-track>
+      <ul class="figure-strip__items" data-strip-items role="list">
+        <li class="figure-strip__item" data-strip-item data-figure-index="0" data-figure-src="./figs/autoillustrate/ai_scientist.webp" data-drawio-src="./figs/autoillustrate/ai_scientist.drawio" role="listitem">
+          <button class="figure-strip__card" type="button" data-strip-open aria-haspopup="dialog" aria-label="Open The AI Scientist figure"><img class="figure-strip__thumb" src="./figs/autoillustrate/ai_scientist.webp" alt="AutoIllustrate overview figure of The AI Scientist" width="1800" height="754" loading="lazy" /></button>
+          <span class="figure-strip__label" data-strip-title>The AI Scientist <dt-cite key=lu2026aiscinature></dt-cite></span>
+          <div data-strip-caption>Overview of The AI Scientist and the Automated Reviewer. (1) Idea Generation: an LLM mutation operator iteratively grows an archive of structured research ideas (hypothesis, experimental plan, self-assessed interestingness/novelty/feasibility); each idea is checked for novelty against the literature via Semantic Scholar and discarded if it duplicates existing work. In the template-based mode, ideation starts from a human-provided code template. (2) Experimentation: in the template-free mode, an experiment progress manager runs a parallelized agentic tree search over four stages (preliminary investigation, hyperparameter tuning, research agenda execution, ablation studies); each node writes and executes code, plots its results and has the plots critiqued by a vision-language model, being marked buggy (then debugged) or non-buggy (then refined), and the best node of each stage seeds the next stage. The template-based mode instead executes a sequential experimental plan with Aider. (3) Manuscript Writing: results are aggregated into figures and written into a LaTeX paper that is refined through reflection with VLM and linter feedback, then compiled to PDF. The Automated Reviewer ensembles five independent NeurIPS-style reviews into an Area-Chair meta-review that produces scores and an accept/reject decision.</div>
+        </li>
+        <li class="figure-strip__item" data-strip-item data-figure-index="1" data-figure-src="./figs/autoillustrate/discopop.webp" data-drawio-src="./figs/autoillustrate/discopop.drawio" role="listitem">
+          <button class="figure-strip__card" type="button" data-strip-open aria-haspopup="dialog" aria-label="Open the DiscoPOP figure"><img class="figure-strip__thumb" src="./figs/autoillustrate/discopop.webp" alt="AutoIllustrate overview figure of DiscoPOP" width="1800" height="608" loading="lazy" /></button>
+          <span class="figure-strip__label" data-strip-title>DiscoPOP <dt-cite key=lu2024discovering></dt-cite></span>
+          <div data-strip-caption>LLM-driven objective discovery. An LLM, seeded in context with established preference-optimization losses and their scores, proposes a candidate objective <dt-math>f_i</dt-math> as PyTorch code over policy and reference log-probabilities. Candidates failing unit tests are resampled with the error message as feedback; valid ones replace DPO to fine-tune an LLM on preference pairs, and the fine-tuned model is scored on MT-Bench (<dt-math>\eta</dt-math>). Appending <dt-math>(f_i, \eta)</dt-math> to the context closes the loop, which repeats until convergence or a generation budget. One discovered objective, DiscoPOP (LRML), blends the logistic (DPO) and exponential losses with a weight <dt-math>\sigma(\beta\rho/\tau)</dt-math> modulated by the log ratio.</div>
+        </li>
+        <li class="figure-strip__item" data-strip-item data-figure-index="2" data-figure-src="./figs/autoillustrate/dgm.webp" data-drawio-src="./figs/autoillustrate/dgm.drawio" role="listitem">
+          <button class="figure-strip__card" type="button" data-strip-open aria-haspopup="dialog" aria-label="Open the Darwin Gödel Machine figure"><img class="figure-strip__thumb" src="./figs/autoillustrate/dgm.webp" alt="AutoIllustrate overview figure of the Darwin Gödel Machine" width="1800" height="743" loading="lazy" /></button>
+          <span class="figure-strip__label" data-strip-title>Darwin Gödel Machine <dt-cite key=zhang2026darwin></dt-cite></span>
+          <div data-strip-caption>The DGM iteratively builds a growing archive of agents by interleaving self-modification with downstream task evaluation. Agents in the archive are selected for self-modification through open-ended exploration; each selected parent analyzes its own evaluation logs, proposes a feature, and implements it in its own codebase, and only children that still compile and can edit code are added back to the archive.</div>
+        </li>
+        <li class="figure-strip__item" data-strip-item data-figure-index="3" data-figure-src="./figs/autoillustrate/ctm.webp" data-drawio-src="./figs/autoillustrate/ctm.drawio" role="listitem">
+          <button class="figure-strip__card" type="button" data-strip-open aria-haspopup="dialog" aria-label="Open the Continuous Thought Machine figure"><img class="figure-strip__thumb" src="./figs/autoillustrate/ctm.webp" alt="AutoIllustrate overview figure of the Continuous Thought Machine" width="1800" height="732" loading="lazy" /></button>
+          <span class="figure-strip__label" data-strip-title>Continuous Thought Machine <dt-cite key=darlow2026continuous></dt-cite></span>
+          <div data-strip-caption>The CTM unfolds an internal sequence of ticks <dt-math>t = 1,\ldots,T</dt-math>, decoupled from the data. At each tick: (1) a synapse model <dt-math>f_{\theta_{\mathrm{syn}}}</dt-math> maps the concatenated post-activations <dt-math>\mathbf{z}^t</dt-math> and attention output <dt-math>\mathbf{o}^t</dt-math> to pre-activations <dt-math>\mathbf{a}^t</dt-math>; (2) the <dt-math>M</dt-math> most recent pre-activations form a history <dt-math>\mathbf{A}^t</dt-math>; (3) each neuron <dt-math>d</dt-math> has a privately parameterized neuron-level model (NLM) <dt-math>g_{\theta_d}</dt-math> that processes its own history <dt-math>\mathbf{A}^t_d</dt-math> to produce (4) post-activations <dt-math>\mathbf{z}^{t+1}_d</dt-math>; (5) post-activations accumulate in a growing history <dt-math>\mathbf{Z}^t</dt-math>; (6) neural synchronization <dt-math>\mathbf{S}^t = \mathbf{Z}^t (\mathbf{Z}^t)^\intercal</dt-math>, with learnable per-pair exponential decay <dt-math>r_{ij}</dt-math>, measures how neuron activity co-varies over time; (7) randomly sampled neuron pairs from <dt-math>\mathbf{S}^t</dt-math> form (8) synchronization representations <dt-math>\mathbf{S}^t_{\text{out}}</dt-math> and <dt-math>\mathbf{S}^t_{\text{action}}</dt-math>, projected into (9) outputs <dt-math>\mathbf{y}^t</dt-math> and attention queries <dt-math>\mathbf{q}^t</dt-math>; cross-attention over data features yields <dt-math>\mathbf{o}^t</dt-math>, which is (10) concatenated with <dt-math>\mathbf{z}^{t+1}</dt-math> for the next tick. Right: a loss is computed at every tick; the ticks of minimum loss (<dt-math>t_1</dt-math>) and maximum certainty (<dt-math>t_2</dt-math>) are selected per input and their losses averaged, giving native adaptive computation.</div>
+        </li>
+        <li class="figure-strip__item" data-strip-item data-figure-index="4" data-figure-src="./figs/autoillustrate/shinka_evolve.webp" data-drawio-src="./figs/autoillustrate/shinka_evolve.drawio" role="listitem">
+          <button class="figure-strip__card" type="button" data-strip-open aria-haspopup="dialog" aria-label="Open the ShinkaEvolve figure"><img class="figure-strip__thumb" src="./figs/autoillustrate/shinka_evolve.webp" alt="AutoIllustrate overview figure of ShinkaEvolve" width="1800" height="743" loading="lazy" /></button>
+          <span class="figure-strip__label" data-strip-title>ShinkaEvolve <dt-cite key=lange2026shinkaevolve></dt-cite></span>
+          <div data-strip-caption>Each generation (1) samples an island from the program archive and draws a parent (weighted by performance and novelty) together with top-K and random inspiration programs; (2) builds a mutation prompt and queries an LLM from a bandit-selected ensemble to propose a diff edit, full rewrite, or crossover, rejecting proposals whose mutable code is too similar to existing programs (embedding similarity, then an LLM novelty judge); and (3) executes accepted programs, storing fitness, public metrics and textual feedback in the archive. Relative-improvement rewards update the LLM selection probabilities (UCB1), and a periodic meta-scratchpad distils insights into future mutation prompts.</div>
+        </li>
+        <li class="figure-strip__item" data-strip-item data-figure-index="5" data-figure-src="./figs/autoillustrate/conductor.webp" data-drawio-src="./figs/autoillustrate/conductor.drawio" role="listitem">
+          <button class="figure-strip__card" type="button" data-strip-open aria-haspopup="dialog" aria-label="Open The RL Conductor figure"><img class="figure-strip__thumb" src="./figs/autoillustrate/conductor.webp" alt="AutoIllustrate overview figure of the RL Conductor" width="1800" height="979" loading="lazy" /></button>
+          <span class="figure-strip__label" data-strip-title>The RL Conductor <dt-cite key=nielsen2026learning></dt-cite></span>
+          <span class="figure-strip__sublabel" data-strip-subtitle>which, alongside Trinity <dt-cite key=xu2026trinity></dt-cite>, powers <a href="https://sakana.ai/fugu/" target="_blank" rel="noopener noreferrer">Sakana Fugu</a> <dt-cite key=tang2026fugu></dt-cite>! 🐡</span>
+          <div data-strip-caption>Given a question <dt-math>q_i</dt-math>, a small trainable Conductor LM reasons in a chain-of-thought and then outputs an agentic workflow as three Python lists: the worker assigned to each step, a natural-language subtask for each step, and an access list selecting which previous answers enter each worker's context. Large frozen worker LLMs, drawn from a sampled <dt-math>k</dt-math>-of-<dt-math>n</dt-math> pool, execute the steps sequentially, and the final output <dt-math>o_i</dt-math> is rewarded (0 if the lists cannot be parsed, 0.5 if incorrect, 1 if it matches <dt-math>s_i</dt-math>) to train the Conductor with GRPO. Recursive calls let the Conductor re-plan from its own parent output and the last response, up to a maximum depth, giving a tunable test-time compute axis.</div>
+        </li>
+        <li class="figure-strip__item" data-strip-item data-figure-index="6" data-figure-src="./figs/autoillustrate/error_diffusion.webp" data-drawio-src="./figs/autoillustrate/error_diffusion.drawio" role="listitem">
+          <button class="figure-strip__card" type="button" data-strip-open aria-haspopup="dialog" aria-label="Open the Error Diffusion figure"><img class="figure-strip__thumb" src="./figs/autoillustrate/error_diffusion.webp" alt="AutoIllustrate overview figure of the dual-stream Error Diffusion framework" width="1800" height="720" loading="lazy" /></button>
+          <span class="figure-strip__label" data-strip-title>Error Diffusion <dt-cite key=yamada2026diffusing></dt-cite></span>
+          <div data-strip-caption>Overview of the dual-stream Error Diffusion framework. <strong>Left:</strong> The excitatory/inhibitory architecture maintains separate streams (<dt-math>\mathbf{p}</dt-math>, <dt-math>\mathbf{n}</dt-math>) with four non-negative weight matrices per layer, enforcing Dale's principle structurally. <strong>Center:</strong> The Error Diffusion update broadcasts output error directly to hidden layers without weight transport or random feedback matrices. <strong>Right:</strong> The shared architecture is applied to classification (with domain-specific sigmoid widths, mean-centered error, and asymmetric initialization) and reinforcement learning (with ReLU activations and PPO integration).</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <p class="figure-strip__hint">Drag to browse. Click a figure to open its editable draw.io source and the enhanced version.</p>
+</section>
+<hr>
+<h2>Lessons Learned and Limitations</h2>
+<p>Across our case studies, a recurring lesson is that the research task, evaluator, and verification process shape what the agent discovers. A high score can still come from a shortcut that violates the intended method (i.e., reward hacking), especially when important constraints are left implicit (e.g., the Error Diffusion experiment). Rubrics can make those constraints explicit, but they are also imperfect because of the agentic nature of rubric-based evaluation. Human researchers still need to choose meaningful questions, define what counts as a valid experiment, and check whether the resulting claims are ready for publication.</p>
+<p>The scope for discovery also depends on the task. On a mature, heavily optimized benchmark, search may concentrate on hyperparameter tuning and small engineering changes, turning a science project into an engineering one. These gains can be useful, while their scientific significance depends on what we learn from them. More open-ended questions give agents room to explore alternative mechanisms, test competing hypotheses, and investigate when an idea generalizes. The Agentic Scientist can support both kinds of work. However, it leaves room for human researchers to judge and decide whether the optimized solution contains significant scientific discovery.</p>
+<p>The current system also has gaps in how it uses prior work. Unlike our earlier AI Scientist systems, The Agentic Scientist searches the literature during manuscript writing rather than during ideation. This limits how directly new hypotheses build on existing research. It also lacks a reliable pipeline for turning published methods into working state-of-the-art baselines. Most generated comparisons instead modify the program selected during optimization. These comparisons help isolate which changes matter, but leave open how the method compares with the strongest alternatives from the literature.</p>
+<p>Our evaluations have limits of their own. AI reviewer scores provide a proxy for paper quality, rather than independent evidence of scientific correctness; only the Error Diffusion paper underwent external peer review. All of our research tasks are in computational machine learning, so transfer to fields requiring physical experiments, specialized instruments, or human-subject studies remains untested. AutoIllustrate also needs broader human assessment: its benchmark uses a single vision-language model as judge, and its gains in faithfulness and aesthetics come with trade-offs in readability and conciseness.</p>
+<p><strong>Ethical considerations:</strong> AI-assisted research raises risks for attribution, research integrity, and an already strained peer-review process. We therefore submitted only the Error Diffusion paper for external review, and only after human researchers verified its implementations, results, claims, and references. The other generated manuscripts served only as internal evaluation artifacts. Responsible use of systems like The Agentic Scientist also calls for provenance for generated code and text and disclosure of agent contributions. Researchers remain accountable for safety, authorship, final claims, and deciding whether the work is suitable for submission and external review.</p>
+<hr>
+<h2>Outlook</h2>
+<p>We see The Agentic Scientist as an opportunity to give researchers greater experimental reach with faster iteration loops. The system allows exploring more hypotheses within a question and testing connections across research directions that might otherwise go unexplored. The scaffold serves as a reusable workflow for both types of exploration. A longer-term possibility is to use the system to improve its own research workflow, provided we can reliably measure whether those changes lead to better science.</p>
+<p>We open-source both The Agentic Scientist and AutoIllustrate for the community to build on top of. We are excited to see The Agentic Scientist co-generate impactful scientific discovery in the wild. Please check out our code and try it for yourself!</p>
+<h4>Sakana AI</h4>
+<ul class="sa-bottom-resources">
+  <li><a href="https://github.com/SakanaAI/AI-Scientist-v3" target="_blank" rel="noopener noreferrer"><svg class="sa-bottom-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38-.01-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63 0 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12-.51.56-.82 1.27-.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>Agentic Scientist</span></a></li>
+  <li><a href="https://github.com/SakanaAI/autoillustrate" target="_blank" rel="noopener noreferrer"><svg class="sa-bottom-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38-.01-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63 0 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12-.51.56-.82 1.27-.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>AutoIllustrate</span></a></li>
+  <li><a href="https://arxiv.org/abs/2610.18933" target="_blank" rel="noopener noreferrer"><svg class="sa-bottom-icon res-icon-arxiv" viewBox="0 0 74.492 100.25" aria-hidden="true">
+                  <g fill="#B31B1B">
+                    <path d="M586.72,255.616a3.377,3.377,0,0,1,.448.031,5.917,5.917,0,0,1,3.581,2.79c.454,1.116.314,2.023-1.315,4.141L563.168,293.6l-8.558-10.047,29.348-26.616a4.406,4.406,0,0,1,2.762-1.321m0-1.5a5.766,5.766,0,0,0-3.69,1.643l-.041.032-.038.035L553.6,282.442l-1.077.977.943,1.107,8.558,10.047,1.145,1.344,1.141-1.348,26.267-31.022.022-.027.022-.028c1.574-2.046,2.327-3.622,1.516-5.619a7.309,7.309,0,0,0-4.779-3.714,5.083,5.083,0,0,0-.64-.043Z" transform="translate(-526.086 -245.559)"/>
+                    <path d="M553.423,284.593l8.977,10.558L597.911,337.9c.873,1.093,1.419,2.186,1.047,3.418a4.092,4.092,0,0,1-2.721,2.837,3.557,3.557,0,0,1-2.687-1.124L548.01,300.808c-3.5-3.5-2.971-8.151.436-11.558l4.977-4.657m.124-2.17L552.4,283.5l-4.976,4.656c-4.192,4.191-4.372,9.816-.473,13.714l44.521,42.4a5.485,5.485,0,0,0,3.722,1.538,5.1,5.1,0,0,0,1.483-.224,5.59,5.59,0,0,0,3.719-3.838,5.176,5.176,0,0,0-1.31-4.788l-35.53-42.767-8.988-10.571-1.019-1.2Z" transform="translate(-526.086 -245.559)"/>
+                    <path d="M562.4,295.151l9.556,11.5,5.761-5.356a7.926,7.926,0,0,0,.041-11.743l-43.7-41.923s-1.671-2.029-3.437-2.071a4.49,4.49,0,0,0-4.23,2.718c-.688,1.651-.194,2.809,1.315,4.97l29.306,35.565Z" transform="translate(-526.086 -245.559)"/>
+                    <path d="M553.7,306.223l-17.116,21.024c-1.255,1.337-2.032,3.683-1.331,5.367a4.587,4.587,0,0,0,4.287,2.841,4.087,4.087,0,0,0,3.082-1.523l20.328-18.9Z" transform="translate(-526.086 -245.559)"/>
+                  </g>
+                </svg><span>The Agentic Scientist</span></a></li>
+  <li><a href="https://arxiv.org/abs/2606.31700" target="_blank" rel="noopener noreferrer"><svg class="sa-bottom-icon res-icon-arxiv" viewBox="0 0 74.492 100.25" aria-hidden="true">
+                  <g fill="#B31B1B">
+                    <path d="M586.72,255.616a3.377,3.377,0,0,1,.448.031,5.917,5.917,0,0,1,3.581,2.79c.454,1.116.314,2.023-1.315,4.141L563.168,293.6l-8.558-10.047,29.348-26.616a4.406,4.406,0,0,1,2.762-1.321m0-1.5a5.766,5.766,0,0,0-3.69,1.643l-.041.032-.038.035L553.6,282.442l-1.077.977.943,1.107,8.558,10.047,1.145,1.344,1.141-1.348,26.267-31.022.022-.027.022-.028c1.574-2.046,2.327-3.622,1.516-5.619a7.309,7.309,0,0,0-4.779-3.714,5.083,5.083,0,0,0-.64-.043Z" transform="translate(-526.086 -245.559)"/>
+                    <path d="M553.423,284.593l8.977,10.558L597.911,337.9c.873,1.093,1.419,2.186,1.047,3.418a4.092,4.092,0,0,1-2.721,2.837,3.557,3.557,0,0,1-2.687-1.124L548.01,300.808c-3.5-3.5-2.971-8.151.436-11.558l4.977-4.657m.124-2.17L552.4,283.5l-4.976,4.656c-4.192,4.191-4.372,9.816-.473,13.714l44.521,42.4a5.485,5.485,0,0,0,3.722,1.538,5.1,5.1,0,0,0,1.483-.224,5.59,5.59,0,0,0,3.719-3.838,5.176,5.176,0,0,0-1.31-4.788l-35.53-42.767-8.988-10.571-1.019-1.2Z" transform="translate(-526.086 -245.559)"/>
+                    <path d="M562.4,295.151l9.556,11.5,5.761-5.356a7.926,7.926,0,0,0,.041-11.743l-43.7-41.923s-1.671-2.029-3.437-2.071a4.49,4.49,0,0,0-4.23,2.718c-.688,1.651-.194,2.809,1.315,4.97l29.306,35.565Z" transform="translate(-526.086 -245.559)"/>
+                    <path d="M553.7,306.223l-17.116,21.024c-1.255,1.337-2.032,3.683-1.331,5.367a4.587,4.587,0,0,0,4.287,2.841,4.087,4.087,0,0,0,3.082-1.523l20.328-18.9Z" transform="translate(-526.086 -245.559)"/>
+                  </g>
+                </svg><span>Accepted ALIFE paper</span></a></li>
+</ul>
+<p>Want to make AI that improves AI? Please see our (RSI) <a href="https://sakana.ai/careers/">Careers</a> page for more information.</p>
+</dt-article>
+<dt-appendix>
+<h3 id="citation">Citation</h3>
+<pre class="citation long">@article{agentic_scientist,
+  title   = {The Agentic Scientist: Orchestrating Coding Agents for Automated Scientific (Co-)Discovery},
+  author  = {Lange, Robert Tjarko and Grillotti, Luca and Yamada, Yutaro and Charakorn, Rujikorn and Ha, David},
+  journal = {arXiv preprint arXiv:2610.18933},
+  year    = {2026}
+}</pre></dt-appendix>
+</dt-appendix>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a50e1a9ebeb72cb2',t:'MTc5MzA2NjM5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script type="text/bibliography">
+
+@article{lu2024aisciv1,
+  title={The ai scientist: Towards fully automated open-ended scientific discovery},
+  author={Lu, Chris and Lu, Cong and Lange, Robert Tjarko and Foerster, Jakob and Clune, Jeff and Ha, David},
+  journal={arXiv preprint arXiv:2408.06292},
+  year={2024}
+}
+
+@article{yamada2025aisciv2,
+  title={The ai scientist-v2: Workshop-level automated scientific discovery via agentic tree search},
+  author={Yamada, Yutaro and Lange, Robert Tjarko and Lu, Cong and Hu, Shengran and Lu, Chris and Foerster, Jakob and Clune, Jeff and Ha, David},
+  journal={arXiv preprint arXiv:2504.08066},
+  year={2025}
+}
+
+@article{lu2026aiscinature,
+  title={Towards end-to-end automation of AI research},
+  author={Lu, Chris and Lu, Cong and Lange, Robert Tjarko and Yamada, Yutaro and Hu, Shengran and Foerster, Jakob and Ha, David and Clune, Jeff},
+  journal={Nature},
+  volume={651},
+  number={8107},
+  pages={914--919},
+  year={2026},
+  publisher={Nature Publishing Group UK London}
+}
+
+@article{yamada2026diffusing,
+  title={Diffusing Blame: Task-Dependent Credit Assignment in Biologically Plausible Dual-Stream Networks},
+  author={Yamada, Yutaro and Grillotti, Luca and Charakorn, Rujikorn and Risi, Sebastian and Ha, David and Lange, Robert Tjarko},
+  journal={The 2026 Conference on Artificial Life (ALIFE)},
+  year={2026}
+}
+
+
+
+@misc{karpathy2026autoresearch,
+  title={autoresearch: {AI} agents running research on single-{GPU} nanochat training automatically},
+  author={Karpathy, Andrej},
+  year={2026},
+  howpublished={GitHub repository},
+  url={https://github.com/karpathy/autoresearch}
+}
+
+@inproceedings{lange2026shinkaevolve,
+  title={Shinkaevolve: Towards open-ended and sample-efficient program evolution},
+  author={Lange, Robert and Imajuku, Yuki and Cetin, Edoardo},
+  booktitle={International Conference on Learning Representations},
+  volume={2026},
+  pages={74026--74078},
+  year={2026}
+}
+
+@article{novikov2025alphaevolve,
+  title={Alphaevolve: A coding agent for scientific and algorithmic discovery},
+  author={Novikov, Alexander and Vũ, Ngân and Eisenberger, Marvin and Dupont, Emilien and Huang, Po-Sen and Wagner, Adam Zsolt and Shirobokov, Sergey and Kozlovskii, Borislav and Ruiz, Francisco JR and Mehrabian, Abbas and others},
+  journal={arXiv preprint arXiv:2506.13131},
+  year={2025}
+}
+
+@inproceedings{charakorn2026doctolora,
+  title       ={Doc-to-Lo{RA}: Learning to Instantly Internalize Contexts},
+  author      ={Rujikorn Charakorn and Edoardo Cetin and Shinnosuke Uesaka and Robert Tjarko Lange},
+  booktitle   ={Forty-third International Conference on Machine Learning},
+  year        ={2026},
+  url         ={https://openreview.net/forum?id=iW1oBBO72S}
+}
+
+@article{hansen2016cma,
+  title={The CMA evolution strategy: A tutorial},
+  author={Hansen, Nikolaus},
+  journal={arXiv preprint arXiv:1604.00772},
+  year={2016}
+}
+
+@article{hu2021lora,
+  title={Lora: Low-rank adaptation of large language models},
+  author={Hu, Edward J and Shen, Yelong and Wallis, Phillip and Allen-Zhu, Zeyuan and Li, Yuanzhi and Wang, Shean and Wang, Lu and Chen, Weizhu},
+  journal={arXiv preprint arXiv:2106.09685},
+  year={2021}
+}
+
+@article{zhu2026paperbanana,
+  title={PaperBanana: Automating Academic Illustration for AI Scientists},
+  author={Zhu, Dawei and Meng, Rui and Song, Yale and Wei, Xiyu and Li, Sujian and Pfister, Tomas and Yoon, Jinsung},
+  journal={arXiv preprint arXiv:2601.23265},
+  year={2026}
+}
+
+@inproceedings{nielsen2026learning,
+  title={Learning to orchestrate agents in natural language with the conductor},
+  author={Nielsen, Stefan and Cetin, Edoardo and Schwendeman, Peter and Sun, Qi and Xu, Jinglue and Tang, Yujin},
+  booktitle={International Conference on Learning Representations},
+  volume={2026},
+  pages={135686--135724},
+  year={2026}
+}
+
+@inproceedings{xu2026trinity,
+  title={Trinity: An evolved llm coordinator},
+  author={Xu, Jinglue and Sun, Qi and Schwendeman, Peter and Nielsen, Stefan and Cetin, Edoardo and Tang, Yujin},
+  booktitle={International Conference on Learning Representations},
+  volume={2026},
+  pages={70195--70224},
+  year={2026}
+}
+
+@article{lu2024discovering,
+  title={Discovering preference optimization algorithms with and for large language models},
+  author={Lu, Chris and Holt, Samuel and Fanconi, Claudio and Chan, Alex J and Foerster, Jakob and van der Schaar, Mihaela and Lange, Robert T},
+  journal={Advances in Neural Information Processing Systems},
+  volume={37},
+  pages={86528--86573},
+  year={2024}
+}
+
+@inproceedings{zhang2026darwin,
+title={Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents},
+author={Jenny Zhang and Shengran Hu and Cong Lu and Robert Tjarko Lange and Jeff Clune},
+booktitle={The Fourteenth International Conference on Learning Representations},
+year={2026},
+url={https://openreview.net/forum?id=pUpzQZTvGY}
+}
+
+@article{tang2026fugu,
+  title={Sakana Fugu Technical Report},
+  author={Tang, Yujin and Cetin, Edoardo and Xu, Jinglue and Sun, Qi and Nielsen, Stefan and Richard, Vincent and Goda, Haruto and Tymchenko, Iaroslav and Nguyen, Nhan and Lee, Hyunin and Ashiga, Mari and Kotyan, Shashank and Kuroki, So and Clanuwat, Tarin},
+  journal={arXiv preprint arXiv:2606.21228},
+  year={2026}
+}
+@article{darlow2026continuous,
+  title={Continuous thought machines},
+  author={Darlow, Luke and Regan, Ciaran and Risi, Sebastian and Seely, Jeffrey and Jones, Llion},
+  journal={Advances in Neural Information Processing Systems},
+  volume={38},
+  pages={21548--21594},
+  year={2026}
+}
+
+
+
+</script>
+
+<script language="javascript" type="text/javascript" src="./lib/blazy.js"></script>
+<script language="javascript" type="text/javascript" src="./lib/jquery-1.12.4.min.js"></script>
+<script language="javascript" type="text/javascript" src="./lib/controller.js"></script>

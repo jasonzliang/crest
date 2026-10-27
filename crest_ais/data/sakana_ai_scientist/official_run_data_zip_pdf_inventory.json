@@ -1,0 +1,2466 @@
+[
+  {
+    "name": "claude_runs_diffusion.zip",
+    "drive_id": "1A7TROeiSJ6o7ri80h4Ml74ILoPIsQXMW",
+    "source_url": "https://drive.usercontent.google.com/download?id=1A7TROeiSJ6o7ri80h4Ml74ILoPIsQXMW&export=download&confirm=t",
+    "archive_size": 238988408,
+    "pdf_count": 38,
+    "pdfs": [
+      {
+        "path": "claude_runs_diffusion/20240805_070751_comparative_embedding_study/comparative_embedding_study.pdf",
+        "uncompressed_bytes": 945828,
+        "compressed_bytes": 934956,
+        "compression": 8,
+        "crc32": "f20b96d4",
+        "local_header_offset": 230236
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_090252_connected_component_tracking/connected_component_tracking.pdf",
+        "uncompressed_bytes": 1047209,
+        "compressed_bytes": 997437,
+        "compression": 8,
+        "crc32": "d4ceff73",
+        "local_header_offset": 2938126
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_095832_intrinsic_dimensionality_tracking/intrinsic_dimensionality_tracking.pdf",
+        "uncompressed_bytes": 1359685,
+        "compressed_bytes": 1339875,
+        "compression": 8,
+        "crc32": "a764e750",
+        "local_header_offset": 4566673
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_120019_moment_guided_diffusion/moment_guided_diffusion.pdf",
+        "uncompressed_bytes": 1041473,
+        "compressed_bytes": 1023655,
+        "compression": 8,
+        "crc32": "42c024eb",
+        "local_header_offset": 7925999
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_080636_score_based_diffusion/score_based_diffusion.pdf",
+        "uncompressed_bytes": 1422896,
+        "compressed_bytes": 1404933,
+        "compression": 8,
+        "crc32": "5a5d62de",
+        "local_header_offset": 10242992
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_092818_adaptive_temporal_consistency/adaptive_temporal_consistency.pdf",
+        "uncompressed_bytes": 1034884,
+        "compressed_bytes": 1002868,
+        "compression": 8,
+        "crc32": "3c1bbd9c",
+        "local_header_offset": 13148824
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_081854_auxiliary_latent_diffusion/auxiliary_latent_diffusion.pdf",
+        "uncompressed_bytes": 2973697,
+        "compressed_bytes": 2938202,
+        "compression": 8,
+        "crc32": "9fa55e7a",
+        "local_header_offset": 17221382
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_071751_diffusion_trajectory_analysis/diffusion_trajectory_analysis.pdf",
+        "uncompressed_bytes": 1005395,
+        "compressed_bytes": 978747,
+        "compression": 8,
+        "crc32": "98d882e1",
+        "local_header_offset": 21552097
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_084735_geometric_flow_analysis/geometric_flow_analysis.pdf",
+        "uncompressed_bytes": 1855199,
+        "compressed_bytes": 1817147,
+        "compression": 8,
+        "crc32": "51167ebc",
+        "local_header_offset": 23948836
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_072021_transfer_learning_diffusion/transfer_learning_diffusion.pdf",
+        "uncompressed_bytes": 1020287,
+        "compressed_bytes": 998097,
+        "compression": 8,
+        "crc32": "bf19483e",
+        "local_header_offset": 28768993
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_133416_pdf_guided_diffusion/pdf_guided_diffusion.pdf",
+        "uncompressed_bytes": 1216388,
+        "compressed_bytes": 1165637,
+        "compression": 8,
+        "crc32": "5b2edcda",
+        "local_header_offset": 31497725
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_082014_manifold_preserving_diffusion/manifold_preserving_diffusion.pdf",
+        "uncompressed_bytes": 430721,
+        "compressed_bytes": 418233,
+        "compression": 8,
+        "crc32": "3b7eae12",
+        "local_header_offset": 33000408
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_115911_adaptive_multi_scale_diffusion/adaptive_multi_scale_diffusion.pdf",
+        "uncompressed_bytes": 1130803,
+        "compressed_bytes": 1103743,
+        "compression": 8,
+        "crc32": "a34adf2b",
+        "local_header_offset": 33754479
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_115535_dual_scale_diffusion/dual_scale_diffusion.pdf",
+        "uncompressed_bytes": 1020004,
+        "compressed_bytes": 1000984,
+        "compression": 8,
+        "crc32": "c825f5fc",
+        "local_header_offset": 36119397
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_090403_adaptive_disentangled_diffusion/adaptive_disentangled_diffusion.pdf",
+        "uncompressed_bytes": 567508,
+        "compressed_bytes": 551816,
+        "compression": 8,
+        "crc32": "93f78e21",
+        "local_header_offset": 38279533
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_104833_entropy_flow_analysis/entropy_flow_analysis.pdf",
+        "uncompressed_bytes": 1079819,
+        "compressed_bytes": 1046216,
+        "compression": 8,
+        "crc32": "312c9fb1",
+        "local_header_offset": 39470509
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_134818_manifold_navigation_analysis/manifold_navigation_analysis.pdf",
+        "uncompressed_bytes": 876108,
+        "compressed_bytes": 842897,
+        "compression": 8,
+        "crc32": "088ba939",
+        "local_header_offset": 42602124
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_100510_uncertainty_quantification_diffusion/uncertainty_quantification_diffusion.pdf",
+        "uncompressed_bytes": 1059231,
+        "compressed_bytes": 1041689,
+        "compression": 8,
+        "crc32": "8a12b71f",
+        "local_header_offset": 44138916
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_084954_dual_resolution_diffusion/dual_resolution_diffusion.pdf",
+        "uncompressed_bytes": 869978,
+        "compressed_bytes": 854257,
+        "compression": 8,
+        "crc32": "b8a6ba53",
+        "local_header_offset": 46425692
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_094847_data_complexity_evolution/data_complexity_evolution.pdf",
+        "uncompressed_bytes": 1041630,
+        "compressed_bytes": 1029093,
+        "compression": 8,
+        "crc32": "6dedfec2",
+        "local_header_offset": 49324136
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_103946_pca_aligned_diffusion/pca_aligned_diffusion.pdf",
+        "uncompressed_bytes": 304383,
+        "compressed_bytes": 299707,
+        "compression": 8,
+        "crc32": "e772ab9e",
+        "local_header_offset": 53056369
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_102728_symmetry_guided_diffusion/symmetry_guided_diffusion.pdf",
+        "uncompressed_bytes": 708656,
+        "compressed_bytes": 690459,
+        "compression": 8,
+        "crc32": "307b8abc",
+        "local_header_offset": 54933667
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_080730_diffusion_augmented_density_estimation/diffusion_augmented_density_estimation.pdf",
+        "uncompressed_bytes": 507101,
+        "compressed_bytes": 495520,
+        "compression": 8,
+        "crc32": "a44f085e",
+        "local_header_offset": 55768224
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_151100_local_structure_preservation/local_structure_preservation.pdf",
+        "uncompressed_bytes": 518445,
+        "compressed_bytes": 497248,
+        "compression": 8,
+        "crc32": "e52dc1a4",
+        "local_header_offset": 57588371
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_071251_dual_expert_denoiser/dual_expert_denoiser.pdf",
+        "uncompressed_bytes": 847653,
+        "compressed_bytes": 811723,
+        "compression": 8,
+        "crc32": "b1f029bc",
+        "local_header_offset": 59323193
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_071021_quadrant_conditional_diffusion/quadrant_conditional_diffusion.pdf",
+        "uncompressed_bytes": 899147,
+        "compressed_bytes": 855689,
+        "compression": 8,
+        "crc32": "2f9e54b4",
+        "local_header_offset": 61194429
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_133618_temporal_sensitivity_analysis/temporal_sensitivity_analysis.pdf",
+        "uncompressed_bytes": 1016133,
+        "compressed_bytes": 998064,
+        "compression": 8,
+        "crc32": "0e0a538f",
+        "local_header_offset": 64357847
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_075134_curriculum_diffusion_learning/curriculum_diffusion_learning.pdf",
+        "uncompressed_bytes": 369343,
+        "compressed_bytes": 351193,
+        "compression": 8,
+        "crc32": "55c50140",
+        "local_header_offset": 66802028
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_070521_learning_rate_schedule/learning_rate_schedule.pdf",
+        "uncompressed_bytes": 1001308,
+        "compressed_bytes": 983417,
+        "compression": 8,
+        "crc32": "38716d6a",
+        "local_header_offset": 68158602
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_115928_semantic_latent_interpolation/semantic_latent_interpolation.pdf",
+        "uncompressed_bytes": 1687990,
+        "compressed_bytes": 1670351,
+        "compression": 8,
+        "crc32": "4f573b68",
+        "local_header_offset": 70239129
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_132219_adaptive_local_complexity_diffusion/adaptive_local_complexity_diffusion.pdf",
+        "uncompressed_bytes": 384879,
+        "compressed_bytes": 374362,
+        "compression": 8,
+        "crc32": "8bba5930",
+        "local_header_offset": 74115567
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_134447_information_bottleneck_analysis/information_bottleneck_analysis.pdf",
+        "uncompressed_bytes": 549196,
+        "compressed_bytes": 531964,
+        "compression": 8,
+        "crc32": "e83a4d0e",
+        "local_header_offset": 75554851
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_090815_linear_diffusion_steering/linear_diffusion_steering.pdf",
+        "uncompressed_bytes": 667759,
+        "compressed_bytes": 641842,
+        "compression": 8,
+        "crc32": "dea1c8b7",
+        "local_header_offset": 77711093
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_104019_grid_based_noise_adaptation/grid_based_noise_adaptation.pdf",
+        "uncompressed_bytes": 1023132,
+        "compressed_bytes": 1005676,
+        "compression": 8,
+        "crc32": "bac434a9",
+        "local_header_offset": 79310349
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_075344_input_perturbation_robustness/input_perturbation_robustness.pdf",
+        "uncompressed_bytes": 179753,
+        "compressed_bytes": 176335,
+        "compression": 8,
+        "crc32": "d8ad529e",
+        "local_header_offset": 82972151
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_145558_iterative_diffusion_augmentation/iterative_diffusion_augmentation.pdf",
+        "uncompressed_bytes": 945558,
+        "compressed_bytes": 934987,
+        "compression": 8,
+        "crc32": "7779e899",
+        "local_header_offset": 84894708
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_151014_intrinsic_dimensionality_diffusion/intrinsic_dimensionality_diffusion.pdf",
+        "uncompressed_bytes": 1779202,
+        "compressed_bytes": 1750240,
+        "compression": 8,
+        "crc32": "a55ca363",
+        "local_header_offset": 86242008
+      },
+      {
+        "path": "claude_runs_diffusion/20240805_144141_optimal_transport_diffusion/latex/template.pdf",
+        "uncompressed_bytes": 802808,
+        "compressed_bytes": 792767,
+        "compression": 8,
+        "crc32": "1f8b8139",
+        "local_header_offset": 226649229
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "claude_runs_grokking.zip",
+    "drive_id": "1DtTAXO70NdjmHdgJvBolR8N9UIZTwPyS",
+    "source_url": "https://drive.usercontent.google.com/download?id=1DtTAXO70NdjmHdgJvBolR8N9UIZTwPyS&export=download&confirm=t",
+    "archive_size": 253987781,
+    "pdf_count": 26,
+    "pdfs": [
+      {
+        "path": "claude_runs_grokking/20240804_001646_model_architecture_grokking/model_architecture_grokking.pdf",
+        "uncompressed_bytes": 616217,
+        "compressed_bytes": 578681,
+        "compression": 8,
+        "crc32": "382edc98",
+        "local_header_offset": 3173783
+      },
+      {
+        "path": "claude_runs_grokking/20240804_001416_batch_size_grokking/batch_size_grokking.pdf",
+        "uncompressed_bytes": 2167599,
+        "compressed_bytes": 2099570,
+        "compression": 8,
+        "crc32": "29ed98bc",
+        "local_header_offset": 7186557
+      },
+      {
+        "path": "claude_runs_grokking/20240804_022805_data_augmentation_grokking/data_augmentation_grokking.pdf",
+        "uncompressed_bytes": 1011153,
+        "compressed_bytes": 980439,
+        "compression": 8,
+        "crc32": "b9a23046",
+        "local_header_offset": 11403942
+      },
+      {
+        "path": "claude_runs_grokking/20240804_165116_noisy_grokking/noisy_grokking.pdf",
+        "uncompressed_bytes": 389329,
+        "compressed_bytes": 360530,
+        "compression": 8,
+        "crc32": "e9cd8fb2",
+        "local_header_offset": 14029318
+      },
+      {
+        "path": "claude_runs_grokking/20240804_041826_pruning_grokking_dynamics/pruning_grokking_dynamics.pdf",
+        "uncompressed_bytes": 1121561,
+        "compressed_bytes": 1061813,
+        "compression": 8,
+        "crc32": "5b7d28cd",
+        "local_header_offset": 15937402
+      },
+      {
+        "path": "claude_runs_grokking/20240804_065223_invariance_learning_grokking/invariance_learning_grokking.pdf",
+        "uncompressed_bytes": 1076895,
+        "compressed_bytes": 1024924,
+        "compression": 8,
+        "crc32": "44f572e3",
+        "local_header_offset": 18385207
+      },
+      {
+        "path": "claude_runs_grokking/20240804_002147_initialization_impact_grokking/initialization_impact_grokking.pdf",
+        "uncompressed_bytes": 489320,
+        "compressed_bytes": 465596,
+        "compression": 8,
+        "crc32": "e8b60563",
+        "local_header_offset": 22507389
+      },
+      {
+        "path": "claude_runs_grokking/20240804_013658_optimizer_impact_grokking/optimizer_impact_grokking.pdf",
+        "uncompressed_bytes": 1467487,
+        "compressed_bytes": 1393198,
+        "compression": 8,
+        "crc32": "fa3e7422",
+        "local_header_offset": 26623886
+      },
+      {
+        "path": "claude_runs_grokking/20240804_144453_proto_lottery_tickets_grokking/proto_lottery_tickets_grokking.pdf",
+        "uncompressed_bytes": 800596,
+        "compressed_bytes": 753159,
+        "compression": 8,
+        "crc32": "2c959f15",
+        "local_header_offset": 31209969
+      },
+      {
+        "path": "claude_runs_grokking/20240804_005509_input_encoding_grokking/input_encoding_grokking.pdf",
+        "uncompressed_bytes": 657289,
+        "compressed_bytes": 624680,
+        "compression": 8,
+        "crc32": "933dde29",
+        "local_header_offset": 34170102
+      },
+      {
+        "path": "claude_runs_grokking/20240804_045218_mdl_grokking_correlation/mdl_grokking_correlation.pdf",
+        "uncompressed_bytes": 668441,
+        "compressed_bytes": 632452,
+        "compression": 8,
+        "crc32": "a615dede",
+        "local_header_offset": 36710532
+      },
+      {
+        "path": "claude_runs_grokking/20240804_163420_adversarial_robustness_evolution_grokking/adversarial_robustness_evolution_grokking.pdf",
+        "uncompressed_bytes": 643697,
+        "compressed_bytes": 615256,
+        "compression": 8,
+        "crc32": "3a8d106d",
+        "local_header_offset": 41525674
+      },
+      {
+        "path": "claude_runs_grokking/20240804_071057_gradient_flow_grokking/gradient_flow_grokking.pdf",
+        "uncompressed_bytes": 593688,
+        "compressed_bytes": 566320,
+        "compression": 8,
+        "crc32": "06fd8c30",
+        "local_header_offset": 47287710
+      },
+      {
+        "path": "claude_runs_grokking/20240804_061701_lottery_ticket_grokking/lottery_ticket_grokking.pdf",
+        "uncompressed_bytes": 574543,
+        "compressed_bytes": 535934,
+        "compression": 8,
+        "crc32": "c22d6a79",
+        "local_header_offset": 50877126
+      },
+      {
+        "path": "claude_runs_grokking/20240804_001916_cyclic_lr_grokking/cyclic_lr_grokking.pdf",
+        "uncompressed_bytes": 371264,
+        "compressed_bytes": 351629,
+        "compression": 8,
+        "crc32": "2b21fb05",
+        "local_header_offset": 59058457
+      },
+      {
+        "path": "claude_runs_grokking/20240804_075859_gradient_accumulation_grokking/gradient_accumulation_grokking.pdf",
+        "uncompressed_bytes": 1833822,
+        "compressed_bytes": 1773265,
+        "compression": 8,
+        "crc32": "e39088a3",
+        "local_header_offset": 59410855
+      },
+      {
+        "path": "claude_runs_grokking/20240804_034102_robustness_grokking_correlation/robustness_grokking_correlation.pdf",
+        "uncompressed_bytes": 1414196,
+        "compressed_bytes": 1369400,
+        "compression": 8,
+        "crc32": "86f80979",
+        "local_header_offset": 71451485
+      },
+      {
+        "path": "claude_runs_grokking/20240804_053426_critical_period_grokking/critical_period_grokking.pdf",
+        "uncompressed_bytes": 743590,
+        "compressed_bytes": 697064,
+        "compression": 8,
+        "crc32": "f825e8d2",
+        "local_header_offset": 75669347
+      },
+      {
+        "path": "claude_runs_grokking/20240804_162752_adaptive_grokking_critical_periods/adaptive_grokking_critical_periods.pdf",
+        "uncompressed_bytes": 988039,
+        "compressed_bytes": 937150,
+        "compression": 8,
+        "crc32": "ef2c8a92",
+        "local_header_offset": 86907821
+      },
+      {
+        "path": "claude_runs_grokking/20240804_155106_mutual_information_grokking/mutual_information_grokking.pdf",
+        "uncompressed_bytes": 612915,
+        "compressed_bytes": 583669,
+        "compression": 8,
+        "crc32": "1f9844ba",
+        "local_header_offset": 98559135
+      },
+      {
+        "path": "claude_runs_grokking/20240804_124231_relational_complexity_grokking/relational_complexity_grokking.pdf",
+        "uncompressed_bytes": 732477,
+        "compressed_bytes": 696604,
+        "compression": 8,
+        "crc32": "db363706",
+        "local_header_offset": 101940393
+      },
+      {
+        "path": "claude_runs_grokking/20240804_141422_simplicity_bias_grokking/simplicity_bias_grokking.pdf",
+        "uncompressed_bytes": 1746039,
+        "compressed_bytes": 1676897,
+        "compression": 8,
+        "crc32": "7da00e53",
+        "local_header_offset": 104294393
+      },
+      {
+        "path": "claude_runs_grokking/20240804_073129_positional_encoding_grokking/positional_encoding_grokking.pdf",
+        "uncompressed_bytes": 919630,
+        "compressed_bytes": 887953,
+        "compression": 8,
+        "crc32": "208b2f11",
+        "local_header_offset": 110030730
+      },
+      {
+        "path": "claude_runs_grokking/20240804_122430_effective_capacity_grokking/effective_capacity_grokking.pdf",
+        "uncompressed_bytes": 722504,
+        "compressed_bytes": 690941,
+        "compression": 8,
+        "crc32": "15c4c6d7",
+        "local_header_offset": 114261393
+      },
+      {
+        "path": "claude_runs_grokking/20240804_002917_scheduled_regularization_grokking/scheduled_regularization_grokking.pdf",
+        "uncompressed_bytes": 461597,
+        "compressed_bytes": 435756,
+        "compression": 8,
+        "crc32": "e532705b",
+        "local_header_offset": 117583081
+      },
+      {
+        "path": "claude_runs_grokking/20240804_002647_data_imbalance_grokking/latex/template.pdf",
+        "uncompressed_bytes": 766865,
+        "compressed_bytes": 685144,
+        "compression": 8,
+        "crc32": "9a3dbdde",
+        "local_header_offset": 225676999
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "claude_runs_nanogpt.zip",
+    "drive_id": "1WQOq_GsrwLdcRceKiywle7orqCyIzAbV",
+    "source_url": "https://drive.usercontent.google.com/download?id=1WQOq_GsrwLdcRceKiywle7orqCyIzAbV&export=download&confirm=t",
+    "archive_size": 31416013,
+    "pdf_count": 19,
+    "pdfs": [
+      {
+        "path": "claude_runs_nanogpt/20240727_145516_progressive_character_unfolding/progressive_character_unfolding.pdf",
+        "uncompressed_bytes": 239276,
+        "compressed_bytes": 223958,
+        "compression": 8,
+        "crc32": "0a9773a1",
+        "local_header_offset": 779857
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_022637_hierarchical_char_positional_encoding/hierarchical_char_positional_encoding.pdf",
+        "uncompressed_bytes": 527413,
+        "compressed_bytes": 455575,
+        "compression": 8,
+        "crc32": "1c489f03",
+        "local_header_offset": 1888929
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_105628_discrete_context_activations/discrete_context_activations.pdf",
+        "uncompressed_bytes": 256086,
+        "compressed_bytes": 234926,
+        "compression": 8,
+        "crc32": "413d24f2",
+        "local_header_offset": 2696028
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_015515_adaptive_char_curriculum/adaptive_char_curriculum.pdf",
+        "uncompressed_bytes": 248619,
+        "compressed_bytes": 233850,
+        "compression": 8,
+        "crc32": "979c6254",
+        "local_header_offset": 4477246
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_155433_fixed_interval_semantic_summaries/fixed_interval_semantic_summaries.pdf",
+        "uncompressed_bytes": 226375,
+        "compressed_bytes": 210938,
+        "compression": 8,
+        "crc32": "2b0e3b26",
+        "local_header_offset": 7646772
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_144936_dual_aspect_char_embedding/dual_aspect_char_embedding.pdf",
+        "uncompressed_bytes": 279633,
+        "compressed_bytes": 260013,
+        "compression": 8,
+        "crc32": "b5d09ca1",
+        "local_header_offset": 8145872
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_045333_global_context_vector/global_context_vector.pdf",
+        "uncompressed_bytes": 270224,
+        "compressed_bytes": 253724,
+        "compression": 8,
+        "crc32": "a231883a",
+        "local_header_offset": 9496085
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_164134_emergent_syntax_attention/emergent_syntax_attention.pdf",
+        "uncompressed_bytes": 244047,
+        "compressed_bytes": 227807,
+        "compression": 8,
+        "crc32": "a368c90a",
+        "local_header_offset": 11962927
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_031927_adaptive_cyclic_char_encoding/adaptive_cyclic_char_encoding.pdf",
+        "uncompressed_bytes": 281816,
+        "compressed_bytes": 250249,
+        "compression": 8,
+        "crc32": "0c6388a3",
+        "local_header_offset": 13520666
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_094327_adaptive_neuron_gating/adaptive_neuron_gating.pdf",
+        "uncompressed_bytes": 427566,
+        "compressed_bytes": 379671,
+        "compression": 8,
+        "crc32": "0dd4a086",
+        "local_header_offset": 15057862
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_055526_adaptive_style_attention/adaptive_style_attention.pdf",
+        "uncompressed_bytes": 262458,
+        "compressed_bytes": 243922,
+        "compression": 8,
+        "crc32": "035295e1",
+        "local_header_offset": 16530731
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_012304_gradient_noise_scaling/gradient_noise_scaling.pdf",
+        "uncompressed_bytes": 299772,
+        "compressed_bytes": 275188,
+        "compression": 8,
+        "crc32": "a4040cf2",
+        "local_header_offset": 17609566
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_011534_simplified_sam_optimization/simplified_sam_optimization.pdf",
+        "uncompressed_bytes": 432108,
+        "compressed_bytes": 382034,
+        "compression": 8,
+        "crc32": "72205f9f",
+        "local_header_offset": 18225166
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_012804_char_level_activation_study/char_level_activation_study.pdf",
+        "uncompressed_bytes": 255810,
+        "compressed_bytes": 235997,
+        "compression": 8,
+        "crc32": "bef3ead8",
+        "local_header_offset": 19113093
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_011303_power_of_two_sparse_attention/power_of_two_sparse_attention.pdf",
+        "uncompressed_bytes": 488040,
+        "compressed_bytes": 413590,
+        "compression": 8,
+        "crc32": "d68097cf",
+        "local_header_offset": 21110095
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_110849_adaptive_layer_fusion/adaptive_layer_fusion.pdf",
+        "uncompressed_bytes": 258670,
+        "compressed_bytes": 241960,
+        "compression": 8,
+        "crc32": "c7c13777",
+        "local_header_offset": 21749656
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_011305_hybrid_char_bigram_tokenization/hybrid_char_bigram_tokenization.pdf",
+        "uncompressed_bytes": 472141,
+        "compressed_bytes": 423271,
+        "compression": 8,
+        "crc32": "b4591229",
+        "local_header_offset": 23451670
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_083221_hierarchical_chunk_attention/hierarchical_chunk_attention.pdf",
+        "uncompressed_bytes": 318764,
+        "compressed_bytes": 290883,
+        "compression": 8,
+        "crc32": "3b11aa4c",
+        "local_header_offset": 25745163
+      },
+      {
+        "path": "claude_runs_nanogpt/20240727_123423_dual_tier_adaptive_dimensionality/dual_tier_adaptive_dimensionality.pdf",
+        "uncompressed_bytes": 291719,
+        "compressed_bytes": 269223,
+        "compression": 8,
+        "crc32": "bb02520a",
+        "local_header_offset": 26627467
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "deepseek_runs_diffusion.zip",
+    "drive_id": "1r5FvqAkdKReUTUpVOEe0ZEe-XfMi4F4c",
+    "source_url": "https://drive.usercontent.google.com/download?id=1r5FvqAkdKReUTUpVOEe0ZEe-XfMi4F4c&export=download&confirm=t",
+    "archive_size": 59638547,
+    "pdf_count": 32,
+    "pdfs": [
+      {
+        "path": "deepseek_runs_diffusion/20240803_020214_initialization_strategies_impact/initialization_strategies_impact.pdf",
+        "uncompressed_bytes": 136342,
+        "compressed_bytes": 133757,
+        "compression": 8,
+        "crc32": "3eb9a9d5",
+        "local_header_offset": 95520
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_230557_model_depth_controllability/model_depth_controllability.pdf",
+        "uncompressed_bytes": 769164,
+        "compressed_bytes": 760345,
+        "compression": 8,
+        "crc32": "fbcbd9ad",
+        "local_header_offset": 1319950
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_011038_userguided_sampling_strategies/userguided_sampling_strategies.pdf",
+        "uncompressed_bytes": 833373,
+        "compressed_bytes": 823595,
+        "compression": 8,
+        "crc32": "c7695f85",
+        "local_header_offset": 4286059
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_221619_guided_clustering_diffusion/guided_clustering_diffusion.pdf",
+        "uncompressed_bytes": 134850,
+        "compressed_bytes": 132006,
+        "compression": 8,
+        "crc32": "8f28d7e1",
+        "local_header_offset": 5502790
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_222756_stochastic_timestep_selection/stochastic_timestep_selection.pdf",
+        "uncompressed_bytes": 127386,
+        "compressed_bytes": 124747,
+        "compression": 8,
+        "crc32": "93115e13",
+        "local_header_offset": 7115496
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_222008_adaptive_timesteps_diffusion/adaptive_timesteps_diffusion.pdf",
+        "uncompressed_bytes": 111845,
+        "compressed_bytes": 109632,
+        "compression": 8,
+        "crc32": "28e26c8c",
+        "local_header_offset": 7681617
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_220447_rnn_lstm_denoiser/rnn_lstm_denoiser.pdf",
+        "uncompressed_bytes": 992774,
+        "compressed_bytes": 975824,
+        "compression": 8,
+        "crc32": "02961687",
+        "local_header_offset": 9977808
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_231612_optimizer_impact_on_controllability/optimizer_impact_on_controllability.pdf",
+        "uncompressed_bytes": 650896,
+        "compressed_bytes": 636025,
+        "compression": 8,
+        "crc32": "2491a2f3",
+        "local_header_offset": 10957970
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_235736_dynamic_curriculum_learning/dynamic_curriculum_learning.pdf",
+        "uncompressed_bytes": 778367,
+        "compressed_bytes": 768409,
+        "compression": 8,
+        "crc32": "2105bda2",
+        "local_header_offset": 12711557
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_221435_simplified_moe_diffusion/simplified_moe_diffusion.pdf",
+        "uncompressed_bytes": 825707,
+        "compressed_bytes": 815890,
+        "compression": 8,
+        "crc32": "7189a5fe",
+        "local_header_offset": 14513312
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_013857_adaptive_data_curriculum/adaptive_data_curriculum.pdf",
+        "uncompressed_bytes": 795755,
+        "compressed_bytes": 785726,
+        "compression": 8,
+        "crc32": "0dec57b2",
+        "local_header_offset": 16878339
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_004353_diverse_noise_types/diverse_noise_types.pdf",
+        "uncompressed_bytes": 976079,
+        "compressed_bytes": 966379,
+        "compression": 8,
+        "crc32": "702cc7a6",
+        "local_header_offset": 18788874
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_001236_loss_functions_for_controllable_generation/loss_functions_for_controllable_generation.pdf",
+        "uncompressed_bytes": 536510,
+        "compressed_bytes": 512117,
+        "compression": 8,
+        "crc32": "a2e09d7f",
+        "local_header_offset": 21639603
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_234037_curriculum_learning_diffusion/curriculum_learning_diffusion.pdf",
+        "uncompressed_bytes": 1016183,
+        "compressed_bytes": 999154,
+        "compression": 8,
+        "crc32": "3df7849a",
+        "local_header_offset": 22663831
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_020002_training_dynamics_generalization/training_dynamics_generalization.pdf",
+        "uncompressed_bytes": 982479,
+        "compressed_bytes": 964252,
+        "compression": 8,
+        "crc32": "63b5c7a4",
+        "local_header_offset": 26317816
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_025159_training_dynamics_generalization/training_dynamics_generalization.pdf",
+        "uncompressed_bytes": 1028689,
+        "compressed_bytes": 1012272,
+        "compression": 8,
+        "crc32": "33db920a",
+        "local_header_offset": 28686555
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_021127_regularization_impact/regularization_impact.pdf",
+        "uncompressed_bytes": 735776,
+        "compressed_bytes": 725339,
+        "compression": 8,
+        "crc32": "b4558106",
+        "local_header_offset": 30965161
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_001707_data_transformation_impact/data_transformation_impact.pdf",
+        "uncompressed_bytes": 827166,
+        "compressed_bytes": 806923,
+        "compression": 8,
+        "crc32": "e8e72de7",
+        "local_header_offset": 32978325
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_023138_custom_evaluation_metrics/custom_evaluation_metrics.pdf",
+        "uncompressed_bytes": 571738,
+        "compressed_bytes": 564116,
+        "compression": 8,
+        "crc32": "af50f111",
+        "local_header_offset": 34790167
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_021035_training_regime_generalization/training_regime_generalization.pdf",
+        "uncompressed_bytes": 915019,
+        "compressed_bytes": 897470,
+        "compression": 8,
+        "crc32": "ba4e869b",
+        "local_header_offset": 37493885
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_022018_data_transformation_for_controllability/data_transformation_for_controllability.pdf",
+        "uncompressed_bytes": 529092,
+        "compressed_bytes": 521280,
+        "compression": 8,
+        "crc32": "5d7269a1",
+        "local_header_offset": 38685135
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_220217_enhanced_positional_encoding/enhanced_positional_encoding.pdf",
+        "uncompressed_bytes": 99295,
+        "compressed_bytes": 97537,
+        "compression": 8,
+        "crc32": "598afeba",
+        "local_header_offset": 39694753
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_233156_initialization_strategies_impact/initialization_strategies_impact.pdf",
+        "uncompressed_bytes": 665912,
+        "compressed_bytes": 650465,
+        "compression": 8,
+        "crc32": "1c995bfc",
+        "local_header_offset": 40522724
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_220948_targeted_adaptive_noise_scheduling/targeted_adaptive_noise_scheduling.pdf",
+        "uncompressed_bytes": 141802,
+        "compressed_bytes": 138966,
+        "compression": 8,
+        "crc32": "3bf6870c",
+        "local_header_offset": 41946827
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_224851_rule_based_diffusion/rule_based_diffusion.pdf",
+        "uncompressed_bytes": 132121,
+        "compressed_bytes": 129539,
+        "compression": 8,
+        "crc32": "513dd68b",
+        "local_header_offset": 44312608
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_025459_sampling_strategies_impact/sampling_strategies_impact.pdf",
+        "uncompressed_bytes": 1030718,
+        "compressed_bytes": 1014004,
+        "compression": 8,
+        "crc32": "902797b6",
+        "local_header_offset": 44491615
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_012248_batch_dynamics_impact/batch_dynamics_impact.pdf",
+        "uncompressed_bytes": 988921,
+        "compressed_bytes": 972349,
+        "compression": 8,
+        "crc32": "df3fc1ce",
+        "local_header_offset": 47030410
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_003524_simplified_data_encodings/simplified_data_encodings.pdf",
+        "uncompressed_bytes": 140208,
+        "compressed_bytes": 137554,
+        "compression": 8,
+        "crc32": "f06dc90b",
+        "local_header_offset": 49062097
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_231248_activation_function_impact/activation_function_impact.pdf",
+        "uncompressed_bytes": 945859,
+        "compressed_bytes": 929811,
+        "compression": 8,
+        "crc32": "0dba9378",
+        "local_header_offset": 51334977
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240802_233819_curriculum_learning_diffusion/curriculum_learning_diffusion.pdf",
+        "uncompressed_bytes": 982467,
+        "compressed_bytes": 966070,
+        "compression": 8,
+        "crc32": "5e790821",
+        "local_header_offset": 52385187
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_000636_preference_based_evaluation/preference_based_evaluation.pdf",
+        "uncompressed_bytes": 791435,
+        "compressed_bytes": 782314,
+        "compression": 8,
+        "crc32": "833ef8ca",
+        "local_header_offset": 54429477
+      },
+      {
+        "path": "deepseek_runs_diffusion/20240803_004758_multigpu_training_diffusion/latex/template.pdf",
+        "uncompressed_bytes": 577247,
+        "compressed_bytes": 569395,
+        "compression": 8,
+        "crc32": "5c4ba908",
+        "local_header_offset": 57320338
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "deepseek_runs_grokking.zip",
+    "drive_id": "1bXWeRagZ4b0yzUIXjl-pgA8JVUTTRHjV",
+    "source_url": "https://drive.usercontent.google.com/download?id=1bXWeRagZ4b0yzUIXjl-pgA8JVUTTRHjV&export=download&confirm=t",
+    "archive_size": 101410077,
+    "pdf_count": 38,
+    "pdfs": [
+      {
+        "path": "deepseek_runs_grokking/20240802_230412_data_augmentation_grokking/data_augmentation_grokking.pdf",
+        "uncompressed_bytes": 111259,
+        "compressed_bytes": 108885,
+        "compression": 8,
+        "crc32": "1a3a5585",
+        "local_header_offset": 1738836
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_012842_sleep_wake_grokking/sleep_wake_grokking.pdf",
+        "uncompressed_bytes": 757587,
+        "compressed_bytes": 734241,
+        "compression": 8,
+        "crc32": "122d0339",
+        "local_header_offset": 3597452
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_205745_batch_size_grokking/batch_size_grokking.pdf",
+        "uncompressed_bytes": 689387,
+        "compressed_bytes": 668642,
+        "compression": 8,
+        "crc32": "2c8acd89",
+        "local_header_offset": 6948640
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_073741_training_intensity_grokking/training_intensity_grokking.pdf",
+        "uncompressed_bytes": 176711,
+        "compressed_bytes": 168587,
+        "compression": 8,
+        "crc32": "aeae8605",
+        "local_header_offset": 9520554
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_102346_skip_connections_grokking/skip_connections_grokking.pdf",
+        "uncompressed_bytes": 679780,
+        "compressed_bytes": 656592,
+        "compression": 8,
+        "crc32": "13f4652a",
+        "local_header_offset": 11192223
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_081137_fixed_interval_reset_grokking/fixed_interval_reset_grokking.pdf",
+        "uncompressed_bytes": 230692,
+        "compressed_bytes": 216350,
+        "compression": 8,
+        "crc32": "2a848f51",
+        "local_header_offset": 13696915
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_071320_sparsity_grokking/sparsity_grokking.pdf",
+        "uncompressed_bytes": 270779,
+        "compressed_bytes": 257122,
+        "compression": 8,
+        "crc32": "729fb6b6",
+        "local_header_offset": 14947879
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_051615_adaptive_lr_grokking/adaptive_lr_grokking.pdf",
+        "uncompressed_bytes": 726152,
+        "compressed_bytes": 699272,
+        "compression": 8,
+        "crc32": "73c983d2",
+        "local_header_offset": 17543404
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_233909_dynamic_update_grokking/dynamic_update_grokking.pdf",
+        "uncompressed_bytes": 370082,
+        "compressed_bytes": 357236,
+        "compression": 8,
+        "crc32": "d60a2bd7",
+        "local_header_offset": 20329861
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_091618_task_complexity_grokking/task_complexity_grokking.pdf",
+        "uncompressed_bytes": 764236,
+        "compressed_bytes": 743340,
+        "compression": 8,
+        "crc32": "33d41773",
+        "local_header_offset": 24341013
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_102255_data_augmentation_grokking/data_augmentation_grokking.pdf",
+        "uncompressed_bytes": 86007,
+        "compressed_bytes": 84505,
+        "compression": 8,
+        "crc32": "26acff83",
+        "local_header_offset": 28116711
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_032914_refined_sleep_wake_grokking/sleep_wake_grokking.pdf",
+        "uncompressed_bytes": 808900,
+        "compressed_bytes": 764732,
+        "compression": 8,
+        "crc32": "cac4afa5",
+        "local_header_offset": 29587114
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_065902_adaptive_interruption_grokking/adaptive_interruption_grokking.pdf",
+        "uncompressed_bytes": 297085,
+        "compressed_bytes": 289906,
+        "compression": 8,
+        "crc32": "9ee31eb5",
+        "local_header_offset": 32452492
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_081346_custom_loss_grokking/custom_loss_grokking.pdf",
+        "uncompressed_bytes": 231751,
+        "compressed_bytes": 217331,
+        "compression": 8,
+        "crc32": "08cb7256",
+        "local_header_offset": 35173652
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_054536_batch_mix_grokking/batch_mix_grokking.pdf",
+        "uncompressed_bytes": 209191,
+        "compressed_bytes": 195387,
+        "compression": 8,
+        "crc32": "c835bfd6",
+        "local_header_offset": 36171438
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_210245_learning_rate_grokking/learning_rate_grokking.pdf",
+        "uncompressed_bytes": 451198,
+        "compressed_bytes": 427906,
+        "compression": 8,
+        "crc32": "58141e6b",
+        "local_header_offset": 37980239
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_001237_early_stopping_grokking/early_stopping_grokking.pdf",
+        "uncompressed_bytes": 208625,
+        "compressed_bytes": 194754,
+        "compression": 8,
+        "crc32": "7e7227a1",
+        "local_header_offset": 41474777
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_014923_targeted_perturbation_grokking/targeted_perturbation_grokking.pdf",
+        "uncompressed_bytes": 243866,
+        "compressed_bytes": 230072,
+        "compression": 8,
+        "crc32": "4d0da489",
+        "local_header_offset": 45065979
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_211015_regularization_grokking/regularization_grokking.pdf",
+        "uncompressed_bytes": 200435,
+        "compressed_bytes": 186892,
+        "compression": 8,
+        "crc32": "7ff6a4bc",
+        "local_header_offset": 45297288
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_001019_training_duration_grokking/training_duration_grokking.pdf",
+        "uncompressed_bytes": 512965,
+        "compressed_bytes": 485895,
+        "compression": 8,
+        "crc32": "7d5dea55",
+        "local_header_offset": 47433581
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_052737_weight_init_grokking/weight_init_grokking.pdf",
+        "uncompressed_bytes": 80931,
+        "compressed_bytes": 79336,
+        "compression": 8,
+        "crc32": "7ddace49",
+        "local_header_offset": 49827671
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_014609_loss_function_grokking/loss_function_grokking.pdf",
+        "uncompressed_bytes": 630783,
+        "compressed_bytes": 607835,
+        "compression": 8,
+        "crc32": "cff69d6d",
+        "local_header_offset": 51863293
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_234741_dynamic_training_grokking/dynamic_training_grokking.pdf",
+        "uncompressed_bytes": 244789,
+        "compressed_bytes": 228745,
+        "compression": 8,
+        "crc32": "6ac936c2",
+        "local_header_offset": 55486621
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_234716_cyclical_lr_grokking/cyclical_lr_grokking.pdf",
+        "uncompressed_bytes": 58122,
+        "compressed_bytes": 57137,
+        "compression": 8,
+        "crc32": "b640668c",
+        "local_header_offset": 58052030
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_020913_sleep_wake_grokking/sleep_wake_grokking.pdf",
+        "uncompressed_bytes": 509643,
+        "compressed_bytes": 487816,
+        "compression": 8,
+        "crc32": "426b4b4b",
+        "local_header_offset": 59224157
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_094527_periodic_reset_grokking/periodic_reset_grokking.pdf",
+        "uncompressed_bytes": 173527,
+        "compressed_bytes": 160478,
+        "compression": 8,
+        "crc32": "f09ea68c",
+        "local_header_offset": 61920485
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_094535_systematic_lr_holidays_grokking/systematic_lr_holidays_grokking.pdf",
+        "uncompressed_bytes": 633051,
+        "compressed_bytes": 616729,
+        "compression": 8,
+        "crc32": "1d0719a4",
+        "local_header_offset": 64490871
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_210015_activation_function_grokking/activation_function_grokking.pdf",
+        "uncompressed_bytes": 411707,
+        "compressed_bytes": 400643,
+        "compression": 8,
+        "crc32": "c48e2327",
+        "local_header_offset": 68680870
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_023806_refined_sleep_wake_grokking/sleep_wake_grokking.pdf",
+        "uncompressed_bytes": 9572,
+        "compressed_bytes": 9498,
+        "compression": 8,
+        "crc32": "7a1d3b83",
+        "local_header_offset": 72701476
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_102022_refined_dynamic_training_rhythm_grokking/refined_dynamic_training_rhythm_grokking.pdf",
+        "uncompressed_bytes": 791078,
+        "compressed_bytes": 766919,
+        "compression": 8,
+        "crc32": "47a1080d",
+        "local_header_offset": 75383538
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_210745_initialization_grokking/initialization_grokking.pdf",
+        "uncompressed_bytes": 246550,
+        "compressed_bytes": 233472,
+        "compression": 8,
+        "crc32": "380a35f6",
+        "local_header_offset": 79148847
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_210515_model_size_grokking/model_size_grokking.pdf",
+        "uncompressed_bytes": 380123,
+        "compressed_bytes": 368719,
+        "compression": 8,
+        "crc32": "97066fbf",
+        "local_header_offset": 80844361
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_071522_task_complexity_grokking/task_complexity_grokking.pdf",
+        "uncompressed_bytes": 110626,
+        "compressed_bytes": 108482,
+        "compression": 8,
+        "crc32": "d541c11d",
+        "local_header_offset": 83774268
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_234250_targeted_noise_grokking/targeted_noise_grokking.pdf",
+        "uncompressed_bytes": 484732,
+        "compressed_bytes": 458569,
+        "compression": 8,
+        "crc32": "f014e254",
+        "local_header_offset": 86447390
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_041223_intermittent_training_grokking/intermittent_training_grokking.pdf",
+        "uncompressed_bytes": 444061,
+        "compressed_bytes": 419017,
+        "compression": 8,
+        "crc32": "29358217",
+        "local_header_offset": 88286430
+      },
+      {
+        "path": "deepseek_runs_grokking/20240802_211515_structured_interruption_grokking/structured_interruption_grokking.pdf",
+        "uncompressed_bytes": 629306,
+        "compressed_bytes": 609666,
+        "compression": 8,
+        "crc32": "ac4007a0",
+        "local_header_offset": 91740275
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_020748_attention_config_grokking/attention_config_grokking.pdf",
+        "uncompressed_bytes": 104373,
+        "compressed_bytes": 102297,
+        "compression": 8,
+        "crc32": "484df192",
+        "local_header_offset": 92946393
+      },
+      {
+        "path": "deepseek_runs_grokking/20240803_041015_refined_learning_dynamics_grokking/latex/template.pdf",
+        "uncompressed_bytes": 313797,
+        "compressed_bytes": 300452,
+        "compression": 8,
+        "crc32": "4e44a28d",
+        "local_header_offset": 96865134
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "deepseek_runs_nanogpt.zip",
+    "drive_id": "1Yti0HJJingUYqdRuzKsTh91n1pzgBcN6",
+    "source_url": "https://drive.usercontent.google.com/download?id=1Yti0HJJingUYqdRuzKsTh91n1pzgBcN6&export=download&confirm=t",
+    "archive_size": 20086217,
+    "pdf_count": 23,
+    "pdfs": [
+      {
+        "path": "deepseek_runs_nanogpt/20240730_231955_norm_tech_interpretability/norm_tech_interpretability.pdf",
+        "uncompressed_bytes": 64346,
+        "compressed_bytes": 63190,
+        "compression": 8,
+        "crc32": "e5472bc8",
+        "local_header_offset": 212247
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_151409_normalization_techniques/normalization_techniques.pdf",
+        "uncompressed_bytes": 350286,
+        "compressed_bytes": 310562,
+        "compression": 8,
+        "crc32": "65b59037",
+        "local_header_offset": 1132744
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_193009_reverse_curriculum_learning/reverse_curriculum_learning.pdf",
+        "uncompressed_bytes": 427780,
+        "compressed_bytes": 390283,
+        "compression": 8,
+        "crc32": "09841592",
+        "local_header_offset": 1983565
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_182829_holistic_normalization_analysis/holistic_normalization_analysis.pdf",
+        "uncompressed_bytes": 84966,
+        "compressed_bytes": 83485,
+        "compression": 8,
+        "crc32": "b6fc0571",
+        "local_header_offset": 2833002
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_151139_normalization_techniques/normalization_techniques.pdf",
+        "uncompressed_bytes": 316496,
+        "compressed_bytes": 277240,
+        "compression": 8,
+        "crc32": "64e7eb7b",
+        "local_header_offset": 3907333
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_150639_optimizer_comparison/optimizer_comparison.pdf",
+        "uncompressed_bytes": 228088,
+        "compressed_bytes": 207286,
+        "compression": 8,
+        "crc32": "4f0ba6bf",
+        "local_header_offset": 5026014
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_145639_adaptive_block_size/adaptive_block_size.pdf",
+        "uncompressed_bytes": 144921,
+        "compressed_bytes": 129827,
+        "compression": 8,
+        "crc32": "df4ef550",
+        "local_header_offset": 6057464
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_190919_advanced_char_tokenization/advanced_char_tokenization.pdf",
+        "uncompressed_bytes": 172595,
+        "compressed_bytes": 156945,
+        "compression": 8,
+        "crc32": "72d83a93",
+        "local_header_offset": 6875526
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_215346_batch_lr_interaction/batch_lr_interaction.pdf",
+        "uncompressed_bytes": 69794,
+        "compressed_bytes": 68560,
+        "compression": 8,
+        "crc32": "f0bb81e8",
+        "local_header_offset": 7067715
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_150139_positional_encoding_strategies/positional_encoding_strategies.pdf",
+        "uncompressed_bytes": 187961,
+        "compressed_bytes": 171574,
+        "compression": 8,
+        "crc32": "385c63b2",
+        "local_header_offset": 7534122
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_192755_interpretability_normalization/interpretability_normalization.pdf",
+        "uncompressed_bytes": 257435,
+        "compressed_bytes": 228435,
+        "compression": 8,
+        "crc32": "bd224e5f",
+        "local_header_offset": 8464957
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_224838_enhanced_attention_exploration/enhanced_attention_exploration.pdf",
+        "uncompressed_bytes": 70886,
+        "compressed_bytes": 69584,
+        "compression": 8,
+        "crc32": "b3d2e0dd",
+        "local_header_offset": 9631275
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_200440_activation_interpretability_analysis/activation_interpretability_analysis.pdf",
+        "uncompressed_bytes": 58740,
+        "compressed_bytes": 57748,
+        "compression": 8,
+        "crc32": "001f60cf",
+        "local_header_offset": 9757398
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240731_000038_norm_tech_interpretability_refined/norm_tech_interpretability.pdf",
+        "uncompressed_bytes": 156752,
+        "compressed_bytes": 141436,
+        "compression": 8,
+        "crc32": "da3b263e",
+        "local_header_offset": 10453413
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_212339_data_sampling_strategies/data_sampling_strategies.pdf",
+        "uncompressed_bytes": 136000,
+        "compressed_bytes": 121063,
+        "compression": 8,
+        "crc32": "f0446577",
+        "local_header_offset": 11208131
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_210343_advanced_weight_init/advanced_weight_init.pdf",
+        "uncompressed_bytes": 62362,
+        "compressed_bytes": 61181,
+        "compression": 8,
+        "crc32": "ad19dd33",
+        "local_header_offset": 11761080
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_223513_efficient_auxiliary_tasks/efficient_auxiliary_tasks.pdf",
+        "uncompressed_bytes": 117251,
+        "compressed_bytes": 115069,
+        "compression": 8,
+        "crc32": "af00d60c",
+        "local_header_offset": 12378322
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_221711_weight_decay_schedules/weight_decay_schedules.pdf",
+        "uncompressed_bytes": 144542,
+        "compressed_bytes": 130440,
+        "compression": 8,
+        "crc32": "16a829cd",
+        "local_header_offset": 12998459
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_150856_cyclical_lr_batch_size_opt/cyclical_lr_batch_size_opt.pdf",
+        "uncompressed_bytes": 136882,
+        "compressed_bytes": 121876,
+        "compression": 8,
+        "crc32": "238d1f3e",
+        "local_header_offset": 13575262
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_150909_mixed_precision_training/mixed_precision_training.pdf",
+        "uncompressed_bytes": 333769,
+        "compressed_bytes": 294437,
+        "compression": 8,
+        "crc32": "59065d94",
+        "local_header_offset": 14842804
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_234237_norm_tech_interpretability/norm_tech_interpretability.pdf",
+        "uncompressed_bytes": 69281,
+        "compressed_bytes": 68065,
+        "compression": 8,
+        "crc32": "6cc106b2",
+        "local_header_offset": 15408868
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_145909_transformer_init_strategies/transformer_init_strategies.pdf",
+        "uncompressed_bytes": 191339,
+        "compressed_bytes": 176190,
+        "compression": 8,
+        "crc32": "d77f2acc",
+        "local_header_offset": 15828327
+      },
+      {
+        "path": "deepseek_runs_nanogpt/20240730_181740_holistic_normalization_analysis/holistic_normalization_analysis.pdf",
+        "uncompressed_bytes": 160453,
+        "compressed_bytes": 144882,
+        "compression": 8,
+        "crc32": "3d501b7b",
+        "local_header_offset": 16564447
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "gpt4o_runs_diffusion.zip",
+    "drive_id": "1Ymisx4SjLrq_MNBz_JUyPhRu5a3iYPw4",
+    "source_url": "https://drive.usercontent.google.com/download?id=1Ymisx4SjLrq_MNBz_JUyPhRu5a3iYPw4&export=download&confirm=t",
+    "archive_size": 46175287,
+    "pdf_count": 16,
+    "pdfs": [
+      {
+        "path": "gpt4o_runs_diffusion/20240801_191335_contrastive_learning/contrastive_learning.pdf",
+        "uncompressed_bytes": 977961,
+        "compressed_bytes": 958753,
+        "compression": 8,
+        "crc32": "eb04cd33",
+        "local_header_offset": 1847378
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_202600_dendritic_computation/dendritic_computation.pdf",
+        "uncompressed_bytes": 1072555,
+        "compressed_bytes": 1054059,
+        "compression": 8,
+        "crc32": "23cef0fc",
+        "local_header_offset": 4300587
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_195532_integrated_gradients_interpretability/integrated_gradients_interpretability.pdf",
+        "uncompressed_bytes": 863169,
+        "compressed_bytes": 852577,
+        "compression": 8,
+        "crc32": "5ed45e95",
+        "local_header_offset": 7823785
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_190105_mode_specific_generation/mode_specific_generation.pdf",
+        "uncompressed_bytes": 1002763,
+        "compressed_bytes": 985860,
+        "compression": 8,
+        "crc32": "dd217bc8",
+        "local_header_offset": 9841974
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_192852_latent_variable_diffusion/latent_variable_diffusion.pdf",
+        "uncompressed_bytes": 960124,
+        "compressed_bytes": 940939,
+        "compression": 8,
+        "crc32": "7d2725b0",
+        "local_header_offset": 12567933
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_191105_manifold_diffusion/manifold_diffusion.pdf",
+        "uncompressed_bytes": 1023473,
+        "compressed_bytes": 1007326,
+        "compression": 8,
+        "crc32": "0c04b9ff",
+        "local_header_offset": 15235780
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_191051_ebm_refinement/ebm_refinement.pdf",
+        "uncompressed_bytes": 385840,
+        "compressed_bytes": 369263,
+        "compression": 8,
+        "crc32": "d4334774",
+        "local_header_offset": 17815540
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_192913_mixture_of_experts/mixture_of_experts.pdf",
+        "uncompressed_bytes": 155254,
+        "compressed_bytes": 152207,
+        "compression": 8,
+        "crc32": "22d69e4f",
+        "local_header_offset": 19384859
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_190711_attention_mechanism/attention_mechanism.pdf",
+        "uncompressed_bytes": 1027706,
+        "compressed_bytes": 1009770,
+        "compression": 8,
+        "crc32": "f7877312",
+        "local_header_offset": 20902123
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_190335_learned_embeddings/learned_embeddings.pdf",
+        "uncompressed_bytes": 976863,
+        "compressed_bytes": 967327,
+        "compression": 8,
+        "crc32": "deacd6c9",
+        "local_header_offset": 23352133
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_195408_rl_dynamic_noise_schedule/rl_dynamic_noise_schedule.pdf",
+        "uncompressed_bytes": 548614,
+        "compressed_bytes": 519867,
+        "compression": 8,
+        "crc32": "ad1b1e74",
+        "local_header_offset": 26466551
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_195906_evolutionary_diffusion/evolutionary_diffusion.pdf",
+        "uncompressed_bytes": 1236028,
+        "compressed_bytes": 1218448,
+        "compression": 8,
+        "crc32": "e8d2e644",
+        "local_header_offset": 27565412
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_193742_progressive_noise_schedule/progressive_noise_schedule.pdf",
+        "uncompressed_bytes": 642276,
+        "compressed_bytes": 617499,
+        "compression": 8,
+        "crc32": "e2eaf31d",
+        "local_header_offset": 30163975
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_202839_invariance_learning/invariance_learning.pdf",
+        "uncompressed_bytes": 838190,
+        "compressed_bytes": 827471,
+        "compression": 8,
+        "crc32": "2f15e3ab",
+        "local_header_offset": 31825680
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_201853_distributionally_robust_diffusion/distributionally_robust_diffusion.pdf",
+        "uncompressed_bytes": 116780,
+        "compressed_bytes": 114328,
+        "compression": 8,
+        "crc32": "47c5f0c8",
+        "local_header_offset": 34807852
+      },
+      {
+        "path": "gpt4o_runs_diffusion/20240801_195619_transformer_diffusion/transformer_diffusion.pdf",
+        "uncompressed_bytes": 372218,
+        "compressed_bytes": 362498,
+        "compression": 8,
+        "crc32": "67de9708",
+        "local_header_offset": 36515022
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "gpt4o_runs_grokking.zip",
+    "drive_id": "1lwFPkemYTmtWuOcKUkeaVcFKIyCtYrqC",
+    "source_url": "https://drive.usercontent.google.com/download?id=1lwFPkemYTmtWuOcKUkeaVcFKIyCtYrqC&export=download&confirm=t",
+    "archive_size": 97000421,
+    "pdf_count": 13,
+    "pdfs": [
+      {
+        "path": "gpt4o_runs_grokking/20240801_190415_input_transformations/input_transformations.pdf",
+        "uncompressed_bytes": 974122,
+        "compressed_bytes": 927438,
+        "compression": 8,
+        "crc32": "9e3510a6",
+        "local_header_offset": 3230250
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240802_012342_predictive_uncertainty/predictive_uncertainty.pdf",
+        "uncompressed_bytes": 365258,
+        "compressed_bytes": 350583,
+        "compression": 8,
+        "crc32": "b8c4f944",
+        "local_header_offset": 8149910
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_223937_label_noise_impact/noise_impact.pdf",
+        "uncompressed_bytes": 510459,
+        "compressed_bytes": 461711,
+        "compression": 8,
+        "crc32": "0b8f0c89",
+        "local_header_offset": 11288568
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_164402_optimizer_choice/optimizer_choice.pdf",
+        "uncompressed_bytes": 368077,
+        "compressed_bytes": 356467,
+        "compression": 8,
+        "crc32": "ab9079a6",
+        "local_header_offset": 12239128
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_232322_latent_space_manipulation/latent_space_manipulation.pdf",
+        "uncompressed_bytes": 1349733,
+        "compressed_bytes": 1310307,
+        "compression": 8,
+        "crc32": "7e0ceb15",
+        "local_header_offset": 18868586
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_205251_data_distribution/data_distribution.pdf",
+        "uncompressed_bytes": 2017674,
+        "compressed_bytes": 1931044,
+        "compression": 8,
+        "crc32": "11b7780e",
+        "local_header_offset": 23354820
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_163402_initialization_schemes/initialization_schemes.pdf",
+        "uncompressed_bytes": 636641,
+        "compressed_bytes": 617461,
+        "compression": 8,
+        "crc32": "2be11d22",
+        "local_header_offset": 31232334
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240802_012155_adversarial_training/adversarial_training.pdf",
+        "uncompressed_bytes": 282205,
+        "compressed_bytes": 271138,
+        "compression": 8,
+        "crc32": "2398f648",
+        "local_header_offset": 36874102
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240802_025712_catastrophic_forgetting/catastrophic_forgetting.pdf",
+        "uncompressed_bytes": 143902,
+        "compressed_bytes": 131127,
+        "compression": 8,
+        "crc32": "3030eb13",
+        "local_header_offset": 44656814
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_184526_capacity_task_complexity/capacity_task_complexity.pdf",
+        "uncompressed_bytes": 1317358,
+        "compressed_bytes": 1259576,
+        "compression": 8,
+        "crc32": "8844e491",
+        "local_header_offset": 62729909
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_163632_data_augmentation/data_augmentation.pdf",
+        "uncompressed_bytes": 453572,
+        "compressed_bytes": 437278,
+        "compression": 8,
+        "crc32": "f2382a4b",
+        "local_header_offset": 64851828
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_163132_architecture_variation/architecture_variation.pdf",
+        "uncompressed_bytes": 3579019,
+        "compressed_bytes": 3507941,
+        "compression": 8,
+        "crc32": "88ef8927",
+        "local_header_offset": 71897483
+      },
+      {
+        "path": "gpt4o_runs_grokking/20240801_162631_batch_size_grokking/batch_size_grokking.pdf",
+        "uncompressed_bytes": 1739325,
+        "compressed_bytes": 1701866,
+        "compression": 8,
+        "crc32": "dcd45c43",
+        "local_header_offset": 83018612
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "gpt4o_runs_nanogpt.zip",
+    "drive_id": "1KA5-6DWKhsI4u16JV9k7YT-hTEQC7Wn7",
+    "source_url": "https://drive.usercontent.google.com/download?id=1KA5-6DWKhsI4u16JV9k7YT-hTEQC7Wn7&export=download&confirm=t",
+    "archive_size": 29051776,
+    "pdf_count": 16,
+    "pdfs": [
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_182910_gradient_noise_injection/gradient_noise_injection.pdf",
+        "uncompressed_bytes": 501478,
+        "compressed_bytes": 459097,
+        "compression": 8,
+        "crc32": "95526f13",
+        "local_header_offset": 1893923
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_182830_memory_augmentation/memory_augmentation.pdf",
+        "uncompressed_bytes": 492047,
+        "compressed_bytes": 451999,
+        "compression": 8,
+        "crc32": "ffffaf53",
+        "local_header_offset": 3110746
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240726_002039_complexity_based_dynamic_capacity/complexity_based_dynamic_capacity.pdf",
+        "uncompressed_bytes": 354949,
+        "compressed_bytes": 316477,
+        "compression": 8,
+        "crc32": "700e99d4",
+        "local_header_offset": 4370566
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240726_031916_embedding_refinement/embedding_refinement.pdf",
+        "uncompressed_bytes": 394825,
+        "compressed_bytes": 350798,
+        "compression": 8,
+        "crc32": "291ff2df",
+        "local_header_offset": 5196354
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_181051_meta_learning_hyperparameters/meta_learning_hyperparameters.pdf",
+        "uncompressed_bytes": 247645,
+        "compressed_bytes": 232816,
+        "compression": 8,
+        "crc32": "07b05130",
+        "local_header_offset": 6733966
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_151832_targeted_regularization/targeted_regularization.pdf",
+        "uncompressed_bytes": 451476,
+        "compressed_bytes": 410805,
+        "compression": 8,
+        "crc32": "3e191446",
+        "local_header_offset": 7996203
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_210854_dynamic_dropout_adaptation/dynamic_dropout_adaptation.pdf",
+        "uncompressed_bytes": 379234,
+        "compressed_bytes": 337939,
+        "compression": 8,
+        "crc32": "52466c15",
+        "local_header_offset": 9482972
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240726_003808_temporal_dynamic_capacity/temporal_dynamic_capacity.pdf",
+        "uncompressed_bytes": 413734,
+        "compressed_bytes": 376789,
+        "compression": 8,
+        "crc32": "91051445",
+        "local_header_offset": 10878268
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240726_002336_attention_re_routing/attention_re_routing.pdf",
+        "uncompressed_bytes": 364017,
+        "compressed_bytes": 319115,
+        "compression": 8,
+        "crc32": "deec3b85",
+        "local_header_offset": 11823476
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240726_011411_adaptive_computation_reduction/adaptive_computation_reduction.pdf",
+        "uncompressed_bytes": 582556,
+        "compressed_bytes": 544547,
+        "compression": 8,
+        "crc32": "75aec7a4",
+        "local_header_offset": 15563281
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_151332_layerwise_learning_rates/layerwise_learning_rates.pdf",
+        "uncompressed_bytes": 419692,
+        "compressed_bytes": 380746,
+        "compression": 8,
+        "crc32": "157ea755",
+        "local_header_offset": 16699732
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_172908_learned_positional_encodings/learned_positional_encodings.pdf",
+        "uncompressed_bytes": 512856,
+        "compressed_bytes": 462991,
+        "compression": 8,
+        "crc32": "51637db6",
+        "local_header_offset": 18739674
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240726_004434_adaptive_input_length/adaptive_input_length.pdf",
+        "uncompressed_bytes": 512899,
+        "compressed_bytes": 474089,
+        "compression": 8,
+        "crc32": "0cf67bc6",
+        "local_header_offset": 21877539
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240726_034521_active_learning/active_learning.pdf",
+        "uncompressed_bytes": 377849,
+        "compressed_bytes": 338483,
+        "compression": 8,
+        "crc32": "7b48b9e4",
+        "local_header_offset": 23147489
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_214544_dynamic_batch_size/dynamic_batch_size.pdf",
+        "uncompressed_bytes": 457856,
+        "compressed_bytes": 411173,
+        "compression": 8,
+        "crc32": "95c9b34a",
+        "local_header_offset": 24544873
+      },
+      {
+        "path": "gpt4o_runs_nanogpt/20240725_212642_dynamic_model_compression/latex/template.pdf",
+        "uncompressed_bytes": 139945,
+        "compressed_bytes": 131735,
+        "compression": 8,
+        "crc32": "068c26df",
+        "local_header_offset": 25880315
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "llama_runs_diffusion.zip",
+    "drive_id": "1NtVMLmDQUrVFf7H4KzRetHKq2inL5-2N",
+    "source_url": "https://drive.usercontent.google.com/download?id=1NtVMLmDQUrVFf7H4KzRetHKq2inL5-2N&export=download&confirm=t",
+    "archive_size": 42071710,
+    "pdf_count": 21,
+    "pdfs": [
+      {
+        "path": "llama_runs_diffusion/20240803_063127_mode_transition/mode_transition.pdf",
+        "uncompressed_bytes": 812175,
+        "compressed_bytes": 801811,
+        "compression": 8,
+        "crc32": "d9e18700",
+        "local_header_offset": 117830
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_071351_mode_transitioning_loss/mode_transition.pdf",
+        "uncompressed_bytes": 807565,
+        "compressed_bytes": 798240,
+        "compression": 8,
+        "crc32": "5c77f232",
+        "local_header_offset": 2712112
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_080530_noise_schedule_signatures/noise_schedule_signatures.pdf",
+        "uncompressed_bytes": 546673,
+        "compressed_bytes": 539524,
+        "compression": 8,
+        "crc32": "e52606e0",
+        "local_header_offset": 4938745
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_065703_mode_signatures/mode_signatures.pdf",
+        "uncompressed_bytes": 735303,
+        "compressed_bytes": 726097,
+        "compression": 8,
+        "crc32": "7c87979a",
+        "local_header_offset": 8080942
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_071635_dataset_distribution_fingerprinting/dataset_distribution_fingerprinting.pdf",
+        "uncompressed_bytes": 622413,
+        "compressed_bytes": 613739,
+        "compression": 8,
+        "crc32": "b86c87c0",
+        "local_header_offset": 8839287
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_075145_diffusion_perturbations/diffusion_perturbations.pdf",
+        "uncompressed_bytes": 815122,
+        "compressed_bytes": 805153,
+        "compression": 8,
+        "crc32": "2276ae00",
+        "local_header_offset": 10393724
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_051323_learning_rate_schedule/learning_rate_schedule.pdf",
+        "uncompressed_bytes": 843942,
+        "compressed_bytes": 828296,
+        "compression": 8,
+        "crc32": "f982ae85",
+        "local_header_offset": 12411146
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_052053_resolution_conditioned_diffusion/resolution_conditioned_diffusion.pdf",
+        "uncompressed_bytes": 525292,
+        "compressed_bytes": 518447,
+        "compression": 8,
+        "crc32": "110fee66",
+        "local_header_offset": 14454564
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_085047_noise_schedule_interpolation/noise_schedule_interpolation.pdf",
+        "uncompressed_bytes": 796050,
+        "compressed_bytes": 786165,
+        "compression": 8,
+        "crc32": "e2e82531",
+        "local_header_offset": 15880800
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_100934_noise_schedule_analysis/noise_schedule_analysis.pdf",
+        "uncompressed_bytes": 584844,
+        "compressed_bytes": 576994,
+        "compression": 8,
+        "crc32": "bc159862",
+        "local_header_offset": 17701526
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_084629_diffusion_model_temporal_adaptation/diffusion_model_temporal_adaptation.pdf",
+        "uncompressed_bytes": 746255,
+        "compressed_bytes": 737599,
+        "compression": 8,
+        "crc32": "a1b3ea7d",
+        "local_header_offset": 19209087
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_085742_diffusion_model_masking/diffusion_model_masking.pdf",
+        "uncompressed_bytes": 755069,
+        "compressed_bytes": 746516,
+        "compression": 8,
+        "crc32": "0f6bddf8",
+        "local_header_offset": 21097982
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_051553_hybrid_embedding/hybrid_embedding.pdf",
+        "uncompressed_bytes": 803470,
+        "compressed_bytes": 788551,
+        "compression": 8,
+        "crc32": "edf0620c",
+        "local_header_offset": 22933433
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_091633_diffusion_trajectory_quality/diffusion_trajectory_quality.pdf",
+        "uncompressed_bytes": 782397,
+        "compressed_bytes": 773921,
+        "compression": 8,
+        "crc32": "8a838626",
+        "local_header_offset": 25900282
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_051823_mode_specific_diffusion/mode_specific_diffusion.pdf",
+        "uncompressed_bytes": 821265,
+        "compressed_bytes": 811749,
+        "compression": 8,
+        "crc32": "ab6f0b64",
+        "local_header_offset": 26706420
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_065715_diffusion_confidence/diffusion_confidence.pdf",
+        "uncompressed_bytes": 814975,
+        "compressed_bytes": 806106,
+        "compression": 8,
+        "crc32": "aa245782",
+        "local_header_offset": 28694140
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_052323_geometric_constraints/geometric_constraints.pdf",
+        "uncompressed_bytes": 958330,
+        "compressed_bytes": 939376,
+        "compression": 8,
+        "crc32": "4b3be652",
+        "local_header_offset": 30964971
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_052824_dataset_agnostic_diffusion/dataset_agnostic_diffusion.pdf",
+        "uncompressed_bytes": 263729,
+        "compressed_bytes": 244949,
+        "compression": 8,
+        "crc32": "df396910",
+        "local_header_offset": 33375600
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_054621_diffusion_trajectory_control/diffusion_trajectory_control.pdf",
+        "uncompressed_bytes": 610896,
+        "compressed_bytes": 601536,
+        "compression": 8,
+        "crc32": "525c7652",
+        "local_header_offset": 34129938
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_084148_noise_schedule_symmetry/noise_schedule_symmetry.pdf",
+        "uncompressed_bytes": 690616,
+        "compressed_bytes": 682678,
+        "compression": 8,
+        "crc32": "2d7af1cf",
+        "local_header_offset": 36425234
+      },
+      {
+        "path": "llama_runs_diffusion/20240803_071545_symmetry_invariant_loss/symmetry_invariant_loss.pdf",
+        "uncompressed_bytes": 816786,
+        "compressed_bytes": 805924,
+        "compression": 8,
+        "crc32": "b2c51808",
+        "local_header_offset": 38273447
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "llama_runs_grokking.zip",
+    "drive_id": "1rK2cx1UfImzl5MJHMyBfgpAAfgSjInX_",
+    "source_url": "https://drive.usercontent.google.com/download?id=1rK2cx1UfImzl5MJHMyBfgpAAfgSjInX_&export=download&confirm=t",
+    "archive_size": 73755898,
+    "pdf_count": 30,
+    "pdfs": [
+      {
+        "path": "llama_runs_grokking/20240803_100036_permutation_equivariance_grokking/permutation_equivariance_grokking.pdf",
+        "uncompressed_bytes": 343927,
+        "compressed_bytes": 325843,
+        "compression": 8,
+        "crc32": "a647415d",
+        "local_header_offset": 3108915
+      },
+      {
+        "path": "llama_runs_grokking/20240803_002804_math_operation_depth_grokking/math_operation_depth_grokking.pdf",
+        "uncompressed_bytes": 159149,
+        "compressed_bytes": 146216,
+        "compression": 8,
+        "crc32": "9cba8dd4",
+        "local_header_offset": 3969611
+      },
+      {
+        "path": "llama_runs_grokking/20240803_080426_hierarchical_meta_pattern_grokking/hierarchical_meta_pattern_grokking.pdf",
+        "uncompressed_bytes": 339758,
+        "compressed_bytes": 325501,
+        "compression": 8,
+        "crc32": "7db79783",
+        "local_header_offset": 6588167
+      },
+      {
+        "path": "llama_runs_grokking/20240803_072525_structured_irrelevant_info_grokking/structured_irrelevant_info_grokking.pdf",
+        "uncompressed_bytes": 224028,
+        "compressed_bytes": 211140,
+        "compression": 8,
+        "crc32": "4e38d19c",
+        "local_header_offset": 9434089
+      },
+      {
+        "path": "llama_runs_grokking/20240803_094851_controlled_concept_drift_grokking/controlled_concept_drift_grokking.pdf",
+        "uncompressed_bytes": 350328,
+        "compressed_bytes": 337442,
+        "compression": 8,
+        "crc32": "e411087a",
+        "local_header_offset": 12212269
+      },
+      {
+        "path": "llama_runs_grokking/20240803_145029_hierarchical_math_operations/hierarchical_math_operations.pdf",
+        "uncompressed_bytes": 229282,
+        "compressed_bytes": 216268,
+        "compression": 8,
+        "crc32": "47563e3e",
+        "local_header_offset": 13308223
+      },
+      {
+        "path": "llama_runs_grokking/20240803_102104_operation_invariance/operation_invariance.pdf",
+        "uncompressed_bytes": 192343,
+        "compressed_bytes": 179916,
+        "compression": 8,
+        "crc32": "e9c842d5",
+        "local_header_offset": 15301693
+      },
+      {
+        "path": "llama_runs_grokking/20240803_003304_missing_operand_grokking/missing_operand_grokking.pdf",
+        "uncompressed_bytes": 441979,
+        "compressed_bytes": 418438,
+        "compression": 8,
+        "crc32": "09c031f8",
+        "local_header_offset": 19152325
+      },
+      {
+        "path": "llama_runs_grokking/20240803_175803_arithmetic_decomposition/arithmetic_decomposition.pdf",
+        "uncompressed_bytes": 176179,
+        "compressed_bytes": 162856,
+        "compression": 8,
+        "crc32": "48f08858",
+        "local_header_offset": 21470299
+      },
+      {
+        "path": "llama_runs_grokking/20240803_040654_hierarchical_math_operations/hierarchical_math_operations.pdf",
+        "uncompressed_bytes": 221668,
+        "compressed_bytes": 207479,
+        "compression": 8,
+        "crc32": "aae316f1",
+        "local_header_offset": 22676605
+      },
+      {
+        "path": "llama_runs_grokking/20240803_002303_numbering_system_grokking/numbering_system_grokking.pdf",
+        "uncompressed_bytes": 273807,
+        "compressed_bytes": 259422,
+        "compression": 8,
+        "crc32": "6bbd9087",
+        "local_header_offset": 24536684
+      },
+      {
+        "path": "llama_runs_grokking/20240803_132224_modular_to_nonmodular_grokking/modular_to_nonmodular_grokking.pdf",
+        "uncompressed_bytes": 439932,
+        "compressed_bytes": 416294,
+        "compression": 8,
+        "crc32": "2bf8f599",
+        "local_header_offset": 25908119
+      },
+      {
+        "path": "llama_runs_grokking/20240803_103132_cognitive_demand_generalization/cognitive_demand_generalization.pdf",
+        "uncompressed_bytes": 190777,
+        "compressed_bytes": 177224,
+        "compression": 8,
+        "crc32": "30623296",
+        "local_header_offset": 28143929
+      },
+      {
+        "path": "llama_runs_grokking/20240803_132853_math_operation_representation_comparison/math_operation_representation_comparison.pdf",
+        "uncompressed_bytes": 264451,
+        "compressed_bytes": 251755,
+        "compression": 8,
+        "crc32": "3006de9d",
+        "local_header_offset": 31079379
+      },
+      {
+        "path": "llama_runs_grokking/20240803_104541_operation_compositionality_grokking/operation_compositionality_grokking.pdf",
+        "uncompressed_bytes": 282304,
+        "compressed_bytes": 270604,
+        "compression": 8,
+        "crc32": "6dea7aed",
+        "local_header_offset": 31425646
+      },
+      {
+        "path": "llama_runs_grokking/20240803_032142_identity_element_grokking/identity_element_grokking.pdf",
+        "uncompressed_bytes": 303360,
+        "compressed_bytes": 289820,
+        "compression": 8,
+        "crc32": "bafc2f75",
+        "local_header_offset": 34516086
+      },
+      {
+        "path": "llama_runs_grokking/20240803_003034_graph_structure_grokking/graph_structure_grokking.pdf",
+        "uncompressed_bytes": 274344,
+        "compressed_bytes": 261070,
+        "compression": 8,
+        "crc32": "0576af2d",
+        "local_header_offset": 37185089
+      },
+      {
+        "path": "llama_runs_grokking/20240803_070827_distracting_patterns_grokking/distracting_patterns_grokking.pdf",
+        "uncompressed_bytes": 281325,
+        "compressed_bytes": 269182,
+        "compression": 8,
+        "crc32": "f1e43de0",
+        "local_header_offset": 39420469
+      },
+      {
+        "path": "llama_runs_grokking/20240803_043727_few_shot_grokking/few_shot_grokking.pdf",
+        "uncompressed_bytes": 171763,
+        "compressed_bytes": 157746,
+        "compression": 8,
+        "crc32": "c708759a",
+        "local_header_offset": 40937586
+      },
+      {
+        "path": "llama_runs_grokking/20240803_004309_operation_representation_networks/operation_representation_networks.pdf",
+        "uncompressed_bytes": 234924,
+        "compressed_bytes": 222908,
+        "compression": 8,
+        "crc32": "237857e1",
+        "local_header_offset": 43129189
+      },
+      {
+        "path": "llama_runs_grokking/20240803_042456_arithmetic_decomposition/arithmetic_decomposition.pdf",
+        "uncompressed_bytes": 143505,
+        "compressed_bytes": 130750,
+        "compression": 8,
+        "crc32": "e79a3030",
+        "local_header_offset": 44524020
+      },
+      {
+        "path": "llama_runs_grokking/20240803_060902_nested_operations/nested_operations.pdf",
+        "uncompressed_bytes": 433585,
+        "compressed_bytes": 418675,
+        "compression": 8,
+        "crc32": "f1f868dd",
+        "local_header_offset": 46621946
+      },
+      {
+        "path": "llama_runs_grokking/20240803_061539_isomorphic_grokking/isomorphic_grokking.pdf",
+        "uncompressed_bytes": 196733,
+        "compressed_bytes": 183107,
+        "compression": 8,
+        "crc32": "3efeb926",
+        "local_header_offset": 49171392
+      },
+      {
+        "path": "llama_runs_grokking/20240803_104945_model_capacity_grokking/model_capacity_grokking.pdf",
+        "uncompressed_bytes": 285466,
+        "compressed_bytes": 275565,
+        "compression": 8,
+        "crc32": "f8b21e12",
+        "local_header_offset": 50463370
+      },
+      {
+        "path": "llama_runs_grokking/20240803_033537_distracting_patterns_grokking/distracting_patterns_grokking.pdf",
+        "uncompressed_bytes": 221913,
+        "compressed_bytes": 208721,
+        "compression": 8,
+        "crc32": "f0e9c497",
+        "local_header_offset": 52574858
+      },
+      {
+        "path": "llama_runs_grokking/20240803_002533_rotational_symmetry_grokking/rotational_symmetry_grokking.pdf",
+        "uncompressed_bytes": 224603,
+        "compressed_bytes": 212653,
+        "compression": 8,
+        "crc32": "56dd5386",
+        "local_header_offset": 54907730
+      },
+      {
+        "path": "llama_runs_grokking/20240803_131714_fractal_operations_grokking/fractal_operations_grokking.pdf",
+        "uncompressed_bytes": 274496,
+        "compressed_bytes": 262065,
+        "compression": 8,
+        "crc32": "022e9441",
+        "local_header_offset": 57703154
+      },
+      {
+        "path": "llama_runs_grokking/20240803_025747_abstractness_grokking/abstractness_grokking.pdf",
+        "uncompressed_bytes": 158520,
+        "compressed_bytes": 145592,
+        "compression": 8,
+        "crc32": "9a393f0f",
+        "local_header_offset": 62567899
+      },
+      {
+        "path": "llama_runs_grokking/20240803_114200_operation_complexity_generalization/operation_complexity_generalization.pdf",
+        "uncompressed_bytes": 211816,
+        "compressed_bytes": 198088,
+        "compression": 8,
+        "crc32": "fe4b97e2",
+        "local_header_offset": 63710188
+      },
+      {
+        "path": "llama_runs_grokking/20240803_063216_abstract_algebra_grokking/abstract_algebra_grokking.pdf",
+        "uncompressed_bytes": 265538,
+        "compressed_bytes": 253279,
+        "compression": 8,
+        "crc32": "f8a4f7fd",
+        "local_header_offset": 66685208
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  },
+  {
+    "name": "llama_runs_nanogpt.zip",
+    "drive_id": "1OmRXQU0Sv_FFExFISsEKm3ckfvEjvlvQ",
+    "source_url": "https://drive.usercontent.google.com/download?id=1OmRXQU0Sv_FFExFISsEKm3ckfvEjvlvQ&export=download&confirm=t",
+    "archive_size": 20632628,
+    "pdf_count": 21,
+    "pdfs": [
+      {
+        "path": "llama_runs_nanogpt/20240731_212220_layerwise_learning_rates/layerwise_learning_rates.pdf",
+        "uncompressed_bytes": 137822,
+        "compressed_bytes": 123162,
+        "compression": 8,
+        "crc32": "6215f544",
+        "local_header_offset": 1465024
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_061540_syntactic_complexity_aware_gpt/syntactic_complexity_aware_gpt.pdf",
+        "uncompressed_bytes": 173728,
+        "compressed_bytes": 158771,
+        "compression": 8,
+        "crc32": "306f7bbd",
+        "local_header_offset": 2396462
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_010354_recency_effect_gpt/recency_effect_gpt.pdf",
+        "uncompressed_bytes": 167368,
+        "compressed_bytes": 151555,
+        "compression": 8,
+        "crc32": "8ae62c77",
+        "local_header_offset": 2786281
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_061933_entity_relationship_gpt/entity_relationship_gpt.pdf",
+        "uncompressed_bytes": 136801,
+        "compressed_bytes": 121831,
+        "compression": 8,
+        "crc32": "8d6d9fda",
+        "local_header_offset": 3381326
+      },
+      {
+        "path": "llama_runs_nanogpt/20240731_211950_adaptive_block_size/adaptive_block_size.pdf",
+        "uncompressed_bytes": 95459,
+        "compressed_bytes": 81232,
+        "compression": 8,
+        "crc32": "6c937d1c",
+        "local_header_offset": 4619655
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_014116_idiomatic_gpt/idiomatic_gpt.pdf",
+        "uncompressed_bytes": 112816,
+        "compressed_bytes": 99722,
+        "compression": 8,
+        "crc32": "6cfd3de0",
+        "local_header_offset": 5102752
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_045953_frequency_based_forgetting_gpt/frequency_based_forgetting_gpt.pdf",
+        "uncompressed_bytes": 177425,
+        "compressed_bytes": 161373,
+        "compression": 8,
+        "crc32": "3f52d591",
+        "local_header_offset": 5920304
+      },
+      {
+        "path": "llama_runs_nanogpt/20240731_213451_temporal_regularization/temporal_regularization.pdf",
+        "uncompressed_bytes": 139004,
+        "compressed_bytes": 126020,
+        "compression": 8,
+        "crc32": "cedfdc9c",
+        "local_header_offset": 7221597
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_001010_availability_heuristic_gpt/availability_heuristic_gpt.pdf",
+        "uncompressed_bytes": 188369,
+        "compressed_bytes": 172526,
+        "compression": 8,
+        "crc32": "e0c48bdb",
+        "local_header_offset": 8066271
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_034431_linguistic_difficulty_gpt/linguistic_difficulty_gpt.pdf",
+        "uncompressed_bytes": 153599,
+        "compressed_bytes": 138031,
+        "compression": 8,
+        "crc32": "1a664725",
+        "local_header_offset": 8945307
+      },
+      {
+        "path": "llama_runs_nanogpt/20240731_212950_targeted_knowledge_distillation/targeted_knowledge_distillation.pdf",
+        "uncompressed_bytes": 129869,
+        "compressed_bytes": 115059,
+        "compression": 8,
+        "crc32": "0ffa2f38",
+        "local_header_offset": 9265122
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_000729_dual_scale_attention_gpt/dual_scale_attention_gpt.pdf",
+        "uncompressed_bytes": 393585,
+        "compressed_bytes": 354025,
+        "compression": 8,
+        "crc32": "ecfb30ba",
+        "local_header_offset": 10015557
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_083347_contrastive_forgetting_gpt/contrastive_forgetting_gpt.pdf",
+        "uncompressed_bytes": 131825,
+        "compressed_bytes": 118798,
+        "compression": 8,
+        "crc32": "73cdb7d7",
+        "local_header_offset": 11338163
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_075259_syntactic_complexity_aware_gpt/syntactic_complexity_aware_gpt.pdf",
+        "uncompressed_bytes": 94781,
+        "compressed_bytes": 80546,
+        "compression": 8,
+        "crc32": "21303a92",
+        "local_header_offset": 12846423
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_072244_domain_invariant_reps/domain_invariant_reps.pdf",
+        "uncompressed_bytes": 106939,
+        "compressed_bytes": 94963,
+        "compression": 8,
+        "crc32": "b58d5d8b",
+        "local_header_offset": 13368584
+      },
+      {
+        "path": "llama_runs_nanogpt/20240731_235721_domain_adaptation_meta_learning/domain_adaptation_meta_learning.pdf",
+        "uncompressed_bytes": 118997,
+        "compressed_bytes": 106194,
+        "compression": 8,
+        "crc32": "24347c26",
+        "local_header_offset": 13757184
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_030146_selective_forgetting_gpt/selective_forgetting_gpt.pdf",
+        "uncompressed_bytes": 109693,
+        "compressed_bytes": 95430,
+        "compression": 8,
+        "crc32": "df16ccbd",
+        "local_header_offset": 14545110
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_044633_availability_heuristic_gpt/availability_heuristic_gpt.pdf",
+        "uncompressed_bytes": 179336,
+        "compressed_bytes": 163260,
+        "compression": 8,
+        "crc32": "1db303bf",
+        "local_header_offset": 14964839
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_004830_interpretable_dynamic_attention_gpt/interpretable_dynamic_attention_gpt.pdf",
+        "uncompressed_bytes": 181345,
+        "compressed_bytes": 166617,
+        "compression": 8,
+        "crc32": "a7f554b6",
+        "local_header_offset": 15849231
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_041741_primacy_effect_gpt/primacy_effect_gpt.pdf",
+        "uncompressed_bytes": 178615,
+        "compressed_bytes": 162537,
+        "compression": 8,
+        "crc32": "b0955c53",
+        "local_header_offset": 16885744
+      },
+      {
+        "path": "llama_runs_nanogpt/20240801_042950_novelty_conditioned_gpt/novelty_conditioned_gpt.pdf",
+        "uncompressed_bytes": 94563,
+        "compressed_bytes": 80327,
+        "compression": 8,
+        "crc32": "7ddaa1d3",
+        "local_header_offset": 17132046
+      }
+    ],
+    "method": "HTTP Range ZIP central-directory inspection; only selected PDF members retrieved."
+  }
+]

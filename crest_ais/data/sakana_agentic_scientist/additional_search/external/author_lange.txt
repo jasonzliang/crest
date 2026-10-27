@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robert Lange | AI Researcher at Sakana.AI</title>
+    <meta name="description" content="Robert Lange is a Staff Research Scientist at Sakana.AI working on evolutionary computation, automated scientific discovery, and self-improving AI systems. Creator of The AI Scientist and ShinkaEvolve.">
+    <link rel="canonical" href="https://roberttlange.com/">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Robert Lange | AI Researcher at Sakana.AI">
+    <meta property="og:description" content="Staff Research Scientist at Sakana.AI. Working on evolutionary computation, automated scientific discovery, and self-improving AI systems.">
+    <meta property="og:url" content="https://roberttlange.com/">
+    <meta property="og:site_name" content="Robert T. Lange">
+    <meta property="og:image" content="https://roberttlange.com/imgs/animations/rob-escher.jpeg">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@RobertTLange">
+    <meta name="twitter:title" content="Robert Lange | AI Researcher at Sakana.AI">
+    <meta name="twitter:description" content="Staff Research Scientist at Sakana.AI. Working on evolutionary computation, automated scientific discovery, and self-improving AI systems.">
+    <meta name="twitter:image" content="https://roberttlange.com/imgs/animations/rob-escher.jpeg">
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Robert T. Lange",
+        "url": "https://roberttlange.com",
+        "image": "https://roberttlange.com/imgs/animations/rob-escher.jpeg",
+        "jobTitle": "Staff Research Scientist",
+        "worksFor": {
+            "@type": "Organization",
+            "name": "Sakana.AI",
+            "url": "https://sakana.ai"
+        },
+        "alumniOf": [
+            {"@type": "Organization", "name": "TU Berlin"},
+            {"@type": "Organization", "name": "Imperial College London"},
+            {"@type": "Organization", "name": "Google DeepMind"}
+        ],
+        "sameAs": [
+            "https://twitter.com/RobertTLange",
+            "https://github.com/RobertTLange",
+            "https://scholar.google.es/citations?user=cTrc3x4AAAAJ"
+        ],
+        "knowsAbout": ["Evolutionary Computation", "Automated Scientific Discovery", "Meta-Learning", "Machine Learning"]
+    }
+    </script>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KGWL2RQ35H"></script>
+    <script src="/js/analytics.js"></script>
+    <!-- Twitter widgets -->
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</head>
+<body>
+    <header id="site-header">
+        <h1>Robert T. Lange</h1>
+        <nav>
+            <a href="/" class="active" aria-current="page">Home</a>
+            <a href="/research-statement/">Research</a>
+            <a href="/about/">About</a>
+        </nav>
+    </header>
+
+    <div class="ca-container" data-ca-hash-hide data-ca-sweep></div>
+    <p class="ca-caption" data-ca-hash-hide>escherian cellular metamorphosis</p>
+
+    <main id="home">
+        <section class="intro" id="intro-section">
+            <div class="intro-image">
+                <div class="intro-image-zone intro-image-left"></div>
+                <div class="intro-image-zone intro-image-right"></div>
+            </div>
+            <div class="intro-text">
+                <p>Hi! I'm Rob &mdash; a Staff Research Scientist and <a href="https://sakana.ai/seed-round/">Founding Member</a> at <a href="https://sakana.ai/">Sakana.AI</a><img src="/imgs/sakana-emoji-sm.png" class="sakana-emoji" alt="">, where we build nature-inspired methods for the LLM era. My work includes <a href="https://arxiv.org/abs/2408.06292">The AI Scientist</a> (<a href="https://arxiv.org/abs/2504.08066">v2</a>, <a href="https://arxiv.org/abs/2610.18933">v3</a>), <a href="https://arxiv.org/abs/2509.19349">ShinkaEvolve</a>, <a href="https://arxiv.org/abs/2402.18381">EvoLLM</a>, and learned <a href="https://arxiv.org/abs/2211.11260">evolutionary</a> <a href="https://arxiv.org/abs/2304.03995">optimization</a>. I'm also wrapping up my PhD on Evolutionary Meta-Learning at TU Berlin. Before that, I spent time at Google DeepMind in Tokyo and interned with the London Discovery team.</p>
+                <div class="intro-links">
+                    <a href="https://twitter.com/RobertTLange" title="Twitter / X" aria-label="Twitter">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                    <a href="https://github.com/RobertTLange" title="GitHub" aria-label="GitHub">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                    </a>
+                    <a href="https://scholar.google.es/citations?user=cTrc3x4AAAAJ&hl=en" title="Google Scholar" aria-label="Google Scholar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 100 14 7 7 0 000-14z"/></svg>
+                    </a>
+                    <a href="mailto:robertlange0@gmail.com" title="Email" aria-label="Email">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+        <div id="listings-container">
+            <section id="news">
+                <h2>News <sup><button class="view-toggle" id="news-view-toggle" data-posttype="news" type="button">[all]</button></sup></h2>
+                <ul class="timeline" id="news-timeline">
+                    <!-- News posts will be dynamically inserted here by JavaScript -->
+                </ul>
+            </section>
+
+            <section id="blog">
+                <h2>Blog <sup><button class="view-toggle" id="blog-view-toggle" data-posttype="blog" type="button">[all]</button></sup></h2>
+                <ul class="timeline" id="blog-timeline">
+                    <!-- Blog posts will be dynamically inserted here by JavaScript -->
+                </ul>
+            </section>
+        </div>
+
+        <section id="post-display-area" style="display: none;">
+            <button id="back-to-listings">← Back to All</button>
+            <header id="post-view-header" style="text-align: center; margin-bottom: 2em;">
+            </header>
+            <div id="post-content-goes-here">
+                <!-- Fetched post content will be injected here -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Robert T. Lange. All rights reserved. &middot; <a href="/imprint/">Imprint</a></p>
+    </footer>
+
+    <script>
+        // Restore clean URL after 404.html redirect
+        (function() {
+            var redirect = sessionStorage.redirect;
+            if (redirect) {
+                delete sessionStorage.redirect;
+                window.history.replaceState(null, null, redirect);
+            }
+        })();
+
+        // Ensure KaTeX is loaded before main.js
+        if (typeof katex !== 'undefined') {
+            console.log('KaTeX loaded successfully');
+        } else {
+            console.error('KaTeX failed to load');
+        }
+    </script>
+    <script src="/js/main.js"></script>
+    <script src="/js/cellular-automata.js"></script>
+</body>
+</html> 

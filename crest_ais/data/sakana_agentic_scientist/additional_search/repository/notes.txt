@@ -1,0 +1,55 @@
+Repository double-check for additional generated paper PDFs
+Checked UTC: 2026-10-27T02:01:13.323753+00:00
+Additional unique eligible generated manuscripts discovered: 0.
+Eligible manuscript downloads: 0.
+
+Official main head: df8313889a004f8a44a472e19a833cd547bb828a
+All 8 reachable commit trees were recursively enumerated without truncation. None contains a PDF path, submodule, or generated-results directory. Only blank ALIFE/ICLR paper templates are included.
+Public branch inventory: main only. Public tag inventory: empty. Public release inventory: empty. Public refs: main and two merged PR heads, which are covered by the reachable commit history.
+No Git LFS pointer files exist in the complete current source snapshot. .gitattributes only specifies shell-script line endings. .gitignore explicitly ignores *.pdf, results/, output/, outputs/, and *.tar.gz.
+Current source snapshot contains 1452 unique URL strings, overwhelmingly dependency URLs. Relevant manuscript links are the system paper arXiv:2610.18933 and an older GRPO reference arXiv:2206.14858; neither is eligible. No external generated-paper artifact, Zenodo, Drive, Dropbox, or Hugging Face output dataset link found.
+GitHub Actions lists one CI workflow and zero current artifacts. Issues, PR bodies, all issue comments and commit comments yielded no output-manuscript links.
+Eight selected/representative fork heads were inspected. One fork (astoreyai) includes a 15-page Hilkenmeier et al. systematic-review article as a test fixture, DOI 10.1186/s13643-026-03228-4. It is unrelated human-authored input, not generated output. Its SHA256 is 9f107325eb6475be8b22117d3370b776678cd71aa5fb173c660daf05db1ae82f. The temporary PDF was deleted after identification.
+
+Access and completeness limits:
+- Public unauthenticated GitHub REST requests succeeded; browser tool could not render API routes, so these were fetched through Python urllib over HTTPS.
+- No private branches, deleted/unreachable objects, non-public local run directories, or authenticated-only artifacts can be ruled out. No authentication bypass attempted.
+- No tagged releases or currently listed GitHub Actions artifacts exist to download. Current public API state does not establish whether an artifact existed previously and expired.
+- 77 fork records were returned despite repository metadata reporting 78 forks; selected modified or representative fork heads were inspected, not every fork branch or historical fork commit.
+
+Explicit checked URLs:
+https://github.com/SakanaAI/AI-Scientist-v3
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/branches?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/tags?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/releases?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/commits?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/main?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/matching-refs/
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/actions/artifacts?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/actions/workflows?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/issues?state=all&per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/pulls?state=all&per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/issues/comments?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/comments?per_page=100
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/forks?per_page=100
+https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v3/main/README.md
+https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v3/main/.gitattributes
+https://raw.githubusercontent.com/SakanaAI/AI-Scientist-v3/main/.gitignore
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/tarball/df8313889a004f8a44a472e19a833cd547bb828a
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/df8313889a004f8a44a472e19a833cd547bb828a?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/322f7a8717849211b145d78fceaa0df901de947d?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/e49408e937115081f68d90838a79483f4f1c1d35?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/7eca5af83b66691477a687aff8fde318e30c3999?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/9ed986dea4f55cbd99680cb5c2a20e0abc247f2b?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/8236a6f71e4f754986fcae5a8af4c89620f53541?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/7ac627e6e9ece605525ea869e62f60acdd415531?recursive=1
+https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/2b8aa39285c35aaca3b0e06dd121061ef8a2d854?recursive=1
+https://api.github.com/repos/satputekuldip/AI-Scientist-v3/git/trees/main?recursive=1
+https://api.github.com/repos/SUN-1024/AI-Scientist-v3/git/trees/codex%2Funified-research-agent?recursive=1
+https://api.github.com/repos/DavinciDreams/AI-Scientist-v3/git/trees/main?recursive=1
+https://api.github.com/repos/astoreyai/AI-Scientist-v3/git/trees/main?recursive=1
+https://api.github.com/repos/sk-surya/ai-scientist-v3/git/trees/main?recursive=1
+https://api.github.com/repos/danielsimonjr/Agentic-Scientist/git/trees/main?recursive=1
+https://api.github.com/repos/interactivetech/AI-Scientist-v3/git/trees/main?recursive=1
+https://api.github.com/repos/theainerd/AI-Scientist-v3/git/trees/main?recursive=1

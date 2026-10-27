@@ -1,0 +1,690 @@
+[
+  {
+    "label": "Health (Cartan-DEC-MiAE)",
+    "file": "generated-papers/applications/Health_Cartan-DEC-MiAE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Health_Cartan-DEC-MiAE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Health_Cartan-DEC-MiAE.pdf",
+    "sha256": "f172a003aec8f1b75c4a1ae5599c1598acf6a7b2cceab8396cfb5659c8b81418",
+    "bytes": 427834
+  },
+  {
+    "label": "Neuroscience (FCD-Engram)",
+    "file": "generated-papers/applications/Neuroscience_FCD-Engram.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Neuroscience_FCD-Engram.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Neuroscience_FCD-Engram.pdf",
+    "sha256": "92dbb0f58765a1b3b5acdb2457e53d72beb4531eb8bc9c1559c6941d6c4f96e0",
+    "bytes": 2551163
+  },
+  {
+    "label": "Neuroscience (Simplified DWGR-SVL)",
+    "file": "generated-papers/applications/Neuroscience_Simplified DWGR-SVL.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Neuroscience_Simplified%20DWGR-SVL.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Neuroscience_Simplified DWGR-SVL.pdf",
+    "sha256": "33b8bff7beec371772396bab4b4d19677658e972c96d0598ff7bdfeeac1baf4c",
+    "bytes": 2357901
+  },
+  {
+    "label": "Neuroscience (ST-FacRNN)",
+    "file": "generated-papers/applications/Neuroscience_ST-FacRNN.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Neuroscience_ST-FacRNN.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Neuroscience_ST-FacRNN.pdf",
+    "sha256": "b99c2d3fb93efe16718a32f49914c6bdb32524078675fd878ec2117bfbd28e74",
+    "bytes": 2498489
+  },
+  {
+    "label": "Neuroscience (TA-FATA-CSBrain)",
+    "file": "generated-papers/applications/Neuroscience_TA-FATA-CSBrain.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Neuroscience_TA-FATA-CSBrain.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Neuroscience_TA-FATA-CSBrain.pdf",
+    "sha256": "f04fca76b97626852dfb90c15a7deda47ea58c711216d0315fc463cab9b04909",
+    "bytes": 3652060
+  },
+  {
+    "label": "Robotics (KinemaAnchor-Manifold)",
+    "file": "generated-papers/applications/Robotics_KinemaAnchor-Manifold.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Robotics_KinemaAnchor-Manifold.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Robotics_KinemaAnchor-Manifold.pdf",
+    "sha256": "e302499ee541a581cdc1ba2e237d0aa7bebe36a3e8cfadf5e8aaf1e4c5478311",
+    "bytes": 391022
+  },
+  {
+    "label": "Sciences (ErtelHodge-STELLA)",
+    "file": "generated-papers/applications/Sciences_ErtelHodge-STELLA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Sciences_ErtelHodge-STELLA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Sciences_ErtelHodge-STELLA.pdf",
+    "sha256": "09989907b89d99533f8562630d11057d12dbcb5d3c14f79460a96c2dbb9e4a05",
+    "bytes": 1788109
+  },
+  {
+    "label": "Sciences (SYMP-MONGE)",
+    "file": "generated-papers/applications/Sciences_SYMP-MONGE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Sciences_SYMP-MONGE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Sciences_SYMP-MONGE.pdf",
+    "sha256": "1fcd57dd6a5f81c6567785de57c0af4779de8e259caeb06bba44e63ddb59ceb8",
+    "bytes": 1963070
+  },
+  {
+    "label": "Speech (CHAMPS-RAG)",
+    "file": "generated-papers/applications/Speech_CHAMPS-RAG.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Speech_CHAMPS-RAG.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Speech_CHAMPS-RAG.pdf",
+    "sha256": "4c7d698c006f0185ab132a08a17262eb2b9dc531cc4b80d4877370e483b910a3",
+    "bytes": 3558130
+  },
+  {
+    "label": "Time Series (PG-CDIG)",
+    "file": "generated-papers/applications/Time Series_PG-CDIG.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Time%20Series_PG-CDIG.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Time Series_PG-CDIG.pdf",
+    "sha256": "fc26796ee16e1ff7058c5c4cb8944b6fb623883f389fba2e6d0f39e64fc95ba5",
+    "bytes": 2775741
+  },
+  {
+    "label": "Others (AnisoSPD)",
+    "file": "generated-papers/applications/Others_AnisoSPD.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Others_AnisoSPD.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Others_AnisoSPD.pdf",
+    "sha256": "0168e87568074df7458330b7e3be6df238fe0cd982e867d3eca6bda48a0e338b",
+    "bytes": 3586482
+  },
+  {
+    "label": "Others (DiffTrop-Bitween)",
+    "file": "generated-papers/applications/Others_DiffTrop-Bitween.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Others_DiffTrop-Bitween.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Others_DiffTrop-Bitween.pdf",
+    "sha256": "f444299d2c91ff561a3dce7d900cd693f4cfc9897a2ca903f181790c173217f5",
+    "bytes": 2803912
+  },
+  {
+    "label": "Others (DR-LEF)",
+    "file": "generated-papers/applications/Others_DR-LEF.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Others_DR-LEF.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Others_DR-LEF.pdf",
+    "sha256": "2696d497d7ca50e23aaaf00c339d6a5ebb0973b5fc7c8574871282f56ec832c0",
+    "bytes": 3431202
+  },
+  {
+    "label": "Others (SAVVY-Vortex)",
+    "file": "generated-papers/applications/Others_SAVVY-Vortex.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Others_SAVVY-Vortex.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Others_SAVVY-Vortex.pdf",
+    "sha256": "0da56cee0938c969da8bcdc130e4a3dbb9d47b70020b6de3ebf3e362ee54f6fc",
+    "bytes": 3904827
+  },
+  {
+    "label": "Others (TVCS-IF)",
+    "file": "generated-papers/applications/Others_TVCS-IF.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/applications/Others_TVCS-IF.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/applications/Others_TVCS-IF.pdf",
+    "sha256": "f7c01532a13d19a10630e6b6b1989f8a3c261f74dd1eeac9ef4088523743fa76",
+    "bytes": 2995561
+  },
+  {
+    "label": "Algorithms (RMTS)",
+    "file": "generated-papers/deep_learning/Algorithms_RMTS.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Algorithms_RMTS.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Algorithms_RMTS.pdf",
+    "sha256": "0030a50e3a0d7168f9b65847573caaf3ac4b6e0c977febce062613c9128f4371",
+    "bytes": 4068846
+  },
+  {
+    "label": "Foundation (TABHARMONY)",
+    "file": "generated-papers/deep_learning/Foundation_TABHARMONY.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Foundation_TABHARMONY.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Foundation_TABHARMONY.pdf",
+    "sha256": "a467c878716145b2b8c895c83cfa144055c2274098db1fff537dc85f7ce27f7d",
+    "bytes": 1095403
+  },
+  {
+    "label": "Foundation (UNI-XDLM)",
+    "file": "generated-papers/deep_learning/Foundation_UNI-XDLM.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Foundation_UNI-XDLM.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Foundation_UNI-XDLM.pdf",
+    "sha256": "93d4893d992755831d0523fa987d29fc501a3c0c91441ff5750b782645bed578",
+    "bytes": 524424
+  },
+  {
+    "label": "LLMs (CS-HLA)",
+    "file": "generated-papers/deep_learning/LLMs_CS-HLA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_CS-HLA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_CS-HLA.pdf",
+    "sha256": "babd6697d56c66ea64a8f805d5f18476d9606e1f8d51c8b9f3d93ae57af3b2e2",
+    "bytes": 3683004
+  },
+  {
+    "label": "LLMs (DNLP-LCBC)",
+    "file": "generated-papers/deep_learning/LLMs_DNLP-LCBC.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_DNLP-LCBC.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_DNLP-LCBC.pdf",
+    "sha256": "2a34cc805ed98138a53061248e183b0d40810b1d36f13559a653f5de25914c18",
+    "bytes": 1468218
+  },
+  {
+    "label": "LLMs (Mem-MaxRL)",
+    "file": "generated-papers/deep_learning/LLMs_Mem-MaxRL.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_Mem-MaxRL.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_Mem-MaxRL.pdf",
+    "sha256": "d8b94dab2ca141fe4715303587224dd6f483736a7fbc4689c744cacf823d2e2c",
+    "bytes": 724452
+  },
+  {
+    "label": "LLMs (Poisson-Top-W)",
+    "file": "generated-papers/deep_learning/LLMs_Poisson-Top-W.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_Poisson-Top-W.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_Poisson-Top-W.pdf",
+    "sha256": "b9e2661623b372a3729f5dac2d3c99512627949a6d4b861c2c64f2e4a73c96da",
+    "bytes": 3924863
+  },
+  {
+    "label": "LLMs (RES-TRACE)",
+    "file": "generated-papers/deep_learning/LLMs_RES-TRACE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_RES-TRACE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_RES-TRACE.pdf",
+    "sha256": "4e9f52be19e08c8b2c242b903ea3341d5a9d111c4cea6930edeb1bcf672f024e",
+    "bytes": 3333024
+  },
+  {
+    "label": "LLMs (SDDF-RKHS)",
+    "file": "generated-papers/deep_learning/LLMs_SDDF-RKHS.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_SDDF-RKHS.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_SDDF-RKHS.pdf",
+    "sha256": "382846a46234349eefa3e7f8f8deb2315b25c187055c15fe38db3113b74566d8",
+    "bytes": 3290871
+  },
+  {
+    "label": "LLMs (SymCrooks-Steering)",
+    "file": "generated-papers/deep_learning/LLMs_SymCrooks-Steering.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_SymCrooks-Steering.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_SymCrooks-Steering.pdf",
+    "sha256": "bdf88d447559ee3fa7ab895ec8e22c2788cc5c5e3992e14a338c6187d4ef6b06",
+    "bytes": 1766244
+  },
+  {
+    "label": "LLMs (TPH-Lock)",
+    "file": "generated-papers/deep_learning/LLMs_TPH-Lock.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_TPH-Lock.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_TPH-Lock.pdf",
+    "sha256": "bdf4c246a0e9273617b8b5bb7382204184c32ebf9fe9ec44775bfe64f2dcf36f",
+    "bytes": 614641
+  },
+  {
+    "label": "LLMs (VD-STrans)",
+    "file": "generated-papers/deep_learning/LLMs_VD-STrans.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/LLMs_VD-STrans.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/LLMs_VD-STrans.pdf",
+    "sha256": "5682c9c2e0e1b8b9072c19493415171ef216eac8ce075e3bbae5c126991a7f31",
+    "bytes": 4085766
+  },
+  {
+    "label": "Robustness (ResoKoopman)",
+    "file": "generated-papers/deep_learning/Robustness_ResoKoopman.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Robustness_ResoKoopman.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Robustness_ResoKoopman.pdf",
+    "sha256": "4ed7981f364b6652000d0a8ea7db50786783bf98b89e938614730a7c6b610a02",
+    "bytes": 2614257
+  },
+  {
+    "label": "Others (BF-DFN)",
+    "file": "generated-papers/deep_learning/Others_BF-DFN.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_BF-DFN.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_BF-DFN.pdf",
+    "sha256": "cae06532b7749d82e6d95e2126b91c051dd2e75e6fe6e3375036348ef5502e7e",
+    "bytes": 2927042
+  },
+  {
+    "label": "Others (DynaSpec-RAG)",
+    "file": "generated-papers/deep_learning/Others_DynaSpec-RAG.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_DynaSpec-RAG.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_DynaSpec-RAG.pdf",
+    "sha256": "fab90f061a6e2ee396dc5a0485462230d3eb72e379f1270fcf57c5f77baebb07",
+    "bytes": 1650850
+  },
+  {
+    "label": "Others (Fed-LanczosSAM)",
+    "file": "generated-papers/deep_learning/Others_Fed-LanczosSAM.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_Fed-LanczosSAM.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_Fed-LanczosSAM.pdf",
+    "sha256": "d65ec49c99d34315346393ddfb25deb505595bd08c306e836a4399542064e6ce",
+    "bytes": 3475408
+  },
+  {
+    "label": "Others (HARMONIC-MoP)",
+    "file": "generated-papers/deep_learning/Others_HARMONIC-MoP.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_HARMONIC-MoP.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_HARMONIC-MoP.pdf",
+    "sha256": "46747b5df324ef002bed2c994d1ab901074a314da43e47280ef39471f260f060",
+    "bytes": 2450267
+  },
+  {
+    "label": "Others (InfoOptim)",
+    "file": "generated-papers/deep_learning/Others_InfoOptim.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_InfoOptim.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_InfoOptim.pdf",
+    "sha256": "05281639bdcf5806c50acfbd72f9fcc55c7807f7989a61d29a7d779c28ef317f",
+    "bytes": 4044411
+  },
+  {
+    "label": "Others (Koopman-DMD)",
+    "file": "generated-papers/deep_learning/Others_Koopman-DMD.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_Koopman-DMD.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_Koopman-DMD.pdf",
+    "sha256": "3adecb8f00cd2b0fcd4b8e6a7a53e99b9de0edf275b8d8808154e7f3b829c46f",
+    "bytes": 1544341
+  },
+  {
+    "label": "Others (Neural-MMA)",
+    "file": "generated-papers/deep_learning/Others_Neural-MMA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_Neural-MMA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_Neural-MMA.pdf",
+    "sha256": "b25660dc49d1835147328651372e230eede916fe4bf5fa0fdddf93214e6bac02",
+    "bytes": 2949278
+  },
+  {
+    "label": "Others (NSK)",
+    "file": "generated-papers/deep_learning/Others_NSK.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_NSK.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_NSK.pdf",
+    "sha256": "30fc2b0293425066638aa30ec811478272fae67b4d97d005505c0d9d5d80ce18",
+    "bytes": 3363567
+  },
+  {
+    "label": "Others (PhySense-AdjointFlow)",
+    "file": "generated-papers/deep_learning/Others_PhySense-AdjointFlow.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_PhySense-AdjointFlow.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_PhySense-AdjointFlow.pdf",
+    "sha256": "cacd428737df87b4a740161c79d68951450bbc1b7bb0c222452a439b69ee7f3b",
+    "bytes": 612668
+  },
+  {
+    "label": "Others (Soft-VSM)",
+    "file": "generated-papers/deep_learning/Others_Soft-VSM.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_Soft-VSM.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_Soft-VSM.pdf",
+    "sha256": "97df376def67b4fc6a313ebdee534665564af1d927b71904e9cf4ffed3761517",
+    "bytes": 2926840
+  },
+  {
+    "label": "Others (TKFS-Attention)",
+    "file": "generated-papers/deep_learning/Others_TKFS-Attention.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/deep_learning/Others_TKFS-Attention.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/deep_learning/Others_TKFS-Attention.pdf",
+    "sha256": "cf4fba20b86a76fdca1ac2dadfbc37f863dab5daed85edcf88e9e8a310ab42a9",
+    "bytes": 1658128
+  },
+  {
+    "label": "Algorithms (Flash-Newton)",
+    "file": "generated-papers/general_ml/Algorithms_Flash-Newton.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Algorithms_Flash-Newton.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Algorithms_Flash-Newton.pdf",
+    "sha256": "5ad766e4414ca51aaaf90739e7a95719f002d97905c33d6b1db58255e494906d",
+    "bytes": 1742870
+  },
+  {
+    "label": "Causality (SPECTRA-HET SPLIT UP)",
+    "file": "generated-papers/general_ml/Causality_SPECTRA-HET SPLIT UP.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Causality_SPECTRA-HET%20SPLIT%20UP.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Causality_SPECTRA-HET SPLIT UP.pdf",
+    "sha256": "424c86422466c94c47381f03b138adae429ba188caaa683fc0ad7b04b485d1c1",
+    "bytes": 2038230
+  },
+  {
+    "label": "Evaluation (DR-Schervish)",
+    "file": "generated-papers/general_ml/Evaluation_DR-Schervish.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Evaluation_DR-Schervish.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Evaluation_DR-Schervish.pdf",
+    "sha256": "e3b6ed6365d3fe2a5c686ff94a4b2382490ad43dcf6919a59dd3d2733d7e767c",
+    "bytes": 4250496
+  },
+  {
+    "label": "Infrastructure (RDF-VG)",
+    "file": "generated-papers/general_ml/Infrastructure_RDF-VG.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Infrastructure_RDF-VG.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Infrastructure_RDF-VG.pdf",
+    "sha256": "74b5e8c17d5d78eb8218982b20a365d8e7cd13ec0b41d59b3bb470965b0e76d1",
+    "bytes": 3371518
+  },
+  {
+    "label": "Others (BAM-Val)",
+    "file": "generated-papers/general_ml/Others_BAM-Val.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_BAM-Val.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_BAM-Val.pdf",
+    "sha256": "ca38d7f910cadefd645e4df0c93cec0e51a786e17bd0b0ccfad486e85e9b9835",
+    "bytes": 3185703
+  },
+  {
+    "label": "Others (CIQS-PC)",
+    "file": "generated-papers/general_ml/Others_CIQS-PC.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_CIQS-PC.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_CIQS-PC.pdf",
+    "sha256": "0faf02222662bee42c23a668a3de486eca8a086677382a54fcd8e4c89416af69",
+    "bytes": 4658736
+  },
+  {
+    "label": "Others (ECTS-HFD)",
+    "file": "generated-papers/general_ml/Others_ECTS-HFD.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_ECTS-HFD.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_ECTS-HFD.pdf",
+    "sha256": "aa9107a66bc5429c3ff633adf9dcbab81737d8cffd02b07e6a92bc67a6ffe06e",
+    "bytes": 3828394
+  },
+  {
+    "label": "Others (FR-MSH-GGAD)",
+    "file": "generated-papers/general_ml/Others_FR-MSH-GGAD.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_FR-MSH-GGAD.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_FR-MSH-GGAD.pdf",
+    "sha256": "7b12c531ae22fdbb0ae21df80e6a6b100cccb3feb578ca5004d215d165a4c7c4",
+    "bytes": 2948526
+  },
+  {
+    "label": "Others (NEM-SPKN)",
+    "file": "generated-papers/general_ml/Others_NEM-SPKN.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_NEM-SPKN.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_NEM-SPKN.pdf",
+    "sha256": "3dfe4b26fac8a51fce3b9549f63f7f908e18cee3a35a16abea2a55395baa91e6",
+    "bytes": 3323573
+  },
+  {
+    "label": "Others (Procrustes-DS)",
+    "file": "generated-papers/general_ml/Others_Procrustes-DS.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_Procrustes-DS.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_Procrustes-DS.pdf",
+    "sha256": "db6a01081ebf446ca44c8b2089593a49a4f8b3e57f98aceb098c1a4cb814c3d0",
+    "bytes": 375916
+  },
+  {
+    "label": "Others (QAMT-Transfer)",
+    "file": "generated-papers/general_ml/Others_QAMT-Transfer.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_QAMT-Transfer.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_QAMT-Transfer.pdf",
+    "sha256": "b8a4efbcc31b5bb10b58c3e9dffee4dbf1440b5982cfb05014eaa9e5e17a4390",
+    "bytes": 2954303
+  },
+  {
+    "label": "Others (SD-TTC)",
+    "file": "generated-papers/general_ml/Others_SD-TTC.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_SD-TTC.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_SD-TTC.pdf",
+    "sha256": "9299a4c68ac5e6d14ac272529f002fce9d00679584fd903234e77e2f3ed137bf",
+    "bytes": 668224
+  },
+  {
+    "label": "Others (Sheaf-PartialTSW)",
+    "file": "generated-papers/general_ml/Others_Sheaf-PartialTSW.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_Sheaf-PartialTSW.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_Sheaf-PartialTSW.pdf",
+    "sha256": "c41e73ac0462f5e7afa1768be24d60a444204eb49a019d6872730530a6c06db0",
+    "bytes": 2403560
+  },
+  {
+    "label": "Others (TBOC-ANOVA)",
+    "file": "generated-papers/general_ml/Others_TBOC-ANOVA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/general_ml/Others_TBOC-ANOVA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/general_ml/Others_TBOC-ANOVA.pdf",
+    "sha256": "b53335e77f93d6cdfe63de3897913b43e176a550405efa5875db9d8ef89522e7",
+    "bytes": 2890440
+  },
+  {
+    "label": "Convex (OFP-Shadow)",
+    "file": "generated-papers/optimization/Convex_OFP-Shadow.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/optimization/Convex_OFP-Shadow.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/optimization/Convex_OFP-Shadow.pdf",
+    "sha256": "ce0753e3542533b5477c7ad94a3d6edeb6182dce75857fe5fdca1f6b7f9339dd",
+    "bytes": 3374090
+  },
+  {
+    "label": "Discrete (LD-RPB-OM)",
+    "file": "generated-papers/optimization/Discrete_LD-RPB-OM.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/optimization/Discrete_LD-RPB-OM.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/optimization/Discrete_LD-RPB-OM.pdf",
+    "sha256": "741883232cfd2e392af71bee0a12cb196b2d2c112b8f4e0f9abd1cc26e007b72",
+    "bytes": 2649016
+  },
+  {
+    "label": "Non-Convex (ALOT-DRO)",
+    "file": "generated-papers/optimization/Non-Convex_ALOT-DRO.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/optimization/Non-Convex_ALOT-DRO.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/optimization/Non-Convex_ALOT-DRO.pdf",
+    "sha256": "c02824f0da3d8a835e3728bcb17191b750a241d554801f2332131adbaf62d60d",
+    "bytes": 518571
+  },
+  {
+    "label": "Others (ANSE)",
+    "file": "generated-papers/optimization/Others_ANSE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/optimization/Others_ANSE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/optimization/Others_ANSE.pdf",
+    "sha256": "f2a1acc6e20a84e350834160be17f176084cdeb86724de23e1096bfeab7523e3",
+    "bytes": 3743146
+  },
+  {
+    "label": "Others (LC-FTT)",
+    "file": "generated-papers/optimization/Others_LC-FTT.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/optimization/Others_LC-FTT.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/optimization/Others_LC-FTT.pdf",
+    "sha256": "b451f522ac585aae227ad9b15b811581e256670c628949a34ca04928c35230c0",
+    "bytes": 3708495
+  },
+  {
+    "label": "Bayesian (DAGP-HDP-HMM)",
+    "file": "generated-papers/probabilistic/Bayesian_DAGP-HDP-HMM.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Bayesian_DAGP-HDP-HMM.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Bayesian_DAGP-HDP-HMM.pdf",
+    "sha256": "f124c1d4b604f320452bbe1c857d023f9586ffdb4a1a286b3f3b7b08d611ec2f",
+    "bytes": 3163236
+  },
+  {
+    "label": "Sampling (SMBTT-CCDB)",
+    "file": "generated-papers/probabilistic/Sampling_SMBTT-CCDB.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Sampling_SMBTT-CCDB.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Sampling_SMBTT-CCDB.pdf",
+    "sha256": "fdc3442a702dab3f3efe660448db09c6d27c919c2b7bc420c8dd3ff3c2a97e17",
+    "bytes": 2170002
+  },
+  {
+    "label": "Sampling (SpecAttn-Div)",
+    "file": "generated-papers/probabilistic/Sampling_SpecAttn-Div.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Sampling_SpecAttn-Div.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Sampling_SpecAttn-Div.pdf",
+    "sha256": "56f93fd4b347e03b9a181765481672d753f62d7c5ad213160d5281369db7a2dd",
+    "bytes": 3689041
+  },
+  {
+    "label": "Others (AD-LSVI)",
+    "file": "generated-papers/probabilistic/Others_AD-LSVI.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Others_AD-LSVI.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Others_AD-LSVI.pdf",
+    "sha256": "d0e53a70c778eb5823778993eea01a103d59d61040230d4c7e4daca25835b827",
+    "bytes": 2840650
+  },
+  {
+    "label": "Others (AWF-CP)",
+    "file": "generated-papers/probabilistic/Others_AWF-CP.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Others_AWF-CP.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Others_AWF-CP.pdf",
+    "sha256": "c63520ba29376d485aedf2e0d004bf9dc067b601c147e14d80a0ce4e681f7cca",
+    "bytes": 3153233
+  },
+  {
+    "label": "Others (BTV-RDRO)",
+    "file": "generated-papers/probabilistic/Others_BTV-RDRO.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Others_BTV-RDRO.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Others_BTV-RDRO.pdf",
+    "sha256": "0e0c18e7433596ad4597f24e81a3ce47e44e0a9a98a0291718dd9b11059e0d9e",
+    "bytes": 3525823
+  },
+  {
+    "label": "Others (COFM-SIB)",
+    "file": "generated-papers/probabilistic/Others_COFM-SIB.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Others_COFM-SIB.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Others_COFM-SIB.pdf",
+    "sha256": "7b9d76920107af559ee20e6a90a1b4a27d962b1a7719a5a4328d245d287dca0b",
+    "bytes": 3991347
+  },
+  {
+    "label": "Others (DosePFN)",
+    "file": "generated-papers/probabilistic/Others_DosePFN.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Others_DosePFN.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Others_DosePFN.pdf",
+    "sha256": "a4fd9d13815956cf3081f89a2b1e2ecd8da600e64fd61a60c1e54c09da910ef2",
+    "bytes": 4162843
+  },
+  {
+    "label": "Others (PH-CNR-OLLA)",
+    "file": "generated-papers/probabilistic/Others_PH-CNR-OLLA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Others_PH-CNR-OLLA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Others_PH-CNR-OLLA.pdf",
+    "sha256": "b657a95f25feb1100b280661ab72313d4a742b8051b471cd3177ad0a41327832",
+    "bytes": 7661163
+  },
+  {
+    "label": "Others (ScaleMode-NeuralSurv)",
+    "file": "generated-papers/probabilistic/Others_ScaleMode-NeuralSurv.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/probabilistic/Others_ScaleMode-NeuralSurv.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/probabilistic/Others_ScaleMode-NeuralSurv.pdf",
+    "sha256": "04a52fccc96bc2ef0ba0acda26145feacd0a9933e41b84ef3fbe844ad127b3d5",
+    "bytes": 3303088
+  },
+  {
+    "label": "Others (CSX-MoE)",
+    "file": "generated-papers/rl/Others_CSX-MoE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/rl/Others_CSX-MoE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/rl/Others_CSX-MoE.pdf",
+    "sha256": "bb21d71d065cc648cdd0dc8ff0c263cfcd7cadbf88ef138c90429b37ffa9358d",
+    "bytes": 1805029
+  },
+  {
+    "label": "Others (DisCoRe-IQA)",
+    "file": "generated-papers/rl/Others_DisCoRe-IQA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/rl/Others_DisCoRe-IQA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/rl/Others_DisCoRe-IQA.pdf",
+    "sha256": "15822d1b717906ca25d628031ab2a344fe9a1e95674d8ea1944c2ab0db8e4818",
+    "bytes": 5061097
+  },
+  {
+    "label": "Others (Exact-CPWL CvaR)",
+    "file": "generated-papers/rl/Others_Exact-CPWL CvaR.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/rl/Others_Exact-CPWL%20CvaR.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/rl/Others_Exact-CPWL CvaR.pdf",
+    "sha256": "7c19686b9f0834f5b10543d40dfe21fddd15df8ea839e2360bf3f9193767bd5f",
+    "bytes": 1053413
+  },
+  {
+    "label": "Alignment (CHVA)",
+    "file": "generated-papers/social_aspects/Alignment_CHVA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Alignment_CHVA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Alignment_CHVA.pdf",
+    "sha256": "0fbcfe1fce90a719c3675224b82035a59331c89bf0aa6b9ccfc632b13a9c95a1",
+    "bytes": 4133731
+  },
+  {
+    "label": "Interpretability (CP-GRASSMANN)",
+    "file": "generated-papers/social_aspects/Interpretability_CP-GRASSMANN.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Interpretability_CP-GRASSMANN.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Interpretability_CP-GRASSMANN.pdf",
+    "sha256": "6204907fa6801dea13cd9a0a7f425feb48319315742a9f347cccf6b953a1c432",
+    "bytes": 3156712
+  },
+  {
+    "label": "Interpretability (Flex-Dot)",
+    "file": "generated-papers/social_aspects/Interpretability_Flex-Dot.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Interpretability_Flex-Dot.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Interpretability_Flex-Dot.pdf",
+    "sha256": "18b9cb0d764a05c095dee50fa2932e0ca989fc28f2fbeedd4ea2040c35db7731",
+    "bytes": 480043
+  },
+  {
+    "label": "Interpretability (Overdamped DAVE)",
+    "file": "generated-papers/social_aspects/Interpretability_Overdamped DAVE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Interpretability_Overdamped%20DAVE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Interpretability_Overdamped DAVE.pdf",
+    "sha256": "8fbe8c664f3dcbcc79f6f8c8582ce00fbc27b7d79dd8274df7c241dab1197d4c",
+    "bytes": 2950284
+  },
+  {
+    "label": "Interpretability (SHEAF-SAE)",
+    "file": "generated-papers/social_aspects/Interpretability_SHEAF-SAE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Interpretability_SHEAF-SAE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Interpretability_SHEAF-SAE.pdf",
+    "sha256": "13fbf7d272b068a7f0c85575c629cf0b8befa8ae8260f1165382e9d3885907b9",
+    "bytes": 4695286
+  },
+  {
+    "label": "Interpretability (SLT-MDA)",
+    "file": "generated-papers/social_aspects/Interpretability_SLT-MDA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Interpretability_SLT-MDA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Interpretability_SLT-MDA.pdf",
+    "sha256": "2f46107fb37bf9fc40e24cce1216cec7b0b4889a209193984af0115489f5b7d3",
+    "bytes": 510409
+  },
+  {
+    "label": "Privacy (DP-EBS-BB)",
+    "file": "generated-papers/social_aspects/Privacy_DP-EBS-BB.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Privacy_DP-EBS-BB.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Privacy_DP-EBS-BB.pdf",
+    "sha256": "dfc26cdfea6f6a2c07c24a729877d58e4fe3c4efdca694bda1027531bad6a68b",
+    "bytes": 418069
+  },
+  {
+    "label": "Robustness (IMD-GV)",
+    "file": "generated-papers/social_aspects/Robusntess_IMD-GV.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Robusntess_IMD-GV.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Robusntess_IMD-GV.pdf",
+    "sha256": "1215190a36db0de7dbf2968fb412fe66d064ad3965058db2746dc2547d36275b",
+    "bytes": 1639386
+  },
+  {
+    "label": "Others (VIGN-SDA-PMSVM)",
+    "file": "generated-papers/social_aspects/Others_VIGN-SDA-PMSVM.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/social_aspects/Others_VIGN-SDA-PMSVM.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/social_aspects/Others_VIGN-SDA-PMSVM.pdf",
+    "sha256": "e3694d98c9c3286058e7bf8147a8bf84b9ca0236cb6df49918b0dba4198629ae",
+    "bytes": 4210508
+  },
+  {
+    "label": "Bandits (FVTG-CP)",
+    "file": "generated-papers/theory/Bandits_FVTG-CP.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/theory/Bandits_FVTG-CP.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/theory/Bandits_FVTG-CP.pdf",
+    "sha256": "b3d97a14c28bd7e0f7d028019c0190f87657a5ee7203b4c1668f606a0f8162ec",
+    "bytes": 3470904
+  },
+  {
+    "label": "Game Theory (NTW-KPA)",
+    "file": "generated-papers/theory/Game Theory_NTW-KPA.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/theory/Game%20Theory_NTW-KPA.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/theory/Game Theory_NTW-KPA.pdf",
+    "sha256": "dcf87e5f3d81697d9b950ab26ce4d511256de397efe5839674ed465bee0195c1",
+    "bytes": 649204
+  },
+  {
+    "label": "Optimization (PLL-ICE)",
+    "file": "generated-papers/theory/Optimization_PLL-ICE.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/theory/Optimization_PLL-ICE.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/theory/Optimization_PLL-ICE.pdf",
+    "sha256": "5e95e9579aa15bc01c5ea421e201f7498ba4c1b02535aa3d1b4be89704efdd08",
+    "bytes": 3397585
+  },
+  {
+    "label": "Optimization (SSH-ED-SDP)",
+    "file": "generated-papers/theory/Optimization_SSH-ED-SDP.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/theory/Optimization_SSH-ED-SDP.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/theory/Optimization_SSH-ED-SDP.pdf",
+    "sha256": "0d8f11ee44cbf8c2c58bf1a1c8aded62ac4d7e522604ee461d3417c834c8bb18",
+    "bytes": 1852260
+  },
+  {
+    "label": "Probabilistic (DRO-ROCP)",
+    "file": "generated-papers/theory/Probabilistic_DRO-ROCP.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/theory/Probabilistic_DRO-ROCP.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/theory/Probabilistic_DRO-ROCP.pdf",
+    "sha256": "b7d4d1f208cd730aa6defd86f6f9e4cf47e16c77327b715b70d12f8d0d58d3d7",
+    "bytes": 5195111
+  },
+  {
+    "label": "Others (DR-COCO)",
+    "file": "generated-papers/theory/Others_DR-COCO.pdf",
+    "pdf_url": "https://scientist-two.github.io/generated-papers/theory/Others_DR-COCO.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/scientisttwo/papers/theory/Others_DR-COCO.pdf",
+    "sha256": "3c69e52b068cb4347fe93422837793ae8bfefe68592abbd444d35f6aaf147a0a",
+    "bytes": 3078105
+  }
+]

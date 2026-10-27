@@ -1,0 +1,190 @@
+{
+  "source_url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/trees/main?recursive=1",
+  "truncated": false,
+  "pdfs": [
+    {
+      "path": "ai_scientist/fewshot_examples/132_automated_relational.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f4845932ebcee78276cbfe0e57d2f52e8bdb3386",
+      "size": 1348476,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/f4845932ebcee78276cbfe0e57d2f52e8bdb3386"
+    },
+    {
+      "path": "ai_scientist/fewshot_examples/2_carpe_diem.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0c0c451773317aef4cb30160ac3a38bc0531a992",
+      "size": 858387,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/0c0c451773317aef4cb30160ac3a38bc0531a992"
+    },
+    {
+      "path": "ai_scientist/fewshot_examples/attention.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "489a90b4a0def0254939f2ff8923efd51eebdfaa",
+      "size": 569417,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/489a90b4a0def0254939f2ff8923efd51eebdfaa"
+    },
+    {
+      "path": "example_papers/adaptive_dual_scale_denoising.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1f874ca5a5dca140e42eb9dae7af3781394b7d31",
+      "size": 1027664,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/1f874ca5a5dca140e42eb9dae7af3781394b7d31"
+    },
+    {
+      "path": "example_papers/adaptive_dual_scale_denoising/adaptive_dual_scale_denoising.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1f874ca5a5dca140e42eb9dae7af3781394b7d31",
+      "size": 1027664,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/1f874ca5a5dca140e42eb9dae7af3781394b7d31"
+    },
+    {
+      "path": "example_papers/data_augmentation_grokking.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dc54060ba84b8c4aff7e13da3f516c5613f6043f",
+      "size": 1011153,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/dc54060ba84b8c4aff7e13da3f516c5613f6043f"
+    },
+    {
+      "path": "example_papers/data_augmentation_grokking/data_augmentation_grokking.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dc54060ba84b8c4aff7e13da3f516c5613f6043f",
+      "size": 1011153,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/dc54060ba84b8c4aff7e13da3f516c5613f6043f"
+    },
+    {
+      "path": "example_papers/dual_expert_denoiser.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14bdf657e04124425821e0e9c4e104bd18222b5e",
+      "size": 847653,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/14bdf657e04124425821e0e9c4e104bd18222b5e"
+    },
+    {
+      "path": "example_papers/dual_expert_denoiser/dual_expert_denoiser.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14bdf657e04124425821e0e9c4e104bd18222b5e",
+      "size": 847653,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/14bdf657e04124425821e0e9c4e104bd18222b5e"
+    },
+    {
+      "path": "example_papers/gan_diffusion.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1ffc5fbe1f1db661b903dcac0f47704ac67601c0",
+      "size": 993385,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/1ffc5fbe1f1db661b903dcac0f47704ac67601c0"
+    },
+    {
+      "path": "example_papers/gan_diffusion/gan_diffusion.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1ffc5fbe1f1db661b903dcac0f47704ac67601c0",
+      "size": 993385,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/1ffc5fbe1f1db661b903dcac0f47704ac67601c0"
+    },
+    {
+      "path": "example_papers/grid_based_noise_adaptation.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "31fdc81187b15095e1ac5fef56e80bb01091c82d",
+      "size": 1023132,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/31fdc81187b15095e1ac5fef56e80bb01091c82d"
+    },
+    {
+      "path": "example_papers/grid_based_noise_adaptation/grid_based_noise_adaptation.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "31fdc81187b15095e1ac5fef56e80bb01091c82d",
+      "size": 1023132,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/31fdc81187b15095e1ac5fef56e80bb01091c82d"
+    },
+    {
+      "path": "example_papers/layerwise_lr_grokking.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "454964d3a1bdc53d4785aee03881a6df589060cd",
+      "size": 1228924,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/454964d3a1bdc53d4785aee03881a6df589060cd"
+    },
+    {
+      "path": "example_papers/layerwise_lr_grokking/layerwise_lr_grokking.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "454964d3a1bdc53d4785aee03881a6df589060cd",
+      "size": 1228924,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/454964d3a1bdc53d4785aee03881a6df589060cd"
+    },
+    {
+      "path": "example_papers/mdl_grokking_correlation.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2f7a52202fee0387f1c2239b96982475e2980897",
+      "size": 668441,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/2f7a52202fee0387f1c2239b96982475e2980897"
+    },
+    {
+      "path": "example_papers/mdl_grokking_correlation/mdl_grokking_correlation.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2f7a52202fee0387f1c2239b96982475e2980897",
+      "size": 668441,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/2f7a52202fee0387f1c2239b96982475e2980897"
+    },
+    {
+      "path": "example_papers/multi_style_adapter.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "914ad176b09c44b8542e9c6856bf518d234113c2",
+      "size": 338393,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/914ad176b09c44b8542e9c6856bf518d234113c2"
+    },
+    {
+      "path": "example_papers/multi_style_adapter/multi_style_adapter.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "914ad176b09c44b8542e9c6856bf518d234113c2",
+      "size": 338393,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/914ad176b09c44b8542e9c6856bf518d234113c2"
+    },
+    {
+      "path": "example_papers/rl_lr_adaptation.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "75cc0b5f3dc9645d805a5542a7b89229f1bf4bc7",
+      "size": 436104,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/75cc0b5f3dc9645d805a5542a7b89229f1bf4bc7"
+    },
+    {
+      "path": "example_papers/rl_lr_adaptation/rl_lr_adaptation.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "75cc0b5f3dc9645d805a5542a7b89229f1bf4bc7",
+      "size": 436104,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/75cc0b5f3dc9645d805a5542a7b89229f1bf4bc7"
+    },
+    {
+      "path": "example_papers/weight_initialization_grokking.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "494615ec7979a6b81a6fdfea1a8ba740dad40407",
+      "size": 1507162,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/494615ec7979a6b81a6fdfea1a8ba740dad40407"
+    },
+    {
+      "path": "example_papers/weight_initialization_grokking/weight_initialization_grokking.pdf",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "494615ec7979a6b81a6fdfea1a8ba740dad40407",
+      "size": 1507162,
+      "url": "https://api.github.com/repos/SakanaAI/AI-Scientist/git/blobs/494615ec7979a6b81a6fdfea1a8ba740dad40407"
+    }
+  ]
+}

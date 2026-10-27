@@ -1,0 +1,27 @@
+{
+  "snapshot_date": "2026-10-26",
+  "files": {
+    "crest/providers/openai.py": {
+      "sha256": "5d2ce9e8bbd834c7289697da8b713e555832ac263996c3261bdcdb2ca3ca97a7"
+    },
+    "crest/providers/gemini.py": {
+      "sha256": "fc0385043de1fdb02b97fa5ac8fb8c06547fbce190c9d835c6ed9f62ae09e1de"
+    },
+    "crest/providers/http.py": {
+      "sha256": "cac0b25b8b7087f5e4ef78860f6d90448438e138a6bb653964a445362e7afa6d"
+    }
+  },
+  "changes": "Frozen transports retain local HTTP helper and local SCHEMA imports. Protocol and rubric refreshed from current CREST working tree for one overall creativity judgment.",
+  "rubric": {
+    "upstream": "crest/prompts/nus_pairwise.txt (working tree)",
+    "sha256": "a70eba755b64d489c0872448476e6148c33e4b145506ea79bbe705b62db7d65e"
+  },
+  "frozen_schema": "crest_ais.protocol.SCHEMA: one flat overall creativity reason/winner object, guided jointly by New, Useful, and Surprising",
+  "protocol_updated_at": "2026-10-27T02:46:39.166765+00:00",
+  "protocol": {
+    "upstream": "crest/judging.py (working tree)",
+    "sha256": "236573d0f0c3f4638063ee745ce72933ed3ddbdc11568b5aa1bc325e71bbacaa",
+    "version": "nus-overall-pairwise-v2",
+    "sampling_version": "crest-ais-v1"
+  }
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+    "container_pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+    "container_pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+    "first_container_page_1based": 153,
+    "last_container_page_1based": 160,
+    "arxiv_variant_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_compositional_regularization_watermark.pdf",
+    "arxiv_variant_sha256": "1ed8c159a052a59716b8b7232e3fe08fee4409b1be21fb0d3d8da9bac954aee9",
+    "every_complete_page_text_exactly_equal": false,
+    "per_page_text_exactly_equal": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "every_complete_page_equal_after_removing_only_extra_container_line_counter": true,
+    "per_page_equal_after_removing_only_extra_container_line_counter": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "removed_container_line_counters": [
+      "1065",
+      "1066",
+      "1067",
+      "1068",
+      "1069",
+      "1070",
+      "1071",
+      "1072"
+    ],
+    "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed."
+  },
+  {
+    "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+    "container_pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+    "container_pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+    "first_container_page_1based": 169,
+    "last_container_page_1based": 175,
+    "arxiv_variant_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_label_noise_watermark.pdf",
+    "arxiv_variant_sha256": "df72bd0b3ada59c74a3b632e1e8b443d980e725fe4e49a578d342efa711dd849",
+    "every_complete_page_text_exactly_equal": false,
+    "per_page_text_exactly_equal": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "every_complete_page_equal_after_removing_only_extra_container_line_counter": true,
+    "per_page_equal_after_removing_only_extra_container_line_counter": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "removed_container_line_counters": [
+      "1175",
+      "1176",
+      "1177",
+      "1178",
+      "1179",
+      "1180",
+      "1181"
+    ],
+    "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed."
+  },
+  {
+    "source_url": "https://www.nature.com/articles/s41586-026-10265-5#MOESM1",
+    "container_pdf_url": "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10265-5/MediaObjects/41586_2026_10265_MOESM1_ESM.pdf",
+    "container_pdf_path": "data/sakana_ai_scientist_v2/evidence/nature_supplement.pdf",
+    "first_container_page_1based": 183,
+    "last_container_page_1based": 188,
+    "arxiv_variant_path": "data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_pest_prediction_watermark.pdf",
+    "arxiv_variant_sha256": "2d5a6c5ab6c61fbae7df12bc07af8e8b87e45c2c253b5857c7c9731aebac340e",
+    "every_complete_page_text_exactly_equal": false,
+    "per_page_text_exactly_equal": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "every_complete_page_equal_after_removing_only_extra_container_line_counter": true,
+    "per_page_equal_after_removing_only_extra_container_line_counter": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "removed_container_line_counters": [
+      "1278",
+      "1279",
+      "1280",
+      "1281",
+      "1282",
+      "1283"
+    ],
+    "equivalence_basis": "Identical complete source-PDF page text after removing only the single extra Nature supplementary-document line counter appended to each embedded page. No manuscript words removed."
+  }
+]

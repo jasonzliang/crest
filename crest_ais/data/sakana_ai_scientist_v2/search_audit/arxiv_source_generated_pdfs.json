@@ -1,0 +1,20 @@
+[
+  {
+    "archive_path": "generated_papers/aisci_compositional_regularization_watermark.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_compositional_regularization_watermark.pdf",
+    "sha256": "1ed8c159a052a59716b8b7232e3fe08fee4409b1be21fb0d3d8da9bac954aee9",
+    "bytes": 844168
+  },
+  {
+    "archive_path": "generated_papers/aisci_label_noise_watermark.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_label_noise_watermark.pdf",
+    "sha256": "df72bd0b3ada59c74a3b632e1e8b443d980e725fe4e49a578d342efa711dd849",
+    "bytes": 1984024
+  },
+  {
+    "archive_path": "generated_papers/aisci_pest_prediction_watermark.pdf",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_pest_prediction_watermark.pdf",
+    "sha256": "2d5a6c5ab6c61fbae7df12bc07af8e8b87e45c2c253b5857c7c9731aebac340e",
+    "bytes": 1758113
+  }
+]

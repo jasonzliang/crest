@@ -1,0 +1,382 @@
+[
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/CITATION.cff",
+    "line": "  url: \"https://arxiv.org/abs/2610.18933\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/README.md",
+    "line": "  <a href=\"https://arxiv.org/abs/2610.18933\"><img src=\"https://img.shields.io/badge/arXiv-2610.18933-b31b1b.svg\" alt=\"arXiv\"></a>"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/README.md",
+    "line": "  <a href=\"https://arxiv.org/pdf/2610.18933\"><img src=\"https://img.shields.io/badge/Paper-PDF-red.svg\" alt=\"Paper PDF\"></a>"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/README.md",
+    "line": "   The paper lands in `results/circpack/claude/<run_id>/paper/paper.pdf`;"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/README.md",
+    "line": "agsci review results/circpack/claude/<run_id>/paper/paper.pdf --output review.json"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/README.md",
+    "line": "[our paper](https://arxiv.org/abs/2610.18933):"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/docs/pipeline.md",
+    "line": "The same reviewer is available standalone as `agsci review <paper.pdf> [--output review.json]`"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/docs/scripts.md",
+    "line": "- Before each review-driven manuscript repair pass, `paper.sh` copies the current `paper.pdf` into `paper/final_<timestamp>/revisions/` so the draft history stays inspectable over time."
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/docs/scripts.md",
+    "line": "- Set `paper.ai_review=openai` on an `agsci investigate` run, or append `review` to `execution.phases` for the end-to-end orchestrator, to send the validated final `paper.pdf` to the standalone OpenAI-backed `src/aireview.py` reviewer. Both forms require explicit opt-in. This final assessment is separate from the optional review/repair cycles above and writes `ai_review.json` plus `ai_review.log` in the final paper directory."
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/docs/scripts.md",
+    "line": "- `agsci review <paper.pdf> [--output review.json]` runs the same reviewer standalone on any PDF, outside a pipeline run and without manifest bookkeeping; it reads `OPENAI_API_KEY` from the environment or the repo `.env` (`--env-file` overrides it) and needs `uv` on `PATH`."
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/docs/scripts.md",
+    "line": "- `paper/final_<timestamp>/paper.pdf`"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/docs/usage.md",
+    "line": "  - Review output is stored as `ai_review.json` and `ai_review.log` beside `paper.pdf`, with status and paths recorded under `ai_review` in `paper/latest_manifest.json`. Review failures warn and publish the paper normally."
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/examples/grpo/grpo_utils/src/grpo_utils/drgrpo_grader.py",
+    "line": "    This code comes from https://arxiv.org/pdf/2206.14858.pdf, page18."
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/examples/grpo/grpo_utils/src/grpo_utils/evaluate.py",
+    "line": "    This code comes from https://arxiv.org/pdf/2206.14858.pdf, page18."
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/pyproject.toml",
+    "line": "Paper = \"https://arxiv.org/abs/2610.18933\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/agents/skills/validate-paper/SKILL.md",
+    "line": "5. Require `paper.pdf` to exist."
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/agsci/main.py",
+    "line": "    agsci review <paper.pdf> [--output review.json]  # standalone OpenAI-backed reviewer"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/agsci/main.py",
+    "line": "  review       Review a paper PDF with the OpenAI-backed reviewer: agsci review <paper.pdf> [--output review.json]"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/investigation/cli.py",
+    "line": "    final_pdf = output_dir / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/investigation/final_ai_review.py",
+    "line": "    paper_pdf = paper_dir / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/investigation/final_ai_review.py",
+    "line": "        temporary_pdf = temporary_root / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/investigation/final_ai_review.py",
+    "line": "                    \"paper.pdf\","
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/investigation/paper_revision_workspace.py",
+    "line": "        \"paper.pdf\","
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_finalize.py",
+    "line": "        \"paper_pdf\": str((output_dir / \"paper.pdf\").resolve()),"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_finalize.py",
+    "line": "            \"paper_pdf\": str((output_dir / \"paper.pdf\").resolve()),"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_review.py",
+    "line": "        \"paper.pdf\","
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_step.py",
+    "line": "                    f\"{paper_format} page-limit validation could not locate the references section in paper.pdf; total pages = {total_pages}, limit = {max_body_pages} excluding references\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_step.py",
+    "line": "        pdf_path = paper_dir / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_step.py",
+    "line": "                    \"could not inspect compiled paper.pdf for rendered \""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_supplement.py",
+    "line": "            \"hard_errors\": [\"compiled paper.pdf is missing the Supplementary Information heading\"],"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_supplement.py",
+    "line": "        hard_errors.append(\"compiled paper.pdf is missing the References heading before SI\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/paper_watermark.py",
+    "line": "``validate_and_compile_paper`` runs, so every published ``paper.pdf`` carries the"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/orchestrator/semantic_scholar.py",
+    "line": "        \"source_url\": \"https://arxiv.org/abs/1604.00772\","
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/pipeline/cli.py",
+    "line": "        logger.info(\"Expected paper PDF: %s\", paths.paper_dir / \"paper.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/pipeline/config.py",
+    "line": "    paper_pdf = paper_dir / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/pipeline/review.py",
+    "line": "        f\"{paths.paper_dir / 'paper.pdf'} -> \""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/pipeline/revision_publication.py",
+    "line": "    \"paper.pdf\","
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/pipeline/revision_publication.py",
+    "line": "    \"paper.pdf\","
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/pipeline/revision_publication.py",
+    "line": "    if manifest.get(\"paper_pdf\") != str((artifact_root / \"paper.pdf\").resolve()):"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/prompts/paper_revision.md",
+    "line": "Compile the paper and repair all hard validation failures. Finish only when `paper.pdf` is current"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/lib/concept_figure.sh",
+    "line": "# Ensure paper.pdf reflects a newly rendered asset even when later validation"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/lib/concept_figure.sh",
+    "line": "    concept_figure_log \"compiled paper.pdf with the rendered concept figure\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/paper.sh",
+    "line": "  local source_pdf=\"$OUTPUT_DIR/paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/paper.sh",
+    "line": "    echo \"[paper.sh] review round $review_round requested repair but paper.pdf is missing; skipping revision snapshot\" >&2"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/paper.sh",
+    "line": "  local source_pdf=\"$OUTPUT_DIR/paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/paper.sh",
+    "line": "    echo \"[paper.sh] evidence audit requested repair but paper.pdf is missing; skipping revision snapshot\" >&2"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/paper_edit.sh",
+    "line": "  local source_pdf=\"$OUTPUT_DIR/paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/src/scripts/paper_edit.sh",
+    "line": "    echo \"[paper_edit.sh] review round $review_round requested repair but paper.pdf is missing; skipping revision snapshot\" >&2"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/investigation/test_investigation_cli_paper.py",
+    "line": "    (output_dir / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_review.py",
+    "line": "            \"pdf_path\": str(root / \"paper.pdf\"),"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_review.py",
+    "line": "        root, {\"pdf_path\": str(root / \"paper.pdf\")},"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_review.py",
+    "line": "    (output_dir / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_scripts.py",
+    "line": "        \"  : > paper.pdf\\n\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_step.py",
+    "line": "    assert (root / \"paper.pdf\").is_file()"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_step.py",
+    "line": "        (root / \"paper.pdf\").write_bytes(b\"%PDF-1.7\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_step.py",
+    "line": "        pytest.raises(RuntimeError, match=\"could not inspect compiled paper.pdf\"),"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_step.py",
+    "line": "        layouts = paper_step.read_pdf_page_layouts(Path(\"paper.pdf\"))"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_step_concept_figure.py",
+    "line": "    figures = _success_case(root, path_pdf=\"figures/results.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_step_concept_figure.py",
+    "line": "    unrelated_pdf = figures / \"results.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper/test_paper_step_concept_figure.py",
+    "line": "            {\"figure_id\": \"results\", \"path_pdf\": \"figures/overview.pdf\", \"generator\": \"matplotlib\"}"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/paper_step_support.py",
+    "line": "    (paper_dir / \"paper.pdf\").write_text(\"pdf\", encoding=\"utf-8\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_agsci_cli.py",
+    "line": "    assert main([\"review\", \"paper.pdf\", \"--output\", \"r.json\"]) == 3"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_agsci_cli.py",
+    "line": "    assert received_review == [[\"paper.pdf\", \"--output\", \"r.json\"]]"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_agsci_cli.py",
+    "line": "    pdf = tmp_path / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        (self.paper_dir / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        _write_manifest(self.manifest_path, self.paper_dir / \"paper.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    newer_pdf = env.results_dir / \"paper\" / \"final_newer\" / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    (env.paper_dir / \"paper.pdf\").write_bytes(b\"SAFE-PDF\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        (outside_final / \"paper.pdf\").write_bytes(b\"EVIL-PDF\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    with (env.paper_dir / \"paper.pdf\").open(\"r+b\") as stream:"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    (paper_dir / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    _write_manifest(outside_root / \"latest_manifest.json\", paper_dir / \"paper.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    (paper_dir / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\nbefore\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    (replacement_dir / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\nafter\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        _write_manifest(directory / \"latest_manifest.json\", paper_dir / \"paper.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        (directory / \"paper.pdf\").write_bytes(f\"%PDF-1.4\\n{title}\\n\".encode())"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        _write_manifest(directory / \"latest_manifest.json\", paper_dir / \"paper.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        _write_manifest(root / \"latest_manifest.json\", paper_dir / \"paper.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    (paper_dir / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "    _write_manifest(paper_dir / \"latest_manifest.json\", paper_dir / \"paper.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_final_ai_review.py",
+    "line": "        assert str(paths.paper_dir / \"paper.pdf\") in description"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_pipeline_cli_dryrun.py",
+    "line": "    paper_pdf = paper_dir / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_pipeline_config.py",
+    "line": "    paper_pdf = paper_dir / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_pipeline_config.py",
+    "line": "            paper_pdf = paper_dir / \"paper.pdf\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_pipeline_config.py",
+    "line": "                \"paper_pdf\": str((paper_dir / \"paper.pdf\").resolve()),"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_pipeline_config.py",
+    "line": "                json.dumps({\"paper_pdf\": str((paper_dir / \"paper.pdf\").resolve())}), encoding=\"utf-8\""
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/pipeline/test_run_inspector.py",
+    "line": "    return RunStore(results_root=root, agentlens_base_url=\"http://localhost:8787\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision/test_pipeline_revision.py",
+    "line": "        lambda paths, *_: (paths.paper_dir / \"paper.pdf\").unlink(),"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision/test_revision_publication.py",
+    "line": "    assert manifest[\"paper_pdf\"] == str((paper_dir / \"paper.pdf\").resolve())"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision/test_revision_publication.py",
+    "line": "    assert original_manifest[\"paper_pdf\"] == str((paper_dir / \"paper.pdf\").resolve())"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision/test_revision_publication.py",
+    "line": "    (revision_dir / \"paper.pdf\").unlink()"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision/test_revision_publication.py",
+    "line": "    (revision_dir / \"paper.pdf\").symlink_to(root / \"victim.pdf\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision/test_revision_publication.py",
+    "line": "        if source.parent.name.startswith(\".revision-source-\") and target.name == \"paper.pdf\":"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision_test_support.py",
+    "line": "    (workspace / \"paper.pdf\").write_bytes(b\"%PDF-1.4\\n\")"
+  },
+  {
+    "path": "SakanaAI-AI-Scientist-v3-df83138/tests/revision_test_support.py",
+    "line": "                \"paper_pdf\": str((workspace / \"paper.pdf\").resolve()),"
+  }
+]

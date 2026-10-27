@@ -1,0 +1,62 @@
+{
+  "audit_date_utc": "2026-10-27T03:47:04.517836+00:00",
+  "official_generated_manuscripts_in_audited_2025_sources": 3,
+  "global_corpus_complete": false,
+  "global_corpus_limitation": "Nature 2026 supplementary artifacts are investigated by the main collector; third-party runs are outside this official-source audit.",
+  "arxiv_source_archive": {
+    "url": "https://arxiv.org/src/2504.08066v1",
+    "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/system_arxiv_source.tar",
+    "bytes": 9426383,
+    "sha256": "ea458b4c4212b9e61d909193504485986780026a962727da8669877f6f76740e",
+    "members": 47
+  },
+  "recovered_duplicate_variants": [
+    {
+      "archive_path": "generated_papers/aisci_compositional_regularization_watermark.pdf",
+      "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_compositional_regularization_watermark.pdf",
+      "sha256": "1ed8c159a052a59716b8b7232e3fe08fee4409b1be21fb0d3d8da9bac954aee9",
+      "bytes": 844168,
+      "source_archive_url": "https://arxiv.org/src/2504.08066v1",
+      "classification": "duplicate_publication_variant",
+      "count_as_additional_distinct_manuscript": false,
+      "human_margin_comments": true
+    },
+    {
+      "archive_path": "generated_papers/aisci_label_noise_watermark.pdf",
+      "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_label_noise_watermark.pdf",
+      "sha256": "df72bd0b3ada59c74a3b632e1e8b443d980e725fe4e49a578d342efa711dd849",
+      "bytes": 1984024,
+      "source_archive_url": "https://arxiv.org/src/2504.08066v1",
+      "classification": "duplicate_publication_variant",
+      "count_as_additional_distinct_manuscript": false,
+      "human_margin_comments": true
+    },
+    {
+      "archive_path": "generated_papers/aisci_pest_prediction_watermark.pdf",
+      "local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/arxiv_generated_papers/aisci_pest_prediction_watermark.pdf",
+      "sha256": "2d5a6c5ab6c61fbae7df12bc07af8e8b87e45c2c253b5857c7c9731aebac340e",
+      "bytes": 1758113,
+      "source_archive_url": "https://arxiv.org/src/2504.08066v1",
+      "classification": "duplicate_publication_variant",
+      "count_as_additional_distinct_manuscript": false,
+      "human_margin_comments": true
+    }
+  ],
+  "historical_variant_manifest": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/workshop_history_manuscript_variants.json",
+  "eligibility_qualifications": [
+    {
+      "paper": "pest-detection",
+      "human_assistance": "Humans manually downloaded Kaggle dataset and reduced size to one tenth.",
+      "primary_source_url": "https://arxiv.org/html/2504.08066v1#A3.SS3.SSS1",
+      "local_source": "/Users/jason/Desktop/crest/crest_ais/data/sakana_ai_scientist_v2/search_audit/arxiv_tex/main_arxiv.tex",
+      "line": 1319
+    }
+  ],
+  "third_party_unverified_leads": [
+    {
+      "url": "https://huggingface.co/datasets/agentos-openlab/researchclaweval",
+      "status": "card claims v2 outputs; archives not downloaded, manuscript availability unverified",
+      "official_sakana_release": false
+    }
+  ]
+}

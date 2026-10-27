@@ -1,0 +1,299 @@
+{
+  "paper_galleries": [
+    {
+      "class": "paper-gallery__slide",
+      "data-paper-src": "papers/alife2026_camera_ready-1.pdf",
+      "data-paper-title": "Diffusing Blame: Task-Dependent Credit Assignment in Biologically Plausible Dual-Stream Networks",
+      "role": "listitem"
+    },
+    {
+      "class": "paper-gallery__slide",
+      "data-paper-src": "papers/doc_to_lora_multi_needle_claude.pdf",
+      "data-paper-title": "Addressing Beats Architecture: Query-Conditioned Merge-Time Selection for Context-to-LoRA Hypernetworks on Multi-Needle Retrieval",
+      "role": "listitem"
+    },
+    {
+      "class": "paper-gallery__slide",
+      "data-paper-src": "papers/metaevo_paper-1.pdf",
+      "data-paper-title": "How Much of a Learned Evolution Strategy Is the Algorithm It Was Anchored To?",
+      "role": "listitem"
+    }
+  ],
+  "links": [
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./favicon.ico"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "https://vjs.zencdn.net/8.11.8/video-js.css"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./css/style_mazes.css"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./css/style_videos.css"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./css/style_experiments.css"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./css/snippet.css"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./css/paper_gallery.css?v=10"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./css/autoillustrate_carousel.css?v=8"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "https://www.googletagmanager.com/gtag/js?id=G-W770C6CJ1J"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "https://cdn.jsdelivr.net/npm/onnxruntime-web@latest/dist/ort.min.js"
+    },
+    {
+      "tag": "link",
+      "attribute": "href",
+      "url": "./css/katex.min.css"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./lib/template.v1.js?v=2"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "https://vjs.zencdn.net/8.11.8/video.min.js"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./results_video.js"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./scroll_play.js"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./paper_gallery.js?v=15"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./autoillustrate_carousel.js?v=8"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./scientific_plot_embed.js?v=1"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://sakana.ai/ai-scientist/"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://sakana.ai/ai-scientist-first-publication/"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://sakana.ai/ai-scientist-nature/"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://arxiv.org/abs/2610.18933"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://arxiv.org/abs/2606.31700"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://github.com/SakanaAI/AI-Scientist-v3"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://github.com/SakanaAI/autoillustrate"
+    },
+    {
+      "tag": "source",
+      "attribute": "src",
+      "url": "./figs/agentic-scientist.mp4"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://sakana.ai/ai-scientist/"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://sakana.ai/ai-scientist-first-publication/"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://arxiv.org/abs/2606.31700"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/alife_co_discovery_pipeline.png"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "papers/doc_to_lora_multi_needle_claude.pdf"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://github.com/SakanaAI/doc-to-lora"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "papers/metaevo_paper-1.pdf"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/agentic-sci-overview.png"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://github.com/SakanaAI/autoillustrate"
+    },
+    {
+      "tag": "iframe",
+      "attribute": "src",
+      "url": "./figs/reviewer_release_and_performance.html"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate_pipeline.png?v=2"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/dgm_plain.webp"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/dgm.webp"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/ai_scientist.webp"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/discopop.webp"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/dgm.webp"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/ctm.webp"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/shinka_evolve.webp"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/conductor.webp"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://sakana.ai/fugu/"
+    },
+    {
+      "tag": "img",
+      "attribute": "src",
+      "url": "./figs/autoillustrate/error_diffusion.webp"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://github.com/SakanaAI/AI-Scientist-v3"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://github.com/SakanaAI/autoillustrate"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://arxiv.org/abs/2610.18933"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://arxiv.org/abs/2606.31700"
+    },
+    {
+      "tag": "a",
+      "attribute": "href",
+      "url": "https://sakana.ai/careers/"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./lib/blazy.js"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./lib/jquery-1.12.4.min.js"
+    },
+    {
+      "tag": "script",
+      "attribute": "src",
+      "url": "./lib/controller.js"
+    }
+  ]
+}

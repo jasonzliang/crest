@@ -1,0 +1,54 @@
+[
+  {
+    "matching_paper_ids": [
+      "sakana_v1_dual_expert_denoiser"
+    ],
+    "archive_url": "https://drive.usercontent.google.com/download?id=1A7TROeiSJ6o7ri80h4Ml74ILoPIsQXMW&export=download&confirm=t",
+    "archive_member_path": "claude_runs_diffusion/20240805_071251_dual_expert_denoiser/dual_expert_denoiser.pdf",
+    "run_id": "20240805_071251_dual_expert_denoiser",
+    "model": "claude",
+    "template": "2d_diffusion",
+    "crc32": "b1f029bc",
+    "byte_size": 847653,
+    "equivalence_basis": "ZIP member uncompressed byte size and CRC32 match a retained official PDF; no source member code executed."
+  },
+  {
+    "matching_paper_ids": [
+      "sakana_v1_grid_based_noise_adaptation"
+    ],
+    "archive_url": "https://drive.usercontent.google.com/download?id=1A7TROeiSJ6o7ri80h4Ml74ILoPIsQXMW&export=download&confirm=t",
+    "archive_member_path": "claude_runs_diffusion/20240805_104019_grid_based_noise_adaptation/grid_based_noise_adaptation.pdf",
+    "run_id": "20240805_104019_grid_based_noise_adaptation",
+    "model": "claude",
+    "template": "2d_diffusion",
+    "crc32": "bac434a9",
+    "byte_size": 1023132,
+    "equivalence_basis": "ZIP member uncompressed byte size and CRC32 match a retained official PDF; no source member code executed."
+  },
+  {
+    "matching_paper_ids": [
+      "sakana_v1_data_augmentation_grokking"
+    ],
+    "archive_url": "https://drive.usercontent.google.com/download?id=1DtTAXO70NdjmHdgJvBolR8N9UIZTwPyS&export=download&confirm=t",
+    "archive_member_path": "claude_runs_grokking/20240804_022805_data_augmentation_grokking/data_augmentation_grokking.pdf",
+    "run_id": "20240804_022805_data_augmentation_grokking",
+    "model": "claude",
+    "template": "grokking",
+    "crc32": "b9a23046",
+    "byte_size": 1011153,
+    "equivalence_basis": "ZIP member uncompressed byte size and CRC32 match a retained official PDF; no source member code executed."
+  },
+  {
+    "matching_paper_ids": [
+      "sakana_v1_mdl_grokking_correlation"
+    ],
+    "archive_url": "https://drive.usercontent.google.com/download?id=1DtTAXO70NdjmHdgJvBolR8N9UIZTwPyS&export=download&confirm=t",
+    "archive_member_path": "claude_runs_grokking/20240804_045218_mdl_grokking_correlation/mdl_grokking_correlation.pdf",
+    "run_id": "20240804_045218_mdl_grokking_correlation",
+    "model": "claude",
+    "template": "grokking",
+    "crc32": "a615dede",
+    "byte_size": 668441,
+    "equivalence_basis": "ZIP member uncompressed byte size and CRC32 match a retained official PDF; no source member code executed."
+  }
+]

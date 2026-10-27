@@ -1,0 +1,313 @@
+[
+  {
+    "pdf_path": "pdfs/compositional-regularization.pdf",
+    "page_count": 8,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "LaTeX with hyperref",
+      "producer": "pdfTeX-1.40.26",
+      "creationDate": "D:20250312104903+09'00'",
+      "modDate": "D:20250312104903+09'00'",
+      "trapped": "",
+      "encryption": null
+    },
+    "pdf_annotations": [],
+    "provenance_lines": [
+      {
+        "page": 2,
+        "text": "We generated synthetic datasets of arithmetic expressions to evaluate compositional generalization.",
+        "dir": [
+          1.0,
+          0.0
+        ],
+        "bbox": [
+          107.99999237060547,
+          678.4705810546875,
+          504.0032958984375,
+          688.4331665039062
+        ],
+        "spans": [
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          }
+        ]
+      },
+      {
+        "page": 3,
+        "text": "\u2022 Training set: 1,000 randomly generated expressions using a limited set of numbers and",
+        "dir": [
+          1.0,
+          0.0
+        ],
+        "bbox": [
+          135.39698791503906,
+          259.822509765625,
+          504.00433349609375,
+          269.8760681152344
+        ],
+        "spans": [
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Medi",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Medi",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Medi",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Medi",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          }
+        ]
+      },
+      {
+        "page": 8,
+        "text": "\u2022 The synthetic dataset was generated with a predefined random seed for reproducibility.",
+        "dir": [
+          1.0,
+          0.0
+        ],
+        "bbox": [
+          135.39700317382812,
+          472.199462890625,
+          489.51751708984375,
+          482.1620788574219
+        ],
+        "spans": [
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pdf_path": "pdfs/label-noise.pdf",
+    "page_count": 7,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "LaTeX with hyperref",
+      "producer": "pdfTeX-1.40.26",
+      "creationDate": "D:20250312104950+09'00'",
+      "modDate": "D:20250312104950+09'00'",
+      "trapped": "",
+      "encryption": null
+    },
+    "pdf_annotations": [],
+    "provenance_lines": [
+      {
+        "page": 1,
+        "text": "fields such as healthcare, finance, and autonomous systems.",
+        "dir": [
+          1.0,
+          0.0
+        ],
+        "bbox": [
+          108.0,
+          572.866455078125,
+          345.4088134765625,
+          582.8290405273438
+        ],
+        "spans": [
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          }
+        ]
+      },
+      {
+        "page": 3,
+        "text": "AI Scientist",
+        "dir": [
+          1.0,
+          0.0
+        ],
+        "bbox": [
+          518.7940063476562,
+          149.4765167236328,
+          566.9432373046875,
+          159.43911743164062
+        ],
+        "spans": [
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          }
+        ]
+      },
+      {
+        "page": 3,
+        "text": "generated re-",
+        "dir": [
+          1.0,
+          0.0
+        ],
+        "bbox": [
+          518.7940063476562,
+          160.4355010986328,
+          571.8948364257812,
+          170.39810180664062
+        ],
+        "spans": [
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          },
+          {
+            "font": "NimbusRomNo9L-Regu",
+            "size": 9.962599754333496
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pdf_path": "pdfs/pest-detection.pdf",
+    "page_count": 6,
+    "metadata": {
+      "format": "PDF 1.5",
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "LaTeX with hyperref",
+      "producer": "pdfTeX-1.40.26",
+      "creationDate": "D:20250312105011+09'00'",
+      "modDate": "D:20250312105011+09'00'",
+      "trapped": "",
+      "encryption": null
+    },
+    "pdf_annotations": [],
+    "provenance_lines": []
+  }
+]

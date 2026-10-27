@@ -1,0 +1,346 @@
+[
+  {
+    "label": "Health (Cartan-DEC-MiAE)",
+    "file": "generated-papers/applications/Health_Cartan-DEC-MiAE.pdf"
+  },
+  {
+    "label": "Neuroscience (FCD-Engram)",
+    "file": "generated-papers/applications/Neuroscience_FCD-Engram.pdf"
+  },
+  {
+    "label": "Neuroscience (Simplified DWGR-SVL)",
+    "file": "generated-papers/applications/Neuroscience_Simplified DWGR-SVL.pdf"
+  },
+  {
+    "label": "Neuroscience (ST-FacRNN)",
+    "file": "generated-papers/applications/Neuroscience_ST-FacRNN.pdf"
+  },
+  {
+    "label": "Neuroscience (TA-FATA-CSBrain)",
+    "file": "generated-papers/applications/Neuroscience_TA-FATA-CSBrain.pdf"
+  },
+  {
+    "label": "Robotics (KinemaAnchor-Manifold)",
+    "file": "generated-papers/applications/Robotics_KinemaAnchor-Manifold.pdf"
+  },
+  {
+    "label": "Sciences (ErtelHodge-STELLA)",
+    "file": "generated-papers/applications/Sciences_ErtelHodge-STELLA.pdf"
+  },
+  {
+    "label": "Sciences (SYMP-MONGE)",
+    "file": "generated-papers/applications/Sciences_SYMP-MONGE.pdf"
+  },
+  {
+    "label": "Speech (CHAMPS-RAG)",
+    "file": "generated-papers/applications/Speech_CHAMPS-RAG.pdf"
+  },
+  {
+    "label": "Time Series (PG-CDIG)",
+    "file": "generated-papers/applications/Time Series_PG-CDIG.pdf"
+  },
+  {
+    "label": "Others (AnisoSPD)",
+    "file": "generated-papers/applications/Others_AnisoSPD.pdf"
+  },
+  {
+    "label": "Others (DiffTrop-Bitween)",
+    "file": "generated-papers/applications/Others_DiffTrop-Bitween.pdf"
+  },
+  {
+    "label": "Others (DR-LEF)",
+    "file": "generated-papers/applications/Others_DR-LEF.pdf"
+  },
+  {
+    "label": "Others (SAVVY-Vortex)",
+    "file": "generated-papers/applications/Others_SAVVY-Vortex.pdf"
+  },
+  {
+    "label": "Others (TVCS-IF)",
+    "file": "generated-papers/applications/Others_TVCS-IF.pdf"
+  },
+  {
+    "label": "Algorithms (RMTS)",
+    "file": "generated-papers/deep_learning/Algorithms_RMTS.pdf"
+  },
+  {
+    "label": "Foundation (TABHARMONY)",
+    "file": "generated-papers/deep_learning/Foundation_TABHARMONY.pdf"
+  },
+  {
+    "label": "Foundation (UNI-XDLM)",
+    "file": "generated-papers/deep_learning/Foundation_UNI-XDLM.pdf"
+  },
+  {
+    "label": "LLMs (CS-HLA)",
+    "file": "generated-papers/deep_learning/LLMs_CS-HLA.pdf"
+  },
+  {
+    "label": "LLMs (DNLP-LCBC)",
+    "file": "generated-papers/deep_learning/LLMs_DNLP-LCBC.pdf"
+  },
+  {
+    "label": "LLMs (Mem-MaxRL)",
+    "file": "generated-papers/deep_learning/LLMs_Mem-MaxRL.pdf"
+  },
+  {
+    "label": "LLMs (Poisson-Top-W)",
+    "file": "generated-papers/deep_learning/LLMs_Poisson-Top-W.pdf"
+  },
+  {
+    "label": "LLMs (RES-TRACE)",
+    "file": "generated-papers/deep_learning/LLMs_RES-TRACE.pdf"
+  },
+  {
+    "label": "LLMs (SDDF-RKHS)",
+    "file": "generated-papers/deep_learning/LLMs_SDDF-RKHS.pdf"
+  },
+  {
+    "label": "LLMs (SymCrooks-Steering)",
+    "file": "generated-papers/deep_learning/LLMs_SymCrooks-Steering.pdf"
+  },
+  {
+    "label": "LLMs (TPH-Lock)",
+    "file": "generated-papers/deep_learning/LLMs_TPH-Lock.pdf"
+  },
+  {
+    "label": "LLMs (VD-STrans)",
+    "file": "generated-papers/deep_learning/LLMs_VD-STrans.pdf"
+  },
+  {
+    "label": "Robustness (ResoKoopman)",
+    "file": "generated-papers/deep_learning/Robustness_ResoKoopman.pdf"
+  },
+  {
+    "label": "Others (BF-DFN)",
+    "file": "generated-papers/deep_learning/Others_BF-DFN.pdf"
+  },
+  {
+    "label": "Others (DynaSpec-RAG)",
+    "file": "generated-papers/deep_learning/Others_DynaSpec-RAG.pdf"
+  },
+  {
+    "label": "Others (Fed-LanczosSAM)",
+    "file": "generated-papers/deep_learning/Others_Fed-LanczosSAM.pdf"
+  },
+  {
+    "label": "Others (HARMONIC-MoP)",
+    "file": "generated-papers/deep_learning/Others_HARMONIC-MoP.pdf"
+  },
+  {
+    "label": "Others (InfoOptim)",
+    "file": "generated-papers/deep_learning/Others_InfoOptim.pdf"
+  },
+  {
+    "label": "Others (Koopman-DMD)",
+    "file": "generated-papers/deep_learning/Others_Koopman-DMD.pdf"
+  },
+  {
+    "label": "Others (Neural-MMA)",
+    "file": "generated-papers/deep_learning/Others_Neural-MMA.pdf"
+  },
+  {
+    "label": "Others (NSK)",
+    "file": "generated-papers/deep_learning/Others_NSK.pdf"
+  },
+  {
+    "label": "Others (PhySense-AdjointFlow)",
+    "file": "generated-papers/deep_learning/Others_PhySense-AdjointFlow.pdf"
+  },
+  {
+    "label": "Others (Soft-VSM)",
+    "file": "generated-papers/deep_learning/Others_Soft-VSM.pdf"
+  },
+  {
+    "label": "Others (TKFS-Attention)",
+    "file": "generated-papers/deep_learning/Others_TKFS-Attention.pdf"
+  },
+  {
+    "label": "Algorithms (Flash-Newton)",
+    "file": "generated-papers/general_ml/Algorithms_Flash-Newton.pdf"
+  },
+  {
+    "label": "Causality (SPECTRA-HET SPLIT UP)",
+    "file": "generated-papers/general_ml/Causality_SPECTRA-HET SPLIT UP.pdf"
+  },
+  {
+    "label": "Evaluation (DR-Schervish)",
+    "file": "generated-papers/general_ml/Evaluation_DR-Schervish.pdf"
+  },
+  {
+    "label": "Infrastructure (RDF-VG)",
+    "file": "generated-papers/general_ml/Infrastructure_RDF-VG.pdf"
+  },
+  {
+    "label": "Others (BAM-Val)",
+    "file": "generated-papers/general_ml/Others_BAM-Val.pdf"
+  },
+  {
+    "label": "Others (CIQS-PC)",
+    "file": "generated-papers/general_ml/Others_CIQS-PC.pdf"
+  },
+  {
+    "label": "Others (ECTS-HFD)",
+    "file": "generated-papers/general_ml/Others_ECTS-HFD.pdf"
+  },
+  {
+    "label": "Others (FR-MSH-GGAD)",
+    "file": "generated-papers/general_ml/Others_FR-MSH-GGAD.pdf"
+  },
+  {
+    "label": "Others (NEM-SPKN)",
+    "file": "generated-papers/general_ml/Others_NEM-SPKN.pdf"
+  },
+  {
+    "label": "Others (Procrustes-DS)",
+    "file": "generated-papers/general_ml/Others_Procrustes-DS.pdf"
+  },
+  {
+    "label": "Others (QAMT-Transfer)",
+    "file": "generated-papers/general_ml/Others_QAMT-Transfer.pdf"
+  },
+  {
+    "label": "Others (SD-TTC)",
+    "file": "generated-papers/general_ml/Others_SD-TTC.pdf"
+  },
+  {
+    "label": "Others (Sheaf-PartialTSW)",
+    "file": "generated-papers/general_ml/Others_Sheaf-PartialTSW.pdf"
+  },
+  {
+    "label": "Others (TBOC-ANOVA)",
+    "file": "generated-papers/general_ml/Others_TBOC-ANOVA.pdf"
+  },
+  {
+    "label": "Convex (OFP-Shadow)",
+    "file": "generated-papers/optimization/Convex_OFP-Shadow.pdf"
+  },
+  {
+    "label": "Discrete (LD-RPB-OM)",
+    "file": "generated-papers/optimization/Discrete_LD-RPB-OM.pdf"
+  },
+  {
+    "label": "Non-Convex (ALOT-DRO)",
+    "file": "generated-papers/optimization/Non-Convex_ALOT-DRO.pdf"
+  },
+  {
+    "label": "Others (ANSE)",
+    "file": "generated-papers/optimization/Others_ANSE.pdf"
+  },
+  {
+    "label": "Others (LC-FTT)",
+    "file": "generated-papers/optimization/Others_LC-FTT.pdf"
+  },
+  {
+    "label": "Bayesian (DAGP-HDP-HMM)",
+    "file": "generated-papers/probabilistic/Bayesian_DAGP-HDP-HMM.pdf"
+  },
+  {
+    "label": "Sampling (SMBTT-CCDB)",
+    "file": "generated-papers/probabilistic/Sampling_SMBTT-CCDB.pdf"
+  },
+  {
+    "label": "Sampling (SpecAttn-Div)",
+    "file": "generated-papers/probabilistic/Sampling_SpecAttn-Div.pdf"
+  },
+  {
+    "label": "Others (AD-LSVI)",
+    "file": "generated-papers/probabilistic/Others_AD-LSVI.pdf"
+  },
+  {
+    "label": "Others (AWF-CP)",
+    "file": "generated-papers/probabilistic/Others_AWF-CP.pdf"
+  },
+  {
+    "label": "Others (BTV-RDRO)",
+    "file": "generated-papers/probabilistic/Others_BTV-RDRO.pdf"
+  },
+  {
+    "label": "Others (COFM-SIB)",
+    "file": "generated-papers/probabilistic/Others_COFM-SIB.pdf"
+  },
+  {
+    "label": "Others (DosePFN)",
+    "file": "generated-papers/probabilistic/Others_DosePFN.pdf"
+  },
+  {
+    "label": "Others (PH-CNR-OLLA)",
+    "file": "generated-papers/probabilistic/Others_PH-CNR-OLLA.pdf"
+  },
+  {
+    "label": "Others (ScaleMode-NeuralSurv)",
+    "file": "generated-papers/probabilistic/Others_ScaleMode-NeuralSurv.pdf"
+  },
+  {
+    "label": "Others (CSX-MoE)",
+    "file": "generated-papers/rl/Others_CSX-MoE.pdf"
+  },
+  {
+    "label": "Others (DisCoRe-IQA)",
+    "file": "generated-papers/rl/Others_DisCoRe-IQA.pdf"
+  },
+  {
+    "label": "Others (Exact-CPWL CvaR)",
+    "file": "generated-papers/rl/Others_Exact-CPWL CvaR.pdf"
+  },
+  {
+    "label": "Alignment (CHVA)",
+    "file": "generated-papers/social_aspects/Alignment_CHVA.pdf"
+  },
+  {
+    "label": "Interpretability (CP-GRASSMANN)",
+    "file": "generated-papers/social_aspects/Interpretability_CP-GRASSMANN.pdf"
+  },
+  {
+    "label": "Interpretability (Flex-Dot)",
+    "file": "generated-papers/social_aspects/Interpretability_Flex-Dot.pdf"
+  },
+  {
+    "label": "Interpretability (Overdamped DAVE)",
+    "file": "generated-papers/social_aspects/Interpretability_Overdamped DAVE.pdf"
+  },
+  {
+    "label": "Interpretability (SHEAF-SAE)",
+    "file": "generated-papers/social_aspects/Interpretability_SHEAF-SAE.pdf"
+  },
+  {
+    "label": "Interpretability (SLT-MDA)",
+    "file": "generated-papers/social_aspects/Interpretability_SLT-MDA.pdf"
+  },
+  {
+    "label": "Privacy (DP-EBS-BB)",
+    "file": "generated-papers/social_aspects/Privacy_DP-EBS-BB.pdf"
+  },
+  {
+    "label": "Robustness (IMD-GV)",
+    "file": "generated-papers/social_aspects/Robusntess_IMD-GV.pdf"
+  },
+  {
+    "label": "Others (VIGN-SDA-PMSVM)",
+    "file": "generated-papers/social_aspects/Others_VIGN-SDA-PMSVM.pdf"
+  },
+  {
+    "label": "Bandits (FVTG-CP)",
+    "file": "generated-papers/theory/Bandits_FVTG-CP.pdf"
+  },
+  {
+    "label": "Game Theory (NTW-KPA)",
+    "file": "generated-papers/theory/Game Theory_NTW-KPA.pdf"
+  },
+  {
+    "label": "Optimization (PLL-ICE)",
+    "file": "generated-papers/theory/Optimization_PLL-ICE.pdf"
+  },
+  {
+    "label": "Optimization (SSH-ED-SDP)",
+    "file": "generated-papers/theory/Optimization_SSH-ED-SDP.pdf"
+  },
+  {
+    "label": "Probabilistic (DRO-ROCP)",
+    "file": "generated-papers/theory/Probabilistic_DRO-ROCP.pdf"
+  },
+  {
+    "label": "Others (DR-COCO)",
+    "file": "generated-papers/theory/Others_DR-COCO.pdf"
+  }
+]

@@ -1,0 +1,237 @@
+[
+  {
+    "name": "assets",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "assets/sakana_logo.png",
+    "bytes": 396050,
+    "type": "b'0'"
+  },
+  {
+    "name": "fancyhdr.sty",
+    "bytes": 20521,
+    "type": "b'0'"
+  },
+  {
+    "name": "figures",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "figures/conceptual.png",
+    "bytes": 1664650,
+    "type": "b'0'"
+  },
+  {
+    "name": "figures/experiment_tree_v2.pdf",
+    "bytes": 62961,
+    "type": "b'0'"
+  },
+  {
+    "name": "figures/workshop_paper.png",
+    "bytes": 2000517,
+    "type": "b'0'"
+  },
+  {
+    "name": "generated_papers",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "generated_papers/aisci_compositional_regularization_watermark.pdf",
+    "bytes": 844168,
+    "type": "b'0'"
+  },
+  {
+    "name": "generated_papers/aisci_label_noise_watermark.pdf",
+    "bytes": 1984024,
+    "type": "b'0'"
+  },
+  {
+    "name": "generated_papers/aisci_pest_prediction_watermark.pdf",
+    "bytes": 1758113,
+    "type": "b'0'"
+  },
+  {
+    "name": "include",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "include/gdm_format.cls",
+    "bytes": 12044,
+    "type": "b'0'"
+  },
+  {
+    "name": "main_arxiv.bbl",
+    "bytes": 13867,
+    "type": "b'0'"
+  },
+  {
+    "name": "main_arxiv.tex",
+    "bytes": 104600,
+    "type": "b'0'"
+  },
+  {
+    "name": "math_commands.tex",
+    "bytes": 10739,
+    "type": "b'0'"
+  },
+  {
+    "name": "natbib.sty",
+    "bytes": 45154,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/generated_code_samples",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/generated_code_samples/data_generating_process.png",
+    "bytes": 198388,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/generated_code_samples/eval_function.png",
+    "bytes": 82907,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/generated_code_samples/model_class.png",
+    "bytes": 143184,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/generated_code_samples/train_loop_loss_reg.png",
+    "bytes": 154529,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/idea.txt",
+    "bytes": 4502,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/reviewer_2.txt",
+    "bytes": 2456,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/reviewer_3.txt",
+    "bytes": 1169,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/compositional_regularization/sub_idea.txt",
+    "bytes": 1546,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/label_noise",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "workshop_papers/label_noise/generated_code_samples",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "workshop_papers/label_noise/generated_code_samples/ece_calc_func.png",
+    "bytes": 174778,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/label_noise/generated_code_samples/noisy_dataset_class.png",
+    "bytes": 169401,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/label_noise/generated_code_samples/noisy_dataset_class_2.png",
+    "bytes": 233699,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/label_noise/generated_code_samples/temperature_scaling.png",
+    "bytes": 60785,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/label_noise/idea.txt",
+    "bytes": 4105,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/label_noise/reviewer_1.txt",
+    "bytes": 1172,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/label_noise/reviewer_3.txt",
+    "bytes": 657,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/generated_code_samples",
+    "bytes": 0,
+    "type": "b'5'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/generated_code_samples/domain_discriminator.png",
+    "bytes": 59535,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/generated_code_samples/env_noise_simulation.png",
+    "bytes": 119171,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/generated_code_samples/ers_calc.png",
+    "bytes": 222319,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/generated_code_samples/multi_dataset_train_loop.png",
+    "bytes": 272264,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/idea.txt",
+    "bytes": 3202,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/reviewer_1.txt",
+    "bytes": 3482,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/reviewer_2.txt",
+    "bytes": 1856,
+    "type": "b'0'"
+  },
+  {
+    "name": "workshop_papers/pest_prediction/reviewer_3.txt",
+    "bytes": 3302,
+    "type": "b'0'"
+  }
+]

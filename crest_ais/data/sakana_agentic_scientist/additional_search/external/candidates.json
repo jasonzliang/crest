@@ -1,0 +1,122 @@
+{
+  "checked_at_utc": "2026-10-27T02:02:17.609010+00:00",
+  "scope": "Public primary-author archives for Sakana The Agentic Scientist / SakanaAI/AI-Scientist-v3 / arXiv2610.18933",
+  "additional_verified_full_manuscript_count": 0,
+  "additional_downloads": [],
+  "candidates": [
+    {
+      "title": "Addressing Beats Architecture: Query-Conditioned Merge-Time Selection for Context-to-LoRA Hypernetworks on Multi-Needle Retrieval",
+      "source_url": "https://pub.sakana.ai/agentic-scientist/papers/doc_to_lora_multi_needle_claude.pdf",
+      "provenance_url": "https://pub.sakana.ai/agentic-scientist/",
+      "status": "known_baseline_duplicate_not_downloaded",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "reason": "One of the three complete papers already collected by parent; URL directly present in official blog HTML."
+    },
+    {
+      "title": "How Much of a Learned Evolution Strategy Is the Algorithm It Was Anchored To?",
+      "source_url": "https://pub.sakana.ai/agentic-scientist/papers/metaevo_paper-1.pdf",
+      "provenance_url": "https://pub.sakana.ai/agentic-scientist/",
+      "status": "known_baseline_duplicate_not_downloaded",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "reason": "One of the three complete papers already collected by parent; URL directly present in official blog HTML."
+    },
+    {
+      "title": "Diffusing Blame: Task-Dependent Credit Assignment in Biologically Plausible Dual-Stream Networks",
+      "source_url": "https://pub.sakana.ai/agentic-scientist/papers/alife2026_camera_ready-1.pdf",
+      "provenance_url": "https://pub.sakana.ai/agentic-scientist/",
+      "status": "known_baseline_duplicate_not_downloaded",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "reason": "One of the three complete papers already collected by parent; URL directly present in official blog HTML."
+    },
+    {
+      "title": "Task-Distribution Breadth, Not Update-Rule Capacity, Governs Anytime Transfer in Time-Budgeted Learned Optimizers",
+      "title_transcription": "Read from first-page preview; punctuation normalized, not a full-text manuscript extraction.",
+      "task": "Learned optimization",
+      "source_url": "https://arxiv.org/html/2610.18933v1/highlighted_task_papers.png",
+      "provenance_url": "https://arxiv.org/html/2610.18933v1#A2.F19",
+      "status": "first_page_preview_only_no_full_manuscript_found",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "preview_local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_agentic_scientist/additional_search/external/highlighted_task_papers.png",
+      "preview_sha256": "08218144413f10da80512f1271abc5b9c75470760955f77ea8164ce3d97278fc",
+      "reason": "Official system paper Figure 19 presents five first-page previews. No linked complete manuscript in HTML; author/archive searches did not find one. Image is not counted as a full generated paper."
+    },
+    {
+      "title": "Encode-Time Sparse Coding Improves the Reconstruction-Sparsity Frontier of Sparse Autoencoders on Language-Model Activations",
+      "title_transcription": "Read from first-page preview; punctuation normalized, not a full-text manuscript extraction.",
+      "task": "Sparse autoencoders",
+      "source_url": "https://arxiv.org/html/2610.18933v1/highlighted_task_papers.png",
+      "provenance_url": "https://arxiv.org/html/2610.18933v1#A2.F19",
+      "status": "first_page_preview_only_no_full_manuscript_found",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "preview_local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_agentic_scientist/additional_search/external/highlighted_task_papers.png",
+      "preview_sha256": "08218144413f10da80512f1271abc5b9c75470760955f77ea8164ce3d97278fc",
+      "reason": "Official system paper Figure 19 presents five first-page previews. No linked complete manuscript in HTML; author/archive searches did not find one. Image is not counted as a full generated paper."
+    },
+    {
+      "title": "Aligning Deployment, Not the Prior: Macro-Recall Transfer in a From-Scratch Tabular In-Context Classifier",
+      "title_transcription": "Read from first-page preview; punctuation normalized, not a full-text manuscript extraction.",
+      "task": "Tabular shift",
+      "source_url": "https://arxiv.org/html/2610.18933v1/highlighted_task_papers.png",
+      "provenance_url": "https://arxiv.org/html/2610.18933v1#A2.F19",
+      "status": "first_page_preview_only_no_full_manuscript_found",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "preview_local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_agentic_scientist/additional_search/external/highlighted_task_papers.png",
+      "preview_sha256": "08218144413f10da80512f1271abc5b9c75470760955f77ea8164ce3d97278fc",
+      "reason": "Official system paper Figure 19 presents five first-page previews. No linked complete manuscript in HTML; author/archive searches did not find one. Image is not counted as a full generated paper."
+    },
+    {
+      "title": "Train the Rollout You Evaluate: Regime Alignment for Compact Action-Free World Models",
+      "title_transcription": "Read from first-page preview; punctuation normalized, not a full-text manuscript extraction.",
+      "task": "World models",
+      "source_url": "https://arxiv.org/html/2610.18933v1/highlighted_task_papers.png",
+      "provenance_url": "https://arxiv.org/html/2610.18933v1#A2.F19",
+      "status": "first_page_preview_only_no_full_manuscript_found",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "preview_local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_agentic_scientist/additional_search/external/highlighted_task_papers.png",
+      "preview_sha256": "08218144413f10da80512f1271abc5b9c75470760955f77ea8164ce3d97278fc",
+      "reason": "Official system paper Figure 19 presents five first-page previews. No linked complete manuscript in HTML; author/archive searches did not find one. Image is not counted as a full generated paper."
+    },
+    {
+      "title": "Target-Space Design over Kernel-Hyperparameter Treatment: A Frozen Anonymous-Space Bayesian Optimizer at 64-Evaluation Budgets",
+      "title_transcription": "Read from first-page preview; punctuation normalized, not a full-text manuscript extraction.",
+      "task": "Hyperparameter optimization",
+      "source_url": "https://arxiv.org/html/2610.18933v1/highlighted_task_papers.png",
+      "provenance_url": "https://arxiv.org/html/2610.18933v1#A2.F19",
+      "status": "first_page_preview_only_no_full_manuscript_found",
+      "is_additional": false,
+      "local_path": null,
+      "sha256": null,
+      "preview_local_path": "/Users/jason/Desktop/crest/crest_ais/data/sakana_agentic_scientist/additional_search/external/highlighted_task_papers.png",
+      "preview_sha256": "08218144413f10da80512f1271abc5b9c75470760955f77ea8164ce3d97278fc",
+      "reason": "Official system paper Figure 19 presents five first-page previews. No linked complete manuscript in HTML; author/archive searches did not find one. Image is not counted as a full generated paper."
+    },
+    {
+      "title": "AI Scientist v3: Agent Native refactor. Scale from 1-hour to 24 hours with Reviewer agent",
+      "source_url": "https://huggingface.co/blog/alexshengzhili/aiscientist",
+      "repository_url": "https://github.com/findalexli/ai-scientist-v3",
+      "status": "excluded_unrelated_project_name_collision",
+      "is_additional": false,
+      "reason": "Published March 2026 by alexshengzhili/findalexli; describes independent v2 refactor. It is not SakanaAI/AI-Scientist-v3 (October2026). Associated HF ai-scientist-blog-assets and NanoBanana manuscript are excluded.",
+      "sha256": null
+    }
+  ],
+  "limitations": [
+    "Zenodo direct API/search endpoints returned HTTP400 initially, then HTTP403 indicating unusual network traffic. No bypass attempted. Search-engine-indexed Zenodo queries yielded no relevant primary record; cannot claim complete Zenodo absence.",
+    "Public repository listings and website links establish search coverage, not proof that no other public manuscript exists.",
+    "OpenReview plain unquoted searches overmatch common words; only exact phrase API count-zero searches used for negative conclusions."
+  ]
+}

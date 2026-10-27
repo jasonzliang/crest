@@ -1,0 +1,492 @@
+[
+  {
+    "path": "CITATION.cff",
+    "line": 6,
+    "text": "repository-code: \"https://github.com/SakanaAI/AI-Scientist-v3\""
+  },
+  {
+    "path": "CITATION.cff",
+    "line": 36,
+    "text": "  url: \"https://arxiv.org/abs/2610.18933\""
+  },
+  {
+    "path": "README.md",
+    "line": 16,
+    "text": "  <a href=\"https://arxiv.org/abs/2610.18933\"><img src=\"https://img.shields.io/badge/arXiv-2610.18933-b31b1b.svg\" alt=\"arXiv\"></a>"
+  },
+  {
+    "path": "README.md",
+    "line": 17,
+    "text": "  <a href=\"https://arxiv.org/pdf/2610.18933\"><img src=\"https://img.shields.io/badge/Paper-PDF-red.svg\" alt=\"Paper PDF\"></a>"
+  },
+  {
+    "path": "README.md",
+    "line": 18,
+    "text": "  <a href=\"LICENSE\"><img src=\"https://img.shields.io/badge/License-Apache_2.0-blue.svg\" alt=\"License: Apache 2.0\"></a>"
+  },
+  {
+    "path": "README.md",
+    "line": 30,
+    "text": "default for `agsci run`. Install [Docker](https://docs.docker.com/get-docker/),"
+  },
+  {
+    "path": "README.md",
+    "line": 49,
+    "text": "- **Python \u2265 3.11 with [uv](https://docs.astral.sh/uv/)**. `uv sync` creates"
+  },
+  {
+    "path": "README.md",
+    "line": 53,
+    "text": "  curl -LsSf https://astral.sh/uv/install.sh | sh"
+  },
+  {
+    "path": "README.md",
+    "line": 69,
+    "text": "  [Autoillustrate README](https://github.com/SakanaAI/Autoillustrate#readme)."
+  },
+  {
+    "path": "README.md",
+    "line": 91,
+    "text": "> [Headless CLI](https://github.com/RobertTLange/headless-cli), so the same"
+  },
+  {
+    "path": "README.md",
+    "line": 113,
+    "text": "\u2514\u2500\u2500 paper/         # manuscript, PDF, manifest, and optional AI reviews"
+  },
+  {
+    "path": "README.md",
+    "line": 119,
+    "text": "(`http://127.0.0.1:8765`)."
+  },
+  {
+    "path": "README.md",
+    "line": 164,
+    "text": "   The paper lands in `results/circpack/claude/<run_id>/paper/paper.pdf`;"
+  },
+  {
+    "path": "README.md",
+    "line": 211,
+    "text": "Adding the `review` phase sends the complete manuscript to the OpenAI-backed"
+  },
+  {
+    "path": "README.md",
+    "line": 224,
+    "text": "agsci review results/circpack/claude/<run_id>/paper/paper.pdf --output review.json"
+  },
+  {
+    "path": "README.md",
+    "line": 303,
+    "text": "evaluation re-scores it in a sealed environment; post-hoc analysis mines the artifacts for extra evidence; and the paper phase writes,"
+  },
+  {
+    "path": "README.md",
+    "line": 304,
+    "text": "compiles, and audits the manuscript against that evidence. Each phase runs in its own container and only ever reads"
+  },
+  {
+    "path": "README.md",
+    "line": 336,
+    "text": "[our paper](https://arxiv.org/abs/2610.18933):"
+  },
+  {
+    "path": "apps/run_inspector/README.md",
+    "line": 19,
+    "text": "Open `http://127.0.0.1:8765`."
+  },
+  {
+    "path": "apps/run_inspector/README.md",
+    "line": 49,
+    "text": "The frontend proxies `/api` to the backend at `http://127.0.0.1:8765`."
+  },
+  {
+    "path": "docs/agent_billing.md",
+    "line": 53,
+    "text": "the existing drafting retry policy. Task-level artifact and repair budgets remain"
+  },
+  {
+    "path": "docs/evaluation_evidence.md",
+    "line": 10,
+    "text": "broker; they cannot write into evaluator output directories or provide artifact paths."
+  },
+  {
+    "path": "docs/evaluation_evidence.md",
+    "line": 87,
+    "text": "The manuscript evidence audit checks current claims against current evidence. The later"
+  },
+  {
+    "path": "docs/evaluation_evidence.md",
+    "line": 112,
+    "text": "ablations, and final evaluation before producing posthoc analyses and a manuscript."
+  },
+  {
+    "path": "docs/gpu_quarantine.md",
+    "line": 55,
+    "text": "Normal lease release uses the same cleanup with authority from the current owner. It may terminate"
+  },
+  {
+    "path": "docs/gpu_quarantine.md",
+    "line": 64,
+    "text": "Runtime acquisition remains bounded by its execution deadline; release cleanup has a 30-second"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 11,
+    "text": "curl -LsSf https://astral.sh/uv/install.sh | sh"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 42,
+    "text": "[Headless CLI](https://github.com/RobertTLange/headless-cli) with full tool"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 49,
+    "text": "npx -y git+https://github.com/RobertTLange/headless-cli.git#93cd9b06b85f848af1308c41e018991b33907c5e --version"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 63,
+    "text": "curl https://cursor.com/install -fsS | bash"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 90,
+    "text": "The build installs the Autoillustrate release pinned by `ARG AUTOILLUSTRATE_VERSION`"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 114,
+    "text": "  --build-arg DEBIAN_MIRROR=https://deb.debian.org/debian \\"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 115,
+    "text": "  --build-arg DEBIAN_SECURITY_MIRROR=https://security.debian.org/debian-security \\"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 120,
+    "text": "Avoid `https://ftp.us.debian.org/debian` here. Country `ftp.*` mirrors are not a"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 183,
+    "text": "the host instead, install the same pinned npm release into your user-local npm"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 192,
+    "text": "The upstream [Autoillustrate README](https://github.com/SakanaAI/Autoillustrate#readme)"
+  },
+  {
+    "path": "docs/install.md",
+    "line": 212,
+    "text": "`AUTOILLUSTRATE_VERSION` to install a release other than the image pin. The CLI"
+  },
+  {
+    "path": "docs/no_winner_studies.md",
+    "line": 16,
+    "text": "The selection binds the original completion receipt, attempt history, source artifacts, baseline,"
+  },
+  {
+    "path": "docs/no_winner_studies.md",
+    "line": 28,
+    "text": "a negative-results manuscript, with the failed qualification and its limitations preserved."
+  },
+  {
+    "path": "docs/no_winner_studies.md",
+    "line": 78,
+    "text": "Tests use temporary artifacts and stub external execution. They do not require GPUs, live agents,"
+  },
+  {
+    "path": "docs/paper_final_outcomes.md",
+    "line": 10,
+    "text": "This changes manuscript eligibility, not scientific results. The final outcome"
+  },
+  {
+    "path": "docs/paper_final_outcomes.md",
+    "line": 11,
+    "text": "remains `not_qualified`, and manuscripts must report the qualification failure and"
+  },
+  {
+    "path": "docs/paper_final_outcomes.md",
+    "line": 25,
+    "text": "installed. These commands use existing experiment artifacts and run only paper,"
+  },
+  {
+    "path": "docs/pipeline.md",
+    "line": 5,
+    "text": "explicit `review` phase to send the completed manuscript to the OpenAI-backed final"
+  },
+  {
+    "path": "docs/pipeline.md",
+    "line": 25,
+    "text": "# Full pipeline plus external final-manuscript review:"
+  },
+  {
+    "path": "docs/pipeline.md",
+    "line": 57,
+    "text": "Selecting `review` is explicit consent to send the complete final manuscript to OpenAI."
+  },
+  {
+    "path": "docs/pipeline.md",
+    "line": 60,
+    "text": "The same reviewer is available standalone as `agsci review <paper.pdf> [--output review.json]`"
+  },
+  {
+    "path": "docs/pipeline.md",
+    "line": 207,
+    "text": "phase before variant artifacts or LLM calls are created. After correcting the"
+  },
+  {
+    "path": "docs/pipeline.md",
+    "line": 226,
+    "text": "# Resume from stage 4 (using existing artifacts)"
+  },
+  {
+    "path": "docs/pipeline.md",
+    "line": 265,
+    "text": "Integrated post-hoc analysis is artifact-only: it uses the completed investigation"
+  },
+  {
+    "path": "docs/posthoc_pipeline.md",
+    "line": 4,
+    "text": "analysis-only artifacts for downstream paper writing. It does not search for new"
+  },
+  {
+    "path": "docs/posthoc_pipeline.md",
+    "line": 9,
+    "text": "3. proposes and filters analysis ideas that use existing artifacts only,"
+  },
+  {
+    "path": "docs/posthoc_pipeline.md",
+    "line": 46,
+    "text": "| 2 | Generate analysis candidates | Yes | Propose artifact-based post-hoc analyses as JSON |"
+  },
+  {
+    "path": "docs/posthoc_pipeline.md",
+    "line": 118,
+    "text": "      \"required_artifacts\": [\"string\"],"
+  },
+  {
+    "path": "docs/posthoc_pipeline.md",
+    "line": 165,
+    "text": "- reject missing-artifact proposals"
+  },
+  {
+    "path": "docs/posthoc_pipeline.md",
+    "line": 192,
+    "text": "- `analysis_spec.json` and later execution artifacts use `analysis_id`"
+  },
+  {
+    "path": "docs/posthoc_pipeline.md",
+    "line": 296,
+    "text": "## Most important artifacts"
+  },
+  {
+    "path": "docs/run_inspector.md",
+    "line": 11,
+    "text": "This builds the frontend, launches backend + UI at `http://127.0.0.1:8765`, and opens a"
+  },
+  {
+    "path": "docs/run_inspector.md",
+    "line": 26,
+    "text": "- frontend: `http://127.0.0.1:5173`"
+  },
+  {
+    "path": "docs/run_inspector.md",
+    "line": 27,
+    "text": "- backend API: `http://127.0.0.1:8765`"
+  },
+  {
+    "path": "docs/run_inspector.md",
+    "line": 37,
+    "text": "- `--agentlens-base-url` (default `http://127.0.0.1:8787`)"
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 119,
+    "text": "Inspect latest evaluated artifacts:"
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 132,
+    "text": "Generates final paper artifacts."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 208,
+    "text": "- After every review cycle, the manuscript always re-enters a text-only repair pass. The writer must address major comments seriously, may apply minor comments selectively, and must not run new experiments or invent new quantitative results during review repair."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 210,
+    "text": "- Every host-side validation/compile first inserts (or regenerates) a mandatory watermark block in `paper.tex` reading \"Generated by The Agentic Scientist\" on every page. It is owned by `src/orchestrator/paper_watermark.py`, has no CLI or config switch, applies to `paper.sh`, `paper_edit.sh`, and resume finalization alike. Its settings are applied from the `begindocument/end` hook, so they take precedence over any other `draftwatermark` setup in the manuscript. Skill staging additionally watermarks the staged writer-skill template `paper.tex` files (`watermark_staged_templates`), so agent drafts and intermediate compiles carry the block from the first draft; the checked-in templates remain free of generated code."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 211,
+    "text": "- `--paper-max-repair-rounds` bounds total manuscript repair attempts. Default: `10`."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 212,
+    "text": "- `--paper-review-rounds` bounds planned review/repair cycles for the manuscript. Default: `0`."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 213,
+    "text": "- Before each review-driven manuscript repair pass, `paper.sh` copies the current `paper.pdf` into `paper/final_<timestamp>/revisions/` so the draft history stays inspectable over time."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 214,
+    "text": "- Set `paper.ai_review=openai` on an `agsci investigate` run, or append `review` to `execution.phases` for the end-to-end orchestrator, to send the validated final `paper.pdf` to the standalone OpenAI-backed `src/aireview.py` reviewer. Both forms require explicit opt-in. This final assessment is separate from the optional review/repair cycles above and writes `ai_review.json` plus `ai_review.log` in the final paper directory."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 215,
+    "text": "- `agsci review <paper.pdf> [--output review.json]` runs the same reviewer standalone on any PDF, outside a pipeline run and without manifest bookkeeping; it reads `OPENAI_API_KEY` from the environment or the repo `.env` (`--env-file` overrides it) and needs `uv` on `PATH`."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 230,
+    "text": "Each paper format is one venue file under `configs/venue/`: its brief, canonical author block (`null` for anonymous venues), template directory inside the writer skills, the LaTeX markers that identify a compiled manuscript, the enforced page budget (`null` keeps the brief's budget advisory), and the behavioural checks it opts into (`alife_framing`). Briefs state an enforced budget through the `{{PAPER_PAGE_BUDGET}}` placeholder, which the paper scripts render from the YAML when staging `VENUE.md`. To add a venue, add `configs/venue/<name>.yaml` plus the brief and the `templates/<name>/` directory it references under `src/agents/skills/write-paper/` (the other writer skills receive that tree at staging time); the format list, brief lookup, page limits, format detection, and the scripts' `--paper-format` check all read the catalog."
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 236,
+    "text": "the editor to changes grounded in existing artifacts. `--manifest-dir` publishes the validated"
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 267,
+    "text": "- `paper/final_<timestamp>/paper.pdf`"
+  },
+  {
+    "path": "docs/scripts.md",
+    "line": 273,
+    "text": "- `paper/final_<timestamp>/revisions/review_round_<NN>_before_repair_round_<NN>.pdf`"
+  },
+  {
+    "path": "docs/task_drafting.md",
+    "line": 29,
+    "text": "categories only. Diagnostics never enter result artifacts, scientific evidence, or judge text."
+  },
+  {
+    "path": "docs/task_drafting.md",
+    "line": 35,
+    "text": "to newly rendered prompts; they do not retrofit live containers or historical artifacts."
+  },
+  {
+    "path": "docs/task_drafting.md",
+    "line": 83,
+    "text": "final evaluation or alter existing run artifacts."
+  },
+  {
+    "path": "docs/task_drafting.md",
+    "line": 110,
+    "text": "The check releases its lease immediately and does not reserve future capacity or clear quarantine;"
+  },
+  {
+    "path": "docs/task_drafting.md",
+    "line": 226,
+    "text": "Drafting stops before accepting retained artifacts or starting another draft/review/repair call"
+  },
+  {
+    "path": "docs/task_drafting.md",
+    "line": 235,
+    "text": "paper audits that can accept completed artifacts). Qualification subprocess infrastructure retries"
+  },
+  {
+    "path": "docs/temporary_storage.md",
+    "line": 108,
+    "text": "bounded recovery aids, not durable experiment archives. Keep run artifacts and logs under the"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 15,
+    "text": "`agsci investigate` uses [Hydra](https://hydra.cc/) to load `configs/config.yaml` and apply"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 186,
+    "text": "| `logging.verbose` | bool | `false` | Include diagnostic events, evidence, and artifact paths in human output |"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 222,
+    "text": "# Human output with diagnostic events, rubric evidence, and artifact paths"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 269,
+    "text": "artifacts; reconcile financial decisions against the provider invoice."
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 305,
+    "text": "\u251c\u2500\u2500 paper/         # stable manuscript, PDF, manifest, and optional AI reviews"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 306,
+    "text": "\u2514\u2500\u2500 revision/      # isolated review-driven manuscript revision attempts"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 396,
+    "text": "The `review` phase sends the complete final manuscript to OpenAI. It writes `ai_review.json` and"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 402,
+    "text": "Append `revision` after `review` to revise the manuscript against that review and create a"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 413,
+    "text": "improve prose, claims, captions, tables, and figures derived from existing artifacts. The edited"
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 496,
+    "text": "[upstream repository](https://github.com/SakanaAI/Autoillustrate#readme)."
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 593,
+    "text": "  - `paper.ai_review=disabled|openai` controls the post-publication reviewer for `agsci investigate` runs and defaults to `disabled`. For the end-to-end orchestrator, explicitly append `review` to `execution.phases`. Both forms send the complete final manuscript to the OpenAI-backed standalone `src/aireview.py` reviewer. Direct `paper.sh`, paper-edit, and resume-finalization commands do not trigger it."
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 594,
+    "text": "  - Review output is stored as `ai_review.json` and `ai_review.log` beside `paper.pdf`, with status and paths recorded under `ai_review` in `paper/latest_manifest.json`. Review failures warn and publish the paper normally."
+  },
+  {
+    "path": "docs/usage.md",
+    "line": 639,
+    "text": "resuming. Pre-release in-tree sidecars are ignored and never adopted; inspect or export"
+  },
+  {
+    "path": "src/variants_pipeline/README.md",
+    "line": 38,
+    "text": "All artifacts land under `paths.output_dir`."
+  },
+  {
+    "path": "src/variants_pipeline/README.md",
+    "line": 45,
+    "text": "stages load their inputs from disk if those artifacts already exist."
+  },
+  {
+    "path": "src/variants_pipeline/README.md",
+    "line": 116,
+    "text": "Before any stage-5 artifact or agent call, the pipeline provisions"
+  },
+  {
+    "path": "src/variants_pipeline/readme.py",
+    "line": 81,
+    "text": "    # Load pipeline artifacts"
+  }
+]

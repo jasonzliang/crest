@@ -1,0 +1,154 @@
+[
+  {
+    "sha": "df8313889a004f8a44a472e19a833cd547bb828a",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/df8313889a004f8a44a472e19a833cd547bb828a?recursive=1",
+    "message": "Merge pull request #3 from SakanaAI/fix/run-inspector-test-mypy\n\ntest(run-inspector): fix mypy error in ancestor programs test",
+    "entries": 668,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  },
+  {
+    "sha": "322f7a8717849211b145d78fceaa0df901de947d",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/322f7a8717849211b145d78fceaa0df901de947d?recursive=1",
+    "message": "test(run-inspector): compare program locations in ancestor test\n\nFixes mypy union-attr error on Optional program_info that broke CI on main.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+    "entries": 668,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  },
+  {
+    "sha": "e49408e937115081f68d90838a79483f4f1c1d35",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/e49408e937115081f68d90838a79483f4f1c1d35?recursive=1",
+    "message": "Merge pull request #1 from ryuseitoshima/fix/run-inspector-program-directory-diff\n\nFix program directory comparisons in Run Inspector",
+    "entries": 668,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  },
+  {
+    "sha": "7eca5af83b66691477a687aff8fde318e30c3999",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/7eca5af83b66691477a687aff8fde318e30c3999?recursive=1",
+    "message": "fix(run-inspector): list ancestor program dirs and polish diff states\n\nAncestor programs were listed as legacy program.py file paths, so\nspec-layout ancestors had no comparable programs and the default\nancestor -> target diff never loaded. Share the sibling program-dir\nlisting for ancestors.\n\nAlso prefer a modified text file as the default diff file, clear stale\nerrors, show a message when a side has no program, and label empty\nadded/removed files.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+    "entries": 668,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  },
+  {
+    "sha": "9ed986dea4f55cbd99680cb5c2a20e0abc247f2b",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/9ed986dea4f55cbd99680cb5c2a20e0abc247f2b?recursive=1",
+    "message": "Remove added inline explanations",
+    "entries": 665,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  },
+  {
+    "sha": "8236a6f71e4f754986fcae5a8af4c89620f53541",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/8236a6f71e4f754986fcae5a8af4c89620f53541?recursive=1",
+    "message": "Keep comparison fix minimal and add Japanese explanation",
+    "entries": 665,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  },
+  {
+    "sha": "7ac627e6e9ece605525ea869e62f60acdd415531",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/7ac627e6e9ece605525ea869e62f60acdd415531?recursive=1",
+    "message": "Fix program directory comparisons in Run Inspector",
+    "entries": 665,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  },
+  {
+    "sha": "2b8aa39285c35aaca3b0e06dd121061ef8a2d854",
+    "url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v3/git/trees/2b8aa39285c35aaca3b0e06dd121061ef8a2d854?recursive=1",
+    "message": "Initial commit\n\nCo-authored-by: Robert Tjarko Lange <robertlange0@gmail.com>\nCo-authored-by: Yutaro Yamada <6688737+runopti@users.noreply.github.com>\nCo-authored-by: Rujikorn Charakorn <20886355+51616@users.noreply.github.com>",
+    "entries": 664,
+    "truncated": false,
+    "matches": [
+      ".gitattributes",
+      "src/investigation/evaluator_outputs.py",
+      "src/investigation/runtime_output.py",
+      "src/investigation/task_runtime_archive.py",
+      "src/orchestrator/paper_supplement.py",
+      "src/pipeline/revision_ancillary_archive.py",
+      "src/variants_pipeline/sandbox_outputs.py",
+      "tests/variants/test_variants_results.py",
+      "tests/variants/test_variants_sandbox_outputs.py"
+    ],
+    "submodules": []
+  }
+]

@@ -1,0 +1,22 @@
+Sakana AI Scientist generated-paper corpus
+
+Identity: The AI Scientist, original 2024 system (AI-Scientist / v1).
+Confidence: high. Official announcement: https://sakana.ai/ai-scientist/ (August 13, 2024).
+Official repository: https://github.com/SakanaAI/AI-Scientist
+Official full experimental archive, directly linked by the repository README:
+https://drive.google.com/drive/folders/1G7A0wTqfXVa-cpexjk0oaXakaSJwffEt
+PDF subtree: https://drive.google.com/drive/folders/1XmVQbjKJZUIg41Jt-AFuO34pvb52iv1g
+
+Collection: 568 candidate PDFs downloaded successfully; 298 distinct usable manuscripts retained after 269 duplicate/equivalent compilation variants were merged into alternate_sources, with 1 malformed source PDF artifacts preserved separately in incomplete_pdfs and manifest.incomplete_manuscripts. Each retained PDF preserves source bytes, begins with %PDF-, and has a verified SHA256 recorded in manifest.json. Exact metadata for each source model and template is preserved from official folder names. No score filtering was used. The 10 README showcases have provenance.official_showcase=true; this is an official release designation, not a comparison sample decision.
+
+Coverage: all 269 files publicly listed under all_pdfs, plus 10 GitHub showcase files, plus additional manuscript variants discovered by inspecting the 12 official all_run_data ZIP central directories. Repeated filenames in all_pdfs can hide different timestamped runs present in the ZIPs. All four models (claude, deepseek, gpt4o, llama3.1) and all three templates (2d_diffusion, grokking, nanoGPT) are covered. Inventory JSON files document every discovered public listing. ZIP code/logs were not downloaded; only additional manuscript PDF members were fetched through HTTP Range, decompressed and verified against ZIP CRC32 and PDF signatures. For ZIP-only papers, pdf_url identifies the official ZIP container and provenance.archive_member_path identifies the exact PDF. Timestamped run IDs are preserved. Existing manuscripts were linked to their full-run source when ZIP member byte size and CRC32 matched.
+
+Deduplication: GitHub has ten top-level examples also duplicated byte-for-byte in nested example directories; download only the top-level set. GitHub versus Drive compilation variants can have different bytes but identical complete extracted text; keep the GitHub source bytes and record the alternate PDF URLs and SHA256s. Different full text remains a separate manuscript even when filenames or topics overlap.
+
+Scope: v2 is explicitly a separate improved system in Sakana's March 2025 publication announcement. V2 and Agentic Scientist/v3 must not be combined with original-system papers without an explicit analysis decision. The human-authored 2408.06292 system description and three few-shot input reference PDFs are excluded.
+
+Status and limitations: All usable retained PDFs contain the AI-Scientist Generated Preprint disclosure. Source text 'Paper under double-blind review' is template boilerplate and is not evidence of actual submission or external peer review. The full archive contains uncurated outputs with possible scientific or formatting flaws. One file, deepseek/userguided_sampling_strategies.pdf, places an abstract before its title and author block and repeats the abstract heading/content; the manifest records that observed formatting issue. 1 source PDF artifacts cannot be parsed because their original xref/trailer structure is malformed; source ZIP CRC32 and member lengths were verified, the original bytes are preserved, and these artifacts are excluded from the usable-paper count. No explicit source-designated failed-paper labels were discovered. Missing PDFs from failed attempts are not part of the downloadable candidate list.
+
+Dates/licenses: generated manuscript publication dates are unspecified (null); the official original-system release is August 13, 2024. PDF creation dates are compilation timestamps and were not converted into publication dates. Manuscript-specific licenses were not established (null); the current repository license is expressly titled a source-code license.
+
+Availability: 0 unavailable candidates. The unavailable_candidates.json file lists any failure separately. No model/API calls, generated research code, repository programs, secret files, or messages to third parties were used.

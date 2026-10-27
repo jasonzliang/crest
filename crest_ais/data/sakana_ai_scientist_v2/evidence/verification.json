@@ -1,0 +1,44 @@
+{
+  "verified_at_utc": "2026-10-27T03:49:19.775257+00:00",
+  "manifest_path": "data/sakana_ai_scientist_v2/manifest.json",
+  "papers": [
+    {
+      "id": "sakana_v2_compositional_regularization",
+      "sha256": "8d5477b165639ed7339b77677da355496778b081c0086d7185a906fbcbbcd40f",
+      "byte_size": 859369,
+      "page_count": 8,
+      "pdf_signature_verified": true,
+      "full_text_nonempty_every_page": true,
+      "eligible_primary": true
+    },
+    {
+      "id": "sakana_v2_label_noise",
+      "sha256": "20b77a6ea8748d2bf5a0fd10ac589bcb6446fe50d5487632682fa87e324308b2",
+      "byte_size": 1997591,
+      "page_count": 7,
+      "pdf_signature_verified": true,
+      "full_text_nonempty_every_page": true,
+      "eligible_primary": true
+    },
+    {
+      "id": "sakana_v2_pest_detection",
+      "sha256": "4ed38075f76698bda3b3d21d3d792286aa1d45124398277119c8cca86ddbdf6f",
+      "byte_size": 1772982,
+      "page_count": 6,
+      "pdf_signature_verified": true,
+      "full_text_nonempty_every_page": true,
+      "eligible_primary": true
+    }
+  ],
+  "unique_generated_standalone_pdf_hashes": 10,
+  "canonical_page_total": 21,
+  "flattened_comment_boxes": 66,
+  "flattened_comment_lines": 621,
+  "nature_embedded_duplicate_page_text_verified": true,
+  "alternate_source_hashes_signatures_and_page_counts_verified": true,
+  "all_downloaded_pdf_file_count": 15,
+  "all_downloaded_unique_pdf_hash_count": 12,
+  "external_code_executed": false,
+  "paid_judging_used": false,
+  "judging_status": "Not run by collector; requires audited removal of human reviewer margin comments."
+}

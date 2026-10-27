@@ -1,0 +1,107 @@
+[
+  {
+    "repository": "satputekuldip/AI-Scientist-v3",
+    "url": "https://api.github.com/repos/satputekuldip/AI-Scientist-v3/git/trees/main?recursive=1",
+    "sha": "e49408e937115081f68d90838a79483f4f1c1d35",
+    "entries": 668,
+    "truncated": false,
+    "candidates": [
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/templates/paper_authors/alife.tex"
+    ]
+  },
+  {
+    "repository": "SUN-1024/AI-Scientist-v3",
+    "url": "https://api.github.com/repos/SUN-1024/AI-Scientist-v3/git/trees/codex%2Funified-research-agent?recursive=1",
+    "sha": "e845ba362512734e3d2dba645caebd2cb9b4f003",
+    "entries": 1319,
+    "truncated": false,
+    "candidates": [
+      "docs/research/medical-unlearning/validation/20261017_085117_652b0da2/baseline_preflight/baseline_results/correct.json",
+      "docs/research/medical-unlearning/validation/20261017_085117_652b0da2/baseline_preflight/baseline_results/evaluation_evidence.json",
+      "docs/research/medical-unlearning/validation/20261017_085117_652b0da2/baseline_preflight/baseline_results/metrics.json",
+      "docs/research/medical-unlearning/validation/20261017_085117_652b0da2/baseline_preflight/baseline_results/qualification.json",
+      "docs/research/medical-unlearning/validation/20261017_102054_544b6a4c/final_evaluation/results/correct.json",
+      "docs/research/medical-unlearning/validation/20261017_102054_544b6a4c/final_evaluation/results/evaluation_evidence.json",
+      "docs/research/medical-unlearning/validation/20261017_102054_544b6a4c/final_evaluation/results/metrics.json",
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/templates/paper_authors/alife.tex"
+    ]
+  },
+  {
+    "repository": "DavinciDreams/AI-Scientist-v3",
+    "url": "https://api.github.com/repos/DavinciDreams/AI-Scientist-v3/git/trees/main?recursive=1",
+    "sha": "da952f982dfe14c3b21a02969f5cf7a35252758f",
+    "entries": 687,
+    "truncated": false,
+    "candidates": [
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/templates/paper_authors/alife.tex"
+    ]
+  },
+  {
+    "repository": "astoreyai/AI-Scientist-v3",
+    "url": "https://api.github.com/repos/astoreyai/AI-Scientist-v3/git/trees/main?recursive=1",
+    "sha": "c14d204dc94b58148fc3ccc80e7bd5eb7b36d84b",
+    "entries": 794,
+    "truncated": false,
+    "candidates": [
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/scoping_review/manuscript.py",
+      "src/templates/paper_authors/alife.tex",
+      "tests/scoping_review/fixtures/openalex_2026-10-16/hilkenmeier_2026.pdf"
+    ]
+  },
+  {
+    "repository": "sk-surya/ai-scientist-v3",
+    "url": "https://api.github.com/repos/sk-surya/ai-scientist-v3/git/trees/main?recursive=1",
+    "sha": "2b8aa39285c35aaca3b0e06dd121061ef8a2d854",
+    "entries": 664,
+    "truncated": false,
+    "candidates": [
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/templates/paper_authors/alife.tex"
+    ]
+  },
+  {
+    "repository": "danielsimonjr/Agentic-Scientist",
+    "url": "https://api.github.com/repos/danielsimonjr/Agentic-Scientist/git/trees/main?recursive=1",
+    "sha": "fbad7483b5455feb76724b370702de6dafcb2f64",
+    "entries": 700,
+    "truncated": false,
+    "candidates": [
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/templates/paper_authors/alife.tex"
+    ]
+  },
+  {
+    "repository": "interactivetech/AI-Scientist-v3",
+    "url": "https://api.github.com/repos/interactivetech/AI-Scientist-v3/git/trees/main?recursive=1",
+    "sha": "df8313889a004f8a44a472e19a833cd547bb828a",
+    "entries": 668,
+    "truncated": false,
+    "candidates": [
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/templates/paper_authors/alife.tex"
+    ]
+  },
+  {
+    "repository": "theainerd/AI-Scientist-v3",
+    "url": "https://api.github.com/repos/theainerd/AI-Scientist-v3/git/trees/main?recursive=1",
+    "sha": "df8313889a004f8a44a472e19a833cd547bb828a",
+    "entries": 668,
+    "truncated": false,
+    "candidates": [
+      "src/agents/skills/write-paper/templates/alife/paper.tex",
+      "src/agents/skills/write-paper/templates/iclr/paper.tex",
+      "src/templates/paper_authors/alife.tex"
+    ]
+  }
+]
