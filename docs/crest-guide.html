@@ -183,14 +183,14 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <p>This is an exploratory comparison of the saved answers under the selected judges and rubric. A ranking is not an absolute measurement of creativity or evidence that all future answers will follow the same ordering.</p>
 <h2 id="running">Run the three stages</h2>
 <p>Use Python 3.11–3.13 and install the project and Rome dependencies as described in <a href="../README.html#install">Getting started</a>. Export <code>OPENAI_API_KEY</code> and <code>GOOGLE_API_KEY</code> or <code>GEMINI_API_KEY</code>; CREST does not automatically load credentials from dotenv files.</p>
-<pre><code>python -m crest plan --config crest.mbp.yaml --limit 1
-python stage1_generate.py --config crest.mbp.yaml --limit 1
+<pre><code>python -m crest plan --config crest/configs/crest.mbp.yaml --limit 1
+python crest/stage1_generate.py --config crest/configs/crest.mbp.yaml --limit 1
 
 # Replace the placeholder with stage 1's printed run_dir.
-CREST_RUN=results/YYYY-MM-DD/UTC-TIMESTAMP-UNIQUE-ID
-python stage2_judge.py "$CREST_RUN" --config crest.mbp.yaml
-python stage3_analyze.py "$CREST_RUN" --config crest.mbp.yaml</code></pre>
-<p>Planning is local. Generation and judging make paid calls; analysis is local. Omit <code>--limit 1</code> for all 50 questions. The default configuration is <a href="../crest.yaml">crest.yaml</a>; <a href="../crest.mbp.yaml">crest.mbp.yaml</a> selects the measured-resource profile for the 64 GB <code>jason-mbp</code>. Complete the pilot before starting the first full Caesar batch. <code>python -m crest run</code> runs all stages. Later stages otherwise select the latest generation run, so use an explicit result path when managing multiple experiments.</p>
+CREST_RUN=crest/results/YYYY-MM-DD/UTC-TIMESTAMP-UNIQUE-ID
+python crest/stage2_judge.py "$CREST_RUN" --config crest/configs/crest.mbp.yaml
+python crest/stage3_analyze.py "$CREST_RUN" --config crest/configs/crest.mbp.yaml</code></pre>
+<p>Planning is local. Generation and judging make paid calls; analysis is local. Omit <code>--limit 1</code> for all 50 questions. The default configuration is <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>; <a href="../crest/configs/crest.mbp.yaml">crest/configs/crest.mbp.yaml</a> selects the measured-resource profile for the 64 GB <code>jason-mbp</code>. Complete the pilot before starting the first full Caesar batch. <code>python -m crest run</code> runs all stages. Later stages otherwise select the latest generation run, so use an explicit result path when managing multiple experiments.</p>
 <p>To recover an existing run, repeat stage 1 with <code>--run "$CREST_RUN"</code>, then repeat stages 2 and 3. Completed work is reused; remote job IDs are retrieved after interruption. Ambiguous submissions require manual reconciliation before retrying and are never blindly resubmitted.</p>
 <h2 id="models">Current research settings</h2>
 <div aria-label="Research systems and settings" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">System</th><th scope="col">Model and workflow</th><th scope="col">Main settings</th></tr></thead><tbody>
@@ -213,7 +213,7 @@ python stage3_analyze.py "$CREST_RUN" --config crest.mbp.yaml</code></pre>
 </tbody></table></div>
 <p>Each provider gains a slot after two successful uncached jobs and halves capacity on HTTP 429. Shared cooldowns honor available retry/reset headers. Native background-job creation retries only explicit 429 rejections; idempotent polling/cancellation also retry transient failures, with four total attempts. Caesar separately allows bounded SDK retries for 429 and server 5xx errors, retaining reservations for uncertain failed attempts against its budget. Limits apply per pipeline process; other account traffic and hosted-agent usage can still cause rate limits.</p>
 <h2 id="files">Results, snapshots, and cache</h2>
-<pre><code>results/
+<pre><code>crest/results/
   .cache/generation/                 shared answer cache
   YYYY-MM-DD/UTC-TIMESTAMP-ID/
     run.json                        questions, jobs, stage registry

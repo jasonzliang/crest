@@ -1,12 +1,12 @@
 # Paths are relative to this file. Credentials come only from the environment.
-questions: crest/data/queries_n50.jsonl
-rubric: crest/prompts/nus_pairwise.txt
-cache_dir: results/.cache/generation
-output_dir: results
+questions: ../data/queries_n50.jsonl
+rubric: ../prompts/nus_pairwise.txt
+cache_dir: ../results/.cache/generation
+output_dir: ../results
 
 research:
   caesar:
-    rome_path: ../rome
+    rome_path: ../../../rome
     model: gpt-6.1-sol
     reasoning_effort: medium
     synthesis_reasoning_effort: medium

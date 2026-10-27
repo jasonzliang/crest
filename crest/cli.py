@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-from .config import ROOT, load_config
+from .config import DEFAULT_CONFIG, load_config
 from .pipeline import Pipeline
 
 
@@ -17,7 +17,7 @@ def main(argv=None, *, fixed_stage=None):
             parser.add_argument('result_dir', type=Path, nargs='?', help='Stage-1 result directory (defaults to latest)')
     else:
         parser.add_argument('stage', choices=['plan', 'generate', 'judge', 'analyze', 'run'], nargs='?', default='plan')
-    parser.add_argument('--config', type=Path, default=ROOT / 'crest.yaml')
+    parser.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
     parser.add_argument('--run', type=Path, help='Generation result directory; later stages default to latest run')
     if fixed_stage in {None, 'generate'}:
         parser.add_argument('--limit', type=int, help='First N questions for a new generation run')
@@ -41,7 +41,7 @@ def main(argv=None, *, fixed_stage=None):
         if not run and args.stage in {'judge', 'analyze'}:
             latest = Path(config['output_dir']) / 'latest.json'
             if not latest.exists():
-                raise ValueError('No generation run yet. Run stage1_generate.py first or pass a result directory')
+                raise ValueError('No generation run yet. Run python crest/stage1_generate.py first or pass a result directory')
             run = Path(json.loads(latest.read_text())['run_dir'])
         if args.limit is not None and run:
             raise ValueError('--limit applies only to a new generation run; existing runs keep their question snapshot')

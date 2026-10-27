@@ -160,7 +160,7 @@ def test_analysis_script_accepts_result_dir_and_does_not_need_api_keys(tmp_path)
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    result = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'stage3_analyze.py'),
+    result = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'crest/stage3_analyze.py'),
                              str(pipeline.run_dir), '--config', config['_config_path']],
                             cwd=tmp_path, env=env, text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
@@ -196,7 +196,7 @@ def test_generation_failure_does_not_erase_other_paid_answers(tmp_path):
 
 
 def test_default_dataset_plan_has_fifty_questions_and_150_generations():
-    config = load_config(Path(__file__).parents[1] / 'crest.yaml')
+    config = load_config()
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
     pipeline = Pipeline(config, providers=providers)
     assert len(pipeline.questions) == 50
@@ -255,7 +255,7 @@ def test_missing_credentials_stop_before_creating_a_paid_run(tmp_path):
     import sys
     config = fixture_config(tmp_path, n=1)
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    result = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'stage1_generate.py'),
+    result = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'crest/stage1_generate.py'),
                              '--config', config['_config_path'], '--agents', 'openai'],
                             cwd=tmp_path, env=env, text=True, capture_output=True)
     assert result.returncode == 2
@@ -339,7 +339,7 @@ def test_standalone_judging_reuses_answers_without_keys_or_original_questions(tm
     asyncio.run(pipeline.run())
     Path(config['questions']).unlink()
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    completed = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'stage2_judge.py'),
+    completed = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'crest/stage2_judge.py'),
                                 str(pipeline.run_dir), '--config', config['_config_path']],
                                cwd=tmp_path, env=env, capture_output=True, text=True)
     assert completed.returncode == 0, completed.stderr

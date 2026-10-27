@@ -6,6 +6,8 @@ __pycache__/
 venv/
 .cache/
 results/
+# Compatibility alias for result paths recorded before the package layout change.
+/results
 .pytest_cache/
 
 # OS

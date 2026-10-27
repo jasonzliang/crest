@@ -15,6 +15,7 @@ import yaml
 
 from crest import judging as crest_judging
 from crest.analysis import analyze as analyze_crest
+from crest.config import DEFAULT_CONFIG as CREST_CONFIG
 from crest_ais import protocol as ais_protocol
 from crest_ais.analysis import analyze as analyze_ais
 from crest_ais.tests.test_analysis import plan_for, results_for
@@ -25,10 +26,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_configured_rubric_and_overall_verdict_protocol_match_current_crest():
-    crest_config = yaml.safe_load((ROOT / "crest.yaml").read_text())
-    ais_config = json.loads((ROOT / "crest_ais/config.json").read_text())
-    crest_rubric = (ROOT / crest_config["rubric"]).read_text()
-    ais_rubric = (ROOT / "crest_ais" / ais_config["rubric"]).read_text()
+    crest_config = yaml.safe_load(CREST_CONFIG.read_text())
+    ais_path = ROOT / "crest_ais/configs/config.json"
+    ais_config = json.loads(ais_path.read_text())
+    crest_rubric = (CREST_CONFIG.parent / crest_config["rubric"]).read_text()
+    ais_rubric = (ais_path.parent / ais_config["rubric"]).read_text()
     assert ais_rubric == crest_rubric
     assert ais_protocol.SCHEMA == crest_judging.SCHEMA
     assert set(ais_protocol.SCHEMA["properties"]) == {"reason", "winner"}

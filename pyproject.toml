@@ -20,8 +20,8 @@ crest = "crest.cli:main"
 include = ["crest", "crest.providers", "crest_ais", "crest_ais.providers"]
 
 [tool.setuptools.package-data]
-crest = ["prompts/*.txt", "data/*.jsonl"]
-crest_ais = ["config.json", "contract.json", "provider_snapshot.json", "rubric.txt"]
+crest = ["prompts/*.txt", "data/*.jsonl", "configs/*.yaml"]
+crest_ais = ["configs/*.json", "prompts/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "crest_ais/tests"]

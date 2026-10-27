@@ -124,29 +124,29 @@ export GOOGLE_API_KEY=...</code></pre>
 <p><code>GEMINI_API_KEY</code> also works for Google. Credentials come from the environment; CREST does not automatically load dotenv files. Alternatively, set <code>research.caesar.python_executable</code> to the Python executable in an existing Rome environment.</p>
 <h2 id="run">Plan, generate, judge, analyze</h2>
 <p>Planning is local. Stage 1 and stage 2 make paid calls; stage 3 is local. Start with a one-question, three-answer pilot:</p>
-<pre><code>python -m crest plan --config crest.mbp.yaml --limit 1
-python stage1_generate.py --config crest.mbp.yaml --limit 1
+<pre><code>python -m crest plan --config crest/configs/crest.mbp.yaml --limit 1
+python crest/stage1_generate.py --config crest/configs/crest.mbp.yaml --limit 1
 
 # Replace with stage 1's printed run_dir.
-CREST_RUN=results/YYYY-MM-DD/UTC-TIMESTAMP-UNIQUE-ID
-python stage2_judge.py "$CREST_RUN" --config crest.mbp.yaml
-python stage3_analyze.py "$CREST_RUN" --config crest.mbp.yaml</code></pre>
-<p>Complete the pilot before starting the first full Caesar batch; omit <code>--limit 1</code> for 50 questions. <code>python -m crest run --config crest.mbp.yaml</code> performs all three stages. The CLI also exposes <code>plan</code>, <code>generate</code>, <code>judge</code>, and <code>analyze</code>. Use <code>--run PATH</code> for an existing run; later stages otherwise select the latest generation run.</p>
+CREST_RUN=crest/results/YYYY-MM-DD/UTC-TIMESTAMP-UNIQUE-ID
+python crest/stage2_judge.py "$CREST_RUN" --config crest/configs/crest.mbp.yaml
+python crest/stage3_analyze.py "$CREST_RUN" --config crest/configs/crest.mbp.yaml</code></pre>
+<p>Complete the pilot before starting the first full Caesar batch; omit <code>--limit 1</code> for 50 questions. <code>python -m crest run --config crest/configs/crest.mbp.yaml</code> performs all three stages. The CLI also exposes <code>plan</code>, <code>generate</code>, <code>judge</code>, and <code>analyze</code>. Use <code>--run PATH</code> for an existing run; later stages otherwise select the latest generation run.</p>
 <h2 id="settings">Models, budget, and concurrency</h2>
 <p>Caesar uses GPT-6.1 Sol with GPT-6 Luna exploration/knowledge-base helpers, regular exploration, and budget- and time-aware synthesis. Native OpenAI research uses Sol high with web search; Google uses managed standard Deep Research. Judges are <strong>GPT-6 Astra high and Gemini 4 Argon high</strong>, without tools, with 32,768 output tokens each. See <a href="docs/crest-guide.html#models">research settings</a> and <a href="docs/judge-models.html">Judge models</a>.</p>
 <p><strong>$5 per answer is a target, not a guaranteed spending cap.</strong> The 150-answer generation target is $750; judging is additional. Caesar reserves estimated request costs against its $5 SDK/handler guard and keeps $3 for synthesis and merging, with a 7,200-second per-answer limit and 600-second per-call timeout. Native provider APIs expose no hard dollar cap; Gemini research uses conservative cost estimates rather than final invoices. Reports retain estimated costs, failed paid attempts, and unknown bills.</p>
-<p><a href="crest.yaml">crest.yaml</a> starts research at 6 jobs and permits up to 24; judging starts at 8 and permits 32. The <a href="crest.mbp.yaml">64 GB jason-mbp profile</a> starts research at 23 and permits 30 (Caesar 20→20, OpenAI 2→6, Gemini 1→4); judging starts at 16 and permits 32. Adaptive limits increase after successes and reduce on 429s, respecting cooldown headers. These are per-process limits, not account-wide guarantees. Native request retries allow four attempts, with creation retried only after an explicit 429 rejection. Caesar also permits bounded SDK retries for server 5xx errors while retaining uncertain-attempt cost reservations. Ambiguous native job creation requires reconciliation rather than blind resubmission.</p>
+<p><a href="crest/configs/crest.yaml">crest/configs/crest.yaml</a> starts research at 6 jobs and permits up to 24; judging starts at 8 and permits 32. The <a href="crest/configs/crest.mbp.yaml">64 GB jason-mbp profile</a> starts research at 23 and permits 30 (Caesar 20→20, OpenAI 2→6, Gemini 1→4); judging starts at 16 and permits 32. Adaptive limits increase after successes and reduce on 429s, respecting cooldown headers. These are per-process limits, not account-wide guarantees. Native request retries allow four attempts, with creation retried only after an explicit 429 rejection. Caesar also permits bounded SDK retries for server 5xx errors while retaining uncertain-attempt cost reservations. Ambiguous native job creation requires reconciliation rather than blind resubmission.</p>
 <h2 id="results">Results and reuse</h2>
-<pre><code>results/YYYY-MM-DD/UTC-TIMESTAMP-ID/
+<pre><code>crest/results/YYYY-MM-DD/UTC-TIMESTAMP-ID/
   run.json
   01-generate-UTC-TIMESTAMP/   answers.jsonl and readable answers/
   02-judge-UTC-TIMESTAMP/      judgments and frozen inputs/rubric/settings
   03-analysis-UTC-TIMESTAMP/   ranking.json, ranking.csv, report.md
   .cache/judgments/
   .cache/analysis/</code></pre>
-<p>Answers are cached across runs in <code>results/.cache/generation/</code>. Reruns create new timestamped stage folders while reusing matching cached work. <code>answers.jsonl</code> is canonical; analysis reads a precise stage-2 snapshot. Changing judges or rubric reuses answers. Existing generation runs keep their settings; start a new run for changed research settings, reusing unaffected shared-cache entries. Concurrency and retry changes preserve paid cache entries.</p>
+<p>Answers are cached across runs in <code>crest/results/.cache/generation/</code>. Reruns create new timestamped stage folders while reusing matching cached work. <code>answers.jsonl</code> is canonical; analysis reads a precise stage-2 snapshot. Changing judges or rubric reuses answers. Existing generation runs keep their settings; start a new run for changed research settings, reusing unaffected shared-cache entries. Concurrency and retry changes preserve paid cache entries.</p>
 <p>Alongside model, usage, and cost, each canonical answer/judgment row stores <code>timing</code>: UTC ISO start/completion, duration in seconds, source, and definition. Client elapsed time includes provider queueing, polling, retries, and interruptions; it excludes local scheduling before execution. Cache hits retain original durations; older checkpoints are backfilled when possible, otherwise timestamps/duration remain null.</p>
-<p>For intentional fresh calls, increment the relevant provider's <code>revision</code>; this is not a recovery procedure for an unresolved submission. Use <code>python stage1_generate.py --run "$CREST_RUN"</code> to recover existing generation work, then rerun stages 2 and 3.</p>
+<p>For intentional fresh calls, increment the relevant provider's <code>revision</code>; this is not a recovery procedure for an unresolved submission. Use <code>python crest/stage1_generate.py --run "$CREST_RUN"</code> to recover existing generation work, then rerun stages 2 and 3.</p>
 <h2 id="interpretation">Read the ranking</h2>
 <p>Rank by overall wins divided by comparisons on common complete questions. A full 50-question block gives each system 400 comparisons. Reports include ties, cycles, per-judge diagnostics, exclusions, and paired whole-question bootstrap intervals. There are no per-criterion rankings. These are the selected judges' preferences for the saved answers, not a validated general creativity measurement; see <a href="docs/judging-method.html#limits">interpretation limits</a>.</p>
 <h2 id="development">Development and history</h2>

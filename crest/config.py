@@ -13,10 +13,11 @@ import yaml
 from .cache import digest
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CONFIG = ROOT / 'crest/configs/crest.yaml'
 DEFAULTS = {
-    'questions': 'crest/data/queries_n50.jsonl',
-    'rubric': 'crest/prompts/nus_pairwise.txt',
-    'cache_dir': 'results/.cache/generation', 'output_dir': 'results',
+    'questions': '../data/queries_n50.jsonl',
+    'rubric': '../prompts/nus_pairwise.txt',
+    'cache_dir': '../results/.cache/generation', 'output_dir': '../results',
     'research_prompt': (
         'Answer the question below, producing the requested artifact rather than a research plan. '
         'Follow its explicit requirements, format and length. Research relevant evidence and '
@@ -26,7 +27,7 @@ DEFAULTS = {
     ),
     'research': {
         'caesar': {
-            'rome_path': '../rome', 'python_executable': sys.executable,
+            'rome_path': '../../../rome', 'python_executable': sys.executable,
             'recovery_from': None, 'budget_history_from': None,
             'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna',
             'kb_model': 'gpt-6-luna', 'budget_usd': 5.0, 'handler_budget_usd': 5.0,
@@ -84,7 +85,7 @@ def _merge(base, updates):
             base[key] = value
 
 
-def load_config(path: Path | str = ROOT / 'crest.yaml') -> dict:
+def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
     path = Path(path).expanduser().resolve()
     supplied = yaml.safe_load(path.read_text()) or {}
     if not isinstance(supplied, dict):

@@ -297,7 +297,7 @@ def test_gemini_judge_uses_frozen_schema_without_tools(monkeypatch):
 
 
 def test_report_costs_include_failed_paid_outputs(tmp_path):
-    from crest_ais.__main__ import _report
+    from crest_ais.cli import _report
     plan = _plan(tmp_path, (1, 1, 1, 1))
     calls = []
     async def judge(prompt, settings, job):
@@ -362,7 +362,7 @@ def test_cancellation_can_recover_known_cost_from_pre_cancel_raw():
 
 
 def test_cancelled_known_spend_still_guards_dispatch_and_reaches_report(tmp_path):
-    from crest_ais.__main__ import _report
+    from crest_ais.cli import _report
     plan = _plan(tmp_path, (1, 1, 1, 1))
     run_dir = tmp_path / "run"
     task = next(task for task in plan["jobs"] if task["judge"] == "openai")
@@ -541,7 +541,7 @@ def test_worker_override_rejects_values_outside_integer_one_to_sixteen(tmp_path,
 
 
 def test_report_includes_prior_excluded_spend_without_counting_prior_judgments(tmp_path):
-    from crest_ais.__main__ import _report
+    from crest_ais.cli import _report
     plan = _plan(tmp_path, (1, 1, 1, 1))
     run_dir = tmp_path / "run"
     async def judge(prompt, settings, job):
@@ -567,7 +567,7 @@ def test_report_includes_prior_excluded_spend_without_counting_prior_judgments(t
 
 @pytest.mark.parametrize("option", [[], ["--workers-per-judge", "4"]])
 def test_cli_forwards_operational_worker_override_without_changing_plan(tmp_path, monkeypatch, option):
-    from crest_ais import __main__ as cli
+    from crest_ais import cli
     plan = _plan(tmp_path, (1, 1, 1, 1))
     run_dir = tmp_path / "run"
     save_plan(plan, run_dir)
@@ -593,7 +593,7 @@ def test_overall_protocol_freezes_current_crest_semantics_and_invalidates_all_ol
     if not frozen.exists():
         pytest.skip("Frozen corrected v1 plan not present")
     old = json.loads(frozen.read_text())
-    rubric = (root / "rubric.txt").read_text()
+    rubric = (root / "prompts" / "rubric.txt").read_text()
     assert rubric == (root.parent / "crest" / "prompts" / "nus_pairwise.txt").read_text()
     assert PROTOCOL_VERSION == "crest-ais-overall-v2"
     assert JUDGING_VERSION == root_judging.PROTOCOL_VERSION == "nus-overall-pairwise-v2"
@@ -678,7 +678,7 @@ def test_extension_caps_small_populations_and_rejects_changed_frozen_text(tmp_pa
 
 def test_create_extension_reuses_paid_results_and_carries_prior_cost_once(tmp_path):
     from crest_ais.pipeline import create_extension
-    from crest_ais.__main__ import _report
+    from crest_ais.cli import _report
     parent = _plan(tmp_path, (3, 3, 3, 3), pairs_per_matchup=1)
     source = tmp_path / "source"
     destination = tmp_path / "extended"
@@ -708,7 +708,7 @@ def test_create_extension_reuses_paid_results_and_carries_prior_cost_once(tmp_pa
 
 
 def test_cli_extend_uses_frozen_parent_without_loading_current_judges(tmp_path, monkeypatch):
-    from crest_ais import __main__ as cli
+    from crest_ais import cli
     parent = _plan(tmp_path, (3, 3, 3, 3), pairs_per_matchup=1)
     config = tmp_path / "config.json"
     config.write_text(json.dumps({"data_root": ".", "output_dir": "results"}))
@@ -1013,7 +1013,7 @@ def test_single_collection_preparation_does_not_reextract_existing_agents(tmp_pa
 
 def test_cohort_extension_imports_all_240_paid_jobs_without_repaying_them(tmp_path):
     from crest_ais.pipeline import create_cohort_extension
-    from crest_ais.__main__ import _report
+    from crest_ais.cli import _report
     parent = make_plan(_catalog(tmp_path, (4, 4, 4, 4)), AGENTS, JUDGES, tmp_path, RUBRIC, pairs_per_matchup=10)
     assert len(parent["jobs"]) == 240
     source, destination = tmp_path / "source", tmp_path / "five-system-run"
@@ -1085,7 +1085,7 @@ def test_v2_geometry_profile_does_not_apply_to_unrelated_margin_science(tmp_path
 
 
 def test_cli_add_agent_prepares_only_new_collection_and_imports_frozen_parent(tmp_path,monkeypatch):
-    from crest_ais import __main__ as cli
+    from crest_ais import cli
     parent = _plan(tmp_path,(2,2,2,2),pairs_per_matchup=2)
     save_plan(parent,tmp_path/"source")
     new_catalog = _new_agent_catalog(tmp_path,count=1)
