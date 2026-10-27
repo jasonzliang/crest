@@ -82,6 +82,32 @@ def ranking_path(run):
     return run / '03-analysis-test/ranking.json'
 
 
+def test_revised_publication_rejects_meta_only_reason(run):
+    from crest.report import load_run
+    path = run / '02-judge-test/judgments.jsonl'
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    for row in rows:
+        row['protocol_version'] = 'nus-overall-pairwise-v3'
+    rows[0]['verdict']['reason'] = 'Wait, no markdown!'
+    rows[0]['result']['text'] = json.dumps(rows[0]['verdict'])
+    path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    with pytest.raises(ValueError):
+        load_run(run)
+
+
+def test_revised_method_describes_judge_presentations_not_raw_url_metadata():
+    from crest.report import _method
+    data = {'ranking': {'bootstrap': {'seed': 2026}},
+            'judgments': [{'protocol_version': 'nus-overall-pairwise-v3',
+                           'presentation_version': 'citation-neutral-v1'}],
+            'answers': [{'agent': 'openai', 'result': {'text': 'https://example.com?utm_source=openai'}},
+                        {'agent': 'gemini', 'result': {'text': 'https://vertexaisearch.cloud.google.com/source'}}]}
+    html = _method(data)
+    assert 'URL destinations were hidden' in html
+    assert 'Original answers are preserved' in html
+    assert 'this run was not fully blinded' not in html
+
+
 def test_refuses_incomplete_publication_without_overwriting_destination(run, tmp_path):
     from crest.report import write_report
     answers = json.loads(answers_path(run).read_text())

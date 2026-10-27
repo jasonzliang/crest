@@ -313,14 +313,16 @@ def test_failed_paid_verdict_keeps_usage_and_cost_but_never_enters_rankings(tmp_
     summary = asyncio.run(pipeline.judge())
     errors = [json.loads(line) for line in (Path(summary['directory']) / 'errors.jsonl').read_text().splitlines()]
     assert len(errors) == 6
-    assert sum(e['cost_usd'] for e in errors) == pytest.approx(2.52)
+    charged = 2.52 * config['judges']['openai']['retry_attempts']
+    assert sum(e['cost_usd'] for e in errors) == pytest.approx(charged)
+    assert all(len(e['attempts']) == config['judges']['openai']['retry_attempts'] for e in errors)
     assert all(e['usage']['output_tokens'] == 123 for e in errors)
     state = pipeline._stage_cache('judge').job(errors[0]['key']).state
     assert state['status'] == 'failed'
     assert state['provider_result']['cost_usd'] == .42
     report = pipeline.analyze()['report']
-    assert report['costs']['failures']['known_usd'] == pytest.approx(2.52)
-    assert report['costs']['total']['known_usd'] == pytest.approx(3.18)
+    assert report['costs']['failures']['known_usd'] == pytest.approx(charged)
+    assert report['costs']['total']['known_usd'] == pytest.approx(charged + .66)
 
 
 def test_analysis_cache_ignores_completion_order(tmp_path):
@@ -678,3 +680,424 @@ def test_configuration_ids_follow_frozen_prompt_template_on_resume_and_legacy_re
     judged = Path(asyncio.run(resumed.judge())['directory'])
     assert json.loads((judged / 'configurations.json').read_text()) == expected
     assert sum(len(provider.generations) for provider in providers.values()) == 2
+
+
+def judgment_fixture(tmp_path, *, attempts=3):
+    config = fixture_config(tmp_path, n=1)
+    config['judges'] = {'openai': config['judges']['openai']}
+    config['judges']['openai']['retry_attempts'] = attempts
+    provider = FakeProvider('openai')
+    pipeline = Pipeline(config, providers={'openai': provider})
+    pipeline._ensure_run()
+    task = {'key': digest({'fixture': 'judge'}), 'question_id': pipeline.questions[0]['id'],
+            'pair': ['gemini', 'openai'], 'order': ['gemini', 'openai'], 'judge': 'openai',
+            'answer_keys': ['a', 'b'], 'answer_hashes': ['ha', 'hb'], 'prompt': 'Compare.',
+            'settings': config['judges']['openai'], 'protocol_version': 'quality-v3',
+            'presentation_version': 'anonymous-v1', 'presented_answer_hashes': ['pa', 'pb']}
+    return pipeline, provider, task
+
+
+def verdict_receipt(reason='A offers a more useful concrete plan than B, with clear implementation tradeoffs.', *, cost=.02):
+    return {'text': json.dumps({'reason': reason, 'winner': 'A'}), 'cost_usd': cost,
+            'usage': {'output_tokens': 100}, 'raw': {'id': f'paid-{cost}'}}
+
+
+def test_judgment_retries_rejected_reason_in_fresh_checkpoint_and_accounts_for_both(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        assert 'remote_id' not in job.state
+        job.save(remote_id=f'paid-{len(calls)}', retry_events=[{'event': 'transport', 'n': len(calls)}])
+        return verdict_receipt('"winner" B', cost=.03) if len(calls) == 1 else verdict_receipt(cost=.02)
+    provider.judge = judge
+    row, cached = asyncio.run(pipeline._execute(task, 'judge'))
+    assert not cached
+    assert len(set(calls)) == 2
+    assert row['cost_usd'] == pytest.approx(.05)
+    assert row['result']['cost_usd'] == .02
+    assert row['usage_scope'] == 'successful_attempt'
+    assert [a['status'] for a in row['attempts']] == ['rejected', 'completed']
+    assert [a['cost_usd'] for a in row['attempts']] == [.03, .02]
+    assert all(a['timing']['duration_seconds'] >= 0 for a in row['attempts'])
+    assert len(row['retry_events']) == 2
+    for key in ('protocol_version', 'presentation_version', 'presented_answer_hashes'):
+        assert row[key] == task[key]
+    resumed, cached = asyncio.run(pipeline._execute(task, 'judge'))
+    assert cached
+    assert resumed['cost_usd'] == pytest.approx(.05)
+    assert resumed['attempts'] == row['attempts']
+    assert len(calls) == 2
+
+
+def test_judgment_all_invalid_is_bounded_and_resume_keeps_all_charged_receipts(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path, attempts=2)
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        return {**verdict_receipt(cost=.04), 'text': 'invalid JSON'}
+    provider.judge = judge
+    for _ in range(2):
+        with pytest.raises(ValueError, match='valid|invalid|rejected|attempt'):
+            asyncio.run(pipeline._execute(task, 'judge'))
+    state = pipeline._stage_cache('judge').job(task['key']).state
+    assert len(calls) == 2
+    assert state['cost_usd'] == pytest.approx(.08)
+    assert len(state['attempts']) == 2
+    assert all(Path(a['cache_record']).is_file() for a in state['attempts'])
+
+
+def test_judgment_resume_after_terminal_receipt_checkpoint_does_not_call_provider(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def interrupted(prompt, settings, job):
+        calls.append(job.path)
+        job.save(remote_id='already-paid', provider_result=verdict_receipt(cost=.06))
+        raise asyncio.CancelledError()
+    provider.judge = interrupted
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert row['cost_usd'] == .06
+    assert row['verdict']['winner'] == 'A'
+    assert len(calls) == 1
+    assert len(row['attempts']) == 1
+
+
+def test_judgment_terminal_provider_failure_retains_cost_when_next_attempt_succeeds(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        if len(calls) == 1:
+            job.save(remote_id='failed-paid', remote_status='incomplete',
+                     raw={'id': 'failed-paid', 'status': 'incomplete'},
+                     provider_result={'cost_usd': .07, 'usage': {'output_tokens': 40}})
+            raise RuntimeError('terminal incomplete response')
+        return verdict_receipt(cost=.02)
+    provider.judge = judge
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert row['cost_usd'] == pytest.approx(.09)
+    assert row['attempts'][0]['cost_usd'] == .07
+    assert 'terminal incomplete' in row['attempts'][0]['error']
+    assert len(calls) == 2
+
+
+def test_judgment_unknown_submission_never_automatically_resubmits(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        job.save(submission_unknown=True)
+        raise RuntimeError('submission outcome unknown')
+    provider.judge = judge
+    for _ in range(2):
+        with pytest.raises(RuntimeError, match='unknown'):
+            asyncio.run(pipeline._execute(task, 'judge'))
+    assert len(calls) == 1
+    state = pipeline._stage_cache('judge').job(task['key']).state
+    assert len(state['attempts']) == 1
+    assert state['attempts'][0]['status'] == 'failed'
+
+
+def test_judgment_retries_are_single_flight_under_concurrent_resume(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        await asyncio.sleep(.01)
+        return {**verdict_receipt(), 'text': 'invalid JSON'} if len(calls) == 1 else verdict_receipt()
+    provider.judge = judge
+    async def run():
+        return await asyncio.gather(*(pipeline._execute(task, 'judge') for _ in range(3)))
+    results = asyncio.run(run())
+    assert [cached for _, cached in results] == [False, True, True]
+    assert all(row['cost_usd'] == pytest.approx(.04) for row, _ in results)
+    assert len(set(calls)) == 2
+
+
+def test_new_judgment_stage_carries_all_previous_paid_keys_once(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    providers = {name: FakeProvider(name) for name in ('openai', 'gemini')}
+    pipeline = Pipeline(config, providers=providers)
+    asyncio.run(pipeline.generate())
+    first = Path(asyncio.run(pipeline.judge())['directory'])
+    asyncio.run(pipeline.judge())  # A cached repeat must not charge the same four keys again.
+    first_rows = [json.loads(line) for line in (first / 'judgments.jsonl').read_text().splitlines()]
+    Path(config['rubric']).write_text('A new rubric version for a distinct comparison.')
+    new = Path(asyncio.run(pipeline.judge())['directory'])
+    ledger = [json.loads(line) for line in (new / 'prior_judgment_costs.jsonl').read_text().splitlines()]
+    assert {r['key'] for r in ledger} == {r['key'] for r in first_rows}
+    assert len(ledger) == 4
+    assert sum(r['cost_usd'] for r in ledger) == pytest.approx(.04)
+    assert all(r['valid_for_ranking'] is False for r in ledger)
+
+
+def test_completed_cached_judgment_reason_is_revalidated_and_old_receipt_preserved(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    old = verdict_receipt('"winner" B', cost=.08)
+    parent = pipeline._stage_cache('judge').job(task['key'])
+    parent.save(status='completed', result=old, remote_id='historical-paid',
+                started_at='20261026T010000.000000Z', completed_at='20261026T010001.000000Z')
+    row, cached = asyncio.run(pipeline._execute(task, 'judge'))
+    assert not cached
+    assert row['cost_usd'] == pytest.approx(.09)
+    assert row['attempts'][0]['result'] == old
+    preserved = json.loads(Path(row['attempts'][0]['cache_record']).read_text())
+    assert preserved['remote_id'] == 'historical-paid'
+    assert preserved['result'] == old
+    assert len(provider.judgments) == 1
+
+
+def test_checkpoint_write_failure_after_valid_verdict_never_creates_another_paid_attempt(tmp_path, monkeypatch):
+    from crest.cache import Job
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    save = Job.save
+    failed = False
+    def interrupted_save(job, **changes):
+        nonlocal failed
+        if changes.get('status') == 'completed' and job.key == task['key'] and not failed:
+            failed = True
+            raise OSError('interrupted parent completion')
+        return save(job, **changes)
+    monkeypatch.setattr(Job, 'save', interrupted_save)
+    with pytest.raises(OSError, match='interrupted'):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert row['cost_usd'] == .01
+    assert len(row['attempts']) == 1
+    assert len(provider.judgments) == 1
+
+
+def test_native_terminal_raw_checkpoint_is_recovered_without_rebuying(tmp_path):
+    from types import SimpleNamespace
+    from crest.providers import openai
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    raw = {'id': 'terminal-paid', 'status': 'completed', 'model': 'gpt-6.1-sol',
+           'usage': {'input_tokens': 100, 'output_tokens': 10},
+           'output': [{'type': 'message', 'status': 'completed',
+                       'content': [{'type': 'output_text', 'text': verdict_receipt()['text']}]}]}
+    async def interrupted(prompt, settings, job):
+        calls.append(job.path)
+        job.save(raw=raw, remote_id=raw['id'], remote_status='completed')
+        raise asyncio.CancelledError()
+    provider.judge = interrupted
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    # This adapter can decode the saved terminal response without credentials or network.
+    pipeline.providers['openai'] = SimpleNamespace(judge=openai.judge)
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert row['result']['raw'] == raw
+    assert row['cost_usd'] == pytest.approx(.0003)
+    assert len(row['attempts']) == 1
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize('old', [{}, {'text': ''}, {'text': None}, [], None])
+def test_malformed_cached_judgment_becomes_preserved_rejected_attempt(tmp_path, old):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    parent = pipeline._stage_cache('judge').job(task['key'])
+    parent.save(status='completed', result=old)
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert len(row['attempts']) == 2
+    assert row['attempts'][0]['status'] == 'rejected'
+    assert row['cost_usd'] is None
+    assert row['known_cost_usd'] == .01
+    assert row['unknown_cost_count'] == 1
+    original = json.loads(Path(row['attempts'][0]['cache_record']).read_text())
+    assert original['result'] == old
+    assert len(provider.judgments) == 1
+
+
+def test_valid_legacy_cached_judgment_is_strictly_reused_without_checkpoint_mutation(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    parent = pipeline._stage_cache('judge').job(task['key'])
+    parent.save(status='completed', result=verdict_receipt(cost=.08))
+    before = parent.path.read_bytes()
+    row, cached = asyncio.run(pipeline._execute(task, 'judge'))
+    assert cached
+    assert row['cost_usd'] == .08
+    assert parent.path.read_bytes() == before
+    assert provider.judgments == []
+
+
+def test_prior_ledger_carries_failed_attempts_and_imported_costs_once(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    config['judges'] = {'openai': config['judges']['openai']}
+    config['judges']['openai']['retry_attempts'] = 2
+    providers = {name: FakeProvider(name) for name in ('openai', 'gemini')}
+    paid = []
+    async def invalid(prompt, settings, job):
+        paid.append(job.path)
+        return {**verdict_receipt(cost=.04), 'text': 'invalid JSON'}
+    providers['openai'].judge = invalid
+    pipeline = Pipeline(config, providers=providers)
+    asyncio.run(pipeline.generate())
+    imported = {'key': 'imported-superseded', 'stage': 'judge', 'judge': 'openai',
+                'cost_usd': .3, 'valid_for_ranking': False}
+    (pipeline.run_dir / 'prior_judgment_costs.jsonl').write_text(json.dumps(imported) + '\n')
+    failed = asyncio.run(pipeline.judge())
+    assert failed['failed'] == 2
+    asyncio.run(pipeline.judge())
+    assert len(paid) == 4
+    Path(config['rubric']).write_text('A different rubric that creates new paid keys.')
+    providers['openai'].judge = FakeProvider('openai').judge
+    final = Path(asyncio.run(pipeline.judge())['directory'])
+    ledger = [json.loads(line) for line in (final / 'prior_judgment_costs.jsonl').read_text().splitlines()]
+    assert len(ledger) == 3
+    assert sum(row['cost_usd'] for row in ledger) == pytest.approx(.46)
+    old = [row for row in ledger if row['key'] != imported['key']]
+    assert all(len(row['attempts']) == 2 for row in old)
+    assert all(row['valid_for_ranking'] is False for row in ledger)
+
+
+def test_judgment_unknown_charged_cost_keeps_known_retry_cost_separate(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    paid = []
+    async def judge(prompt, settings, job):
+        paid.append(job.path)
+        if len(paid) == 1:
+            return {**verdict_receipt(cost=None), 'text': 'invalid JSON'}
+        return verdict_receipt(cost=.02)
+    provider.judge = judge
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert row['cost_usd'] is None
+    assert row['known_cost_usd'] == .02
+    assert row['unknown_cost_count'] == 1
+    assert [attempt['cost_usd'] for attempt in row['attempts']] == [None, .02]
+    assert row['result']['cost_usd'] == .02
+
+
+def test_terminal_raw_id_reconciles_unknown_submission_before_quality_retry(tmp_path):
+    from crest.providers import openai
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    raw = {'id': 'paid-reconcile', 'status': 'completed', 'model': 'gpt-6.1-sol',
+           'usage': {'input_tokens': 100, 'output_tokens': 10},
+           'output': [{'type': 'message', 'content': [{'type': 'output_text',
+                       'text': verdict_receipt('"winner" B')['text']}]}]}
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        if len(calls) == 1:
+            job.save(raw=raw, submission_unknown=True, provider_result=verdict_receipt('"winner" B', cost=.0003))
+            raise asyncio.CancelledError()
+        if job.state.get('raw'):
+            return await openai.judge(prompt, settings, job)
+        return verdict_receipt(cost=.02)
+    provider.judge = judge
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert row['cost_usd'] == pytest.approx(.0203)
+    assert row['attempts'][0]['remote_id'] == raw['id']
+    assert row['attempts'][0]['submission_unknown'] is False
+    assert len(row['attempts']) == 2
+
+
+def test_legacy_retry_does_not_invent_a_start_time_for_earlier_paid_work(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    parent = pipeline._stage_cache('judge').job(task['key'])
+    parent.save(status='completed', result=verdict_receipt('"winner" B', cost=.03))
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert row['attempts'][0]['timing']['started_at'] is None
+    assert row['attempts'][0]['timing']['duration_seconds'] is None
+    assert row['timing']['started_at'] is None
+    assert row['timing']['duration_seconds'] is None
+    assert row['attempts'][1]['timing']['duration_seconds'] >= 0
+
+
+@pytest.mark.parametrize('placeholder', [None, {}, {'text': 'invalid JSON'}])
+def test_legacy_active_paid_judgment_is_retrieved_before_placeholder_validation(tmp_path, placeholder):
+    import httpx
+    from crest.providers import openai
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    parent = pipeline._stage_cache('judge').job(task['key'])
+    parent.save(status='failed', result=placeholder, remote_id='active-paid',
+                remote_status='in_progress', raw={'id': 'active-paid', 'status': 'in_progress'})
+    requests = []
+    final = {'id': 'active-paid', 'status': 'completed', 'model': 'gpt-6.1-sol',
+             'usage': {'input_tokens': 100, 'output_tokens': 10},
+             'output': [{'type': 'message', 'content': [{'type': 'output_text',
+                         'text': verdict_receipt()['text']}]}]}
+    def handler(request):
+        requests.append((request.method, request.url.path))
+        assert request.method == 'GET', 'an active paid response must never trigger another POST'
+        return httpx.Response(200, json=final)
+    async def judge(prompt, settings, job):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await openai.judge(prompt, settings, job, client=client)
+    provider.judge = judge
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert requests == [('GET', '/v1/responses/active-paid')]
+    assert len(row['attempts']) == 1
+    assert row['attempts'][0]['remote_id'] == 'active-paid'
+    assert row['cost_usd'] == pytest.approx(.0003)
+    assert row['result']['raw'] == final
+
+
+def test_legacy_active_paid_judgment_poll_failure_never_opens_a_fresh_attempt(tmp_path):
+    import httpx
+    from crest.providers import openai
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    parent = pipeline._stage_cache('judge').job(task['key'])
+    parent.save(status='failed', result=None, remote_id='active-paid',
+                remote_status='in_progress', raw={'id': 'active-paid', 'status': 'in_progress'})
+    requests = []
+    def handler(request):
+        requests.append((request.method, request.url.path))
+        assert request.method == 'GET', 'a failed poll must never trigger another POST'
+        return httpx.Response(404, json={'error': 'temporary retrieval failure'})
+    async def judge(prompt, settings, job):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await openai.judge(prompt, settings, job, client=client)
+    provider.judge = judge
+    for _ in range(2):
+        with pytest.raises(httpx.HTTPStatusError):
+            asyncio.run(pipeline._execute(task, 'judge'))
+    assert requests == [('GET', '/v1/responses/active-paid')] * 2
+    state = pipeline._stage_cache('judge').job(task['key']).state
+    assert len(state['attempts']) == 1
+    assert state['attempts'][0]['status'] == 'failed'
+    assert state['attempts'][0]['remote_id'] == 'active-paid'
+
+
+def test_corrupt_judgment_cache_keeps_prior_paid_receipt_in_failure_accounting(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    providers = {name: FakeProvider(name) for name in ('openai', 'gemini')}
+    pipeline = Pipeline(config, providers=providers)
+    asyncio.run(pipeline.generate())
+    original = Path(asyncio.run(pipeline.judge())['directory'])
+    rows = [json.loads(line) for line in (original / 'judgments.jsonl').read_text().splitlines()]
+    job = pipeline._stage_cache('judge').job(rows[0]['key'])
+    job.path.write_text('{corrupted checkpoint')
+    rerun = Path(asyncio.run(pipeline.judge())['directory'])
+    error = json.loads((rerun / 'errors.jsonl').read_text())
+    assert error['key'] == rows[0]['key']
+    assert error['cost_usd'] == .01
+    assert error['historical_cost_receipt']['key'] == rows[0]['key']
+    assert not (rerun / 'prior_judgment_costs.jsonl').read_text()
+    assert pipeline.analyze()['report']['costs']['total']['known_usd'] == pytest.approx(.44)
+    assert sum(len(provider.judgments) for provider in providers.values()) == 4
+    assert job.path.read_text() == '{corrupted checkpoint'
+
+
+def test_prior_tasks_recover_paid_cache_receipts_missing_from_stage_rows(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    providers = {name: FakeProvider(name) for name in ('openai', 'gemini')}
+    pipeline = Pipeline(config, providers=providers)
+    asyncio.run(pipeline.generate())
+    old = Path(asyncio.run(pipeline.judge())['directory'])
+    original = [json.loads(line) for line in (old / 'judgments.jsonl').read_text().splitlines()]
+    (old / 'judgments.jsonl').write_text('')  # Crash between paid checkpoint and row append.
+    Path(config['rubric']).write_text('A new rubric produces new judgment keys.')
+    current = Path(asyncio.run(pipeline.judge())['directory'])
+    ledger = [json.loads(line) for line in (current / 'prior_judgment_costs.jsonl').read_text().splitlines()]
+    assert {row['key'] for row in ledger} == {row['key'] for row in original}
+    assert sum(row['cost_usd'] for row in ledger) == pytest.approx(.04)
+    assert all(row['attempts'] for row in ledger)
+    assert pipeline.analyze()['report']['costs']['total']['known_usd'] == pytest.approx(.48)

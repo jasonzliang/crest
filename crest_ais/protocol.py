@@ -10,10 +10,14 @@ from pathlib import Path
 import random
 
 from crest.cache import digest
+from crest import judging as shared_judging
+from crest.presentation import PRESENTATION_VERSION, present_answer
 from .catalog import within_root
 
-PROTOCOL_VERSION = "crest-ais-overall-v2"
-JUDGING_VERSION = "nus-overall-pairwise-v2"
+PROTOCOL_VERSION = "crest-ais-overall-v3"
+JUDGING_VERSION = "nus-overall-pairwise-v3"
+LEGACY_PROTOCOL_VERSION = "crest-ais-overall-v2"
+LEGACY_JUDGING_VERSION = "nus-overall-pairwise-v2"
 # Preserve the original fixed paper-pair draw when judgment semantics change.
 SAMPLING_VERSION = "crest-ais-v1"
 CRITERIA = ("new", "useful", "surprising")  # Guidance meanings, never separate verdicts.
@@ -29,7 +33,7 @@ SCHEMA = {
 }
 
 
-def build_prompt(question: str, answer_a: str, answer_b: str, rubric: str) -> str:
+def _legacy_build_prompt(question: str, answer_a: str, answer_b: str, rubric: str) -> str:
     """Render complete content with only anonymous answer labels.
 
     JSON encoding prevents an answer from closing a structural delimiter.
@@ -58,36 +62,24 @@ def build_prompt(question: str, answer_a: str, answer_b: str, rubric: str) -> st
     )
 
 
-def validate_verdict(value: dict) -> dict:
-    """Accept one flat overall choice, returning its reason before its winner."""
-    if not isinstance(value, dict) or set(value) != {"reason", "winner"}:
-        raise ValueError("verdict must contain exactly reason and winner")
-    reason = value["reason"]
-    if not isinstance(reason, str) or not reason.strip():
-        raise ValueError("reason must be a nonempty string")
-    if not isinstance(value["winner"], str) or value["winner"] not in ("A", "B"):
-        raise ValueError("winner must be A or B")
-    return {"reason": reason, "winner": value["winner"]}
+def build_prompt(question: str, answer_a: str, answer_b: str, rubric: str,
+                 *, answers_are_presented: bool = False) -> str:
+    """Use the shared current contract for new manuscript comparisons."""
+    return shared_judging.build_prompt(question, answer_a, answer_b, rubric,
+                                      answers_are_presented=answers_are_presented)
 
 
-def parse_verdict(text: str) -> dict:
-    """Parse a single JSON verdict, rejecting duplicate keys and prose wrappers."""
-    if not isinstance(text, str):
-        raise ValueError("judge response must be JSON text")
+def validate_verdict(value: dict, *, require_reason_quality: bool = False) -> dict:
+    """Keep historical parsing permissive unless a current plan requests quality."""
+    return shared_judging.validate_verdict(value, require_reason_quality=require_reason_quality)
 
-    def unique_object(pairs):
-        result = {}
-        for key, value in pairs:
-            if key in result:
-                raise ValueError(f"duplicate JSON key: {key}")
-            result[key] = value
-        return result
 
-    try:
-        value = json.loads(text, object_pairs_hook=unique_object)
-    except (json.JSONDecodeError, RecursionError) as exc:
-        raise ValueError("judge response is not a single valid JSON object") from exc
-    return validate_verdict(value)
+def parse_verdict(text: str, *, require_reason_quality: bool = False) -> dict:
+    return shared_judging.parse_verdict(text, require_reason_quality=require_reason_quality)
+
+
+def requires_reason_quality(plan: dict) -> bool:
+    return plan.get("version") == PROTOCOL_VERSION
 
 PAPER_PREFACE = """SCIENTIFIC MANUSCRIPT COMPARISON
 The answers below are page-tagged transcriptions of released research manuscripts,
@@ -172,28 +164,16 @@ def make_plan(catalog: list[dict], agents: dict, judges: dict, data_root: Path, 
             papers = [left[index // len(right)], right[index % len(right)]]
             paper_ids = [paper["id"] for paper in papers]
             selected.update(paper_ids)
-            pair_id = digest({"protocol": SAMPLING_VERSION, "papers": paper_ids})
-            for order in (paper_ids, paper_ids[::-1]):
-                answers = [texts[identity] for identity in order]
-                if answers[0] == answers[1]:
-                    raise ValueError(f"Identical blinded manuscripts cannot be judged: {paper_ids}")
-                prompt = build_prompt(PAPER_QUESTION, *answers, full_rubric)
-                for judge, settings in judge_settings.items():
-                    identity = {"protocol": PROTOCOL_VERSION, "judging_protocol": JUDGING_VERSION,
-                                "pair_id": pair_id, "papers": paper_ids, "order": order,
-                                "judge": judge, "settings": settings, "prompt": prompt,
-                                "rubric": full_rubric,
-                                "pdf_sha256": [paper["sha256"] for paper in papers]}
-                    jobs.append({"key": digest(identity), "pair_id": pair_id, "agents": list(pair),
-                                 "papers": paper_ids[:], "order": order[:], "judge": judge,
-                                 "settings": deepcopy(settings), "prompt": prompt})
+            jobs.extend(_frozen_pair_jobs(papers, texts, judge_settings, full_rubric, PAPER_QUESTION))
     selection = {"method": "Uniform distinct paper pairs without replacement independently within each scientist matchup",
                  "seed": seed, "pairs_per_matchup": pairs_per_matchup,
                  "scientist_matchups": len(strata), "sampled_pairs": sum(s["sampled_pairs"] for s in strata),
                  "judges_per_pair": 2, "orders_per_judge": 2,
                  "eligible_papers_per_agent": {agent: len(pool) for agent, pool in by_agent.items()},
                  "note": "All released eligible papers remain in the sampling pool; matchups receive equal weight in analysis."}
-    plan = {"version": PROTOCOL_VERSION, "sampling_version": SAMPLING_VERSION, "created_at": datetime.now(timezone.utc).isoformat(),
+    plan = {"version": PROTOCOL_VERSION, "judging_protocol": JUDGING_VERSION,
+            "presentation_version": PRESENTATION_VERSION,
+            "sampling_version": SAMPLING_VERSION, "created_at": datetime.now(timezone.utc).isoformat(),
             "seed": seed, "pairs_per_matchup": pairs_per_matchup,
             "agents": dict(sorted(agents.items())), "judges": judge_settings,
             "papers": [deepcopy(paper) for paper in sorted(catalog, key=lambda row: row["id"]) if paper["id"] in selected],
@@ -207,7 +187,7 @@ def make_plan(catalog: list[dict], agents: dict, judges: dict, data_root: Path, 
 EXTENSION_VERSION = "crest-ais-extension-v1"
 
 
-def _frozen_pair_jobs(papers, texts, judges, rubric, question):
+def _frozen_pair_jobs(papers, texts, judges, rubric, question, *, protocol_version=PROTOCOL_VERSION):
     paper_ids = [paper["id"] for paper in papers]
     pair_id = digest({"protocol": SAMPLING_VERSION, "papers": paper_ids})
     jobs = []
@@ -215,15 +195,28 @@ def _frozen_pair_jobs(papers, texts, judges, rubric, question):
         answers = [texts[identity] for identity in order]
         if answers[0] == answers[1]:
             raise ValueError(f"Identical blinded manuscripts cannot be judged: {paper_ids}")
-        prompt = build_prompt(question, *answers, rubric)
+        legacy = protocol_version == LEGACY_PROTOCOL_VERSION
+        if not legacy and protocol_version != PROTOCOL_VERSION:
+            raise ValueError("Unsupported frozen manuscript protocol")
+        presented = answers if legacy else [present_answer(answer) for answer in answers]
+        if not legacy and presented[0] == presented[1]:
+            raise ValueError(f"Identical judge presentations cannot be judged: {paper_ids}")
+        prompt = (_legacy_build_prompt(question, *answers, rubric) if legacy else
+                  build_prompt(question, *presented, rubric, answers_are_presented=True))
+        metadata = {} if legacy else {
+            "judging_protocol": JUDGING_VERSION, "presentation_version": PRESENTATION_VERSION,
+            "answer_hashes": [hashlib.sha256(answer.encode()).hexdigest() for answer in answers],
+            "presented_answer_hashes": [hashlib.sha256(answer.encode()).hexdigest() for answer in presented]}
         for judge, settings in sorted(judges.items()):
-            identity = {"protocol": PROTOCOL_VERSION, "judging_protocol": JUDGING_VERSION,
+            identity = {"protocol": protocol_version,
+                        "judging_protocol": LEGACY_JUDGING_VERSION if legacy else JUDGING_VERSION,
                         "pair_id": pair_id, "papers": paper_ids, "order": order,
                         "judge": judge, "settings": settings, "prompt": prompt, "rubric": rubric,
-                        "pdf_sha256": [paper["sha256"] for paper in papers]}
+                        "pdf_sha256": [paper["sha256"] for paper in papers], **metadata}
             jobs.append({"key": digest(identity), "pair_id": pair_id,
                          "agents": [paper["agent"] for paper in papers], "papers": paper_ids[:],
-                         "order": order[:], "judge": judge, "settings": deepcopy(settings), "prompt": prompt})
+                         "order": order[:], "judge": judge, "settings": deepcopy(settings), "prompt": prompt,
+                         **metadata})
     return jobs
 
 
@@ -236,7 +229,7 @@ def extend_plan(parent: dict, data_root: Path, *, pairs_per_matchup: int = 10,
     records that timing for analysis to avoid a fixed-size confidence claim.
     """
     validate_plan_fingerprint(parent)
-    if parent.get("version") != PROTOCOL_VERSION or parent.get("sampling_version") != SAMPLING_VERSION:
+    if parent.get("version") not in {PROTOCOL_VERSION, LEGACY_PROTOCOL_VERSION} or parent.get("sampling_version") != SAMPLING_VERSION:
         raise ValueError("Extension requires the current frozen overall protocol")
     if (isinstance(pairs_per_matchup, bool) or not isinstance(pairs_per_matchup, int)
             or pairs_per_matchup < parent["pairs_per_matchup"]):
@@ -277,7 +270,8 @@ def extend_plan(parent: dict, data_root: Path, *, pairs_per_matchup: int = 10,
             raise ValueError("Parent job references an ineligible paper")
         blocks.setdefault(pair, []).append(job)
     for pair, jobs in blocks.items():
-        expected = _frozen_pair_jobs([records[identity] for identity in pair], texts, judges, parent["rubric"], question)
+        expected = _frozen_pair_jobs([records[identity] for identity in pair], texts, judges, parent["rubric"], question,
+                                     protocol_version=parent["version"])
         if {job["key"]: job for job in jobs} != {job["key"]: job for job in expected}:
             raise ValueError("Parent job keys, prompts, settings, or order do not match frozen inputs")
     new_jobs, strata, stages = [], [], []
@@ -302,7 +296,8 @@ def extend_plan(parent: dict, data_root: Path, *, pairs_per_matchup: int = 10,
         additions = [remaining[index] for index in sorted(rng.sample(range(len(remaining)), target - len(existing)))]
         for papers in additions:
             selected.update(paper["id"] for paper in papers)
-            new_jobs.extend(_frozen_pair_jobs(papers, texts, judges, parent["rubric"], question))
+            new_jobs.extend(_frozen_pair_jobs(papers, texts, judges, parent["rubric"], question,
+                                             protocol_version=parent["version"]))
         strata.append({"agents": list(matchup), "population_pairs": population, "sampled_pairs": target})
         stages.append({"agents": list(matchup), "population_pairs": population, "original_pairs": len(existing),
                        "additional_pairs": len(additions), "final_pairs": target})
@@ -391,7 +386,8 @@ def add_agent_plan(parent: dict, new_catalog: list[dict], new_agents: dict, data
         for index in sorted(rng.sample(range(population), count)):
             papers = [left[index // len(right)], right[index % len(right)]]
             selected.update(paper["id"] for paper in papers)
-            additions.extend(_frozen_pair_jobs(papers, texts, parent["judges"], parent["rubric"], question))
+            additions.extend(_frozen_pair_jobs(papers, texts, parent["judges"], parent["rubric"], question,
+                                              protocol_version=parent["version"]))
         strata.append({"agents": list(matchup), "population_pairs": population, "sampled_pairs": count})
         stages.append({"agents": list(matchup), "population_pairs": population,
                        "original_pairs": 0, "additional_pairs": count, "final_pairs": count})

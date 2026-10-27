@@ -200,6 +200,28 @@ def cost_for_row(row: dict) -> dict:
     if isinstance(attached, dict) and attached.get("version") == COST_VERSION:
         return copy.deepcopy(attached)
     result = row.get("result") if isinstance(row.get("result"), dict) else row
+    if row.get('cost_scope') == 'all_judgment_attempts' and row.get('attempts'):
+        attempts = row['attempts']
+        keys = [attempt.get('key') for attempt in attempts]
+        if any(not isinstance(key, str) or not key for key in keys) or len(set(keys)) != len(keys):
+            raise ValueError('Judgment attempt receipts require distinct keys')
+        details = assess_cost(result, agent=row.get('judge') or row.get('provider'), settings=row.get('settings'))
+        amounts = [_first(attempt.get('cost_usd')) for attempt in attempts]
+        known = [value for value in amounts if value is not None]
+        details.update(
+            recorded_provider_estimate_usd=_first(row.get('cost_usd')),
+            current_attempt_known_estimate_usd=amounts[-1],
+            prior_attempt_known_estimate_usd=math.fsum(v for v in amounts[:-1] if v is not None),
+            cumulative_known_estimate_usd=math.fsum(known) if known else None,
+            current_attempt_estimate_incomplete=amounts[-1] is None,
+            estimate_incomplete=any(value is None for value in amounts),
+            history_attempts=[{'job_key': attempt['key'], 'source_job': attempt.get('cache_record'),
+                               'known_estimate_usd': amount, 'unresolved_reserved_exposure_usd': 0,
+                               'cost_unknown': amount is None}
+                              for attempt, amount in zip(attempts[:-1], amounts[:-1])])
+        details['assumptions'].append(
+            'Judgment costs include retained rejected attempts; displayed response usage belongs only to the selected attempt.')
+        return details
     return assess_cost(result, agent=row.get("agent") or row.get("provider") or row.get("judge"),
                        settings=row.get("settings"))
 

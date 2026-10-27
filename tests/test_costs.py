@@ -10,6 +10,32 @@ PRIOR_KEY = "a" * 64
 CURRENT_KEY = "b" * 64
 
 
+def test_judge_retry_receipts_count_rejected_attempts_without_repricing_success_usage():
+    success = {'model': 'gpt-6-astra', 'cost_usd': .3, 'usage': {'output_tokens': 100}}
+    row = {'judge': 'openai', 'key': CURRENT_KEY, 'result': success, 'cost_usd': .5,
+           'cost_scope': 'all_judgment_attempts', 'attempts': [
+               {'key': PRIOR_KEY, 'status': 'rejected', 'cost_usd': .2,
+                'result': {'model': 'gpt-6-astra', 'cost_usd': .2}},
+               {'key': CURRENT_KEY, 'status': 'completed', 'cost_usd': .3, 'result': success}]}
+    before = copy.deepcopy(row)
+    cost = cost_for_row(row)
+    assert cost['current_attempt_known_estimate_usd'] == .3
+    assert cost['prior_attempt_known_estimate_usd'] == .2
+    assert cost['cumulative_known_estimate_usd'] == .5
+    assert summarize_costs([row, row])['cumulative_known_estimate_usd'] == .5
+    assert row == before
+
+
+def test_judge_retry_unknown_charge_retains_known_subtotal_and_uncertainty():
+    row = {'judge': 'gemini', 'cost_scope': 'all_judgment_attempts', 'cost_usd': None,
+           'result': {'model': 'gemini-4-argon', 'cost_usd': .3},
+           'attempts': [{'key': PRIOR_KEY, 'cost_usd': None},
+                        {'key': CURRENT_KEY, 'status': 'completed', 'cost_usd': .3}]}
+    cost = cost_for_row(row)
+    assert cost['cumulative_known_estimate_usd'] == .3
+    assert cost['estimate_incomplete'] is True
+
+
 def caesar_result():
     current = {"known_cost_usd": 1.4, "unknown_cost": False,
                "events": [{"status": "completed", "cost_usd": 1.4}], "in_flight": []}

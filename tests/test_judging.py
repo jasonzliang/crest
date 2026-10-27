@@ -178,7 +178,7 @@ def test_fingerprint_invalidates_full_content_rubric_settings_and_protocol(exper
 def test_fingerprint_changes_if_rendered_prompt_changes(experiment, monkeypatch):
     original = judging.build_prompt
     baseline = {j["key"] for j in judging.make_judgment_jobs(*experiment)}
-    monkeypatch.setattr(judging, "build_prompt", lambda *args: original(*args) + "\nExtra instruction.")
+    monkeypatch.setattr(judging, "build_prompt", lambda *args, **kwargs: original(*args, **kwargs) + "\nExtra instruction.")
     assert baseline.isdisjoint({j["key"] for j in judging.make_judgment_jobs(*experiment)})
 
 
@@ -214,3 +214,111 @@ def test_duplicate_agent_answer_records_are_rejected(experiment):
     questions, answers, judges, rubric = experiment
     with pytest.raises(ValueError, match="duplicate"):
         judging.make_judgment_jobs(questions, answers + [answers[0]], judges, rubric)
+
+
+@pytest.mark.parametrize('reason', [
+    'Wait, no markdown!',
+    'Answer A is stronger than Answer B because it combines a structural-thermal ',
+    'Answer A is stronger than Answer B, whose familiar blocks—such as ',
+    'Answer A is stronger than Answer B because it prevents overload (',
+    'Answer A is stronger than Answer B by introducing a six-part ',
+    'Answer A is stronger than Answer B through its mechanism and its ',
+    'Answer A is stronger than Answer B because the central proposal (',
+    'Answer A is stronger than Answer B because its incentives generate B2B ',
+    'Answer A is stronger than Answer B because its least placeable ',
+    'Answer A develops an original mechanism.',
+    'A and B are answers. Return only JSON!',
+])
+def test_quality_screen_rejects_meta_only_noncomparative_or_unfinished_reasons(reason):
+    value = {'reason': reason, 'winner': 'A'}
+    assert judging.parse_verdict(json.dumps(value)) == value
+    with pytest.raises(ValueError, match='reason'):
+        judging.parse_verdict(json.dumps(value), require_reason_quality=True)
+    with pytest.raises(ValueError, match='reason'):
+        judging.validate_verdict(value, require_reason_quality=True)
+
+
+@pytest.mark.parametrize('reason', [
+    "A's less readily placed building block and unexpected central move produce a stronger "
+    "creative proposal, despite B's clearer mechanism.",
+    'A explains the mechanism more clearly than B.',
+    'Both answers are equally coherent; neither offers a substantive creative advantage. '
+    'There is no substantive preference, so A is selected by the fixed convention.',
+    'The first response is more original than the second because it challenges the premise.',
+    'A improves the proof compared with B by reducing its cost to O(n).',
+    'A develops a clearer mechanism than B, including the limit described by Smith et al.',
+    'A is more coherent than B because its conclusion is "test the mechanism."',
+    'A is faster than B:\n- A: O(n)\n- B: O(n²)',
+    'A is more explicit than B about the valid interval [0, 1).',
+])
+def test_quality_screen_accepts_comparison_without_word_count_or_keyword_demands(reason):
+    value = {'reason': reason, 'winner': 'A'}
+    assert judging.parse_verdict(json.dumps(value), require_reason_quality=True) == value
+
+
+def test_jobs_store_raw_and_presented_provenance_and_share_presentations(experiment):
+    questions, answers, judges, rubric = experiment
+    answers[0]['result']['text'] = 'Use [the paper](https://publisher.test/p?utm_source=chatgpt.com).'
+    raw_snapshot = deepcopy(answers)
+    jobs = judging.make_judgment_jobs(questions, answers, judges, rubric)
+    normal = next(j for j in jobs if j['order'] == ['caesar', 'gemini'])
+    reverse = next(j for j in jobs if j['order'] == ['gemini', 'caesar'])
+    assert normal['protocol_version'] == judging.PROTOCOL_VERSION
+    assert normal['presentation_version']
+    assert normal['answer_hashes'][0] == hashlib.sha256(answers[0]['result']['text'].encode()).hexdigest()
+    assert normal['presented_answer_hashes'][0] == hashlib.sha256(b'Use [the paper].').hexdigest()
+    assert reverse['presented_answer_hashes'] == list(reversed(normal['presented_answer_hashes']))
+    forward_data = json.loads(normal['prompt'].split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])
+    reverse_data = json.loads(reverse['prompt'].split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])
+    assert forward_data['A'] == reverse_data['B'] == 'Use [the paper].'
+    assert answers == raw_snapshot
+
+
+def test_url_only_differences_are_excluded_as_identical_presentations(experiment):
+    questions, answers, judges, rubric = experiment
+    answers[0]['result']['text'] = 'Use [the paper](https://publisher.test/a?utm_source=chatgpt.com).'
+    answers[1]['result']['text'] = 'Use [the paper](https://vertexaisearch.cloud.google.com/redirect/b).'
+    jobs = judging.make_judgment_jobs(questions, answers, judges, rubric)
+    skipped = [j for j in jobs if j.get('skip_reason')]
+    assert len(skipped) == 4
+    assert all(j['skip_reason'] == 'identical_answers' for j in skipped)
+    assert all(j['answer_hashes'][0] != j['answer_hashes'][1] for j in skipped)
+    assert all(j['presented_answer_hashes'][0] == j['presented_answer_hashes'][1] for j in skipped)
+
+
+def test_direct_prompt_calls_apply_same_presentation_as_scheduled_jobs():
+    prompt = judging.build_prompt('Question', 'See https://one.test.', 'See https://two.test.', 'Rubric')
+    data = json.loads(prompt.split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])
+    assert data == {'question': 'Question', 'A': 'See [Source 1].', 'B': 'See [Source 1].'}
+
+
+@pytest.mark.parametrize('reason', [
+    'A gives a clearer mechanism than B, so there are no adverse tradeoffs in choosing A.',
+    'Both answers avoid superficial decoration, but A achieves greater creative quality '
+    'by specifying the operating mechanism and its failure modes.',
+])
+def test_quality_screen_accepts_answer_labels_and_greater_comparative_language(reason):
+    assert judging.validate_verdict({'reason': reason, 'winner': 'A'},
+                                    require_reason_quality=True)['reason'] == reason
+
+
+def test_prompt_word_range_is_advisory_and_explanation_must_be_complete():
+    prompt = judging.build_prompt('Question', 'First answer', 'Second answer', 'Rubric')
+    assert 'Aim for 150–300 words in a complete comparative paragraph' in prompt
+    assert 'one complete paragraph of 150–300 words' not in prompt
+
+
+@pytest.mark.parametrize('reason', [
+    'A supplies a stronger mechanism that B provides no evidence for.',
+    'A proposes an implementation, but B supplies assumptions without a mechanism.',
+])
+def test_quality_screen_accepts_grammatical_preposition_endings_and_but_comparisons(reason):
+    assert judging.validate_verdict({'reason': reason, 'winner': 'A'},
+                                    require_reason_quality=True)['reason'] == reason
+
+
+def test_quality_screen_accepts_comparison_without_allowlisted_connective():
+    reason = ('A and B each provide viable mechanisms; A demonstrates feasibility, '
+              'B merely asserts it.')
+    assert judging.validate_verdict({'reason': reason, 'winner': 'A'},
+                                    require_reason_quality=True)['reason'] == reason

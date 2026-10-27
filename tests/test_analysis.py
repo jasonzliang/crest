@@ -56,6 +56,21 @@ def failure_cost_fields(cost):
         "partial_observed_estimate_usd", "observed_count", "budget_exceeded_count")}
 
 
+def test_revised_protocol_excludes_noncomparative_reason_but_preserves_legacy_reproduction():
+    data = experiment(2)
+    data[2][0]['verdict']['reason'] = 'Wait, no markdown!'
+    assert report(data)['coverage']['complete_questions'] == 2
+    for row in data[2]:
+        row['protocol_version'] = 'nus-overall-pairwise-v3'
+        if row is not data[2][0]:
+            row['verdict']['reason'] = (
+                "A develops an original load-sharing mechanism with a supported payoff, "
+                "whereas B repeats the expected bridge design without resolving its stated weakness.")
+    result = report(data)
+    assert result['coverage']['complete_questions'] == 1
+    assert result['coverage']['invalid_judgments'] == 1
+
+
 class AnalysisTests(unittest.TestCase):
     def test_swapped_labels_map_back_to_agent_and_rank_three_entrants(self):
         result = report(experiment())

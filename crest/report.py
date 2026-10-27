@@ -126,9 +126,13 @@ def _validate(data):
         if not isinstance(row.get('key'), str) or not row['key'] or row['key'] in keys:
             raise ValueError('Judgments require unique canonical keys')
         keys.add(row['key'])
-        verdict = validate_verdict(row.get('verdict'))
+        protocol = row.get('protocol_version')
+        if protocol not in (None, 'nus-overall-pairwise-v2', 'nus-overall-pairwise-v3'):
+            raise ValueError('Unsupported judging protocol')
+        strict_reason = protocol == 'nus-overall-pairwise-v3'
+        verdict = validate_verdict(row.get('verdict'), require_reason_quality=strict_reason)
         text = (row.get('result') or {}).get('text')
-        if text is not None and parse_verdict(text) != verdict:
+        if text is not None and parse_verdict(text, require_reason_quality=strict_reason) != verdict:
             raise ValueError('Stored verdict differs from the provider result')
         ordered = [answer_map[row['question_id'], a] for a in order]
         if 'answer_keys' in row and row['answer_keys'] != [a['key'] for a in ordered]:
@@ -136,6 +140,14 @@ def _validate(data):
         if 'answer_hashes' in row and row['answer_hashes'] != [
                 hashlib.sha256(a['result']['text'].encode()).hexdigest() for a in ordered]:
             raise ValueError('Judgment answer content hashes do not match')
+        if strict_reason:
+            from .presentation import PRESENTATION_VERSION, present_answer
+            if row.get('presentation_version') != PRESENTATION_VERSION or row.get('presented_answer_hashes') != [
+                    hashlib.sha256(present_answer(a['result']['text']).encode()).hexdigest() for a in ordered]:
+                raise ValueError('Judgment presentation hashes do not match the saved answers')
+    if any(j.get('protocol_version') == 'nus-overall-pairwise-v3' for j in judgments) and not all(
+            j.get('protocol_version') == 'nus-overall-pairwise-v3' for j in judgments):
+        raise ValueError('Do not mix judgments from different rubric protocols')
     if len(judgments) != 600 or seen != cells:
         raise ValueError('Final publication requires 600 valid overall judgments')
     bootstrap = ranking.get('bootstrap', {})
@@ -637,7 +649,18 @@ def _method(data):
     google_grounding = sum(a['agent'] == 'gemini' and 'vertexaisearch.cloud.google.com' in a['result']['text']
                            for a in data['answers'])
     provenance = ''
-    if openai_tracking or google_grounding:
+    revised = bool(data.get('judgments')) and all(
+        j.get('protocol_version') == 'nus-overall-pairwise-v3'
+        and j.get('presentation_version') == 'citation-neutral-v1' for j in data['judgments'])
+    if revised:
+        provenance = ('<p>URL destinations were hidden uniformly in judge presentations; meaningful citation labels and '
+                      'answer content were retained. Original answers are preserved below. Style can still reveal provenance, '
+                      'so this does not establish complete blinding.</p>'
+                      '<p>The revised rubric credits central contributions and combinations, treats unfamiliarity as uncertainty, '
+                      'and evaluates usefulness within the question\'s premises. Equal-merit cases choose A by convention; '
+                      'consistent indifference across both orders splits votes evenly. Mechanical explanation checks '
+                      'reject obvious incomplete or noncomparative responses; they do not verify factual accuracy.</p>')
+    elif openai_tracking or google_grounding:
         provenance = ('<p>Provider labels were withheld, but this run was not fully blinded. '
                       f'Links reveal provenance in {openai_tracking} / 50 {LABELS["openai"]} answers '
                       f'and {google_grounding} / 50 {LABELS["gemini"]} answers. '

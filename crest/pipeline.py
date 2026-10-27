@@ -277,14 +277,16 @@ class Pipeline:
                 ]}
 
     async def _execute(self, task: dict, stage: str, controller=None) -> tuple[dict, bool]:
-        from .judging import parse_verdict
+        if stage == 'judge':
+            from .judge_execution import execute_judgment
+            return await execute_judgment(self, task, controller)
         async with self._stage_cache(stage).lock(task['key']) as job:
             job.rate_controller = controller
             cached = job.state.get('status') == 'completed'
             if cached:
                 result = job.state.get('result')
-                if stage == 'generate' and (not isinstance(result, dict) or
-                        not isinstance(result.get('text'), str) or not result['text'].strip()):
+                if (not isinstance(result, dict) or not isinstance(result.get('text'), str)
+                        or not result['text'].strip()):
                     raise CacheCorruption(f'Completed checkpoint has no complete answer text: {job.path}; '
                                           'preserve and inspect it before retrying')
             else:
@@ -294,35 +296,31 @@ class Pipeline:
                     first_started = started
                 job.save(status='running', stage=stage, started_at=started,
                          first_started_at=first_started, error=None)
-                provider = self._provider(task['agent'] if stage == 'generate' else task['judge'])
-                call = provider.generate if stage == 'generate' else provider.judge
+                provider = self._provider(task['agent'])
                 try:
-                    section, name = ('research', task['agent']) if stage == 'generate' else ('judges', task['judge'])
                     runtime_settings = task['settings'] | {
-                        k: v for k, v in self.config[section][name].items() if k in TRANSPORT_SETTINGS}
+                        k: v for k, v in self.config['research'][task['agent']].items()
+                        if k in TRANSPORT_SETTINGS}
                     already_started = any(job.state.get(k) for k in (
                         'remote_id', 'worker_pid', 'submission_unknown', 'result_path'))
-                    if stage == 'generate' and not already_started:
+                    if not already_started:
                         version = getattr(provider, 'ADAPTER_VERSION', '1')
                         if task.get('adapter_version', version) != version:
                             raise ValueError('Generation adapter changed; start a new stage-1 run to apply it')
                         expected = task.get('source_identity')
                         if expected and provider.identity_metadata(runtime_settings) != expected:
                             raise ValueError('Caesar source changed; start a new stage-1 run to apply it')
-                    result = await call(task['prompt'], runtime_settings, job)
+                    result = await provider.generate(task['prompt'], runtime_settings, job)
                     # Preserve charged usage even when the returned text fails validation.
                     job.save(provider_result=result)
                     if not isinstance(result, dict) or not isinstance(result.get('text'), str) or not result['text'].strip():
                         raise ValueError('Provider returned no complete answer text')
-                    if stage == 'judge':
-                        result['verdict'] = parse_verdict(result['text'])
-                    else:
-                        missing = [c['url'] for c in result.get('citations', [])
-                                   if isinstance(c, dict) and c.get('url') and c['url'] not in result['text']]
-                        if missing:
-                            result['text'] += '\n\nSources:\n' + '\n'.join(dict.fromkeys(missing))
+                    missing = [c['url'] for c in result.get('citations', [])
+                               if isinstance(c, dict) and c.get('url') and c['url'] not in result['text']]
+                    if missing:
+                        result['text'] += '\n\nSources:\n' + '\n'.join(dict.fromkeys(missing))
                     budget, cost = task['settings'].get('budget_usd'), result.get('cost_usd')
-                    if stage == 'generate' and task['agent'] == 'caesar':
+                    if task['agent'] == 'caesar':
                         recovery = (result.get('raw') or {}).get('recovery') or {}
                         # Recovered answer costs include the earlier attempts.
                         budget = recovery.get('original_budget_usd', budget)
@@ -335,14 +333,8 @@ class Pipeline:
                 except Exception as exc:
                     job.save(status='failed', error=f'{type(exc).__name__}: {exc}', failed_at=timestamp())
                     raise
-            if stage == 'judge':
-                verdict = parse_verdict(result['text'])
-                row = {k: task[k] for k in ('key', 'question_id', 'pair', 'order', 'judge', 'answer_keys', 'answer_hashes')}
-                row.update(verdict=verdict, cost_usd=result.get('cost_usd'), usage=result.get('usage', {}),
-                           result=result, cache_hit=cached)
-            else:
-                row = {k: task[k] for k in ('key', 'question_id', 'agent')}
-                row.update(result=result, cache_hit=cached)
+            row = {k: task[k] for k in ('key', 'question_id', 'agent')}
+            row.update(result=result, cache_hit=cached)
             row['cache_record'] = str(job.path)
             row['retry_events'] = job.state.get('retry_events', [])
             row['timing'] = _job_timing(job.state)
@@ -356,6 +348,8 @@ class Pipeline:
         summary = {'planned': len(tasks), 'completed': 0, 'cached': 0, 'failed': 0, 'skipped': 0}
         output = directory / ('answers.jsonl' if stage == 'generate' else 'judgments.jsonl')
         output.touch()
+        historical_costs = ({row['key']: row for row in _read_jsonl(
+            directory / 'prior_judgment_costs.jsonl')} if stage == 'judge' else {})
         question_numbers = {question['id']: i + 1 for i, question in enumerate(self.questions)}
         prompt_template = self.manifest['config'].get('research_prompt')
         if stage == 'generate':
@@ -414,6 +408,23 @@ class Pipeline:
                                                                                state.get('cancel_reason') == 'budget' or
                                                                                result.get('budget_exceeded')),
                                                        'cache_record': str(checkpoint.path) if checkpoint else None}
+                    if stage == 'judge' and 'attempts' in state:
+                        error_row.update(cost_usd=state.get('cost_usd'),
+                                         known_cost_usd=state.get('known_cost_usd'),
+                                         unknown_cost_count=state.get('unknown_cost_count'),
+                                         cost_scope='all_judgment_attempts',
+                                         usage_scope='last_observed_attempt',
+                                         attempts=state['attempts'],
+                                         retry_events=state.get('retry_events', []),
+                                         timing=_job_timing(state))
+                    if stage == 'judge' and checkpoint is None and task['key'] in historical_costs:
+                        historical = historical_costs[task['key']]
+                        error_row.update({k: historical[k] for k in (
+                            'cost_usd', 'known_cost_usd', 'unknown_cost_count', 'cost_scope',
+                            'usage', 'attempts', 'observed_cost_usd', 'observed_cost_scope')
+                            if k in historical})
+                        error_row.update(historical_cost_receipt=historical,
+                                         usage_scope='historical_receipt')
                     if stage == 'generate':
                         receipt = result or {'cost_usd': error_row['cost_usd'], 'usage': error_row['usage'],
                                              'raw': raw.get('raw') or {}}
@@ -436,6 +447,57 @@ class Pipeline:
         self._finish_stage(directory, summary)
         return summary | {'directory': str(directory), 'run_dir': str(self.run_dir)}
 
+    def _prior_judgment_costs(self, directory):
+        """Freeze paid receipts from earlier stages, including orphaned checkpoints."""
+        from .judge_execution import checkpoint_cost_record
+        records = {}
+
+        def include(row):
+            key = row.get('key') or digest(row)
+            previous = records.get(key)
+            # A later aggregate can include extra attempts. Cached repetitions and
+            # inherited copies describe the same paid work, so keep one receipt.
+            score = lambda value: (len(value.get('attempts', [])),
+                                   value.get('known_cost_usd') or value.get('cost_usd') or 0,
+                                   value.get('cost_usd') is not None)
+            if previous is None or score(row) > score(previous):
+                records[key] = row
+
+        for row in _read_jsonl(self.run_dir / 'prior_judgment_costs.jsonl'):
+            include(row)
+        for stage in self.manifest['stages']:
+            if stage['name'] != 'judge' or stage['directory'] == directory.name:
+                continue
+            source = self.run_dir / stage['directory']
+            for row in _read_jsonl(source / 'prior_judgment_costs.jsonl'):
+                include(row)
+            for filename in ('judgments.jsonl', 'errors.jsonl'):
+                for row in _read_jsonl(source / filename):
+                    record = {k: row[k] for k in ('key', 'question_id', 'cost_usd', 'usage',
+                              'known_cost_usd', 'unknown_cost_count', 'cost_scope',
+                              'cache_record', 'attempts', 'observed_cost_usd',
+                              'observed_cost_scope', 'error') if k in row}
+                    record.update(stage='judge', judge=row.get('judge', row.get('provider')),
+                                  valid_for_ranking=False,
+                                  source_judgment_directory=source.name)
+                    include(record)
+            tasks_path = source / 'tasks.json'
+            prior_tasks = json.loads(tasks_path.read_text()) if tasks_path.exists() else []
+            for task in prior_tasks:
+                if task.get('skip_reason'):
+                    continue
+                try:
+                    record = checkpoint_cost_record(self._stage_cache('judge').job(task['key']))
+                except CacheCorruption:
+                    # Stage rows remain usable even when a later cache is damaged.
+                    continue
+                if record is not None:
+                    record.update(stage='judge', judge=task['judge'],
+                                  question_id=task['question_id'], valid_for_ranking=False,
+                                  source_judgment_directory=source.name)
+                    include(record)
+        return list(records.values())
+
     async def judge(self) -> dict:
         from .judging import make_judgment_jobs
         if not self.run_dir:
@@ -456,13 +518,22 @@ class Pipeline:
                        for task in self.manifest['generation_jobs']]
             registry = {record['configuration_id']: record for record in records}
         write_json(directory / 'configurations.json', registry)
-        prior_judgments = _read_jsonl(self.run_dir / 'prior_judgment_costs.jsonl')
+        prior_judgments = self._prior_judgment_costs(directory)
         (directory / 'prior_judgment_costs.jsonl').write_text(''.join(
             json.dumps(row, ensure_ascii=False, allow_nan=False) + '\n' for row in prior_judgments), encoding='utf-8')
         write_json(directory / 'judges.json', judges)
         write_json(directory / 'tasks.json', tasks)
         (directory / 'rubric.txt').write_text(rubric)
         summary = await self._run_tasks(tasks, 'judge', directory)
+        # Current output rows own the costs they actually carry. Historical
+        # fallback receipts remain available until execution has established this.
+        current_rows = (_read_jsonl(directory / 'judgments.jsonl')
+                        + _read_jsonl(directory / 'errors.jsonl'))
+        covered = {row['key'] for row in current_rows
+                   if row.get('attempts') or row.get('cost_usd') is not None}
+        (directory / 'prior_judgment_costs.jsonl').write_text(''.join(
+            json.dumps(row, ensure_ascii=False, allow_nan=False) + '\n'
+            for row in prior_judgments if row.get('key') not in covered), encoding='utf-8')
         expected = len(self.questions) * len(list(itertools.combinations(self.manifest['agents'], 2))) * len(judges) * 2
         summary['unavailable'] = expected - len(tasks)
         self._finish_stage(directory, summary, rubric_sha256=digest(rubric),

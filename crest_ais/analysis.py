@@ -13,7 +13,7 @@ from itertools import combinations
 import math
 from statistics import fmean, variance
 
-from crest_ais.protocol import PROTOCOL_VERSION, validate_plan_fingerprint, validate_verdict
+from crest_ais.protocol import PROTOCOL_VERSION, requires_reason_quality, validate_plan_fingerprint, validate_verdict
 
 
 def _identity(value, name):
@@ -139,7 +139,7 @@ def _validate_plan(plan):
     return agents, judges, catalogs, selected, strata, jobs, blocks
 
 
-def _validate_results(results, jobs):
+def _validate_results(results, jobs, *, require_reason_quality=False):
     if not isinstance(results, list):
         raise ValueError("results must be a list")
     validated = {}
@@ -151,7 +151,7 @@ def _validate_results(results, jobs):
             raise ValueError(f"unknown result key: {key}")
         if key in validated:
             raise ValueError(f"duplicate result key: {key}")
-        verdict = validate_verdict(result.get("verdict"))
+        verdict = validate_verdict(result.get("verdict"), require_reason_quality=require_reason_quality)
         cost = result.get("cost_usd")
         if cost is not None and (isinstance(cost, bool) or not isinstance(cost, (int, float))
                                  or not math.isfinite(cost) or cost < 0):
@@ -297,7 +297,7 @@ def analyze(plan: dict, results: list[dict]) -> dict:
     if isinstance(plan, dict) and "fingerprint" in plan:
         validate_plan_fingerprint(plan)
     agents, judges, catalog, selected, strata, jobs, blocks = _validate_plan(plan)
-    results_by_key = _validate_results(results, jobs)
+    results_by_key = _validate_results(results, jobs, require_reason_quality=requires_reason_quality(plan))
     extension = plan.get("extension")
     posthoc = isinstance(extension, dict) and extension.get("stage") == "post_initial_results"
     complete_blocks = {}

@@ -13,7 +13,7 @@ from pathlib import Path
 import sys
 
 from crest.cache import Cache, digest, write_json
-from .protocol import PROTOCOL_VERSION, add_agent_plan, extend_plan, parse_verdict, validate_verdict, validate_plan_fingerprint
+from .protocol import PROTOCOL_VERSION, add_agent_plan, extend_plan, parse_verdict, requires_reason_quality, validate_verdict, validate_plan_fingerprint
 
 TERMINAL_FAILURES = {"invalid_verdict", "failed", "submission_unknown"}
 
@@ -91,10 +91,15 @@ def _account(state: dict, judge: str, settings: dict) -> dict:
     return accounting
 
 
-def _completed(task: dict, state: dict) -> dict | None:
+def _completed(task: dict, state: dict, *, require_reason_quality: bool = False) -> dict | None:
     if state.get("status") != "completed":
         return None
-    verdict = validate_verdict(state.get("verdict"))
+    verdict = validate_verdict(state.get("verdict"), require_reason_quality=require_reason_quality)
+    if require_reason_quality:
+        result = state.get("result")
+        if (not isinstance(result, dict)
+                or parse_verdict(result.get("text"), require_reason_quality=True) != verdict):
+            raise ValueError("Cached provider output differs from its verdict")
     return {"key": task["key"], "verdict": verdict, **_account(state, task["judge"], task["settings"])}
 
 
@@ -161,13 +166,15 @@ def _create_extension(source_run: Path, run_dir: Path, data_root: Path, *, plan_
     plan = plan_builder(parent, data_root, str(source_run))
     source_cache = Cache(source_run / ".cache" / "judgments")
     source_rows = {row["key"]: row for row in source_results}
+    require_reason_quality = requires_reason_quality(parent)
     states = {}
     for task in parent["jobs"]:
         state = source_cache.job(task["key"]).state
-        if _completed(task, state) != source_rows.get(task["key"]):
+        if _completed(task, state, require_reason_quality=require_reason_quality) != source_rows.get(task["key"]):
             raise ValueError(f"Parent checkpoint differs from result: {task['key']}")
         result = state.get("result")
-        if not isinstance(result, dict) or parse_verdict(result.get("text")) != state["verdict"]:
+        if (not isinstance(result, dict)
+                or parse_verdict(result.get("text"), require_reason_quality=require_reason_quality) != state["verdict"]):
             raise ValueError("Parent provider output differs from its flat verdict")
         states[task["key"]] = state
     existing_plan = run_dir / "plan.json"
@@ -185,7 +192,7 @@ def _create_extension(source_run: Path, run_dir: Path, data_root: Path, *, plan_
     for task in parent["jobs"]:
         job = destination_cache.job(task["key"])
         if job.state:
-            if _completed(task, job.state) != source_rows[task["key"]]:
+            if _completed(task, job.state, require_reason_quality=require_reason_quality) != source_rows[task["key"]]:
                 raise ValueError("Existing imported checkpoint differs from source")
         else:
             write_json(job.path, deepcopy(states[task["key"]]) | {
@@ -203,7 +210,8 @@ def _create_extension(source_run: Path, run_dir: Path, data_root: Path, *, plan_
         write_json(destination, ledger)
     write_json(run_dir / "extension.json", plan["extension"])
     results = [result for task in plan["jobs"]
-               if (result := _completed(task, destination_cache.job(task["key"]).state)) is not None]
+               if (result := _completed(task, destination_cache.job(task["key"]).state,
+                                        require_reason_quality=require_reason_quality)) is not None]
     write_json(run_dir / "results.json", results)
     if not (run_dir / "judging.json").exists():
         known = sum(row["cost_usd"] for row in results if row.get("cost_usd") is not None)
@@ -342,6 +350,17 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
         raise ValueError(f"Plan protocol version must be {PROTOCOL_VERSION}; create a new overall-judgment plan before judging")
     save_plan(plan, run_dir)
     cache = Cache(run_dir / ".cache" / "judgments")
+    require_reason_quality = requires_reason_quality(plan)
+    # Revalidate completed current-contract checkpoints before snapshots can
+    # count them. Invalid paid outputs remain terminal and retain accounting.
+    for task in tasks:
+        async with cache.lock(task["key"]) as job:
+            if job.state.get("status") == "completed":
+                try:
+                    _completed(task, job.state, require_reason_quality=require_reason_quality)
+                except ValueError as error:
+                    job.save(status="invalid_verdict", error=_safe_error(error),
+                             failed_at=datetime.now(timezone.utc).isoformat())
     provided = providers or {}
     _preflight(tasks, cache, provided)
     resolved_providers = dict(provided)
@@ -354,7 +373,8 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
     if len(imported_keys) != len(imported_rows) or imported_keys - tasks_by_key.keys():
         raise ValueError("Invalid imported-result identities")
     for row in imported_rows:
-        if _completed(tasks_by_key[row["key"]], cache.job(row["key"]).state) != row:
+        if _completed(tasks_by_key[row["key"]], cache.job(row["key"]).state,
+                      require_reason_quality=require_reason_quality) != row:
             raise ValueError("Imported paid result differs from cached checkpoint")
     imported_known = sum(row["cost_usd"] for row in imported_rows if row.get("cost_usd") is not None)
     effective_worker_counts = {}
@@ -375,7 +395,7 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
                 known += account["cost_usd"]
             elif observed:
                 unknown += 1
-            result = _completed(task, state)
+            result = _completed(task, state, require_reason_quality=require_reason_quality)
             if result:
                 results.append(result)
             elif state.get("status") in TERMINAL_FAILURES | {"pending_retrieval"}:
@@ -402,7 +422,7 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
         nonlocal finished
         async with cache.lock(task["key"]) as job:
             if job.state.get("status") == "completed":
-                _completed(task, job.state)
+                _completed(task, job.state, require_reason_quality=require_reason_quality)
                 resumed.add(task["key"])
                 return
             if job.state.get("status") in TERMINAL_FAILURES:
@@ -445,7 +465,7 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
                         print(f"Judging {finished}/{len(tasks)}: {name} {job.state['status']} ({type(error).__name__})", file=sys.stderr, flush=True)
                     return
             try:
-                verdict = parse_verdict(result.get("text"))
+                verdict = parse_verdict(result.get("text"), require_reason_quality=require_reason_quality)
             except ValueError as error:
                 job.save(status="invalid_verdict", error=_safe_error(error), failed_at=datetime.now(timezone.utc).isoformat())
             else:

@@ -625,6 +625,7 @@ def test_cli_forwards_operational_worker_override_without_changing_plan(tmp_path
 def test_overall_protocol_freezes_current_crest_semantics_and_invalidates_all_old_jobs():
     from crest_ais.protocol import PROTOCOL_VERSION, JUDGING_VERSION, SAMPLING_VERSION, build_prompt
     from crest import judging as root_judging
+    from crest.presentation import present_answer
     root = Path(__file__).resolve().parents[1]
     frozen = root / "results" / "20261027T022556.099871Z-aebd5e09" / "plan.json"
     if not frozen.exists():
@@ -632,8 +633,8 @@ def test_overall_protocol_freezes_current_crest_semantics_and_invalidates_all_ol
     old = json.loads(frozen.read_text())
     rubric = (root / "prompts" / "rubric.txt").read_text()
     assert rubric == (root.parent / "crest" / "prompts" / "nus_pairwise.txt").read_text()
-    assert PROTOCOL_VERSION == "crest-ais-overall-v2"
-    assert JUDGING_VERSION == root_judging.PROTOCOL_VERSION == "nus-overall-pairwise-v2"
+    assert PROTOCOL_VERSION == "crest-ais-overall-v3"
+    assert JUDGING_VERSION == root_judging.PROTOCOL_VERSION == "nus-overall-pairwise-v3"
     assert SAMPLING_VERSION == "crest-ais-v1"
     assert SCHEMA == root_judging.SCHEMA
     assert build_prompt("question", "paper A", "paper B", "rubric") == root_judging.build_prompt("question", "paper A", "paper B", "rubric")
@@ -651,8 +652,8 @@ def test_overall_protocol_freezes_current_crest_semantics_and_invalidates_all_ol
         assert "Choose A or B independently" not in job["prompt"]
         encoded = job["prompt"].split("UNTRUSTED INPUT DATA (JSON):\n", 1)[1]
         data = json.loads(encoded)
-        assert data["A"] == (root / next(paper["blind_text_path"] for paper in new["papers"] if paper["id"] == job["order"][0])).read_text()
-        assert data["B"] == (root / next(paper["blind_text_path"] for paper in new["papers"] if paper["id"] == job["order"][1])).read_text()
+        assert data["A"] == present_answer((root / next(paper["blind_text_path"] for paper in new["papers"] if paper["id"] == job["order"][0])).read_text())
+        assert data["B"] == present_answer((root / next(paper["blind_text_path"] for paper in new["papers"] if paper["id"] == job["order"][1])).read_text())
 
 
 @pytest.mark.parametrize("verdict", [{"reason":" ","winner":"A"}, {"reason":"reason","winner":"tie"},

@@ -44,7 +44,7 @@ def results_for(plan, winners=None):
     for job in plan["jobs"]:
         agent = winners(job) if winners else job["agents"][0]
         paper = job["papers"][job["agents"].index(agent)]
-        verdict = {"reason": f"Overall creativity evidence for {paper}",
+        verdict = {"reason": f"A and B differ in overall creative quality: {paper} offers stronger substantive mechanisms and evidence.",
                    "winner": "A" if job["order"][0] == paper else "B"}
         records.append({"key": job["key"], "verdict": verdict,
                         "cost_usd": 0.1, "usage": {}, "model": "fixture", "warnings": []})

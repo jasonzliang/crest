@@ -160,7 +160,10 @@ def load_questions(path: Path | str) -> list[dict]:
             raise ValueError(f'Duplicate question at line {line_no}')
         ids.add(identity)
         texts.add(text)
-        questions.append({'id': identity, 'text': text})
+        question = {'id': identity, 'text': text}
+        if 'category' in row:
+            question['category'] = row['category']
+        questions.append(question)
     if not questions:
         raise ValueError('Question file is empty')
     return questions

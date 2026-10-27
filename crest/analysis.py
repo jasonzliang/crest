@@ -11,13 +11,18 @@ import random
 
 from .costs import summarize_costs
 
-ANALYSIS_VERSION = "8"
+ANALYSIS_VERSION = "9"
 
 
-def _valid_verdict(value):
-    return (isinstance(value, dict) and set(value) == {"reason", "winner"}
-            and isinstance(value["reason"], str) and bool(value["reason"].strip())
-            and value["winner"] in ("A", "B"))
+def _valid_verdict(value, protocol_version=None):
+    from .judging import validate_verdict
+    if protocol_version not in (None, 'nus-overall-pairwise-v2', 'nus-overall-pairwise-v3'):
+        return False
+    try:
+        validate_verdict(value, require_reason_quality=protocol_version == 'nus-overall-pairwise-v3')
+    except (ValueError, TypeError):
+        return False
+    return True
 
 
 def _interval(values):
@@ -141,7 +146,7 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
             invalid[q] += 1
             continue
         cell = (tuple(pair), tuple(order), judgment.get("judge"))
-        if (cell not in expected or not _valid_verdict(judgment.get("verdict"))
+        if (cell not in expected or not _valid_verdict(judgment.get("verdict"), judgment.get('protocol_version'))
                 or judgment.get("status", "completed") != "completed"):
             invalid[q] += 1
             continue

@@ -464,7 +464,7 @@ def _papers(report, data_root, destination):
                      '<table class="papers-table"><thead><tr><th scope="col">Paper</th>'
                      '<th scope="col">Topic / pages</th><th scope="col">Read</th></tr></thead><tbody>')
         for paper in group:
-            title, paper_id = paper.get("title", paper.get("id")), paper.get("id", "")
+            title = paper.get("title", paper.get("id"))
             parts.append(f'<tr><th scope="row">{_text(title)}'
                          '<details class="paper-record"><summary>Paper record and extraction notes</summary>'
                          f'<pre>{_text(json.dumps(paper, ensure_ascii=False, indent=2, sort_keys=True))}</pre>'
