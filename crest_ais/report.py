@@ -661,7 +661,6 @@ CSS = """
 :root{--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9;--paper:#fff}
 *{box-sizing:border-box}html{scroll-padding-top:1.2rem}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}:focus-visible{outline:3px solid #b45a13;outline-offset:4px}
-.skip-link{position:fixed;top:-100px;left:1rem;padding:.6rem 1rem;background:var(--ink);color:#fff;z-index:10}.skip-link:focus{top:1rem}
 main{max-width:1160px;margin:auto;padding:2.8rem clamp(1.1rem,4vw,3rem) 4rem}.brand{font-weight:800;letter-spacing:.15em;font-size:.85rem;color:var(--accent)}
 header{border-bottom:2px solid var(--ink);padding-bottom:1.7rem}h1{font-size:clamp(2rem,5vw,3.65rem);line-height:1.08;letter-spacing:-.045em;max-width:21ch;margin:.8rem 0 1rem;font-weight:750}.subtitle{max-width:70ch;color:var(--muted);font-size:1.06rem;margin:0}
 .meta{display:flex;flex-wrap:wrap;gap:.4rem 1.3rem;font-size:.8rem;color:var(--muted);margin-top:1.3rem}.status{font-weight:700;color:var(--accent)}nav{display:flex;flex-wrap:wrap;gap:.35rem 1.25rem;padding:1rem 0;font-size:.82rem}nav a{text-decoration:none}

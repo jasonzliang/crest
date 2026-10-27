@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 CSS = """
+.skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
 .crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
@@ -30,6 +31,11 @@ main>section{border-top:0}
 main>header,main .hero{border-bottom:0}
 main .stats,main .judgment{border:0}
 main p{margin:.65rem 0 1rem;line-height:1.7}
+main ul,main ol{padding-left:1.5rem}main li{margin:.35rem 0}
+main blockquote{margin:1rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent);background:var(--wash)}
+main hr{margin:1.5rem 0;border:0;border-top:1px solid var(--line)}
+main img,main video{max-width:100%;height:auto}main svg{max-width:100%}
+main .archive-note{margin:1rem 0;padding:.8rem 1rem;border-left:3px solid #997024;background:#fbf6e9;color:var(--ink);font-size:.9rem;line-height:1.7}
 main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
 main nav a{text-decoration:none}
 main nav a:hover{text-decoration:underline}
@@ -39,9 +45,9 @@ main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
 main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
 main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
 main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
-main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere;background:#eef3f5;padding:.1rem .25rem;border-radius:3px}
 main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
-main pre code{font-size:1em;overflow-wrap:normal}
+main pre code{font-size:1em;overflow-wrap:normal;background:transparent;padding:0;border-radius:0}
 main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
 main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
 main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}

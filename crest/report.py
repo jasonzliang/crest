@@ -12,7 +12,7 @@ identities. No alternative audit or accounting protocol is introduced here.
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict
+from collections import Counter, defaultdict
 from html import escape
 import hashlib
 from itertools import combinations
@@ -22,6 +22,9 @@ import os
 from pathlib import Path
 import statistics
 import tempfile
+
+from markdown_it import MarkdownIt
+from markdown_it.renderer import RendererHTML
 
 from .analysis import analyze
 from .artifacts import configuration_record
@@ -51,6 +54,35 @@ def _text(value):
 def _evidence_text(value):
     # Preserve source whitespace without leaving trailing blanks in generated HTML.
     return _text(value).replace(' \n', '&#32;\n').replace('\t\n', '&#9;\n')
+
+
+class _AnswerMarkdownRenderer(RendererHTML):
+    def image(self, tokens, idx, _options, _env):
+        # Keep reading the offline report free of automatic image requests.
+        token = tokens[idx]
+        label, source = _text(token.content or 'Image'), token.attrGet('src') or ''
+        link_depth = sum(t.nesting for t in tokens[:idx] if t.type in {'link_open', 'link_close'})
+        if not link_depth and source.lower().startswith(('http://', 'https://')):
+            return f'<a href="{_text(source)}">{label}</a>'
+        return label
+
+    def table_open(self, _tokens, _idx, _options, _env):
+        return '<div class="table-scroll" role="region" aria-label="Answer table" tabindex="0"><table>'
+
+    def table_close(self, _tokens, _idx, _options, _env):
+        return '</table></div>\n'
+
+
+def _markdown_answer(text):
+    parser = MarkdownIt('js-default', renderer_cls=_AnswerMarkdownRenderer)
+    env = {}
+    tokens = parser.parse(text, env)
+    for token in tokens:
+        if token.type in {'heading_open', 'heading_close'}:
+            token.tag = f'h{min(6, int(token.tag[1:]) + 3)}'
+        elif token.type == 'th_open':
+            token.attrSet('scope', 'col')
+    return parser.renderer.render(tokens, parser.options, env)
 
 
 def _judge_label(data, judge):
@@ -528,7 +560,8 @@ def _questions(data):
         judgments[j['question_id']].append(j)
     parts = ['<section id="questions"><h2>All questions, answers and judgments</h2>',
              '<p>Every question includes all three complete answers and its 12 saved overall judgments. '
-             'Expand an answer or reason to inspect the source content; no API or network request is needed.</p>']
+             'The question winner has the most pairwise wins; ties are shown. '
+             'Expand an answer or reason to read it.</p>']
     catalog = _jsonl(ROOT / 'crest/data/queries_n50.jsonl')
     categories = {row['query']: row['category'] for row in catalog}
     groups = {row['category']: [] for row in catalog}
@@ -546,8 +579,15 @@ def _questions(data):
                      f'<small>{len(questions)} questions</small></h3>')
         for index, question in questions:
             qid = question['id']
+            votes = Counter(row['order'][0 if row['verdict']['winner'] == 'A' else 1]
+                            for row in judgments[qid])
+            most_wins = max(votes.values())
+            winners = [agent for agent in agents if votes[agent] == most_wins]
+            outcome = ('Winner: ' if len(winners) == 1 else 'Tie: ') + ' / '.join(LABELS[a] for a in winners)
             parts.append(f'<details class="question" id="question-{index}"><summary>'
                          f'<span class="question-number">{index:02d}</span><span class="question-title">{_text(question["text"])}</span>'
+                         f'<span class="question-outcome" data-winners="{" ".join(winners)}" data-wins="{most_wins}" '
+                         f'title="{most_wins} wins in 8 comparisons per system">{_text(outcome)}</span>'
                          '</summary><div class="question-content">')
             parts.append('<h4 class="evidence-heading">Answers</h4>')
             for agent in agents:
@@ -583,7 +623,9 @@ def _questions(data):
                     configuration = {'source': 'legacy run manifest; per-answer configuration was not recorded',
                                      'settings': data['manifest'].get('config', {}).get('research', {}).get(agent)}
                 parts.append(f'<details class="answer" id="answer-{index}-{agent}"><summary>{_text(LABELS[agent])}</summary>'
-                             f'<div class="answer-text" role="region" tabindex="0" aria-label="{_text(LABELS[agent])} answer, question {index}">{_evidence_text(row["result"]["text"])}</div>'
+                             f'<div class="answer-text" data-answer-sha256="{hashlib.sha256(row["result"]["text"].encode()).hexdigest()}" '
+                             f'role="region" tabindex="0" aria-label="{_text(LABELS[agent])} answer, question {index}">'
+                             f'{_markdown_answer(row["result"]["text"])}</div>'
                              '<details class="answer-metadata"><summary>Answer metadata and source records</summary>'
                              f'<p class="small">Saved cumulative estimate {_money(cost["cumulative_known_estimate_usd"])} · saved job elapsed '
                              f'{_duration((row.get("timing") or {}).get("duration_seconds"))}{audit_note}</p>'
@@ -666,7 +708,6 @@ def _method(data):
 
 
 CSS = """
-.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:white;padding:.7rem 1rem}.skip-link:focus{top:1rem}
 #judges>details{margin:.3rem 0}
 .question-category{margin-top:2rem}.question-category>h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .8rem}
 .method-summary{display:grid;grid-template-columns:10rem minmax(0,1fr);gap:1rem 1.5rem}.method-summary dt{font-weight:650;color:#0b5967}.method-summary dd{margin:0}
@@ -674,8 +715,8 @@ CSS = """
 .run-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin:1.8rem 0}.run-stats strong{display:block;color:#0b5967;font-size:1.9rem}.run-stats span{font-size:.85rem;color:#526574}
 .ranking-row{display:grid;grid-template-columns:minmax(160px,1.1fr) minmax(150px,2fr) 130px;gap:1rem;align-items:center;margin:1.1rem 0}.rank-label{display:flex;align-items:center;gap:.7rem}.rank{color:#526574;font-size:1.3rem}.ranking-row svg{width:100%;height:48px}.score{text-align:right;font-variant-numeric:tabular-nums}.score strong{display:block;font-size:1.4rem}.score small{display:block;font-size:.8rem;line-height:1.5}
 .table-scroll{max-width:100%;overflow:auto}.table-scroll table{min-width:630px}.table-scroll .matrix{table-layout:fixed;min-width:700px}.matrix th,.matrix td{vertical-align:middle;padding:.9rem}.matrix th:first-child{width:29%}.matrix thead th,.matrix td{text-align:center}.matrix tbody th{font-weight:650;line-height:1.5}.heat-cell,.diagonal{display:flex;align-items:center;justify-content:center;min-height:3rem;padding:.6rem;font-variant-numeric:tabular-nums}.heat-cell{background:rgba(11,89,103,var(--shade))}.diagonal{background:#f0f3f5;color:#71818c}
-.question{padding:0;border:1px solid #d7e1e6;border-radius:6px;margin:1rem 0}.question>summary{display:grid;grid-template-columns:2rem minmax(0,1fr) 1rem;gap:.8rem;align-items:start;padding:1.2rem;font-size:1rem;list-style:none}.question>summary::-webkit-details-marker{display:none}.question>summary::after{content:"+";font-size:1.2rem;line-height:1.2;text-align:center}.question[open]>summary::after{content:"−"}.question-number{color:#526574;font-weight:400;font-variant-numeric:tabular-nums}.question-title{min-width:0}.question-content{padding:0 1.2rem 1rem}.question .evidence-heading{margin:1rem 0 .5rem}.question .answer{border-top:1px solid #d7e1e6;margin:0;padding:.15rem 0}.question .answer>summary{font-size:1rem;padding:1rem 0}.reason,.answer-text{white-space:pre-wrap;overflow-wrap:anywhere}.answer-text{max-height:40rem;overflow:auto;background:#f5f8f9;padding:1.2rem;font-size:.95rem;line-height:1.8}.answer-metadata{margin:1rem 0}.cost-record pre{max-height:32rem;white-space:pre-wrap;overflow-wrap:anywhere}.question .judgments{border-top:1px solid #d7e1e6;margin:1rem 0 0;padding-top:.5rem}.judgment-group{margin:1.5rem 0;padding-top:1rem;border-top:1px solid #d7e1e6}.judgment-group:first-of-type{margin-top:.5rem;padding-top:0;border-top:0}.judgment-group>h4{font-size:1rem;margin:.5rem 0}.question .judgment{margin:.3rem 0;padding:.2rem 0}.judgment .presentation{font-size:.85rem;color:#526574;margin:.2rem 0 1rem}.judgment .reason{margin:.7rem 0 1.5rem}summary{overflow-wrap:anywhere}code{overflow-wrap:anywhere}footer{padding:1rem 0;margin-top:3rem}
-@media(max-width:650px){.method-summary{grid-template-columns:1fr;gap:.25rem}.method-summary dd{margin-bottom:1rem}.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{max-height:32rem;padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
+.question{padding:0;border:1px solid #d7e1e6;border-radius:6px;margin:1rem 0}.question>summary{display:grid;grid-template-columns:2rem minmax(0,1fr) auto 1rem;gap:.8rem;align-items:start;padding:1.2rem;font-size:1rem;list-style:none}.question>summary::-webkit-details-marker{display:none}.question>summary::after{grid-column:-2;grid-row:1;content:"+";font-size:1.2rem;line-height:1.2;text-align:center}.question[open]>summary::after{content:"−"}.question-number{color:#526574;font-weight:400;font-variant-numeric:tabular-nums}.question-title{min-width:0}.question-outcome{max-width:16rem;font-size:.78rem;line-height:1.6;font-weight:500;text-align:right}.question-content{padding:0 1.2rem 1rem}.question .evidence-heading{margin:1rem 0 .5rem}.question .answer{border-top:1px solid #d7e1e6;margin:0;padding:.15rem 0}.question .answer>summary{font-size:1rem;padding:1rem 0}.reason{white-space:pre-wrap;overflow-wrap:anywhere}.answer-text{white-space:normal;overflow-wrap:anywhere;max-height:40rem;overflow:auto;background:#f5f8f9;padding:1.2rem;font-size:.95rem;line-height:1.8}.answer-text>:first-child{margin-top:0}.answer-text>:last-child{margin-bottom:0}.answer-text h4{font-size:1.2rem}.answer-text h5{font-size:1.05rem}.answer-text h6{font-size:1rem}.answer-text pre{white-space:pre;overflow:auto}.answer-text .table-scroll table{min-width:480px}.answer-text .table-scroll th,.answer-text .table-scroll td{padding:.6rem .75rem;border-bottom:1px solid var(--line)}.answer-metadata{margin:1rem 0}.cost-record pre{max-height:32rem;white-space:pre-wrap;overflow-wrap:anywhere}.question .judgments{border-top:1px solid #d7e1e6;margin:1rem 0 0;padding-top:.5rem}.judgment-group{margin:1.5rem 0;padding-top:1rem;border-top:1px solid #d7e1e6}.judgment-group:first-of-type{margin-top:.5rem;padding-top:0;border-top:0}.judgment-group>h4{font-size:1rem;margin:.5rem 0}.question .judgment{margin:.3rem 0;padding:.2rem 0}.judgment .presentation{font-size:.85rem;color:#526574;margin:.2rem 0 1rem}.judgment .reason{margin:.7rem 0 1.5rem}summary{overflow-wrap:anywhere}code{overflow-wrap:anywhere}footer{padding:1rem 0;margin-top:3rem}
+@media(max-width:650px){.question-outcome{grid-column:2;grid-row:2;max-width:none;text-align:left}.method-summary{grid-template-columns:1fr;gap:.25rem}.method-summary dd{margin-bottom:1rem}.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{max-height:32rem;padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
 @media print{.skip-link,main>nav{display:none}.ranking-row{break-inside:avoid}.answer-text{max-height:none;overflow:visible}details>summary{break-after:avoid}}
 """
 

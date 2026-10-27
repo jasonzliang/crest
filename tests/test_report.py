@@ -3,6 +3,7 @@ from copy import deepcopy
 from html.parser import HTMLParser
 from itertools import combinations
 import json
+import hashlib
 import re
 
 import pytest
@@ -225,6 +226,62 @@ def test_uses_saved_bootstrap_intervals_preserves_exact_ties_and_all_evidence(tm
     assert 'not an override' in text
     assert 'Lifetime budget compliance is not established' not in text
     assert 'fetch(' not in text and '<script src=' not in text
+    outcomes = re.findall(r'class="question-outcome" data-winners="([^"]+)" data-wins="(\d+)"', text)
+    assert len(outcomes) == 50
+    assert all(set(winners.split()) == set(AGENTS) and wins == '4' for winners, wins in outcomes)
+
+
+def test_answer_markdown_renders_structure_and_preserves_source(run, tmp_path):
+    from crest.report import write_report
+    source = ('# Example\n\nA **strong** idea and *emphasis*.\n\n'
+              '- First\n- Second\n\n| Part | Use |\n| --- | --- |\n| Shade | Cooling |\n\n'
+              '```python\nx = "<safe>"\n```\n\n[Source](https://example.com/source)\n\n'
+              '> A quoted passage.\n')
+    rows = json.loads(answers_path(run).read_text())
+    rows[0]['result']['text'] = source
+    dump(answers_path(run), rows)
+    original = answers_path(run).read_bytes()
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    for markup in ['<h4>Example</h4>', '<strong>strong</strong>', '<em>emphasis</em>',
+                   '<li>First</li>', '<th scope="col">Part</th>', '<td>Cooling</td>',
+                   '<code class="language-python">', '&lt;safe&gt;', '<blockquote>',
+                   '<a href="https://example.com/source">Source</a>']:
+        assert markup in html
+    assert html.count('<h1>') == 1
+    assert hashlib.sha256(source.encode()).hexdigest() in html
+    assert answers_path(run).read_bytes() == original
+
+
+@pytest.mark.parametrize('source', [
+    '<script>alert(1)</script><img src="https://example.com/pixel" onerror="alert(1)">',
+    '[link](javascript:alert(1))', '[link](vbscript:msgbox(1))',
+    '[link](data:text/html;base64,PHNjcmlwdD4=)', '[link](file:///private/local.txt)',
+    '![Diagram](https://example.com/image.png)',
+])
+def test_answer_markdown_disables_active_content_and_automatic_image_requests(source):
+    from crest.report import _markdown_answer
+    from urllib.parse import urlsplit
+
+    class Content(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            assert tag not in {'script', 'style', 'img', 'iframe', 'object', 'embed'}
+            for name, value in attrs:
+                assert not name.startswith('on') and name != 'src'
+                if name == 'href':
+                    assert urlsplit(value).scheme not in {'javascript', 'vbscript', 'data', 'file'}
+
+    html = _markdown_answer(source)
+    Content().feed(html)
+    if source.startswith('!'):
+        assert '<a href="https://example.com/image.png">Diagram</a>' in html
+
+
+def test_markdown_linked_image_preserves_outer_link_without_nested_anchors():
+    from crest.report import _markdown_answer
+    html = _markdown_answer('[![Diagram](https://example.com/image.png)](https://example.com/source)')
+    assert html == '<p><a href="https://example.com/source">Diagram</a></p>\n'
 
 
 def test_partial_unknown_ledger_is_not_dropped_or_double_counted_as_zero(run):
@@ -644,6 +701,7 @@ def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchu
         def __init__(self):
             super().__init__()
             self.stack, self.columns, self.rows, self.answers, self.groups, self.presentations = [], [], [], [], [], []
+            self.outcomes = []
             self.diagonals = self.question_numbers = self.question_titles = 0
 
         def handle_starttag(self, tag, attrs):
@@ -651,6 +709,9 @@ def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchu
             classes = attrs.get('class', '').split()
             if 'answer' in classes:
                 self.answers.append(attrs['id'])
+            if 'question-outcome' in classes:
+                assert self.stack[-1][0] == 'summary'
+                self.outcomes.append((attrs['data-winners'], attrs['data-wins']))
             if 'judgment-group' in classes:
                 self.groups.append(0)
             if 'judgment' in classes:
@@ -687,6 +748,7 @@ def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchu
     assert len(parser.presentations) == 600
     assert set(parser.presentations) == {f'A: {a} · B: {b}' for a in names for b in names if a != b}
     assert parser.question_numbers == parser.question_titles == 50
+    assert parser.outcomes == [('openai', '8')] * 50
 
 
 def test_questions_group_by_dataset_category_without_changing_snapshot_order_or_ids(run, tmp_path):
