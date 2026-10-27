@@ -7,7 +7,7 @@ name = "crest-research"
 version = "0.2.0"
 description = "Cached research generation, binary pairwise judging, and creativity ranking"
 requires-python = ">=3.11"
-dependencies = ["httpx>=0.28,<1", "PyYAML>=6,<7", "psutil>=5.9", "markdown-it-py>=4,<5"]
+dependencies = ["httpx>=0.28,<1", "PyYAML>=6,<7", "psutil>=5.9", "markdown-it-py[linkify]>=4,<5"]
 
 [project.optional-dependencies]
 test = ["pytest>=8", "pytest-xdist>=3.8,<4"]

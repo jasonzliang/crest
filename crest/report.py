@@ -74,7 +74,7 @@ class _AnswerMarkdownRenderer(RendererHTML):
 
 
 def _markdown_answer(text):
-    parser = MarkdownIt('js-default', renderer_cls=_AnswerMarkdownRenderer)
+    parser = MarkdownIt('js-default', {'breaks': True, 'linkify': True}, renderer_cls=_AnswerMarkdownRenderer)
     env = {}
     tokens = parser.parse(text, env)
     for token in tokens:

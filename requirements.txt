@@ -2,4 +2,4 @@
 httpx>=0.28,<1
 PyYAML>=6,<7
 psutil>=5.9
-markdown-it-py>=4,<5
+markdown-it-py[linkify]>=4,<5

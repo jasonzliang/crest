@@ -278,6 +278,28 @@ def test_answer_markdown_disables_active_content_and_automatic_image_requests(so
         assert '<a href="https://example.com/image.png">Diagram</a>' in html
 
 
+@pytest.mark.parametrize('newline', ['\n', '\r\n'])
+def test_answer_markdown_preserves_single_line_breaks_without_changing_blocks(newline):
+    from crest.report import _markdown_answer
+    source = ('First line\nSecond line\n\nNext paragraph.\n\n'
+              '- Item one\n- Item two\n\n```\nalpha\nbeta\n```\n').replace('\n', newline)
+    html = _markdown_answer(source)
+    assert '<p>First line<br>\nSecond line</p>' in html
+    assert '<p>Next paragraph.</p>' in html
+    assert '<li>Item one</li>\n<li>Item two</li>' in html
+    assert '<pre><code>alpha\nbeta\n</code></pre>' in html
+    assert html.count('<br>') == 1
+
+
+def test_answer_markdown_links_bare_source_urls_without_altering_underscores():
+    from crest.report import _markdown_answer
+    url = ('https://socialsci.libretexts.org/Bookshelves/Linguistics/'
+           'Analyzing_Meaning_-_An_Introduction_to_Semantics_and_Pragmatics_(Kroeger)')
+    html = _markdown_answer(f'[1] {url}')
+    assert f'<a href="{url}">{url}</a>' in html
+    assert '<em>' not in html
+
+
 def test_markdown_linked_image_preserves_outer_link_without_nested_anchors():
     from crest.report import _markdown_answer
     html = _markdown_answer('[![Diagram](https://example.com/image.png)](https://example.com/source)')
