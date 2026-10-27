@@ -194,7 +194,7 @@ python stage3_analyze.py "$CREST_RUN" --config crest.mbp.yaml</code></pre>
 <p>To recover an existing run, repeat stage 1 with <code>--run "$CREST_RUN"</code>, then repeat stages 2 and 3. Completed work is reused; remote job IDs are retrieved after interruption. Ambiguous submissions require manual reconciliation before retrying and are never blindly resubmitted.</p>
 <h2 id="models">Current research settings</h2>
 <div aria-label="Research systems and settings" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">System</th><th scope="col">Model and workflow</th><th scope="col">Main settings</th></tr></thead><tbody>
-<tr><td>Caesar</td><td><code>gpt-6.1-sol</code> main/synthesis; <code>gpt-6-luna</code> exploration and knowledge-base helpers at low reasoning.</td><td>Mini-like exploration: up to 250 iterations, 11 additional starting queries, quick exploration with 2 workers; 3 drafts, up to 15 Q&amp;A rounds per draft, then merge. Q&amp;A reduces adaptively to preserve writing budget and time.</td></tr>
+<tr><td>Caesar</td><td><code>gpt-6.1-sol</code> main/synthesis; <code>gpt-6-luna</code> exploration and knowledge-base helpers at low reasoning.</td><td>Regular exploration: up to 250 iterations and 11 additional starting queries; quick exploration is disabled by default. Then 3 drafts, up to 15 Q&amp;A rounds per draft, and a merge. Q&amp;A reduces adaptively to preserve writing budget and time.</td></tr>
 <tr><td>OpenAI</td><td><code>gpt-6.1-sol</code>, Responses API with hosted web search and background execution.</td><td>High reasoning, 40,000 output-token allowance, 25 tool calls, standard tier.</td></tr>
 <tr><td>Gemini</td><td><code>deep-research-preview-04-2026</code>, managed Interactions API agent.</td><td>Standard Deep Research, visualization off, collaborative planning off. Google controls its underlying model; no backbone override.</td></tr>
 </tbody></table></div>
@@ -204,10 +204,10 @@ python stage3_analyze.py "$CREST_RUN" --config crest.mbp.yaml</code></pre>
 <h2 id="operations">Budgets and parallelism</h2>
 <p><strong>$5 per answer is a target, not a guaranteed cap.</strong> All 150 answers target $750; judging costs extra. Caesar reserves estimated request costs against a $5 SDK/handler guard and keeps $3 for synthesis, reducing exploration and Q&amp;A when needed. Its per-answer limit is 7,200 seconds and per-call timeout is 600 seconds. New exploration pages stop after 45 minutes; accepted calls finish before ingestion. Q&amp;A reserves 300 seconds per remaining writing/refinement/merge call. These time allocations improve the chance of completion but cannot guarantee a complete answer before the deadline. Native provider APIs expose no hard dollar cap. Gemini research costs use a conservative estimate; an estimated overrun is not a final invoice. Cost reports retain failed paid attempts, partial observations, and unknown bills.</p>
 <div aria-label="Adaptive job limits" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">Stage / provider</th><th scope="col">Default: start → maximum</th><th scope="col">64 GB jason-mbp: start → maximum</th></tr></thead><tbody>
-<tr><td>Research · Caesar</td><td>1 → 4</td><td>10 → 10</td></tr>
+<tr><td>Research · Caesar</td><td>1 → 4</td><td>20 → 20</td></tr>
 <tr><td>Research · OpenAI</td><td>3 → 12</td><td>2 → 6</td></tr>
 <tr><td>Research · Gemini</td><td>2 → 8</td><td>1 → 4</td></tr>
-<tr><td><strong>Research total</strong></td><td><strong>6 → 24</strong></td><td><strong>13 → 20</strong></td></tr>
+<tr><td><strong>Research total</strong></td><td><strong>6 → 24</strong></td><td><strong>23 → 30</strong></td></tr>
 <tr><td>Each judge</td><td>4 → 16</td><td>8 → 16</td></tr>
 <tr><td><strong>Judging total</strong></td><td><strong>8 → 32</strong></td><td><strong>16 → 32</strong></td></tr>
 </tbody></table></div>

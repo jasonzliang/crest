@@ -424,7 +424,7 @@ def analyze(plan: dict, results: list[dict]) -> dict:
                 "Only complete four-judgment paper-pair blocks contribute scores. Partial completion may be selective; primary ranks require the entire plan.",
                 "Opponent matchups receive equal weight, regardless of released collection sizes or sampled pair counts. Each verdict is one overall creativity choice guided jointly by New, Useful, and Surprising.",
                 "Small eligible pools, including Agentic v3's two autonomous papers when present, sharply limit representativeness.",
-                "Known costs cover successful result records only; missing provider billing or failed attempts may add unrecorded charges.",
+                "Costs are usage-based estimates rather than provider invoices; missing usage is unknown, not free, and can leave charges unrecorded.",
             ]}
     if isinstance(extension, dict):
         report["extension"] = deepcopy(extension)

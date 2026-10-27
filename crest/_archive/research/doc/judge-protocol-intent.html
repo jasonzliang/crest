@@ -112,20 +112,7 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 </style></head>
 <body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../README.html">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
 <main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#judge-protocol--design-intent-vs-implemented-behaviour">Judge
-protocol — design intent vs implemented behaviour</a></li><li><a href="#crest-judge-panel-configuration">CREST judge panel
-configuration.</a></li><li><a href="#multi-vendor--1-open-weight-leave-one-family-out-is-enforced-in-scorepy">Multi-vendor
-+ &gt;=1 open-weight; leave-one-family-out is enforced in score.py.</a></li><li><a href="#pin-dated-model-snapshots-for-reproducibility-record-exact-ids-at-run-time">Pin
-dated model snapshots for reproducibility (record exact IDs at run
-time).</a></li><li><a href="#which-keys-are-actually-read-judgepanelfrom_config-reads-only-judges-threshold_all_three">WHICH
-KEYS ARE ACTUALLY READ. JudgePanel.from_config reads ONLY: judges,
-threshold_all_three,</a></li><li><a href="#min_judges-leave_one_family_out-everything-else-in-this-file-is-intent-not-implemented">min_judges,
-leave_one_family_out. Everything else in this file is INTENT, not
-implemented</a></li><li><a href="#behaviour-and-is-marked-not-implemented-below-shipping-unimplemented-controls-in-a-config">behaviour,
-and is marked [NOT IMPLEMENTED] below. Shipping unimplemented controls
-in a config</a></li><li><a href="#that-a-reviewer-reads-as-evidence-is-how-three-of-this-projects-claims-became-indefensible">that
-a reviewer reads as evidence is how three of this project's claims
-became indefensible.</a></li><li><a href="#randomize_answer_order-true--not-implemented-and-vacuous-scoring-is-single-answer-not">randomize_answer_order:
-true # [NOT IMPLEMENTED] and VACUOUS: scoring is single-answer, not</a></li></ul></nav></details><article><h1 id="judge-protocol--design-intent-vs-implemented-behaviour">Judge
+protocol — design intent vs implemented behaviour</a></li></ul></nav></details><article><h1 id="judge-protocol--design-intent-vs-implemented-behaviour">Judge
 protocol — design intent vs implemented behaviour</h1>
 <blockquote>
 <p>Moved out of <code>judge/judge_config.yaml</code> on 2026-07-31. That
@@ -139,57 +126,52 @@ so pointing anything at it would silently revert LOFO to True. The live
 config is <code>judge/judge_config.live.yaml</code>; this file is
 documentation only and must never be loaded.</p>
 </blockquote>
-<h1 id="crest-judge-panel-configuration">CREST judge panel
-configuration.</h1>
-<h1 id="multi-vendor--1-open-weight-leave-one-family-out-is-enforced-in-scorepy">Multi-vendor
-+ &gt;=1 open-weight; leave-one-family-out is enforced in score.py.</h1>
-<h1 id="pin-dated-model-snapshots-for-reproducibility-record-exact-ids-at-run-time">Pin
-dated model snapshots for reproducibility (record exact IDs at run
-time).</h1>
-<h1 id="which-keys-are-actually-read-judgepanelfrom_config-reads-only-judges-threshold_all_three">WHICH
-KEYS ARE ACTUALLY READ. JudgePanel.from_config reads ONLY: judges,
-threshold_all_three,</h1>
-<h1 id="min_judges-leave_one_family_out-everything-else-in-this-file-is-intent-not-implemented">min_judges,
-leave_one_family_out. Everything else in this file is INTENT, not
-implemented</h1>
-<h1 id="behaviour-and-is-marked-not-implemented-below-shipping-unimplemented-controls-in-a-config">behaviour,
-and is marked [NOT IMPLEMENTED] below. Shipping unimplemented controls
-in a config</h1>
-<h1 id="that-a-reviewer-reads-as-evidence-is-how-three-of-this-projects-claims-became-indefensible">that
-a reviewer reads as evidence is how three of this project's claims
-became indefensible.</h1>
-<p>threshold_all_three: 6.0 # READ. min per-axis score for "creative"
-(all three required). # NB not the primary endpoint any more -- see
-judge_config.live.yaml. blind: true # DE FACTO TRUE, not a switch:
-_judge_prompt carries no agent name.</p>
-<h1 id="randomize_answer_order-true--not-implemented-and-vacuous-scoring-is-single-answer-not">randomize_answer_order:
-true # [NOT IMPLEMENTED] and VACUOUS: scoring is single-answer, not</h1>
-<pre tabindex="0"><code>                            # pairwise, so there is no answer order to randomize. Removed rather
-                            # than left asserting a control that does not exist.</code></pre>
-<p>judges:</p>
-<ul>
-<li>id: judge_anthropic model: claude-opus-4-8-YYYYMMDD # pin exact
-dated snapshot family: anthropic</li>
-<li>id: judge_google model: gemini-3-pro-YYYYMMDD family: google</li>
-<li>id: judge_openai model: gpt-5.2-YYYYMMDD # dropped under LOFO when
-the entrant is OpenAI-family (e.g., Caesar) family: openai</li>
-<li>id: judge_open_weight model: <open-weight-judge>-YYYYMMDD #
-required: fewer shared blind spots than the frontier trio family:
-open_weight</open-weight-judge></li>
-</ul>
-<p>reliability: report: [krippendorff_alpha, icc] # IMPLEMENTED in
-analysis/stats.py:: # reliability_report() -- ICC(1,1), ICC(1,k),
-ICC(3,1), # ICC(3,k), Krippendorff alpha (interval), the judge share #
-of variance and of SS, and per-judge severity. # NB strongly
-RUN-SPECIFIC: ICC(1,k) has come out # .774/.746/.671 and .527/.631/.445
-on two superseded runs. # Recompute per run; the canonical values live
-in # doc/design.md section 0 and nowhere else.
-human_validation_required_categories: [C1, C2, C3, C4, C5] # human panel
-validates all; primary on C1/C5</p>
-<p>grounding_gate: metric: fact_precision # [NOT IMPLEMENTED] the
-shipped gate is a regex cue-counter # (score.py::grounding_gate,
-honestly labelled a PILOT proxy # in code). This key declares a
-materially STRONGER gate # than the one that runs -- do not cite it as
-implemented. threshold: 0.8 # below =&gt; creativity score = 0</p>
+<pre tabindex="0"><code class="language-yaml"># CREST judge panel configuration.
+# Multi-vendor + &gt;=1 open-weight; leave-one-family-out is enforced in score.py.
+# Pin dated model snapshots for reproducibility (record exact IDs at run time).
+
+# WHICH KEYS ARE ACTUALLY READ. JudgePanel.from_config reads ONLY: judges, threshold_all_three,
+# min_judges, leave_one_family_out. Everything else in this file is INTENT, not implemented
+# behaviour, and is marked [NOT IMPLEMENTED] below. Shipping unimplemented controls in a config
+# that a reviewer reads as evidence is how three of this project's claims became indefensible.
+threshold_all_three: 6.0        # READ. min per-axis score for "creative" (all three required).
+                                # NB not the primary endpoint any more -- see judge_config.live.yaml.
+blind: true                     # DE FACTO TRUE, not a switch: _judge_prompt carries no agent name.
+# randomize_answer_order: true  # [NOT IMPLEMENTED] and VACUOUS: scoring is single-answer, not
+                                # pairwise, so there is no answer order to randomize. Removed rather
+                                # than left asserting a control that does not exist.
+
+judges:
+  - id: judge_anthropic
+    model: claude-opus-4-8-YYYYMMDD     # pin exact dated snapshot
+    family: anthropic
+  - id: judge_google
+    model: gemini-3-pro-YYYYMMDD
+    family: google
+  - id: judge_openai
+    model: gpt-5.2-YYYYMMDD              # dropped under LOFO when the entrant is OpenAI-family (e.g., Caesar)
+    family: openai
+  - id: judge_open_weight
+    model: &lt;open-weight-judge&gt;-YYYYMMDD  # required: fewer shared blind spots than the frontier trio
+    family: open_weight
+
+reliability:
+  report: [krippendorff_alpha, icc]     # IMPLEMENTED in analysis/stats.py::
+                                        # reliability_report() -- ICC(1,1), ICC(1,k), ICC(3,1),
+                                        # ICC(3,k), Krippendorff alpha (interval), the judge share
+                                        # of variance and of SS, and per-judge severity.
+                                        # NB strongly RUN-SPECIFIC: ICC(1,k) has come out
+                                        # .774/.746/.671 and .527/.631/.445 on two superseded runs.
+                                        # Recompute per run; the canonical values live in
+                                        # doc/design.md section 0 and nowhere else.
+  human_validation_required_categories: [C1, C2, C3, C4, C5]   # human panel validates all; primary on C1/C5
+
+grounding_gate:
+  metric: fact_precision                # [NOT IMPLEMENTED] the shipped gate is a regex cue-counter
+                                        # (score.py::grounding_gate, honestly labelled a PILOT proxy
+                                        # in code). This key declares a materially STRONGER gate
+                                        # than the one that runs -- do not cite it as implemented.
+  threshold: 0.8                        # below =&gt; creativity score = 0
+</code></pre>
 </article><footer><a href="../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
 
