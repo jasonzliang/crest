@@ -186,8 +186,10 @@ def _summarize(rows, audit_records):
     lifetime = [r.get('active_attempt_seconds') for r in audited if r.get('timing_complete') is True]
     lifetime = [v for v in lifetime if _number(v)]
     known = [r.get('known_usd') for r in audited if _number(r.get('known_usd'))]
+    known_total = costs['cumulative_known_estimate_usd'] if known_available else None
     return {'answers': len(rows), 'cost_assessment': costs,
-            'known_cost_usd': costs['cumulative_known_estimate_usd'] if known_available else None,
+            'known_cost_usd': known_total,
+            'mean_known_cost_usd': known_total / len(rows) if known_total is not None and rows else None,
             'current_attempt_known_cost_usd': costs['current_attempt_known_estimate_usd'] if current_available else None,
             'unknown_cost_answers': costs['unknown_count'],
             'unknown_current_cost_answers': costs['current_attempt_unknown_count'],
@@ -195,11 +197,13 @@ def _summarize(rows, audit_records):
             'current_unknown_reserved_usd': costs['current_unresolved_reserved_exposure_usd'],
             'audited_known_cost_usd': math.fsum(known) if len(known) == len(rows) else None,
             'duration_count': len(durations), 'duration_sum_seconds': math.fsum(durations) if durations else None,
+            'mean_duration_seconds': statistics.mean(durations) if durations else None,
             'median_duration_seconds': statistics.median(durations) if durations else None,
             'min_duration_seconds': min(durations) if durations else None,
             'max_duration_seconds': max(durations) if durations else None,
             'unknown_duration_answers': len(rows) - len(durations),
             'lifetime_duration_count': len(lifetime),
+            'mean_lifetime_duration_seconds': statistics.mean(lifetime) if lifetime else None,
             'median_lifetime_duration_seconds': statistics.median(lifetime) if lifetime else None,
             'estimated_above_target': sum(_number((r.get('result') or {}).get('cost_usd'))
                                           and r['result']['cost_usd'] > 5 for r in rows)}
@@ -389,6 +393,18 @@ def _resources(data):
     parts = ['<section id="resources"><h2>Cost and elapsed time</h2><p>Dollar figures are published-rate estimates, '
              'not invoices. Saved cumulative answer estimates include embedded recovery history, even when additional charges are unknown. '
              'The current-attempt column is separate and is not added again. Unknown reservations are exposure, not measured spend.</p>']
+    averages = []
+    for agent in AGENTS:
+        r = generation[agent]
+        basis = ('conditional scenario' if r['cost_assessment']['basis_counts'].get('conditional_list_price_scenario')
+                 else 'incomplete known components' if r['unknown_cost_answers'] else 'estimate')
+        averages.append([_text(SHORT[agent]), _money(r['mean_known_cost_usd']) + f'<br><small>{basis}</small>',
+                         _duration(r['mean_duration_seconds']), _duration(r['mean_lifetime_duration_seconds'])])
+    parts.append(_table(['System', 'Mean cumulative estimate / question', 'Mean successful-attempt elapsed',
+                         'Mean audited lifetime active execution'], averages, 'Per-question cost and elapsed-time means'))
+    parts.append('<p class="small">Cost means divide saved cumulative known or conditional estimate components by all 50 questions; '
+                 'unknown additional charges are excluded. Time means use only answers with available timing, with coverage below; '
+                 'missing times are not counted as zero.</p>')
     rows = []
     for agent in AGENTS:
         r = generation[agent]
@@ -478,7 +494,7 @@ def _models(data):
         elif agent == 'openai':
             detail = 'Sol + hosted web search through Responses API; not the complete hosted ChatGPT deep-research harness.'
         else:
-            detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Per-question frozen task settings and receipts retain helper differences.'
+            detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Per-answer configuration records retain helper settings and recovery provenance.'
         rows.append([_text(LABELS[agent]), _text(', '.join(models)), _text(detail)])
     return '<section id="systems"><h2>Systems in this experiment</h2>' + _table(['System', 'Recorded result model / billing reference', 'Workflow'], rows, 'Frozen research systems') + '</section>'
 

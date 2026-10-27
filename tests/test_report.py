@@ -171,6 +171,7 @@ def test_missing_times_remain_unknown_and_cache_hits_keep_original_duration(run)
     assert resources['duration_count'] == 49
     assert resources['duration_sum_seconds'] == 4875
     assert resources['median_duration_seconds'] == 100
+    assert resources['mean_duration_seconds'] == pytest.approx(4875 / 49)
     assert resources['unknown_duration_answers'] == 1
 
 
@@ -329,10 +330,54 @@ def test_all_unpriced_answers_and_incomplete_lifetime_times_remain_unknown(run, 
     audit = tmp_path / 'audit.json'; dump(audit, doc)
     resources = load_run(run, audit=audit)['resources']['generation']['openai']
     assert resources['known_cost_usd'] is None
+    assert resources['mean_known_cost_usd'] is None
     assert resources['current_attempt_known_cost_usd'] is None
     assert resources['unknown_cost_answers'] == 50
     assert resources['median_lifetime_duration_seconds'] is None
+    assert resources['mean_lifetime_duration_seconds'] is None
     assert resources['lifetime_duration_count'] == 0
+
+
+def test_per_question_means_preserve_partial_costs_and_use_observed_times(run, tmp_path):
+    from crest.report import load_run, write_report
+    rows = json.loads(answers_path(run).read_text())
+    caesar = [row for row in rows if row['agent'] == 'caesar']
+    caesar[0]['result'].update(cost_usd=None, raw={
+        'usage_audit': {'known_cost_usd': 3., 'unknown_cost': True},
+        'new_attempt_usage_audit': {'known_cost_usd': 1., 'unknown_cost': False},
+        'budget_history': {'previous_known_cost_usd': 2., 'previous_unknown_reserved_usd': .4}})
+    caesar[0]['timing']['duration_seconds'] = 10
+    caesar[1]['timing']['duration_seconds'] = 400
+    google = [row for row in rows if row['agent'] == 'gemini']
+    google[0]['result']['cost_usd'], google[1]['result']['cost_usd'] = 3., 5.
+    dump(answers_path(run), rows)
+    doc = final_audit(run)
+    audited_caesar = [row for row in doc['generation']['answer_details'] if row['agent'] == 'caesar']
+    audited_caesar[0].update(active_attempt_seconds=300, known_usd=3., exposure_upper_usd=3.4,
+                             unknown_attempt_count=1)
+    audited_caesar[1]['active_attempt_seconds'] = 600
+    audited_google = [row for row in doc['generation']['answer_details'] if row['agent'] == 'gemini']
+    for row, amount in zip(audited_google, (3., 5.)):
+        row.update(known_usd=amount, exposure_upper_usd=amount)
+    doc['ledger']['known_generation_attempt_usd'] = 159.
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    data = load_run(run, audit=audit)
+    c = data['resources']['generation']['caesar']
+    assert c['mean_known_cost_usd'] == pytest.approx(52 / 50)
+    assert c['mean_duration_seconds'] == pytest.approx(5210 / 50)
+    assert c['mean_lifetime_duration_seconds'] == pytest.approx(9300 / 50)
+    assert c['median_duration_seconds'] == 100
+    assert c['median_lifetime_duration_seconds'] == 175
+    assert c['unknown_cost_answers'] == 1
+    assert data['resources']['generation']['gemini']['mean_known_cost_usd'] == pytest.approx(56 / 50)
+    output = tmp_path / 'page.html'
+    write_report(run, output, audit=audit)
+    html = output.read_text()
+    assert 'Mean cumulative estimate / question' in html
+    assert 'Mean successful-attempt elapsed' in html
+    assert 'Mean audited lifetime active execution' in html
+    assert '$1.0400' in html and '$1.1200' in html
+    assert 'incomplete known components' in html and 'conditional scenario' in html
 
 
 def test_shallow_answer_links_and_full_configuration_provenance(run, tmp_path):
@@ -371,13 +416,16 @@ def test_all_frozen_configurations_render_with_nonnull_shared_prompt_template(ru
     from crest.report import load_run, write_report
     manifest_path = run / 'run.json'
     manifest = json.loads(manifest_path.read_text())
-    template = 'Research the shared question carefully: {query}\nPreserve <primary> evidence.'
+    template = 'Research the shared question carefully: {question}\nPreserve <primary> evidence.'
     manifest['config']['research_prompt'] = template
     dump(manifest_path, manifest)
     rows = json.loads(answers_path(run).read_text())
     registry = {}
     for index, row in enumerate(rows):
-        task = {'agent': row['agent'], 'settings': manifest['config']['research'][row['agent']],
+        settings = deepcopy(manifest['config']['research'][row['agent']])
+        if row['agent'] == 'caesar' and index // 3 < 10:
+            settings['budget_history_from'] = f'prior/question-{index // 3}'
+        task = {'agent': row['agent'], 'settings': settings,
                 'adapter_version': 1, 'source_identity': None}
         record = configuration_record(task, prompt_template=manifest['config']['research_prompt'])
         registry[record['configuration_id']] = record
@@ -387,7 +435,7 @@ def test_all_frozen_configurations_render_with_nonnull_shared_prompt_template(ru
     output = tmp_path / 'page.html'
     write_report(run, output)
     data = load_run(run)
-    assert len(data['configurations']) == 3
+    assert len(data['configurations']) == 13
     assert all(record['prompt_template'] == template for record in data['configurations'].values())
     html = output.read_text()
     assert html.count('class="answer"') == 150
