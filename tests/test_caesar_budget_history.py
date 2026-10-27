@@ -186,3 +186,53 @@ def test_unknown_summary_without_bounded_entries_cannot_fund_restart(tmp_path):
     worker.atomic_json(path, value)
     with pytest.raises(ValueError, match="unknown|bound"):
         worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
+
+
+def test_final_usage_file_replaces_stale_terminal_snapshot(tmp_path):
+    source = _source(tmp_path / "old", .5, .2)
+    snapshot_path = source / "caesar-result.json"
+    snapshot = json.loads(snapshot_path.read_text())
+    snapshot["usage"].update(successful_calls=1, events=[], in_flight=[{"reserved_usd": .2}])
+    worker.atomic_json(snapshot_path, snapshot)
+    final = {"known_cost_usd": .65, "unknown_cost": False, "cost_usd": .65,
+        "budget_target_usd": 5., "successful_calls": 2, "events": [{"status": "completed", "cost_usd": .65, "unknown_cost": False}], "in_flight": []}
+    worker.atomic_json(source / "caesar-output" / "usage.json", final)
+    value = worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
+    assert value["previous_known_cost_usd"] == .65
+    assert value["previous_unknown_reserved_usd"] == 0
+    assert value["new_attempt_budget_usd"] == pytest.approx(4.35)
+    assert value["previous_cost_unknown"] is False
+
+
+def test_ancestral_final_usage_changes_history_identity(tmp_path):
+    source = _source(tmp_path / "old", .5, .2)
+    final = {"known_cost_usd": .6, "unknown_cost": True, "budget_target_usd": 5.,
+        "events": [{"status": "failed", "unknown_cost": True, "reserved_usd": .1}], "in_flight": []}
+    path = source / "caesar-output" / "usage.json"
+    worker.atomic_json(path, final)
+    settings = {"rome_path": str(tmp_path), "budget_history_from": str(source)}
+    old = caesar.identity_metadata(settings)
+    final["known_cost_usd"] = .7
+    worker.atomic_json(path, final)
+    assert old != caesar.identity_metadata(settings)
+
+
+def test_live_owned_worker_prevents_history_admission(tmp_path, monkeypatch):
+    import psutil
+    source = _source(tmp_path / "old", .5, .2)
+    worker.atomic_json(source / "state.json", {"worker_pid": 43210})
+    process = SimpleNamespace(status=lambda: psutil.STATUS_RUNNING,
+        cmdline=lambda: ["python", "-m", "crest.caesar_worker", "--result", str(source / "caesar-result.json")])
+    monkeypatch.setattr(psutil, "Process", lambda pid: process)
+    with pytest.raises(ValueError, match="running|alive"):
+        worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
+
+
+def test_recycled_pid_for_unrelated_process_does_not_block_final_history(tmp_path, monkeypatch):
+    import psutil
+    source = _source(tmp_path / "old", .5, .2)
+    worker.atomic_json(source / "state.json", {"worker_pid": 43210})
+    process = SimpleNamespace(status=lambda: psutil.STATUS_RUNNING, cmdline=lambda: ["python", "-m", "unrelated"])
+    monkeypatch.setattr(psutil, "Process", lambda pid: process)
+    value = worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
+    assert value["new_attempt_budget_usd"] == pytest.approx(4.3)

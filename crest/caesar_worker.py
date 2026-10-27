@@ -766,6 +766,31 @@ def _agent_name(key):
 
 
 
+def _assert_history_worker_stopped(source):
+    state_path = source / "state.json"
+    if not state_path.exists():
+        return
+    import psutil
+    state = json.loads(state_path.read_text())
+    pid = state.get("worker_pid")
+    try:
+        processes = [psutil.Process(int(pid))] if pid else psutil.process_iter()
+        for process in processes:
+            try:
+                if process.status() == psutil.STATUS_ZOMBIE:
+                    continue
+                command = process.cmdline()
+                if "crest.caesar_worker" in command and any(str(source) in str(arg) for arg in command):
+                    raise ValueError("Source worker is still running; final usage is not stable")
+            except psutil.NoSuchProcess:
+                continue
+            except psutil.AccessDenied as error:
+                if pid:
+                    raise ValueError("Cannot verify source worker has stopped") from error
+    except psutil.NoSuchProcess:
+        return
+
+
 def recovery_history(source, prompt):
     """Verify each preserved attempt once; never double-count embedded summaries."""
     history, seen = [], set()
@@ -774,6 +799,7 @@ def recovery_history(source, prompt):
         if cursor in seen:
             raise ValueError("Recovery ancestry contains a cycle")
         seen.add(cursor)
+        _assert_history_worker_stopped(cursor)
         request = json.loads((cursor / "caesar-request.json").read_text())
         record = json.loads((cursor / "caesar-result.json").read_text())
         if request.get("prompt") != prompt:
@@ -782,7 +808,8 @@ def recovery_history(source, prompt):
             raise ValueError("Budget ancestry requires a terminal failed/completed attempt")
         result = record.get("result") or {}
         raw = record.get("raw") or result.get("raw") or {}
-        usage = raw.get("new_attempt_usage_audit") or record.get("usage") or result.get("usage") or {}
+        usage_path = cursor / "caesar-output" / "usage.json"
+        usage = json.loads(usage_path.read_text()) if usage_path.is_file() else raw.get("new_attempt_usage_audit") or record.get("usage") or result.get("usage") or {}
         if raw.get("recovery") and raw.get("budget_history"):
             raise ValueError("Ambiguous budget ancestry modes")
         prior = raw.get("recovery") or raw.get("budget_history") or {}
@@ -796,6 +823,7 @@ def recovery_history(source, prompt):
             raise ValueError("Previous usage lacks a conservative cost bound")
         worker_id = request.get("worker_id") or request.get("job_key") or cursor.name
         history.append({"source_job": str(cursor), "known_cost_usd": known,
+            "usage_source": str(usage_path) if usage_path.is_file() else "terminal_per_attempt_snapshot",
             "unknown_reserved_usd": sum(reserved), "cost_unknown": bool(usage.get("unknown_cost") or unknown),
             "collection_name": "crest_" + hashlib.sha256(worker_id.encode()).hexdigest()[:40]})
         previous_settings = request.get("settings") or {}

@@ -65,6 +65,8 @@ def identity_metadata(settings: dict) -> dict:
         prompt = json.loads((source / "caesar-request.json").read_text())["prompt"]
         ancestry, _ = recovery_history(source, prompt)
         paths = [Path(item["source_job"]) / name for item in ancestry for name in ("caesar-request.json", "caesar-result.json")]
+        paths += [Path(item["source_job"]) / "caesar-output" / "usage.json" for item in ancestry
+                  if (Path(item["source_job"]) / "caesar-output" / "usage.json").is_file()]
         if settings.get("recovery_from"):
             paths += sorted((source / "caesar-output" / "__rome__").glob("*.checkpoint.json"))
             paths += sorted(path for path in (source / "caesar-output" / "chroma").rglob("*") if path.is_file())
