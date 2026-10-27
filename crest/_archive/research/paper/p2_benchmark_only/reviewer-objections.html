@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Reviewer objections · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest--reviewer-objections-register-governing-checklist">CREST —
+Reviewer Objections Register (governing checklist)</a></li><li><a href="#tier-1--critical--potentially-decisive-fix-these-or-dont-submit-to-iclr">TIER
+1 — CRITICAL / potentially decisive (fix these or don't submit to
+ICLR)</a></li><li><a href="#tier-2--high-score-depressing-several-are-partial-fix-only">TIER
+2 — HIGH (score-depressing; several are partial-fix-only)</a></li><li><a href="#tier-3--medium-checklist-satisfiable-mostly-desk-reject-preventable">TIER
+3 — MEDIUM (checklist-satisfiable; mostly desk-reject-preventable)</a></li><li><a href="#irreducible-residual-risks-state-plainly-in-limitations">Irreducible
+residual risks (state plainly in Limitations)</a></li><li><a href="#required-artifacts-pre-empt-desk-level-concerns">Required
+artifacts (pre-empt desk-level concerns)</a></li><li><a href="#prioritized-fix-order-highest-leverage-first">Prioritized fix
+order (highest leverage first)</a></li><li><a href="#venue-implication-from-the-ac-lens">Venue implication (from the
+AC lens)</a></li><li><a href="#section-ownership-map-what-closes-what-in-the-papercode">Section-Ownership
+Map (what closes what in the paper/code)</a></li></ul></nav></details><article><h1 id="crest--reviewer-objections-register-governing-checklist">CREST —
+Reviewer Objections Register (governing checklist)</h1>
+<p>Consolidated from a 4-lens ICLR-2027 red-team: <strong>Novelty &amp;
+Positioning</strong>, <strong>Methodology &amp; Soundness</strong>,
+<strong>Benchmark Integrity / COI</strong>, and <strong>Significance /
+Area-Chair</strong>. Ranked by likelihood × severity.</p>
+<p><strong>How to use this file:</strong> every LaTeX section and code
+component drafted for CREST must <em>visibly close</em> the objections
+assigned to it (see the Section-Ownership Map at the bottom). Objections
+that cannot be fully closed are listed honestly under "Irreducible
+residual risks" — the paper must <em>acknowledge</em> those in
+Limitations, not hide them.</p>
+<p><strong>One confirmed load-bearing fact (verified against
+arXiv:2604.20855 §5.1):</strong> the Caesar preprint <em>already
+publishes, verbatim,</em> the five categories (Constrained Synthesis,
+Counterfactual Reasoning, Cross-Domain Synthesis, Meta-Creativity,
+Open-Ended Synthesis), the New/Useful/Surprising 1–10 rubric, a
+cross-agent table (Caesar vs Gemini 3 / Sonnet 4.5 / GPT-5.2), the
+3-judge panel + self-preference analysis, and two ablations. This is the
+root of objections #1, #2, #6 below.</p>
+<hr/>
+<h2 id="tier-1--critical--potentially-decisive-fix-these-or-dont-submit-to-iclr">TIER
+1 — CRITICAL / potentially decisive (fix these or don't submit to
+ICLR)</h2>
+<h3 id="o1-self-overlap-with-the-authors-own-preprint--no-novel-contribution-existential">O1.
+Self-overlap with the authors' own preprint → "no novel contribution"
+(EXISTENTIAL)</h3>
+<ul>
+<li><strong>L×S:</strong> High × Critical (desk-level for a skeptic who
+opens the cited preprint).</li>
+<li><strong>Defense:</strong> Front-load an explicit
+<strong>delta-vs-prior-work paragraph in §1</strong>. The genuinely new
+objects — and the <em>only</em> ones — are: (a) <strong>scale</strong>
+(5 single queries → ~30 challenges × ≥6 domains; per-cell n≥5 vs n=1);
+(b) a <strong>released, versioned public artifact</strong> (rubric +
+judge harness + frozen snapshots; the preprint released none); (c) a
+<strong>multi-agent field</strong> where Caesar is one de-emphasized
+entrant; (d) the <strong>axis-dependence finding as a pre-registered
+hypothesis test</strong> (never claimed in the preprint). Position CREST
+as <em>measurement + finding</em>, not the agent.</li>
+<li><strong>Residual:</strong> the taxonomy + rubric are
+<strong>not</strong> novel to CREST. Whether "scale + release + reframe"
+clears ICLR-main novelty is a genuine coin-flip. <strong>This is the
+paper's existential risk.</strong> Do not hope the reviewer won't open
+the preprint — it is cited by number.</li>
+</ul>
+<h3 id="o2-construct-validity--is-nus-actually-creativity-and-is-surprising-discriminant-from-new">O2.
+Construct validity — is N/U/S actually <em>creativity</em>, and is
+"Surprising" discriminant from "New"?</h3>
+<ul>
+<li><strong>L×S:</strong> High × High. In the preprint's own Table 1,
+New ≈ Surprising are near-collinear (Caesar 8.64 / 8.27).</li>
+<li><strong>Defense:</strong> Ground the construct in
+<strong>independent theory</strong> — Runco &amp; Jaeger (novelty +
+usefulness = the standard definition), Boden (+ surprise), Amabile's
+Consensual Assessment Technique for scoring — and cite the
+<strong>cog-sci sources, not the Caesar preprint,</strong> as the
+rubric's provenance. Add a <strong>discriminant-validity study</strong>:
+inter-axis correlation matrix + factor analysis proving Surprising
+carries variance beyond New; <strong>convergent validity</strong> vs a
+human-expert CAT panel <em>across all agents</em>; and
+<strong>discriminant from accuracy and verbosity</strong>.</li>
+<li><strong>Residual:</strong> may empirically collapse to a 2-factor
+(novelty + value) construct; factor structure is under-identified at
+N≈30. If the correlation stays high, "creativity ≠ novelty" fails.
+Data-determined; cannot be pre-argued.</li>
+</ul>
+<h3 id="o3-the-flagship-finding-is-confounded-with-judge-invalidity-near-fatal">O3.
+The flagship finding is confounded with judge-invalidity
+(near-fatal)</h3>
+<ul>
+<li><strong>L×S:</strong> Very High × Very High. The C1/C5 <strong>nulls
+coincide exactly</strong> with the two categories where the LLM judge
+fails human agreement — so "axis-dependent creativity" is
+indistinguishable from "axis-dependent judge failure."</li>
+<li><strong>Defense:</strong> Report <strong>α/ICC per category</strong>
+(never pooled); <strong>validity-stratified results</strong> separating
+judge-valid cells (C2/C3/C4) from judge-invalid cells (C1/C5); make the
+<strong>human panel the primary scorer for C1/C5</strong> and re-run the
+null test on human scores; label sub-threshold cells
+<strong>"measurement inconclusive," not "null."</strong> Do not present
+C1/C5 nulls as confirmed predictions.</li>
+<li><strong>Residual:</strong> even human-scored, C1/C5 stay
+underpowered (O5); cannot prove a true null vs Type II error. Dampen,
+don't dissolve.</li>
+</ul>
+<h3 id="o4-construct-validity--a-reproducible-judge-is-the-accept-gate-ac-meta-verdict">O4.
+Construct validity + a <em>reproducible</em> judge is THE accept gate
+(AC meta-verdict)</h3>
+<ul>
+<li><strong>L×S:</strong> High × Critical (the necessary condition for
+everything else).</li>
+<li><strong>Defense:</strong> Make <strong>§4 (judge validation) the
+load-bearing section</strong>: released runnable judge; agreement with
+human-expert creativity ratings; reported reliability; discriminant from
+accuracy/verbosity. If the measure isn't credibly creativity
+<em>and</em> reproducible, the finding and the significance story mean
+nothing.</li>
+<li><strong>Residual:</strong> creativity has no ground truth; CAT +
+reliability bounds subjectivity but never removes the
+judge-defines-construct circularity.</li>
+</ul>
+<hr/>
+<h2 id="tier-2--high-score-depressing-several-are-partial-fix-only">TIER
+2 — HIGH (score-depressing; several are partial-fix-only)</h2>
+<h3 id="o5-statistical-power--56-itemscell-cannot-support-nullparity-claims">O5.
+Statistical power — ~5–6 items/cell cannot support null/parity
+claims</h3>
+<ul>
+<li><strong>Defense:</strong> mixed-effects (items + domains crossed
+random effects); <strong>MDE / power curves for every null</strong>;
+<strong>TOST equivalence tests</strong> so nulls read as
+evidence-for-null; <strong>positive controls</strong> (strong C2/C3
+signal proves the instrument is sensitive); effect sizes + CIs
+everywhere; replace "null/parity" with "not detectable at N; CI includes
+zero." <strong>Highest-leverage single change: expand N.</strong></li>
+<li><strong>Residual:</strong> power vs multiplicity is
+<strong>unwinnable at N=30</strong> (correction annihilates power;
+crossed random effects go singular). Honest posture: nulls/parity are
+<em>hypothesis-generating</em>, only the largest wins are
+confirmatory.</li>
+</ul>
+<h3 id="o6-coi--self-serving-benchmark--builder-also-competes-post-leaderboard-illusion">O6.
+COI / self-serving benchmark — builder also competes (post-"Leaderboard
+Illusion")</h3>
+<ul>
+<li><strong>Defense:</strong> a <strong>prominent COI statement</strong>
+(anonymized), not a citation; <strong>pre-register
+outcome-independence</strong> (the contribution is the benchmark+method
+regardless of where Caesar lands); engineer for <strong>Caesar-not-first
++ full removability</strong> (all headline findings hold with Caesar
+excluded); LOFO judging; <strong>budget parity</strong>; if Caesar wins,
+an extraordinary-evidence bar (replicate under LOFO + human CAT +
+alt-rubrics + hidden split; no screenshots).</li>
+<li><strong>Residual:</strong> builder-run results are down-weighted
+regardless of controls; the only clean outcome is <em>a frontier agent
+first, Caesar strong-but-second.</em> You don't control where it
+lands.</li>
+</ul>
+<h3 id="o7-llm-judge-bias--documented-25-pt-self-preference-in-the-preprint-table-2">O7.
+LLM-judge bias — documented ±2.5-pt self-preference in the preprint
+(Table 2)</h3>
+<ul>
+<li><strong>Defense:</strong> LOFO + multi-vendor + ≥1 open-weight +
+majority vote; <strong>blind judging</strong> (no agent
+identity/family); <strong>human-IRR</strong> (κ/ICC ≥ ~0.75 target);
+show the axis-dependence pattern is <strong>invariant across judge
+backbones</strong>.</li>
+<li><strong>Residual:</strong> frontier judges share RLHF-induced biases
+(verbosity, sycophancy) → panel diversity does <em>not</em> cancel them;
+the open-weight judge is weaker, so the panel is dominated by correlated
+frontier judges.</li>
+</ul>
+<h3 id="o8-lengthverbosity-confound-r--047-in-the-preprint">O8.
+Length/verbosity confound (r = 0.47 in the preprint)</h3>
+<ul>
+<li><strong>Defense:</strong> length as a <strong>covariate in the mixed
+model</strong> (bins fail at N=30 — ~2 items/bin); report
+within-covariate effects; frame <strong>confound vs mediator</strong>
+explicitly.</li>
+<li><strong>Residual:</strong> length may be a <em>mediator</em> of
+creativity (elaboration is part of the act) — "controlling" it risks
+over-correction; shared judge length-bias persists.</li>
+</ul>
+<h3 id="o9-contamination--novelty--fetched-fresher-pages-not-synthesis">O9.
+Contamination — "novelty = fetched fresher pages," not synthesis</h3>
+<ul>
+<li><strong>Defense:</strong> post-cutoff subset + <strong>frozen dated
+snapshot + one shared search index</strong> (neutralizes recency);
+define "New" relative to a <strong>fixed reference corpus</strong>, not
+the judge's cutoff; FACT gate blocks hallucinated novelty; report
+pre/post-cutoff split.</li>
+<li><strong>Residual:</strong> freezing the index removes the
+live-retrieval skill deep-research agents exist for (realism tradeoff);
+must report live <strong>and</strong> frozen; they may disagree.</li>
+</ul>
+<h3 id="o10-so-what--is-agent-creativity-important-now-or-niche-ac-significance">O10.
+"So what?" — is agent creativity important now, or niche? (AC
+significance)</h3>
+<ul>
+<li><strong>Defense:</strong> frame the measurement gap precisely —
+every existing agent eval scores
+accuracy/coverage/faithfulness/completion; creativity is the axis
+separating a <strong>research collaborator from a search
+summarizer</strong>, and it's the unmeasured one; tie to the
+AI-co-scientist moment.</li>
+<li><strong>Residual:</strong> an AC may deem it premature
+(reliability/accuracy is the binding constraint; creativity a "luxury
+metric"), or "interesting but boutique."</li>
+</ul>
+<h3 id="o11-axis-dependence-looks-obvious--post-hoc">O11.
+Axis-dependence looks obvious / post-hoc</h3>
+<ul>
+<li><strong>Defense:</strong> harden from "scores vary by task" to a
+<strong>theory-predicted crossover / rank-reversal interaction</strong>
+(the agent most creative on New is <em>not</em> the one most creative on
+Surprising; Gentner-analogy creativity dissociates from
+Byrne-counterfactual); pre-register the predictions; report the
+agent×axis interaction test with CIs.</li>
+<li><strong>Residual:</strong> "obvious in hindsight" is irreducibly
+subjective; the interaction may not reach robustness at N≈6/cell.</li>
+</ul>
+<hr/>
+<h2 id="tier-3--medium-checklist-satisfiable-mostly-desk-reject-preventable">TIER
+3 — MEDIUM (checklist-satisfiable; mostly desk-reject-preventable)</h2>
+<ul>
+<li><strong>O12. Releasability</strong> (licensing, snapshots, IRB,
+dual-use): release <strong>URLs + timestamps + content hashes</strong>
+(not scraped content) with per-source license; artifact license
+(Apache-2.0 / CC-BY); <strong>IRB approval or documented exemption +
+consent + fair pay + de-identification</strong> for the (external) rater
+study; dual-use harm statement with the FACT gate as guard + content
+screening. <em>Residual:</em> web-corpus licensing is never fully clean;
+IRB-exemption boundaries vary.</li>
+<li><strong>O13. Gaming + reproducibility of a released judge
+benchmark:</strong> hidden held-out split; a <strong>creativity-hack
+red-team</strong> (show verbosity/keyword-stuffing does NOT inflate
+CREST); pinned judge snapshots + prompts + seeds; Docker + lockfile +
+verify.py + SHA-256 at a tagged anonymized commit + Zenodo DOI; report a
+<strong>reliability/drift envelope + rank-stability</strong>
+(bit-reproduction is impossible with drifting judges); living-benchmark
+governance (no builder-privileged post-release access).
+<em>Residual:</em> no public judge benchmark is gaming-proof; held-out
+splits leak over time.</li>
+<li><strong>O14. Double-blind de-anonymization:</strong> strict
+<strong>third-person</strong> Caesar citation ("prior/concurrent work by
+a group we do not identify"); git filter-repo history rewrite + PDF/EXIF
+scrub + fingerprint scrub (e.g., status lines, "fourth pillar"
+phrasing); anonymized repo; <strong>route the COI to the AC</strong>.
+<em>Residual:</em> a publicly-named agent is guessable by an expert —
+document to the AC as accepted risk.</li>
+<li><strong>O15. Cross-agent fairness:</strong> normalize tool/compute
+budgets (equal search-call cap, token/wall-clock); report a
+<strong>cost-vs-creativity Pareto frontier</strong> rather than a single
+rank. <em>Residual:</em> heterogeneous agent architectures make perfect
+parity ill-defined.</li>
+<li><strong>O16. FACT hard-zero gate:</strong> validate the gate
+(precision/recall vs human faithfulness labels); sensitivity
+with/without + graded vs binary; report per-agent firing rate; use a
+<strong>hurdle/two-part model</strong> for the resulting zero-inflation.
+<em>Residual:</em> the gate itself is an LLM-judge with error and can
+fire differentially by agent.</li>
+<li><strong>O17. Venue fit (ICLR main has no D&amp;B track):</strong>
+lead with the <em>finding + theory-grounded framework</em>, not the
+artifact; cite ICLR precedent for accepted analysis/benchmark papers.
+<em>Residual:</em> structural ~0.5–1-point tax some reviewers won't
+drop.</li>
+</ul>
+<hr/>
+<h2 id="irreducible-residual-risks-state-plainly-in-limitations">Irreducible
+residual risks (state plainly in Limitations)</h2>
+<ol type="1">
+<li><strong>Power vs multiplicity is unwinnable at N≈30</strong> —
+nulls/parity are hypothesis-generating, not confirmatory.</li>
+<li><strong>Closed-agent results are not reproducible</strong> — only
+time-indexed snapshots; the reproducible core is (open-weight agent +
+frozen index).</li>
+<li><strong>Freezing the index changes the task</strong> — removes the
+defining live-retrieval capability; report both regimes.</li>
+<li><strong>Multi-vendor judges do not give independent errors</strong>
+— shared RLHF biases; panel diversity ≠ bias cancellation.</li>
+<li><strong>Length may be a mediator, not a confound</strong> — no
+purely statistical adjustment resolves it.</li>
+<li><strong>N/U/S dimensionality is theory-supported but
+data-under-identified</strong> at N≈30.</li>
+<li><strong>Creativity has no ground truth</strong> — the
+judge-defines-construct circularity is bounded, not eliminated.</li>
+<li><strong>COI vs double-blind vs construct-capture-assessment is an
+irreducible three-way tension</strong> — surface it to the AC
+explicitly.</li>
+</ol>
+<h2 id="required-artifacts-pre-empt-desk-level-concerns">Required
+artifacts (pre-empt desk-level concerns)</h2>
+<ul>
+<li><strong>Datasheet (Gebru et al.):</strong> motivation incl. COI;
+composition (instances, splits incl. hidden, copyright/PII/dual-use
+flags); collection (authoring + scraping/freezing dates +
+robots.txt/ToS); labeling (rubric + <strong>cog-sci provenance, not
+Caesar</strong> + judge versions + rater protocol); uses (out-of-scope,
+gaming vectors); distribution (artifact license + per-source corpus
+license + URL/hash mechanism + DOI + versioning); maintenance
+(refresh/contamination policy, judge-snapshot retention); human-subjects
+(IRB/exemption, consent, pay).</li>
+<li><strong>Ethics statement:</strong> COI + enumerated controls (LOFO,
+pre-registration, Caesar excluded from rubric design, human validation,
+outcome-independence, budget parity); IRB/consent/pay;
+copyright/robots/PII; dual-use analysis.</li>
+<li><strong>Reproducibility statement:</strong> OSF pre-registration
+(frozen rubric/weights/decision rules, timestamp predating scoring);
+pinned judge snapshots + prompts + seeds + retention; frozen corpus +
+hashes + live/frozen modes; full harness (Docker + lockfile + verify.py
++ SHA at tag, anon repo, DOI); reliability reporting (ICC/κ, human-LLM
+concordance, drift envelope, calibration set); statistical
+protocol.</li>
+</ul>
+<h2 id="prioritized-fix-order-highest-leverage-first">Prioritized fix
+order (highest leverage first)</h2>
+<ol type="1">
+<li><strong>Sever the rubric's provenance from Caesar</strong> and prove
+<strong>construct validity</strong> against human consensus on
+non-Caesar agents (O2, O4, O1).</li>
+<li><strong>Pre-register</strong> taxonomy, items, and the "predicted
+nulls"; <strong>independent/blind item authoring</strong> with held-out
+replication (O1, O6, O11).</li>
+<li><strong>Validity-stratified reporting</strong> + human scoring on
+C1/C5; <strong>per-category α/ICC</strong> (O3).</li>
+<li><strong>MDE/power + effect-size/CI + TOST</strong>, replacing all
+"null/parity" language; <strong>expand N</strong> if at all possible
+(O5).</li>
+<li><strong>Prominent COI statement</strong> + engineer
+<strong>Caesar-not-first + removability</strong> (O6).</li>
+<li>Length-as-covariate + confound/mediator framing; cross-backbone
+judge invariance (O7, O8).</li>
+<li>Datasheet / ethics / repro / anonymization / anti-gaming (O12–O16) —
+checklist-satisfiable.</li>
+</ol>
+<h2 id="venue-implication-from-the-ac-lens">Venue implication (from the
+AC lens)</h2>
+<p>As designed (~30 items, subjective judge, finding not yet a
+crossover) → <strong>NeurIPS Datasets &amp; Benchmarks maximizes both
+the fair significance read and acceptance odds</strong> (its reviewers
+weigh construct validity / datasheets / reproducibility as native
+strengths, not reject triggers). <strong>ICLR main wins only if the
+axis-dependence result is hardened into a statistically robust,
+theory-predicted rank-reversal</strong> — then it is a <em>findings</em>
+paper and ICLR's audience amplifies it. Provisional AC read on the
+current draft: <strong>borderline-reject at ICLR main, borderline-accept
+at NeurIPS D&amp;B.</strong></p>
+<hr/>
+<h2 id="section-ownership-map-what-closes-what-in-the-papercode">Section-Ownership
+Map (what closes what in the paper/code)</h2>
+<div aria-label="Section-Ownership
+Map (what closes what in the paper/code) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Objection</th>
+<th scope="col">Owner (paper section / artifact / experiment)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>O1 self-overlap</td>
+<td>§1 delta paragraph; §2 related-work table; pre-registration</td>
+</tr>
+<tr>
+<td>O2 construct/discriminant validity</td>
+<td>§3 construct grounding; §4 validity study (inter-axis corr + factor
+analysis + human CAT)</td>
+</tr>
+<tr>
+<td>O3 nulls⟂judge-invalidity</td>
+<td>§4 per-category α/ICC; §5 validity-stratified results (human scoring
+on C1/C5)</td>
+</tr>
+<tr>
+<td>O4 reproducible judge</td>
+<td>§4 (load-bearing); released judge harness</td>
+</tr>
+<tr>
+<td>O5 power</td>
+<td>§5 stats (mixed-effects, MDE, TOST, CIs); dataset size</td>
+</tr>
+<tr>
+<td>O6 COI</td>
+<td>COI statement; §5 removability + Caesar-not-first; ethics</td>
+</tr>
+<tr>
+<td>O7 judge bias</td>
+<td>§4 LOFO + blind + backbone-invariance</td>
+</tr>
+<tr>
+<td>O8 length</td>
+<td>§5 length-covariate + confound/mediator</td>
+</tr>
+<tr>
+<td>O9 contamination</td>
+<td>§3 frozen snapshot/shared index; §5 pre/post split</td>
+</tr>
+<tr>
+<td>O10 significance</td>
+<td>§1 motivation</td>
+</tr>
+<tr>
+<td>O11 obvious/post-hoc</td>
+<td>§5 crossover-interaction test; pre-registration</td>
+</tr>
+<tr>
+<td>O12 releasability</td>
+<td>datasheet + ethics + repro</td>
+</tr>
+<tr>
+<td>O13 gaming/repro</td>
+<td>repro statement; harness; hidden split; creativity-hack
+red-team</td>
+</tr>
+<tr>
+<td>O14 anonymity</td>
+<td>submission hygiene; third-person citation</td>
+</tr>
+<tr>
+<td>O15 fairness</td>
+<td>§5 budget parity + Pareto</td>
+</tr>
+<tr>
+<td>O16 FACT gate</td>
+<td>§6 grounding (gate validation + hurdle model)</td>
+</tr>
+<tr>
+<td>O17 venue</td>
+<td>framing / venue decision</td>
+</tr>
+</tbody>
+</table></div>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

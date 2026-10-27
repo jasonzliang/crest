@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>AI/ML dataset build · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#aiml-crest-dataset--build-report">AI/ML CREST dataset — build
+report</a></li><li><a href="#-this-report-describes-a-superseded-build-annotated-2026-07-31">⚠
+THIS REPORT DESCRIBES A SUPERSEDED BUILD (annotated 2026-07-31)</a></li><li><a href="#0-headline--the-build-shipped-41-of-50-the-remaining-9-were-authored-later-closed">0.
+HEADLINE — the build shipped 41 of 50; the remaining 9 were authored
+later. CLOSED.</a></li><li><a href="#1-per-category-verdict-counts">1. Per-category verdict
+counts</a></li><li><a href="#2-fabrication-and-date-errors-caught-and-how-each-was-resolved">2.
+Fabrication and date errors caught, and how each was resolved</a></li><li><a href="#3-items-dropped">3. Items dropped</a></li><li><a href="#4-schema-enforcement">4. Schema enforcement</a></li><li><a href="#5-distributions">5. Distributions</a></li><li><a href="#6-discrimination-evidence-per-item">6. Discrimination evidence,
+per item</a></li><li><a href="#7-compatibility--closed-2026-07-31">7. COMPATIBILITY — CLOSED 2026-07-31</a></li><li><a href="#8-what-still-needs-human-review">8. What still needs human
+review</a></li><li><a href="#appendix--id-renumbering">Appendix — id renumbering</a></li></ul></nav></details><article><h1 id="aiml-crest-dataset--build-report">AI/ML CREST dataset — build
+report</h1>
+<blockquote>
+<h2 id="-this-report-describes-a-superseded-build-annotated-2026-07-31">⚠
+THIS REPORT DESCRIBES A SUPERSEDED BUILD (annotated 2026-07-31)</h2>
+<p>It documents the <strong>41-item</strong> intermediate state. The
+shipped file <code>question/crest_aiml_challenges.jsonl</code> now has
+<strong>50 items, 10 per category</strong>: ids
+<code>00</code>–<code>40</code> are unchanged and every per-item finding
+below still points at a real item, but ids
+<strong><code>41</code>–<code>49</code> are new (C4 ×3, C5 ×6) and are
+covered by NOTHING in this report</strong> — no audit record, no
+discrimination review, no dedupe check.</p>
+<p>Three items this report marks BLOCKING are
+<strong>CLOSED</strong>:</p>
+<ul>
+<li>§8.1 the 9 missing items — authored and appended as
+<code>_41</code>–<code>_49</code>.</li>
+<li>§7 schema incompatibility — <code>question/schema.json</code> is now
+<code>crest-challenge/3.2.0</code> with the twelve-value
+<code>domain</code> enum, and all 50 items load and validate.</li>
+<li>§8.2's provenance loss — the C5 source is tracked at
+<code>question/aiml_build/c5_source_verbatim.json</code>. The
+<em>unaudited</em> half of §8.2 still stands.</li>
+</ul>
+<p>§5's distributions are re-measured in place below. §0, §4 and §7 are
+superseded and cut to their surviving conclusions. <strong>This dataset
+is not wired into <code>config/eval_config.yaml</code>, has no
+<code>item_design.jsonl</code> rows (so <code>ci_check.sh</code>'s
+bijection check does not cover it), and has never been run or
+scored.</strong> It is not the dataset any published CREST number refers
+to.</p>
+</blockquote>
+<p>Built 2026-07-31. Output:
+<code>question/crest_aiml_challenges.jsonl</code> (one JSON object per
+line, UTF-8, LF-terminated).</p>
+<hr/>
+<h2 id="0-headline--the-build-shipped-41-of-50-the-remaining-9-were-authored-later-closed">0.
+HEADLINE — the build shipped 41 of 50; the remaining 9 were authored
+later. <strong>CLOSED.</strong></h2>
+<p>At build time the five category batches were not all available:
+C1/C2/C3 had 10 each on disk, C4 had <strong>7</strong>
+(<code>questions/c4_ml_new10.audited.json</code>, committed mid-audit),
+and C5 had <strong>no source file at all</strong> — 5 items were
+transcribed verbatim from the task prompt, and the prompt itself cut off
+inside item 6. Minus one cross-category duplicate (§3) ⇒ <strong>41
+shipped</strong>. Nothing was invented to reach 50 at the time, which
+was the right call: the alternative was authoring 8 items with
+fabricated prior-art catalogues.</p>
+<p><strong>The 9 were authored separately and appended as ids
+<code>_41</code>–<code>_49</code>, so the file is 50/50 and squared at
+10 per category.</strong> They were NOT produced by this build and carry
+none of its audit apparatus — see the header. The C5 transcription is
+now tracked at <code>question/aiml_build/c5_source_verbatim.json</code>;
+it remains <strong>unverified against any original</strong> (§8.2).</p>
+<hr/>
+<h2 id="1-per-category-verdict-counts">1. Per-category verdict
+counts</h2>
+<h3 id="1a-audit-activity-pre-audit-vs-post-audit-artifact-diff">1a.
+Audit activity (pre-audit vs post-audit artifact diff)</h3>
+<p>C1, C2 and C3 each have both a pre-audit and a post-audit artifact on
+disk, so the auditor's verdicts are recoverable exactly by diffing
+them.</p>
+<div aria-label="1a.
+Audit activity (pre-audit vs post-audit artifact diff) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Batch</th>
+<th scope="col">Items touched</th>
+<th scope="col"><code>known_answers</code> added</th>
+<th scope="col">amended in place</th>
+<th scope="col">deleted</th>
+<th scope="col"><code>hard_rules</code> added</th>
+<th scope="col">amended</th>
+<th scope="col"><code>expert_baseline</code> rewritten</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>10 / 10</td>
+<td>+41</td>
+<td>7</td>
+<td>−6</td>
+<td>+7</td>
+<td>4</td>
+<td>6</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>10 / 10</td>
+<td>+35</td>
+<td>9</td>
+<td>−5</td>
+<td>+10</td>
+<td>4</td>
+<td>10</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>10 / 10</td>
+<td>+17</td>
+<td>11</td>
+<td>−1</td>
+<td>+1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>7 / 7 (no pre-audit copy retained)</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>C5</td>
+<td><strong>0 / 4 — NEVER AUDITED</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Every C1/C2/C3 item was modified by its auditor. None passed
+clean.</strong> 100% touch rate across 30 items is the headline verdict
+number.</p>
+<p>C4's audited file has no retained pre-audit sibling, so its verdict
+counts cannot be reconstructed; its corrections are visible only as
+in-artifact prose (its <code>known_answers</code> preambles all carry
+the "dated by FIRST publication (arXiv v1 or first venue), not by a
+later version, rebranding or product name" rubric, which is the C4
+auditor's signature).</p>
+<p><strong>C5 was never audited at all.</strong> It is the only batch in
+the file with no audit provenance.</p>
+<h3 id="1b-audit-apparatus-surviving-in-the-shipped-file">1b. Audit
+apparatus surviving in the shipped file</h3>
+<div aria-label="1b. Audit
+apparatus surviving in the shipped file table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Batch</th>
+<th scope="col">n</th>
+<th scope="col"><code>known_answers</code> (mean)</th>
+<th scope="col"><code>hard_rules</code> (mean)</th>
+<th scope="col"><code>NEGATIVE RESULT</code></th>
+<th scope="col"><code>KNOWN AND BINDING</code></th>
+<th scope="col"><code>CONCEPT DATE NOTE</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>10</td>
+<td>244 (24.4)</td>
+<td>73 (7.3)</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>10</td>
+<td>173 (17.3)</td>
+<td>65 (6.5)</td>
+<td>0</td>
+<td>66</td>
+<td>0</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>10</td>
+<td>126 (12.6)</td>
+<td>71 (7.1)</td>
+<td><strong>10 (one per item)</strong></td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>7</td>
+<td>179 (25.6)</td>
+<td>57 (8.1)</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>4</td>
+<td>89 (22.2)</td>
+<td>20 (5.0)</td>
+<td>0</td>
+<td>0</td>
+<td>7</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each batch's auditor used a different marker convention. C3's ten
+<code>NEGATIVE RESULT</code> blocks each record the exact searches run
+and state "absence of evidence only; a contesting citation overrides
+this entry" — the most honest of the four conventions. C2's 66
+<code>KNOWN AND BINDING</code> tags mark facts an answer may not
+contradict. C5's 7 <code>CONCEPT DATE NOTE</code> tags are the only
+audit-shaped content in that batch, and they were authored with the
+items, not by an auditor.</p>
+<p>C5's rule count (mean 5.0) is visibly thinner than every other
+category (6.5–8.1). See §8.4.</p>
+<hr/>
+<h2 id="2-fabrication-and-date-errors-caught-and-how-each-was-resolved">2.
+Fabrication and date errors caught, and how each was resolved</h2>
+<p><strong>Zero outright fabrications were found in any batch.</strong>
+Every named paper, DOI, arXiv id, statute and system in the shipped file
+resolves to a real artifact. The defect class that actually dominated is
+<strong>concept-date inflation</strong>: prior art dated to a later
+paper, product launch, rebranding or venue rather than to first
+publication. In every case found, the error ran in the direction that
+makes the prior art look <em>younger</em> — i.e. that makes a submission
+look <em>more novel</em> than it is, which directly inflates the New
+score. Not one error ran the other way.</p>
+<h3 id="2a-c1--architecture--alignment--systems">2a. C1 — architecture /
+alignment / systems</h3>
+<div aria-label="2a. C1 — architecture /
+alignment / systems table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item (final id)</th>
+<th scope="col">Defect</th>
+<th scope="col">Resolution in shipped file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C1_architectures_training_00</code></td>
+<td>Constant-size recurrent state credited to Mamba (2023)</td>
+<td>Rewritten to credit <strong>S4 (2021, arXiv:2111.00396)</strong> as
+establishing the constant-size recurrent state; Mamba demoted to "added
+input-dependent selection", Mamba-2/SSD to the scan. Now reads "KNOWN
+from 2021, <strong>not 2023</strong>".</td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_00</code></td>
+<td>Delta-rule / gated linear attention dated 2023+</td>
+<td>Prepended <strong>fast-weight programmers / delta-rule linear
+attention (2021, arXiv:2102.11174)</strong>, with the note that the
+delta rule traces to Schmidhuber's 1992 fast weights.</td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_00</code></td>
+<td>Compressive memory credited to Infini-attention (2024) / Titans</td>
+<td>Rewritten as "Segment recurrence and learned compressive memory",
+now anchored at <strong>Transformer-XL (2019, arXiv:1901.02860)</strong>
+and <strong>Compressive Transformer (2019, arXiv:1911.05507)</strong>;
+reads "KNOWN from 2019, <strong>not 2022-2024</strong>". Titans redated
+to its true v1, <strong>2024-12-31</strong>, not 2025.</td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_00</code></td>
+<td>Constant-time addressable memory missing</td>
+<td>Added <strong>Large Memory Layers with Product Keys (2019,
+arXiv:1907.05242)</strong> — this closes a live novelty hole: the item's
+own R2 invites an O(1) lookup structure, and product-key addressing
+already is one. Also added AutoCompressors (2305.14788) and In-context
+Autoencoder (2307.06945).</td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_01</code></td>
+<td>Router z-loss attributed to Switch Transformer</td>
+<td>Corrected: Switch contributes "selective precision for router
+stability"; <strong>the router z-loss itself is ST-MoE (2022), not
+Switch (2021)</strong>.</td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_01</code></td>
+<td>Node-limited routing credited to DeepSeek-V3 (2024-12)</td>
+<td>New entry: <strong>DeepSeek-V2 (2024-05, arXiv:2405.04434)</strong>
+already has device-limited routing plus device-level and communication
+balance losses. "the node-limited constraint predates DeepSeek-V3".</td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_01</code></td>
+<td>Expert Race (2503.16057) listed as a plain LM router</td>
+<td>Qualified: "introduced for <strong>diffusion transformers rather
+than decoder-only LMs</strong>, and therefore batch-coupled in the sense
+R1 forbids".</td>
+</tr>
+<tr>
+<td><code>C1_alignment_safety_03</code></td>
+<td>AI-control baseline numbers quoted at the wrong audit budget</td>
+<td>The published protocol menu (15%/100%, 62%/97%, 92%/94%) is from a
+<strong>5,000-problem stream at a 2% budget</strong>; this item
+specifies 10,000 tasks at <strong>1%</strong>. Rule text now says the
+numbers are known "<strong>AT A 2% BUDGET</strong> — an answer must
+rescale them to this item's 1% budget rather than quote them directly."
+This closes a scoring hole where a copied number would have read as a
+derived one.</td>
+</tr>
+<tr>
+<td><code>C1_systems_efficiency_06</code></td>
+<td>KV-quantisation citation list mis-grouped and one entry
+misdated</td>
+<td>PolarQuant (2502.00527) and TurboQuant (2504.19874) moved into the
+rotation/transform group with correct descriptions; a duplicated
+TurboQuant/PolarQuant tail and a 2026 SAW-INT4 entry removed from the
+sub-2-bit group.</td>
+</tr>
+<tr>
+<td><code>C1_theory_learning_08</code></td>
+<td>Synthetic-textbook pretraining credited to Phi-4 (2024)</td>
+<td>Corrected to <strong>Textbooks Are All You Need / phi-1 (2023,
+arXiv:2306.11644)</strong> first, with Phi-4 retained as the production
+follow-on.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Plus 6 of 10 C1 <code>expert_baseline</code> fields rewritten, and 7
+new / 4 amended hard rules — chiefly the addition of the
+<code>R-CLOSEST PRIOR ART</code> numeric-delta disclosure rule, which is
+now present in <strong>all 10</strong> C1 items.</p>
+<h3 id="2b-c2--counterfactual-worlds">2b. C2 — counterfactual
+worlds</h3>
+<div aria-label="2b. C2 — counterfactual
+worlds table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item (final id)</th>
+<th scope="col">Defect</th>
+<th scope="col">Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C2_architectures_training_10</code></td>
+<td>Attention-sink mechanism stated wrongly ("sinks exist because
+softmax must allocate a full unit of mass")</td>
+<td>Rewritten to the published account: sinks are <strong>tied
+to</strong> softmax's mass constraint, <strong>function as key biases /
+an over-mixing brake</strong>, and are attenuated when the normalisation
+is replaced. Added <strong>Gu et al. 2024 (arXiv:2410.10781)</strong> as
+the empirical study.</td>
+</tr>
+<tr>
+<td><code>C2_architectures_training_10</code></td>
+<td>Associative-recall gap credited to Zoology (2023)</td>
+<td>Backdated by adding <strong>H3 / Hungry Hungry Hippos (2022-12-28,
+arXiv:2212.14052)</strong>.</td>
+</tr>
+<tr>
+<td><code>C2_architectures_training_10</code></td>
+<td>Low-bit-serving claim unqualified</td>
+<td>Added the counter-evidence <strong>Quamba (2024,
+arXiv:2410.13229)</strong> documenting massive activation outliers in
+softmax-free recurrent models, plus a new hard rule forbidding "no
+softmax ⇒ low-bit is easy" without reconciling it. This inverts a claim
+the item would previously have rewarded.</td>
+</tr>
+<tr>
+<td><code>C2_architectures_training_11</code></td>
+<td>LLaDA described vaguely as "roughly comparable to a same-size
+autoregressive model"</td>
+<td>Replaced with the paper's actual claims: 8B trained from scratch,
+competitive with LLaMA3 8B on ICL and (after SFT) instruction following,
+<strong>beats GPT-4o on reversal poem completion</strong>.</td>
+</tr>
+<tr>
+<td><code>C2_architectures_training_11</code></td>
+<td>The "16×" masked-diffusion figure used loosely</td>
+<td>Pinned precisely: the <strong>scaling rate</strong> is comparable
+with a "relatively small compute gap"; the <strong>16×</strong> figure
+is specific to matching a KV-cached ARM's <em>text-generation</em>
+quality (while sampling ~1.4× faster). A hard rule now states that
+conflating the two is an error.</td>
+</tr>
+<tr>
+<td><code>C2_systems_efficiency_16</code></td>
+<td>"AI and Memory Wall" dated 2024 (arXiv)</td>
+<td>Redated to first publication: <strong>RISELab blog post,
+2021-03-29</strong>, then arXiv:2403.14123 (2024) and IEEE Micro. Entry
+now reads "2021/2024".</td>
+</tr>
+<tr>
+<td><code>C2_systems_efficiency_17</code></td>
+<td><strong>Materially stale law.</strong> US Executive Order 14110's
+10²⁶-op reporting threshold cited as operative</td>
+<td>Corrected: EO 14110 was <strong>revoked 2025-01-20 by EO
+14179</strong>. The operative operation-count thresholds as of this
+dating are <strong>California SB 53</strong> (Transparency in Frontier
+AI Act, signed 2025-09-29, in force 2026-01-01, &gt;10²⁶ integer or FP
+operations) and <strong>New York's RAISE Act</strong>.</td>
+</tr>
+<tr>
+<td><code>C2_evaluation_benchmarking_15</code></td>
+<td>METR time-horizon result cited without its actual metric</td>
+<td>Corrected to the <strong>50%-task-completion time horizon</strong>,
+with full author list and title.</td>
+</tr>
+<tr>
+<td><code>C2_alignment_safety_12</code>,
+<code>C2_alignment_safety_13</code></td>
+<td>Truncated "et al." author lists on load-bearing citations</td>
+<td>Expanded (Wen/Zhong/Khan/Perez/Steinhardt/Huang/Bowman/He;
+Cunningham/Ewart/Riggs/Huben/Sharkey).</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>All 10</strong> C2 <code>expert_baseline</code> fields were
+rewritten, and 10 new / 4 amended hard rules added.</p>
+<h3 id="2c-c3--cross-domain-imports">2c. C3 — cross-domain imports</h3>
+<div aria-label="2c. C3 — cross-domain imports table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item (final id)</th>
+<th scope="col">Defect</th>
+<th scope="col">Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C3_architectures_training_20</code></td>
+<td>Price Equilibrium Routing dated 2025, incomplete citation</td>
+<td>Corrected to <strong>2026</strong>, with authors (Zhao, Zheng &amp;
+Zhang), Springer LNCS pp. 3–16, doi:10.1007/978-981-95-4972-6_1. This
+matters: it is flagged as the <strong>CLOSEST market framing</strong>,
+so its date sets the novelty bar.</td>
+</tr>
+<tr>
+<td><code>C3_architectures_training_20</code></td>
+<td>DA-MoE / ExpertFlow cited by title only, ExpertFlow
+mischaracterised</td>
+<td>Authors added; ExpertFlow re-described as "an offloading/caching and
+token-scheduling system <strong>rather than a budget
+rule</strong>".</td>
+</tr>
+<tr>
+<td><code>C3_architectures_training_21</code></td>
+<td>Goyal et al. data-filtering scaling law presented as a
+text-pretraining result</td>
+<td>Qualified: "<strong>experiments are on vision-language web data
+rather than text-only pretraining</strong>".</td>
+</tr>
+<tr>
+<td><code>C3_architectures_training_21</code></td>
+<td>Villalobos et al. cited under its 2024 title</td>
+<td>Corrected: posted <strong>2022-10-26</strong> as "Will we run out of
+data? An analysis of the limits of scaling datasets in Machine
+Learning"; the commonly quoted title is the <strong>2024
+revision</strong>.</td>
+</tr>
+<tr>
+<td><code>C3_alignment_safety_22</code></td>
+<td>Holmström career-concerns model dated 1999 (the reprint)</td>
+<td>Corrected: <strong>first circulated 1982</strong> in <em>Essays in
+Economics and Management in Honor of Lars Wahlbeck</em>; RES
+66(1):169–182 (1999) is the reprint. A 17-year error on the item's
+central imported result.</td>
+</tr>
+<tr>
+<td><code>C3_alignment_safety_22</code></td>
+<td>arXiv:2602.21556 described as contract design</td>
+<td>Re-described as "a principal-agent <strong>elicitation</strong>
+framework for multi-model aggregation <strong>rather than contract
+design proper</strong>".</td>
+</tr>
+<tr>
+<td><code>C3_architectures_training_21</code></td>
+<td>Nonrivalry premise unchecked</td>
+<td>The <strong>DECISIVE DISANALOGY</strong> entry (Jones &amp; Tonetti
+2020, AER, doi:10.1257/aer.20191330) plus a matching hard rule now force
+the answer to name the rival quantity, because Hotelling's rule is a
+theorem about a <em>rival</em> stock and text is nonrival. Without this
+the item rewarded "tokens are like oil".</td>
+</tr>
+<tr>
+<td>all 10 C3 items</td>
+<td>Novelty gates unbacked by a search</td>
+<td>Each item now carries a
+<strong><code>NEGATIVE RESULT</code></strong> block naming the exact
+queries run on 2026-07-31 and stating "absence of evidence only; a
+contesting citation overrides this entry".</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="2d-c4--no-pre-audit-copy-retained">2d. C4 — no pre-audit copy
+retained</h3>
+<p>C4's corrections are not reconstructible as a diff. What is
+verifiable in the shipped file: each <code>known_answers</code> list
+opens with the first-publication rubric, and specific entries carry
+corrective detail (e.g. <code>C4_architectures_training_30</code> dates
+the Needle-In-A-Haystack repo to its <strong>creation date, 11 November
+2023</strong>, and notes the URL now redirects;
+<code>C4_architectures_training_31</code> marks LV-Eval's
+keyword-replacement design as "the closest published control for the
+leakage problem this item names", i.e. an explicitly located novelty bar
+rather than a bare citation).</p>
+<h3 id="2e-c5--no-audit">2e. C5 — no audit</h3>
+<p>The 7 <code>CONCEPT DATE NOTE</code> entries in C5 were written with
+the items. They are correct as far as they go and they are the right
+shape (Hopfield 1982 vs the 2020 attention-equivalence; Schmidhuber 1992
+fast weights vs the 2021 equivalence paper; Anil et al. 2021
+prover-verifier vs the 2024 legibility application; Cotra 2021
+sandwiching vs the 2022 empirical study; Lord 1980 IRT vs the 1982
+review; Curse of Recursion 2023 vs the 2024 <em>Nature</em> version,
+plus the 2022 Data Feedback Loops / corrupt-datasets precedents). But
+<strong>no independent auditor has checked C5's remaining ~82 catalogue
+entries</strong>, and given that C1/C2/C3 each showed a 100% item-level
+defect rate, the prior that C5 is clean is low. §8.2.</p>
+<hr/>
+<h2 id="3-items-dropped">3. Items dropped</h2>
+<p><strong>One item dropped, for cross-category
+duplication.</strong></p>
+<h3 id="c5_alignment_safety_03--dropped-dedupe-against-c4_alignment_safety_32"><code>C5_alignment_safety_03</code>
+— DROPPED (dedupe against <code>C4_alignment_safety_32</code>)</h3>
+<p>Both items pose the same open problem: <em>detect reward hacking
+while an RL run is still going, without a trustworthy gold signal, and
+report the overhead, the trigger threshold, the false-alarm handling and
+the blind spots.</em> A single well-constructed answer satisfies both
+asks. Lexical Jaccard on the two queries is only 0.103 — the collision
+is semantic, and was caught by reading, not by the overlap scan.</p>
+<p><code>C4_alignment_safety_32</code> was kept and
+<code>C5_alignment_safety_03</code> dropped, for three reasons:</p>
+<ol type="1">
+<li><strong>Stronger discrimination.</strong> C4 requires three distinct
+outputs (R1 genuine improvement; R2 proxy rising via a stylistic
+correlate; R3 <em>true quality rising while the proxy stays flat because
+the reward model underrates it</em>). R3 in particular is a
+discriminator that almost no naive answer produces. C5's only
+discrimination requirement is "name a class of hack it cannot
+catch."</li>
+<li><strong>Validation protocol.</strong> C4 rule (b) demands a positive
+control with reward hacking deliberately induced, plus a reported
+detection rate <em>and</em> false-positive rate. C5 has no validation
+requirement.</li>
+<li><strong>C5's exclusion list leaks.</strong> C5 bans reward-model
+ensembles, adversarial verifiers, CoT-reading monitors, KL/entropy
+penalties and post-hoc transcript review — but its own
+<code>expert_baseline</code> names the convergent answer as "a trusted
+held-out probe set scored periodically during the run", which
+<strong>none of its own hard rules exclude</strong>. The item therefore
+fails to box the expert baseline out, which is the entire point of a C5
+item. That is an independent defect, not just a tie-breaker.</li>
+</ol>
+<p>Cost: C5 falls from 5 items to 4.</p>
+<h3 id="not-dropped-but-adjacent--flagged-for-human-adjudication">Not
+dropped, but adjacent — flagged for human adjudication</h3>
+<p>Five further pairs sit close enough that a reviewer should confirm
+the call. In each case the <em>deliverable</em> differs even though the
+topic overlaps, which is the test applied here (would one answer
+substantially answer the other?).</p>
+<div aria-label="Not
+dropped, but adjacent — flagged for human adjudication table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Pair</th>
+<th scope="col">Shared topic</th>
+<th scope="col">Why kept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C1_evaluation_benchmarking_04</code> /
+<code>C4_evaluation_benchmarking_34</code></td>
+<td>black-box contamination</td>
+<td>C1 wants a <strong>hypothesis test</strong> (statistic, null
+distribution, provable FPR ≤ 5%, power); C4 wants an <strong>effect-size
+estimate</strong> (how many score points of inflation, with
+uncertainty). Different outputs, different access models.</td>
+</tr>
+<tr>
+<td><code>C1_evaluation_benchmarking_05</code> /
+<code>C4_evaluation_benchmarking_35</code></td>
+<td>emergence vs metric artifact</td>
+<td>C1 is a <strong>two-way</strong> test on rich private data (12
+checkpoints × 3 seeds, per-item scores, loss) with a
+rescoring-invariance requirement. C4 is a <strong>three-way
+attribution</strong> (measurement / models / mid-family pipeline change)
+from public reported scores, plus a forward prediction.</td>
+</tr>
+<tr>
+<td><code>C1_alignment_safety_03</code> /
+<code>C3_alignment_safety_23</code></td>
+<td>audit-budgeted oversight</td>
+<td>C1 wants a <strong>control protocol</strong> with a safety
+probability against an adversary that picks its attack rate; C3 wants a
+<strong>risk-limiting certification</strong> (manifest, assorter,
+margin, escalation, conditional error bound α).</td>
+</tr>
+<tr>
+<td><code>C1_theory_learning_08</code> /
+<code>C3_architectures_training_21</code> /
+<code>C5_architectures_training_38</code></td>
+<td>the data wall</td>
+<td>C1 wants a <strong>non-divergence theorem</strong> for
+self-training; C3 wants an <strong>intertemporal depletion
+policy</strong> (Euler/Hotelling condition); C5 explicitly
+<strong>excludes</strong> synthetic data and verifier RL, so C1's answer
+is inadmissible there.</td>
+</tr>
+<tr>
+<td><code>C2_evaluation_benchmarking_14</code> /
+<code>C5_evaluation_benchmarking_40</code></td>
+<td>contamination-free evaluation</td>
+<td>C2 is counterfactual <strong>consequence reasoning</strong> about a
+world where the artifact exists; C5 is the <strong>design</strong> of
+the artifact.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Cross-category lexical Jaccard was computed for all 695
+cross-category query pairs. Maximum was 0.129
+(<code>C1_theory_learning_08</code> /
+<code>C5_architectures_training_38</code>); the whole distribution is
+low, so no pair is a textual near-duplicate.</p>
+<p><strong>No items were dropped for schema failure.</strong> All 42
+candidates passed every content check.</p>
+<hr/>
+<h2 id="4-schema-enforcement">4. Schema enforcement</h2>
+<p>The build-time checker (<code>.tmp_build/assemble.py</code>) passed 0
+errors on the 41 items it wrote. <strong>This section is superseded by
+the live gate</strong>: all 50 items now validate against
+<code>question/schema.json</code> (<code>crest-challenge/3.2.0</code>)
+via <code>harness/run_crest.load_challenges</code>, which is the check
+that matters. The one build-time convention worth keeping on the
+record:</p>
+<ul>
+<li>Every item's <code>known_answers</code> carries ≥ 8
+<em>substantive</em> entries with both a resolvable identifier (arXiv id
+/ DOI / stable URL) <strong>and</strong> a 4-digit year, on top of a
+leading <code>Dated as of …</code> preamble entry that carries neither
+by design and is excluded from that count. (This is a markedly stricter
+dating bar than the shipped CREST set achieved —
+<code>datasheet.md</code> §2.)</li>
+</ul>
+<p>Two <code>known_answers</code> entries do not match the
+identifier/year regex and were manually cleared as false positives, not
+defects:</p>
+<ul>
+<li><code>C2_systems_efficiency_17</code> — the BIS advanced-computing
+control entry. Its identifier is the <strong>ECCN (3A090)</strong> and
+the Total Processing Performance metric, not an arXiv id or DOI.
+Valid.</li>
+<li><code>C3_systems_efficiency_27</code> — the MQA/GQA/MLA
+cache-reduction entry. Carries three arXiv ids (1911.02150, 2305.13245,
+2405.04434) but no spelled-out year; the years are encoded in the arXiv
+ids. Valid, though spelling out "2019 / 2023 / 2024" would be more
+consistent with the rest of the file.</li>
+</ul>
+<hr/>
+<h2 id="5-distributions">5. Distributions</h2>
+<p><strong>Re-measured 2026-07-31 on the shipped 50-item file</strong>
+(the 41-item tables this section originally carried are gone; they
+described the intermediate build).</p>
+<p><strong>Category:</strong> 10 / 10 / 10 / 10 / 10 — squared.</p>
+<p><strong>Domain × category</strong> (all six AI/ML domains used; still
+not square):</p>
+<div aria-label="5. Distributions table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">domain</th>
+<th scope="col">C1</th>
+<th scope="col">C2</th>
+<th scope="col">C3</th>
+<th scope="col">C4</th>
+<th scope="col">C5</th>
+<th scope="col">total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>architectures_training</code></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td><strong>10</strong></td>
+</tr>
+<tr>
+<td><code>alignment_safety</code></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>1</td>
+<td><strong>9</strong></td>
+</tr>
+<tr>
+<td><code>evaluation_benchmarking</code></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>1</td>
+<td><strong>9</strong></td>
+</tr>
+<tr>
+<td><code>systems_efficiency</code></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td><strong>8</strong></td>
+</tr>
+<tr>
+<td><code>theory_learning</code></td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td><strong>7</strong></td>
+</tr>
+<tr>
+<td><code>multimodal_agents</code></td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td><strong>7</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>C1–C4 are now identically shaped (2/2/2/2/1/1); the 6 late C5 items
+went to <code>theory_learning</code> ×3 and
+<code>multimodal_agents</code> ×3, so C5 is the odd row and
+<code>systems_efficiency</code> has <strong>no</strong> C5 item.</p>
+<p><strong>Time sensitivity × category</strong> — total 37
+<code>pre_cutoff</code> / 8 <code>post_cutoff</code> / 5
+<code>timeless</code>:</p>
+<div aria-label="5. Distributions table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col"></th>
+<th scope="col">pre_cutoff</th>
+<th scope="col">post_cutoff</th>
+<th scope="col">timeless</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>5</td>
+<td>5</td>
+<td>0</td>
+</tr>
+<tr>
+<td>C2</td>
+<td><strong>10</strong></td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>4</td>
+<td>1</td>
+<td>5</td>
+</tr>
+<tr>
+<td>C4</td>
+<td><strong>10</strong></td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>8</td>
+<td>2</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p>C1 is the only balanced category. <strong>C2 and C4 are 100%
+<code>pre_cutoff</code></strong> — defensible on design grounds (a
+counterfactual world and a measurement-invention task do not need a
+post-cutoff hook), but the pre/post-cutoff contrast stays confounded
+with category: every <code>post_cutoff</code> item is C1, C3 or C5. Any
+analysis crossing category with time sensitivity will not identify.
+§8.5. NB this is the one place the AI/ML set is materially
+<em>better</em> than the shipped CREST set, which has a single
+post-cutoff item (<code>datasheet.md</code> §2, "Splits").</p>
+<p><strong>Axis isolated</strong> — novelty 18, usefulness 11, balanced
+11, surprise 10. Near-confounded with category rather than perfectly
+confounded as at 41 items: C1 = <code>usefulness</code> ×10, C2 =
+<code>surprise</code> ×10, C3 = <code>novelty</code> ×10, C4 =
+<code>balanced</code> ×9 + <code>usefulness</code> ×1, C5 =
+<code>novelty</code> ×8 + <code>balanced</code> ×2. C3 and C5 share the
+<code>novelty</code> label, so no axis label identifies a single
+category.</p>
+<p><strong>Rule counts:</strong> mean <code>hard_rules</code> per
+category 7.3 / 6.5 / 7.1 / 8.1 / 5.6 — C5 is still the thinnest tier
+(§8.4). <code>known_answers</code> 10–30 per item;
+<code>expert_baseline</code> 517–2,408 chars.</p>
+<hr/>
+<h2 id="6-discrimination-evidence-per-item">6. Discrimination evidence,
+per item</h2>
+<p>"Discrimination" = the machinery in each item that separates a strong
+answer from the convergent expert baseline. Each category uses a
+different device, and the strength is uneven.</p>
+<h3 id="c1-n10--program-checkable-arithmetic--numeric-prior-art-delta">C1
+(n=10) — program-checkable arithmetic + numeric prior-art delta</h3>
+<p>Every C1 item carries
+<strong><code>R-CLOSEST PRIOR ART</code></strong>: name exactly ONE
+published method and give a <strong>numeric</strong> delta on the item's
+binding metric; "ours differs" with no number FAILS; a zero delta
+honestly reported is allowed. That last clause is the real discriminator
+— it removes the incentive to bluff. Plus item-specific arithmetic
+gates:</p>
+<div aria-label="C1
+(n=10) — program-checkable arithmetic + numeric prior-art delta table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">item</th>
+<th scope="col">binding numeric gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C1_architectures_training_00</code></td>
+<td>per-layer byte table summing to ≤ 2.56e8 bytes at L=1e6; R5 forces a
+bits-required-vs-bits-budgeted accounting, and the design <strong>FAILS
+on its own arithmetic</strong> if R5 &gt; R1</td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_01</code></td>
+<td>R3 forces computing the random-routing reference (2048 ± Poisson,
+r≈1.07) rather than asserting balance; <strong>R6</strong> forces
+converting expert-level ratio r to device-level r_dev over 32 devices
+and using r_dev for any throughput claim</td>
+</tr>
+<tr>
+<td><code>C1_alignment_safety_02</code></td>
+<td>FLOP breakdown ≤ 1.3× vanilla PPO; R5 forces an eval-set size
+computation with clustered SEs such that the CI half-width is &lt;
+2%</td>
+</tr>
+<tr>
+<td><code>C1_alignment_safety_03</code></td>
+<td>expected audits ≤ 100 over 10,000 tasks, arithmetic shown, including
+audits triggered by resampling/escalation</td>
+</tr>
+<tr>
+<td><code>C1_evaluation_benchmarking_04</code></td>
+<td>R6 separates permutation replicates (free) from fresh model
+generations (costly) inside a 20,000-generation budget</td>
+</tr>
+<tr>
+<td><code>C1_evaluation_benchmarking_05</code></td>
+<td>R4 requires using the 1,000 per-item scores and per-checkpoint loss
+— a criterion from the 12 aggregate accuracies alone FAILS; R5 forces
+seed variance into the noise model</td>
+</tr>
+<tr>
+<td><code>C1_systems_efficiency_06</code></td>
+<td>R6 requires 128k degradation reported separately from short-context,
+because cache-quantisation error accumulates with sequence length and
+weight-quantisation error does not</td>
+</tr>
+<tr>
+<td><code>C1_systems_efficiency_07</code></td>
+<td>R3 requires a parametric verifier-score family jointly consistent
+with AUC 0.78 <strong>and</strong> FPR 12%</td>
+</tr>
+<tr>
+<td><code>C1_theory_learning_08</code></td>
+<td>effective-data multiplier over 400B real tokens, with the assumption
+that breaks first named</td>
+</tr>
+<tr>
+<td><code>C1_multimodal_agents_09</code></td>
+<td>R1 forces stating where the check runs and enumerating what an
+attacker who controls the context can see at that placement</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c2-n10--scope-locks--explicit-no-credit-list">C2 (n=10) — scope
+locks + explicit no-credit list</h3>
+<p>C2's device is negative: <strong>66 <code>KNOWN AND BINDING</code>
+tags</strong> naming facts the answer may not contradict, plus 2
+<code>KNOWN AND EXPLICITLY EXCLUDED FROM CREDIT</code> tags naming the
+obvious answer so it earns nothing. Examples that bite hard:</p>
+<ul>
+<li><code>C2_architectures_training_10</code>: prefill/decode accounting
+rule — "long inputs become free" is invalid; and the low-bit-serving
+rule that must be reconciled with Quamba's outlier evidence.</li>
+<li><code>C2_architectures_training_11</code>: "this world has no
+reversal curse" is <strong>explicitly excluded from credit</strong> (it
+is arXiv:2406.05183), and so is "they would invent a block-wise cache"
+(arXiv:2503.09573, arXiv:2505.22618).</li>
+<li><code>C2_alignment_safety_12</code>: must name a respect in which
+the world is <strong>less safe</strong>, and must distinguish exploiting
+reward-model error from tampering with the reward channel.</li>
+<li><code>C2_evaluation_benchmarking_15</code>: must separate
+predictability of <strong>capability</strong> from predictability of
+<strong>propensity</strong>.</li>
+<li><code>C2_multimodal_agents_19</code>: must not conflate semantic
+transfer with transfer of computational structure
+(arXiv:2103.05247).</li>
+</ul>
+<p><strong>Weakness:</strong> 4 of 10 C2 items (<code>_11</code>,
+<code>_13</code>, <code>_14</code>, <code>_17</code>) have <strong>no
+explicit discrimination clause</strong> in <code>hard_rules</code> —
+they rely entirely on the <code>known_answers</code> no-credit list.
+That is weaker than an in-rule gate, because a judge reading only the
+rules will not see it.</p>
+<h3 id="c3-n10--novelty-gate--negative-result-search">C3 (n=10) —
+novelty gate + negative-result search</h3>
+<p><strong>Every C3 item carries a <code>NOVELTY GATE</code> rule naming
+the specific convergent answer that earns zero</strong>, which is the
+sharpest discrimination device in the file. Each gate is backed by a
+<code>NEGATIVE RESULT</code> block recording the exact searches run.</p>
+<div aria-label="C3 (n=10) —
+novelty gate + negative-result search table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">item</th>
+<th scope="col">the answer that scores zero</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_20</code> MoE apportionment</td>
+<td>any correspondence in the prior-art set; must exceed all of
+them</td>
+</tr>
+<tr>
+<td><code>_21</code> Hotelling data</td>
+<td>ditto, plus the rivalry rule forces naming what is actually
+depleted</td>
+</tr>
+<tr>
+<td><code>_22</code> contract theory</td>
+<td>"optimization distorts effort toward measured dimensions"
+(arXiv:2603.28063)</td>
+</tr>
+<tr>
+<td><code>_23</code> election audits</td>
+<td>"sample outputs for human review, prioritised by a monitor score,
+under a fixed budget" (arXiv:2312.06942)</td>
+</tr>
+<tr>
+<td><code>_24</code> capture-recapture</td>
+<td>running or combining existing contamination detectors, or moving to
+a fresh benchmark</td>
+</tr>
+<tr>
+<td><code>_25</code> Signor-Lipps</td>
+<td>"emergence is a metric artifact" / "continuous metrics smooth the
+curve"</td>
+</tr>
+<tr>
+<td><code>_26</code> von Neumann multiplexing</td>
+<td>stochastic rounding, loss scaling, higher-precision outliers, block
+scaling, smooth precision scaling laws</td>
+</tr>
+<tr>
+<td><code>_27</code> reservoir design</td>
+<td>evicting low-attention tokens, sinks + recent window, paging,
+learned eviction, architectural cache shrinkage</td>
+</tr>
+<tr>
+<td><code>_28</code> island biogeography</td>
+<td>replay buffers, weight regularisation, "larger models forget
+less"</td>
+</tr>
+<tr>
+<td><code>_29</code> immunology</td>
+<td>trained injection classifier, instruction hierarchy, provenance
+capability restriction, sandboxing, dual-LLM quarantine</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c4-n7-of-the-shipped-10--_41_42_43-not-reviewed--named-discrimination-cases-with-labelled-arms">C4
+(n=7 of the shipped 10 —
+<code>_41</code>/<code>_42</code>/<code>_43</code> not reviewed) — named
+discrimination cases with labelled arms</h3>
+<p>C4 is the only category with an explicit, uniformly-applied
+<code>DISCRIMINATION CASE</code> rule, and it names the arms:</p>
+<div aria-label="C4
+(n=7 of the shipped 10 — _41 / _42 / _43 not reviewed) — named
+discrimination cases with labelled arms table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">item</th>
+<th scope="col">arms</th>
+<th scope="col">must produce</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_30</code> routing quality</td>
+<td>M1 token-identity-deterministic router vs M2 context-dependent
+router</td>
+<td>different scores, direction justified, plus where M1 falls relative
+to the permutation null. Rule (c) additionally pins the
+<strong>permutation null to the floor</strong>, so perfect load balance
+alone cannot raise the score</td>
+</tr>
+<tr>
+<td><code>_31</code> effective context</td>
+<td>L1 lexical-match-only vs L2 k dispersed facts</td>
+<td>distinct outputs; a single scalar that ties them FAILS</td>
+</tr>
+<tr>
+<td><code>_32</code> reward hacking</td>
+<td>R1 real improvement / R2 stylistic correlate / R3 real improvement
+the proxy misses</td>
+<td>three distinct outputs; collapsing R2 with R3, or R3 with "no
+progress", FAILS</td>
+</tr>
+<tr>
+<td><code>_33</code> explanation believability</td>
+<td>E1 large explanation, high in-sample fit, no transfer vs E2 smaller
+explanation that transfers</td>
+<td>distinct scores</td>
+</tr>
+<tr>
+<td><code>_34</code> contamination inflation</td>
+<td>C1 verbatim memoriser vs C2 genuinely strong model</td>
+<td>distinct outputs, plus rule (d) requires the difficulty-matching
+control between seen and unseen items be <strong>established and
+verified</strong></td>
+</tr>
+<tr>
+<td><code>_35</code> emergence attribution</td>
+<td>J1 vanishes under graded rescoring / J2 survives rescoring / J3
+pipeline change</td>
+<td>three distinct verdicts</td>
+</tr>
+<tr>
+<td><code>_36</code> reasoning-budget fairness</td>
+<td>S1 high peak at large budget, flat low-budget vs S2 lower peak,
+strong low-budget</td>
+<td>distinct rankings</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c5-n4-of-the-shipped-10--_44_49-not-reviewed--exclusion-lists-only">C5
+(n=4 of the shipped 10 — <code>_44</code>–<code>_49</code> not reviewed)
+— exclusion lists only</h3>
+<p>C5's device is the query-level exclusion list plus, in two items, an
+<code>expert_baseline</code> that explicitly says the convergent answer
+is itself excluded:</p>
+<ul>
+<li><code>C5_architectures_training_37</code>: "the specific fix most
+experts reach for first, a constant-size recurrent state plus a local
+exact-attention window, <strong>is itself prior art here and is excluded
+by this item's own constraints</strong>." Strong.</li>
+<li><code>C5_evaluation_benchmarking_40</code>: "the reflexes of dating
+items or refreshing them after the model's cutoff <strong>are excluded
+by this item's own constraints</strong>, so they do not count as a
+response." Strong. Also the only C5 item with an in-rule discrimination
+clause (the property making leakage irrelevant "must not be item
+secrecy, a private held-out split, or items being newer than the
+model").</li>
+<li><code>C5_architectures_training_38</code> and
+<code>C5_alignment_safety_39</code>: <strong>no in-rule discrimination
+clause, and their <code>expert_baseline</code> does not claim the
+convergent answer is excluded.</strong> These two are the
+weakest-discriminating items <em>of those reviewed here</em>. §8.4.</li>
+</ul>
+<hr/>
+<h2 id="7-compatibility--closed-2026-07-31">7. COMPATIBILITY —
+<strong>CLOSED 2026-07-31</strong></h2>
+<p>At build time <code>question/schema.json</code> pinned
+<code>domain</code> to the six ORIGINAL domains, so all 41 items failed
+validation on <code>domain</code> and nothing else — every other
+constraint (<code>id</code> pattern, <code>required</code>,
+<code>additionalProperties: false</code>, the two other enums,
+<code>minLength</code>, <code>minItems</code>) already passed. The
+schema has since been bumped to
+<strong><code>crest-challenge/3.2.0</code></strong> with a twelve-value
+<code>domain</code> enum, and all 50 items load and validate through
+<code>harness/run_crest.load_challenges</code>.</p>
+<p>The trade-off that decision made, and which is now live: a
+<strong>union</strong> enum permits an arts/humanities item to be tagged
+<code>systems_efficiency</code>. The alternative considered was a second
+schema file selected per dataset, which would need a change to
+<code>load_challenges</code>' <code>_SCHEMA</code> constant. That was
+not done.</p>
+<p>Two compatibility notes that are <strong>still open</strong>:</p>
+<ul>
+<li><code>ci_check.sh</code> enforces an id bijection between
+<code>question/crest_challenges.jsonl</code> and
+<code>question/item_design.jsonl</code>. <code>item_design.jsonl</code>
+has <strong>no rows for these 50 ids</strong>, so this dataset has no
+design-rationale sidecar and the bijection gate does not cover it.</li>
+<li><code>expert_baseline</code> is judge-hidden as of 2026-07-30 and is
+<strong>not</strong> read by <code>judge/score.py::_judge_prompt</code>.
+It is carried here for provenance only. Nothing in §6's discrimination
+analysis reaches the judge unless it is also in <code>hard_rules</code>
+or <code>known_answers</code> — which is precisely why the four C2 items
+and two C5 items with no in-rule discrimination clause are flagged
+(§8.4).</li>
+</ul>
+<hr/>
+<h2 id="8-what-still-needs-human-review">8. What still needs human
+review</h2>
+<p>Ordered by how much damage it does if left alone.</p>
+<h3 id="81-the-9-missing-items--closed-authored-and-appended-as-_41_49">8.1
+The 9 missing items — <strong>CLOSED.</strong> Authored and appended as
+<code>_41</code>–<code>_49</code></h3>
+<p>C4 gained <code>multimodal_agents</code>,
+<code>theory_learning</code>, <code>systems_efficiency</code>; C5 gained
+<code>multimodal_agents</code> ×3 and <code>theory_learning</code> ×3.
+The file is 50 rows, 10 per category. Note what that means for
+everything else in this report: those 9 items came from a different pass
+and carry <strong>no audit record, no discrimination review (§6 stops at
+<code>_40</code>) and no dedupe check</strong> here. If any of them
+duplicates <code>C4_alignment_safety_32</code> — the dedupe that cost
+the original 41st slot — this report would not know.</p>
+<h3 id="82-c5-has-never-been-audited--still-open-provenance-half-closed">8.2
+C5 has never been audited — <strong>STILL OPEN</strong> (provenance half
+closed)</h3>
+<p>Zero independent citation checking on the C5 items, ~89 catalogue
+entries. C1, C2 and C3 each had a <strong>100% item-level defect
+rate</strong> under audit; assuming C5 is clean contradicts the observed
+base rate. The C5 items were also <strong>transcribed from the task
+prompt, not read from a source artifact</strong>, so the transcription
+needs diffing against whatever the original was; if no original exists,
+C5 must be treated as unsourced. <strong>Closed:</strong> the
+transcription is no longer gitignored — it is tracked at
+<code>question/aiml_build/c5_source_verbatim.json</code>, so the chain
+survives a clean clone. <code>assemble.py</code> and
+<code>renumber_map.json</code> remain untracked under
+<code>crest/.tmp_build/</code> and will not.</p>
+<h3 id="83-c4-has-no-retained-pre-audit-artifact">8.3 C4 has no retained
+pre-audit artifact</h3>
+<p>Its corrections cannot be reconstructed or spot-checked, so §2d is
+thinner than §2a–2c by necessity. If the C4 auditor's working copy still
+exists anywhere, retain it.</p>
+<h3 id="84-weak-discriminating-items">8.4 Weak-discriminating items</h3>
+<p>Six of the items reviewed here have no in-rule discrimination clause
+and therefore rely wholly on the <code>known_answers</code> no-credit
+list, which a judge reading <code>hard_rules</code> will not see:
+<code>C2_architectures_training_11</code>,
+<code>C2_alignment_safety_13</code>,
+<code>C2_evaluation_benchmarking_14</code>,
+<code>C2_systems_efficiency_17</code>,
+<code>C5_architectures_training_38</code>,
+<code>C5_alignment_safety_39</code>. The last two are worst, and C5 is
+still the thinnest tier at 50 items (mean 5.6 rules vs 6.5–8.1
+elsewhere, §5). Neither item's <code>expert_baseline</code> claims the
+convergent answer is excluded. Consider adding an explicit gate.
+<code>_44</code>–<code>_49</code> have not been checked for this at
+all.</p>
+<h3 id="85-confounded-design-axes">8.5 Confounded design axes</h3>
+<p><code>axis_isolated</code> is near-1:1 with <code>category</code>
+(C3/C5 share <code>novelty</code>; C4 and C5 each carry one off-label
+item — §5). <code>time_sensitivity</code> is near-confounded: C2 and C4
+are 100% <code>pre_cutoff</code>, so every <code>post_cutoff</code> item
+is C1, C3 or C5. Any model comparison crossing category with time
+sensitivity will not identify. Decide whether that is intended before
+running.</p>
+<h3 id="86-post-cutoff-citations-to-future-dated-arxiv-ids">8.6
+Post-cutoff citations to future-dated arXiv ids</h3>
+<p>The catalogues cite ids in the 2602–2606 range (e.g.
+arXiv:2603.28063, 2604.16242, 2606.04923, 2605.26047, 2604.09780,
+2606.09711). These are load-bearing — several are named as the
+<strong>closest prior art</strong> and therefore set the novelty bar.
+They should be re-resolved immediately before release; if any fails to
+resolve, the novelty gate on that item is void.
+<code>C3_alignment_safety_22</code>'s gate rests entirely on
+arXiv:2603.28063 resolving.</p>
+<h3 id="87-two-style-inconsistencies-in-known_answers">8.7 Two style
+inconsistencies in <code>known_answers</code></h3>
+<p><code>C3_systems_efficiency_27</code>'s MQA/GQA/MLA entry carries
+arXiv ids but no spelled-out year, and
+<code>C2_systems_efficiency_17</code>'s BIS entry uses an ECCN rather
+than a DOI. Both are valid; both differ from the file's convention.
+Normalise or leave.</p>
+<h3 id="88-dedupe-calls-to-confirm">8.8 Dedupe calls to confirm</h3>
+<p>The five adjacent pairs in §3.
+<code>C1_evaluation_benchmarking_04</code> /
+<code>C4_evaluation_benchmarking_34</code> is the closest of them and
+the most likely to be overturned by a second reader.</p>
+<h3 id="89-legal-and-regulatory-currency">8.9 Legal and regulatory
+currency</h3>
+<p><code>C2_systems_efficiency_17</code> now turns on California SB 53
+(in force 2026-01-01) and New York's RAISE Act after EO 14110's
+revocation. Regulatory facts decay fastest of anything in this file and
+should be re-checked at release.</p>
+<hr/>
+<h2 id="appendix--id-renumbering">Appendix — id renumbering</h2>
+<p><code>NN</code> runs 00–40, globally unique, assigned by one counter
+walking C1→C5 in batch order. Ids <code>41</code>–<code>49</code> were
+appended later by a different pass and have no row here.</p>
+<div aria-label="Appendix — id renumbering table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">new id</th>
+<th scope="col">old id</th>
+<th scope="col">source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C1_architectures_training_00</code></td>
+<td><code>C1_architectures_training_01</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_architectures_training_01</code></td>
+<td><code>C1_architectures_training_02</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_alignment_safety_02</code></td>
+<td><code>C1_alignment_safety_03</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_alignment_safety_03</code></td>
+<td><code>C1_alignment_safety_04</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_evaluation_benchmarking_04</code></td>
+<td><code>C1_evaluation_benchmarking_05</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_evaluation_benchmarking_05</code></td>
+<td><code>C1_evaluation_benchmarking_06</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_systems_efficiency_06</code></td>
+<td><code>C1_systems_efficiency_07</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_systems_efficiency_07</code></td>
+<td><code>C1_systems_efficiency_08</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_theory_learning_08</code></td>
+<td><code>C1_theory_learning_09</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C1_multimodal_agents_09</code></td>
+<td><code>C1_multimodal_agents_10</code></td>
+<td><code>.tmp_axv/items.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C2_architectures_training_10</code></td>
+<td><code>C2_architectures_training_00</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_architectures_training_11</code></td>
+<td><code>C2_architectures_training_01</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_alignment_safety_12</code></td>
+<td><code>C2_alignment_safety_02</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_alignment_safety_13</code></td>
+<td><code>C2_alignment_safety_03</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_evaluation_benchmarking_14</code></td>
+<td><code>C2_evaluation_benchmarking_04</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_evaluation_benchmarking_15</code></td>
+<td><code>C2_evaluation_benchmarking_05</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_systems_efficiency_16</code></td>
+<td><code>C2_systems_efficiency_06</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_systems_efficiency_17</code></td>
+<td><code>C2_systems_efficiency_07</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_theory_learning_18</code></td>
+<td><code>C2_theory_learning_08</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C2_multimodal_agents_19</code></td>
+<td><code>C2_multimodal_agents_09</code></td>
+<td><code>.tmpaudit/c2_items_fixed.json</code></td>
+</tr>
+<tr>
+<td><code>C3_architectures_training_20</code></td>
+<td><code>C3_architectures_training_01</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_architectures_training_21</code></td>
+<td><code>C3_architectures_training_02</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_alignment_safety_22</code></td>
+<td><code>C3_alignment_safety_03</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_alignment_safety_23</code></td>
+<td><code>C3_alignment_safety_04</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_evaluation_benchmarking_24</code></td>
+<td><code>C3_evaluation_benchmarking_05</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_evaluation_benchmarking_25</code></td>
+<td><code>C3_evaluation_benchmarking_06</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_systems_efficiency_26</code></td>
+<td><code>C3_systems_efficiency_07</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_systems_efficiency_27</code></td>
+<td><code>C3_systems_efficiency_08</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_theory_learning_28</code></td>
+<td><code>C3_theory_learning_09</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C3_multimodal_agents_29</code></td>
+<td><code>C3_multimodal_agents_10</code></td>
+<td><code>questions/c3_ml_new10.corrected.json</code></td>
+</tr>
+<tr>
+<td><code>C4_architectures_training_30</code></td>
+<td><code>C4_architectures_training_01</code></td>
+<td><code>questions/c4_ml_new10.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C4_architectures_training_31</code></td>
+<td><code>C4_architectures_training_02</code></td>
+<td><code>questions/c4_ml_new10.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C4_alignment_safety_32</code></td>
+<td><code>C4_alignment_safety_03</code></td>
+<td><code>questions/c4_ml_new10.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C4_alignment_safety_33</code></td>
+<td><code>C4_alignment_safety_04</code></td>
+<td><code>questions/c4_ml_new10.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C4_evaluation_benchmarking_34</code></td>
+<td><code>C4_evaluation_benchmarking_05</code></td>
+<td><code>questions/c4_ml_new10.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C4_evaluation_benchmarking_35</code></td>
+<td><code>C4_evaluation_benchmarking_06</code></td>
+<td><code>questions/c4_ml_new10.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C4_systems_efficiency_36</code></td>
+<td><code>C4_systems_efficiency_07</code></td>
+<td><code>questions/c4_ml_new10.audited.json</code></td>
+</tr>
+<tr>
+<td><code>C5_architectures_training_37</code></td>
+<td><code>C5_architectures_training_00</code></td>
+<td><code>.tmp_build/c5_from_prompt.json</code> (transcribed)</td>
+</tr>
+<tr>
+<td><code>C5_architectures_training_38</code></td>
+<td><code>C5_architectures_training_01</code></td>
+<td><code>.tmp_build/c5_from_prompt.json</code> (transcribed)</td>
+</tr>
+<tr>
+<td><code>C5_alignment_safety_39</code></td>
+<td><code>C5_alignment_safety_02</code></td>
+<td><code>.tmp_build/c5_from_prompt.json</code> (transcribed)</td>
+</tr>
+<tr>
+<td><code>C5_evaluation_benchmarking_40</code></td>
+<td><code>C5_evaluation_benchmarking_04</code></td>
+<td><code>.tmp_build/c5_from_prompt.json</code> (transcribed)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Dropped: <code>C5_alignment_safety_03</code> (dedupe, §3). Authored
+later, outside this build: <code>_41</code>–<code>_49</code> (§8.1).</p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

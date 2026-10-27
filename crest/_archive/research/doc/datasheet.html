@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Dataset datasheet · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../README.html">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#datasheet-for-crest">Datasheet for CREST</a></li><li><a href="#1-motivation">1. Motivation</a></li><li><a href="#2-composition">2. Composition</a></li><li><a href="#3-collection-process">3. Collection process</a></li><li><a href="#4-preprocessing--frozen-index">4. Preprocessing / frozen
+index</a></li><li><a href="#5-uses">5. Uses</a></li><li><a href="#6-distribution--licensing">6. Distribution &amp; licensing</a></li><li><a href="#7-maintenance">7. Maintenance</a></li><li><a href="#human-subjects-judge-validation-study">Human subjects
+(judge-validation study)</a></li><li><a href="#appendix-adversarial-item-vetting-log">Appendix: adversarial
+item-vetting log</a></li></ul></nav></details><article><h1 id="datasheet-for-crest">Datasheet for CREST</h1>
+<p>Follows <em>Datasheets for Datasets</em> (Gebru et al., 2021). This
+datasheet describes the artifact <strong>as shipped</strong>, with
+anything unbuilt marked <code>[NOT IMPLEMENTED]</code> rather than
+described in the present tense. It is also a release gate — NeurIPS/ICLR
+Datasets &amp; Benchmarks desk-reject checks (licensing, contamination,
+author-COI, human-subjects) are answered here.</p>
+<p><strong>This file is the SINGLE SOURCE OF TRUTH for dataset
+composition</strong> — field lists, schema version,
+per-category/domain/axis counts, the <code>time_sensitivity</code>
+split, prior-art dating rates and quarantine status. Other docs
+cross-reference §2 instead of restating those numbers. Conversely, every
+figure measured <em>from a scored run</em> (endpoint means,
+correlations, ICC, judge severity) lives in <code>design.md</code> §0
+and is not restated here.</p>
+<blockquote>
+<p><strong>Release status: NOT RELEASE-READY</strong>, but no longer for
+the reason this note used to give. The mechanical pre-release gate
+(<code>analysis/ci_check.sh</code>) now <strong>PASSES</strong> all of
+its checks (47 as of 2026-07-31; the count grows as patterns are added,
+so do not cite a number from this line): the
+<code>C1_materials_chemistry_01</code> self-contradiction it used to
+fail on has been fixed. Run the gate for the live list rather than
+trusting any transcript, including this one. What still blocks release:
+Croissant/Croissant-RAI metadata is <strong>not written</strong> — there
+is no <code>croissant.json</code> in the repo — so the Croissant
+desk-reject gate is not cleared; <strong>no human study has been
+run</strong>, so the judge panel is unvalidated against human raters;
+the 250-record run directory is gitignored and therefore <strong>not
+distributed</strong>, so the reported results cannot be recomputed from
+a fresh clone; and both field-ablation deltas quoted in the papers
+(+0.98 on <em>New</em>, −0.02 on <em>Surprising</em>) were measured on a
+superseded run and <strong>cannot be re-derived</strong> against the
+released records, which all carry
+<code>judge_prompt_version: null</code>.</p>
+</blockquote>
+<h2 id="1-motivation">1. Motivation</h2>
+<ul>
+<li><strong>Purpose.</strong> Measure the <em>creativity</em> (novelty /
+Useful / Surprising) of deep-research web agents, organized by task
+type, to fill the gap left by correctness-only benchmarks (GAIA,
+BrowseComp, DeepResearch Bench, LiveResearchBench). CREST is the
+evaluation artifact; it is not a training set.</li>
+<li><strong>Who built it / funding.</strong> [Anonymized for
+double-blind review.] Funding and institutional affiliation disclosed in
+the camera-ready.</li>
+<li><strong>Conflict of interest (COI).</strong>
+<strong>Corrected.</strong> This entry previously stated that one
+entrant (an exploration-based agent, cited as prior work) was built by
+parties overlapping with the benchmark authors, and listed four
+mitigations for it. That was false, and both papers cited this file as
+their COI record while it said so. <strong>No author-built agent was
+entered.</strong> The released registry contains five off-the-shelf
+commercial systems — <code>openai_deepresearch</code>,
+<code>openai_shallow</code>, <code>claude_shallow</code>,
+<code>gemini_deepresearch_max</code>, <code>gemini_shallow</code> — and
+all 250 scored records belong to them, so three of the four mitigations
+were vacuous ("reported with it removed" removes nothing; "does not top
+every category" and "gated on that entrant not being rank-1" are
+undefined for a non-entrant). The optional mechanism case study those
+triggers gated has been deleted from the paper. The COI that
+<em>does</em> exist is narrower: a prior workshop preprint by the same
+authors piloted an earlier version of this taxonomy on an exploration
+agent, so the <strong>taxonomy</strong> has author provenance even
+though no <strong>entrant</strong> does. <strong>Leave-one-family-out
+judging is not a mitigation either</strong> — it is off by default
+(<code>judge/judge_config.live.yaml: leave_one_family_out: false</code>)
+because with three vendors it confounded judge identity with entrant
+family and moved the leaderboard more than the self-preference it
+removed. Self-preference is instead <em>measured</em>: every judge row
+is stamped <code>same_family</code> and enters the model as a covariate,
+and the LOFO subset is recoverable post-hoc. No ranking claim is made at
+all
+(<code>analysis/preregistration.yaml: ranking_claims: none</code>).</li>
+</ul>
+<h2 id="2-composition">2. Composition</h2>
+<ul>
+<li><p><strong>Instances.</strong> 50 research challenges (10 per
+category, C1–C5). Each is a natural-language research query plus
+metadata. The shipped schema (<code>question/schema.json</code>, version
+<code>crest-challenge/3.2.0</code>,
+<code>additionalProperties: false</code>) defines <strong>nine required
+fields</strong> — <code>id</code>, <code>category</code> (C1–C5),
+<code>domain</code>, <code>query</code>, <code>axis_isolated</code>,
+<code>time_sensitivity</code>, <code>known_answers[]</code>,
+<code>hard_rules[]</code>, <code>expert_baseline</code> — plus
+<strong>one optional field</strong>,
+<code>author_expected_surprises</code> (present in 7 of 50 items). Ten
+fields total.</p>
+<ul>
+<li><strong>Judge-hidden fields.</strong> <code>expert_baseline</code>
+and <code>author_expected_surprises</code> are retained in the dataset
+for provenance but are <strong>not sent to the judge</strong> (see
+§"Labels" and <code>judge/rubric.md</code>).</li>
+<li><strong>Removed fields.</strong> <code>predicted_direction</code>
+and <code>category_name</code> (schema v2.0.0) and
+<code>rationale</code> (v3.0.0). Predictions now live in
+<code>analysis/preregistration.yaml</code>; per-item design rationale in
+<code>question/item_design.jsonl</code>, whose id-bijection with the
+challenge file is enforced by <code>analysis/ci_check.sh</code>. v3.2.0
+widened the <code>domain</code> enum to twelve values so a second,
+unrelated 50-item AI/ML set
+(<code>question/crest_aiml_challenges.jsonl</code>) validates against
+the same schema. <strong>That set is not part of this
+datasheet</strong>: it is not listed in
+<code>config/eval_config.yaml</code>, has no
+<code>item_design.jsonl</code> rows, is not covered by the item-vetting
+or live-web audits. It <strong>has</strong> been run and scored, and
+both prior statements to the contrary here were wrong: three runs exist
+on disk with <code>benchmark: crest_aiml</code> in their manifests, at
+243, 249 and 1 records. Of those, the <strong>249-record run
+alone</strong> (<code>2026-08-01T015432Z</code>) is promoted into
+<strong>tracked</strong>
+<code>result/leaderboard.crest_aiml.json</code>; the 243-record run is
+scored under judge prompt <strong>v2</strong> and the other two under
+<strong>v3</strong>. So the v3-scored evidence in this repo is 250
+records, all on the AI/ML set. The science set's 250-record run carries
+<code>judge_prompt_version: null</code> — it predates the stamp
+entirely, so it is unversioned rather than "v1/v2". No claim in this
+datasheet rests on the AI/ML set. It is <strong>not</strong> covered by
+<code>analysis/ci_check.sh</code>: the schema/loader, sidecar-bijection
+and second-item-file checks were all REMOVED from that script (see its
+header, lines 26-36), so the earlier claim of coverage "added
+2026-07-31" describes a check that no longer exists. Its own run
+validates it on load. A union enum also means nothing now stops an
+arts/humanities item being tagged <code>systems_efficiency</code>.</li>
+<li><strong>Enforcement.</strong> The schema is validated on load
+(<code>harness/run_crest.py::load_challenges</code>), and
+<code>Challenge.from_json</code> <strong>raises</strong> on a missing
+<code>id</code>, <code>query</code>, <code>known_answers</code> or
+<code>expert_baseline</code>. Previously the schema was never applied
+and a missing <code>known_answers</code> silently became "(none
+provided)" in the judge prompt.</li>
+</ul></li>
+<li><p><strong>Balance.</strong> 10 per category × 5 categories; per
+domain: biology/medicine 9, materials/chemistry 9, economics/business 8,
+engineering 8, law/policy 8, arts/humanities 8.
+<code>axis_isolated</code>: novelty 20, usefulness 10, surprise 10,
+balanced 10. Per-category predicted directions (20 predicted-null, 20
+favored, 10 parity) live in <code>analysis/preregistration.yaml</code>,
+which states in its own header that it is <strong>not externally
+timestamped</strong> and must not be described as
+pre-registration.</p></li>
+<li><p><strong>Labels/ground truth.</strong> There is no single correct
+answer (by design). Each item ships three authored anchors, but only two
+of them are used at scoring time: the judge sees
+<code>known_answers</code> and <code>hard_rules</code>;
+<code>expert_baseline</code> is withheld (ablating it barely moved
+Surprising — see <code>design.md</code> §0 — and in 7 items it carried
+the author's own list of the intended surprises). Scores are produced at
+evaluation time by the LLM judge panel.
+<strong><code>[NOT IMPLEMENTED]</code> Human validation:</strong> no
+human panel has been run, no human scores exist, and no code reads
+<code>human_validation_required_categories</code> — a key that no longer
+exists in any config, only in <code>doc/judge_protocol_intent.md</code>,
+the documentation-only record of the deleted
+<code>judge_config.yaml</code>.</p></li>
+<li><p><strong>Splits.</strong> Items carry a
+<code>time_sensitivity</code> label, but the distribution makes a
+pre/post-cutoff split unusable as shipped: <strong>35
+<code>timeless</code>, 14 <code>pre_cutoff</code>, 1
+<code>post_cutoff</code></strong>. Reporting scores split by cutoff
+class — a control this project's own design spec calls for — is
+therefore not currently possible. <code>[NOT IMPLEMENTED]</code> There
+is <strong>no</strong> rolling held-out set and nothing is withheld from
+publication: all 50 items, their prior-art lists and their baselines are
+in the public repo.</p></li>
+<li><p><strong>Prior-art dating.</strong> <code>known_answers</code> is
+documented as a <em>dated</em> set, and the judge prompt calls it the
+"DATED PRIOR-ART SET", but most entries are not dated. Measured
+2026-07-31 over the shipped file, counting an entry as dated if it
+contains a 4-digit year (<code>(?&lt;!\d)(19|20)\d\d(?!\d)</code>) and
+excluding each item's leading <code>Dated as of …</code> preamble entry,
+which is a header rather than prior art (21 such entries; 708
+substantive entries remain):</p>
+<div aria-label="2. Composition table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">id block</th>
+<th scope="col">dated</th>
+<th scope="col">rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>file-wide</td>
+<td>363 / 708</td>
+<td><strong>51%</strong></td>
+</tr>
+<tr>
+<td><code>_0x</code></td>
+<td>64 / 140</td>
+<td>46%</td>
+</tr>
+<tr>
+<td><code>_1x</code></td>
+<td>101 / 112</td>
+<td><strong>90%</strong></td>
+</tr>
+<tr>
+<td><code>_2x</code></td>
+<td>152 / 211</td>
+<td>72%</td>
+</tr>
+<tr>
+<td><code>_3x</code></td>
+<td>22 / 99</td>
+<td><strong>22%</strong></td>
+</tr>
+<tr>
+<td><code>_4x</code></td>
+<td>24 / 146</td>
+<td><strong>16%</strong></td>
+</tr>
+<tr>
+<td><code>_42</code>–<code>_45</code> only</td>
+<td>2 / 48</td>
+<td><strong>4.2%</strong> (46 of 48 carry no year)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Earlier drafts quoted 52% / 91% / 22% / 18%; the first, second and
+fourth were off by 1–2 pp against this definition. Include the preamble
+entries and the file-wide rate is 53%, so the convention matters — hence
+stating it. An undated bare entry cannot function as a dated novelty
+baseline, and the audit found the dating error direction is one-sided:
+prior art is consistently made to look <em>younger</em> than it is,
+which inflates novelty (<code>doc/misc/audit_live_C4_remainder.md</code>
+§2).</p></li>
+<li><p><strong>External data.</strong> <code>[NOT IMPLEMENTED]</code>
+Retrieval is <strong>live provider web search</strong>;
+<code>FrozenIndex</code> raises <code>NotImplementedError</code>, so no
+snapshot exists and no run is contamination-controlled — each run
+manifest records <code>contamination_controlled: false</code> and states
+the caveat. Intended design: a frozen, dated corpus snapshot (see
+§4).</p></li>
+</ul>
+<h2 id="3-collection-process">3. Collection process</h2>
+<ul>
+<li>Challenges were authored/adapted by domain-aware authors, seeded
+from the five reference categories, then expanded to 50 with per-item
+metadata. Each item is <em>intended</em> to require multi-source
+synthesis (never a single lookup). <strong>This was verified by reading,
+not by test:</strong> no tool-ablation check (score a no-web model; cut
+anything it answers) has been run.</li>
+<li><strong>Provenance caveat on "expert".</strong> There is no
+documented expert-elicitation protocol, no annotator credentials, no
+annotations-per-item, and no inter-expert agreement — the Croissant-RAI
+<code>dataAnnotationProtocol</code> fields are unfilled. One
+<code>expert_baseline</code> (<code>C2_biology_medicine_34</code>) is
+explicitly <strong>model-drafted, not expert-written</strong>, and is
+flagged in-field as needing physiologist review.</li>
+<li><strong>Adversarial item-vetting log</strong>
+(<code>doc/item_vetting.md</code>, appended in summary below). Every
+item was red-teamed for: (i) contamination risk, (ii)
+synthesis-required, (iii) axis-isolation, (iv) headroom, (v) metadata
+completeness. <strong>That pass is now partly superseded</strong>: a
+subsequent live-web audit of all 50 items (~610 claims,
+<code>doc/misc/audit_live_*.md</code>) contradicted several of its PASS
+grades, and its header records what no longer holds. Both documents
+should be read together; neither alone is current.</li>
+<li><strong>Quarantine.</strong> <code>question/quarantine.yaml</code>
+is the mechanism for excluding an item whose defect makes its scores
+uninterpretable; quarantined items are dropped at load with a loud
+notice, counted in the run manifest, and block release.
+<strong>Currently zero items are quarantined.</strong>
+<code>C2_biology_medicine_34</code> was quarantined 2026-07-30 (its
+<code>expert_baseline</code> was 156 chars and failed
+<code>minLength(200)</code>; 64% of the field turned out to be an answer
+key) and <strong>restored 2026-07-31</strong> with a 1,620-char
+model-drafted baseline (measured on the shipped file;
+<code>item_vetting.md</code> said 1,478 and was wrong) — so the shipped
+set is 50/50, with that item's provenance weaker than the rest. Three
+items are on a documented watch-list. One of them
+(<code>C4_engineering_45</code>) carried an auditor verdict of "do not
+release" because its novelty gate was inverted — it offered as its
+example of a new mechanism something its own <code>known_answers</code>
+already contains. <strong>Fixed 2026-07-31</strong>, along with two
+citation errors in the same item, and the watch-list entry now records
+the fix. That fix has a provenance cost stated there and as caveat 8 of
+<code>result/leaderboard.json</code>: <strong>the released run was
+scored against the old wording</strong>, so this item's 5 records no
+longer correspond to the shipped item — as is also true of
+<code>C1_materials_chemistry_01</code>, whose numeric rules were edited
+after that run was scored. Any per-item or C4-category claim from that
+run must exclude those 10 records or be re-run. Note the gate could not
+see any of this until 2026-07-31: it read only <code>quarantined:</code>
+and ignored <code>watch_list:</code> entirely, so an item under an
+explicit do-not-release verdict shipped with the release gate green. It
+now fails on a live verdict and requires a dated <code>RESOLVED</code>
+marker to pass.</li>
+</ul>
+<h2 id="4-preprocessing--frozen-index">4. Preprocessing / frozen
+index</h2>
+<ul>
+<li><strong>Frozen shared index.</strong> <code>[NOT IMPLEMENTED]</code>
+The intended design is that all agents retrieve from one dated snapshot
+through a common search API with matched tool/compute budget, so
+"novelty/Surprising" reflect synthesis rather than fresher retrieval,
+and runs reproduce; it would be released as a manifest (URL + timestamp
++ SHA-256 per document). <strong>None of this exists.</strong>
+<code>harness/agents.py::FrozenIndex</code> raises on construction
+specifically to stop a live run being mislabeled as
+contamination-controlled. No <code>--index</code> CLI flag exists -- the
+plumbing was removed rather than left as a stub implying a mode the
+harness cannot enter. Search budgets are also <strong>not</strong>
+matched across entrants: the shallow arm is capped where the provider
+exposes a cap and the deep arm's budget is provider-managed and
+uncappable, which each run manifest discloses as a live confound.</li>
+<li><strong>Canaries.</strong> <code>[NOT IMPLEMENTED]</code>
+<strong>Zero of the 50 items embed a canary string</strong>
+(<code>grep -ci canary</code> over the item file returns 0). Planned,
+not shipped; the release/licensing argument in §5–§6 must not rely on
+it, and <code>analysis/ci_check.sh</code> has a check that fails the
+build if any doc makes an unqualified canary claim.</li>
+<li><strong>Trajectory logging.</strong> Partial. Each run writes
+immutable <code>records.jsonl</code> (per-record status, grounding
+result, per-judge scores, <code>n_searches</code>,
+<code>output_len_tokens</code>, and — from record schema 1.2.0 — the
+billing surface <code>tokens{}</code> / <code>billed_tools{}</code> /
+<code>n_calls</code> / <code>calls[]</code> / <code>usage_raw[]</code>,
+with the same usage block on each judge row) and
+<code>transcripts.jsonl</code> (full answer text + citations).
+<code>[NOT IMPLEMENTED]</code> Per-query search logs and automated
+search-time-contamination scanning (benchmark-metadata /
+question-context / explicit-answer leakage) do not exist.</li>
+</ul>
+<h2 id="5-uses">5. Uses</h2>
+<ul>
+<li><strong>Intended.</strong> Benchmarking and diagnosing the
+creativity of deep-research agents; studying the task-dependence of
+creativity; judge-validity research.</li>
+<li><strong>Out of scope / cautions.</strong> Not a leaderboard of
+overall agent quality (no ranking claim is made: measured judge severity
+exceeds the entire between-entrant spread — <code>design.md</code> §0);
+not a correctness or safety benchmark; not a training set. <strong>The
+no-training request rests on the license and on this document only —
+there are no canaries to detect ingestion and no gated split to
+withhold.</strong> Creativity scores are LLM-panel scores throughout: no
+category is human-anchored, so the automated judge should not be treated
+as authoritative anywhere, and least of all on C1/C5, where this
+project's own prior human data reversed the LLM judge.</li>
+</ul>
+<h2 id="6-distribution--licensing">6. Distribution &amp; licensing</h2>
+<ul>
+<li>Questions, schema, judge config + rubric, harness and analysis code
+are in one public repo under <strong>Apache-2.0</strong> (single
+<code>LICENSE</code> at the repo root). <code>[NOT IMPLEMENTED]</code>
+The per-layer licensing the design calls for — code Apache-2.0/MIT,
+authored questions and answer keys CC-BY-4.0 — is <strong>not</strong>
+in place: there is no separate data license and no data-use
+agreement.</li>
+<li><code>[NOT IMPLEMENTED]</code> No frozen-index manifest exists to
+distribute (see §4), so the "hash/URL manifest, not redistributed
+content" argument currently describes an artifact that has not been
+built. No copyrighted source content is redistributed either way: the
+repo ships authored prose and citations only.</li>
+<li><code>[NOT IMPLEMENTED]</code> Croissant and Croissant-RAI records.
+No <code>croissant.json</code> is produced.</li>
+<li>Versioning today is the git history plus the challenge-schema
+version string (<code>crest-challenge/3.2.0</code>); each run directory
+pins the git commit, the config snapshot, and the judge model IDs
+actually used. A semver dataset release that pins model snapshots is not
+yet cut.</li>
+</ul>
+<h2 id="7-maintenance">7. Maintenance</h2>
+<ul>
+<li>Maintained by the (anonymized) authors; issues/PRs via the public
+repo. Defective items are handled through
+<code>question/quarantine.yaml</code>, which records the defect, why
+scores would be uninterpretable, what resolves it, and — for released
+items — the resolution, so the record survives the fix.
+<code>[NOT IMPLEMENTED]</code> A rolling fresh-question set, per-cycle
+refresh, and item tombstones do not exist yet.
+<code>[NOT IMPLEMENTED]</code> There is also <strong>no open-weight
+entrant and no frozen index</strong>, so the "permanently reproducible
+anchor" the design asks for does not exist: the five current entrants
+are all closed, provider-hosted models (three shallow: Anthropic/OpenAI/
+Google; two deep: OpenAI/Google — the deep arm has no Anthropic entrant,
+an asymmetry to disclose). The judge panel has the same gap: three
+vendors, no genuinely open-weight judge.</li>
+</ul>
+<h2 id="human-subjects-judge-validation-study">Human subjects
+(judge-validation study)</h2>
+<ul>
+<li><code>[NOT IMPLEMENTED] — planned, not run.</code> The intended
+human validation and pairwise-expert study would use paid domain experts
+scoring model outputs (not personal data). No study has been conducted,
+no raters recruited, and no human labels exist in this repo. IRB/ethics
+status and consent language: [to be finalized before any such study]; if
+run, no PII would be collected and raters would be compensated at/above
+local standard rates.</li>
+</ul>
+<hr/>
+<h2 id="appendix-adversarial-item-vetting-log">Appendix: adversarial
+item-vetting log</h2>
+<p>Per-item dispositions (contamination / synthesis-required /
+axis-isolation / headroom / metadata): see
+<strong><code>doc/item_vetting.md</code></strong> for the full per-item
+table and rationale, and read its "superseded" header first — the later
+live-web audit (<code>doc/misc/audit_live_*.md</code>) overturned
+several of its grades, most importantly on <code>known_answers</code>
+dating and on <code>C4_engineering_45</code>.</p>
+</article><footer><a href="../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

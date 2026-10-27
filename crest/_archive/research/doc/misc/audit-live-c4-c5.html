@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Citation audit: C4 and C5 · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#live-web-citation-audit--c4--c5-items">Live-Web Citation Audit —
+C4 / C5 items</a></li><li><a href="#1-summary-table">1. Summary table</a></li><li><a href="#2-counts-by-verdict">2. Counts by verdict</a></li><li><a href="#3-exact-old--new-replacements">3. Exact old → new
+replacements</a></li><li><a href="#4-why-the-sarrus-entry-is-a-scoring-bug-not-a-citation-slip">4.
+Why the Sarrus entry is a scoring bug, not a citation slip</a></li><li><a href="#5-systemic-pattern-brand-date-vs-concept-date">5. Systemic
+pattern: brand date vs. concept date</a></li><li><a href="#6-items-not-covered">6. Items NOT covered</a></li><li><a href="#7-overall-assessment-are-the-c4c5-prior-art-catalogues-trustworthy-enough-to-gate-novelty">7.
+Overall assessment: are the C4/C5 prior-art catalogues trustworthy
+enough to gate novelty?</a></li></ul></nav></details><article><h1 id="live-web-citation-audit--c4--c5-items">Live-Web Citation Audit —
+C4 / C5 items</h1>
+<p><strong>Scope:</strong> the 20 items with <code>id</code> starting
+<code>C4_</code> or <code>C5_</code> in
+<code>question/crest_challenges.audit.jsonl</code> <strong>Date of
+audit:</strong> 2026-07-30 <strong>Method:</strong> live WebSearch +
+WebFetch (Wikipedia, primary institutional pages, Crossref API, PubMed,
+press releases). No <code>.jsonl</code> file was modified.
+<strong>Fields examined:</strong> <code>known_answers</code>,
+<code>expert_baseline</code>, <code>query</code>,
+<code>hard_rules</code>.</p>
+<blockquote>
+<p><strong>Headline: zero fabrications.</strong> Every named index,
+metric, method, paper, institution, standard, and instrument I was able
+to check exists and is attributed to the right people. The defects are
+all <em>date-precision</em> defects of one recurring type (see "Systemic
+pattern") plus <strong>one genuine internal-consistency error</strong>
+(Sarrus, <code>C5_engineering_48</code>).</p>
+</blockquote>
+<hr/>
+<h2 id="1-summary-table">1. Summary table</h2>
+<h3 id="1a-priority-claims-flagged-by-the-prior-offline-audit">1a.
+Priority claims flagged by the prior offline audit</h3>
+<div aria-label="1a.
+Priority claims flagged by the prior offline audit table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C4_arts_humanities_23</code> #15</td>
+<td>"Dutch 'Colonial Collections' advisory committee framework (2021)
+enabling unconditional returns"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Three distinct events conflated: (a) Gonçalves-Ho Kang You committee
+report <em>Colonial Collections and a Recognition of Injustice</em>,
+published <strong>7 Oct 2020</strong> by the Raad voor Cultuur; (b)
+government <strong>policy vision</strong> (<em>Beleidsvisie collecties
+uit een koloniale context</em>) adopting it, incl. unconditional return,
+<strong>Jan 2021</strong>; (c) the standing advisory committee itself
+(<em>Adviescommissie teruggave cultuurgoederen uit koloniale
+context</em> / Commissie Koloniale Collecties) established by decree of
+the State Secretary for OCW on <strong>6 Sept 2022</strong>. The prior
+audit was right that the <em>report</em> is 2020.</td>
+<td><a href="https://nltimes.nl/2020/10/07/netherlands-advised-return-art-looted-colonial-era">https://nltimes.nl/2020/10/07/netherlands-advised-return-art-looted-colonial-era</a>
+· <a href="https://english.cultureelerfgoed.nl/topics/c/cultural-goods-from-a-colonial-context/policy-in-the-netherlands">https://english.cultureelerfgoed.nl/topics/c/cultural-goods-from-a-colonial-context/policy-in-the-netherlands</a>
+· <a href="https://commissie.kolonialecollecties.nl/over-de-commissie">https://commissie.kolonialecollecties.nl/over-de-commissie</a></td>
+</tr>
+<tr>
+<td><code>C4_economics_business_20</code> #2</td>
+<td>"Dawex (founded 2015)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Founded 2015 in Lyon by Fabrice Tocco and Laurent Lafaye. Nuance
+only: the <em>Dawex Global Data Marketplace</em> product launched
+<strong>2017</strong>; 2015 is company founding.</td>
+<td><a href="https://www.dawex.com/en/about/our-story/">https://www.dawex.com/en/about/our-story/</a>
+· <a href="https://www.cbinsights.com/company/dawex">https://www.cbinsights.com/company/dawex</a></td>
+</tr>
+<tr>
+<td><code>C4_economics_business_20</code> #10</td>
+<td>"Posner &amp; Weyl 'Radical Markets' (2018)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Eric A. Posner &amp; E. Glen Weyl, <em>Radical Markets: Uprooting
+Capitalism and Democracy for a Just Society</em>, Princeton UP, 2018.
+The prior pass's correction away from "Lanier-Weyl" was
+<strong>correct</strong>. See §3 for a surviving inconsistency in
+<code>C5_economics_business_26</code>.</td>
+<td><a href="https://press.princeton.edu/books/hardcover/9780691177502/radical-markets">https://press.princeton.edu/books/hardcover/9780691177502/radical-markets</a></td>
+</tr>
+<tr>
+<td><code>C4_biology_medicine_18</code> #14</td>
+<td>"ICLAC Register of Misidentified Cell Lines (2012 onward)"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>The <strong>Register predates ICLAC</strong>. It was "originally
+developed by Amanda Capes-Davis and Ian Freshney, and published in 2010"
+(Capes-Davis et al., <em>Int J Cancer</em> 2010;127:1-8, PMID 20143388).
+<strong>ICLAC was formed in 2012</strong>, following ANSI/ATCC
+ASN-0002-2011, and now curates the Register (latest: v14, 15 Feb
+2026).</td>
+<td><a href="https://iclac.org/databases/cross-contaminations/">https://iclac.org/databases/cross-contaminations/</a>
+· <a href="https://iclac.org/about-iclac/">https://iclac.org/about-iclac/</a></td>
+</tr>
+<tr>
+<td><code>C5_economics_business_46</code> #16</td>
+<td>"S&amp;P/Case-Shiller Home Price Index (1991)"</td>
+<td><strong>IMPRECISE</strong> (lineage-correct, brand-date wrong)</td>
+<td>Methodology: Case &amp; Shiller weighted-repeat-sales, late 1980s.
+<strong>Case Shiller Weiss, Inc. founded 1991</strong> (Allan Weiss with
+Case &amp; Shiller); CSW produced the US indices 1991-2002.
+<strong>Fiserv acquired CSW in 2002, when Standard &amp; Poor's began
+publishing → the "S&amp;P/Case-Shiller" brand dates to 2002.</strong>
+CoreLogic acquired the business Apr 2013 ("S&amp;P CoreLogic
+Case-Shiller"); now "S&amp;P Cotality Case-Shiller".</td>
+<td><a href="https://en.wikipedia.org/wiki/Case%E2%80%93Shiller_index">https://en.wikipedia.org/wiki/Case%E2%80%93Shiller_index</a>
+· <a href="https://en.wikipedia.org/wiki/Allan_Weiss">https://en.wikipedia.org/wiki/Allan_Weiss</a></td>
+</tr>
+<tr>
+<td><code>C5_economics_business_46</code> #19</td>
+<td>"Baltic Dry Index (1985)"</td>
+<td><strong>IMPRECISE</strong> (lineage-correct, brand-date wrong)</td>
+<td>The Baltic Exchange first published the <strong>Baltic Freight Index
+(BFI) on 4 Jan 1985</strong> (13 voyage routes, settlement mechanism for
+the BIFFEX futures contract). The <strong>Baltic Dry Index launched 1
+Nov 1999</strong>, replacing the BFI and switching from spot voyage
+rates to timecharter averages for Capesize/Panamax/Handysize.</td>
+<td><a href="https://en.wikipedia.org/wiki/Baltic_Dry_Index">https://en.wikipedia.org/wiki/Baltic_Dry_Index</a>
+· <a href="https://transportgeography.org/contents/chapter3/transport-costs/baltic-dry-index/">https://transportgeography.org/contents/chapter3/transport-costs/baltic-dry-index/</a></td>
+</tr>
+<tr>
+<td><code>C5_law_policy_47</code> #17</td>
+<td>"Kemeny-Young method (1959) — maximum-likelihood ranking"</td>
+<td><strong>IMPRECISE</strong> (the year+gloss pairing is strictly
+wrong)</td>
+<td>Prior audit confirmed. Three separate contributions: <strong>Kemeny
+1959</strong> (<em>Mathematics without numbers</em>, Daedalus
+88:577-591) gives the Kendall-tau <strong>distance-minimizing</strong>
+rule — <em>not</em> an MLE claim. <strong>Young &amp; Levenglick
+1978</strong> (<em>A Consistent Extension of Condorcet's Election
+Principle</em>, SIAM J. Appl. Math. 35(2):285-300) give the axiomatic
+characterization — this is where the "Young" in the name comes from.
+<strong>Young 1988</strong> (<em>Condorcet's Theory of Voting</em>, APSR
+82(4):1231-1244; also <em>Optimal Voting Rules</em>, JEP 9(1), 1995)
+supplies the <strong>maximum-likelihood-estimator</strong>
+interpretation.</td>
+<td><a href="https://en.wikipedia.org/wiki/Kemeny_method">https://en.wikipedia.org/wiki/Kemeny_method</a></td>
+</tr>
+<tr>
+<td><code>C5_engineering_48</code> #10</td>
+<td>"Sarrus linkage — rotation to rectilinear translation", listed as
+prior art for a <strong>planar</strong>-linkage invention query</td>
+<td><strong>WRONG — internal-consistency error</strong></td>
+<td>Sarrus (Pierre Frédéric Sarrus, <strong>1853</strong>) is a
+<strong>spatial</strong> single-loop overconstrained <strong>6R</strong>
+mechanism, a "space crank". Wikipedia, verbatim: <em>"The Sarrus linkage
+is of a three-dimensional class sometimes known as a space crank, unlike
+the Peaucellier–Lipkin linkage which is a planar mechanism."</em> The
+motion description ("rotation to rectilinear translation") is correct;
+the <strong>classification as in-scope planar prior art is not</strong>.
+See §4 for why this is a scoring bug, not a citation slip.</td>
+<td><a href="https://en.wikipedia.org/wiki/Sarrus_linkage">https://en.wikipedia.org/wiki/Sarrus_linkage</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="1b-c4_arts_humanities_23-post-cutoff-assessment-the-item-is-labelled-post_cutoff">1b.
+<code>C4_arts_humanities_23</code> post-cutoff assessment (the item is
+labelled <code>post_cutoff</code>)</h3>
+<p>The 2025/2026 restitution events in <code>known_answers</code> #16
+are <strong>real and independently verifiable on the live web</strong> —
+they are <em>not</em> unverifiable-by-design, and they are unusually
+accurate.</p>
+<div aria-label="1b. C4_arts_humanities_23 post-cutoff assessment (the item is
+labelled post_cutoff ) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Netherlands returning 119 bronzes (Feb and June 2025)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Transfer agreement signed <strong>19 Feb 2025</strong> at the
+Wereldmuseum Leiden (Dutch culture minister Eppo Bruins + NCMM DG
+Olugbile Holloway); formal handover <strong>21 June 2025</strong>
+(Lagos/Edo State, received by Oba Ewuare II). Largest single return of
+Benin material tied to the 1897 expedition.</td>
+<td><a href="https://www.aljazeera.com/amp/news/2025/6/21/the-netherlands-returns-119-stolen-sculptures-to-nigeria">https://www.aljazeera.com/amp/news/2025/6/21/the-netherlands-returns-119-stolen-sculptures-to-nigeria</a>
+· <a href="https://www.npr.org/2025/02/21/g-s1-50111/benin-bronze-netherlands-nigeria">https://www.npr.org/2025/02/21/g-s1-50111/benin-bronze-netherlands-nigeria</a></td>
+</tr>
+<tr>
+<td>"three Swiss museums agreeing to transfer 28 bronzes with some
+remaining on long-term loan … (2026-03)"</td>
+<td><strong>CONFIRMED</strong> (date exact)</td>
+<td>Transfer of ownership of <strong>28 objects</strong>, signed
+<strong>20 March 2026</strong>; handover ceremony National Museum Lagos
+<strong>29 June 2026</strong>. Three museums: Ethnographic Museum,
+University of Zurich (14 returned), Museum Rietberg Zurich (2), Musée
+d'Ethnographie de Genève (2) = 18 physically returned; <strong>9 remain
+on long-term loan at Rietberg + 1 at MEG</strong> = 10. 18 + 10 = 28 ✓.
+(5 further objects seized by Swiss authorities returned under separate
+proceedings.)</td>
+<td><a href="https://www.musethno.uzh.ch/en/About-us/News/260629-media-release-benin-artefacts.html">https://www.musethno.uzh.ch/en/About-us/News/260629-media-release-benin-artefacts.html</a>
+· <a href="https://www.euronews.com/culture/2026/06/30/switzerland-returns-18-looted-benin-bronzes-to-nigeria">https://www.euronews.com/culture/2026/06/30/switzerland-returns-18-looted-benin-bronzes-to-nigeria</a></td>
+</tr>
+<tr>
+<td>"…at Nigeria's request" (the Swiss loan-back)</td>
+<td><strong>UNVERIFIABLE</strong></td>
+<td>The UZH media release documents the loan arrangement but does
+<strong>not</strong> attribute the request to Nigeria. The Swiss federal
+release (admin.ch) returned HTTP 403 to automated fetch. Recommend
+softening to "with some remaining on long-term loan".</td>
+<td><a href="https://www.musethno.uzh.ch/en/About-us/News/260629-media-release-benin-artefacts.html">https://www.musethno.uzh.ch/en/About-us/News/260629-media-release-benin-artefacts.html</a>
+(loans stated, attribution absent)</td>
+</tr>
+<tr>
+<td>"Germany's transfer of ~1,100 Benin Bronzes (2022, first physical
+returns 2022-12)"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Joint political declaration <strong>1 July 2022</strong> covering
+<strong>1,130</strong> objects — "~1,100" is fine. But <strong>two
+objects (an Oba head and a 16th-c. plaque) were physically handed to
+Nigerian representatives at the 1 July 2022 Berlin signing</strong>; the
+first delivery <em>on Nigerian soil</em> was <strong>20 objects in
+Abuja, 20 Dec 2022</strong>. "First physical returns 2022-12" needs
+qualifying.</td>
+<td><a href="https://kulturstaatsminister.de/fileadmin/user_upload/Downloads/Aufarbeiten/2022-07-01-Joint-Declaration-Benin-Bronzes.pdf">https://kulturstaatsminister.de/fileadmin/user_upload/Downloads/Aufarbeiten/2022-07-01-Joint-Declaration-Benin-Bronzes.pdf</a>
+· <a href="https://www.theartnewspaper.com/2022/07/04/the-benin-bronzes-are-returning-home-germany-and-nigeria-sign-historic-restitution-agreement">https://www.theartnewspaper.com/2022/07/04/the-benin-bronzes-are-returning-home-germany-and-nigeria-sign-historic-restitution-agreement</a></td>
+</tr>
+<tr>
+<td>"Nigeria's designation of the Oba as private royal custodian
+(2023-03)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Decree/gazette issued by outgoing President Buhari <strong>23 March
+2023</strong>, vesting repatriated Benin Expedition objects (incl.
+future returns) in the Oba of Benin / the Royal Family in Benin
+City.</td>
+<td><a href="https://en.wikipedia.org/wiki/Benin_Bronzes">https://en.wikipedia.org/wiki/Benin_Bronzes</a></td>
+</tr>
+<tr>
+<td>"Digital Benin database launched 2022-11 (5,000+ objects across 130+
+institutions)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Launched <strong>4 Nov 2022</strong>; 5,240+ objects;
+<strong>131</strong> museums/institutions across 20 countries; hosted by
+MARKK Hamburg.</td>
+<td><a href="https://www.museumsassociation.org/museums-journal/news/2022/11/digital-benin-project-unveils-online-platform/">https://www.museumsassociation.org/museums-journal/news/2022/11/digital-benin-project-unveils-online-platform/</a>
+· <a href="https://digitalbenin.org/documentation/introduction">https://digitalbenin.org/documentation/introduction</a></td>
+</tr>
+<tr>
+<td>#7 "Declaration on the Importance and Value of Universal Museums
+(2002) … ~18 major museums"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Issued <strong>December 2002</strong> by the directors of
+<strong>18</strong> European and US museums (Art Institute of Chicago,
+Staatliche Museen zu Berlin, Cleveland, Getty, Guggenheim, Louvre, Met,
+MFA Boston, MoMA, …).</td>
+<td><a href="https://www.elginism.com/similar-cases/declaration-on-the-importance-of-the-universal-museum/20021211/4620/">https://www.elginism.com/similar-cases/declaration-on-the-importance-of-the-universal-museum/20021211/4620/</a></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Verdict on the <code>post_cutoff</code> label:</strong>
+correct and well-used. The item's post-cutoff content is
+<em>genuinely</em> checkable rather than a hedge. <strong>But it creates
+a maintenance liability</strong>: <code>known_answers</code> #16
+hard-codes a March 2026 event, and the Benin restitution timeline is
+still moving (the Swiss handover on 29 June 2026 already post-dates the
+entry's framing). A benchmark shipping publicly needs either a dated
+snapshot marker on this entry or a policy of re-verifying it per
+release.</p>
+<h3 id="1c-other-claims-verified-live-second-tier">1c. Other claims
+verified live (second tier)</h3>
+<div aria-label="1c. Other claims
+verified live (second tier) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Note / source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C4_economics_business_20</code> #2</td>
+<td>"AWS Data Exchange (launched Nov 2019)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>GA announced <strong>13 Nov 2019</strong>, 1,000+ products / 80+
+providers. <a href="https://aws.amazon.com/about-aws/whats-new/2019/11/introducing-aws-data-exchange">https://aws.amazon.com/about-aws/whats-new/2019/11/introducing-aws-data-exchange</a></td>
+</tr>
+<tr>
+<td><code>C4_economics_business_20</code> #4</td>
+<td>"IAS 38 effective 2004, ongoing" (attributed to "IASB")</td>
+<td><strong>IMPRECISE</strong></td>
+<td>IAS 38 was <strong>issued September 1998 by the IASC</strong> (not
+the IASB), adopted by the IASB April 2001, and <strong>revised March
+2004</strong> (revised version effective for annual periods beginning
+on/after 31 Mar 2004). <a href="https://www.iasplus.com/en/standards/ias/ias38">https://www.iasplus.com/en/standards/ias/ias38</a>
+· <a href="https://www.ifrs.org/issued-standards/list-of-standards/ias-38-intangible-assets/">https://www.ifrs.org/issued-standards/list-of-standards/ias-38-intangible-assets/</a></td>
+</tr>
+<tr>
+<td><code>C4_economics_business_20</code> #11</td>
+<td>OECD "Measuring the Economic Value of Data and Cross-Border Data
+Flows" (2020)</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Nguyen, D. &amp; Paczos, M. (2020), <em>OECD Digital Economy
+Papers</em> <strong>No. 297</strong>, Aug 2020. <a href="https://www.oecd.org/en/publications/measuring-the-economic-value-of-data-and-cross-border-data-flows_6345995e-en.html">https://www.oecd.org/en/publications/measuring-the-economic-value-of-data-and-cross-border-data-flows_6345995e-en.html</a></td>
+</tr>
+<tr>
+<td><code>C4_biology_medicine_18</code> #2</td>
+<td>"Begley &amp; Ellis (2012, Nature, 'Amgen', 6/53 preclinical
+oncology studies reproduced)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td><em>Drug development: Raise standards for preclinical cancer
+research</em>, Nature 483(7391):531-533, 28 Mar 2012. (The 6-of-53
+figure is in the commentary body/Table 1; PubMed carries no abstract.)
+<a href="https://pubmed.ncbi.nlm.nih.gov/22460880/">https://pubmed.ncbi.nlm.nih.gov/22460880/</a></td>
+</tr>
+<tr>
+<td><code>C4_biology_medicine_18</code> #11</td>
+<td>"Alipourfard et al. (2021, preprint) — 'Systematizing Confidence in
+Open Research and Evidence'"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Crossref: <em>Systematizing Confidence in Open Research and Evidence
+(SCORE)</em>, Alipourfard et al., 2021, DOI
+<strong>10.31235/osf.io/46mnb</strong> (SocArXiv). <a href="https://doi.org/10.31235/osf.io/46mnb">https://doi.org/10.31235/osf.io/46mnb</a></td>
+</tr>
+<tr>
+<td><code>C4_biology_medicine_18</code> #14</td>
+<td>"Cellosaurus (Bairoch, 2018, Journal of Biomolecular
+Techniques)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Bairoch A., <em>The Cellosaurus, a Cell-Line Knowledge
+Resource</em>, J Biomol Tech 2018;<strong>29(2):25-38</strong>, PMID
+29805321, DOI 10.7171/jbt.18-2902-002. <a href="https://pubmed.ncbi.nlm.nih.gov/29805321/">https://pubmed.ncbi.nlm.nih.gov/29805321/</a></td>
+</tr>
+<tr>
+<td><code>C4_biology_medicine_18</code> #16</td>
+<td>"SciScore and the Rigor-and-Transparency Index (Menke, Bandrowski et
+al., 2020, iScience)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Menke, Roelandse, Ozyurt, Martone, Bandrowski, iScience 2020, DOI
+10.1016/j.isci.2020.101698.</td>
+</tr>
+<tr>
+<td><code>C4_engineering_22</code> #4</td>
+<td>"Process-capability indices Cp/Cpk (Victor Kane, J. Quality
+Technology, 1986)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Kane, V.E., <em>Process Capability Indices</em>, JQT 1986, DOI
+10.1080/00224065.1986.11978984.</td>
+</tr>
+<tr>
+<td><code>C4_engineering_22</code> #4</td>
+<td>"Cpm (Chan–Cheng–Spiring, 1988)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Chan, Cheng &amp; Spiring, <em>A New Measure of Process Capability:
+Cpm</em>, JQT 1988, DOI 10.1080/00224065.1988.11979102.</td>
+</tr>
+<tr>
+<td><code>C4_law_policy_21</code> #8</td>
+<td>"Libgober (2020, 'Meetings, Comments, and the Distributive Politics
+of Rulemaking', QJPS)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Quarterly Journal of Political Science <strong>vol. 15</strong>,
+2020, DOI 10.1561/100.00018135.</td>
+</tr>
+<tr>
+<td><code>C4_materials_chemistry_19</code> #3</td>
+<td>"Krivovichev structural-complexity (Acta Cryst. A, 2012)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td><em>Topological complexity of crystal structures: quantitative
+approach</em>, Acta Cryst A 2012, DOI 10.1107/S0108767312012044.</td>
+</tr>
+<tr>
+<td><code>C5_economics_business_46</code> #18</td>
+<td>"Herfindahl-Hirschman Index (1945/1950)"</td>
+<td><strong>CONFIRMED</strong></td>
+<td>The dual dating is the standard and correct one: Hirschman,
+<em>National Power and the Structure of Foreign Trade</em> (1945);
+Herfindahl, <em>Concentration in the Steel Industry</em> dissertation
+(1950); Hirschman's own priority note <em>The Paternity of an Index</em>
+(1964). <a href="https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_index">https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_index</a></td>
+</tr>
+<tr>
+<td><code>C5_law_policy_47</code> #18</td>
+<td>"STAR voting (Score-Then-Automatic-Runoff, ~2014)"</td>
+<td><strong>IMPRECISE</strong> (same brand-vs-concept pattern)</td>
+<td>Proposed <strong>October 2014</strong> by <strong>Mark
+Frohnmayer</strong> as <strong>Score Runoff Voting (SRV)</strong>; the
+"STAR / Score Then Automatic Runoff" name came later (2017-18). The
+<em>method</em> date ~2014 is right; the <em>name</em> is not from 2014.
+<a href="https://en.wikipedia.org/wiki/STAR_voting">https://en.wikipedia.org/wiki/STAR_voting</a></td>
+</tr>
+<tr>
+<td><code>C5_law_policy_47</code> #15</td>
+<td>"Bucklin voting (~1909) — sequential rank accumulation"</td>
+<td><strong>IMPRECISE — and it matters for novelty gating</strong></td>
+<td>1909 = first US use, Grand Junction, Colorado; named for Georgist
+politician James W. Bucklin. But <strong>the method was proposed by
+Condorcet in 1793</strong> and reportedly used by the Republic of Geneva
+that same year. The effective prior-art date is <strong>1793</strong>,
+not 1909. <a href="https://en.wikipedia.org/wiki/Bucklin_voting">https://en.wikipedia.org/wiki/Bucklin_voting</a></td>
+</tr>
+<tr>
+<td><code>C5_law_policy_27</code> #1</td>
+<td>"Finland — Committee for the Future: <strong>permanent standing
+committee</strong> … established 1993"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Established <strong>1993 as a temporary committee</strong>; the
+Eduskunta granted it <strong>permanent standing-committee status in
+2000</strong>. The parenthetical "(the first standing parliamentary
+future-generations body)" therefore attaches to the wrong year. <a href="https://unu.edu/cpr/blog-post/parliamentary-committees-future-legislative-movement-overcome-political-myopia">https://unu.edu/cpr/blog-post/parliamentary-committees-future-legislative-movement-overcome-political-myopia</a>
+· <a href="https://eptanetwork.org/static-html/comparative-table/countryreport/finland.html">https://eptanetwork.org/static-html/comparative-table/countryreport/finland.html</a></td>
+</tr>
+<tr>
+<td><code>C5_engineering_48</code> #10</td>
+<td>Sarrus, 1853, Pierre Frédéric Sarrus, "space crank", pre-dates
+Peaucellier</td>
+<td><strong>CONFIRMED</strong> (confirms the error in 1a)</td>
+<td><a href="https://en.wikipedia.org/wiki/Sarrus_linkage">https://en.wikipedia.org/wiki/Sarrus_linkage</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="1d-expert_baseline-fields">1d. <code>expert_baseline</code>
+fields</h3>
+<p>Checked all 20. They contain <strong>essentially no falsifiable dated
+claims</strong> — they are prose descriptions of the convergent expert
+answer and the surprise threshold. The only embedded factual references
+are "NAGPRA 2024" (<code>C4_arts_humanities_23</code>, consistent with
+<code>known_answers</code> #10 and correct), "Shiller (2003)"
+(<code>C5_economics_business_26</code>, <em>The New Financial
+Order</em>, 2003 — correct), and "RFdiffusion/AlphaFold3 era"
+(<code>C5_biology_medicine_24</code> — RFdiffusion 2023, AlphaFold 3 May
+2024, correct). <strong>No defects found in
+<code>expert_baseline</code>.</strong></p>
+<hr/>
+<h2 id="2-counts-by-verdict">2. Counts by verdict</h2>
+<p>Counted at the level of <em>discrete checkable claims verified
+against a live source</em>, not per item.</p>
+<div aria-label="2. Counts by verdict table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Verdict</th>
+<th scope="col">Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CONFIRMED</strong></td>
+<td><strong>19</strong></td>
+</tr>
+<tr>
+<td><strong>IMPRECISE</strong></td>
+<td><strong>11</strong></td>
+</tr>
+<tr>
+<td><strong>WRONG</strong></td>
+<td><strong>1</strong> (Sarrus placement, <code>C5_engineering_48</code>
+#10)</td>
+</tr>
+<tr>
+<td><strong>UNVERIFIABLE</strong></td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td><strong>FABRICATED</strong></td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>Total live claim-checks</td>
+<td><strong>33</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>UNVERIFIABLE detail:</p>
+<ol type="1">
+<li><code>C4_arts_humanities_23</code> #16 — "at Nigeria's request"
+(Swiss loan-back). Tried: admin.ch federal press release (<strong>HTTP
+403</strong>), UZH Ethnographic Museum release (loans documented,
+attribution absent), Euronews/swissinfo/artnet coverage (no
+attribution). Recommend removing the attribution.</li>
+<li><code>C5_biology_medicine_24</code> #19 — "Oncolytic viruses …
+approvals since 2015". Flagged but <strong>not live-verified</strong>
+(WebSearch budget exhausted at 200/200). To my knowledge this is
+US/EU-centric: Rigvir was approved in Latvia in 2004 and Oncorine (H101)
+in China in 2005; T-VEC/Imlygic (FDA Oct 2015, EMA Dec 2015) is the
+first <em>Western</em> approval. <strong>Needs a live check before
+release.</strong></li>
+</ol>
+<hr/>
+<h2 id="3-exact-old--new-replacements">3. Exact old → new
+replacements</h2>
+<p>Recommended text edits. <strong>No <code>.jsonl</code> file was
+modified by this audit.</strong></p>
+<p><strong><code>C4_arts_humanities_23</code>,
+<code>known_answers</code> #15</strong></p>
+<ul>
+<li>old:
+<code>Dutch 'Colonial Collections' advisory committee framework (2021) enabling unconditional returns</code></li>
+<li>new:
+<code>Dutch colonial-collections framework: Gonçalves Committee report 'Colonial Collections and a Recognition of Injustice' (Council for Culture, Oct 2020); government policy vision adopting it, incl. unconditional return (Jan 2021); standing Colonial Collections Committee (Adviescommissie teruggave cultuurgoederen uit koloniale context) established Sept 2022</code></li>
+</ul>
+<p><strong><code>C4_arts_humanities_23</code>,
+<code>known_answers</code> #16</strong></p>
+<ul>
+<li>old:
+<code>Germany's transfer of ~1,100 Benin Bronzes (2022, first physical returns 2022-12)</code></li>
+<li>new:
+<code>Germany's transfer of 1,130 Benin Bronzes (joint declaration 1 July 2022, with 2 objects handed over at the Berlin signing; first delivery in Nigeria 20 Dec 2022, 20 objects)</code></li>
+<li>old:
+<code>three Swiss museums agreeing to transfer 28 bronzes with some remaining on long-term loan at Nigeria's request (2026-03)</code></li>
+<li>new:
+<code>three Swiss museums (Ethnographic Museum UZH, Museum Rietberg Zurich, MEG Geneva) transferring ownership of 28 objects (signed 2026-03-20), 18 physically returned and 10 remaining on long-term loan in Switzerland (handover 2026-06-29)</code></li>
+</ul>
+<p><strong><code>C4_economics_business_20</code>,
+<code>known_answers</code> #4</strong></p>
+<ul>
+<li>old: <code>IAS 38 effective 2004, ongoing</code></li>
+<li>new:
+<code>IAS 38 issued Sept 1998 by the IASC, adopted by the IASB 2001, revised March 2004, ongoing</code></li>
+</ul>
+<p><strong><code>C4_biology_medicine_18</code>,
+<code>known_answers</code> #14</strong></p>
+<ul>
+<li>old:
+<code>ICLAC Register of Misidentified Cell Lines (2012 onward)</code></li>
+<li>new:
+<code>ICLAC Register of Misidentified Cell Lines (register first published 2010 by Capes-Davis &amp; Freshney, Int J Cancer 127:1-8; curated by ICLAC since its formation in 2012; v14, 2026)</code></li>
+</ul>
+<p><strong><code>C5_economics_business_46</code>,
+<code>known_answers</code> #16</strong></p>
+<ul>
+<li>old:
+<code>S&amp;P/Case-Shiller Home Price Index (1991) — repeat-sales housing prices.</code></li>
+<li>new:
+<code>Case-Shiller repeat-sales home price index — methodology Case &amp; Shiller (late 1980s); produced by Case Shiller Weiss Inc. from 1991; published under the S&amp;P/Case-Shiller brand from 2002; now S&amp;P Cotality Case-Shiller.</code></li>
+</ul>
+<p><strong><code>C5_economics_business_46</code>,
+<code>known_answers</code> #19</strong></p>
+<ul>
+<li>old:
+<code>Baltic Dry Index (1985) — dry-bulk shipping freight cost.</code></li>
+<li>new:
+<code>Baltic Dry Index — dry-bulk shipping freight cost; predecessor Baltic Freight Index published from 4 Jan 1985, reconstituted and renamed as the BDI on 1 Nov 1999.</code></li>
+</ul>
+<p><strong><code>C5_law_policy_47</code>, <code>known_answers</code>
+#17</strong></p>
+<ul>
+<li>old:
+<code>Kemeny-Young method (1959) — maximum-likelihood ranking.</code></li>
+<li>new:
+<code>Kemeny-Young method — Kemeny (1959, Daedalus) distance-minimizing (Kendall-tau) ranking; Young &amp; Levenglick (1978, SIAM J. Appl. Math.) axiomatic characterization; Young (1988, APSR) maximum-likelihood interpretation.</code></li>
+</ul>
+<p><strong><code>C5_law_policy_47</code>, <code>known_answers</code>
+#18</strong></p>
+<ul>
+<li>old:
+<code>STAR voting (Score-Then-Automatic-Runoff, ~2014).</code></li>
+<li>new:
+<code>STAR voting (Score Then Automatic Runoff) — proposed Oct 2014 by Mark Frohnmayer as Score Runoff Voting (SRV); renamed STAR ~2018.</code></li>
+</ul>
+<p><strong><code>C5_law_policy_47</code>, <code>known_answers</code>
+#15</strong></p>
+<ul>
+<li>old:
+<code>Bucklin voting (~1909) — sequential rank accumulation.</code></li>
+<li>new:
+<code>Bucklin voting / Grand Junction system — sequential rank accumulation; proposed by Condorcet (1793) and reportedly used by the Republic of Geneva the same year; re-invented and first used in the US at Grand Junction, Colorado (1909).</code></li>
+</ul>
+<p><strong><code>C5_engineering_48</code>, <code>known_answers</code>
+#10</strong> — pick one:</p>
+<ul>
+<li>(preferred) <strong>delete the entry</strong>, since a spatial
+mechanism is outside the query's declared class; or</li>
+<li>old:
+<code>Sarrus linkage — rotation to rectilinear translation.</code></li>
+<li>new:
+<code>Sarrus linkage (Sarrus, 1853) — SPATIAL 6R overconstrained "space crank", rotation to rectilinear translation. NOTE: spatial, not planar; listed for contrast only and OUT OF SCOPE for the planar-linkage novelty gate.</code></li>
+</ul>
+<p><strong><code>C5_law_policy_27</code>, <code>known_answers</code>
+#1</strong></p>
+<ul>
+<li>old:
+<code>permanent standing committee of the Finnish Parliament reviewing long-range/future policy, established 1993 (the first standing parliamentary future-generations body)</code></li>
+<li>new:
+<code>committee of the Finnish Parliament reviewing long-range/future policy, established 1993 as a temporary committee and made a permanent standing committee in 2000 (the first standing parliamentary future-generations body)</code></li>
+</ul>
+<p><strong><code>C5_economics_business_26</code>,
+<code>known_answers</code> #20</strong> — consistency with the fix
+already applied in <code>C4_economics_business_20</code> #10</p>
+<ul>
+<li>old:
+<code>(Weyl-Posner 'Radical Markets,' 2018; Harberger-NFT experiments 2021)</code></li>
+<li>new:
+<code>(Posner &amp; Weyl, 'Radical Markets,' 2018; Harberger-NFT experiments 2021)</code></li>
+<li>(<code>#21</code>'s "Lanier-Weyl 2018" for data-as-labor is
+<strong>acceptable as-is</strong> — Lanier and Weyl are genuine
+co-authors of Arrieta-Ibarra et al., <em>Should We Treat Data as
+Labor?</em>, AEA P&amp;P 2018 — but for consistency with
+<code>C4_economics_business_20</code> #10 consider spelling out the full
+author list.)</li>
+</ul>
+<p><strong><code>C5_biology_medicine_24</code>,
+<code>known_answers</code> #19</strong> — pending live confirmation</p>
+<ul>
+<li>old:
+<code>Oncolytic viruses (established niche; approvals since 2015)</code></li>
+<li>new (proposed):
+<code>Oncolytic viruses (established niche; Rigvir approved Latvia 2004 and Oncorine/H101 China 2005; first US/EU approval T-VEC/Imlygic 2015)</code></li>
+</ul>
+<hr/>
+<h2 id="4-why-the-sarrus-entry-is-a-scoring-bug-not-a-citation-slip">4.
+Why the Sarrus entry is a scoring bug, not a citation slip</h2>
+<p><code>C5_engineering_48</code>'s <code>query</code> asks for "an
+entirely original <strong>planar</strong> linkage mechanism: a named
+kinematic chain of rigid links joined by revolute and/or prismatic
+joints…". <code>known_answers</code> #1 then states the gate: "New is
+judged against mechanisms whose <strong>DEFINING principle</strong>
+matches any entry below." Entry #10 is the Sarrus linkage — a spatial 6R
+mechanism.</p>
+<p>Two concrete failure modes follow:</p>
+<ol type="1">
+<li><strong>False non-novelty.</strong> A submission proposing a
+genuinely new <em>planar</em> rotation-to-translation linkage can be
+scored down for "matching the defining principle" of Sarrus — a
+mechanism that cannot exist in the plane. The exclusion set is
+over-broad by one entry, and it is over-broad in exactly the direction
+(straight-line/translation output) that planar-linkage inventions most
+often target. Note that #6/#7/#8/#15/#16/#17 already cover planar
+straight-line generation properly (Peaucellier-Lipkin, Watt, Chebyshev,
+Roberts, Hart, Scott Russell), so #10 adds no legitimate coverage.</li>
+<li><strong>Contradictory instruction to the answering model.</strong> A
+model reading the prior-art list as an implicit definition of scope can
+reasonably conclude that spatial mechanisms are admissible, then answer
+out of class and be penalized under <code>hard_rules</code> for a
+constraint the catalogue itself blurred. That is an item-design defect,
+distinguishable from a wrong date.</li>
+</ol>
+<p>Secondary, softer issue in the same list: #15 "Roberts linkage"
+(approximate straight line) is <strong>Richard</strong> Roberts
+(1789-1864), while #21 "Roberts-Chebyshev cognate linkages" is
+<strong>Samuel</strong> Roberts (1827-1913). The list does not conflate
+them, but a judge or model easily might; disambiguating the first names
+would harden the entry.</p>
+<hr/>
+<h2 id="5-systemic-pattern-brand-date-vs-concept-date">5. Systemic
+pattern: brand date vs. concept date</h2>
+<p>Six of the eleven IMPRECISE findings are the <em>same</em> defect — a
+single year attached to a named artifact where the name and the
+underlying concept have different birthdays:</p>
+<div aria-label="5. Systemic
+pattern: brand date vs. concept date table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Entry</th>
+<th scope="col">Concept date</th>
+<th scope="col">Name/brand date</th>
+<th scope="col">Listed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Case-Shiller</td>
+<td>late 1980s method / 1991 company</td>
+<td><strong>2002</strong> (S&amp;P/Case-Shiller)</td>
+<td>1991</td>
+</tr>
+<tr>
+<td>Baltic Dry Index</td>
+<td><strong>1985</strong> (BFI)</td>
+<td><strong>1999</strong> (BDI)</td>
+<td>1985</td>
+</tr>
+<tr>
+<td>STAR voting</td>
+<td><strong>2014</strong> (SRV)</td>
+<td><strong>~2018</strong> (STAR)</td>
+<td>~2014</td>
+</tr>
+<tr>
+<td>Bucklin voting</td>
+<td><strong>1793</strong> (Condorcet)</td>
+<td><strong>1909</strong> (Bucklin/Grand Junction)</td>
+<td>~1909</td>
+</tr>
+<tr>
+<td>Kemeny-Young</td>
+<td>1959 (Kemeny)</td>
+<td>1978/1988 (Young)</td>
+<td>1959</td>
+</tr>
+<tr>
+<td>ICLAC Register</td>
+<td><strong>2010</strong> (register)</td>
+<td><strong>2012</strong> (ICLAC)</td>
+<td>2012</td>
+</tr>
+<tr>
+<td>Finland Cttee for the Future</td>
+<td><strong>1993</strong> (temporary)</td>
+<td><strong>2000</strong> (permanent standing)</td>
+<td>1993</td>
+</tr>
+<tr>
+<td>Dutch colonial-collections framework</td>
+<td>2020 (report)</td>
+<td>2021 policy / 2022 committee</td>
+<td>2021</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>This is a systematic novelty-gate risk, not
+cosmetic.</strong> Every C5 <code>known_answers</code> list opens with
+"New is judged against &lt;indices/methods/mechanisms&gt; whose DEFINING
+principle matches any entry below". When the listed year is the
+<em>branding</em> year, the gate silently understates how long the
+defining principle has been public — and a submission whose concept was
+anticipated in 1793 (Bucklin) or 1985 (BFI) can be scored as novel
+against a 1909/1999 prior-art boundary. The fix is cheap and mechanical:
+for every catalogue entry, record the <strong>earliest publication of
+the defining principle</strong>, and put the brand name/date second.</p>
+<hr/>
+<h2 id="6-items-not-covered">6. Items NOT covered</h2>
+<p><strong>Fully audited at claim level (every dated/named claim checked
+or live-verified) — 6 items:</strong>
+<code>C4_arts_humanities_23</code>,
+<code>C4_economics_business_20</code>,
+<code>C4_biology_medicine_18</code>,
+<code>C5_economics_business_46</code>, <code>C5_law_policy_47</code>,
+<code>C5_engineering_48</code>.</p>
+<p><strong>Partially audited (list reviewed in full; 1-2 highest-risk
+claims live-verified, remainder checked against known public record but
+not fetched) — 5 items:</strong> <code>C4_engineering_22</code> (Kane
+1986, Chan-Cheng-Spiring 1988 verified; QMU 2001/NAS 2009, Hasofer-Lind
+1974, Rackwitz-Fiessler 1978, Sobol' 1993/2001, AIAA S-120-2006,
+MIL-STD-1629A 1980 <strong>not</strong> fetched),
+<code>C4_law_policy_21</code> (Libgober 2020 verified; Stigler 1971,
+Peltzman 1976, Becker 1983, Laffont-Tirole 1991, Carpenter-Moss 2014,
+Lucca-Seru-Trebbi 2014, Yackee 2006, You 2017, Wagner 2010,
+Clinton-Lewis 2008 <strong>not</strong> fetched),
+<code>C4_materials_chemistry_19</code> (Krivovichev 2012 verified; GNoME
+Nov 2023, MatterGen Dec 2023/Jan 2025, pymatgen 2013, Magpie 2016, SOAP
+2013, Mat2Vec 2019, CDVAE 2022, CD-index 2017/2019, Bemis-Murcko 1996,
+A-Lab 2023, MP/OQMD/AFLOW <strong>not</strong> fetched),
+<code>C5_law_policy_27</code> (Finland verified; Israel 2001/2006,
+Hungary 2007-08/2012, Malta 2012, Wales 2015/2016, UN 2021/2024, Art.
+20a 1994, Norway §112 1992, Neubauer 2021, Urgenda 2019, Juliana 2015,
+Minors Oposa 1993, Te Awa Tupua 2017, Brown Weiss 1989, Kavka-Warren
+1983, Ekeli 2005, Gonzalez-Ricoy &amp; Gosseries 2016, Jonas 1979, Rawls
+1971 <strong>not</strong> fetched),
+<code>C5_economics_business_26</code> (author-order issue found by
+inspection; IEM 1988, cat bonds mid-1990s, World Bank PEF 2017, EIB-BNP
+2004, CME weather 1999, Shiller 2003, EU ETS 2005, Frontier 2022,
+pneumococcal AMC 2007, Peterborough 2010, Tabarrok 1998,
+Buterin-Hitzig-Weyl 2018, RetroPGF 2021-24, FCC 2016-17, BUIDL 2024,
+VitaDAO 2021, Kalshi v. CFTC 2024 <strong>not</strong> fetched).</p>
+<p><strong>NOT audited beyond a read-through — 9 items:</strong>
+<code>C4_biology_medicine_42</code>,
+<code>C4_materials_chemistry_43</code>,
+<code>C4_economics_business_44</code>, <code>C4_engineering_45</code>,
+<code>C5_arts_humanities_29</code>, <code>C5_biology_medicine_24</code>
+(one claim flagged, §2), <code>C5_engineering_28</code>,
+<code>C5_materials_chemistry_25</code>,
+<code>C5_arts_humanities_49</code>.</p>
+<p>Reason for the triage: live WebSearch budget was exhausted (200/200)
+partway through; the remaining work was done with WebFetch against known
+URLs and the Crossref API, which requires a target citation per call and
+does not scale to ~250 remaining entries in one pass.</p>
+<p><strong>A structural observation about the not-audited set.</strong>
+The five later-numbered C4 items (<code>_42</code>, <code>_43</code>,
+<code>_44</code>, <code>_45</code>) and
+<code>C5_arts_humanities_49</code> have <strong>bare, undated
+catalogues</strong> — e.g. <code>C4_materials_chemistry_43</code> lists
+"E-factor (Sheldon)", "Atom economy (Trost)", "EcoScale route-assessment
+score" with no years, no venues, no citations;
+<code>C4_engineering_45</code> lists "iFixit Repairability Score", "EN
+45554", "Modularity index (Martin &amp; Ishii)" likewise. These are
+<strong>low-risk for date errors precisely because they assert almost
+nothing</strong> — but that is also why they are <strong>weak novelty
+gates</strong>: they cannot tell a judge which version, edition, or
+formulation of a method counts as prior art. Compare the
+<code>_1x</code>/<code>_2x</code> items, whose entries carry full
+citations and explicit ALLOWED/FORBIDDEN annotations
+(<code>C4_biology_medicine_18</code> is the strongest in the set). The
+catalogue quality across C4/C5 is <strong>bimodal</strong>, and the
+bimodality tracks item ID, which suggests two different authoring
+passes. That inconsistency will produce inconsistent novelty scoring
+across domains regardless of whether any individual entry is right.</p>
+<hr/>
+<h2 id="7-overall-assessment-are-the-c4c5-prior-art-catalogues-trustworthy-enough-to-gate-novelty">7.
+Overall assessment: are the C4/C5 prior-art catalogues trustworthy
+enough to gate novelty?</h2>
+<p><strong>Qualified yes for the richly-cited items; not yet for the
+whole set. Ship after the §3 edits.</strong></p>
+<p><strong>What holds up.</strong> Zero fabrications across 33 live
+claim-checks spanning eight domains — no invented papers, no invented
+institutions, no invented indices, no misattributed authorship (the one
+authorship issue, "Weyl-Posner", is a reversed order of two real
+co-authors, and the prior pass's "Lanier-Weyl → Posner &amp; Weyl"
+correction was itself correct). Hard-to-get details are right at a rate
+I did not expect: NAGPRA's enactment date to the day (1990-11-16) and
+its 2024 regulatory revision; the WIPO GRATK Treaty adoption date
+(2024-05-24); HHI's correct 1945/1950 dual attribution; Digital Benin's
+institution count; Cellosaurus down to volume and pages; and a
+<strong>post-cutoff</strong> March 2026 Swiss restitution agreement
+dated exactly right. The <code>expert_baseline</code> fields are clean.
+That is a catalogue built by someone who checked their work.</p>
+<p><strong>What does not hold up.</strong></p>
+<ol type="1">
+<li><strong>The brand-vs-concept date defect (§5) is systematic and
+directly corrupts the gate.</strong> It appears in at least six entries
+and, unlike a typo, it biases in a consistent direction: it makes prior
+art look <em>younger</em> than it is, which makes submissions look
+<em>more novel</em> than they are. For C5 items — whose entire scoring
+premise is "no established X already exists on this defining concept" —
+this is the single most consequential class of finding in this
+audit.</li>
+<li><strong><code>C5_engineering_48</code> has a live scoring
+bug</strong>, not a citation error. A spatial mechanism sits in the
+exclusion set for a planar-only invention task, adding no legitimate
+coverage (planar straight-line generators are already covered six ways)
+while creating both a false-non-novelty path and a contradictory scope
+signal to the answering model. This one should block release of that
+item until fixed.</li>
+<li><strong>Catalogue depth is bimodal by item ID (§6).</strong>
+<code>C4_biology_medicine_18</code> carries per-entry ALLOWED /
+FORBIDDEN INPUT / PARTIALLY FORBIDDEN annotations that make the gate
+genuinely operational; <code>C4_engineering_45</code> is a list of
+twelve bare names. Both are asked to perform the same function. They
+will not perform it equally, and cross-domain score comparisons will
+inherit that asymmetry.</li>
+<li><strong>One post-cutoff entry is a moving target.</strong>
+<code>C4_arts_humanities_23</code> #16 hard-codes March 2026 Benin
+restitution events that were already superseded by a June 2026 handover.
+This needs a snapshot date or a per-release re-verification policy.</li>
+</ol>
+<p><strong>Recommended gate before public release:</strong></p>
+<ul>
+<li><strong>Blocking:</strong> apply the <code>C5_engineering_48</code>
+#10 fix; apply the six brand-vs-concept date fixes in §3.</li>
+<li><strong>Blocking:</strong> live-verify the oncolytic-virus approval
+date in <code>C5_biology_medicine_24</code> #19 and drop the unsupported
+"at Nigeria's request" in <code>C4_arts_humanities_23</code> #16.</li>
+<li><strong>Strongly recommended:</strong> adopt a catalogue convention
+— <em>earliest publication of the defining principle first, brand name
+and date second</em> — and sweep all 20 items for it. This is the one
+change that converts the catalogues from "accurate bibliography" into
+"sound novelty gate".</li>
+<li><strong>Recommended:</strong> bring the <code>_4x</code> items up to
+<code>_1x</code>/<code>_2x</code> citation depth, or explicitly document
+that their novelty gate is coarser so scores are not compared across the
+two tiers.</li>
+<li><strong>Recommended:</strong> finish claim-level coverage on the 9
+unaudited items (§6) — nothing in the audited sample suggests they are
+fabricated, but the brand-vs-concept defect is systematic enough that it
+should be assumed present until checked.</li>
+</ul>
+<p><strong>Bottom line:</strong> the catalogues are honest and unusually
+well-researched. Their weakness is not truthfulness but <em>date
+semantics</em> — and because the gate is "does an existing X share this
+defining principle", date semantics is exactly the axis that determines
+whether novelty scoring is sound. The fixes are small, enumerated in §3,
+and worth making before this ships publicly.</p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

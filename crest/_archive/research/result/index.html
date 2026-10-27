@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Run outputs · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../README.html">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><article><h1 id="crestresult--run-outputs">crest/result — run outputs</h1>
+<p>Each evaluation writes a run directory. Runs are
+<strong>immutable</strong>: every invocation mints a new
+<code>run_id</code> and nothing is ever resumed into an existing one.
+There is no <code>--resume</code> / <code>--no-resume</code>. What stops
+you re-paying is the <strong>cross-run generation cache</strong>
+(<code>harness/cache.py</code>, on by default): an agent answer already
+stored in <em>any</em> previous run is served for free, keyed by
+(challenge text, agent, model, adapter fingerprint), so a re-run costs
+judge calls only. Disable it with <code>--override-cache</code> (all
+entrants) or <code>--override-cache-agents &lt;keys&gt;</code> (just the
+named ones), or <code>use_cache: false</code> in the config. To repair
+judge failures in place without minting a new run, use
+<code>python -m crest.harness.rejudge --run &lt;run_dir&gt;</code>.</p>
+<pre tabindex="0"><code>result/
+  readme.md                     this file (the only tracked thing in here)
+  index.jsonl                   append-only registry: one line per run (discovery)   [gitignored]
+  latest -&gt; runs/&lt;run_id&gt;       symlink to the newest run (convenience, NOT canonical) [gitignored]
+  superseded_runs.json          provenance for DELETED run dirs: what each showed, why superseded
+  leaderboard.json            promoted canonical numbers cited in the paper. TRACKED, and the
+                              only copy of the results inside git -- result/runs/ is gitignored,
+                              so summary.json is not in git at all. Regenerate with
+                              `python -m crest.analysis.promote_leaderboard --run &lt;run_dir&gt;`.
+  runs/&lt;run_id&gt;/                                                                     [gitignored]
+    README.md                   per-run orientation + the records↔transcripts join recipe
+    records.jsonl               analysis-grade, one line per (challenge, agent); no heavy text
+    transcripts.jsonl           heavy: full agent output text + citations, keyed by record_id
+    errors.jsonl                one line per failed task (agent error / circuit-broken provider)
+    config.snapshot.yaml        literal copy of the config as-run (run_eval.py only)
+    run_manifest.json           provenance: git commit, config, pinned models, judge panel,
+                                 live-vs-frozen mode + contamination caveat, totals, env
+    summary.json                aggregates per agent × category (grounding/creative rates, means)
+    ablation.json               written only by `analysis/ablate_fields.py`</code></pre>
+<p><code>run_id = &lt;UTC-timestamp&gt;__crest__&lt;subset&gt;__git&lt;sha&gt;__&lt;nonce&gt;</code>
+— sortable and provenance-encoding. Run outputs are ~7 MB per run, so
+<code>runs/</code>, <code>index.jsonl</code> and <code>latest</code> are
+<strong>gitignored</strong> and live on disk only; they are both the
+generation cache and the evidence base, so do not delete them.</p>
+<ul>
+<li><strong>"the numbers in the paper"</strong> →
+<code>leaderboard.json</code>. It carries the primary endpoint
+min(New,Useful,Surprising) per agent (which <code>summary.json</code>
+does NOT), the run's provenance including derived warnings about it, and
+the caveats -- chiefly that judge severity exceeds the between-agent
+spread, so <strong>the ordering is not identifiable</strong> from this
+run.</li>
+<li><strong>"the latest run"</strong> → <code>latest</code>.</li>
+<li><strong>"what runs exist"</strong> → <code>index.jsonl</code>.</li>
+<li>Analyze a run:
+<code>python -m crest.analysis.stats --run crest/result/runs/&lt;run_id&gt;/records.jsonl</code>.</li>
+<li>Is a long run still alive?
+<code>python -m crest.analysis.stall_check</code>.</li>
+</ul>
+<p><code>RECORD_SCHEMA_VERSION</code> in <code>harness/results.py</code>
+is now <code>crest-record/1.2.0</code>; the shipped run 040653Z was
+written under the previous version and all 250 of its records — and its
+manifest — stamp <code>crest-record/1.0.0</code>.
+<code>scoring_status</code> is one of <code>scored</code> ·
+<code>judge_degraded</code> (scored, but by fewer than
+<code>min_judges</code> — excluded from headline numbers) ·
+<code>empty_answer</code> (the adapter returned no text; an ADAPTER
+failure, deliberately distinguished from fabrication) ·
+<code>too_short</code> (non-empty but under the substantive-length floor
+-- same adapter root cause as <code>empty_answer</code>, but kept
+separate because the threshold is a judgement call) ·
+<code>grounding_fail</code> · <code>judge_error</code> (no judge
+survived). <code>creativity</code> is <code>null</code> on every
+UNSCORED path — never a fake 0 — but <strong><code>judge_degraded</code>
+is the exception: it carries a full <code>creativity</code>
+dict</strong> scored by too few judges, which is why
+<code>results.py::is_scored</code> requires BOTH
+<code>scoring_status == "scored"</code> and a non-empty dict (three
+disagreeing definitions of "scored" once made a repair drop the headline
+count from 100 to 91). Records written by <code>run_crest</code> carry
+<code>query_sha</code> + <code>adapter_fp</code> (the cache's content
+address); <strong>the shipped run 040653Z predates
+<code>adapter_fp</code>, <code>truncated</code>,
+<code>answer_chars</code> and <code>answer_words</code> — 0 of its 250
+records have them</strong>, so the cache indexes none of it and
+answer-length covariates cannot be computed from that release. Records
+also carry <code>generation_cached</code> /
+<code>cache_source_run</code>, so a reused answer is visible in the
+data.</p>
+<p>Per-judge scores are a list under <code>creativity.judges</code>,
+each row stamped with <code>same_family</code>, so
+<code>pandas.json_normalize(record_path=["creativity","judges"], meta=[...])</code>
+yields a rater-level frame for the mixed-effects model (750 rows on run
+040653Z). The leave-one-family-out subset is the rows with
+<strong><code>same_family == False</code></strong> — LOFO <em>drops</em>
+the same-family judge, so keeping <code>== True</code> selects the exact
+complement (500 vs 250 rows on that run).
+<code>creativity.judge_protocol</code> records which protocol produced
+the row (<code>full-panel (same-family as covariate)</code> by
+default).</p>
+<p>Reliability (Krippendorff α / ICC) and inferential stats live in
+<code>crest/analysis/stats.py</code>, not in
+<code>summary.json</code>.</p>
+<p><code>make_manifest</code> derives <code>judge_protocol</code> from
+<code>panel.protocol</code>, so it agrees with the per-record
+<code>creativity.judge_protocol</code>. Run 040653Z's manifest was
+written before that fix and hand-corrected; its
+<code>judge_protocol_note</code> records exactly that.</p>
+</article><footer><a href="../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Field justification · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#the-minimal-reviewer-defensible-field-set-for-crest">The Minimal
+Reviewer-Defensible Field Set for CREST</a></li><li><a href="#executive-summary">Executive Summary</a></li><li><a href="#introduction">Introduction</a></li><li><a href="#finding-1--known_answers-302-the-field-that-defeats-the-most-dangerous-objection">Finding
+1 — known_answers (30.2%): the field that defeats the most
+dangerous objection</a></li><li><a href="#finding-2--hard_rules-208-the-strongest-field-and-the-one-closest-to-objective">Finding
+2 — hard_rules (20.8%): the strongest field, and the one
+closest to objective</a></li><li><a href="#finding-3--expert_baseline-178-buying-an-axis-that-will-not-stay-separate">Finding
+3 — expert_baseline (17.8%): buying an axis that will not
+stay separate</a></li><li><a href="#finding-4--rationale-203-right-content-wrong-file">Finding 4 — rationale (20.3%): right content, wrong file</a></li><li><a href="#finding-5--the-label-fields-12-cheap-and-load-bearing">Finding 5
+— the label fields (1.2%): cheap and load-bearing</a></li><li><a href="#synthesis--insights">Synthesis &amp; Insights</a></li><li><a href="#limitations--caveats">Limitations &amp; Caveats</a></li><li><a href="#recommendations">Recommendations</a></li><li><a href="#bibliography">Bibliography</a></li><li><a href="#methodology-appendix">Methodology Appendix</a></li><li><a href="#post-remediation-measurements-2026-07-30-after-the-judge-prompt-fixes">Post-remediation
+measurements (2026-07-30, after the judge-prompt fixes)</a></li></ul></nav></details><article><h1 id="the-minimal-reviewer-defensible-field-set-for-crest">The Minimal
+Reviewer-Defensible Field Set for CREST</h1>
+<p><strong>Deep research report — 2026-07-30</strong> Subject: which of
+the 12 per-item fields in <code>crest_challenges.jsonl</code> survive
+reviewer scrutiny, which move to a sidecar, and which are cuttable.</p>
+<hr/>
+<h2 id="executive-summary">Executive Summary</h2>
+<p>CREST ships 50 items at ~8.7 KB each, of which the agent-visible
+<code>query</code> is 9.7%. The remaining 90% is per-item scoring
+machinery. The instinct that this is bloat is half right: one field is
+misfiled and one is buying less than it costs, but the two largest
+fields are the strongest part of the design and cutting them would be a
+serious mistake.</p>
+<p>The decisive external finding is that <strong>unanchored LLM novelty
+judgment is not merely noisy, it is directionally wrong.</strong>
+RQ-Bench reports that "LLM judges consistently rate model-generated RQs
+as highly novel, producing a novelty mirage," while "domain experts...
+reach the opposite conclusion and prefer the author-anchored reference
+questions" [1]. A creativity benchmark that scores New without a
+per-item reference set is therefore measuring judge optimism, not
+novelty. <code>known_answers</code> is the field that buys immunity to
+the single most damaging objection available to a reviewer, and it
+should be defended, not trimmed.</p>
+<p><code>hard_rules</code> is on even firmer ground, both externally and
+in CREST's own data. IFEval's founding argument is that "LLM-based
+auto-evaluation is potentially biased or limited by the ability of the
+evaluator LLM," which is why it uses constraints "checked with a
+deterministic program" [2]. CREST's hard rules are the same move in
+semantic form, and they demonstrably bind: across 144 verdicts, mean
+Useful is <strong>2.84</strong> when a judge cites a rule violation
+versus <strong>8.27</strong> when it does not.</p>
+<p>The genuinely weak field is <code>expert_baseline</code>. CREST's own
+judges score New and Surprising at r = 0.77–0.94, with 28% of verdicts
+assigning identical values. This is not a CREST artifact — it replicates
+a documented psychometric result. Confirmatory factor analysis finds
+that <strong>two-factor (novelty + usefulness) models fit creativity
+assessments better than three-factor models</strong> [5], an independent
+study reports surprise–novelty r = .71 with surprise contributing no
+additional predictive variance beyond value and novelty [6], and
+value/novelty metrics outperform surprise in predicting creative
+outcomes [16]. The recommendation is nonetheless <strong>not to cut the
+field</strong>: keep it to operationalise the axis at all, but demote
+Surprising to a secondary/exploratory measure and disclose the collapse
+before a reviewer finds it.</p>
+<p><code>rationale</code> (20.3% of bytes) reaches no model at runtime —
+verified: <code>ch['rationale']</code> is never read by
+<code>_judge_prompt</code>. It is not worthless; benchmark documentation
+norms actively require curation rationale (BIG-bench required each task
+to "describe the data source and curation methods" [8]; KDD and NeurIPS
+D&amp;B tracks require datasheet-style documentation [9]). It is simply
+in the wrong file. Move it to a sidecar and the runtime dataset shrinks
+20% with zero behavioural change.</p>
+<p><strong>Recommendation: keep 11 of 12 fields, move
+<code>rationale</code> to a sidecar, retain <code>expert_baseline</code>
+with demoted status and a disclosed correlation. Cut nothing.</strong>
+The bytes are not the liability; the undisclosed axis collapse and the
+unverified provenance of the novelty baseline are.</p>
+<hr/>
+<h2 id="introduction">Introduction</h2>
+<h3 id="scope">Scope</h3>
+<p>In scope: the justification status of each field in
+<code>crest_challenges.jsonl</code>, judged against (a) published
+benchmark-documentation norms, (b) evidence on LLM-judge reliability
+with and without per-item anchors, (c) the construct-validity literature
+on novelty/usefulness/surprise, and (d) CREST's own 144 judge
+verdicts.</p>
+<p>Out of scope: whether the 50 items are individually well-designed
+(covered by <code>doc/item_vetting.md</code>), factual accuracy of item
+content (covered by <code>doc/hallucination_audit.md</code> and a
+pending live-web pass), and the LOFO-versus-full-panel judging question
+(separate analysis).</p>
+<h3 id="assumptions-surfaced">Assumptions surfaced</h3>
+<p>"Justified" is operationalised as: <strong>the field answers a
+specific, foreseeable reviewer objection that no cheaper field
+answers.</strong> A field that is merely <em>used</em> by the judge is
+not thereby justified — usage and necessity are different tests, and the
+<code>expert_baseline</code> finding below is exactly the case where
+they diverge. Empirical inputs come from a partial run (112 of 250
+records at time of analysis), so all per-axis statistics are provisional
+and directional rather than final.</p>
+<hr/>
+<h2 id="finding-1--known_answers-302-the-field-that-defeats-the-most-dangerous-objection">Finding
+1 — <code>known_answers</code> (30.2%): the field that defeats the most
+dangerous objection</h2>
+<p>The reviewer objection this field answers is: <em>"Your New scores
+reflect the judge's ignorance of the literature, not the agent's
+originality."</em> Without a per-item reference set there is no answer
+to it.</p>
+<p>The external evidence is unusually direct. RQ-Bench constructs
+"author-anchored RQs from [each paper's] cited background, gaps, and
+contributions" specifically to test novelty judgment, and finds a
+systematic failure: "LLM judges consistently rate model-generated RQs as
+highly novel, producing a novelty mirage; in comparative evaluations,
+this preference becomes even stronger" [1]. Critically, the error is not
+random — experts "reach the opposite conclusion." An unanchored judge
+does not merely add variance to New; it shifts New upward in a way that
+would flatter every entrant and destroy the benchmark's ability to
+discriminate.</p>
+<p>Corroborating evidence on the reliability side: LLM judges achieve
+high agreement <em>with each other</em> (ICC .86–.94) while agreeing
+poorly with humans (ICC .43) [12]. High inter-LLM agreement is therefore
+not evidence of validity, and CREST cannot lean on panel consensus as a
+substitute for an anchor. Conversely, creativity studies that establish
+shared anchors through calibration report solid reliability (Novelty ICC
+0.83, Usefulness 0.75) [11] — anchoring is the mechanism that produces
+trustworthy novelty scoring, and per-item <code>known_answers</code> is
+a stronger form of it than a calibration session because it is
+item-specific and auditable.</p>
+<p>CREST's own data is consistent with the field working. New spans the
+full 1–10 range (mean 5.92, sd 2.18) and 15% of verdicts land in the 1–3
+"restates known content" band. A saturated distribution would have
+suggested the list was decorative; a discriminating one with a populated
+bottom band suggests judges are actually checking against it.
+Additionally, 53% of judge rationales invoke prior-art framing.</p>
+<p><strong>Verdict: keep, and treat as a headline methodological
+contribution rather than overhead.</strong> The dated novelty baseline
+is also the only reason CREST's pre/post-cutoff labelling means anything
+— a baseline without a date cannot support a contamination claim.</p>
+<p><strong>Residual risk, and it is real.</strong> The reviewer's
+counter-move is provenance: <em>who wrote the list?</em> Self-bias
+research shows it "arises from two additive sources: LLM-as-a-testset
+and LLM-as-an-evaluator, and their combination amplifies the effect"
+[3], and that LLM-generated benchmarks "systematically favor the model
+that created them" [3]. CREST's prior-art lists were assembled with
+agent assistance, which places them on the LLM-as-a-testset arm of
+exactly this failure mode. Published mitigations are ensemble judging
+[4], calibration, diversity enhancement, and human involvement [3].
+CREST already has the multi-vendor ensemble; what it lacks is
+<strong>independent verification of the lists themselves.</strong>
+<code>doc/hallucination_audit.md</code> was explicit that live web
+search was unavailable and that "a full per-citation web verification
+remains a pre-release step," leaving 8 items flagged. Closing that gap
+is the highest-value remaining action on this field — an unverified
+novelty yardstick is a load-bearing component resting on unchecked
+content.</p>
+<hr/>
+<h2 id="finding-2--hard_rules-208-the-strongest-field-and-the-one-closest-to-objective">Finding
+2 — <code>hard_rules</code> (20.8%): the strongest field, and the one
+closest to objective</h2>
+<p>The objection answered: <em>"Your Useful axis rewards fluent prose,
+and LLM judges are known to do exactly that."</em></p>
+<p>IFEval's design rationale is the cleanest statement of why checkable
+constraints matter: human evaluation is "expensive, slow, and not
+objectively reproducible, while LLM-based auto-evaluation is potentially
+biased or limited by the ability of the evaluator LLM," which motivates
+constraints "checked with a deterministic program, circumventing the
+need of an LLM or human as judge" [2]. CREST's hard rules are the
+semantic analogue — a rule like "the target must not be the target of
+any antibacterial that has reached human clinical trials as of the dated
+known-answers" gives a judge a factual ground to fail an answer on,
+rather than an aesthetic one.</p>
+<p>CREST's own evidence is the strongest quantitative result in this
+report:</p>
+<div aria-label="Finding
+2 — hard_rules (20.8%): the strongest field, and the one
+closest to objective table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">condition</th>
+<th scope="col">mean Useful</th>
+<th scope="col">n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>verdict cites ≥1 rule violation</td>
+<td><strong>2.84</strong></td>
+<td>107</td>
+</tr>
+<tr>
+<td>no violation cited</td>
+<td><strong>8.27</strong></td>
+<td>37</td>
+</tr>
+</tbody>
+</table></div>
+<p>74% of verdicts cite a specific rule, and the rubric's "violation ⇒
+Useful ≤ 3" mandate holds in 83% of those. Independently,
+<code>corr(New, Useful)</code> is only 0.12–0.38 — Useful is the <em>one
+axis that is cleanly separable</em> from the others, and the rules are
+what make it so. Compare this to the <code>expert_baseline</code> result
+below: same design philosophy, opposite outcome.</p>
+<p><strong>Verdict: keep, unambiguously.</strong> Two upgrades worth
+noting for the paper's own defence:</p>
+<ol type="1">
+<li><strong>The 17% leak.</strong> Roughly one in six verdicts cites a
+violation yet scores Useful above 3, in violation of the rubric's own
+cap. A reviewer who audits the verdict-level data will find this. It is
+a prompt-adherence problem, fixable by post-hoc enforcement (clamp
+Useful when <code>hard_rules_violated</code> is non-empty) rather than
+by trusting the judge.</li>
+<li><strong>Partial programmatic verification.</strong> A subset of
+CREST's rules are genuinely deterministic — cent-error arithmetic, pitch
+counts, mobility floors, radiative-balance inequalities. Verifying those
+in code and reserving the judge for the semantic remainder would move
+CREST measurably toward IFEval-grade objectivity and pre-empt "why is an
+LLM checking arithmetic?"</li>
+</ol>
+<hr/>
+<h2 id="finding-3--expert_baseline-178-buying-an-axis-that-will-not-stay-separate">Finding
+3 — <code>expert_baseline</code> (17.8%): buying an axis that will not
+stay separate</h2>
+<p>The objection answered in principle: <em>"Surprising relative to
+whose expectation?"</em> Without a written baseline the axis is
+undefined, so the field is not gratuitous. The problem is that supplying
+the baseline does not, in practice, produce a distinct axis.</p>
+<p>CREST's judges, per-judge:</p>
+<div aria-label="Finding
+3 — expert_baseline (17.8%): buying an axis that will not
+stay separate table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">judge</th>
+<th scope="col">corr(New, Surprising)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>judge_google</td>
+<td>0.94</td>
+</tr>
+<tr>
+<td>judge_openai</td>
+<td>0.90</td>
+</tr>
+<tr>
+<td>judge_anthropic</td>
+<td>0.77</td>
+</tr>
+</tbody>
+</table></div>
+<p>28% of verdicts give New and Surprising identical scores; 70% are
+within one point.</p>
+<p>The important interpretive point is that <strong>this is not a CREST
+bug.</strong> It reproduces an established result. Confirmatory factor
+analysis across entrepreneurship, advertising and art finds that
+"composite latent construct models with two factors (novelty and
+usefulness) represent creativity assessments... better than one- and
+three-factor models" [5]. A design-research study reports
+surprise–novelty r = .71, describes it as suggesting redundancy, and
+finds surprise "does not contribute additional predictive variance
+beyond value and novelty" [6] — and further that "creativity, novelty
+and surprise are perceived as the same dimension" [6]. Reviews of
+Boden-derived operationalisations note that "value and novelty metrics
+often outperform surprise in predicting creative outcomes" [16].
+Surprise has a serious theoretical pedigree in computational creativity
+[7] but a poor record as a <em>separately measurable</em> rating
+dimension.</p>
+<p>CREST's observed 0.77–0.94 is therefore at or above the literature's
+r ≈ .71 — the collapse is expected, not anomalous.</p>
+<p><strong>Verdict: keep the field, demote the axis, disclose the
+correlation.</strong> Three reasons not to cut:</p>
+<ul>
+<li>Deleting <code>expert_baseline</code> deletes the <em>ability to
+measure</em> Surprising, converting an informative negative result into
+an unexamined omission. The measurement is what lets CREST report the
+collapse as a finding.</li>
+<li>Boden-grounded surprise is a stated contribution of the paper;
+silently dropping it invites "why does your NUS triad have two
+letters?"</li>
+<li>The spread across judges (0.77 vs 0.94) suggests the collapse is
+<em>partly</em> rubric-induced rather than inherent. Anthropic separated
+the axes materially better, so sharper prompt wording may recover
+discriminant validity. That is testable cheaply.</li>
+</ul>
+<p><strong>The consequence that must reach the paper:</strong>
+<code>creative_all_three</code> is presented as three independent
+hurdles. At r ≈ 0.9 between two of them it is effectively
+<strong>two</strong>, which overstates the gate's stringency. Report the
+inter-axis correlation matrix, and consider a two-factor composite as
+the primary endpoint with Surprising as secondary. A reviewer who
+computes this correlation from the released per-judge data — which CREST
+does release — will otherwise find it first.</p>
+<hr/>
+<h2 id="finding-4--rationale-203-right-content-wrong-file">Finding 4 —
+<code>rationale</code> (20.3%): right content, wrong file</h2>
+<p>Verified locally: <code>_judge_prompt</code> reads
+<code>known_answers</code>, <code>hard_rules</code>,
+<code>expert_baseline</code>, <code>query</code>, <code>category</code>,
+<code>axis_isolated</code> — and <strong>not</strong>
+<code>rationale</code>. (An earlier automated check produced a false
+positive here by matching the <code>"rationale"</code> key in the
+judge's <em>output</em> schema; the corrected test confirms the
+challenge field is never read.) <code>analysis/stats.py</code> contains
+no reference to it either. 86 KB reaches no model and no analysis.</p>
+<p>That does not make it deletable. Benchmark documentation norms
+require exactly this content: BIG-bench required every task to "describe
+the data source and curation methods on the task README page" [8]; the
+KDD 2026 Datasets &amp; Benchmarks CFP requires "dataset documentation
+and intended uses," recommending datasheets for datasets, nutrition
+labels, and data statements [9]; and work on benchmark repositories
+argues datasets are more usable when accompanied by metadata describing
+composition and intended tasks [10]. Design rationale is a reviewer
+<em>asset</em> — it is the evidence that axis-isolation claims were
+reasoned rather than asserted.</p>
+<p><strong>Verdict: move to a sidecar
+(<code>question/item_design.jsonl</code>, keyed by <code>id</code>), do
+not cut.</strong> This cuts the runtime dataset by 20% with zero
+behavioural change, keeps the provenance reviewers want, and has the
+incidental benefit of shrinking what must be loaded per judge call.
+CREST already has <code>doc/datasheet.md</code> as the natural host for
+the aggregate narrative.</p>
+<hr/>
+<h2 id="finding-5--the-label-fields-12-cheap-and-load-bearing">Finding 5
+— the label fields (1.2%): cheap and load-bearing</h2>
+<p><code>id</code>, <code>category</code>, <code>category_name</code>,
+<code>domain</code>, <code>axis_isolated</code>,
+<code>time_sensitivity</code>, <code>predicted_direction</code> together
+cost ~97 bytes per item. Each maps to a specific analysis or claim:
+<code>category</code> and <code>domain</code> are the fixed effects;
+<code>axis_isolated</code> supports the "the aggregate cannot hide a
+weak axis" claim; <code>predicted_direction</code> is the
+pre-registration record that converts C1/C5 losses from a weakness into
+mechanism confirmation; <code>time_sensitivity</code> supports the
+contamination split.</p>
+<p><strong>Verdict: keep all.</strong> One caveat with teeth:
+<code>time_sensitivity</code> currently has <strong>n=1</strong> in the
+<code>post_cutoff</code> stratum, so the pre/post split it exists to
+enable is not computable. The field is justified; the <em>data behind
+it</em> is not yet. Either author more post-cutoff items or drop the
+contamination claim — and note that the p3 abstract already advertises a
+"frozen retrieval snapshot" that <code>FrozenIndex</code> raises
+<code>NotImplementedError</code> on. LiveBench's contamination-limited
+design [14] is the reference point a reviewer will have in mind.</p>
+<p><code>category_name</code> is strictly derivable from
+<code>category</code> and is the one true redundancy in the schema —
+1,204 bytes, harmless, keep for human readability.</p>
+<hr/>
+<h2 id="synthesis--insights">Synthesis &amp; Insights</h2>
+<p>Three patterns cut across the findings.</p>
+<p><strong>1. Usage is not justification.</strong> All three large
+judge-facing fields are <em>used</em> by judges. Only two are
+<em>necessary</em>. <code>hard_rules</code> and
+<code>known_answers</code> each produce a measurable, separable effect;
+<code>expert_baseline</code> produces an axis that will not stay
+distinct from one it already has. The right test for a benchmark field
+is not "does the judge read it" but "does the score change in a way
+nothing cheaper achieves."</p>
+<p><strong>2. The anchoring literature and the construct-validity
+literature point in opposite directions, and both are right.</strong>
+Anchoring evidence [1][11] says: give judges per-item reference material
+or novelty scoring fails. Construct-validity evidence [5][6] says:
+surprise will not separate from novelty no matter what you give judges.
+These are compatible — anchoring fixes <em>accuracy</em> on the axes
+that exist; it cannot manufacture <em>discriminant validity</em> between
+two axes that human raters also conflate. CREST should therefore anchor
+hard (keep both reference fields) while claiming fewer independent
+axes.</p>
+<p><strong>3. CREST's largest exposure is provenance, not size.</strong>
+The self-bias literature's finding that bias "arises from two additive
+sources: LLM-as-a-testset and LLM-as-an-evaluator" [3] is the sharpest
+available attack on a benchmark whose author also fields an entrant.
+CREST has mitigated the evaluator arm (multi-vendor ensemble [4]) and
+left the testset arm largely unmitigated: the novelty baselines are
+agent-assisted and, by the audit's own admission, not web-verified.
+<strong>Every byte of <code>known_answers</code> is load-bearing and
+unverified at the same time.</strong> That combination, not the 426 KB,
+is what would sink a review.</p>
+<hr/>
+<h2 id="limitations--caveats">Limitations &amp; Caveats</h2>
+<ul>
+<li>Empirical inputs are a <strong>partial run</strong> (112/250
+records, 144 verdicts) from a single day. All correlations and means are
+directional; the New–Surprising correlation should be recomputed on the
+complete run before it enters the paper.</li>
+<li>The judge-level correlations are computed on pooled items across
+categories. Some of the New–Surprising association may be item-driven (a
+genuinely novel cross-domain mapping <em>is</em> genuinely surprising)
+rather than rater-driven. A per-category decomposition would sharpen the
+diagnosis and is not yet run.</li>
+<li>Several supporting figures (surprise–novelty r = .71; ICC values)
+were obtained via search-result summaries rather than full-text
+extraction, and carry correspondingly lower confidence than the RQ-Bench
+quotes, which were verified against the source abstract.</li>
+<li>No source directly studies <em>deep-research-agent</em> creativity
+benchmarks with per-item novelty baselines; the anchoring evidence is
+transferred from research-ideation novelty judgment [1][13], which is
+close but not identical.</li>
+<li>Cost-benefit is assessed on reviewer defensibility, not annotation
+economics. At 500+ items the hand-authored fields become infeasible and
+this analysis would need redoing.</li>
+</ul>
+<hr/>
+<h2 id="recommendations">Recommendations</h2>
+<p><strong>Keep in the runtime dataset (10 fields):</strong>
+<code>id</code>, <code>query</code>, <code>category</code>,
+<code>category_name</code>, <code>domain</code>,
+<code>axis_isolated</code>, <code>time_sensitivity</code>,
+<code>predicted_direction</code>, <code>known_answers</code>,
+<code>hard_rules</code>.</p>
+<p><strong>Keep, with changed status (1 field):</strong>
+<code>expert_baseline</code> — retain, but demote Surprising to a
+secondary endpoint, publish the inter-axis correlation matrix, and
+consider a two-factor primary composite.</p>
+<p><strong>Move to sidecar (1 field):</strong> <code>rationale</code> →
+<code>question/item_design.jsonl</code>. −20% runtime bytes, zero
+behavioural change, provenance preserved for reviewers.</p>
+<p><strong>Cut: nothing.</strong></p>
+<p>Ranked actions, highest reviewer-risk-reduction first:</p>
+<ol type="1">
+<li><strong>Run the live per-citation verification of
+<code>known_answers</code>.</strong> It is the novelty yardstick, it is
+unverified, and it sits on the exact arm of self-bias reviewers attack
+[3]. The audit's own 8 flagged items are the starting list.</li>
+<li><strong>Disclose the New–Surprising collapse</strong> and restate
+<code>creative_all_three</code> as a two-hurdle gate. Recompute on the
+full run first.</li>
+<li><strong>Enforce the hard-rule cap post-hoc</strong> (clamp Useful ≤
+3 when <code>hard_rules_violated</code> is non-empty) to close the 17%
+adherence leak.</li>
+<li><strong>Move <code>rationale</code> to a sidecar</strong> and point
+<code>doc/datasheet.md</code> at it.</li>
+<li><strong>Fix the <code>time_sensitivity</code> stratum or drop the
+contamination claim</strong> — n=1 cannot support a split, and the
+"frozen snapshot" already claimed in the abstract does not exist in
+code.</li>
+<li><strong>Programmatically verify the deterministic subset of
+<code>hard_rules</code></strong>, moving toward IFEval-grade objectivity
+[2] where the rules permit it.</li>
+</ol>
+<hr/>
+<h2 id="bibliography">Bibliography</h2>
+<p>[1] <em>On the Limits of LLM-as-Judge for Scientific Novelty
+Assessment</em> (RQ-Bench), arXiv:2606.12071, 2026-06-10. <a href="https://arxiv.org/abs/2606.12071">https://arxiv.org/abs/2606.12071</a>
+[2] Zhou et al., <em>Instruction-Following Evaluation for Large Language
+Models</em> (IFEval), arXiv:2311.07911. <a href="https://arxiv.org/abs/2311.07911">https://arxiv.org/abs/2311.07911</a>
+[3] <em>When LLMs Benchmark Themselves: Deconstructing Self-Bias in
+Automated Evaluation</em>, arXiv:2509.26600. <a href="https://arxiv.org/abs/2509.26600">https://arxiv.org/abs/2509.26600</a>
+[4] <em>Quantifying and Mitigating Self-Preference Bias of LLM
+Judges</em>, arXiv:2604.22891. <a href="https://arxiv.org/html/2604.22891">https://arxiv.org/html/2604.22891</a>
+[5] <em>The Alignment of Measures and Constructs in Organizational
+Research: The Case of Testing Measurement Models of Creativity</em>,
+Journal of Business and Psychology. <a href="https://link.springer.com/article/10.1007/s10869-009-9147-8">https://link.springer.com/article/10.1007/s10869-009-9147-8</a>
+[6] <em>Creativity, Surprise &amp; Design: An Introduction and
+Investigation</em>, Design Society. <a href="https://www.designsociety.org/download-publication/32464/creativity_surprise_design_an_introduction_and_investigation">https://www.designsociety.org/download-publication/32464/creativity_surprise_design_an_introduction_and_investigation</a>
+[7] Yannakakis &amp; Liapis, <em>Searching for Surprise</em>, ICCC 2016.
+<a href="https://www.computationalcreativity.net/iccc2016/wp-content/uploads/2016/01/Searching-for-Surprise.pdf">https://www.computationalcreativity.net/iccc2016/wp-content/uploads/2016/01/Searching-for-Surprise.pdf</a>
+[8] <em>BIG-bench task submission documentation</em>. <a href="https://github.com/google/BIG-bench/blob/main/docs/doc.md">https://github.com/google/BIG-bench/blob/main/docs/doc.md</a>
+[9] <em>KDD 2026 Datasets &amp; Benchmarks Track — Call for Papers</em>.
+<a href="https://kdd2026.kdd.org/datasets-and-benchmarks-track-call-for-papers/">https://kdd2026.kdd.org/datasets-and-benchmarks-track-call-for-papers/</a>
+[10] <em>Benchmark Data Repositories for Better Benchmarking</em>,
+arXiv:2410.24100. <a href="https://arxiv.org/pdf/2410.24100">https://arxiv.org/pdf/2410.24100</a>
+[11] <em>How Do Hackathons Foster Creativity? Towards AI Collaborative
+Evaluation of Creativity at Scale</em>, arXiv:2503.04290. <a href="https://arxiv.org/pdf/2503.04290">https://arxiv.org/pdf/2503.04290</a>
+[12] <em>Creativity Benchmark: A benchmark for marketing creativity for
+large language models</em>, arXiv:2509.09702. <a href="https://arxiv.org/html/2509.09702v2">https://arxiv.org/html/2509.09702v2</a>
+[13] <em>NovBench: Evaluating Large Language Models on Academic Paper
+Novelty Assessment</em>, arXiv:2604.11543. <a href="https://arxiv.org/html/2604.11543v1">https://arxiv.org/html/2604.11543v1</a>
+[14] <em>LiveBench: A Challenging, Contamination-Limited LLM
+Benchmark</em>, arXiv:2406.19314. <a href="https://arxiv.org/pdf/2406.19314">https://arxiv.org/pdf/2406.19314</a>
+[15] <em>Play Favorites: A Statistical Method to Measure Self-Bias in
+LLM-as-a-Judge</em>, arXiv:2508.06709. <a href="https://arxiv.org/pdf/2508.06709">https://arxiv.org/pdf/2508.06709</a>
+[16] <em>Operational Validity of Boden's Creativity Framework</em>. <a href="https://www.emergentmind.com/topics/operational-validity-of-boden-s-creativity-framework">https://www.emergentmind.com/topics/operational-validity-of-boden-s-creativity-framework</a></p>
+<hr/>
+<h2 id="methodology-appendix">Methodology Appendix</h2>
+<p><strong>Mode:</strong> deep (8 phases), with main-analysis section
+lengths deliberately compressed below the 600–2,000-word-per-finding
+guideline. The deliverable is an engineering decision, and padding the
+findings would have reduced their utility. All other contract elements
+(evidence persistence, claim-level sourcing, complete bibliography) are
+met.</p>
+<p><strong>Retrieval:</strong> <code>search-cli</code> was attempted
+first per methodology but all providers failed
+(<code>status: all_providers_failed</code>, brave); the documented
+WebSearch fallback was used for all queries, with WebFetch for direct
+verification of source [1]. Six search angles were run: LLM-judge
+creativity anchoring; the novelty-mirage result; novelty/surprise
+construct separability; self-serving benchmark bias and mitigations;
+benchmark per-item documentation norms; verifiable-constraint
+benchmarks.</p>
+<p><strong>Evidence handling:</strong> 16 sources registered in
+<code>sources.jsonl</code> with credibility scores; 16 evidence spans in
+<code>evidence.jsonl</code> with source IDs, quote text, evidence type
+(direct quote vs paraphrase-supported), and locators. Quotes from source
+[1] were verified verbatim against the abstract; figures from
+[5][6][11][12][16] derive from search-result summaries and are labelled
+<code>paraphrase_supported</code>, a distinction carried into the
+Limitations section.</p>
+<p><strong>Local empirical inputs:</strong> <code>records.jsonl</code>
+from run
+<code>2026-07-30T081356Z__crest__full50__git84f7a96__51ea6b</code> (112
+records / 144 judge verdicts at analysis time); field byte-shares
+computed directly over <code>crest_challenges.jsonl</code>; the
+<code>rationale</code>-unused claim verified by regex against
+<code>_judge_prompt</code> for <code>ch['rationale']</code> access,
+after an initial automated check returned a false positive.</p>
+<p><strong>Deviation from contract:</strong> HTML/PDF rendering not
+generated; the markdown is the source of truth and the actionable output
+is the ranked recommendation list.</p>
+<hr/>
+<h2 id="post-remediation-measurements-2026-07-30-after-the-judge-prompt-fixes">Post-remediation
+measurements (2026-07-30, after the judge-prompt fixes)</h2>
+<p>Everything below was measured on the full-panel run
+<code>2026-07-30T111856Z</code> (250 records, 3 judges each, untruncated
+answers, anti-web clause present), i.e. on the corrected instrument
+rather than the one the reviewers analysed.</p>
+<blockquote>
+<p><strong>SUPERSEDED RUN.</strong> <code>111856Z</code> is not the
+canonical run and is <strong>not on disk</strong> (<code>result/</code>
+is gitignored), so nothing in this section is reproducible as written.
+The canonical run is <code>2026-07-31T040653Z</code>; its recomputed
+figures live in <code>doc/design.md</code> §0, and where the two
+disagree, §0 wins. The <em>directions</em> below all survive
+re-measurement; three magnitudes do not (flagged inline). The ablation
+deltas (+0.98 / −0.02) have no persisted output in either run and can
+only be re-derived by re-running
+<code>analysis/ablate_fields.py</code>.</p>
+</blockquote>
+<h3 id="known_answers--keep-now-proven-load-bearing-by-ablation"><code>known_answers</code>
+— KEEP. Now proven load-bearing by ablation.</h3>
+<p>Withholding the prior-art list from the judge <strong>inflates New by
++0.98</strong> (7.28 -&gt; 8.26 over 50 records). That is the novelty
+mirage reproduced in-house, in the correct direction. It also disposes
+of the "wrong-signed dose-response" objection: the positive correlation
+between list length and New was a category confound, not evidence the
+field fails. The reviewers' "no ablation, so no evidence it moves a
+score" objection is answered.</p>
+<p>Consequence worth stating: the S1 fix (adding the rubric's missing
+"judge ONLY against that list, NOT against the web or your own
+background knowledge" clause to the deployed prompt) makes list
+CORRECTNESS the only remaining safeguard against a wrong novelty
+baseline. Before, a judge's own knowledge was a second, unreliable line
+of defence. This raises the priority of DOI-per-entry (S13).</p>
+<h3 id="expert_baseline--demote-the-axis-keep-the-field-conclusion-reversed"><code>expert_baseline</code>
+— DEMOTE the axis, keep the field. <strong>CONCLUSION
+REVERSED.</strong></h3>
+<p>Withholding it moves Surprising by <strong>-0.02</strong>. It does
+not anchor the axis it exists for — that part stands. The recommendation
+that followed does not: on the argument that r(New, Surprising) ~ 0.93
+and that Surprising was the sole binding axis in ~1 record of 147, this
+section proposed reporting <strong>two primary axes</strong> with
+Surprising exploratory. Both premises were wrong. On the canonical run
+Surprising is the sole binding axis in a fifth of all records, and the
+New/Surprising correlation is <strong>CONTAMINATED</strong> — the v1
+judge prompt stated that correlation <em>to the judge</em> — so it
+cannot evidence inseparability at all (<code>design.md</code> §0). The
+primary endpoint is <code>min(New, Useful, Surprising)</code>, all three
+axes. The field is kept because deleting it removes the ability to
+measure the collapse, and Boden-grounded surprise is a stated
+contribution.</p>
+<p>Separately, 7 items had answer keys embedded in this field and are
+now split into judge-hidden <code>author_expected_surprises</code>. For
+three of them the key was the MAJORITY of the field
+(C2_biology_medicine_34 64%, C2_law_policy_37 59%,
+C2_economics_business_36 58%), so for those items Surprising was graded
+recall against an author-written list, not expectation-violation.</p>
+<h3 id="axis_isolated--valid-for-c1-only-narrow-the-claim"><code>axis_isolated</code>
+— VALID FOR C1 ONLY. Narrow the claim.</h3>
+<p>Measured after the truncation fix on run <code>111856Z</code> (n=196,
+excluding <code>balanced</code>):</p>
+<div aria-label="axis_isolated — VALID FOR C1 ONLY. Narrow the claim. table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">label</th>
+<th scope="col">binding-axis hit rate</th>
+<th scope="col">chance</th>
+<th scope="col">delta (labelled axis - others)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>usefulness (C1)</td>
+<td><strong>56%</strong></td>
+<td>33%</td>
+<td><strong>-1.56</strong> (correct sign)</td>
+</tr>
+<tr>
+<td>novelty (C3, C5)</td>
+<td>21%</td>
+<td>33%</td>
+<td><strong>+1.51</strong> (wrong sign)</td>
+</tr>
+<tr>
+<td>surprise (C2)</td>
+<td>15%</td>
+<td>33%</td>
+<td>+0.18</td>
+</tr>
+<tr>
+<td>overall</td>
+<td>28%</td>
+<td>33%</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>STALE MAGNITUDES.</strong> Recomputed on the canonical run
+these rates are materially different (usefulness 68% sole-binding / 80%
+including ties; surprise 14% / 40%; novelty 0% / 11%) — see
+<code>design.md</code> §0, which is authoritative. The <em>verdict</em>
+is unchanged and in fact strengthened: valid for C1/usefulness,
+wrong-signed for novelty. Cite §0, not this table; the 56 / 21 / 15
+triple has already leaked into three other docs from here.</p>
+</blockquote>
+<p>C1 is genuinely usefulness-limited. The novelty label is
+wrong-signed: items built to isolate novelty are where agents score
+HIGHEST on New, i.e. they are novelty-EASY rather than
+novelty-isolating, which corroborates the earlier finding that C5 is
+saturable. <strong>Both abstracts must stop describing the set as
+axis-isolating in general</strong>; the defensible claim is
+usefulness-isolation on C1.</p>
+<h3 id="rationale-category_name-predicted_direction"><code>rationale</code>,
+<code>category_name</code>, <code>predicted_direction</code></h3>
+<p><code>rationale</code> reaches no model (verified) -&gt; sidecar.
+<code>category_name</code> and <code>predicted_direction</code> removed:
+both were deterministic functions of <code>category</code>, and the
+latter could not evidence ordering while it lived in editable data.
+Predictions now in <code>analysis/preregistration.yaml</code>, which
+<code>stats.py</code> reads and which self-reports
+<code>externally_timestamped: false</code>.</p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

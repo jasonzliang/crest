@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Caesar question comparison · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crests-50-vs-the-caesar-papers-5--question-set-comparison--run-readiness">CREST's
+50 vs the Caesar paper's 5 — question-set comparison +
+run-readiness</a></li><li><a href="#the-five-original-caesar-questions-verbatim">The five original
+Caesar questions (verbatim)</a></li><li><a href="#what-changed-and-why-it-matters">What changed, and why it
+matters</a></li><li><a href="#run-readiness-status">Run-readiness status</a></li></ul></nav></details><article><h1 id="crests-50-vs-the-caesar-papers-5--question-set-comparison--run-readiness">CREST's
+50 vs the Caesar paper's 5 — question-set comparison +
+run-readiness</h1>
+<blockquote>
+<p><strong>PARTLY SUPERSEDED (annotated 2026-07-31).</strong> This is a
+<strong>pre-run</strong> note; five of its statements are no longer true
+of the shipped artifact, and the run it was clearing has since
+happened:</p>
+<ul>
+<li>"Surprise is now anchored" by <code>expert_baseline</code> —
+<strong>reversed.</strong> The field is judge-hidden since 2026-07-30
+because ablating it barely moved the axis (<code>design.md</code>
+§0).</li>
+<li>"3–12 checkable <code>hard_rules</code>" / "≥3
+<code>hard_rules</code>" — the shipped file is
+<strong>5–12</strong>.</li>
+<li>"<code>category_name</code> is backfilled across all 50" —
+<code>category_name</code> was <strong>removed</strong> in schema
+v2.0.0.</li>
+<li>"C2_law_policy_09's <code>expert_baseline</code> is now real (1087
+chars)" — it is <strong>818 chars</strong> on the shipped file; its
+answer-key portion was split into
+<code>author_expected_surprises</code>.</li>
+<li>"No inter-judge reliability … <code>analysis/stats.py</code>
+contains zero references to either" — <strong>implemented</strong>:
+<code>stats.py::reliability_report</code> reports Krippendorff α,
+ICC(1,·) and ICC(3,·) plus per-judge severity (values in
+<code>design.md</code> §0).</li>
+</ul>
+<p>What still stands and is why this note is kept: the comparison
+against the Caesar paper's five original questions, the "the original 5
+didn't require research" argument, the dropped length-control
+regression, and the 12-items-pointing-at-judge-side-content fix.</p>
+</blockquote>
+<p>Pre-run vetting pass, 2026-07-30. Compares the shipped
+<code>question/crest_challenges.jsonl</code> against (a) the five
+original challenges in the Caesar paper (arXiv:2604.20855, App.
+pp.19–20) and (b) the design contract in
+<code>science_moonshot/documentation/caesar/caesar_creativity_eval_spec.md</code>
+(v1, 2026-07-24). Complements <code>doc/item_vetting.md</code> (per-item
+gates); this note is about the <em>set</em>.</p>
+<h2 id="the-five-original-caesar-questions-verbatim">The five original
+Caesar questions (verbatim)</h2>
+<div aria-label="The five original
+Caesar questions (verbatim) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Cat</th>
+<th scope="col">Original query</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1 Constrained</td>
+<td>"Invent a new emotion that humans don't experience."</td>
+</tr>
+<tr>
+<td>C2 Counterfactual</td>
+<td>"If humans evolved with echolocation instead of color vision, how
+would that change painting, architecture, and mathematics? Walk through
+each consequence."</td>
+</tr>
+<tr>
+<td>C3 Cross-Domain</td>
+<td>"Apply the mathematical structure of calculus (not the concepts, but
+the formal relationships) to cooking."</td>
+</tr>
+<tr>
+<td>C4 Meta-Creativity</td>
+<td>"Create a creativity metric for AI systems that doesn't rely on
+human judgment, novelty, usefulness, or surprise."</td>
+</tr>
+<tr>
+<td>C5 Open-Ended</td>
+<td>"Invent a completely original business idea that doesn't exist
+yet."</td>
+</tr>
+</tbody>
+</table></div>
+<p>Theory anchors are per-category and carried over unchanged: Ward 1994
+(C1), Byrne 2005 (C2), Gentner 1983 (C3), Amabile 1982 inverted (C4),
+Boden 2004 historical creativity (C5).</p>
+<h2 id="what-changed-and-why-it-matters">What changed, and why it
+matters</h2>
+<div aria-label="What changed, and why it
+matters table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Dimension</th>
+<th scope="col">Caesar paper (5)</th>
+<th scope="col">CREST (50)</th>
+<th scope="col">Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>n / cell</td>
+<td>5 total, 1 per category</td>
+<td>50, <strong>10 per category</strong></td>
+<td>spec asked ~30 (20 min) — <strong>exceeded</strong>; retires n=5
+Cliff's-Delta</td>
+</tr>
+<tr>
+<td>Domains</td>
+<td>none (generic/domain-free)</td>
+<td><strong>6 labeled</strong> (8–9 items each)</td>
+<td>meets spec</td>
+</tr>
+<tr>
+<td><strong>Research necessity</strong></td>
+<td><strong>none</strong> — answerable with zero web search</td>
+<td>every item demands multi-source literature synthesis</td>
+<td><strong>the biggest fix</strong> (below)</td>
+</tr>
+<tr>
+<td>Novelty baseline</td>
+<td>none</td>
+<td>dated <code>known_answers</code> per item (8–33 entries)</td>
+<td>New is now scored against something</td>
+</tr>
+<tr>
+<td>Usefulness gate</td>
+<td>none</td>
+<td>3–12 checkable <code>hard_rules</code></td>
+<td>Useful is now falsifiable</td>
+</tr>
+<tr>
+<td>Surprise baseline</td>
+<td>none</td>
+<td><code>expert_baseline</code> per item</td>
+<td>Surprise is now anchored</td>
+</tr>
+<tr>
+<td>Axis isolation</td>
+<td>not labeled</td>
+<td><code>axis_isolated</code> per item</td>
+<td>meets spec</td>
+</tr>
+<tr>
+<td>Length control</td>
+<td><strong>3 output settings</strong> (full / ELI5 / ELI5-450w)</td>
+<td><strong>1 setting</strong></td>
+<td><strong>regression</strong> (below)</td>
+</tr>
+<tr>
+<td>Item overlap</td>
+<td>—</td>
+<td>zero reuse of the original 5</td>
+<td>supports the paper's "fresh, held-out questions" claim</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="the-decisive-improvement-the-original-5-didnt-require-research">The
+decisive improvement: the original 5 didn't require research</h3>
+<p>"Invent a new emotion that humans don't experience" is armchair
+ideation — an untooled chat model answers it as well as a deep-research
+agent. For a <em>deep-research</em> creativity claim that is a fatal
+confound: search quality cannot influence the score, so the benchmark
+cannot attribute creativity to research behaviour. CREST's items instead
+force literature fusion (e.g. C1_biology_medicine_00 asks for a novel
+CRAB antibacterial mechanism grounded across "essentiality data, the
+CRAB resistome and clinical pipeline, target druggability, and human
+off-target risk"). This is what makes the grounding gate meaningful
+rather than decorative.</p>
+<h3 id="the-one-regression-length-control-was-dropped">The one
+regression: length control was dropped</h3>
+<p>The Caesar paper ran every query under three output constraints
+<em>specifically because</em> it found a verbosity confound (r=0.47),
+and the spec requires "&gt;= 3 length bins; report length-matched
+comparisons for EVERY category". CREST runs a single unconstrained
+setting. <code>analysis/stats.py</code> names length as an intended
+covariate ("O8 length: output length as a covariate (not just bins)")
+but <strong>no length term is implemented</strong> in any model.
+<code>records.jsonl</code> does store <code>output_len_tokens</code>, so
+a covariate is recoverable post-hoc — length-<em>matched</em> bins are
+not.</p>
+<h2 id="run-readiness-status">Run-readiness status</h2>
+<h3 id="fixed-in-this-pass-was-a-hard-blocker">Fixed in this pass (was a
+hard blocker)</h3>
+<p><strong>12 items pointed the agent at content it never
+receives.</strong> Items 34–45 (the new C2/C3/C4 batch) contained
+instructions like "Do not merely restate the obvious first-order effects
+already listed in known_answers", "Every correspondence in known_answers
+is KNOWN", "(see novelty gate)", and — worst — C4_42–45's hard
+requirement "Ground it in &gt;=3 traditions from known_answers". The
+harness passes only <code>ch.query</code>; <code>known_answers</code> is
+judge-side. So these were unfollowable instructions, and because judges
+<em>do</em> see the rules, an agent could be penalized for failing an
+instruction it could not read. Rewrote all 16 occurrences self-contained
+("...a domain expert would name immediately", "...already established in
+the published literature", "...and earn no novelty credit"), preserving
+the bar exactly. No other item touched. <code>doc/item_vetting.md</code>
+missed this because it graded items in isolation rather than against
+what the harness actually shows the agent.</p>
+<p>Also confirmed already-fixed since that audit: C2_law_policy_09's
+<code>expert_baseline</code> is now real (1087 chars, was a stub) and
+<code>category_name</code> is backfilled across all 50.</p>
+<h3 id="clean">Clean</h3>
+<p>All 50 queries well-formed (no truncation, brace/encoding issues),
+every item has a non-empty dated <code>known_answers</code> (8-33
+entries; 729 across the set), &gt;=3 checkable <code>hard_rules</code>,
+an <code>expert_baseline</code>, and full labels. Balanced 10/category;
+domains 8–9 each.</p>
+<h3 id="gaps-that-bound-the-claims-not-run-blockers">Gaps that bound the
+claims (NOT run blockers)</h3>
+<p>Recoverable from this run's <code>records.jsonl</code>
+afterwards:</p>
+<ul>
+<li><strong>No inter-judge reliability.</strong>
+<code>judge/judge_config.yaml</code> (since deleted; see
+<code>doc/judge_protocol_intent.md</code>) mandated
+<code>[krippendorff_alpha, icc]</code>; <code>analysis/stats.py</code>
+contains zero references to either. Per-judge scores <em>are</em>
+persisted as a list-of-objects, so IRR is computable post-hoc — but it
+is currently unwritten code.</li>
+<li><strong>Length covariate</strong> — see above;
+<code>output_len_tokens</code> is recorded.</li>
+</ul>
+<p><strong>Now-or-never</strong> (cannot be fixed after the run):</p>
+<ul>
+<li><strong>post-cutoff subset is n=1.</strong> Only
+<code>C4_arts_humanities_23</code> is <code>post_cutoff</code> (full
+distribution: <code>datasheet.md</code> §2, "Splits"). The spec requires
+a post-cutoff subset and "report results split pre/post-cutoff" —
+impossible at n=1. Combined with <code>FrozenIndex</code> still raising
+<code>NotImplementedError</code> and the manifest recording
+<code>contamination_controlled: false</code>, <strong>the
+contamination-control leg of the design is unsupported by this
+run.</strong> Note the p3 abstract already advertises a "frozen
+retrieval snapshot" — that claim outruns the code.</li>
+<li><strong>No open-weight judge.</strong> The protocol file requires
+&gt;=1 ("fewer shared blind spots than the frontier trio");
+<code>judge_config.live.yaml</code> has only anthropic/openai/google.
+Checked the live keys: no open-weight model on the OpenAI key; the
+Google key exposes <code>gemma-4-31b-it</code> /
+<code>gemma-4-26b-a4b-it</code>, but Gemma shares Google's lineage, so
+labeling it <code>open_weight</code> would partially defeat
+leave-one-family-out when judging <code>gemini_shallow</code>.
+Satisfying this honestly needs a third-party host
+(Together/Fireworks/Groq) — no key available. Left unsatisfied rather
+than faked.</li>
+</ul>
+<h3 id="weak-tier-unchanged">Weak tier, unchanged</h3>
+<p><code>C5_economics_business_46</code>, <code>C5_law_policy_47</code>,
+<code>C5_engineering_48</code>, <code>C5_arts_humanities_49</code> were
+marked REVISE by the earlier audit for thin synthesis / low headroom.
+Queries have since roughly doubled (~350 → ~780 chars), but they still
+carry 5 <code>hard_rules</code> vs 7–8 and 21 <code>known_answers</code>
+vs 24–33 for the C5 originals. Partly addressed, not fully. Since C5 is
+a <em>predicted-null</em> category, a saturable tier inflates C5 scores
+and weakens the "predicted null" evidence rather than the headline wins
+— a bias against the paper's own thesis, so not disqualifying for this
+run.</p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

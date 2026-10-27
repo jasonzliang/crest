@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Citation audit: C1 · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest-c1--live-web-citation-audit">CREST C1 — live-web citation
+audit</a></li><li><a href="#headline">Headline</a></li><li><a href="#verdict-counts">Verdict counts</a></li><li><a href="#summary-table">Summary table</a></li><li><a href="#recommended-mechanical-replacements">Recommended mechanical
+replacements</a></li><li><a href="#overall-assessment-are-c1s-novelty-baselines-trustworthy-enough-to-score-against">Overall
+assessment: are C1's novelty baselines trustworthy enough to score
+against?</a></li><li><a href="#sourcing-limitations-to-disclose">Sourcing limitations to
+disclose</a></li></ul></nav></details><article><h1 id="crest-c1--live-web-citation-audit">CREST C1 — live-web citation
+audit</h1>
+<p><strong>Scope:</strong> the 10 items with <code>id</code> prefix
+<code>C1_</code> in <code>question/crest_challenges.audit.jsonl</code>.
+<strong>Fields audited:</strong> <code>known_answers</code> (highest
+weight — it is the novelty yardstick), <code>expert_baseline</code>,
+<code>query</code>. <strong>Date of audit:</strong> 2026-07-30.
+<strong>No <code>.jsonl</code> file was modified.</strong></p>
+<p><strong>Method.</strong> WebSearch (until session budget exhausted at
+200 calls), then WebFetch and direct HTTPS fetches against primary
+sources and literature APIs (Europe PMC REST, Crossref, OpenAlex,
+Semantic Scholar, PubChem, USENIX/NeurIPS proceedings, publisher and
+agency pages). Unfalsifiable prose, scoring-rubric language, and
+textbook common knowledge (Vickrey 1961, 12-TET, "villanelle is 19
+lines") were not re-litigated.</p>
+<hr/>
+<h2 id="headline">Headline</h2>
+<p><strong>Zero fabrications.</strong> Every paper, compound, statute,
+standard, mission and product named across all 10 items exists. That is
+the single most important result: the C1 prior-art lists were built from
+real literature, not hallucinated.</p>
+<p><strong>5 WRONG, 9 IMPRECISE, 2 UNVERIFIABLE, ~80 CONFIRMED.</strong>
+Of the 5 WRONG, <strong>3 sit inside <code>known_answers</code></strong>
+and are the ones that actually matter:</p>
+<ol type="1">
+<li><code>C1_biology_medicine_00</code> — <strong>"dynobactin
+N"</strong> does not exist; the compound is <strong>dynobactin
+A</strong>.</li>
+<li><code>C1_biology_medicine_00</code> — <strong>"RG6114"</strong> is
+<em>not</em> the LepB inhibitor G0775. RG6114 is
+<strong>inavolisib</strong> (GDC-0077 / Itovebi), a PI3Kα inhibitor for
+breast cancer. Wrong drug entirely.</li>
+<li><code>C1_materials_chemistry_31</code> — <strong>LAGP</strong> is
+given the LATP formula, erasing the germanium dependence that the item's
+own baseline argument turns on.</li>
+</ol>
+<p>The other 2 WRONG are both inside a single citation in
+<code>C1_engineering_04</code> (a phantom co-author and a wrong
+companion journal).</p>
+<p><strong>The four prior-pass corrections:</strong> 3 of 4 fully
+re-verify (AWS Spot timeline + &lt;5% interruption; Rao/Burgess/Kaffine
+PNAS volume-issue-pages; FCC 22-74 date). The fourth (Cs2TiI6 band gap)
+is <strong>half-corroborated</strong> — the 1.56 eV direct figure holds,
+the 1.58 eV indirect figure does not reproduce from any source I could
+reach.</p>
+<hr/>
+<h2 id="verdict-counts">Verdict counts</h2>
+<div aria-label="Verdict counts table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Verdict</th>
+<th scope="col">Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CONFIRMED</td>
+<td>~80</td>
+</tr>
+<tr>
+<td>WRONG</td>
+<td>5</td>
+</tr>
+<tr>
+<td>IMPRECISE</td>
+<td>9</td>
+</tr>
+<tr>
+<td>UNVERIFIABLE</td>
+<td>2</td>
+</tr>
+<tr>
+<td><strong>FABRICATED</strong></td>
+<td><strong>0</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>By item (defects only): bio_00 = 2 WRONG + 1 IMPRECISE + 1
+UNVERIFIABLE · eng_04 = 2 WRONG + 2 IMPRECISE · mat_31 = 1 WRONG ·
+law_03 = 2 IMPRECISE · mat_01 = 2 IMPRECISE + 1 UNVERIFIABLE · econ_02 =
+1 IMPRECISE · bio_30 = 1 IMPRECISE · <strong>arts_05, arts_33, eng_32 =
+clean</strong>.</p>
+<hr/>
+<h2 id="summary-table">Summary table</h2>
+<h3 id="c1_biology_medicine_00-crab-antibacterial-moa">C1_biology_medicine_00
+(CRAB antibacterial MoA)</h3>
+<div aria-label="C1_biology_medicine_00
+(CRAB antibacterial MoA) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zosurabalpin = RG6006 (Roche), tethered macrocyclic peptide, traps
+LptB2FGC, CRAB-selective; Nature 2024 (Zampaloni; Pahil)</td>
+<td>CONFIRMED</td>
+<td>Zampaloni et al., <em>Nature</em> 625:566–571, online 3 Jan 2024;
+Pahil et al. companion</td>
+<td><a href="https://www.nature.com/articles/s41586-023-06873-0">https://www.nature.com/articles/s41586-023-06873-0</a>
+· <a href="https://pubmed.ncbi.nlm.nih.gov/38172634/">https://pubmed.ncbi.nlm.nih.gov/38172634/</a></td>
+</tr>
+<tr>
+<td>LpxC inhibitors ACHN-975, LPC-233; UDP-3-O-acyl-GlcNAc
+deacetylase</td>
+<td>CONFIRMED</td>
+<td>both compounds real</td>
+<td><a href="https://doi.org/10.3389/fmicb.2025.1541379">https://doi.org/10.3389/fmicb.2025.1541379</a></td>
+</tr>
+<tr>
+<td><strong>"Darobactin and dynobactin N"</strong> bind BamA</td>
+<td><strong>WRONG</strong></td>
+<td>The compound is <strong>dynobactin A</strong> (from <em>Photorhabdus
+australis</em>). Miller et al. name only dynobactin A; no "dynobactin N"
+exists in the literature. ("N–C crosslink" in that paper is a bond type,
+not a variant.)</td>
+<td><a href="https://www.nature.com/articles/s41564-022-01227-4">https://www.nature.com/articles/s41564-022-01227-4</a>
+· <a href="https://www.rcsb.org/structure/7R1W">https://www.rcsb.org/structure/7R1W</a></td>
+</tr>
+<tr>
+<td>Darobactin: Nature 2019 (Imai et al.); dynobactin: Nat Microbiol
+2022 (Miller et al.)</td>
+<td>CONFIRMED</td>
+<td>Imai et al. <em>Nature</em> 576:459 (2019); Miller RD, Iinishi A, …
+Hiller S, Lewis K, <em>Nat Microbiol</em> 2022</td>
+<td><a href="https://www.nature.com/articles/s41586-019-1791-1">https://www.nature.com/articles/s41586-019-1791-1</a>
+· <a href="https://doi.org/10.1038/s41564-022-01227-4">https://doi.org/10.1038/s41564-022-01227-4</a></td>
+</tr>
+<tr>
+<td>Murepavadin (POL7080) peptidomimetic LptD inhibitor,
+Pseudomonas-focused</td>
+<td>CONFIRMED</td>
+<td><em>Drugs of the Future</em> 2018 monograph titles it exactly
+this</td>
+<td><a href="https://doi.org/10.1358/dof.2018.043.03.2774450">https://doi.org/10.1358/dof.2018.043.03.2774450</a></td>
+</tr>
+<tr>
+<td>Thanatin binds LptA (Vetterli et al. 2018–2019)</td>
+<td>CONFIRMED</td>
+<td>Vetterli et al., <em>Sci Adv</em> 4:eaau2634 (2018)</td>
+<td><a href="https://doi.org/10.1126/sciadv.aau2634">https://doi.org/10.1126/sciadv.aau2634</a></td>
+</tr>
+<tr>
+<td>Cefiderocol: siderophore-cephalosporin, TonB-dependent uptake,
+inhibits PBP3</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1021/acsinfecdis.4c00218">https://doi.org/10.1021/acsinfecdis.4c00218</a></td>
+</tr>
+<tr>
+<td>"next-gen analogs SPR206, <strong>SPR741/MRX-8</strong>"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Three distinct programs, not two. SPR741 (Spero) is a
+<strong>non-bactericidal polymyxin-B-derived potentiator</strong> with
+no useful intrinsic Gram-negative activity; MRX-8 (MicuRx) is a separate
+direct-acting next-gen polymyxin. The <code>/</code> implies
+equivalence.</td>
+<td><a href="https://doi.org/10.3390/antibiotics11091251">https://doi.org/10.3390/antibiotics11091251</a>
+· <a href="https://doi.org/10.1128/aac.01912-24">https://doi.org/10.1128/aac.01912-24</a></td>
+</tr>
+<tr>
+<td>Sulbactam-durlobactam (XACDURO) FDA-approved May 2023 for CRAB</td>
+<td>CONFIRMED</td>
+<td>approved <strong>23 May 2023</strong>, HABP/VABP due to <em>A.
+baumannii-calcoaceticus</em> complex</td>
+<td><a href="https://www.drugs.com/history/xacduro.html">https://www.drugs.com/history/xacduro.html</a></td>
+</tr>
+<tr>
+<td>PDF inhibitors actinonin, LBM415/GSK1322322</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1021/acsinfecdis.4c00218">https://doi.org/10.1021/acsinfecdis.4c00218</a></td>
+</tr>
+<tr>
+<td>LepB inhibitors: arylomycins, <strong>G0775/RG6114</strong></td>
+<td><strong>WRONG</strong></td>
+<td>G0775 is correct (Smith PA et al., <em>Nature</em> 561:189–194,
+2018). <strong>RG6114 = inavolisib / GDC-0077 / RO-7113755</strong>, a
+PI3Kα inhibitor-degrader (Itovebi) — an unrelated oncology drug. Delete
+<code>/RG6114</code>.</td>
+<td><a href="https://www.nature.com/articles/s41586-018-0483-6">https://www.nature.com/articles/s41586-018-0483-6</a>
+· PubChem synonyms for inavolisib list <code>RG6114</code>,
+<code>RG-6114</code></td>
+</tr>
+<tr>
+<td>LolCDE inhibitors, pyridineimidazole G0507 series</td>
+<td>CONFIRMED</td>
+<td>G0507 real (Nickerson et al., LolCDE inhibitor)</td>
+<td><a href="https://doi.org/10.1002/asia.202500350">https://doi.org/10.1002/asia.202500350</a></td>
+</tr>
+<tr>
+<td>FabI: fabimycin (Gram-negative-active), afabicin</td>
+<td>CONFIRMED</td>
+<td>fabimycin real, FabI-targeting, Gram-negative-selective</td>
+<td><a href="https://doi.org/10.64898/2026.04.05.716606">https://doi.org/10.64898/2026.04.05.716606</a></td>
+</tr>
+<tr>
+<td>Epetraborole = LeuRS inhibitor, boron/oxaborole editing-site
+trap</td>
+<td>CONFIRMED</td>
+<td>OBORT mechanism: boron binds cis-diols of tRNA-Leu terminal
+adenosine, traps it in the LeuRS editing site</td>
+<td><a href="https://doi.org/10.1371/journal.pntd.0011795">https://doi.org/10.1371/journal.pntd.0011795</a></td>
+</tr>
+<tr>
+<td>trans-translation inhibitors KKL-35, acylaminooxadiazoles</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1021/acsinfecdis.4c00218">https://doi.org/10.1021/acsinfecdis.4c00218</a></td>
+</tr>
+<tr>
+<td>Riboswitch: ribocil (Merck), roseoflavin</td>
+<td>CONFIRMED</td>
+<td>Howe JA et al. (Merck Research Labs), <em>Nature</em> 526:672–677
+(2015)</td>
+<td><a href="https://doi.org/10.1038/nature15542">https://doi.org/10.1038/nature15542</a></td>
+</tr>
+<tr>
+<td>FtsZ: PC190723, TXA709/TXA707</td>
+<td>CONFIRMED</td>
+<td>TXA709 is the prodrug of active benzamide TXA707</td>
+<td><a href="https://doi.org/10.3390/antibiotics9020069">https://doi.org/10.3390/antibiotics9020069</a></td>
+</tr>
+<tr>
+<td>MurA/fosfomycin; NBTIs gepotidacin, zoliflodacin;
+taniborbactam/xeruborbactam/avibactam/zidebactam (zidebactam also a PBP2
+binder); MsbA G907; PPMOs vs <em>acpP</em>/<em>rpsH</em>;
+phage/endolysin/CRISPR/efflux-inhibitor modalities</td>
+<td>CONFIRMED</td>
+<td>all real and correctly characterised</td>
+<td><a href="https://doi.org/10.1021/acsinfecdis.4c00218">https://doi.org/10.1021/acsinfecdis.4c00218</a></td>
+</tr>
+<tr>
+<td><strong>EB:</strong> MurJ (MviN) = MOP-superfamily lipid II
+flippase; solved <em>Thermosipho</em>/<em>E. coli</em> structures;
+alternating-access cavity; MTSES-accessibility probing</td>
+<td>CONFIRMED</td>
+<td>Kuk ACY, Hao A, Lee SY, <em>Annu Rev Biochem</em> 91:705–729
+(2022)</td>
+<td><a href="https://doi.org/10.1146/annurev-biochem-040320-105145">https://doi.org/10.1146/annurev-biochem-040320-105145</a></td>
+</tr>
+<tr>
+<td><strong>EB:</strong> "<em>murJ</em> is called essential in A.
+baumannii Tn-seq essential-gene sets (ATCC 17978 / AB5075)"</td>
+<td><strong>UNVERIFIABLE</strong></td>
+<td>A. baumannii essential-gene resources exist (Ward RD et al.,
+<em>mBio</em> 15:e02051-23, 2024, CRISPRi essential-gene knockdowns;
+Gallagher et al. Tn-seq in AB5075) but I could not confirm <em>murJ</em>
+appears in <strong>both</strong> the ATCC 17978 and AB5075 essential
+sets as stated. Directionally sound (<em>murJ</em> is essential in
+<em>E. coli</em> and broadly conserved-essential in
+Gram-negatives).</td>
+<td><a href="https://doi.org/10.1128/mbio.02051-23">https://doi.org/10.1128/mbio.02051-23</a></td>
+</tr>
+<tr>
+<td><strong>EB:</strong> humans have no MurJ ortholog</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_economics_business_02-gpu-market-mechanism">C1_economics_business_02
+(GPU market mechanism)</h3>
+<div aria-label="C1_economics_business_02
+(GPU market mechanism) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Green-Laffont 1979; Myerson-Satterthwaite 1983</td>
+<td>CONFIRMED</td>
+<td>Green &amp; Laffont, <em>Incentives in Public Decision-Making</em>,
+North-Holland 1979 (reviewed <em>Econ J</em> 90:407, 1980); Myerson
+&amp; Satterthwaite, <em>JET</em> 29:265–281 (1983)</td>
+<td><a href="https://doi.org/10.2307/2231809">https://doi.org/10.2307/2231809</a>
+· <a href="https://doi.org/10.1016/0022-0531(83)90048-0">https://doi.org/10.1016/0022-0531(83)90048-0</a></td>
+</tr>
+<tr>
+<td>GSP: Edelman-Ostrovsky-Schwarz 2007; Varian 2007</td>
+<td>CONFIRMED</td>
+<td><em>AER</em> 97(1):242–259 (2007); <em>IJIO</em> 25:1163–1178
+(2007)</td>
+<td><a href="https://doi.org/10.1257/aer.97.1.242">https://doi.org/10.1257/aer.97.1.242</a>
+· <a href="https://doi.org/10.1016/j.ijindorg.2006.10.002">https://doi.org/10.1016/j.ijindorg.2006.10.002</a></td>
+</tr>
+<tr>
+<td><strong>AWS EC2 Spot: 2009-2017 bid-based; changed at re:Invent
+2017, rolled out ~March 2018; no bidding; &lt;5% average
+interruption</strong> <em>(prior-pass correction)</em></td>
+<td>CONFIRMED</td>
+<td>AWS Compute Blog post dated <strong>13 March 2018</strong>,
+verbatim: "The typical frequency of interruption for Spot Instances in
+the last 30 days was <strong>less than 5% on average</strong>."
+Announced at re:Invent Nov 2017.</td>
+<td><a href="https://aws.amazon.com/blogs/compute/new-amazon-ec2-spot-pricing/">https://aws.amazon.com/blogs/compute/new-amazon-ec2-spot-pricing/</a></td>
+</tr>
+<tr>
+<td>"Google Cloud Spot/Preemptible VMs (… <strong>~24h max
+life</strong>, ~30s preemption notice)"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>The 24-hour hard cap is a property of legacy <strong>Preemptible VMs
+only</strong>. <strong>Spot VMs</strong> (GA Oct 2021) have <strong>no
+maximum runtime</strong>. The ~30 s ACPI shutdown warning applies to
+both.</td>
+<td><a href="https://docs.cloud.google.com/compute/docs/instances/spot">https://docs.cloud.google.com/compute/docs/instances/spot</a>
+· <a href="https://docs.cloud.google.com/compute/docs/instances/preemptible">https://docs.cloud.google.com/compute/docs/instances/preemptible</a></td>
+</tr>
+<tr>
+<td>Azure Spot VMs: user max-price cap, eviction on price OR
+capacity</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://docs.cloud.google.com/compute/docs/instances/spot">https://docs.cloud.google.com/compute/docs/instances/spot</a>
+(contrast)</td>
+</tr>
+<tr>
+<td>Vast.ai: open marketplace, host-set prices + interruptible bid-based
+tier</td>
+<td>CONFIRMED</td>
+<td>Vast.ai docs: on-demand = "Fixed pricing set by the host";
+"Interruptible instances use a bidding system … higher bids get priority
+… May be paused if outbid"</td>
+<td><a href="https://docs.vast.ai/instances/instance-types">https://docs.vast.ai/instances/instance-types</a></td>
+</tr>
+<tr>
+<td>Nisan-Ronen 1999/2001</td>
+<td>CONFIRMED</td>
+<td><em>GEB</em> 35:166–196 (2001); STOC 1999</td>
+<td><a href="https://doi.org/10.1006/game.1999.0790">https://doi.org/10.1006/game.1999.0790</a></td>
+</tr>
+<tr>
+<td>Lehmann-O'Callaghan-Shoham 2002; Lavi-Swamy 2005;
+Dobzinski-Nisan-Schapira 2005</td>
+<td>CONFIRMED</td>
+<td><em>JACM</em> 49:577–602 (2002); FOCS 2005:595–604; STOC
+2005:610–618</td>
+<td><a href="https://doi.org/10.1145/585265.585266">https://doi.org/10.1145/585265.585266</a>
+· <a href="https://doi.org/10.1109/sfcs.2005.76">https://doi.org/10.1109/sfcs.2005.76</a>
+· <a href="https://doi.org/10.1145/1060590.1060681">https://doi.org/10.1145/1060590.1060681</a></td>
+</tr>
+<tr>
+<td>online VCG (Parkes-Singh 2003); Hajiaghayi et al. 2004</td>
+<td>CONFIRMED</td>
+<td>Parkes &amp; Singh, "An MDP-Based Approach to Online Mechanism
+Design," NeurIPS <strong>2003</strong> proceedings;
+Hajiaghayi/Kleinberg/Parkes, EC'04:71–80</td>
+<td><a href="https://proceedings.neurips.cc/paper_files/paper/2003">https://proceedings.neurips.cc/paper_files/paper/2003</a>
+· <a href="https://doi.org/10.1145/988772.988784">https://doi.org/10.1145/988772.988784</a></td>
+</tr>
+<tr>
+<td>Milgrom-Segal deferred-acceptance auctions (paper 2014; FCC
+incentive auction); Li 2017 OSP</td>
+<td>CONFIRMED</td>
+<td>Milgrom &amp; Segal, EC'14 (Stanford, June 2014); Li, <em>AER</em>
+107:3257–3287 (2017)</td>
+<td><a href="https://netecon.seas.harvard.edu/NetEcon14/Papers/Milgrom_netecon14.pdf">https://netecon.seas.harvard.edu/NetEcon14/Papers/Milgrom_netecon14.pdf</a>
+· <a href="https://doi.org/10.1257/aer.20160425">https://doi.org/10.1257/aer.20160425</a></td>
+</tr>
+<tr>
+<td>Ghodsi et al. 2011 DRF; Ben-Yehuda et al. 2013</td>
+<td>CONFIRMED</td>
+<td>DRF = NSDI'11; Agmon Ben-Yehuda et al., <em>ACM TEAC</em> 1(3)
+(2013), earlier CloudCom 2011</td>
+<td><a href="https://www.usenix.org/legacy/events/nsdi11/tech/full_papers/Ghodsi.pdf">https://www.usenix.org/legacy/events/nsdi11/tech/full_papers/Ghodsi.pdf</a>
+· <a href="https://doi.org/10.1145/2509413.2509416">https://doi.org/10.1145/2509413.2509416</a></td>
+</tr>
+<tr>
+<td>VCG NP-hard winner determination; Vickrey/Clarke/Groves
+1961/1971/1973; Myerson 1981; multi-unit uniform-price &amp;
+pay-as-bid</td>
+<td>CONFIRMED (common knowledge)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_engineering_04-reusable-fdm-energy-absorber">C1_engineering_04
+(reusable FDM energy absorber)</h3>
+<div aria-label="C1_engineering_04
+(reusable FDM energy absorber) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>"Correa, Klatt, Spadaccini, Seepersad et al., 'Negative
+stiffness honeycombs for recoverable shock isolation,' Rapid Prototyping
+Journal, 2015"</strong></td>
+<td><strong>WRONG (author)</strong></td>
+<td><strong>Spadaccini is not an author.</strong> Actual: <strong>Correa
+DM, Klatt T, Cortes S, Haberman M, Kovar D, Seepersad C</strong>,
+<em>Rapid Prototyping Journal</em> <strong>21(2):193–200
+(2015)</strong></td>
+<td><a href="https://doi.org/10.1108/RPJ-12-2014-0182">https://doi.org/10.1108/RPJ-12-2014-0182</a></td>
+</tr>
+<tr>
+<td><strong>"(and companion work in Additive Manufacturing,
+2015)"</strong></td>
+<td><strong>WRONG (venue)</strong></td>
+<td>The companion paper is Correa DM, Seepersad CC, Haberman MR,
+"Mechanical design of negative stiffness honeycomb materials,"
+<strong><em>Integrating Materials and Manufacturing Innovation</em> 4:10
+(2015)</strong> — not <em>Additive Manufacturing</em>.</td>
+<td><a href="https://doi.org/10.1186/s40192-015-0038-8">https://doi.org/10.1186/s40192-015-0038-8</a></td>
+</tr>
+<tr>
+<td>Frenzel, Findeisen, Kadic, Gumbsch, Wegener, <em>Adv Mater</em>
+2016</td>
+<td>CONFIRMED</td>
+<td><em>Adv Mater</em> 28:5865–5870 (2016); author list exact</td>
+<td><a href="https://doi.org/10.1002/adma.201600610">https://doi.org/10.1002/adma.201600610</a></td>
+</tr>
+<tr>
+<td>Shan, Kang, Raney, Wang, Fang, Candido, Lewis, Bertoldi, <em>Adv
+Mater</em> 2015</td>
+<td>CONFIRMED</td>
+<td><em>Adv Mater</em> 27:4296–4301 (2015); author list exact</td>
+<td><a href="https://doi.org/10.1002/adma.201501708">https://doi.org/10.1002/adma.201501708</a></td>
+</tr>
+<tr>
+<td>Restrepo, Mankame, Zavattieri, <em>Extreme Mechanics Letters</em>
+2015</td>
+<td>CONFIRMED</td>
+<td><em>EML</em> 4:52–60 (2015)</td>
+<td><a href="https://doi.org/10.1016/j.eml.2015.08.001">https://doi.org/10.1016/j.eml.2015.08.001</a></td>
+</tr>
+<tr>
+<td>"Bertoldi, Reis, Shim, Mullin et al., <strong>~2008-2017</strong>"
+(holey sheets, buckliball)</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Buckliball = Shim, Perdigou, Chen, Bertoldi, Reis, <em>PNAS</em>
+109(16):5978–5983 (2012) ✓. But Mullin, Willshaw, Box, Mahadevan,
+<em>PRL</em> 99:084301 is <strong>2007</strong> — the range should open
+at ~2007.</td>
+<td><a href="https://doi.org/10.1073/pnas.1115674109">https://doi.org/10.1073/pnas.1115674109</a></td>
+</tr>
+<tr>
+<td>"TPMS lattices … printed in <strong>TPU/elastomer</strong> … e.g.
+<strong>Maskery, Ashcroft, Hague</strong> et al."</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Maskery/Ashcroft/Hague TPMS work is <strong>laser-sintered polyamide
+(nylon-12) and metal</strong>, not TPU (e.g. Maskery et al.,
+<em>Polymer</em> 152:62–71, 2018). TPU-gyroid recoverable-cushioning
+studies exist but are from other groups. Named attribution is
+misplaced.</td>
+<td><a href="https://doi.org/10.1016/j.polymer.2017.11.049">https://doi.org/10.1016/j.polymer.2017.11.049</a></td>
+</tr>
+<tr>
+<td>Carbon/Adidas 4D &amp; 4DFWD ~2017-2021; EOS/HP + nTopology TPU
+lattice insoles</td>
+<td>CONFIRMED (secondary sources only)</td>
+<td>Futurecraft 4D unveiled 2017 with Carbon; 4DFWD 2021. adidas's own
+press-release URL now 404s.</td>
+<td><a href="https://en.wikipedia.org/wiki/Carbon_(company)">https://en.wikipedia.org/wiki/Carbon_(company)</a></td>
+</tr>
+<tr>
+<td>Constant-force compliant mechanisms (Howell and collaborators,
+~2000-2019)</td>
+<td>CONFIRMED (common knowledge)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>EB:</strong> FDM TPU ~95A Shore, density ~1.20 g/cc</td>
+<td>CONFIRMED</td>
+<td>standard FDM TPU-95A datasheets: 1.20–1.22 g/cm³</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_law_policy_03-leo-debris-instrument">C1_law_policy_03 (LEO
+debris instrument)</h3>
+<div aria-label="C1_law_policy_03 (LEO
+debris instrument) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Rao, Burgess &amp; Kaffine, PNAS 117(23):12756-12762, issue
+9 June 2020 (online-first 26 May 2020)</strong> <em>(prior-pass
+correction)</em></td>
+<td>CONFIRMED</td>
+<td>Volume 117, issue 23, pp. 12756–12762; PubMed records Epub 2020 May
+26; PNAS vol 117 no 23 = 9 June 2020 issue</td>
+<td><a href="https://www.pnas.org/content/117/23/12756/tab-article-info">https://www.pnas.org/content/117/23/12756/tab-article-info</a>
+· <a href="https://pubmed.ncbi.nlm.nih.gov/32457138/">https://pubmed.ncbi.nlm.nih.gov/32457138/</a></td>
+</tr>
+<tr>
+<td>Adilov, Alexander &amp; Cunningham, <em>Environmental and Resource
+Economics</em> (2015)</td>
+<td>CONFIRMED</td>
+<td>ERE <strong>60(1):81–98</strong> (2015)</td>
+<td><a href="https://doi.org/10.1007/s10640-013-9758-4">https://doi.org/10.1007/s10640-013-9758-4</a></td>
+</tr>
+<tr>
+<td>"Deposit-refund schemes and performance (deorbit) bonds —
+<strong>Molly Macauley (Resources for the Future)</strong> and OECD
+space-economy analyses"</td>
+<td><strong>IMPRECISE (misattribution)</strong></td>
+<td>Macauley/RFF is real and published on orbital-debris economics
+(<em>Resources</em> 1993; <em>Acta Astronautica</em> 115:160–164, 2015)
+but <strong>no publication of hers on deposit-refund or performance
+bonds for orbit</strong> could be found — her deposit-refund work is
+municipal solid waste. The <strong>OECD leg is correct</strong>:
+Undseth, Jolly &amp; Olivari, "Space sustainability: the economics of
+space debris in perspective," OECD STI Policy Paper, 8 Apr 2020. Real
+bond/deposit-refund citations: Bullock &amp; Johanson, <em>MIT Sci
+Policy Rev</em> (2021).</td>
+<td><a href="https://doi.org/10.1787/a339de43-en">https://doi.org/10.1787/a339de43-en</a>
+· <a href="https://doi.org/10.1016/j.actaastro.2015.05.006">https://doi.org/10.1016/j.actaastro.2015.05.006</a>
+· <a href="https://doi.org/10.38105/spr.16gdw8z5d4">https://doi.org/10.38105/spr.16gdw8z5d4</a></td>
+</tr>
+<tr>
+<td>51 U.S.C. ch. 509 financial-responsibility / MPL</td>
+<td>CONFIRMED</td>
+<td>§50914 uses the statutory phrase "maximum probable loss"; $500M
+third-party / $100M gov-property caps</td>
+<td><a href="https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title51-section50914&amp;num=0&amp;edition=prelim">https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title51-section50914&amp;num=0&amp;edition=prelim</a></td>
+</tr>
+<tr>
+<td><strong>FCC 22-74, adopted 29 September 2022, 5-year rule</strong>
+<em>(prior-pass correction)</em></td>
+<td>CONFIRMED</td>
+<td>Second Report and Order, adopted 29 Sep 2022, IB Dockets 18-313 /
+22-271</td>
+<td><a href="https://docs.fcc.gov/public/attachments/FCC-22-74A1.pdf">https://docs.fcc.gov/public/attachments/FCC-22-74A1.pdf</a></td>
+</tr>
+<tr>
+<td>ESA Zero Debris Charter drafted 2023, first signatories 2024,
+net-zero by 2030</td>
+<td>CONFIRMED</td>
+<td>"draft zero" July 2023, launched Nov 2023; <strong>12 countries
+signed 22 May 2024</strong></td>
+<td><a href="https://www.esa.int/Space_Safety/Space_Debris/Twelve_countries_sign_the_Zero_Debris_Charter">https://www.esa.int/Space_Safety/Space_Debris/Twelve_countries_sign_the_Zero_Debris_Charter</a></td>
+</tr>
+<tr>
+<td>COPUOS LTS: 21 guidelines adopted 2019</td>
+<td>CONFIRMED</td>
+<td>UNIS/OS/518, 22 June 2019: "a preamble and 21 guidelines"</td>
+<td><a href="https://www.unoosa.org/oosa/en/informationfor/media/2019-unis-os-518.html">https://www.unoosa.org/oosa/en/informationfor/media/2019-unis-os-518.html</a></td>
+</tr>
+<tr>
+<td>IADC Space Debris Mitigation Guidelines 2002, rev. 2007/2020</td>
+<td>CONFIRMED</td>
+<td>IADC-02-01 Rev.0 = 2002-10-15, Rev.1 = 2007-09-01, Rev.2 =
+2020-03-01 (current)</td>
+<td><a href="https://orbitaldebris.jsc.nasa.gov/library/iadc-space-debris-guidelines-revision-2.pdf">https://orbitaldebris.jsc.nasa.gov/library/iadc-space-debris-guidelines-revision-2.pdf</a></td>
+</tr>
+<tr>
+<td>"Space Sustainability Rating — WEF concept
+(<strong>~2019-2021</strong>), operational home at eSpace/EPFL
+<strong>from ~2022</strong>"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Per SSR's own history: concept initiated by the WEF Global Future
+Council on Space <strong>in 2016</strong>; WEF appointed the design
+consortium (ESA/MIT/BryceTech/UT Austin) 2019; <strong>eSpace–EPFL
+selected May 2021</strong>; SSR <strong>went live June 2022</strong>;
+independent SSR Association formed Jan 2023.</td>
+<td><a href="https://spacesustainabilityrating.org/about/">https://spacesustainabilityrating.org/about/</a></td>
+</tr>
+<tr>
+<td>ESA ClearSpace-1 contracted to ClearSpace SA, 2020; Astroscale
+ELSA-d launched March 2021</td>
+<td>CONFIRMED</td>
+<td>€86M service contract signed <strong>26 Nov 2020</strong> (mission
+commissioned Dec 2019); ELSA-d launched <strong>22 March 2021
+UTC</strong>. Side note: ClearSpace-1's target changed VESPA → PROBA-1
+and launch slipped to ~2028/29.</td>
+<td><a href="https://www.esa.int/Newsroom/Press_Releases/Call_for_Media_ESA_and_ClearSpace_SA_sign_contract_for_world_s_first_debris_removal_mission">https://www.esa.int/Newsroom/Press_Releases/Call_for_Media_ESA_and_ClearSpace_SA_sign_contract_for_world_s_first_debris_removal_mission</a>
+· <a href="https://astroscale.com/missions/elsa-d/">https://astroscale.com/missions/elsa-d/</a></td>
+</tr>
+<tr>
+<td>SPD-3 (June 2018) + OSC TraCSS</td>
+<td>CONFIRMED</td>
+<td>SPD-3 signed <strong>18 June 2018</strong>; TraCSS is an Office of
+Space Commerce program, operational 2026. <strong>Live-status
+caveat:</strong> the FY2026 President's Budget proposed terminating
+TraCSS; Senate appropriators rejected the termination (July 2025). A
+2026-dated item should reflect that its funding was contested.</td>
+<td><a href="https://trumpwhitehouse.archives.gov/presidential-actions/space-policy-directive-3-national-space-traffic-management-policy/">https://trumpwhitehouse.archives.gov/presidential-actions/space-policy-directive-3-national-space-traffic-management-policy/</a>
+· <a href="https://www.space.commerce.gov/traffic-coordination-system-for-space-tracss/">https://www.space.commerce.gov/traffic-coordination-system-for-space-tracss/</a></td>
+</tr>
+<tr>
+<td><strong>EB:</strong> OST Art. II (no appropriation), Art. VI
+("authorization and continuing supervision"), Art. VIII (jurisdiction
+&amp; control); Liability Convention Art. III (fault, elsewhere than on
+the surface of the Earth); Japan Space Activities Act</td>
+<td>CONFIRMED</td>
+<td>All verified verbatim. Japan = "Act on Launching Spacecraft and
+Launch Vehicle and Control of Spacecraft," <strong>Act No. 76 of
+2016</strong>.</td>
+<td><a href="https://www.unoosa.org/oosa/en/ourwork/spacelaw/treaties/outerspacetreaty.html">https://www.unoosa.org/oosa/en/ourwork/spacelaw/treaties/outerspacetreaty.html</a>
+· <a href="https://www.unoosa.org/oosa/en/ourwork/spacelaw/treaties/liability-convention.html">https://www.unoosa.org/oosa/en/ourwork/spacelaw/treaties/liability-convention.html</a>
+· <a href="https://www8.cao.go.jp/space/english/activity/application.html">https://www8.cao.go.jp/space/english/activity/application.html</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_materials_chemistry_01-wide-gap-tandem-top-cell">C1_materials_chemistry_01
+(wide-gap tandem top cell)</h3>
+<div aria-label="C1_materials_chemistry_01
+(wide-gap tandem top cell) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BaZrS3 orthorhombic Pnma, DIRECT gap ~1.7-1.85 eV</td>
+<td>CONFIRMED</td>
+<td>distorted Pnma perovskite; measured direct gaps 1.74–1.85 eV</td>
+<td><a href="https://doi.org/10.1021/acsaem.9b02428">https://doi.org/10.1021/acsaem.9b02428</a>
+· <a href="https://doi.org/10.1021/acsami.3c00618">https://doi.org/10.1021/acsami.3c00618</a></td>
+</tr>
+<tr>
+<td>BaHfS3 ~1.9-2.0 eV</td>
+<td>CONFIRMED (literature consensus)</td>
+<td>standard reported range in the chalcogenide-perovskite literature;
+no single primary abstract reachable this session</td>
+<td><a href="https://doi.org/10.1021/acsami.3c00618">https://doi.org/10.1021/acsami.3c00618</a></td>
+</tr>
+<tr>
+<td>SrZrS3 (perovskite + needle-like polymorphs, ~1.5-2.05 eV); CaZrS3
+(~1.9-2.05 eV)</td>
+<td>CONFIRMED</td>
+<td>α needle-like and β distorted-perovskite polymorphs with gaps
+spanning ~1.5–2.05 eV</td>
+<td><a href="https://doi.org/10.1021/acsomega.0c00740">https://doi.org/10.1021/acsomega.0c00740</a></td>
+</tr>
+<tr>
+<td>BaZrSe3 ~1.3-1.5 eV</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1021/acsami.3c00618">https://doi.org/10.1021/acsami.3c00618</a></td>
+</tr>
+<tr>
+<td>Ruddlesden-Popper Ba(n+1)Zr(n)S(3n+1) (Ba3Zr2S7, Ba2ZrS4), ~1.25-1.8
+eV</td>
+<td>CONFIRMED</td>
+<td>dimensional tuning across that range is the standard result</td>
+<td><a href="https://doi.org/10.1021/acsami.3c00618">https://doi.org/10.1021/acsami.3c00618</a></td>
+</tr>
+<tr>
+<td>Cs2AgBiBr6 INDIRECT gap ~1.95-2.2 eV</td>
+<td>CONFIRMED</td>
+<td>Slavney et al. 1.95 eV indirect; McClure et al. 2.19 eV; PL at
+1.9–2.0 eV from self-trapped excitons</td>
+<td><a href="https://doi.org/10.1021/jacs.5b13294">https://doi.org/10.1021/jacs.5b13294</a>
+· <a href="https://doi.org/10.1021/acs.chemmater.5b04231">https://doi.org/10.1021/acs.chemmater.5b04231</a></td>
+</tr>
+<tr>
+<td>Cs2AgBiCl6, Cs2AgInCl6, Cs2AgSbBr6, Cs2NaBiI6, Cs2AgSbCl6 — mostly
+indirect / too wide</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1021/jacs.6c07190">https://doi.org/10.1021/jacs.6c07190</a></td>
+</tr>
+<tr>
+<td><strong>"Cs2TiBr6 and Cs2TiI6 … ~1.55-2.0 eV (Cs2TiI6 measured 1.56
+eV direct / 1.58 eV indirect)"</strong> <em>(prior-pass
+correction)</em></td>
+<td><strong>IMPRECISE (half-corroborated)</strong></td>
+<td>The source is Aslam S, Bakhsh S, Yusof Y, Abd. Rahman MY, Ibrahim A,
+Samsuri S, "Structural and optical properties of vacancy-ordered double
+halide perovskites, Cs2TiI6 films," <em>Mater Sci Eng B</em>
+<strong>296:116645</strong> (Oct 2023). Every accessible rendering of
+that paper reports <strong>"direct and indirect band gaps of 1.56
+eV"</strong> — i.e. 1.56 eV for <em>both</em>. The <strong>1.58 eV
+indirect</strong> figure does not reproduce. Full text unreachable
+(ScienceDirect 403, academia.edu 403, jina proxy 403;
+Crossref/OpenAlex/Semantic Scholar hold no abstract).</td>
+<td><a href="https://doi.org/10.1016/j.mseb.2023.116645">https://doi.org/10.1016/j.mseb.2023.116645</a></td>
+</tr>
+<tr>
+<td>Cs2SnI6 ~1.3 eV; CsSnI3/FASnI3/MASnI3 ~1.3-1.4 eV (Sn²⁺→Sn⁴⁺);
+CsGeI3/MAGeI3 ~1.6 eV (Ge²⁺); Cs3Bi2I9/MA3Bi2I9/Cs3Sb2I9 ~1.9-2.1 eV;
+AgBiI4/Ag2BiI5 ~1.8-1.9 eV; BiSI/BiSeI/SbSI ~1.5-1.9 eV quasi-1D</td>
+<td>CONFIRMED</td>
+<td>all values within the standard reported ranges</td>
+<td><a href="https://doi.org/10.1002/adma.202105844">https://doi.org/10.1002/adma.202105844</a></td>
+</tr>
+<tr>
+<td>Oxynitrides SrTaO2N ~2.1, BaTaO2N ~1.8-2.0, CaTaO2N, LaTaON2 ~2.0
+eV; studied as photocatalysts</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1126/sciadv.aav0693">https://doi.org/10.1126/sciadv.aav0693</a>
+(stability); oxynitride photocatalysis literature</td>
+</tr>
+<tr>
+<td>Reference incumbent Cs/FA-Pb(I,Br)3 ~1.68-1.75 eV; Hoke-effect
+segregation</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>EB:</strong> Bartel tolerance factor threshold <strong>tau
+&lt; 4.18</strong></td>
+<td>CONFIRMED (verbatim)</td>
+<td>Bartel et al., <em>Sci Adv</em> 5:eaav0693 (2019): "τ &lt; 4.18
+indicates perovskite"; 92% accuracy on 576 ABX3 solids. (Same paper:
+optimal Goldschmidt bounds 0.825 &lt; t &lt; 1.059, 74% accuracy.)</td>
+<td><a href="https://doi.org/10.1126/sciadv.aav0693">https://doi.org/10.1126/sciadv.aav0693</a>
+· <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6368436/">https://pmc.ncbi.nlm.nih.gov/articles/PMC6368436/</a></td>
+</tr>
+<tr>
+<td><strong>EB:</strong> "Zr ~193 ppm, Hf ~5.3 ppm, Ba ~628 ppm, S ~350
+ppm crust"</td>
+<td><strong>IMPRECISE (mixed datasets)</strong></td>
+<td>Zr 193 / Hf 5.3 / Ba 628 ppm are <strong>Rudnick &amp; Gao (2003)
+upper-continental-crust</strong> values; S ~350 ppm is the
+CRC/whole-crust figure. On one consistent whole-crust dataset:
+<strong>Zr 165, Hf 3.0, Ba 425, S 350 ppm</strong>. The qualitative
+claim (abundant, Hf scarcest) survives either way.</td>
+<td><a href="https://en.wikipedia.org/wiki/Abundance_of_elements_in_Earth%27s_crust">https://en.wikipedia.org/wiki/Abundance_of_elements_in_Earth%27s_crust</a></td>
+</tr>
+<tr>
+<td><strong>EB:</strong> Goldschmidt t~0.95, octahedral mu~0.39-0.42 for
+Ba(Zr0.5Hf0.5)S3 (Shannon radii)</td>
+<td><strong>UNVERIFIABLE</strong></td>
+<td>Not independently recomputed; plausible for 12-coord Ba²⁺ / 6-coord
+Zr⁴⁺-Hf⁴⁺ / S²⁻ but I did not evaluate the Shannon-radii
+arithmetic.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_arts_humanities_05-mnemonic-poetic-form--clean">C1_arts_humanities_05
+(mnemonic poetic form) — <strong>clean</strong></h3>
+<div aria-label="C1_arts_humanities_05
+(mnemonic poetic form) — clean table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sestina: Arnaut Daniel c. 1180s; 39 lines = 6×6 + 3-line envoi;
+retrogradatio cruciata 6-1-5-2-4-3</td>
+<td>CONFIRMED — schema ABCDEF → FAEBDC → CFDABE → ECBFAD → DEACFB →
+BDFECA is exactly the 6,1,5,2,4,3 spiral; Arnaut Daniel active c.
+1180–1200</td>
+<td><a href="https://en.wikipedia.org/wiki/Sestina">https://en.wikipedia.org/wiki/Sestina</a>
+· <a href="https://www.treccani.it/enciclopedia/sestina_(Enciclopedia-dell'Italiano)/">https://www.treccani.it/enciclopedia/sestina_(Enciclopedia-dell'Italiano)/</a></td>
+</tr>
+<tr>
+<td>Quenine / N-ine (Queneau, formalised by Roubaud/Oulipo); Queneau
+numbers "related to 2 being a primitive root mod 2N+1"</td>
+<td>CONFIRMED — precise criterion: n is a Queneau number iff p = 2n+1 is
+prime and either 2 has order 2n in Z/pZ (2 a primitive root mod p) or n
+is odd. The "related to" hedge is accurate.</td>
+<td><a href="https://oeis.org/A054639">https://oeis.org/A054639</a> · <a href="https://www.ams.org/notices/201105/rtx110500682p.pdf">https://www.ams.org/notices/201105/rtx110500682p.pdf</a></td>
+</tr>
+<tr>
+<td>Vedic vikriti-patha: krama / jata (ab/ba/ab) / ghana
+(ab/ba/abc/cba/abc)</td>
+<td>CONFIRMED — standard descriptions of jaṭā- and ghana-pāṭha</td>
+<td><a href="https://en.wikipedia.org/wiki/Vedic_chant">https://en.wikipedia.org/wiki/Vedic_chant</a></td>
+</tr>
+<tr>
+<td>Villanelle 19 lines, 5 tercets + quatrain, A1/A2 refrains; Pantoum
+(Malay-derived, 2&amp;4 → 1&amp;3); Ghazal radif + qafiya</td>
+<td>CONFIRMED (common knowledge)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Cisiojanus: medieval Latin calendar mnemonic, <strong>12th
+c.</strong>, syllable-index → feast day</td>
+<td>CONFIRMED — "originated in the late twelfth century"; 365 syllables
+in 12 hexameter couplets; name from <em>CIrcumcISIO JANUarius</em></td>
+<td><a href="https://sites.utexas.edu/ransomcentermagazine/2014/01/20/cisiojanus/">https://sites.utexas.edu/ransomcentermagazine/2014/01/20/cisiojanus/</a>
+· <a href="https://ciphermysteries.com/2018/11/23/the-linguistic-diffusion-of-cisiojanus-mnemonics">https://ciphermysteries.com/2018/11/23/the-linguistic-diffusion-of-cisiojanus-mnemonics</a></td>
+</tr>
+<tr>
+<td>Dróttkvætt: 8 lines of 6 syllables, obligatory alliteration +
+hendingar</td>
+<td>CONFIRMED — skaldic.org: "stanzas of eight six-syllable lines,
+regular alliteration and hendingar (skothending in odd lines and
+aðalhending in even ones)"</td>
+<td><a href="https://skaldic.org/m.php?p=doc&amp;i=621">https://skaldic.org/m.php?p=doc&amp;i=621</a></td>
+</tr>
+<tr>
+<td>Ars memoriae / <em>Rhetorica ad Herennium</em> / Frances Yates
+<em>The Art of Memory</em>; Major &amp; Dominic systems; Oulipo N+7,
+snowball, <em>Cent mille milliards de poèmes</em>, <em>morale
+élémentaire</em></td>
+<td>CONFIRMED (common knowledge)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_biology_medicine_30-molecular-glue-degrader">C1_biology_medicine_30
+(molecular-glue degrader)</h3>
+<div aria-label="C1_biology_medicine_30
+(molecular-glue degrader) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRBN glues thalidomide/lenalidomide/pomalidomide → IKZF1/IKZF3;
+lenalidomide also CK1α</td>
+<td>CONFIRMED</td>
+<td>Krönke et al., <em>Nature</em> 2015: lenalidomide induces
+CRL4(CRBN)-dependent CK1α degradation</td>
+<td><a href="https://doi.org/10.1038/nature14610">https://doi.org/10.1038/nature14610</a></td>
+</tr>
+<tr>
+<td>CC-885 → GSPT1</td>
+<td>CONFIRMED</td>
+<td>Matyskiela et al., <em>Nature</em> 535:252 (2016)</td>
+<td><a href="https://doi.org/10.1038/nature18611">https://doi.org/10.1038/nature18611</a></td>
+</tr>
+<tr>
+<td>Indisulam/E7820 → DCAF15 → RBM39</td>
+<td>CONFIRMED</td>
+<td>Han et al., <em>Science</em> 356:eaal3755 (2017)</td>
+<td><a href="https://doi.org/10.1126/science.aal3755">https://doi.org/10.1126/science.aal3755</a></td>
+</tr>
+<tr>
+<td>BI-3802 → BCL6 polymerization and degradation</td>
+<td>CONFIRMED</td>
+<td>Słabicki et al., <em>Nature</em> 588:164–168 (2020); ligase =
+<strong>SIAH1</strong> (naming it would strengthen the entry)</td>
+<td><a href="https://doi.org/10.1038/s41586-020-2925-1">https://doi.org/10.1038/s41586-020-2925-1</a></td>
+</tr>
+<tr>
+<td>Cyclin K glues (CR8, dCeMM2/3/4) via DDB1-CUL4 (CDK12)</td>
+<td>CONFIRMED</td>
+<td>CR8: Słabicki et al., <em>Nature</em> 585:293 (2020). dCeMM2/3/4
+real: Mayor-Ruiz et al., <em>Nat Chem Biol</em> 16:1199–1207 (2020) —
+substrate-receptor-<strong>independent</strong>, DDB1-CUL4 core, so "via
+DDB1-CUL4" is the right phrasing</td>
+<td><a href="https://doi.org/10.1038/s41586-020-2374-x">https://doi.org/10.1038/s41586-020-2374-x</a>
+· <a href="https://doi.org/10.1038/s41589-020-0594-x">https://doi.org/10.1038/s41589-020-0594-x</a></td>
+</tr>
+<tr>
+<td>"Covalent glue recruiters using RNF114 (nimbolide), KEAP1, DCAF11,
+or DCAF16 <strong>to degrade BRD4</strong> and others"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Two fixes. (a) BRD4 is <strong>not</strong> from the nimbolide paper
+— Spradlin et al., <em>Nat Chem Biol</em> 2019 demonstrates RNF114
+recruitment only; BRD4/BCR-ABL degradation via RNF114 is Luo et al.,
+<em>Cell Chem Biol</em> 2021. (b) DCAF16/DCAF11/KEAP1 were introduced as
+<strong>covalent bifunctional (electrophilic PROTAC)</strong>
+recruiters, not monovalent glues — calling them "glue recruiters"
+muddies the very glue-vs-PROTAC distinction the query asks the answer to
+respect.</td>
+<td><a href="https://doi.org/10.1038/s41589-019-0304-8">https://doi.org/10.1038/s41589-019-0304-8</a>
+· <a href="https://doi.org/10.1038/s41589-019-0279-5">https://doi.org/10.1038/s41589-019-0279-5</a></td>
+</tr>
+<tr>
+<td>IAP-recruiting SNIPERs; MDM2-based degraders</td>
+<td>CONFIRMED</td>
+<td>SNIPER = "Specific and Non-genetic IAP-dependent Protein ERaser,"
+recruits cIAP1/XIAP</td>
+<td><a href="https://doi.org/10.1080/14756366.2022.2074414">https://doi.org/10.1080/14756366.2022.2074414</a></td>
+</tr>
+<tr>
+<td>SMARCA2/4 VHL/CRBN degraders; classic VHL/CRBN PROTACs (contrast
+case)</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>14-3-3 stabilizer glues (fusicoccin/cotylenin)</td>
+<td>CONFIRMED</td>
+<td>fusicoccin A explicitly described as a 14-3-3 PPI-stabilizing
+molecular glue</td>
+<td><a href="https://doi.org/10.1002/advs.202508543">https://doi.org/10.1002/advs.202508543</a>
+· <a href="https://doi.org/10.1039/d4sc05963h">https://doi.org/10.1039/d4sc05963h</a></td>
+</tr>
+<tr>
+<td>KRAS G12C/G12D and STAT3 degraders as formerly-undruggable
+examples</td>
+<td>CONFIRMED</td>
+<td>G12C: LC-2 (Bond et al., <em>ACS Cent Sci</em> 2020). G12D: ASP3082.
+STAT3: SD-36 (Bai et al., <em>Cancer Cell</em> 2019)</td>
+<td><a href="https://doi.org/10.1021/acscentsci.0c00411">https://doi.org/10.1021/acscentsci.0c00411</a>
+· <a href="https://doi.org/10.1016/j.ccell.2019.10.002">https://doi.org/10.1016/j.ccell.2019.10.002</a></td>
+</tr>
+<tr>
+<td>FBXO22-based glue degraders</td>
+<td>CONFIRMED (with precision note)</td>
+<td>Real, 2025 wave: SMARCA2/4 (Villemure et al., <em>Nat Commun</em>
+16:9679, 2025, cpd G-6599), NSD2/CDK12, TEAD (FBXO22
+<strong>C326</strong>). Mechanism is <strong>covalent cysteine
+engagement</strong>, so "glue" is loose.</td>
+<td><a href="https://doi.org/10.1038/s41467-025-64669-4">https://doi.org/10.1038/s41467-025-64669-4</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_materials_chemistry_31-li-superionic-conductor">C1_materials_chemistry_31
+(Li superionic conductor)</h3>
+<div aria-label="C1_materials_chemistry_31
+(Li superionic conductor) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Li10GeP2S12 and Li9.54Si1.74P1.44S11.7Cl0.3</td>
+<td>CONFIRMED — every subscript exact</td>
+<td>Kamaya et al., <em>Nat Mater</em> 2011; Kato et al., <em>Nat
+Energy</em> 1:16030 (2016)</td>
+<td><a href="https://doi.org/10.1038/nmat3066">https://doi.org/10.1038/nmat3066</a>
+· <a href="https://doi.org/10.1038/nenergy.2016.30">https://doi.org/10.1038/nenergy.2016.30</a></td>
+</tr>
+<tr>
+<td>Argyrodites Li6PS5X (X = Cl, Br, I)</td>
+<td>CONFIRMED — correct general formula</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1038/s41467-025-64357-3">https://doi.org/10.1038/s41467-025-64357-3</a></td>
+</tr>
+<tr>
+<td>Garnet LLZO Li7La3Zr2O12 with Ta/Al doping</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.3390/ijms241612905">https://doi.org/10.3390/ijms241612905</a></td>
+</tr>
+<tr>
+<td><strong>"NASICON LATP/LAGP Li1+xAlxTi2-x(PO4)3"</strong></td>
+<td><strong>WRONG</strong></td>
+<td>That formula is <strong>LATP only</strong> (typ.
+Li1.3Al0.3Ti1.7(PO4)3). <strong>LAGP is germanium-based:
+Li1+xAlxGe2-x(PO4)3</strong> (typ. Li1.5Al0.5Ge1.5(PO4)3). Two formulas
+are needed. <strong>This one bites:</strong> the item's
+<code>expert_baseline</code> argues the field is forced onto
+"Ge/rare-earth-bearing oxides," and the query's hard constraint is
+"avoid scarce or costly constraining elements" — collapsing LAGP into
+the Ti formula deletes the exact Ge dependence the novelty argument
+rests on.</td>
+<td><a href="https://doi.org/10.1021/acsomega.0c01826">https://doi.org/10.1021/acsomega.0c01826</a>
+· <a href="https://doi.org/10.3390/molecules28248029">https://doi.org/10.3390/molecules28248029</a></td>
+</tr>
+<tr>
+<td>Perovskite LLTO Li3xLa(2/3-x)TiO3</td>
+<td>CONFIRMED — notation variant only</td>
+<td>—</td>
+<td><a href="https://doi.org/10.3390/ma16227088">https://doi.org/10.3390/ma16227088</a></td>
+</tr>
+<tr>
+<td>Halides Li3YCl6, Li3InCl6, Li3ScCl6, Li2ZrCl6</td>
+<td>CONFIRMED — all four real</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1021/acs.chemmater.5c02303">https://doi.org/10.1021/acs.chemmater.5c02303</a>
+· <a href="https://doi.org/10.1016/j.cej.2022.135413">https://doi.org/10.1016/j.cej.2022.135413</a></td>
+</tr>
+<tr>
+<td>Anti-perovskites Li3OCl and Li3OCl0.5Br0.5</td>
+<td>CONFIRMED — Li3OCl is the standard ordering</td>
+<td>—</td>
+<td><a href="https://doi.org/10.1002/advs.201500359">https://doi.org/10.1002/advs.201500359</a>
+· <a href="https://doi.org/10.1021/acsmaterialsau.1c00026">https://doi.org/10.1021/acsmaterialsau.1c00026</a></td>
+</tr>
+<tr>
+<td>Thin-film LiPON</td>
+<td>CONFIRMED</td>
+<td>Bates et al., <em>Solid State Ionics</em> 2000</td>
+<td><a href="https://doi.org/10.1016/S0167-2738(00)00327-1">https://doi.org/10.1016/S0167-2738(00)00327-1</a></td>
+</tr>
+<tr>
+<td>Thio-LISICON Li3.25Ge0.25P0.75S4; glass-ceramic Li7P3S11</td>
+<td>CONFIRMED — both stoichiometries appear verbatim</td>
+<td>Kanno &amp; Murayama, <em>JES</em> 2001</td>
+<td><a href="https://doi.org/10.1149/1.1379028">https://doi.org/10.1149/1.1379028</a>
+· <a href="https://doi.org/10.1016/j.electacta.2017.09.156">https://doi.org/10.1016/j.electacta.2017.09.156</a></td>
+</tr>
+<tr>
+<td>LiBH4, Li2B12H12, Li(CB11H12)</td>
+<td>CONFIRMED — all three real</td>
+<td>0.7Li(CB9H10)–0.3Li(CB11H12) reaches 6.7 mS/cm at 25 °C</td>
+<td><a href="https://doi.org/10.1038/s41467-019-09061-9">https://doi.org/10.1038/s41467-019-09061-9</a>
+· <a href="https://doi.org/10.1039/c5ee02941d">https://doi.org/10.1039/c5ee02941d</a></td>
+</tr>
+<tr>
+<td>Li3N and lithium nitride-halides; Na3Zr2Si2PO12 (context)</td>
+<td>CONFIRMED</td>
+<td>—</td>
+<td><a href="https://doi.org/10.3390/ma14143790">https://doi.org/10.3390/ma14143790</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_engineering_32-radiative-cooling--clean">C1_engineering_32
+(radiative cooling) — <strong>clean</strong></h3>
+<div aria-label="C1_engineering_32
+(radiative cooling) — clean table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raman et al. 2014 photonic multilayer (HfO2/SiO2 on Ag)</td>
+<td>CONFIRMED — Raman AP, Anoma MA, Zhu L, Rephaeli E, Fan S,
+<em>Nature</em> 515:540–544 (27 Nov 2014)</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/25428501/">https://pubmed.ncbi.nlm.nih.gov/25428501/</a></td>
+</tr>
+<tr>
+<td>Zhai et al. 2017 glass-polymer hybrid metamaterial (SiO2
+microspheres in polymer, Ag backing)</td>
+<td>CONFIRMED — <em>Science</em> 355:1062–1066 (2017); SiO2 microspheres
+in polymethylpentene (TPX) over 200 nm Ag; ~96% solar reflectance, IR
+emissivity &gt;0.93, 93 W/m² noon cooling</td>
+<td><a href="https://doi.org/10.1126/science.aai7899">https://doi.org/10.1126/science.aai7899</a></td>
+</tr>
+<tr>
+<td>Mandal et al. 2018 hierarchically porous P(VdF-HFP)</td>
+<td>CONFIRMED — <em>Science</em> 362:315–319 (2018); R_solar 0.96±0.03,
+LWIR ε 0.97±0.02, ~6 °C sub-ambient, ~96 W/m²</td>
+<td><a href="https://doi.org/10.1126/science.aat9513">https://doi.org/10.1126/science.aat9513</a></td>
+</tr>
+<tr>
+<td>Purdue ultra-white BaSO4-acrylic paint (Ruan group)</td>
+<td>CONFIRMED — Ruan-group BaSO4 paint/film line
+(Li/Peoples/Felicelli/Ruan)</td>
+<td><a href="https://doi.org/10.1515/nanoph-2023-0567">https://doi.org/10.1515/nanoph-2023-0567</a></td>
+</tr>
+<tr>
+<td>Purdue CaCO3-acrylic white paint</td>
+<td>CONFIRMED — Ruan-group CaCO3-acrylic paint</td>
+<td><a href="https://doi.org/10.1016/j.xcrp.2020.100221">https://doi.org/10.1016/j.xcrp.2020.100221</a></td>
+</tr>
+<tr>
+<td>Delignified nanowood / cellulose cooler (Hu group)</td>
+<td>CONFIRMED — Li T et al., <em>Science</em> 364:760–763 (2019), "A
+radiative cooling structural material"</td>
+<td><a href="https://doi.org/10.1126/science.aau9101">https://doi.org/10.1126/science.aau9101</a></td>
+</tr>
+<tr>
+<td>Silica aerogel &amp; anodized-aluminium coolers; PDMS-on-metal
+emitters; TiO2/ZnO baseline paints; hBN coatings; SiC/SiO2 metasurface
+selective emitters; colored/structural-color coolers</td>
+<td>CONFIRMED at family level — all real, well-represented device
+classes</td>
+<td><a href="https://doi.org/10.1515/nanoph-2024-0489">https://doi.org/10.1515/nanoph-2024-0489</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c1_arts_humanities_33-tuning-system--clean">C1_arts_humanities_33
+(tuning system) — <strong>clean</strong></h3>
+<div aria-label="C1_arts_humanities_33
+(tuning system) — clean table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12-TET, Pythagorean, meantone (1/4- and 1/6-comma), 5-limit JI
+diatonic</td>
+<td>CONFIRMED (common knowledge)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Well temperaments Werckmeister III, Kirnberger III,
+<strong>Vallotti</strong>, Young</td>
+<td>CONFIRMED — Vallotti temperament, invented by Francesco Antonio
+Vallotti</td>
+<td><a href="https://en.wikipedia.org/wiki/Well_temperament">https://en.wikipedia.org/wiki/Well_temperament</a></td>
+</tr>
+<tr>
+<td>19-TET; 22-TET and <strong>Indian shruti</strong> systems; 31-TET
+(Huygens/Fokker); 53-TET</td>
+<td>CONFIRMED — the 22-śruti division of the octave is attested from the
+<em>Nāṭyaśāstra</em> onward</td>
+<td><a href="https://en.wikipedia.org/wiki/Shruti_(music)">https://en.wikipedia.org/wiki/Shruti_(music)</a></td>
+</tr>
+<tr>
+<td>Bohlen-Pierce: tritave (3:1) divided into <strong>13 equal
+steps</strong></td>
+<td>CONFIRMED — approximates the 3:5:7 wide triad at steps 0/6/10</td>
+<td><a href="https://microtonal.miraheze.org/wiki/Bohlen%E2%80%93Pierce_scale">https://microtonal.miraheze.org/wiki/Bohlen%E2%80%93Pierce_scale</a></td>
+</tr>
+<tr>
+<td>Wendy Carlos Alpha / Beta / Gamma</td>
+<td>CONFIRMED — steps 77.965 c / 63.8 c / 35.1 c; introduced on
+<em>Beauty in the Beast</em> (1986)</td>
+<td><a href="https://en.wikipedia.org/wiki/Wendy_Carlos_scales">https://en.wikipedia.org/wiki/Wendy_Carlos_scales</a></td>
+</tr>
+<tr>
+<td>Harry Partch 43-tone JI</td>
+<td>CONFIRMED (common knowledge)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Named regular temperaments: meantone, porcupine,
+<strong>miracle</strong>, <strong>magic</strong>,
+<strong>pajara</strong></td>
+<td>CONFIRMED — miracle discovered by George Secor (eponym of the
+<em>secor</em>); magic = regular temperament with generator ≈ 5/4;
+pajara first defined by Paul Erlich. Porcupine is standard in
+regular-temperament theory but verified only indirectly (en.xen.wiki is
+Cloudflare-blocked to automated fetches).</td>
+<td><a href="https://en.wikipedia.org/wiki/George_Secor">https://en.wikipedia.org/wiki/George_Secor</a>
+· <a href="https://en.wikipedia.org/wiki/Magic_temperament">https://en.wikipedia.org/wiki/Magic_temperament</a>
+· <a href="https://en.wikipedia.org/wiki/Paul_Erlich">https://en.wikipedia.org/wiki/Paul_Erlich</a></td>
+</tr>
+<tr>
+<td>Erv Wilson MOS and combination-product-set scales</td>
+<td>CONFIRMED — Wilson coined both</td>
+<td><a href="https://en.wikipedia.org/wiki/Erv_Wilson">https://en.wikipedia.org/wiki/Erv_Wilson</a></td>
+</tr>
+</tbody>
+</table></div>
+<hr/>
+<h2 id="recommended-mechanical-replacements">Recommended mechanical
+replacements</h2>
+<p>Apply to <code>question/crest_challenges.jsonl</code> (and the audit
+copy). Each is an exact substring replacement; the surrounding entry
+text is unchanged unless shown.</p>
+<h3 id="wrong--fix-before-release">WRONG — fix before release</h3>
+<p><strong>1. <code>C1_biology_medicine_00</code> /
+<code>known_answers</code> — nonexistent compound</strong></p>
+<pre tabindex="0"><code>OLD: Darobactin and dynobactin N: bind BamA of the BAM
+NEW: Darobactin and dynobactin A: bind BamA of the BAM</code></pre>
+<p><strong>2. <code>C1_biology_medicine_00</code> /
+<code>known_answers</code> — wrong drug code</strong></p>
+<pre tabindex="0"><code>OLD: Type I signal peptidase (LepB) inhibitors: arylomycins, G0775/RG6114. =&gt; LepB KNOWN.
+NEW: Type I signal peptidase (LepB) inhibitors: arylomycins, G0775 (Genentech; Smith et al., Nature 2018). =&gt; LepB KNOWN.</code></pre>
+<p>(<code>RG6114</code> is inavolisib/GDC-0077, an unrelated PI3Kα drug
+— delete, do not "correct" to another code.)</p>
+<p><strong>3. <code>C1_engineering_04</code> /
+<code>known_answers</code> — phantom co-author + wrong companion
+journal</strong></p>
+<pre tabindex="0"><code>OLD: Correa, Klatt, Spadaccini, Seepersad et al., 'Negative stiffness honeycombs for recoverable shock isolation,' Rapid Prototyping Journal, 2015 (and companion work in Additive Manufacturing, 2015).
+NEW: Correa, Klatt, Cortes, Haberman, Kovar, Seepersad, 'Negative stiffness honeycombs for recoverable shock isolation,' Rapid Prototyping Journal 21(2):193-200, 2015 (and companion work: Correa, Seepersad, Haberman, 'Mechanical design of negative stiffness honeycomb materials,' Integrating Materials and Manufacturing Innovation 4:10, 2015).</code></pre>
+<p><strong>4. <code>C1_materials_chemistry_31</code> /
+<code>known_answers</code> — LAGP given the LATP formula</strong></p>
+<pre tabindex="0"><code>OLD: NASICON LATP/LAGP Li1+xAlxTi2-x(PO4)3
+NEW: NASICON LATP Li1+xAlxTi2-x(PO4)3 and LAGP Li1+xAlxGe2-x(PO4)3</code></pre>
+<h3 id="imprecise--recommended">IMPRECISE — recommended</h3>
+<p><strong>5. <code>C1_biology_medicine_00</code> /
+<code>known_answers</code> — polymyxin programs conflated</strong></p>
+<pre tabindex="0"><code>OLD: Polymyxins/colistin and next-gen analogs SPR206, SPR741/MRX-8: bind lipid A / permeabilize the outer membrane.
+NEW: Polymyxins/colistin and next-gen analogs SPR206 (Spero, direct-acting) and MRX-8 (MicuRx, direct-acting), plus the non-bactericidal potentiator SPR741 (Spero): bind lipid A / permeabilize the outer membrane.</code></pre>
+<p><strong>6. <code>C1_economics_business_02</code> /
+<code>known_answers</code> — 24h cap applies only to Preemptible
+VMs</strong></p>
+<pre tabindex="0"><code>OLD: Google Cloud Spot/Preemptible VMs (fixed or percentage discount, no bidding, ~24h max life, ~30s preemption notice)
+NEW: Google Cloud Spot VMs (fixed or percentage discount, no bidding, no maximum runtime, ~30s preemption notice) and their legacy Preemptible-VM predecessor (~24h max life, ~30s notice)</code></pre>
+<p><strong>7. <code>C1_engineering_04</code> /
+<code>known_answers</code> — range should open at 2007 (Mullin et al.,
+PRL 2007)</strong></p>
+<pre tabindex="0"><code>OLD: Bertoldi, Reis, Shim, Mullin et al., ~2008-2017.
+NEW: Mullin, Bertoldi, Reis, Shim et al., ~2007-2017 (Mullin et al., PRL 2007; buckliball: Shim et al., PNAS 2012).</code></pre>
+<p><strong>8. <code>C1_engineering_04</code> /
+<code>known_answers</code> — Maskery TPMS work is not TPU</strong></p>
+<pre tabindex="0"><code>OLD: Triply periodic minimal surface (TPMS) lattices (gyroid, Schwarz-P) printed in TPU/elastomer for recoverable cushioning — e.g., Maskery, Ashcroft, Hague et al. and related TPU-gyroid energy-absorption studies, ~2017-2021.
+NEW: Triply periodic minimal surface (TPMS) lattices (gyroid, Schwarz-P) as energy absorbers — Maskery, Ashcroft, Hague et al. in laser-sintered polyamide (~2017-2018) plus a separate body of TPU/elastomer-gyroid recoverable-cushioning studies, ~2018-2021.</code></pre>
+<p><strong>9. <code>C1_law_policy_03</code> / <code>known_answers</code>
+— Macauley did not publish on orbital deposit-refund/bonds</strong></p>
+<pre tabindex="0"><code>OLD: Deposit-refund schemes and performance (deorbit) bonds — Molly Macauley (Resources for the Future) and OECD space-economy analyses: operators post a refundable bond returned only on verified end-of-life disposal. KNOWN.
+NEW: Deposit-refund schemes and performance (deorbit) bonds — OECD space-economy analysis (Undseth, Jolly &amp; Olivari, 'Space sustainability: the economics of space debris in perspective,' OECD STI Policy Paper, Apr 2020) and academic bond proposals (e.g. Bullock &amp; Johanson, MIT Science Policy Review 2021); background orbital-debris economics from Molly Macauley (Resources for the Future, Acta Astronautica 2015): operators post a refundable bond returned only on verified end-of-life disposal. KNOWN.</code></pre>
+<p><strong>10. <code>C1_law_policy_03</code> /
+<code>known_answers</code> — SSR dates</strong></p>
+<pre tabindex="0"><code>OLD: Space Sustainability Rating — World Economic Forum concept (~2019-2021), operational home at eSpace/EPFL from ~2022
+NEW: Space Sustainability Rating — World Economic Forum concept (Global Future Council on Space, 2016; design consortium appointed 2019), eSpace/EPFL selected as operator May 2021, went live June 2022, independent SSR Association from Jan 2023</code></pre>
+<p><strong>11. <code>C1_materials_chemistry_01</code> /
+<code>known_answers</code> — Cs2TiI6 indirect-gap figure not
+reproducible</strong></p>
+<pre tabindex="0"><code>OLD: (Cs2TiI6 measured 1.56 eV direct / 1.58 eV indirect)
+NEW: (Cs2TiI6 films: direct and indirect gaps both reported ~1.56 eV, Aslam et al., Mater Sci Eng B 296:116645, 2023)</code></pre>
+<p><strong>12. <code>C1_materials_chemistry_01</code> /
+<code>expert_baseline</code> — abundances mix two crustal
+datasets</strong></p>
+<pre tabindex="0"><code>OLD: (Zr ~193 ppm, Hf ~5.3 ppm, Ba ~628 ppm, S ~350 ppm crust)
+NEW: (upper continental crust, Rudnick &amp; Gao 2003: Zr ~193 ppm, Hf ~5.3 ppm, Ba ~628 ppm, S ~62 ppm; whole-crust CRC values: Zr ~165, Hf ~3.0, Ba ~425, S ~350 ppm)</code></pre>
+<p><em>If a single number per element is wanted, use one consistent
+dataset — the current mix silently swaps reference frames
+mid-sentence.</em></p>
+<p><strong>13. <code>C1_biology_medicine_30</code> /
+<code>known_answers</code> — glue-vs-PROTAC conflation and misattributed
+BRD4</strong></p>
+<pre tabindex="0"><code>OLD: Covalent glue recruiters using RNF114 (nimbolide), KEAP1, DCAF11, or DCAF16 to degrade BRD4 and others
+NEW: Covalent E3 recruiters using RNF114 (nimbolide; Spradlin et al. 2019 - BRD4/BCR-ABL degradation via RNF114 from Luo et al. 2021), KEAP1, DCAF11, or DCAF16 (introduced as electrophilic bifunctional PROTACs, with monovalent versions only more recently)</code></pre>
+<h3 id="optional-strengthening-no-verdict-against-the-text">Optional
+strengthening (no verdict against the text)</h3>
+<ul>
+<li><code>C1_biology_medicine_30</code>: name <strong>SIAH1</strong> as
+the BI-3802/BCL6 ligase, and cite Słabicki 2020 / Mayor-Ruiz 2020
+explicitly. Reframe FBXO22 as <strong>covalent
+cysteine-engaging</strong> degraders (real targets: SMARCA2/4, NSD2,
+CDK12, TEAD; 2025).</li>
+<li><code>C1_biology_medicine_00</code> <code>expert_baseline</code>:
+either cite a specific A. baumannii essential-gene source for
+<em>murJ</em> (Ward et al., <em>mBio</em> 2024 is the best current one)
+or soften "is called essential in … Tn-seq essential-gene sets (ATCC
+17978 / AB5075)" to "is essential or near-essential in Gram-negative
+essential-gene datasets."</li>
+<li><code>C1_law_policy_03</code>: TraCSS's FY2026 funding was proposed
+for termination and restored by Senate appropriators (July 2025). A
+2026-dated item that treats TraCSS as a settled fixture is optimistic;
+one sentence of hedging would future-proof it.</li>
+<li><code>C1_law_policy_03</code>: ClearSpace-1 has re-targeted from
+VESPA to PROBA-1 with launch slipped to ~2028/29 — worth a parenthetical
+if answers might be scored on mission status.</li>
+</ul>
+<hr/>
+<h2 id="overall-assessment-are-c1s-novelty-baselines-trustworthy-enough-to-score-against">Overall
+assessment: are C1's novelty baselines trustworthy enough to score
+against?</h2>
+<p><strong>Yes, after the four <code>known_answers</code> fixes (items
+1, 2, 4 above plus the engineering citation).</strong></p>
+<p>The reasoning:</p>
+<ol type="1">
+<li><p><strong>Nothing is fabricated.</strong> Across ~95 checkable
+claims spanning ten disciplines, every named paper, compound, statute,
+standard, mission and commercial product turned out to exist. This is
+the property that matters most for a novelty yardstick: a hallucinated
+prior-art entry would penalise a genuinely novel answer for "restating"
+something that was never published. That failure mode is absent from
+C1.</p></li>
+<li><p><strong>The error rate is low and the errors are
+shallow.</strong> 5 WRONG out of ~95 (~5%), and four of the five are
+<em>labelling</em> errors — a wrong compound suffix, a wrong internal
+drug code, a phantom co-author, a wrong journal. In every one of those
+cases the <strong>underlying target/mechanism/prior art is correctly
+identified</strong>, so the novelty boundary the entry draws is still in
+the right place. An agent proposing BamA would still be correctly marked
+not-new; an agent proposing LepB would still be correctly marked
+not-new.</p></li>
+<li><p><strong>One error has real semantic bite.</strong>
+<code>C1_materials_chemistry_31</code>'s LAGP formula is the exception.
+That item's whole novelty framing is "you can't get &gt;1 mS/cm plus
+Li-metal stability without sulfides or <strong>Ge</strong>/rare-earth
+oxides," and the prior-art list as written contains no germanium NASICON
+at all — LAGP is spelled with the titanium formula. An answer that
+proposed a Ge-free NASICON could be scored as more novel than it is, or
+a judge could get confused about what the excluded-element constraint
+even covers. <strong>Fix this one before release.</strong></p></li>
+<li><p><strong>The <code>expert_baseline</code> fields are in better
+shape than expected.</strong> These are prose arguments, mostly
+unfalsifiable by design, but where they make hard checkable claims they
+hold up: Bartel τ &lt; 4.18 is verbatim correct, MurJ's structural and
+superfamily characterisation is correct, the OST/Liability-Convention
+article mapping is verbatim correct, and the TPU material data is right.
+The two soft spots (mixed crustal-abundance datasets, the unverified
+<em>murJ</em> Tn-seq citation) affect the <em>decoration</em> of the
+argument, not its logic.</p></li>
+<li><p><strong>Three items are fully clean:</strong>
+<code>C1_arts_humanities_05</code>, <code>C1_arts_humanities_33</code>,
+and <code>C1_engineering_32</code>. The two humanities items are notably
+strong — the sestina permutation, the Queneau-number criterion, the
+dróttkvætt line/syllable count, and the Cisiojanus dating all check out
+exactly, which is not the norm for humanities prior-art lists in
+AI-authored benchmarks.</p></li>
+<li><p><strong>Residual risk to be aware of.</strong> (a) The IMPRECISE
+cluster in <code>C1_law_policy_03</code> and
+<code>C1_materials_chemistry_01</code> consists of dates and numbers
+that a strong answer might itself get <em>more</em> right than the
+baseline does — a judge scoring "agrees with known_answers" rather than
+"agrees with reality" would punish accuracy. Worth a rubric note. (b)
+Two items (<code>C1_law_policy_03</code>,
+<code>C1_economics_business_02</code>) reference fast-moving operational
+facts (TraCSS funding, cloud spot-market terms) that will drift; they
+need a re-check on any future release, not a fix now.</p></li>
+</ol>
+<p><strong>Verdict: release-ready for 6 of 10 items as-is, and for all
+10 after applying the four WRONG fixes. The nine IMPRECISE fixes are
+strongly recommended but not blocking.</strong></p>
+<hr/>
+<h2 id="sourcing-limitations-to-disclose">Sourcing limitations to
+disclose</h2>
+<ul>
+<li>The session's WebSearch budget (200 calls) was exhausted partway
+through; the remainder of the audit was done via WebFetch and direct
+HTTPS against primary sources and literature APIs (Europe PMC, Crossref,
+OpenAlex, Semantic Scholar, PubChem, USENIX/NeurIPS proceedings).</li>
+<li>Three sources were unreachable to automated fetching and forced
+fallbacks: <strong>ScienceDirect</strong> (403, blocked the Cs2TiI6 full
+text — hence that verdict's low confidence),
+<strong>science.org</strong> (Cloudflare, worked around via PMC), and
+<strong>en.xen.wiki</strong> (Cloudflare, so "porcupine temperament" is
+confirmed only indirectly).</li>
+<li><code>C1_engineering_04</code>'s adidas 4DFWD primary press release
+now returns 404/202; that date rests on secondary sources.</li>
+</ul>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

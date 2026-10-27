@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Paper comparison: P2 and P3 · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest-paper-comparison--p2-paper_p2_benchmark_only-vs-p3-paper_p3_caesar_hybrid">CREST
+Paper Comparison — P2 ( paper_p2_benchmark_only/ ) vs P3
+( paper_p3_caesar_hybrid/ )</a></li><li><a href="#verdict-40-for-paper-a-p2-benchmark-only">Verdict: 4–0 for Paper
+A (P2, benchmark-only)</a></li><li><a href="#the-core-trade-off-the-reviewers-converged-on">The core
+trade-off the reviewers converged on</a></li><li><a href="#why-a-wins-on-each-lens">Why A wins on each lens</a></li><li><a href="#consensus-weaknesses-to-fix">Consensus weaknesses to fix</a></li><li><a href="#decision">Decision</a></li><li><a href="#round-2-re-review-post-revision-50-items-upgraded-judge-short-prompts">Round
+2 re-review (post-revision: 50 items, upgraded judge, short
+prompts)</a></li></ul></nav></details><article><h1 id="crest-paper-comparison--p2-paper_p2_benchmark_only-vs-p3-paper_p3_caesar_hybrid">CREST
+Paper Comparison — P2 (<code>paper_p2_benchmark_only/</code>) vs P3
+(<code>paper_p3_caesar_hybrid/</code>)</h1>
+<p><strong>Question:</strong> which framing is the stronger ICLR 2027
+submission?</p>
+<ul>
+<li><strong>Paper A = P2
+(<code>paper_p2_benchmark_only/</code>)</strong> — benchmark-only. CREST
+is the sole hero; the authors' agent (Caesar) is one cited entrant among
+many; mechanism/ablation analysis is an optional, IP-gated §7.</li>
+<li><strong>Paper B = P3 (<code>paper_p3_caesar_hybrid/</code>)</strong>
+— CREST + Caesar hybrid. CREST + a "creativity is task-dependent"
+finding + Caesar as co-hero, with component ablations and a
+citation-grounding sanity check.</li>
+</ul>
+<p>Method: four independent ICLR-reviewer agents (benchmark-track rigor;
+construct validity; adversarial Area Chair on novelty/positioning;
+statistics &amp; experimental design), each read <strong>both</strong>
+full drafts + <code>DESIGN.md</code>, judged the <em>design/framing</em>
+(experiment numbers are intentional placeholders), and declared the
+stronger paper with no ties allowed.</p>
+<h2 id="verdict-40-for-paper-a-p2-benchmark-only">Verdict: 4–0 for Paper
+A (P2, benchmark-only)</h2>
+<div aria-label="Verdict: 4–0 for Paper
+A (P2, benchmark-only) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Reviewer (lens)</th>
+<th scope="col">Paper A (P2)</th>
+<th scope="col">Paper B (P3)</th>
+<th scope="col">Stronger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1 — Datasets &amp; Benchmarks</td>
+<td><strong>7</strong> / Accept (borderline)</td>
+<td>6 / Borderline</td>
+<td><strong>A</strong></td>
+</tr>
+<tr>
+<td>R2 — Construct validity</td>
+<td><strong>7</strong> / Accept</td>
+<td>6 / Borderline</td>
+<td><strong>A</strong></td>
+</tr>
+<tr>
+<td>AC — Adversarial novelty/positioning</td>
+<td><strong>5</strong> / Borderline</td>
+<td>4 / Reject</td>
+<td><strong>A</strong></td>
+</tr>
+<tr>
+<td>R4 — Statistics &amp; experimental design</td>
+<td><strong>7</strong> / Accept (leaning)</td>
+<td>6 / Borderline</td>
+<td><strong>A</strong></td>
+</tr>
+<tr>
+<td><strong>Mean</strong></td>
+<td><strong>6.5</strong></td>
+<td><strong>5.5</strong></td>
+<td><strong>A (unanimous)</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>This corroborates the earlier independent P2-vs-P3 decision (P2) —
+now via four fresh, blinded reviewer lenses rather than the
+decision-analysis ensemble.</p>
+<h2 id="the-core-trade-off-the-reviewers-converged-on">The core
+trade-off the reviewers converged on</h2>
+<ul>
+<li><strong>Higher ceiling: B (P3).</strong> If every placeholder lands
+— clean single-dissociation ablations, the pattern generalizes across
+agents, the human study confirms C2/C3, Caesar is top-2 on grounding — B
+is the richer, more mechanistic, more citable paper. It answers
+<em>why</em>, not just <em>what</em>, and its draft carries better
+contamination hygiene and a larger item set (50 vs 30).</li>
+<li><strong>Higher floor / lower rejection risk: A (P2).</strong>
+Removable agent, quarantined optional mechanism, cleanest novelty story,
+construct defined independently of any evaluated agent. Its worst case
+is "borderline/incremental," not "desk-reject."</li>
+<li><strong>All four picked the higher floor.</strong> B buys its extra
+contributions precisely by leaning into the material that creates the
+shared <em>existential</em> risk (self-overlap with the authors' own
+Caesar preprint), and stakes a <em>general</em> title on one
+builder-owned system. "A wins in expectation; B wins only in the world
+where all placeholders land <strong>and</strong>
+self-overlap/COI/de-anonymization are all forgiven." (AC)</li>
+</ul>
+<h2 id="why-a-wins-on-each-lens">Why A wins on each lens</h2>
+<ul>
+<li><strong>Benchmarks (R1):</strong> A reads as a <em>neutral community
+standard</em> (agent de-emphasized, not top-1, all findings hold with it
+excluded); B's co-hero framing + "our agent ranks top-2 on grounding"
+invites the self-serving-benchmark critique that most damages a
+benchmark submission. A also has the deeper, first-class judge
+validation.</li>
+<li><strong>Construct validity (R2):</strong> A is the only draft that
+<em>empirically tests</em> discriminant validity (does
+<em>Surprising</em> carry variance beyond <em>New</em>?) via a
+pre-committed inter-axis correlation matrix + factor analysis, and it
+defuses the "predicted-null categories are exactly the judge-unreliable
+ones" confound with validity-stratified, human-primary scoring on C1/C5.
+B never checks N-vs-S dissociation and has a validation-format mismatch
+(1–10 CAT judge vs pairwise human study).</li>
+<li><strong>Adversarial AC:</strong> B's single most likely rejection
+reason is <em>existential self-overlap</em> — agent, architecture,
+ablations, and cross-agent table all already in the cited preprint, plus
+a builder-owned co-hero. A's most likely rejection reason is thinner
+novelty over the same preprint, but A <em>minimizes</em> that shared
+risk instead of amplifying it.</li>
+<li><strong>Statistics (R4):</strong> Both share the same machinery
+(crossed random effects, multiplicity, TOST, LOFO, length/budget
+controls). A's plan is scoped slightly <em>above</em> its claims
+(instrument + descriptive crossover, with honest power caveats). B takes
+on a <em>causal, mechanism-level</em> burden but backs it with n=1-agent
+ablations and load-bearing off-target equivalence tests it never
+concedes are underpowered, plus taxonomy-agent circularity A avoids by
+making no mechanism claim. "B's headline outruns its design."</li>
+</ul>
+<h2 id="consensus-weaknesses-to-fix">Consensus weaknesses to fix</h2>
+<p><strong>In A (the chosen paper) — all fixable, port from
+B:</strong></p>
+<ol type="1">
+<li><strong>Contamination/release machinery is under-specified in the
+paper text</strong> (R1, decisive caveat): B's draft §3 explicitly
+states SHA-256-hashed snapshot, canary strings, rolling
+brand-new-question set, Croissant metadata; A's §3 names only frozen
+snapshot + pre/post-cutoff split + datasheet. <strong>Port B's
+contamination hygiene language into A's §3 and ship the
+datasheet.</strong> (Structural in B; a one-paragraph omission in
+A.)</li>
+<li><strong>Small item set</strong> (R1, R4): 30 items, ~6/cell — the
+crossover interaction and TOST equivalence A leans on hardest are the
+most power-hungry tests. <strong>Scale toward ~50 items
+(~10/cell)</strong>, as B already specifies.</li>
+<li><strong>Soft taxonomy cell</strong> (R2): C4 "meta-creativity" lacks
+a mechanism of Gentner/Byrne-level rigor. Tighten its theoretical
+grounding.</li>
+<li><strong>§7 dilemma</strong> (R2): if the optional IP-gated mechanism
+case study is <em>kept</em>, it re-imports the single-entrant COI it was
+designed to avoid; if <em>dropped</em>, the finding stays abstract. Keep
+it removable and gated on Caesar not being top-1 (as designed).</li>
+</ol>
+<p><strong>In B (not pursued) — mostly structural, not cheaply
+fixable:</strong></p>
+<ul>
+<li>Self-serving co-hero framing + existential self-overlap with the
+preprint; single-agent generality on a general title; §6 "Caesar top-2"
+showcase; COI/double-blind/IP exposure from describing the authors' own
+agent; no discriminant-validity test; pairwise-vs-1–10 validation
+mismatch.</li>
+</ul>
+<h2 id="decision">Decision</h2>
+<p><strong>Ship Paper A (P2,
+<code>paper_p2_benchmark_only/</code>).</strong> Absorb B's two cheap
+wins — contamination/release hygiene in §3 + the datasheet, and a larger
+item set — without absorbing B's framing risk. Keep the P3 hybrid
+(<code>paper_p3_caesar_hybrid/</code>) on the shelf as the
+<strong>IP-gated upgrade path</strong>: it becomes viable only if the
+five pre-registered triggers go green (Caesar clearly not top-1,
+cross-agent generality confirmed, judge↔︎human agreement secured on
+C1/C5, IP clearance to describe the agent, and the ablation
+single-dissociation holds).</p>
+<hr/>
+<h2 id="round-2-re-review-post-revision-50-items-upgraded-judge-short-prompts">Round
+2 re-review (post-revision: 50 items, upgraded judge, short
+prompts)</h2>
+<p>After the fix sweep — scaled to <strong>50 challenges
+(10/category)</strong>, agent-facing prompts made <strong>short and
+open</strong> with all rigor held judge-side, a <strong>multi-vendor
+LOFO + open-weight, human-validated</strong> judge, the renamed
+<strong>factual-grounding check</strong>, implemented statistics, and an
+honest live-web pilot — the same four reviewers re-reviewed both papers.
+<strong>Verdict unchanged: unanimous 4–0 for P2.</strong></p>
+<div aria-label="Round
+2 re-review (post-revision: 50 items, upgraded judge, short
+prompts) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Reviewer (lens)</th>
+<th scope="col">P2</th>
+<th scope="col">P3</th>
+<th scope="col">Stronger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Datasets &amp; Benchmarks</td>
+<td><strong>7</strong> Accept(borderline)</td>
+<td>5 Borderline</td>
+<td><strong>P2</strong></td>
+</tr>
+<tr>
+<td>Construct validity</td>
+<td><strong>6</strong> Borderline(lean accept)</td>
+<td>4 Reject</td>
+<td><strong>P2</strong></td>
+</tr>
+<tr>
+<td>Adversarial Area Chair</td>
+<td><strong>6</strong> Borderline</td>
+<td>4 Reject</td>
+<td><strong>P2</strong></td>
+</tr>
+<tr>
+<td>Statistics &amp; design</td>
+<td><strong>6</strong> Borderline(accept-leaning)</td>
+<td>4 Reject</td>
+<td><strong>P2</strong></td>
+</tr>
+<tr>
+<td><strong>Mean</strong></td>
+<td><strong>6.25</strong></td>
+<td><strong>4.25</strong></td>
+<td><strong>P2 (unanimous)</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What the revision changed:</strong> the shared upgrades
+<strong>lifted P2's floor from ~borderline-reject toward
+borderline-accept</strong> — the scale-up + implemented stats + the
+discriminant-validity (New-vs-Surprising factor) test directly answered
+round 1's power and construct-validity critiques. They did
+<strong>not</strong> move P3's binding constraint: self-overlap with the
+authors' own preprint + COI (agent as co-hero, the "our agent ranks
+top-2" grounding showcase) + a <strong>causal, mechanism-level claim
+whose limiting unit is a single agent (n=1)</strong> — which the stats
+reviewer notes <em>item-scaling structurally cannot fix</em> (you need
+more agents, not more items). P3 retains the higher ceiling if every
+placeholder lands; P2 retains the decisively higher floor.
+<strong>Decision stands: ship P2; keep P3 as the IP-gated upgrade
+path.</strong></p>
+<p><em>Reviewer transcripts synthesized from two rounds of four parallel
+<code>general-purpose</code> agent reviews; scores on the ICLR 1–10
+scale.</em></p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

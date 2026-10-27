@@ -1,0 +1,2971 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Citation audit: C2 · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest-live-web-citation-audit--c2-counterfactual-reasoning-10-items">CREST
+live-web citation audit — C2 (counterfactual reasoning), 10 items</a></li><li><a href="#0-headline-findings">0. Headline findings</a></li><li><a href="#1-priority-claim-1--c2_engineering_10--michael-hippke">1.
+Priority claim 1 — C2_engineering_10 / Michael Hippke</a></li><li><a href="#2-priority-claim-2--c2_economics_business_08-residual-statistic-check">2.
+Priority claim 2 — C2_economics_business_08 residual-statistic check</a></li><li><a href="#3-c2_engineering_10--full-claim-table">3. C2_engineering_10 — full claim table</a></li><li><a href="#4-c2_economics_business_08--full-claim-table">4. C2_economics_business_08 — full claim table</a></li><li><a href="#5-c2_arts_humanities_11--full-claim-table">5. C2_arts_humanities_11 — full claim table</a></li><li><a href="#6-c2_biology_medicine_06--full-claim-table">6. C2_biology_medicine_06 — full claim table</a></li><li><a href="#7-c2_materials_chemistry_07-no-crystallinity-world--full-claim-table">7. C2_materials_chemistry_07 (no-crystallinity world) — full
+claim table</a></li><li><a href="#8-c2_materials_chemistry_35-non-protective-al-oxide--full-claim-table">8. C2_materials_chemistry_35 (non-protective Al oxide) — full
+claim table</a></li><li><a href="#9-c2_biology_medicine_34-non-enucleated-red-cells--full-claim-table">9. C2_biology_medicine_34 (non-enucleated red cells) — full
+claim table</a></li><li><a href="#10-c2_law_policy_09-no-statute-of-limitations--full-claim-table">10. C2_law_policy_09 (no statute of limitations) — full claim
+table</a></li><li><a href="#11-c2_law_policy_37-no-plea-bargaining--full-claim-table">11. C2_law_policy_37 (no plea bargaining) — full claim
+table</a></li><li><a href="#12-c2_economics_business_36-no-shipping-container--full-claim-table">12. C2_economics_business_36 (no shipping container) — full
+claim table</a></li><li><a href="#13-summary-table--all-graded-claims">13. Summary table — all
+graded claims</a></li><li><a href="#14-counts-by-verdict">14. Counts by verdict</a></li><li><a href="#15-overall-assessment-are-c2s-baselines-trustworthy">15. Overall
+assessment: are C2's baselines trustworthy?</a></li><li><a href="#16-provenance--integrity-note-for-whoever-applies-these-fixes">16.
+Provenance / integrity note for whoever applies these fixes</a></li></ul></nav></details><article><h1 id="crest-live-web-citation-audit--c2-counterfactual-reasoning-10-items">CREST
+live-web citation audit — C2 (counterfactual reasoning), 10 items</h1>
+<p><strong>Scope:</strong> the 10 items whose <code>id</code> starts
+with <code>C2_</code> in
+<code>question/crest_challenges.audit.jsonl</code> (working copy;
+<strong>no <code>.jsonl</code> file was edited by this audit</strong>).
+<strong>Method:</strong> live WebSearch + WebFetch against primary
+sources (arXiv, Crossref, PubMed/PMC, legislation.gov.uk statute PDFs,
+CourtListener/Justia, publisher pages, MacTutor, Wikipedia as secondary
+corroboration only). Only real-world factual claims were graded; the
+counterfactual reasoning itself is not fact-checkable and was left
+alone. <strong>Date:</strong> 2026-07-30.</p>
+<p>Items audited: <code>C2_arts_humanities_11</code>,
+<code>C2_biology_medicine_06</code>,
+<code>C2_biology_medicine_34</code>,
+<code>C2_economics_business_08</code>,
+<code>C2_economics_business_36</code>, <code>C2_engineering_10</code>,
+<code>C2_law_policy_09</code>, <code>C2_law_policy_37</code>,
+<code>C2_materials_chemistry_07</code>,
+<code>C2_materials_chemistry_35</code>.</p>
+<hr/>
+<h2 id="0-headline-findings">0. Headline findings</h2>
+<ol type="1">
+<li><strong><code>C2_engineering_10</code> — WRONG figure, in
+<code>known_answers</code>.</strong> The Hippke citation itself is clean
+(venue, year, arXiv id, submission month all correct), but the paper's
+<code>~400,000 t</code> fuel figure is for a <strong>45 t
+Apollo-class</strong> mission, not a "Hubble-class payload". Hippke
+never mentions Hubble; his telescope example is <strong>JWST at 6.2 t →
+55,000 t</strong>. This is a <code>known_answers</code> error and must
+be fixed before release.</li>
+<li><strong><code>C2_biology_medicine_06</code> — two hard author-list
+errors, both in <code>known_answers</code>.</strong> Rudensky is not an
+author of Aluvihare et al., <em>Nat Immunol</em> 2004 (third author is
+Kallikourdis); Dunn is not an author of the 2011 <em>Science</em>
+immunoediting paper (Schreiber, Old &amp; Smyth). Nothing fabricated —
+both papers exist — but the attributions are wrong.</li>
+<li><strong><code>C2_arts_humanities_11</code> — one substantively wrong
+example.</strong> Melozzo da Forlì (c. 1438–1494) is offered as
+foreshortening that <em>predates</em> the vanishing-point construction;
+he postdates Brunelleschi and Alberti by two generations and works
+inside the perspective tradition.</li>
+<li><strong><code>C2_economics_business_08</code> — the prior pass's
+removals held.</strong> A byte-level scan of the item found
+<strong>no</strong> <code>%</code>, no <code>GDP</code>, no
+<code>billion/trillion</code>, no <code>Cox</code>, no
+<code>Edward</code> anywhere in
+<code>query</code>/<code>known_answers</code>/<code>expert_baseline</code>/<code>hard_rules</code>.
+The suspected-fabricated "5-20% of U.S. GDP" statistic and the "Edward
+Cox 1855" reference are gone and nothing comparable replaced them. Its
+~19 legal-history and finance-theory claims verify remarkably well,
+including against the <strong>primary statute text</strong> of the
+Companies Act 1879. Two residual soft spots: the <code>1863-1933</code>
+double-liability date range, and an unsourced characterisation of Murray
+Rothbard.</li>
+<li><strong><code>C2_engineering_10</code> also carries an unsourced
+number and a wrong hard rule.</strong> The "sustained ~16 g for a minute
+may be lethal" figure traces to a single uncited Wikipedia sentence that
+carries a live <em>citation-needed</em> tag; the standard primary
+reference (Eiband, NASA Memo 5-19-59E, 1959) explicitly says no lethal
+boundary has been established. Separately, <code>hard_rules[1]</code>'s
+"LOX/LH2 vacuum Isp &lt;= ~450 s" is beaten by flown hardware (RL10B-2 =
+465.5 s) — a rule that could penalise a <em>correct</em> agent
+answer.</li>
+<li><strong>Nothing fabricated anywhere in C2.</strong> Every cited
+paper, book, statute and case exists with the stated author/title. The
+failure mode in this category is <em>misattribution, date/figure drift,
+and absolutes that the comparative literature contradicts</em> — not
+invention. C2 is markedly cleaner than a category with invented
+citations would be, but four items need edits before release.</li>
+</ol>
+<hr/>
+<h2 id="1-priority-claim-1--c2_engineering_10--michael-hippke">1.
+Priority claim 1 — <code>C2_engineering_10</code> / Michael Hippke</h2>
+<p><code>known_answers[2]</code> states:</p>
+<blockquote>
+<p>Michael Hippke, 'Spaceflight from Super-Earths is difficult,' Int. J.
+Astrobiology 18 (2019), arXiv:1804.04727 (submitted Apr 2018) … chemical
+rockets remain (barely) viable only up to ~10 Earth masses (a few g) …
+(e.g., a Hubble-class payload from a 10-Earth-mass world would need on
+the order of ~400,000 t of fuel).</p>
+</blockquote>
+<div aria-label="1.
+Priority claim 1 — C2_engineering_10 / Michael Hippke table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Sub-claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Author "Michael Hippke"</td>
+<td>CONFIRMED</td>
+<td><a href="https://arxiv.org/abs/1804.04727">https://arxiv.org/abs/1804.04727</a></td>
+</tr>
+<tr>
+<td>Title "Spaceflight from Super-Earths is difficult"</td>
+<td>CONFIRMED</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Venue <em>Int. J. Astrobiology</em> vol. <strong>18</strong>, year
+<strong>2019</strong></td>
+<td>CONFIRMED</td>
+<td>journal ref on arXiv: <em>Int. J. Astrobiology</em>
+<strong>18</strong> (2019) 393–395; DOI 10.1017/S1473550418000198</td>
+</tr>
+<tr>
+<td>arXiv id <strong>1804.04727</strong></td>
+<td>CONFIRMED</td>
+<td>same</td>
+</tr>
+<tr>
+<td>"submitted Apr 2018"</td>
+<td>CONFIRMED</td>
+<td>v1 <strong>12 April 2018</strong>; v2 18 May 2018</td>
+</tr>
+<tr>
+<td>"required propellant mass is an EXPONENTIAL function of surface
+gravity"</td>
+<td>CONFIRMED</td>
+<td>abstract: "the required fuel mass for a given payload is an
+exponential function of planetary surface gravity"</td>
+</tr>
+<tr>
+<td>"chemical rockets … viable only up to ~10 Earth masses"</td>
+<td>CONFIRMED</td>
+<td>abstract: "chemical rockets still allow for escape velocities on
+Super-Earths up to 10x Earth mass"</td>
+</tr>
+<tr>
+<td>"(a few g)"</td>
+<td>CONFIRMED</td>
+<td>Hippke's worked case is a 10 M⊕ / 1.7 R⊕ world ⇒ g ≈ 3.5 g₀; real
+Kepler-20 b is 9.7 M⊕ / 1.868 R⊕ ⇒ g ≈ 2.8 g₀ — <a href="https://en.wikipedia.org/wiki/Kepler-20b">https://en.wikipedia.org/wiki/Kepler-20b</a></td>
+</tr>
+<tr>
+<td><strong>"a Hubble-class payload … ~400,000 t of fuel"</strong></td>
+<td><strong>WRONG</strong></td>
+<td>The paper attributes ~400,000 t to a <strong>45 t
+Apollo-class</strong> mission, and never mentions Hubble at all. Its
+telescope example is <strong>JWST (6.2 t) → 55,000 t</strong>. <a href="https://ar5iv.labs.arxiv.org/html/1804.04727">https://ar5iv.labs.arxiv.org/html/1804.04727</a></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Verbatim from the paper</strong> (via ar5iv full text):</p>
+<blockquote>
+<p>"For a mass ratio of 83, the minimum rocket (1 t to v_esc) would
+carry 9,000 t of fuel on Kepler-20 b … To lift a more useful payload of
+6.2 t as required for the James Webb Space Telescope on Kepler-20 b, the
+fuel mass would increase to 55,000 t … For a classical Apollo moon
+mission (45 t), the rocket would need to be considerably larger,
+~400,000 t."</p>
+</blockquote>
+<p>(For comparison the paper gives Saturn V a total mass of ~3,050 t for
+the same 45 t lunar payload. Hubble's actual launch mass is ~11 t — i.e.
+between Hippke's two bracketing cases, so the substituted label is wrong
+in <em>both</em> directions: wrong payload class <em>and</em> a figure
+that belongs to a payload 4× heavier.)</p>
+<p><strong>Exact replacement (old → new)</strong> — in
+<code>C2_engineering_10.known_answers[2]</code>:</p>
+<ul>
+<li>OLD:
+<code>(e.g., a Hubble-class payload from a 10-Earth-mass world would need on the order of ~400,000 t of fuel)</code></li>
+<li>NEW:
+<code>(e.g., from a 10-Earth-mass world like Kepler-20 b, a 6.2 t James-Webb-class payload would need ~55,000 t of fuel and a 45 t Apollo-class mission ~400,000 t, against the Saturn V's ~3,050 t for the same 45 t)</code></li>
+</ul>
+<p>This matters: the item's whole design is to <em>cap cheap
+surprise</em> by pre-listing Hippke's headline result as KNOWN. A judge
+holding a wrong quantitative anchor could mark a correct agent answer
+(55,000 t for a telescope-class payload) as a factual error.</p>
+<hr/>
+<h2 id="2-priority-claim-2--c2_economics_business_08-residual-statistic-check">2.
+Priority claim 2 — <code>C2_economics_business_08</code>
+residual-statistic check</h2>
+<p><strong>Question asked:</strong> did any unsupported statistic or
+dubious attribution survive the prior pass that removed a
+suspected-fabricated "5-20% of U.S. GDP" figure and an unconfirmed
+"Edward Cox 1855" reference?</p>
+<p><strong>Answer: essentially no.</strong> A programmatic scan of the
+item's <code>query</code>, <code>known_answers</code>,
+<code>expert_baseline</code> and <code>hard_rules</code> returns
+<strong>zero</strong> matches for <code>%</code>, <code>percent</code>,
+<code>GDP</code>, <code>billion</code>, <code>trillion</code>,
+<code>Cox</code>, or <code>Edward</code>. A file-wide scan for
+<code>5-20</code> returns only false positives elsewhere
+(<code>~15-20</code> mass ratios in <code>C2_engineering_10</code>;
+<code>2025-2026</code> date ranges in C4/C5 items). The item is now
+unusually statistic-free for an economics counterfactual — every
+quantitative-sounding claim has been replaced by dated legal/
+institutional facts, which is the right trade.</p>
+<p><code>known_answers[9]</code> even carries an explicit epistemic
+hedge that reads like the scar tissue of the removal:</p>
+<blockquote>
+<p>"…the aggregate magnitude of these externalities is contested and not
+precisely quantified in the literature."</p>
+</blockquote>
+<p><strong>Two residual soft spots remain</strong> (details in §4): the
+<code>1863-1933</code> double-liability range (IMPRECISE) and the
+Rothbard attribution in the same sentence as the hedge above
+(UNVERIFIABLE / mischaracterisation risk).</p>
+<hr/>
+<h2 id="3-c2_engineering_10--full-claim-table">3.
+<code>C2_engineering_10</code> — full claim table</h2>
+<div aria-label="3. C2_engineering_10 — full claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Galileo, <em>Two New Sciences</em> (1638), square-cube law</td>
+<td>CONFIRMED</td>
+<td><em>Discorsi e dimostrazioni matematiche intorno a due nuove
+scienze</em>, Leiden (Elzevir) 1638; the square-cube law and the
+disproportionate thickening of large animals' bones are in <strong>Day
+Two</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Two_New_Sciences">https://en.wikipedia.org/wiki/Two_New_Sciences</a></td>
+</tr>
+<tr>
+<td>Max self-supporting height ∝ 1/g</td>
+<td>CONFIRMED (analytic)</td>
+<td>h_max = σ/(ρg) for a uniform column ⇒ exactly ∝ 1/g</td>
+<td>derivation</td>
+</tr>
+<tr>
+<td><strong>Tsiolkovsky rocket equation (1903)</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>1903 is right for Tsiolkovsky's publication (<em>Nauchnoe
+Obozrenie</em>, 1903; his own manuscript dated 1897), but the equation
+was <strong>first derived by William Moore</strong> — outlined 1810,
+elaborated in <em>A Treatise on the Motion of Rockets</em> (1813) — and
+independently by Goddard (1912) and Oberth (1920)</td>
+<td><a href="https://en.wikipedia.org/wiki/Tsiolkovsky_rocket_equation">https://en.wikipedia.org/wiki/Tsiolkovsky_rocket_equation</a></td>
+</tr>
+<tr>
+<td>LEO Δv ~9.4–9.7 km/s incl. gravity and drag losses</td>
+<td>CONFIRMED</td>
+<td>Standard budget: 7.8 km/s orbital + 1.5–2 km/s losses = 9.3–9.8
+km/s; ISS-altitude launch quoted at ~9.4 km/s</td>
+<td><a href="https://en.wikipedia.org/wiki/Delta-v_budget">https://en.wikipedia.org/wiki/Delta-v_budget</a></td>
+</tr>
+<tr>
+<td>Hippke citation (venue/year/arXiv/date)</td>
+<td>CONFIRMED</td>
+<td><em>IJA</em> 18 (2019) 393–395; arXiv:1804.04727 v1 12 Apr 2018</td>
+<td><a href="https://arxiv.org/abs/1804.04727">https://arxiv.org/abs/1804.04727</a></td>
+</tr>
+<tr>
+<td><strong>Hippke "~400,000 t / Hubble-class"</strong></td>
+<td><strong>WRONG</strong></td>
+<td>400,000 t = 45 t Apollo-class; JWST 6.2 t → 55,000 t; Hubble not
+mentioned</td>
+<td><a href="https://ar5iv.labs.arxiv.org/html/1804.04727">https://ar5iv.labs.arxiv.org/html/1804.04727</a></td>
+</tr>
+<tr>
+<td>Munroe <em>What If?</em> + worldbuilding essays ~2012–2023</td>
+<td>CONFIRMED</td>
+<td><em>What If?</em> Houghton Mifflin Harcourt, 2014 (inside the stated
+window)</td>
+<td><a href="https://openlibrary.org/search.json?q=What+If+Munroe">https://openlibrary.org/search.json?q=What+If+Munroe</a></td>
+</tr>
+<tr>
+<td>"acute human tolerance is ~5 g before loss of consciousness
+(unpressurised, vertical)"</td>
+<td>CONFIRMED</td>
+<td>Untrained, sudden-onset +Gz blackout occurs between <strong>4 and 6
+g</strong>; trained pilots in g-suits using anti-g straining reach 12–14
+g. Burton RR, "G-induced loss of consciousness: definition, history,
+current status," <em>Aviat Space Environ Med</em> 59(1):2–5, 1988</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/3281645/">https://pubmed.ncbi.nlm.nih.gov/3281645/</a></td>
+</tr>
+<tr>
+<td><strong>"a sustained ~16 g for a minute may be lethal"</strong></td>
+<td><strong>UNVERIFIABLE — recommend cutting</strong></td>
+<td>Traces to a <strong>single uncited sentence in the Wikipedia g-force
+article</strong> ("a constant 16 g for a minute, however, may be
+deadly") whose wikitext carries a live
+<code>Citation needed (August 2021, reason: Where does 16g come from?)</code>
+tag. The standard primary reference — Eiband, "Human Tolerance to
+Rapidly Applied Accelerations: A Summary of the Literature," NASA Memo
+5-19-59E (1959) — covers only rapidly applied accelerations (plateau ≲1
+s) and states outright: "Sufficient experimental data have not been
+obtained to indicate the magnitude of the lethal boundary of severe
+injury." Burton 1988 and the G-LOC literature were also checked.
+<strong>This is an unsourced internet number, not an aerospace-medicine
+result.</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Special:Export/G-force">https://en.wikipedia.org/wiki/Special:Export/G-force</a>
+; <a href="https://ntrs.nasa.gov/api/citations/19980228043/downloads/19980228043.pdf">https://ntrs.nasa.gov/api/citations/19980228043/downloads/19980228043.pdf</a></td>
+</tr>
+<tr>
+<td><strong>"McMahon elastic similarity, 1973; R. McN.
+Alexander"</strong></td>
+<td>CONFIRMED (paper) / <strong>IMPRECISE (bundling)</strong></td>
+<td>Thomas McMahon, "Size and shape in biology," <em>Science</em>
+<strong>179</strong>(4079):1201–1204, 23 Mar 1973 — the
+elastic-similarity paper ✓. But R. McNeill Alexander is a
+<strong>separate</strong> researcher who did not co-author it; the
+bundled citation string reads as joint authorship</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/4689015/">https://pubmed.ncbi.nlm.nih.gov/4689015/</a></td>
+</tr>
+<tr>
+<td>Lift/drag independent of g; 1.5× weight ⇒ 1.5× lift</td>
+<td>CONFIRMED (textbook)</td>
+<td>L = ½ρv²SC_L contains no g</td>
+<td>derivation</td>
+</tr>
+<tr>
+<td>Aerostatic float condition is gravity-INVARIANT</td>
+<td>CONFIRMED (analytic)</td>
+<td>(ρ_air−ρ_gas)Vg = mg ⇒ g cancels identically</td>
+<td>derivation</td>
+</tr>
+<tr>
+<td>Staging/reuse penalties are Δv-driven (2010s)</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Space elevator: Pearson 1975, Edwards 2000s; taper ∝ exp(ρgR/σ)</td>
+<td>CONFIRMED</td>
+<td>Jerome Pearson, "The orbital tower: a spacecraft launcher using the
+Earth's rotational energy," <em>Acta Astronautica</em>
+<strong>2</strong>(9–10):785–799 (1975) ✓. Edwards: NIAC Phase I "The
+Space Elevator" (2000), Phase II report + book with Westling (2002–03)
+✓. Taper: A(R_g)/A_s = exp[(ρ/T)·4.85×10⁷ m²/s²], the constant being the
+Earth gravitational-plus-centrifugal potential integral — exactly the
+ρgR/σ form claimed (steel ⇒ ~10³³ taper; CNT ⇒ ~1.6)</td>
+<td><a href="https://en.wikipedia.org/wiki/Space_elevator">https://en.wikipedia.org/wiki/Space_elevator</a></td>
+</tr>
+<tr>
+<td>Orbital velocity ∝ √g at fixed R (7.8 → 9.5 km/s)</td>
+<td>CONFIRMED (analytic)</td>
+<td>v = √(gR); √1.5 = 1.2247; 7.8 × 1.2247 = 9.55</td>
+<td>derivation</td>
+</tr>
+<tr>
+<td>Mass ratio 8–9 (Earth) → 15–20 (1.5 g) for hydrolox</td>
+<td>CONFIRMED (analytic)</td>
+<td>e^(9.5/4.4)=8.7; e^(12.5/4.4)=17.0; still holds at v_e=4.565 (8.0 →
+15.5)</td>
+<td>derivation</td>
+</tr>
+<tr>
+<td>Grashof/Rayleigh driving force scales with g</td>
+<td>CONFIRMED</td>
+<td>Gr = gβΔT·L³/ν², Ra = Gr·Pr — g appears to the first power in both,
+so buoyancy-driven passive cooling does get <strong>stronger</strong> at
+1.5 g</td>
+<td><a href="https://en.wikipedia.org/wiki/Grashof_number">https://en.wikipedia.org/wiki/Grashof_number</a>
+; <a href="https://en.wikipedia.org/wiki/Rayleigh_number">https://en.wikipedia.org/wiki/Rayleigh_number</a></td>
+</tr>
+<tr>
+<td>structural steel yield ~250–550 MPa</td>
+<td>CONFIRMED for common grades (incomplete as a class ceiling)</td>
+<td>EN 10025 common grades 195/235/275/355/420/460 MPa; ASTM A36 = 250,
+A992 = 345. Quenched-and-tempered structural grades (A514, S690–S960)
+reach <strong>690–960 MPa</strong>, so the range describes
+<em>ordinary</em> structural steel. Harmless here — the item uses it as
+a realism floor, not a cap</td>
+<td><a href="https://en.wikipedia.org/wiki/Structural_steel">https://en.wikipedia.org/wiki/Structural_steel</a></td>
+</tr>
+<tr>
+<td><strong><code>hard_rules[1]</code>: "LOX/LH2 vacuum Isp &lt;= ~450
+s, i.e. v_e &lt;= ~4.4 km/s"</strong></td>
+<td><strong>WRONG</strong></td>
+<td>450 s is not an upper bound — several flown LOX/LH2 engines beat it.
+Highest flown: <strong>RL10B-2 = 465.5 s (4.565 km/s)</strong>, Delta
+III / Delta IV DCSS, in service since 1998. Also above 450 s: RL10E-1
+460.9, Vinci ~457, RS-25/SSME 452.3, RL10C-1-1 453.8. Correct bound ≈
+<strong>465 s / 4.56 km/s</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/RL10">https://en.wikipedia.org/wiki/RL10</a></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Exact replacement (old → new)</strong> — in
+<code>C2_engineering_10.hard_rules[1]</code>:</p>
+<ul>
+<li>OLD:
+<code>chemical-propellant specific impulse (LOX/LH2 vacuum Isp &lt;= ~450 s, i.e. exhaust velocity v_e &lt;= ~4.4 km/s)</code></li>
+<li>NEW:
+<code>chemical-propellant specific impulse (LOX/LH2 vacuum Isp &lt;= ~465 s, i.e. exhaust velocity v_e &lt;= ~4.6 km/s; the RL10B-2 upper-stage engine is the flown ceiling at 465.5 s)</code></li>
+</ul>
+<p>Note this fix is <em>safe for the item's own arithmetic</em>:
+re-running the baseline at v_e = 4.565 km/s gives mass ratios 8.0 →
+15.5, still inside the item's stated "~8-9 to ~15-20" band, and chemical
+SSTO at 1.5 g remains impossible. Leaving the low ceiling in place would
+let a correct agent answer (citing 465 s) be scored as a rule
+violation.</p>
+<p><strong>Two further replacements for
+<code>C2_engineering_10</code>:</strong></p>
+<p><code>known_answers[4]</code> — cut the unsourced lethality
+figure:</p>
+<ul>
+<li>OLD:
+<code>acute human tolerance is ~5 g before loss of consciousness (unpressurised, vertical), and a sustained ~16 g for a minute may be lethal; sustained MODERATE hypergravity (2-5 g) is poorly characterised</code></li>
+<li>NEW:
+<code>acute human tolerance to sudden-onset +Gz is ~4-6 g before loss of consciousness (unpressurised, untrained), rising to 12-14 g for trained pilots in g-suits performing anti-g straining (Burton 1988); sustained MODERATE hypergravity (2-5 g) is poorly characterised, and no lethal-boundary magnitude for sustained acceleration is established in the literature (Eiband, NASA Memo 5-19-59E, 1959)</code></li>
+</ul>
+<p><code>known_answers[1]</code> and <code>known_answers[5]</code> —
+priority/authorship precision (optional, low stakes):</p>
+<ul>
+<li>OLD: <code>Tsiolkovsky rocket equation (1903)</code></li>
+<li>NEW:
+<code>Tsiolkovsky rocket equation (published 1903; first derived by W. Moore, 1810-13)</code></li>
+<li>OLD:
+<code>Biomechanical scaling (McMahon elastic similarity, 1973; R. McN. Alexander)</code></li>
+<li>NEW:
+<code>Biomechanical scaling (McMahon's elastic-similarity paper, Science 1973; and separately R. McN. Alexander's work on locomotor scaling)</code></li>
+</ul>
+<hr/>
+<h2 id="4-c2_economics_business_08--full-claim-table">4.
+<code>C2_economics_business_08</code> — full claim table</h2>
+<div aria-label="4. C2_economics_business_08 — full claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Butler 1911 (Columbia) "greatest single discovery of modern times";
+steam &amp; electricity "reduced to comparative impotence without
+it"</td>
+<td>CONFIRMED</td>
+<td>Speech "Politics and Economics", 143rd Annual Banquet, Chamber of
+Commerce of the State of New York, 1911, pp. 43–55. Quote verbatim: "I
+weigh my words, when I say that in my judgment the limited liability
+corporation is the greatest single discovery of modern times…"</td>
+<td><a href="https://conversableeconomist.com/2017/07/27/the-limited-liability-corporation-is-the-greatest-single-discovery-of-modern-times/">https://conversableeconomist.com/2017/07/27/the-limited-liability-corporation-is-the-greatest-single-discovery-of-modern-times/</a></td>
+</tr>
+<tr>
+<td>Easterbrook &amp; Fischel, "Limited Liability and the Corporation,"
+<em>U. Chi. L. Rev.</em> 1985</td>
+<td>CONFIRMED</td>
+<td><strong>52 U. Chi. L. Rev. 89 (1985)</strong></td>
+<td><a href="https://chicagounbound.uchicago.edu/uclrev/vol52/iss1/3/">https://chicagounbound.uchicago.edu/uclrev/vol52/iss1/3/</a></td>
+</tr>
+<tr>
+<td>Easterbrook &amp; Fischel, <em>The Economic Structure of Corporate
+Law</em>, 1991</td>
+<td>CONFIRMED</td>
+<td>Harvard University Press, 1991</td>
+<td><a href="https://openlibrary.org/search.json?q=The+Economic+Structure+of+Corporate+Law+Easterbrook+Fischel">https://openlibrary.org/search.json?q=The+Economic+Structure+of+Corporate+Law+Easterbrook+Fischel</a></td>
+</tr>
+<tr>
+<td>Hansmann &amp; Kraakman, "The Essential Role of Organizational Law,"
+<em>Yale L.J.</em> 2000</td>
+<td>CONFIRMED</td>
+<td><strong>110 Yale L.J. 387 (2000)</strong></td>
+<td><a href="https://api.crossref.org/works?query.bibliographic=Essential+Role+of+Organizational+Law+Hansmann+Kraakman">https://api.crossref.org/works?query.bibliographic=Essential+Role+of+Organizational+Law+Hansmann+Kraakman</a></td>
+</tr>
+<tr>
+<td>Hansmann &amp; Kraakman, "Toward Unlimited Shareholder Liability for
+Corporate Torts," <em>Yale L.J.</em> 1991</td>
+<td>CONFIRMED</td>
+<td><strong>100 Yale L.J. 1879 (1991)</strong></td>
+<td><a href="https://api.crossref.org/works?query.bibliographic=Toward+Unlimited+Shareholder+Liability+for+Corporate+Torts+Hansmann+Kraakman">https://api.crossref.org/works?query.bibliographic=Toward+Unlimited+Shareholder+Liability+for+Corporate+Torts+Hansmann+Kraakman</a></td>
+</tr>
+<tr>
+<td>Micklethwait &amp; Wooldridge, <em>The Company: A Short History of a
+Revolutionary Idea</em>, 2003</td>
+<td>CONFIRMED</td>
+<td>Modern Library, 2003 (paperback 2005)</td>
+<td><a href="https://openlibrary.org/search.json?q=The+Company+Micklethwait+Wooldridge">https://openlibrary.org/search.json?q=The+Company+Micklethwait+Wooldridge</a></td>
+</tr>
+<tr>
+<td>UK Bubble Act 1720, repealed 1825</td>
+<td>CONFIRMED</td>
+<td>Bubble Act 1720 (6 Geo. 1. c. 18), passed 11 June 1720; main repeal
+by the Bubble Companies etc. Act 1825; residue not repealed until 1901
+(Royal Exchange Assurance Act 1901) — the standard "repealed 1825" is
+fine, the 1901 residue is a footnote</td>
+<td><a href="https://en.wikipedia.org/wiki/Bubble_Act">https://en.wikipedia.org/wiki/Bubble_Act</a></td>
+</tr>
+<tr>
+<td>New York 1811 general limited-liability manufacturing statute,
+"called 'the world's first modern limited liability law'"</td>
+<td>CONFIRMED (as an attributed description)</td>
+<td>"The world's first modern limited liability law was enacted by the
+state of New York in 1811." The item's hedge ("called") is doing correct
+work — primacy claims of this kind are contested in the business-history
+literature (cf. Ron Harris), so keep the hedge</td>
+<td><a href="https://en.wikipedia.org/wiki/Limited_liability">https://en.wikipedia.org/wiki/Limited_liability</a></td>
+</tr>
+<tr>
+<td>UK Limited Liability Act 1855</td>
+<td>CONFIRMED</td>
+<td>18 &amp; 19 Vict. c. 133, Royal Assent <strong>14 August
+1855</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Limited_Liability_Act_1855">https://en.wikipedia.org/wiki/Limited_Liability_Act_1855</a></td>
+</tr>
+<tr>
+<td>Joint Stock Companies Act 1856</td>
+<td>CONFIRMED</td>
+<td>UK-wide; settled separate personality + limited liability for
+Scottish companies</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Companies Act 1862 <strong>extended to insurers</strong></td>
+<td>CONFIRMED</td>
+<td>Insurers were excluded from the 1855 Act; "Limited liability for
+insurance companies was allowed by the Companies Act 1862 (25 &amp; 26
+Vict. c. 89)"</td>
+<td>same</td>
+</tr>
+<tr>
+<td><em>Salomon v A Salomon &amp; Co Ltd</em> (1897), separate legal
+personality</td>
+<td>CONFIRMED</td>
+<td>[1896] UKHL 1, <strong>[1897] AC 22</strong>, House of Lords</td>
+<td><a href="https://en.wikipedia.org/wiki/Salomon_v_A_Salomon_%26_Co_Ltd">https://en.wikipedia.org/wiki/Salomon_v_A_Salomon_%26_Co_Ltd</a></td>
+</tr>
+<tr>
+<td>German GmbH statute 1892</td>
+<td>CONFIRMED</td>
+<td>"The laws governing the GmbH were introduced in the German Empire in
+<strong>1892</strong>"</td>
+<td><a href="https://en.wikipedia.org/wiki/Gesellschaft_mit_beschr%C3%A4nkter_Haftung">https://en.wikipedia.org/wiki/Gesellschaft_mit_beschr%C3%A4nkter_Haftung</a></td>
+</tr>
+<tr>
+<td>UK Limited Liability Partnerships Act 2000</td>
+<td>CONFIRMED</td>
+<td>c. 12; Royal Assent <strong>20 July 2000</strong>; main provisions
+in force <strong>6 April 2001</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Limited_Liability_Partnerships_Act_2000">https://en.wikipedia.org/wiki/Limited_Liability_Partnerships_Act_2000</a></td>
+</tr>
+<tr>
+<td>City of Glasgow Bank failure <strong>1878</strong> ruined
+unlimited-liability shareholders</td>
+<td>CONFIRMED</td>
+<td>Closed <strong>2 October 1878</strong>; "The 1,200 shareholders and
+their families suffered greatly. Their liability was unlimited, and the
+failure ruined most of them."</td>
+<td><a href="https://en.wikipedia.org/wiki/City_of_Glasgow_Bank">https://en.wikipedia.org/wiki/City_of_Glasgow_Bank</a></td>
+</tr>
+<tr>
+<td>…and "prompted the <strong>Companies Act 1879</strong> permitting
+banks to adopt limited/reserve liability"</td>
+<td>CONFIRMED <strong>from primary statute text</strong></td>
+<td>Companies Act 1879 (42 &amp; 43 Vict. c. 76), Royal Assent
+<strong>15 August 1879</strong>, long title: <em>"An Act to amend the
+Law with respect to the Liability of Members of Banking and other Joint
+Stock Companies; and for other purposes."</em> s.4 lets "any company
+registered … as an unlimited company … register … as a limited company";
+s.5 is headed "Reserve capital of company, how provided" and provides
+that increased/uncalled capital "shall not be capable of being called
+up, except in the event of and for the purposes of the company being
+wound up." s.2 excepts the Bank of England.</td>
+<td><a href="https://www.legislation.gov.uk/ukpga/Vict/42-43/76/pdfs/ukpga_18790076_en.pdf">https://www.legislation.gov.uk/ukpga/Vict/42-43/76/pdfs/ukpga_18790076_en.pdf</a></td>
+</tr>
+<tr>
+<td><strong>U.S. national banks carried "double liability" 1863-1933
+(abolished in the 1930s reforms)</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>Imposed by the National Banking Act 1863 §12 ✓. Abolition was
+staged, not a 1933 event: Banking Act of 1933 §22 eliminated it
+<strong>only for shares issued after 16 June 1933</strong>; from
+<strong>1935</strong> national banks could terminate it on existing
+shares on six months' notice; full statutory abolition came
+<strong>1953</strong>. "1863-1933" overstates the 1933 Act.</td>
+<td><a href="https://en.wikipedia.org/wiki/Double_liability">https://en.wikipedia.org/wiki/Double_liability</a>
+; <a href="https://en.wikipedia.org/wiki/Banking_Act_of_1933">https://en.wikipedia.org/wiki/Banking_Act_of_1933</a></td>
+</tr>
+<tr>
+<td><strong>California's constitution imposed proportionate unlimited
+shareholder liability "from 1849 until 1931"</strong></td>
+<td><strong>IMPRECISE (end date)</strong></td>
+<td>Substance correct — 1849 Const. §36: "Each stockholder of a
+corporation, or joint-stock association, shall be individually and
+personally liable for his proportion of all its debts and liabilities";
+carried into Art. XII §3 of the 1879 Constitution. But the
+constitutional provision was <strong>repealed by amendment on 4 November
+1930</strong>; only the implementing Civil Code §322 repeal took effect
+14 August 1931.</td>
+<td><a href="https://www.bainbridgeoncorporations.com/p/a-brief-history-of-limited-liability">https://www.bainbridgeoncorporations.com/p/a-brief-history-of-limited-liability</a>
+; <a href="https://en.wikisource.org/wiki/The_Federal_and_State_Constitutions/Constitution_of_California%E2%80%941849">https://en.wikisource.org/wiki/The_Federal_and_State_Constitutions/Constitution_of_California%E2%80%941849</a></td>
+</tr>
+<tr>
+<td><strong>Lloyd's "Names" unlimited until the 1990s reconstruction
+(triggered by 1988-1992 asbestos/pollution losses) admitted
+limited-liability corporate capital</strong></td>
+<td><strong>IMPRECISE (ordering)</strong></td>
+<td>Substance correct: "The liability of the individual Names was
+unlimited, and thus all their personal wealth and assets were at risk."
+But limited-liability <strong>corporate members were admitted in
+1994</strong>, which <em>preceded</em> the Reconstruction &amp; Renewal
+plan (1995) and the transfer of pre-1993 liabilities to Equitas
+(September 1996). R&amp;R did not itself admit corporate capital.</td>
+<td><a href="https://en.wikipedia.org/wiki/Lloyd%27s_of_London">https://en.wikipedia.org/wiki/Lloyd%27s_of_London</a></td>
+</tr>
+<tr>
+<td>American Express operated as an unlimited-liability joint-stock
+association until 1965</td>
+<td>CONFIRMED (existence of the phenomenon and the literature); 1965
+date SUPPORTED but not independently pinned</td>
+<td>The claim is the subject of two dedicated law-and-economics papers:
+Peter Z. Grossman, "The Market for Shares of Companies with Unlimited
+Liability: The Case of American Express," <strong>24 J. Legal Stud. 63
+(1995)</strong>, and Mark I. Weinstein, "Don't Buy Shares without It:
+Limited Liability Comes to American Express," <strong>37 J. Legal Stud.
+189 (2008)</strong>, DOI 10.1086/588261. The U. Chicago Press article
+page blocks automated fetch, so the specific year 1965 rests on the
+secondary literature rather than a page I could read.</td>
+<td><a href="https://api.crossref.org/works?query.bibliographic=Market+for+Shares+of+Companies+with+Unlimited+Liability+American+Express+Grossman">https://api.crossref.org/works?query.bibliographic=Market+for+Shares+of+Companies+with+Unlimited+Liability+American+Express+Grossman</a></td>
+</tr>
+<tr>
+<td>Naomi Lamoreaux + business-history scholarship (1990s-2000s) on
+persistence of partnership forms</td>
+<td>CONFIRMED (attribution accurate)</td>
+<td>e.g. Lamoreaux &amp; Rosenthal, "Legal Regime and Business's
+Organizational Choice: A Comparison of France and the United States"
+(Feb 2004); Lamoreaux, "Business Organization," <em>Historical
+Statistics of the United States, Millennial Edition</em></td>
+<td><a href="https://api.crossref.org/works?query.bibliographic=Lamoreaux+partnership+corporation+organizational+forms+nineteenth+century">https://api.crossref.org/works?query.bibliographic=Lamoreaux+partnership+corporation+organizational+forms+nineteenth+century</a></td>
+</tr>
+<tr>
+<td>Modigliani-Miller (1958) capital-structure irrelevance under
+frictionless markets</td>
+<td>CONFIRMED</td>
+<td>Modigliani, F. &amp; Miller, M., "The Cost of Capital, Corporation
+Finance and the Theory of Investment," <em>American Economic Review</em>
+<strong>48(3): 261–297 (1958)</strong>; irrelevance holds only absent
+taxes, bankruptcy costs, agency costs, asymmetric information</td>
+<td><a href="https://en.wikipedia.org/wiki/Modigliani%E2%80%93Miller_theorem">https://en.wikipedia.org/wiki/Modigliani%E2%80%93Miller_theorem</a></td>
+</tr>
+<tr>
+<td>Markowitz portfolio selection (1952)</td>
+<td>CONFIRMED</td>
+<td>Markowitz, H., "Portfolio Selection," <em>Journal of Finance</em>
+<strong>7(1): 77–91 (1952)</strong>, DOI
+10.1111/j.1540-6261.1952.tb01525.x</td>
+<td><a href="https://api.crossref.org/works?query.bibliographic=Portfolio+Selection+Markowitz+Journal+of+Finance+1952">https://api.crossref.org/works?query.bibliographic=Portfolio+Selection+Markowitz+Journal+of+Finance+1952</a></td>
+</tr>
+<tr>
+<td><strong>"Murray Rothbard's position that liability for torts should
+be full/unlimited"</strong></td>
+<td><strong>UNVERIFIABLE</strong> (and probably mischaracterised)</td>
+<td>Tried: mises.org book landing pages for <em>Power and Market</em>
+and <em>Man, Economy, and State</em> (no substantive text served); the
+<em>Power and Market</em> CDN PDF (HTTP 403); the <em>Journal of
+Libertarian Studies</em> 19(3) article on the corporation (extracted
+full text — contains <strong>no mention of Rothbard</strong>); two
+search-proxy attempts (CAPTCHA / 403); WebSearch budget exhausted.
+Substantive caution: Rothbard is conventionally read as a
+<em>defender</em> of limited liability to voluntary creditors as a
+purely contractual arrangement, while holding that tort liability cannot
+be contracted away. Filing him under "critical literature [that] argues
+limited liability enables negative corporate externalities" inverts his
+overall stance even if the tort half is right.</td>
+<td><a href="https://cdn.mises.org/19_3_3.pdf">https://cdn.mises.org/19_3_3.pdf</a>
+(checked, no Rothbard)</td>
+</tr>
+<tr>
+<td><code>hard_rules[1]</code>: "early UK railways and canals were built
+under charter with unlimited or ambiguous liability"</td>
+<td>UNVERIFIABLE in detail</td>
+<td>Tried: Companies Clauses Consolidation Act 1845 page (no liability
+detail served); WebSearch exhausted. Directional caution: pre-1845 UK
+canal/railway companies were incorporated by individual private Act,
+each setting its own liability terms, so "unlimited <strong>or
+ambiguous</strong>" is defensible as a hedge but would be wrong as a
+blanket "unlimited". The hedge should stay.</td>
+<td><a href="https://en.wikipedia.org/wiki/Companies_Clauses_Consolidation_Act_1845">https://en.wikipedia.org/wiki/Companies_Clauses_Consolidation_Act_1845</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exact-replacements-for-c2_economics_business_08">Exact
+replacements for <code>C2_economics_business_08</code></h3>
+<p><code>known_answers[6]</code>, three separate edits:</p>
+<ol type="1">
+<li><p><strong>Double liability</strong></p>
+<ul>
+<li>OLD:
+<code>U.S. national banks carried 'double liability' 1863-1933 (abolished in the 1930s reforms)</code></li>
+<li>NEW:
+<code>U.S. national banks carried 'double liability' from the National Banking Act 1863 until the New Deal banking reforms wound it down in stages (Banking Act of 1933 s.22 ended it for shares issued after 16 June 1933; national banks could terminate it on existing shares from 1935; full statutory abolition 1953)</code></li>
+</ul></li>
+<li><p><strong>California</strong></p>
+<ul>
+<li>OLD:
+<code>California's constitution imposed proportionate unlimited shareholder liability from 1849 until 1931</code></li>
+<li>NEW:
+<code>California's constitution imposed proportionate unlimited shareholder liability from 1849 (Const. 1849 s.36, carried into Art. XII s.3 of the 1879 Constitution) until the amendment repealing it was adopted 4 November 1930, with the implementing Civil Code s.322 repeal effective 14 August 1931</code></li>
+</ul></li>
+<li><p><strong>Lloyd's</strong></p>
+<ul>
+<li>OLD:
+<code>Lloyd's of London 'Names' bore unlimited personal liability until the 1990s reconstruction (triggered by 1988-1992 asbestos/pollution losses) admitted limited-liability corporate capital</code></li>
+<li>NEW:
+<code>Lloyd's of London 'Names' bore unlimited personal liability until the asbestos/pollution (APH) losses of the 1988-1992 years of account forced limited-liability corporate members to be admitted in 1994, followed by the Reconstruction &amp; Renewal plan (1995) and the transfer of all pre-1993 liabilities to Equitas in September 1996</code></li>
+</ul></li>
+</ol>
+<p><code>known_answers[9]</code> — Rothbard:</p>
+<ul>
+<li>OLD:
+<code>Critical literature argues limited liability enables negative corporate externalities through risk-shifting (e.g., Murray Rothbard's position that liability for torts should be full/unlimited); the aggregate magnitude of these externalities is contested and not precisely quantified in the literature.</code></li>
+<li>NEW:
+<code>Critical literature argues limited liability enables negative corporate externalities through risk-shifting; a distinct libertarian strand (e.g. Rothbard) instead accepts owner-shielding as a contractual matter between the firm and its VOLUNTARY creditors while denying that tort liability to third parties can be contracted away. Either way, the aggregate magnitude of these externalities is contested and not precisely quantified in the literature.</code></li>
+</ul>
+<p>(Or simply drop the Rothbard parenthetical. It is the only remaining
+attribution in the item that I could not source to a document, and it
+sits in the same sentence as the hedge left behind by the prior removal
+— the same failure signature as the "Edward Cox 1855" reference.)</p>
+<hr/>
+<h2 id="5-c2_arts_humanities_11--full-claim-table">5.
+<code>C2_arts_humanities_11</code> — full claim table</h2>
+<div aria-label="5. C2_arts_humanities_11 — full claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Panofsky 1927, <em>Perspective as Symbolic Form</em></td>
+<td>CONFIRMED</td>
+<td>"Die Perspektive als 'symbolische Form'," lecture 31 Jan 1925,
+printed in <em>Vorträge der Bibliothek Warburg 1924–1925</em> (1927),
+pp. 258–330; Eng. Zone Books 1991. Argument verified in the translation:
+perspective as "one of those 'symbolic forms'"; perspectival space
+"infinite, unchanging and homogeneous"; vanishing point as "the concrete
+symbol for the discovery of the infinite itself". Minor: delivered 1925,
+printed 1927 — both dates circulate.</td>
+<td><a href="https://archive.org/details/ErwinPanofskyPerspectiveAsSymbolicForm">https://archive.org/details/ErwinPanofskyPerspectiveAsSymbolicForm</a></td>
+</tr>
+<tr>
+<td>Andersen, <em>The Geometry of an Art</em></td>
+<td>CONFIRMED</td>
+<td>Kirsti Andersen, <em>The Geometry of an Art: The History of the
+Mathematical Theory of Perspective from Alberti to Monge</em>, Springer
+2007</td>
+<td><a href="https://link.springer.com/book/10.1007/978-0-387-48946-9">https://link.springer.com/book/10.1007/978-0-387-48946-9</a></td>
+</tr>
+<tr>
+<td>Field, <em>The Invention of Infinity</em></td>
+<td>CONFIRMED</td>
+<td>J. V. Field, <em>The Invention of Infinity: Mathematics and Art in
+the Renaissance</em>, OUP 1997</td>
+<td><a href="https://doi.org/10.1093/oso/9780198523949.001.0001">https://doi.org/10.1093/oso/9780198523949.001.0001</a></td>
+</tr>
+<tr>
+<td><strong>"Kepler (1604) and Desargues (c.1639) introduced the point
+at infinity"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>Kepler's <em>Ad Vitellionem paralipomena</em> (1604) posits the
+parabola's second focus as a <em>caecus focus</em> at infinity — the
+earliest known use of a point at infinity, but as a limiting-case device
+for <strong>one conic</strong>, plus an early principle of continuity.
+The <strong>general</strong> projective point at infinity is Desargues
+(1639).</td>
+<td><a href="https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica/Geometrical_Continuity">https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica/Geometrical_Continuity</a>
+; <a href="https://mathshistory.st-andrews.ac.uk/Biographies/Kepler/">https://mathshistory.st-andrews.ac.uk/Biographies/Kepler/</a></td>
+</tr>
+<tr>
+<td>Desargues c. 1639</td>
+<td>CONFIRMED</td>
+<td><em>Brouillon project d'une atteinte aux evenemens des rencontres du
+Cone avec un Plan</em>, Paris 1639</td>
+<td><a href="https://mathshistory.st-andrews.ac.uk/Biographies/Desargues/">https://mathshistory.st-andrews.ac.uk/Biographies/Desargues/</a></td>
+</tr>
+<tr>
+<td>Monge, descriptive geometry, late 18th c.</td>
+<td>CONFIRMED</td>
+<td>Method devised c. 1765–66 at Mézières; taught at École Polytechnique
+from 9 Nov 1794; <em>Géométrie descriptive</em> 1799</td>
+<td><a href="https://mathshistory.st-andrews.ac.uk/Biographies/Monge/">https://mathshistory.st-andrews.ac.uk/Biographies/Monge/</a></td>
+</tr>
+<tr>
+<td>Poncelet's 1822 treatise founded modern projective geometry</td>
+<td>CONFIRMED</td>
+<td><em>Traité des propriétés projectives des figures</em>, 1822</td>
+<td><a href="https://mathshistory.st-andrews.ac.uk/Biographies/Poncelet/">https://mathshistory.st-andrews.ac.uk/Biographies/Poncelet/</a></td>
+</tr>
+<tr>
+<td><strong>Camera obscura "known since antiquity (Mozi, Aristotle,
+Alhazen)"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>Mozi ✓ (4th c. BC); Ibn al-Haytham ✓ (<em>On the Shape of the
+Eclipse</em>, first experimental analysis; <em>Book of Optics</em> c.
+1027). The pinhole/crescent observation attributed to Aristotle is in
+the <strong>pseudo-Aristotelian <em>Problemata</em> Book XV</strong>, a
+Peripatetic compilation of doubted authenticity, final form anywhere
+from the 3rd c. BC to the 6th c. AD.</td>
+<td><a href="https://en.wikipedia.org/wiki/Camera_obscura">https://en.wikipedia.org/wiki/Camera_obscura</a>
+; <a href="https://en.wikipedia.org/wiki/Problems_(Aristotle)">https://en.wikipedia.org/wiki/Problems_(Aristotle)</a></td>
+</tr>
+<tr>
+<td>Hockney-Falco thesis; Hockney <em>Secret Knowledge</em> 2001;
+contested</td>
+<td>CONFIRMED</td>
+<td><em>Secret Knowledge: Rediscovering the Lost Techniques of the Old
+Masters</em>, 2001 (2nd ed. 2006); co-proponent Charles M. Falco from
+March 2000; contested by art historians and by David G. Stork on
+optical-distortion grounds</td>
+<td><a href="https://en.wikipedia.org/wiki/Hockney%E2%80%93Falco_thesis">https://en.wikipedia.org/wiki/Hockney%E2%80%93Falco_thesis</a></td>
+</tr>
+<tr>
+<td>Byzantine "reverse/inverse perspective"</td>
+<td>CONFIRMED</td>
+<td>Established term (also inverse/inverted/divergent perspective);
+canonical treatment Pavel Florensky, "Reverse Perspective" (1919)</td>
+<td><a href="https://en.wikipedia.org/wiki/Reverse_perspective">https://en.wikipedia.org/wiki/Reverse_perspective</a></td>
+</tr>
+<tr>
+<td><strong>"(Alberti, Leonardo's paragone)"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>Alberti solid: <em>De pictura</em> (1435), first written description
+of the linear-perspective construction. But <em>paragone</em> is the
+art-historical <strong>label</strong> for the Renaissance
+painting-vs-sculpture debate, crystallising with Varchi's 1546
+solicitation of artists' views — not Leonardo's own coinage. Leonardo's
+arguments survive in the posthumously compiled <em>Trattato della
+pittura</em> / Codex Urbinas.</td>
+<td><a href="https://en.wikipedia.org/wiki/Paragone">https://en.wikipedia.org/wiki/Paragone</a>
+; <a href="https://en.wikipedia.org/wiki/De_pictura">https://en.wikipedia.org/wiki/De_pictura</a></td>
+</tr>
+<tr>
+<td><strong>"Foreshortening … predate and are independent of the
+vanishing-point construction (e.g. Melozzo da Forli, Roman
+fresco)"</strong></td>
+<td><strong>WRONG (the Melozzo half)</strong></td>
+<td>Melozzo da Forlì is c. 1438–1494; his <em>di sotto in sù</em> works
+(Santi Apostoli vault c. 1472–74; <em>Sixtus IV Appointing Platina</em>
+1477; Loreto cupola after 1484) postdate Brunelleschi's panels (c.
+1415–20) and Alberti's <em>De pictura</em> (1435) by <strong>two
+generations</strong> and sit <strong>inside</strong> the perspective
+tradition. He cannot evidence "predates and is independent of". The
+Roman-fresco half is fine: Villa of P. Fannius Synistor (1st c. BC) uses
+"multiple vanishing points … in a systematic but not fully consistent
+manner".</td>
+<td><a href="https://en.wikipedia.org/wiki/Melozzo_da_Forl%C3%AC">https://en.wikipedia.org/wiki/Melozzo_da_Forl%C3%AC</a>
+; <a href="https://en.wikipedia.org/wiki/Perspective_(graphical)">https://en.wikipedia.org/wiki/Perspective_(graphical)</a></td>
+</tr>
+<tr>
+<td>Skenographia (5th c. BC) and Euclid's <em>Optics</em> (c. 300 BC)
+treated apparent size without a general vanishing point</td>
+<td>CONFIRMED (hedge the inventor)</td>
+<td>Vitruvius credits <strong>Agatharchus of Samos</strong> with
+inventing scene painting for an Aeschylus tragedy, with Democritus and
+Anaxagoras building on his treatise; but Aristotle's <em>Poetics</em>
+instead credits Sophocles — so "attributed inventor" should stay hedged.
+Euclid's <em>Optics</em> c. 300 BC: visual-cone propositions on apparent
+size, and prop. 8 explicitly <strong>denies</strong> simple
+proportionality of perceived size to distance; no general
+vanishing-point construction.</td>
+<td><a href="https://en.wikipedia.org/wiki/Agatharchus">https://en.wikipedia.org/wiki/Agatharchus</a>
+; <a href="https://en.wikipedia.org/wiki/Euclid%27s_Optics">https://en.wikipedia.org/wiki/Euclid%27s_Optics</a></td>
+</tr>
+<tr>
+<td>Le Nôtre at Versailles; Baroque quadratura; illusionistic
+proscenium</td>
+<td>CONFIRMED</td>
+<td>André Le Nôtre (1613–1700), Versailles gardens from 1661, documented
+forced perspective. <em>Quadratura</em> correct for illusionistic
+feigned-architecture ceilings: Lanfranco (Sant'Andrea della Valle
+1625–27), Pietro da Cortona (Palazzo Barberini 1633–39), Pozzo
+(Sant'Ignazio 1691–94)</td>
+<td><a href="https://en.wikipedia.org/wiki/Andr%C3%A9_Le_N%C3%B4tre">https://en.wikipedia.org/wiki/Andr%C3%A9_Le_N%C3%B4tre</a>
+; <a href="https://en.wikipedia.org/wiki/Quadratura">https://en.wikipedia.org/wiki/Quadratura</a></td>
+</tr>
+<tr>
+<td>Brunelleschi peephole demonstration; Alberti; Piero</td>
+<td>CONFIRMED</td>
+<td>Two lost panels c. 1415–1420 (Florence Baptistery; Palazzo Vecchio),
+viewed through a bored hole against a mirror; known via Antonio
+Manetti's <em>Vita di Filippo Brunelleschi</em>. Piero della Francesca,
+<em>De prospectiva pingendi</em>, mid-1470s–1480s. Note the item's
+<code>query</code> says "no Brunelleschi peephole demonstration",
+consistent.</td>
+<td><a href="https://en.wikipedia.org/wiki/Filippo_Brunelleschi">https://en.wikipedia.org/wiki/Filippo_Brunelleschi</a>
+; <a href="https://en.wikipedia.org/wiki/De_prospectiva_pingendi">https://en.wikipedia.org/wiki/De_prospectiva_pingendi</a></td>
+</tr>
+<tr>
+<td>Camera obscura independent of pictorial perspective ⇒ photography
+still possible</td>
+<td>CONFIRMED</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Camera_obscura">https://en.wikipedia.org/wiki/Camera_obscura</a></td>
+</tr>
+<tr>
+<td>Chinese oblique/parallel projection, ukiyo-e, Persian miniature as
+counter-examples</td>
+<td>CONFIRMED (standard)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Perspective_(graphical)">https://en.wikipedia.org/wiki/Perspective_(graphical)</a></td>
+</tr>
+<tr>
+<td>20th-c. modernism (Cézanne, Cubism, abstraction) abandoned
+single-point perspective</td>
+<td>CONFIRMED</td>
+<td>"Linear perspective developed during the Renaissance was vacated";
+Cubist "simultaneity"; Cézanne's plural viewpoint as precursor</td>
+<td><a href="https://en.wikipedia.org/wiki/Cubism">https://en.wikipedia.org/wiki/Cubism</a></td>
+</tr>
+<tr>
+<td><code>expert_baseline</code>: "~400-year painterly rehearsal"</td>
+<td>CONFIRMED</td>
+<td>Alberti 1435 → Daguerre 1839 = 404 yr; full plausible range 391–426
+(Brunelleschi c. 1415–20 / Alberti 1435 → Niépce 1826 / Daguerre
+1839)</td>
+<td><a href="https://en.wikipedia.org/wiki/History_of_photography">https://en.wikipedia.org/wiki/History_of_photography</a></td>
+</tr>
+<tr>
+<td><code>expert_baseline</code>: stereotomy, fortification, gnomonics
+could regenerate descriptive geometry</td>
+<td>CONFIRMED</td>
+<td>Stereotomy: "Descriptive geometry can be considered as an evolution
+of stereotomy"; its canonical text (Frézier 1737–39) was written by a
+career <strong>fortification</strong> engineer. Gnomonics = sundial
+design, i.e. projection of the celestial sphere onto inclined planes.
+Monge's first discoveries (1765) came from a <strong>fortification
+defilement</strong> problem at Mézières.</td>
+<td><a href="https://en.wikipedia.org/wiki/Stereotomy_(descriptive_geometry)">https://en.wikipedia.org/wiki/Stereotomy_(descriptive_geometry)</a>
+; <a href="https://en.wikipedia.org/wiki/Gnomonics">https://en.wikipedia.org/wiki/Gnomonics</a>
+; <a href="https://en.wikipedia.org/wiki/Descriptive_geometry">https://en.wikipedia.org/wiki/Descriptive_geometry</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exact-replacements-for-c2_arts_humanities_11">Exact replacements
+for <code>C2_arts_humanities_11</code></h3>
+<ol type="1">
+<li><p><code>known_answers[8]</code> — the substantive fix:</p>
+<ul>
+<li>OLD: <code>(e.g. Melozzo da Forli, Roman fresco)</code></li>
+<li>NEW:
+<code>(e.g. Roman fresco such as the Villa of P. Fannius Synistor, 1st c. BC, which uses multiple inconsistent vanishing points; Ambrogio Lorenzetti's convergent-line floor in the Presentation at the Temple, 1342)</code></li>
+</ul></li>
+<li><p><code>known_answers[2]</code> — Kepler precision:</p>
+<ul>
+<li>OLD:
+<code>Kepler (1604) and Desargues (c.1639) introduced the point at infinity</code></li>
+<li>NEW:
+<code>Kepler (1604) introduced a point at infinity as a limiting-case device for the parabola and Desargues (c.1639) the general projective point at infinity</code></li>
+</ul></li>
+<li><p><code>known_answers[3]</code> — Aristotle precision:</p>
+<ul>
+<li>OLD:
+<code>known since antiquity (Mozi, Aristotle, Alhazen)</code></li>
+<li>NEW:
+<code>known since antiquity (Mozi, 4th c. BC; the pseudo-Aristotelian Problemata; Ibn al-Haytham/Alhazen, early 11th c.)</code></li>
+</ul></li>
+<li><p><code>known_answers[6]</code> — paragone precision:</p>
+<ul>
+<li>OLD: <code>(Alberti, Leonardo's paragone)</code></li>
+<li>NEW:
+<code>(Alberti's De pictura, 1435; Leonardo's arguments in the posthumous Trattato della pittura, conventionally grouped under the paragone debate)</code></li>
+</ul></li>
+</ol>
+<hr/>
+<h2 id="6-c2_biology_medicine_06--full-claim-table">6.
+<code>C2_biology_medicine_06</code> — full claim table</h2>
+<div aria-label="6. C2_biology_medicine_06 — full claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SCID / David Vetter (1971-1984)</td>
+<td>CONFIRMED</td>
+<td>b. 21 Sep 1971, d. 22 Feb 1984</td>
+<td><a href="https://en.wikipedia.org/wiki/David_Vetter">https://en.wikipedia.org/wiki/David_Vetter</a></td>
+</tr>
+<tr>
+<td>2011 Nobel to Beutler, Hoffmann, Steinman</td>
+<td>CONFIRMED</td>
+<td>Half jointly Beutler &amp; Hoffmann "for their discoveries
+concerning the activation of innate immunity"; half Steinman for the
+dendritic cell. Hoffmann's <em>Drosophila</em> Toll work correctly
+attributed.</td>
+<td><a href="https://www.nobelprize.org/prizes/medicine/2011/press-release/">https://www.nobelprize.org/prizes/medicine/2011/press-release/</a></td>
+</tr>
+<tr>
+<td>"roughly 97% of animal species (all invertebrates)"</td>
+<td>CONFIRMED (defensible, don't harden)</td>
+<td>97% is citable (May RM, <em>Science</em> 1988;241:1441-9) but ~95%
+is at least as common in textbooks; the value is an artifact of the
+total-species estimate chosen.</td>
+<td><a href="https://en.wikipedia.org/wiki/Invertebrate">https://en.wikipedia.org/wiki/Invertebrate</a></td>
+</tr>
+<tr>
+<td>Trained immunity, Netea et al. 2011 onward; BCG heterologous
+protection</td>
+<td>CONFIRMED</td>
+<td>Netea MG, Quintin J, van der Meer JWM, "Trained immunity: a memory
+for innate host defense," <em>Cell Host Microbe</em> 2011;9(5):355-61
+(PMID 21575907). BCG: Kleinnijenhuis et al., <em>PNAS</em>
+2012;109(43):17537-42 — NOD2-dependent, epigenetic monocyte
+reprogramming, protective <strong>in lymphocyte-deficient
+mice</strong></td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/21575907/">https://pubmed.ncbi.nlm.nih.gov/21575907/</a>
+; <a href="https://pubmed.ncbi.nlm.nih.gov/22988082/">https://pubmed.ncbi.nlm.nih.gov/22988082/</a></td>
+</tr>
+<tr>
+<td><strong>VLRs in "lamprey/hagfish" — Pancer &amp; Cooper et al.,
+<em>Nature</em> 2004</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>The 2004 paper is <strong>sea lamprey only</strong>: Pancer Z,
+Amemiya CT, Ehrhardt GRA, Ceitlin J, Gartland GL, Cooper MD, "Somatic
+diversification of variable lymphocyte receptors in the agnathan sea
+lamprey," <em>Nature</em> 2004 Jul 8;430(6996):174-80. LRR-based /
+non-immunoglobulin ✓. <strong>Hagfish VLRs are a separate
+paper</strong>: Pancer et al., <em>PNAS</em> 2005;102(26):9224-9.</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/15241406/">https://pubmed.ncbi.nlm.nih.gov/15241406/</a>
+; <a href="https://pubmed.ncbi.nlm.nih.gov/15964979/">https://pubmed.ncbi.nlm.nih.gov/15964979/</a></td>
+</tr>
+<tr>
+<td><strong>"Burnet-Thomas hypothesis (1957)"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>1957 is Burnet only: Burnet M, "Cancer; a biological approach. I,"
+<em>Br Med J</em> 1957;1(5022):779-86. Lewis Thomas's contribution is
+standardly dated <strong>1959</strong> (discussion in Lawrence HS ed.,
+<em>Cellular and Humoral Aspects of the Hypersensitive States</em>, pp.
+529-32).</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/13404306/">https://pubmed.ncbi.nlm.nih.gov/13404306/</a></td>
+</tr>
+<tr>
+<td>2002 Nature Immunology immunoediting paper</td>
+<td>CONFIRMED</td>
+<td>Dunn GP, Bruce AT, Ikeda H, Old LJ, Schreiber RD, <em>Nat
+Immunol</em> 2002;3(11):991-8</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/12407406/">https://pubmed.ncbi.nlm.nih.gov/12407406/</a></td>
+</tr>
+<tr>
+<td><strong>"Dunn, Old &amp; Schreiber formalization (… Science
+2011)"</strong></td>
+<td><strong>WRONG</strong></td>
+<td>The 2011 <em>Science</em> paper has <strong>no Dunn</strong>:
+Schreiber RD, Old LJ, Smyth MJ, "Cancer immunoediting: integrating
+immunity's roles in cancer suppression and promotion," <em>Science</em>
+2011;331(6024):1565-70</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/21436444/">https://pubmed.ncbi.nlm.nih.gov/21436444/</a></td>
+</tr>
+<tr>
+<td>Allison &amp; Honjo, 2018 Nobel</td>
+<td>CONFIRMED</td>
+<td>"for the discovery of cancer therapy by inhibition of negative
+immune regulation"</td>
+<td><a href="https://en.wikipedia.org/wiki/James_P._Allison">https://en.wikipedia.org/wiki/James_P._Allison</a></td>
+</tr>
+<tr>
+<td>Selective (not uniform) cancer excess in adaptive-immunodeficient
+hosts</td>
+<td>CONFIRMED (standard)</td>
+<td></td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/21436444/">https://pubmed.ncbi.nlm.nih.gov/21436444/</a></td>
+</tr>
+<tr>
+<td><strong>"regulatory T-cell expansion (Aluvihare/Betz/Rudensky,
+Nature Immunology 2004)"</strong></td>
+<td><strong>WRONG</strong></td>
+<td><strong>Rudensky is not an author.</strong> Actual: Aluvihare VR,
+<strong>Kallikourdis M</strong>, Betz AG, "Regulatory T cells mediate
+maternal tolerance to the fetus," <em>Nat Immunol</em> 2004;5(3):266-71
+(PMID 14758358, doi 10.1038/ni1037). Rudensky's maternal-fetal work is
+later and mechanistically different: Samstein RM et al., "Extrathymic
+generation of regulatory T cells in placental mammals mitigates
+maternal-fetal conflict," <em>Cell</em> 2012;150(1):29-38 (CNS1
+enhancer).</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/14758358/">https://pubmed.ncbi.nlm.nih.gov/14758358/</a>
+; <a href="https://pubmed.ncbi.nlm.nih.gov/22770213/">https://pubmed.ncbi.nlm.nih.gov/22770213/</a></td>
+</tr>
+<tr>
+<td>IDO-mediated tryptophan catabolism (Munn &amp; Mellor,
+<em>Science</em> 1998)</td>
+<td>CONFIRMED</td>
+<td>Munn DH, Zhou M, Attwood JT, Bondarev I, Conway SJ, Marshall B,
+Brown C, Mellor AL, "Prevention of allogeneic fetal rejection by
+tryptophan catabolism," <em>Science</em> 1998;281(5380):1191-3. First
+author Munn, senior author Mellor — exactly as claimed.</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/9712583/">https://pubmed.ncbi.nlm.nih.gov/9712583/</a></td>
+</tr>
+<tr>
+<td>trophoblast HLA-G</td>
+<td>CONFIRMED (standard)</td>
+<td></td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/9712583/">https://pubmed.ncbi.nlm.nih.gov/9712583/</a></td>
+</tr>
+<tr>
+<td><strong>"IgE-mediated type-I hypersensitivity (Ishizaka,
+1966)"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>1966 is right for the Ishizakas' identification of the
+reagin-carrying immunoglobulin (Ishizaka K, Ishizaka T, Hornbrook MM,
+<em>J Immunol</em> 1966;97(1):75-85), but IgE was <strong>co-discovered
+independently</strong> by Johansson &amp; Bennich (Uppsala, 1967) and
+the name "IgE" was fixed by a joint 1968 paper. "Ishizaka, 1966" alone
+drops the Swedish group.</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/4162440/">https://pubmed.ncbi.nlm.nih.gov/4162440/</a>
+; <a href="https://en.wikipedia.org/wiki/Immunoglobulin_E">https://en.wikipedia.org/wiki/Immunoglobulin_E</a></td>
+</tr>
+<tr>
+<td>Medawar acquired tolerance (1940s-50s; 1960 Nobel)</td>
+<td>CONFIRMED</td>
+<td>1960 Nobel shared with Frank Macfarlane Burnet "for discovery of
+acquired immunological tolerance"; primary work Billingham, Brent &amp;
+Medawar, <em>Nature</em> 1953</td>
+<td><a href="https://en.wikipedia.org/wiki/Peter_Medawar">https://en.wikipedia.org/wiki/Peter_Medawar</a></td>
+</tr>
+<tr>
+<td>Herd immunity concept, 1920s-30s</td>
+<td>CONFIRMED (dating nuance)</td>
+<td>Concept traces to Topley &amp; Wilson (1923, experimental mouse
+epidemics) and Hedrich's 1930s Baltimore measles data. Nuance: the
+<em>phrase</em> first appears in 1894 veterinary usage. Canonical
+history: Fine PEM, <em>Epidemiol Rev</em> 1993;15(2):265-302.</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/8174658/">https://pubmed.ncbi.nlm.nih.gov/8174658/</a></td>
+</tr>
+<tr>
+<td>Influenza antigenic drift/shift, original antigenic sin presuppose
+antibody</td>
+<td>CONFIRMED (standard)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Herd_immunity">https://en.wikipedia.org/wiki/Herd_immunity</a></td>
+</tr>
+<tr>
+<td>Peto's paradox (Peto, 1975)</td>
+<td>CONFIRMED</td>
+<td>Peto R, Roe FJC, Lee PN, Levy L, Clack J, "Cancer and ageing in mice
+and men," <em>Br J Cancer</em> 1975;32(4):411-26. Caulin &amp; Maley
+themselves cite this 1975 paper as the paradox's origin, so <strong>1975
+is not an error</strong>.</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/1212409/">https://pubmed.ncbi.nlm.nih.gov/1212409/</a></td>
+</tr>
+<tr>
+<td>Caulin &amp; Maley, <em>TREE</em> 2011</td>
+<td>CONFIRMED</td>
+<td>"Peto's Paradox: evolution's prescription for cancer prevention,"
+<em>Trends Ecol Evol</em> 2011;26(4):175-82</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060950/">https://pmc.ncbi.nlm.nih.gov/articles/PMC3060950/</a></td>
+</tr>
+<tr>
+<td>Latent herpesvirus (EBV/CMV) control is strongly CD8-dependent</td>
+<td>CONFIRMED</td>
+<td>Riddell et al., <em>Science</em> 1992;257:238-41; Walter et al.,
+<em>NEJM</em> 1995;333:1038-44; Rooney et al., <em>Lancet</em>
+1995;345:9-13</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/1352912/">https://pubmed.ncbi.nlm.nih.gov/1352912/</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exact-replacements-for-c2_biology_medicine_06">Exact
+replacements for <code>C2_biology_medicine_06</code></h3>
+<ol type="1">
+<li><p><code>known_answers[5]</code> — <strong>hard citation error,
+highest priority</strong>:</p>
+<ul>
+<li>OLD:
+<code>regulatory T-cell expansion (Aluvihare/Betz/Rudensky, Nature Immunology 2004)</code></li>
+<li>NEW:
+<code>regulatory T-cell expansion (Aluvihare, Kallikourdis &amp; Betz, Nature Immunology 2004; and Samstein et al., Cell 2012, for the placental-mammal-specific CNS1 enhancer)</code></li>
+</ul></li>
+<li><p><code>known_answers[4]</code> — <strong>hard citation
+error</strong>:</p>
+<ul>
+<li>OLD:
+<code>Burnet-Thomas hypothesis (1957); Dunn, Old &amp; Schreiber formalization (Nature Immunology 2002; Science 2011)</code></li>
+<li>NEW:
+<code>Burnet-Thomas immunosurveillance hypothesis (Burnet 1957; Thomas 1959); formalization by Dunn, Bruce, Ikeda, Old &amp; Schreiber (Nature Immunology 2002) and Schreiber, Old &amp; Smyth (Science 2011)</code></li>
+</ul></li>
+<li><p><code>known_answers[3]</code>:</p>
+<ul>
+<li>OLD:
+<code>jawless vertebrates (lamprey/hagfish) - Pancer &amp; Cooper et al., Nature 2004</code></li>
+<li>NEW:
+<code>jawless vertebrates - Pancer &amp; Cooper et al., Nature 2004 (sea lamprey) and PNAS 2005 (hagfish)</code></li>
+</ul></li>
+<li><p><code>known_answers[1]</code> — soften the statistic:</p>
+<ul>
+<li>OLD:
+<code>roughly 97% of animal species (all invertebrates) persist on innate immunity only</code></li>
+<li>NEW:
+<code>roughly 95-97% of animal species (all invertebrates) persist on innate immunity only</code></li>
+</ul></li>
+<li><p>Optional, <code>known_answers[6]</code>:</p>
+<ul>
+<li>OLD:
+<code>IgE-mediated type-I hypersensitivity (Ishizaka, 1966)</code></li>
+<li>NEW:
+<code>IgE-mediated type-I hypersensitivity (Ishizaka &amp; Ishizaka 1966; independently Johansson &amp; Bennich 1967; class named IgE 1968)</code></li>
+</ul></li>
+</ol>
+<hr/>
+<h2 id="7-c2_materials_chemistry_07-no-crystallinity-world--full-claim-table">7.
+<code>C2_materials_chemistry_07</code> (no-crystallinity world) — full
+claim table</h2>
+<p>Seventeen <code>known_answers</code> entries, almost all textbook
+condensed-matter facts. This is the best-sourced item in C2: <strong>no
+wrong facts</strong>, one attribution slip, two range quibbles.</p>
+<div aria-label="7. C2_materials_chemistry_07 (no-crystallinity world) — full
+claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Crystals have long-range periodic order; glasses only
+short-range</td>
+<td>CONFIRMED (definitional)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Amorphous_solid">https://en.wikipedia.org/wiki/Amorphous_solid</a></td>
+</tr>
+<tr>
+<td>X-ray crystallography needs a periodic lattice; DNA helix from fibre
+diffraction; non-crystalline methods are cryo-EM, NMR, PDF/EXAFS</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/X-ray_crystallography">https://en.wikipedia.org/wiki/X-ray_crystallography</a></td>
+</tr>
+<tr>
+<td>"a-Si:H has low electron mobility (~1 cm2/V.s)"</td>
+<td>CONFIRMED (needs a one-word qualifier)</td>
+<td>~1 cm²/V·s is correct for the <strong>drift / field-effect</strong>
+mobility, which is the device-relevant number (TOF drift mobility at 320
+K ≈ 1). The <em>extended-state (band)</em> mobility is much higher —
+10–20 cm²/V·s classically, ~46 in a 2024 reanalysis. Add "field-effect"
+or "drift" and it is airtight</td>
+<td><a href="https://pubs.aip.org/aip/apl/article/50/15/983/52295">https://pubs.aip.org/aip/apl/article/50/15/983/52295</a>
+; <a href="https://arxiv.org/abs/2408.03678">https://arxiv.org/abs/2408.03678</a></td>
+</tr>
+<tr>
+<td><strong>"a-IGZO … (Hosono et al. 2004), reach mobility ~10 cm2/V.s
+(roughly 10x a-Si:H)"</strong></td>
+<td>CONFIRMED (figure) / <strong>IMPRECISE (attribution)</strong></td>
+<td>Figure verified <strong>verbatim</strong> in the paper: "Hall effect
+mobilities exceeding 10 cm² V⁻¹ s⁻¹, which is an order of magnitude
+larger than for hydrogenated amorphous silicon." But the paper is
+conventionally cited <strong>Nomura et al. 2004</strong> — Nomura K,
+Ohta H, Takagi A, Kamiya T, Hirano M, <strong>Hosono H</strong>,
+"Room-temperature fabrication of transparent flexible thin-film
+transistors using amorphous oxide semiconductors," <em>Nature</em>
+<strong>432</strong>(7016):488–492 (2004). Hosono is last/corresponding
+author. (TFT <em>saturation</em> mobility in that paper was 6–9
+cm²/V·s)</td>
+<td><a href="https://www.nature.com/articles/nature03090">https://www.nature.com/articles/nature03090</a>
+; <a href="https://pubmed.ncbi.nlm.nih.gov/15565150/">https://pubmed.ncbi.nlm.nih.gov/15565150/</a></td>
+</tr>
+<tr>
+<td>LEDs/laser diodes need crystalline direct-gap semiconductors;
+amorphous shows Urbach tails, localized states below a mobility
+edge</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Urbach_energy">https://en.wikipedia.org/wiki/Urbach_energy</a></td>
+</tr>
+<tr>
+<td>Zeolites/MOFs shape-selective; FCC and xylene isomerization use
+zeolites</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td><a href="https://doi.org/10.1039/C5CS00376H">https://doi.org/10.1039/C5CS00376H</a></td>
+</tr>
+<tr>
+<td>"Amorphous silica-alumina was the pre-zeolite cracking catalyst and
+is far less shape-selective"</td>
+<td>CONFIRMED</td>
+<td>"The original FCC catalyst contained clay, and later amorphous
+silica-alumina and silica-magnesia were used, before zeolite-based
+catalytic cracking was adopted in the early 1960s." ASA has broad
+pore-size distribution, no molecular-sieve selectivity; it survives in
+modern FCC as the <em>active matrix</em> pre-cracking molecules too
+large for zeolite pores</td>
+<td><a href="https://link.springer.com/article/10.1007/s11814-016-0327-8">https://link.springer.com/article/10.1007/s11814-016-0327-8</a></td>
+</tr>
+<tr>
+<td>"Bulk metallic glasses (e.g. Zr-based Vitreloy) … high yield
+strength, large elastic limit, poor tensile ductility, localized shear
+banding, negligible work hardening"</td>
+<td>CONFIRMED</td>
+<td>~2 GPa strength, ~2% elastic limit, essentially zero tensile
+ductility ("fracture instantly upon yielding"), deformation localized
+into shear bands, strain-<strong>softening</strong> rather than work
+hardening. Vitreloy 1 = Zr₄₁.₂Ti₁₃.₈Cu₁₂.₅Ni₁₀Be₂₂.₅ (Caltech 1992) —
+Zr-based as stated</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3996486/">https://pmc.ncbi.nlm.nih.gov/articles/PMC3996486/</a>
+; <a href="https://en.wikipedia.org/wiki/Amorphous_metal">https://en.wikipedia.org/wiki/Amorphous_metal</a></td>
+</tr>
+<tr>
+<td>"Nd2Fe14B and SmCo derive coercivity from high magnetocrystalline
+anisotropy; Fe-based metglas is magnetically SOFT, used in low-loss
+transformer cores"</td>
+<td>CONFIRMED including the formula</td>
+<td>Hard phase is the tetragonal <strong>Nd₂Fe₁₄B</strong>
+intermetallic; coercivity in SmCo₅ and Nd₂Fe₁₄B from high
+magnetocrystalline anisotropy (4f crystal-field + spin-orbit). Fe-based
+amorphous Metglas (2605SA1, 2605HB1M) is soft and cuts
+distribution-transformer no-load loss to ~⅓ of grain-oriented silicon
+steel</td>
+<td><a href="https://www3.aps.anl.gov/haskel/PS/ndfeb.pdf">https://www3.aps.anl.gov/haskel/PS/ndfeb.pdf</a>
+; <a href="https://metglas.com/distribution-transformer-electrical-steel/">https://metglas.com/distribution-transformer-electrical-steel/</a></td>
+</tr>
+<tr>
+<td>Piezo/pyro/ferroelectricity require non-centrosymmetric crystals;
+quartz oscillators; poled PVDF/glass as substitutes</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Piezoelectricity">https://en.wikipedia.org/wiki/Piezoelectricity</a></td>
+</tr>
+<tr>
+<td>"layered LiCoO2, spinel LiMn2O4, olivine LiFePO4"</td>
+<td>CONFIRMED (all three)</td>
+<td>LiCoO₂ layered (2-D Li diffusion), LiMn₂O₄ spinel (3-D), LiFePO₄
+olivine (1-D channels). Minor: Wikipedia files LiFePO₄ under the broader
+"polyanion" label, but "olivine" is the standard structure-type name in
+the battery literature</td>
+<td><a href="https://en.wikipedia.org/wiki/Lithium-ion_battery">https://en.wikipedia.org/wiki/Lithium-ion_battery</a></td>
+</tr>
+<tr>
+<td>Single-crystal Ni-base superalloy turbine blades eliminate grain
+boundaries to resist creep</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Superalloy">https://en.wikipedia.org/wiki/Superalloy</a></td>
+</tr>
+<tr>
+<td>"Crystalline ice Ih (~0.917 g/cm3) … LDA ~0.94 … HDA ~1.17"</td>
+<td>CONFIRMED (HDA is the top of its range)</td>
+<td>Ice Ih 0.917 g/cm³ at 0 °C vs liquid water 0.9998 ✓. LDA ≈ 0.94 ✓.
+<strong>HDA is standardly quoted as 1.15–1.17 g/cm³</strong>, so "~1.17"
+is the range top rather than the central value. Also: medium-density
+amorphous ice (MDA, ~1.06 g/cm³) was reported in 2023, so the binary
+LDA/HDA framing is now slightly dated</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10879119/">https://pmc.ncbi.nlm.nih.gov/articles/PMC10879119/</a></td>
+</tr>
+<tr>
+<td>"Conventional BCS superconductivity occurs in some
+amorphous/disordered metals"</td>
+<td>CONFIRMED</td>
+<td>Amorphous MoGe — "a typical type-II superconductor and follows the
+conventional Bardeen-Cooper-Schrieffer (BCS) equation"; amorphous ReZr —
+"conventional strong coupling Type II"; quench-condensed amorphous Bi
+superconducts at Tc = 6.1 K vs <strong>0.53 mK</strong> for crystalline
+Bi (disorder <em>helps</em>)</td>
+<td><a href="https://arxiv.org/abs/2402.00387">https://arxiv.org/abs/2402.00387</a>
+; <a href="https://link.aps.org/doi/10.1103/PhysRev.147.384">https://link.aps.org/doi/10.1103/PhysRev.147.384</a></td>
+</tr>
+<tr>
+<td>NLO/EO crystals (KDP, LiNbO3, BBO, KTP); silica fibre is a glass
+carrying the internet via χ(3), χ(2) only by poling</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Nonlinear_optics">https://en.wikipedia.org/wiki/Nonlinear_optics</a></td>
+</tr>
+<tr>
+<td>"some amorphous nanostructures (e.g. certain bird feathers) produce
+non-iridescent structural color"</td>
+<td>CONFIRMED, researchers named</td>
+<td>Noh H, Liew SF, Saranathan V, <strong>Prum RO</strong>, Mochrie SGJ,
+<strong>Dufresne ER</strong>, Cao H, "How noniridescent colors are
+generated by quasi-ordered structures of bird feathers," <em>Advanced
+Materials</em> 22 (2010) / arXiv:0912.4487. Mechanism: isotropic
+short-range-ordered β-keratin/air nanostructure ⇒ "colors … invariant
+with the viewing angle"</td>
+<td><a href="https://arxiv.org/abs/0912.4487">https://arxiv.org/abs/0912.4487</a></td>
+</tr>
+<tr>
+<td>Bloch's theorem / band structure / Brillouin zones presuppose
+periodicity; disorder described by Anderson localization, mobility
+edges, Mott</td>
+<td>CONFIRMED (textbook)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Bloch%27s_theorem">https://en.wikipedia.org/wiki/Bloch%27s_theorem</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exact-replacements-for-c2_materials_chemistry_07">Exact
+replacements for <code>C2_materials_chemistry_07</code></h3>
+<ol type="1">
+<li><p><code>known_answers[4]</code> — attribution:</p>
+<ul>
+<li>OLD:
+<code>a-IGZO (indium-gallium-zinc-oxide, Hosono et al. 2004)</code></li>
+<li>NEW:
+<code>a-IGZO (indium-gallium-zinc-oxide, Nomura et al., Nature 432, 488 (2004), from Hosono's group)</code></li>
+</ul></li>
+<li><p><code>known_answers[3]</code> — mobility type (optional but
+recommended, since <code>hard_rules[3]</code> makes retained-fact
+accuracy invalidating):</p>
+<ul>
+<li>OLD:
+<code>hydrogenated amorphous silicon (a-Si:H) has low electron mobility (~1 cm2/V.s)</code></li>
+<li>NEW:
+<code>hydrogenated amorphous silicon (a-Si:H) has low electron field-effect/drift mobility (~1 cm2/V.s)</code></li>
+</ul></li>
+<li><p><code>known_answers[12]</code> — HDA range (optional):</p>
+<ul>
+<li>OLD: <code>high-density (HDA, ~1.17 g/cm3) forms</code></li>
+<li>NEW:
+<code>high-density (HDA, ~1.15-1.17 g/cm3) forms (with medium-density MDA, ~1.06 g/cm3, reported 2023)</code></li>
+</ul></li>
+</ol>
+<hr/>
+<h2 id="8-c2_materials_chemistry_35-non-protective-al-oxide--full-claim-table">8.
+<code>C2_materials_chemistry_35</code> (non-protective Al oxide) — full
+claim table</h2>
+<div aria-label="8. C2_materials_chemistry_35 (non-protective Al oxide) — full
+claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"aluminum's … Pilling-Bedworth ratio ~1.3"</td>
+<td>CONFIRMED</td>
+<td>Al/Al₂O₃ PBR = <strong>1.28</strong>, inside the 1 &lt; R_PB &lt; 2
+passivating window</td>
+<td><a href="https://en.wikipedia.org/wiki/Pilling%E2%80%93Bedworth_ratio">https://en.wikipedia.org/wiki/Pilling%E2%80%93Bedworth_ratio</a></td>
+</tr>
+<tr>
+<td>"The real Al2O3 film is ~4 nm, dense, adherent, self-healing"</td>
+<td>CONFIRMED (upper end of the range)</td>
+<td>Literature: <strong>~2–4 nm</strong> for air-formed native oxide,
+growing to ~5 nm after years of exposure; some sources give 2–10 nm for
+aged/humid surfaces. Growth is self-limiting (inverse-logarithmic
+kinetics); the film is amorphous, dense and adherent</td>
+<td><a href="https://www.sciencedirect.com/science/article/abs/pii/S0169433215011617">https://www.sciencedirect.com/science/article/abs/pii/S0169433215011617</a>
+; <a href="https://en.wikipedia.org/wiki/Passivation_(chemistry)">https://en.wikipedia.org/wiki/Passivation_(chemistry)</a></td>
+</tr>
+<tr>
+<td>"Iron's oxide is flaky and non-protective, so iron rusts
+progressively"</td>
+<td>CONFIRMED (with a mechanism caveat)</td>
+<td>Fe₂O₃ PBR = <strong>2.14</strong> (Fe₃O₄ = 1.90, FeO = 1.7); R_PB
+&gt; 2 means the oxide "chips off and provides no protective effect."
+Caveat worth knowing: PBR is a crude criterion — iron scale is really
+non-protective because it grows fast via high cation diffusivity in
+porous FeO and spalls under compressive growth stress in a multilayer
+FeO/Fe₃O₄/Fe₂O₃ stack; two of the three oxides have PBR &lt; 2 yet still
+aren't protective</td>
+<td><a href="https://en.wikipedia.org/wiki/Pilling%E2%80%93Bedworth_ratio">https://en.wikipedia.org/wiki/Pilling%E2%80%93Bedworth_ratio</a></td>
+</tr>
+<tr>
+<td>"Anodizing works by deliberately thickening aluminum's protective
+oxide"</td>
+<td>CONFIRMED</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Anodizing">https://en.wikipedia.org/wiki/Anodizing</a></td>
+</tr>
+<tr>
+<td>"Sapphire and ruby are stable crystalline bulk Al2O3; divergence is
+the surface film only"</td>
+<td>CONFIRMED</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Corundum">https://en.wikipedia.org/wiki/Corundum</a></td>
+</tr>
+<tr>
+<td><strong><code>query</code> + <code>expert_baseline</code>: "the
+1960s beverage-can revolution"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>Invention precedes the 1960s: the first all-aluminum beverage can
+was <strong>1958</strong> (Hawaii Brewing, Primo beer — a commercial
+flop); <strong>Coors, 22 January 1959</strong> brought the 7-oz
+all-aluminum can mainstream. The genuine 1960s inflection is the
+<em>adoption ramp</em>: Reynolds' drawn-and-ironed two-piece can
+(<strong>1963</strong>) became the industry standard, Schlitz aluminum
+pull-tab (1963), 40% of US beer cans had aluminum tops by end-1963 and
+80% by 1968, Coca-Cola and PepsiCo adopted 1967. Steel was not actually
+displaced until the 1980s–90s (shipments 0.5 B in 1965 → 8.5 B in 1972;
+today ~95%+ aluminum)</td>
+<td><a href="https://www.lightmetalage.com/news/industry-news/applications-design/60-years-of-the-aluminum-can/">https://www.lightmetalage.com/news/industry-news/applications-design/60-years-of-the-aluminum-can/</a></td>
+</tr>
+<tr>
+<td>Overhead transmission conductors are predominantly aluminum (ACSR
+etc.); aluminum displaced copper</td>
+<td>CONFIRMED (the "when" is weakly sourced)</td>
+<td>ACSR is "the most common conductor in use for transmission today,"
+with AAAC also common; aluminum wins on ~half the weight of
+equal-resistance copper plus lower cost; copper "was more popular in the
+past and is still in use, especially at lower voltages and for
+grounding." Trade sources put ACSR development in the <strong>early
+1900s</strong>, spurred by wartime copper demand (ACSS 1970s;
+composite-core ACCC/ACCR early 2000s). No scholarly source pins a
+crossover year — treat "early 20th century" as approximate</td>
+<td><a href="https://en.wikipedia.org/wiki/Overhead_power_line">https://en.wikipedia.org/wiki/Overhead_power_line</a></td>
+</tr>
+<tr>
+<td>Sacrificial anodes, aluminized coatings, aluminum fuel powders exist
+and behave as described</td>
+<td>CONFIRMED (real technologies)</td>
+<td>Aluminum-alloy sacrificial anodes, hot-dip/spray aluminizing, and
+aluminum powder as a solid-rocket/thermite fuel are all standard</td>
+<td><a href="https://en.wikipedia.org/wiki/Galvanic_anode">https://en.wikipedia.org/wiki/Galvanic_anode</a></td>
+</tr>
+<tr>
+<td>Direct substitution to steel/titanium/composites; higher lifecycle
+cost</td>
+<td>CONFIRMED (trivially, and correctly labelled "obvious")</td>
+<td></td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exact-replacement-for-c2_materials_chemistry_35">Exact
+replacement for <code>C2_materials_chemistry_35</code></h3>
+<p><code>expert_baseline</code>:</p>
+<ul>
+<li>OLD: <code>aborts the 1960s beverage-can revolution</code></li>
+<li>NEW:
+<code>aborts the aluminum beverage can (first all-aluminum can 1958-59; the 1963 drawn-and-ironed two-piece can drove 1960s adoption, with steel fully displaced only by the 1980s-90s)</code></li>
+</ul>
+<p>(The <code>query</code> also says "the beverage-can and packaging
+industry" without a date, which is fine. Only the
+<code>expert_baseline</code> carries the "1960s" dating.)</p>
+<hr/>
+<h2 id="9-c2_biology_medicine_34-non-enucleated-red-cells--full-claim-table">9.
+<code>C2_biology_medicine_34</code> (non-enucleated red cells) — full
+claim table</h2>
+<p>Only nine <code>known_answers</code> entries, all short and undated —
+no papers cited, so no fabrication risk. But three of them are stated as
+absolutes that the comparative literature contradicts, and one of those
+(<code>known_answers[9]</code>) is load-bearing for the item's
+malaria/apoptosis thread.</p>
+<div aria-label="9. C2_biology_medicine_34 (non-enucleated red cells) — full
+claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>query</code>: mammalian RBCs evolved enucleation; mature
+mammalian erythrocytes lose nucleus <strong>and
+mitochondria</strong></td>
+<td>CONFIRMED for the adult definitive lineage; IMPRECISE as an
+absolute</td>
+<td>Enucleation of definitive erythrocytes is universal in mammals, and
+mammals are the only vertebrate class with anucleate mature RBCs;
+mitochondria, Golgi and ER are also lost ✓. <strong>But nucleated
+erythrocytes circulate normally in mammalian embryos/fetuses</strong>
+(large "primitive" erythroblasts), and appear in neonates and in
+pathological states — so the claim holds only of the adult definitive
+lineage</td>
+<td><a href="https://en.wikipedia.org/wiki/Red_blood_cell">https://en.wikipedia.org/wiki/Red_blood_cell</a>
+; Newton et al., <em>J Cell Sci</em> 2024;137(19):jcs261673</td>
+</tr>
+<tr>
+<td>"Nucleated cells hold less hemoglobin per cell volume, lowering
+per-cell oxygen capacity"</td>
+<td>CONFIRMED with numbers</td>
+<td>Human MCHC 32–36 g/dL vs broiler chicken (Ross 308) <strong>MCHC
+22.9–27.2 g/dL</strong> — avian RBCs are ~25–30% <em>lower</em> in
+hemoglobin concentration</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/">https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/</a>
+; <a href="https://en.wikipedia.org/wiki/Mean_corpuscular_hemoglobin_concentration">https://en.wikipedia.org/wiki/Mean_corpuscular_hemoglobin_concentration</a></td>
+</tr>
+<tr>
+<td>"A rigid nucleus makes erythrocytes larger and stiffer"</td>
+<td>"larger" CONFIRMED; <strong>"stiffer" UNVERIFIABLE</strong></td>
+<td>Larger ✓: human MCV 80–100 fL vs chicken <strong>MCV 123.6–151.6
+fL</strong> (~1.5×). Stiffer: no measured comparative deformability data
+found; the closest support is Keerthivasan et al. 2011 stating
+enucleation "<strong>likely</strong>" imparts flexibility for traversing
+capillaries half the cell's diameter — an inference, not a measurement.
+Treat as plausible-but-unsourced</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/">https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/</a>
+; <a href="https://en.wikipedia.org/wiki/Mean_corpuscular_volume">https://en.wikipedia.org/wiki/Mean_corpuscular_volume</a></td>
+</tr>
+<tr>
+<td>"Retained mitochondria consume some transported oxygen, raising cell
+metabolic cost"</td>
+<td>CONFIRMED (mechanistically standard)</td>
+<td></td>
+<td><a href="https://en.wikipedia.org/wiki/Red_blood_cell">https://en.wikipedia.org/wiki/Red_blood_cell</a></td>
+</tr>
+<tr>
+<td><strong>"Nucleated erythrocytes are the documented norm in birds,
+reptiles, amphibians, fish"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>The norm is right (Glomski et al., "The phylogenetic odyssey of the
+erythrocyte" III &amp; IV; reptiles, birds confirmed). But there are
+documented exceptions that undercut a strict "norm" claim: <strong>five
+clades of plethodontid salamanders have evolved enucleate RBCs</strong>
+(up to ~99% enucleate in <em>Batrachoseps attenuatus</em>); fish of
+genus <em>Maurolicus</em> have enucleate RBCs; channichthyid icefish
+lack erythrocytes and hemoglobin entirely</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/18328681/">https://pubmed.ncbi.nlm.nih.gov/18328681/</a>
+; <a href="https://en.wikipedia.org/wiki/Red_blood_cell">https://en.wikipedia.org/wiki/Red_blood_cell</a></td>
+</tr>
+<tr>
+<td>"Mammalian enucleation is standardly explained as aiding capillary
+deformability and hemoglobin packing (textbook thesis)"</td>
+<td>CONFIRMED (correctly labelled a thesis, not a fact)</td>
+<td></td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3159172/">https://pmc.ncbi.nlm.nih.gov/articles/PMC3159172/</a></td>
+</tr>
+<tr>
+<td>"Reticulocytes transiently retain organelles in reality"</td>
+<td>CONFIRMED</td>
+<td>Mitochondria persist into the reticulocyte and are cleared by
+NIX/BNIP3L-dependent mitophagy, independent of BAX/BAK — Schweers RL et
+al., <em>PNAS</em> 2007;104(49):19500–5</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/18048346/">https://pubmed.ncbi.nlm.nih.gov/18048346/</a></td>
+</tr>
+<tr>
+<td>"Cell-free fetal DNA in maternal plasma underlies real noninvasive
+prenatal testing"</td>
+<td>CONFIRMED</td>
+<td>Lo YMD, Corbetta N, Chamberlain PF, Rai V, Sargent IL, Redman CWG,
+Wainscoat JS, "Presence of fetal DNA in maternal plasma and serum,"
+<em>Lancet</em> 1997;350(9076):485–7</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/9274585/">https://pubmed.ncbi.nlm.nih.gov/9274585/</a></td>
+</tr>
+<tr>
+<td>"Smears and automated counts must separate nucleated red cells from
+leukocytes"</td>
+<td>CONFIRMED</td>
+<td>Avian nucleated RBCs are documented to interfere with automated
+counters, forcing manual methods</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/">https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/</a></td>
+</tr>
+<tr>
+<td><strong>"Anucleate red cells cannot become cancerous; nucleated ones
+could in principle mutate"</strong> + <code>query</code>'s "nucleated
+cells possess apoptosis machinery"</td>
+<td><strong>IMPRECISE — both halves</strong></td>
+<td>(a) Mature <strong>anucleate</strong> human RBCs <em>do</em> undergo
+a regulated suicidal death, <strong>eryptosis</strong> — Ca²⁺ entry,
+cell shrinkage, phosphatidylserine scrambling (Lang KS et al., <em>Cell
+Physiol Biochem</em> 2005;15(5):195–202; Lang &amp; Lang, <em>Biomed Res
+Int</em> 2015:513518). So the implicit "nucleus ⇒ death machinery, no
+nucleus ⇒ no programmed death" premise is wrong, and the item's
+Plasmodium/apoptosis thread rests on it. (b) Red-lineage cancers exist
+but arise <strong>upstream in nucleated precursors</strong>: pure
+erythroid leukemia arises from erythroblasts (Wang W et al., <em>Am J
+Hematol</em> 2017;92(3):292–6), polycythemia vera is a clonal HSC
+disorder (James C et al., <em>Nature</em> 2005;434:1144–8). Correct
+framing: "the mature anucleate erythrocyte is not itself a transformable
+target"</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/15956782/">https://pubmed.ncbi.nlm.nih.gov/15956782/</a>
+; <a href="https://pubmed.ncbi.nlm.nih.gov/28006859/">https://pubmed.ncbi.nlm.nih.gov/28006859/</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exact-replacements-for-c2_biology_medicine_34">Exact
+replacements for <code>C2_biology_medicine_34</code></h3>
+<ol type="1">
+<li><p><code>known_answers[9]</code> — the load-bearing one:</p>
+<ul>
+<li>OLD:
+<code>Anucleate red cells cannot become cancerous; nucleated ones could in principle mutate (obvious).</code></li>
+<li>NEW:
+<code>The mature anucleate red cell is not itself a transformable target, though red-lineage cancers already arise in nucleated precursors (erythroblasts in pure erythroid leukemia; HSCs in polycythemia vera); note also that anucleate mammalian RBCs are NOT death-machinery-free, since they undergo regulated eryptosis (obvious).</code></li>
+</ul></li>
+<li><p><code>known_answers[4]</code>:</p>
+<ul>
+<li>OLD:
+<code>Nucleated erythrocytes are the documented norm in birds, reptiles, amphibians, fish (factual baseline).</code></li>
+<li>NEW:
+<code>Nucleated erythrocytes are the documented norm in birds, reptiles, amphibians, fish, with rare convergent exceptions (enucleate RBCs in several plethodontid salamander clades and in the fish genus Maurolicus) (factual baseline).</code></li>
+</ul></li>
+<li><p><code>query</code> — the apoptosis premise (this is the one that
+changes what the item is asking):</p>
+<ul>
+<li>OLD:
+<code>(especially Plasmodium/malaria, given that nucleated cells possess apoptosis machinery)</code></li>
+<li>NEW:
+<code>(especially Plasmodium/malaria, given that nucleated cells possess full transcription-dependent apoptosis machinery, whereas real anucleate mammalian RBCs are limited to eryptosis)</code></li>
+</ul></li>
+</ol>
+<hr/>
+<h2 id="10-c2_law_policy_09-no-statute-of-limitations--full-claim-table">10.
+<code>C2_law_policy_09</code> (no statute of limitations) — full claim
+table</h2>
+<div aria-label="10. C2_law_policy_09 (no statute of limitations) — full claim
+table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Roman law: usucapio in the Twelve Tables (c. 450 BCE); longi
+temporis praescriptio (3rd c. CE)</td>
+<td>CONFIRMED</td>
+<td>Roman usucaption required "one year for chattels, two years for
+land" — the Twelve Tables periods. <em>Longi temporis praescriptio</em>
+is conventionally traced to a rescript of Septimius Severus and
+Caracalla c. 199–200 CE, i.e. the turn of the 3rd century — the item's
+"3rd c. CE" is defensible</td>
+<td><a href="https://en.wikipedia.org/wiki/Usucaption">https://en.wikipedia.org/wiki/Usucaption</a></td>
+</tr>
+<tr>
+<td>maxim <em>vigilantibus non dormientibus jura subveniunt</em></td>
+<td>CONFIRMED (standard maxim)</td>
+<td>"the law assists the vigilant, not the sleeping"</td>
+<td><a href="https://www.law.cornell.edu/wex/statute_of_limitations">https://www.law.cornell.edu/wex/statute_of_limitations</a></td>
+</tr>
+<tr>
+<td><em>Wood v. Carpenter</em>, 101 U.S. 135 (1879)</td>
+<td>CONFIRMED</td>
+<td>Decided <strong>22 December 1879</strong>, opinion by
+<strong>Justice Swayne</strong>; concerns fraudulent concealment and
+statute-of-limitations policy. Its famous passage covers all three
+rationales the item lists: "They promote repose… They stimulate to
+activity and punish negligence. While time is constantly destroying the
+evidence of rights, they supply its place by a presumption…"</td>
+<td><a href="https://www.courtlistener.com/opinion/90102/wood-v-carpenter/">https://www.courtlistener.com/opinion/90102/wood-v-carpenter/</a></td>
+</tr>
+<tr>
+<td>Justice Jackson in <em>Order of Railroad Telegraphers v. Ry. Express
+Agency</em>, 321 U.S. 342 (1944)</td>
+<td>CONFIRMED <strong>from the official U.S. Reports scan</strong></td>
+<td><strong>321 U.S. 342</strong>, argued 10 Nov 1943, decided
+<strong>28 February 1944</strong>: "MR. JUSTICE JACKSON delivered the
+opinion of the Court." The passage supporting all three rationales, at
+<strong>321 U.S. 348–349</strong>: "Statutes of limitation… are designed
+to promote justice by preventing surprises through the revival of claims
+that have been allowed to slumber until evidence has been lost, memories
+have faded, and witnesses have disappeared… the right to be free of
+stale claims in time comes to prevail over the right to prosecute them."
+⚠️ Do <strong>not</strong> confuse with Jackson's other well-known
+formulation ("Statutes of limitation find their justification in
+necessity and convenience rather than in logic… by definition
+arbitrary") — that is <em>Chase Securities Corp. v. Donaldson</em>, 325
+U.S. 304, 314 (1945)</td>
+<td><a href="https://tile.loc.gov/storage-services/service/ll/usrep/usrep321/usrep321342/usrep321342.pdf">https://tile.loc.gov/storage-services/service/ll/usrep/usrep321/usrep321342/usrep321342.pdf</a></td>
+</tr>
+<tr>
+<td>1968 UN Convention on Non-Applicability of Statutory Limitations to
+War Crimes and Crimes Against Humanity (in force 1970)</td>
+<td>CONFIRMED <strong>exactly</strong></td>
+<td>Title verified; <strong>adopted 26 November 1968</strong>;
+<strong>entered into force 11 November 1970</strong> per art. VIII; open
+for signature 16 Dec 1968 – 31 Dec 1969; 56 states parties</td>
+<td><a href="https://treaties.un.org/pages/ViewDetails.aspx?src=TREATY&amp;mtdsg_no=IV-6&amp;chapter=4&amp;clang=_en">https://treaties.un.org/pages/ViewDetails.aspx?src=TREATY&amp;mtdsg_no=IV-6&amp;chapter=4&amp;clang=_en</a></td>
+</tr>
+<tr>
+<td><strong>"murder has no statute of limitations in most U.S.
+states"</strong></td>
+<td><strong>IMPRECISE — understated in the item's own
+favour</strong></td>
+<td><strong>No U.S. state imposes a limitations period on
+murder</strong>, so "most" is weaker than the truth. Federally, 18
+U.S.C. § 3281: "An indictment for any offense punishable by death may be
+found at any time without limitation." Cal. Penal Code § 799(a); N.Y.
+CPL § 30.10(2)(a) ("may be commenced at any time"). Residual caveats:
+<em>lesser</em> homicides (manslaughter) can be time-barred, and extreme
+delay can still trigger speedy-trial/due-process dismissal — so "murder"
+specifically, not "homicide"</td>
+<td><a href="https://www.law.cornell.edu/uscode/text/18/3281">https://www.law.cornell.edu/uscode/text/18/3281</a>
+; <a href="https://www.nysenate.gov/legislation/laws/CPL/30.10">https://www.nysenate.gov/legislation/laws/CPL/30.10</a></td>
+</tr>
+<tr>
+<td>California AB 218 (2019) look-back window</td>
+<td>CONFIRMED</td>
+<td><strong>Approved by the Governor 13 October 2019.</strong> Extended
+the limitations period to 22 years past majority (or 5 years from
+discovery, whichever is later) AND created a <strong>three-year revival
+window</strong>: claims "otherwise be barred as of January 1, 2020…
+[are] revived, and these claims may be commenced within three years of
+January 1, 2020" (i.e. to 1 Jan 2023)</td>
+<td><a href="https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=201920200AB218">https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=201920200AB218</a></td>
+</tr>
+<tr>
+<td>New York Child Victims Act (2019) look-back window</td>
+<td>CONFIRMED, with precision</td>
+<td>S2440, ch. 11 of 2019, <strong>signed 14 February 2019</strong>:
+civil claims to age 55, criminal clock from age 23, plus a revival
+window opening 6 months after the effective date — originally <strong>1
+year (14 Aug 2019 – 13 Aug 2020)</strong>, extended to <strong>14 Aug
+2021</strong> by S7082 (signed 3 Aug 2020)</td>
+<td><a href="https://www.nysenate.gov/legislation/bills/2019/S2440">https://www.nysenate.gov/legislation/bills/2019/S2440</a>
+; <a href="https://www.nysenate.gov/legislation/bills/2019/S7082">https://www.nysenate.gov/legislation/bills/2019/S7082</a></td>
+</tr>
+<tr>
+<td>Catholic dioceses and Boy Scouts of America (Ch. 11, 2020)
+bankruptcies</td>
+<td>CONFIRMED, with a <strong>primary-source causal link</strong></td>
+<td>Third Circuit, 137 F.4th 126 (3d Cir. 13 May 2025):
+"<strong>Meanwhile, many states enacted revival statutes enabling
+survivors to assert claims that were previously barred by statutes of
+limitation, and by 2019, it became apparent that BSA could not continue
+to defend individual abuse claims on a case-by-case basis and would need
+to declare bankruptcy. On February 18, 2020, BSA filed for bankruptcy
+protection in the District of Delaware.</strong>" Bar date 16 Nov 2020;
+<strong>over 100,000 proofs of claim</strong> (~82,000–92,700 abuse
+claims in various tallies). This is the strongest single piece of
+evidence in the item — a federal appellate court expressly attributing
+the bankruptcy to SOL revival</td>
+<td><a href="https://storage.courtlistener.com/pdf/2025/05/13/boy_scouts_of_america_and_delaware_bsa_llc_v..pdf">https://storage.courtlistener.com/pdf/2025/05/13/boy_scouts_of_america_and_delaware_bsa_llc_v..pdf</a></td>
+</tr>
+<tr>
+<td>CERCLA/Superfund 1980</td>
+<td>CONFIRMED (standard)</td>
+<td>Comprehensive Environmental Response, Compensation, and Liability
+Act, enacted 1980</td>
+<td><a href="https://www.epa.gov/superfund/superfund-cercla-overview">https://www.epa.gov/superfund/superfund-cercla-overview</a></td>
+</tr>
+<tr>
+<td>T. Merrill, "Property Rules, Liability Rules, and Adverse
+Possession," 1985</td>
+<td><strong>CONFIRMED — and 1985 is the correct year</strong></td>
+<td><strong>Thomas W. Merrill, "Property Rules, Liability Rules, and
+Adverse Possession," 79 Nw. U. L. Rev. 1122 (1985)</strong> —
+recommended citation taken verbatim from the author's own institutional
+repository, corroborated by OpenAlex (<code>publication_year</code>
+1985). A minority of citations render it "(1984)" because vol. 79 spans
+the 1984–85 academic year, but the publisher/repository year is 1985.
+Only nit: "T. Merrill" should be "Thomas W. Merrill".</td>
+<td><a href="https://scholarship.law.columbia.edu/faculty_scholarship/373/">https://scholarship.law.columbia.edu/faculty_scholarship/373/</a></td>
+</tr>
+<tr>
+<td>Posner, <em>Economic Analysis of Law</em></td>
+<td>CONFIRMED as to the work; <strong>pin-cite unverified</strong></td>
+<td>Richard A. Posner, <em>Economic Analysis of Law</em>, 1st ed.
+<strong>1973</strong> (Little, Brown), 9 editions through 2014. The
+efficiency treatment of adverse possession is standard in the property
+chapter and is what Merrill's 1985 article engages, but the book text
+could not be opened (Internet Archive item lending-restricted, 403;
+Google Books API rate-limited), so no specific passage was
+confirmed</td>
+<td><a href="https://en.wikipedia.org/wiki/Richard_Posner">https://en.wikipedia.org/wiki/Richard_Posner</a></td>
+</tr>
+<tr>
+<td>Torrens system, South Australia, 1858</td>
+<td>CONFIRMED</td>
+<td><strong>Real Property Act 1858</strong>; first sale under the system
+<strong>25 August 1858</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Torrens_title">https://en.wikipedia.org/wiki/Torrens_title</a></td>
+</tr>
+<tr>
+<td>Torrens curtain/mirror/indemnity principles</td>
+<td>CONFIRMED <strong>verbatim</strong></td>
+<td>"The Torrens system works on three principles: Mirror principle…
+Curtain principle… Indemnity principle"</td>
+<td><a href="https://en.wikipedia.org/wiki/Torrens_title">https://en.wikipedia.org/wiki/Torrens_title</a></td>
+</tr>
+<tr>
+<td><em>In re African-American Slave Descendants Litigation</em>, 471
+F.3d 754 (7th Cir. 2006)</td>
+<td>CONFIRMED</td>
+<td><strong>471 F.3d 754</strong>, Seventh Circuit, decided <strong>13
+December 2006</strong>, panel Easterbrook / <strong>Posner</strong> /
+Manion (Posner wrote); the district-court proceedings below are 272 F.
+Supp. 2d 755 (N.D. Ill. 2003) etc.</td>
+<td><a href="https://www.courtlistener.com/opinion/796269/in-re-african-american-slave-descendants-litigation-appeals-of-deadria/">https://www.courtlistener.com/opinion/796269/in-re-african-american-slave-descendants-litigation-appeals-of-deadria/</a></td>
+</tr>
+<tr>
+<td>Mau Mau claims against the UK settled June 2013</td>
+<td>CONFIRMED <strong>exactly</strong></td>
+<td>Foreign Secretary <strong>William Hague</strong>'s statement to
+Parliament, <strong>6 June 2013</strong>: <strong>£19.9 million</strong>
+for <strong>5,228 claimants</strong>; the Government expressly did not
+concede liability and noted the difficulty of claims "relating to events
+that occurred overseas… more than fifty years ago"</td>
+<td><a href="https://www.gov.uk/government/news/statement-to-parliament-on-settlement-of-mau-mau-claims">https://www.gov.uk/government/news/statement-to-parliament-on-settlement-of-mau-mau-claims</a></td>
+</tr>
+<tr>
+<td>Herero/Nama claims against Germany</td>
+<td>CONFIRMED; dismissal ground worth noting</td>
+<td><strong><em>Rukoro v. Federal Republic of Germany</em>, 363 F. Supp.
+3d 436 (S.D.N.Y. 2019)</strong> (Swain, J., 11 Mar 2019), <strong>aff'd
+976 F.3d 218 (2d Cir. 24 Sept 2020)</strong>: "we affirm the district
+court's dismissal for lack of subject matter jurisdiction" — the FSIA
+expropriation exception, § 1605(a)(3), did not apply. The dismissal
+turned on <strong>sovereign immunity, not limitations</strong>, which
+actually <em>strengthens</em> the item's own
+<code>known_answers[9]</code> point that other gatekeepers survive when
+SOL is removed. (⚠️ CourtListener's metadata mislabels the district
+court as "S.D. Illinois"; the opinion says S.D.N.Y.)</td>
+<td><a href="https://storage.courtlistener.com/pdf/2020/09/24/rukoro_v._federal_republic_of_germany.pdf">https://storage.courtlistener.com/pdf/2020/09/24/rukoro_v._federal_republic_of_germany.pdf</a></td>
+</tr>
+<tr>
+<td><strong>"the U.S. HEAR Act (2016) lifting state SOL for Nazi-looted
+art"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>Name and year correct — Holocaust Expropriated Art Recovery Act of
+2016, Pub. L. 114-308, <strong>approved 16 December 2016</strong>. But
+the Act does <strong>not "lift"</strong> state statutes of limitations;
+it <strong>preempts them and substitutes a uniform federal 6-year period
+running from actual discovery</strong>. Operative text: a claim may be
+filed "not later than <strong>6 years</strong> after the <strong>actual
+discovery</strong> by the claimant or the agent of the claimant" of both
+identity/location and possessory interest, and this applies
+"<strong>Notwithstanding any other provision of Federal or State law or
+any defense at law relating to the passage of time</strong>." This
+distinction is load-bearing for <em>this specific item</em>: HEAR
+replaces one time-bar with another (and a fairly short one), so it is a
+poor illustration of a world with no time-bars — it is better cited as
+evidence that legislatures reach for <em>discovery-triggered</em>
+limitations rather than abolition.</td>
+<td><a href="https://www.govinfo.gov/content/pkg/PLAW-114publ308/html/PLAW-114publ308.htm">https://www.govinfo.gov/content/pkg/PLAW-114publ308/html/PLAW-114publ308.htm</a></td>
+</tr>
+<tr>
+<td><strong>South Africa TRC, "1995-1998"</strong></td>
+<td><strong>IMPRECISE</strong></td>
+<td>Founding statute confirmed: <strong>Promotion of National Unity and
+Reconciliation Act, No. 34 of 1995</strong>. First HRV hearing 15 April
+1996; five-volume report handed over late <strong>October 1998</strong>.
+But the Amnesty Committee continued and the TRC formally <strong>ended
+its work in March 2003</strong> with the final volumes (Vol. 7 dated
+2002). Precise span: <strong>1995–2003, with core hearings
+1996–1998</strong></td>
+<td><a href="https://www.justice.gov.za/trc/">https://www.justice.gov.za/trc/</a>
+; <a href="https://www.justice.gov.za/trc/report/finalreport/victims_main_vol7.pdf">https://www.justice.gov.za/trc/report/finalreport/victims_main_vol7.pdf</a></td>
+</tr>
+<tr>
+<td>Asbestos + "occurrence" vs "claims-made" coverage wars; insurer
+insolvencies (1970s-2000s)</td>
+<td>CONFIRMED (standard insurance history)</td>
+<td></td>
+<td><a href="https://www.epa.gov/superfund/superfund-cercla-overview">https://www.epa.gov/superfund/superfund-cercla-overview</a></td>
+</tr>
+<tr>
+<td>"even where SOL is absent or waived, claims are still gated by
+sovereign immunity, act-of-state, standing, non-retroactivity,
+causation, burden of proof"</td>
+<td>CONFIRMED (standard doctrine)</td>
+<td></td>
+<td><a href="https://www.law.cornell.edu/wex/statute_of_limitations">https://www.law.cornell.edu/wex/statute_of_limitations</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exact-replacement-for-c2_law_policy_09">Exact replacement for
+<code>C2_law_policy_09</code></h3>
+<p><code>known_answers[7]</code>:</p>
+<ul>
+<li>OLD:
+<code>Holocaust-era art, addressed by the U.S. HEAR Act (2016) lifting state SOL for Nazi-looted art</code></li>
+<li>NEW:
+<code>Holocaust-era art, addressed by the U.S. HEAR Act (Pub. L. 114-308, 16 Dec 2016), which preempts state SOLs and substitutes a uniform federal 6-year period running from ACTUAL DISCOVERY rather than abolishing the time-bar</code></li>
+</ul>
+<hr/>
+<h2 id="11-c2_law_policy_37-no-plea-bargaining--full-claim-table">11.
+<code>C2_law_policy_37</code> (no plea bargaining) — full claim
+table</h2>
+<div aria-label="11. C2_law_policy_37 (no plea bargaining) — full claim
+table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>query</code> + <code>known_answers[3]</code>: "~95% of US
+convictions are real-world guilty pleas"</td>
+<td><strong>IMPRECISE (coarse rather than false)</strong></td>
+<td><em>Missouri v. Frye</em>, <strong>566 U.S. 134, 143
+(2012)</strong>, verbatim: "<strong>Ninety-seven percent of federal
+convictions and ninety-four percent of state convictions are the result
+of guilty pleas</strong>." "~95%" traces to <em>Padilla v.
+Kentucky</em>, 559 U.S. 356, 372 &amp; n.13 (2010) ("nearly 95% of all
+criminal convictions"), so it is not invented — but it understates
+federal by 2–3 points and collapses the federal/state split Frye
+deliberately drew. <strong>Current figures: federal 97.2%</strong> of
+convictions by plea (USSC 2024 Sourcebook tbl. 11, FY2024, n=61,678) /
+<strong>97.6%</strong> (BJS <em>Federal Justice Statistics, 2023</em>
+tbl. 6); <strong>state — no national estimate newer than 2006
+(94%)</strong>, the BJS series having ended, with BJS <em>Felony
+Defendants in Large Urban Counties, 2009</em> tbl. 21 as the nearest
+proxy at ~96–97%. Precise version: **~97–98% federal, ~94–97%
+state**</td>
+<td><a href="https://tile.loc.gov/storage-services/service/ll/usrep/usrep566/usrep566134/usrep566134.pdf">https://tile.loc.gov/storage-services/service/ll/usrep/usrep566/usrep566134/usrep566134.pdf</a>
+; <a href="https://www.ussc.gov/sites/default/files/pdf/research-and-publications/annual-reports-and-sourcebooks/2024/Table11.pdf">https://www.ussc.gov/sites/default/files/pdf/research-and-publications/annual-reports-and-sourcebooks/2024/Table11.pdf</a></td>
+</tr>
+<tr>
+<td><code>known_answers[6]</code>: "The 'trial penalty' (harsher
+post-trial than post-plea sentences) is documented"</td>
+<td>CONFIRMED, but <strong>the magnitude is order-of-magnitude
+ambiguous</strong></td>
+<td>NACDL, <em>The Trial Penalty: The Sixth Amendment Right to Trial on
+the Verge of Extinction and How to Save It</em>, <strong>2018</strong>
+(released 10 July 2018). Raw magnitude, Fig. 1 (USSC FY2015):
+<strong>10.8 yrs post-trial vs 3.3 yrs post-plea ≈ 3.3×</strong>
+(embezzlement/burglary ~8×; excludes 144 life sentences, so
+understated). <strong>Regression-adjusted estimates are far smaller:
++45% falling to +16% with guideline controls</strong> (Ulmer, Eisenstein
+&amp; Johnson, <em>Justice Quarterly</em> 27(4):560–592 (2010)) and
+<strong>+64%</strong> (Kim, 84 Miss. L.J. 1195 (2015)), both via Vera
+Institute, <em>In the Shadows</em> (2020) 40–41. Codified discount: USSG
+§ 3E1.1 (2–3 levels). <strong>Flag for scoring:</strong> raw (~3×) and
+controlled (+16% to +64%) magnitudes differ by an order of magnitude, so
+any agent claim about trial-penalty size must specify which — and a
+judge should not mark either as wrong</td>
+<td><a href="https://www.nacdl.org/getattachment/95b7f0f5-90df-4f9f-9115-520b3f58036a/the-trial-penalty-the-sixth-amendment-right-to-trial-on-the-verge-of-extinction-and-how-to-save-it.pdf">https://www.nacdl.org/getattachment/95b7f0f5-90df-4f9f-9115-520b3f58036a/the-trial-penalty-the-sixth-amendment-right-to-trial-on-the-verge-of-extinction-and-how-to-save-it.pdf</a>
+; <a href="https://www.vera.org/downloads/publications/in-the-shadows-plea-bargaining.pdf">https://www.vera.org/downloads/publications/in-the-shadows-plea-bargaining.pdf</a></td>
+</tr>
+<tr>
+<td>Premise coherence check: is "plea bargaining constitutionally
+prohibited" a genuine counterfactual?</td>
+<td>CONFIRMED — the real doctrine is the opposite</td>
+<td><em>Brady v. United States</em>, <strong>397 U.S. 742, 752
+(1970)</strong> (4 May 1970): "guilty pleas are not constitutionally
+forbidden." <em>Santobello v. New York</em>, <strong>404 U.S. 257, 260
+(1971)</strong> (20 Dec 1971): plea bargaining "is an essential
+component of the administration of justice. Properly administered, it is
+to be encouraged." <em>Bordenkircher v. Hayes</em>, <strong>434 U.S.
+357, 363 (1978)</strong> (decided 18 Jan 1978; the 6 Mar 1978 date some
+databases show is the rehearing denial, 435 U.S. 918) immunised hard
+bargaining. Note the trajectory — the Court <em>declined to
+prohibit</em> → <em>encouraged</em> → <em>immunised</em>; it never
+affirmatively created the practice. A "constitutionally prohibited"
+counterfactual must also unwrite <strong>Fed. R. Crim. P. 11(e)</strong>
+(1974 amendment recognising "the propriety of plea discussions")</td>
+<td><a href="https://tile.loc.gov/storage-services/service/ll/usrep/usrep397/usrep397742/usrep397742.pdf">https://tile.loc.gov/storage-services/service/ll/usrep/usrep397/usrep397742/usrep397742.pdf</a>
+; <a href="https://tile.loc.gov/storage-services/service/ll/usrep/usrep404/usrep404257/usrep404257.pdf">https://tile.loc.gov/storage-services/service/ll/usrep/usrep404/usrep404257/usrep404257.pdf</a></td>
+</tr>
+<tr>
+<td>"Dockets overwhelmed"; "needs far more
+judges/prosecutors/defenders/courtrooms/jurors"; "per-case time and cost
+rise sharply"; "plea bargaining mainly manages caseload volume";
+"speedy-trial and pretrial-detention pressures rise"</td>
+<td>CONFIRMED as correctly-labelled obvious first-order effects (not
+independently checkable factual claims)</td>
+<td></td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="optional-replacement-for-c2_law_policy_37">Optional replacement
+for <code>C2_law_policy_37</code></h3>
+<p><code>known_answers[3]</code> — restore the split Frye drew:</p>
+<ul>
+<li>OLD:
+<code>About 95% of US convictions are real-world guilty pleas (factual baseline).</code></li>
+<li>NEW:
+<code>Roughly 97% of federal and 94% of state US convictions are guilty pleas (Missouri v. Frye, 566 U.S. 134, 143 (2012)); current federal figures are ~97-98% (USSC FY2024; BJS FJS 2023), and no post-2006 national state estimate exists (factual baseline).</code></li>
+</ul>
+<p>The <code>query</code>'s "~95%" can stay as a round framing figure —
+it is <em>Padilla</em>'s own number.</p>
+<hr/>
+<h2 id="12-c2_economics_business_36-no-shipping-container--full-claim-table">12.
+<code>C2_economics_business_36</code> (no shipping container) — full
+claim table</h2>
+<div aria-label="12. C2_economics_business_36 (no shipping container) — full
+claim table table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value / note</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"McLean's Ideal-X (1956) and later ISO standards are the real
+origin"</td>
+<td>CONFIRMED (date/route/count)</td>
+<td>From Levinson's own text (publisher-hosted ch. 1): "On April 26,
+1956, a crane lifted fifty-eight aluminum truck bodies aboard an aging
+tanker ship moored in Newark, New Jersey. Five days later, the Ideal-X
+sailed into Houston…" Converted <strong>T-2 tanker</strong>
+(ex-<em>Potrero Hills</em>), Pan-Atlantic Steamship Company,
+<strong>Malcom</strong> McLean (his own spelling; born Malcolm). ⚠️
+<strong>Two Wikipedia errors to avoid</strong> (and which an earlier
+draft of this audit repeated): the containers were <strong>33 ft, not 35
+ft</strong> (35 ft came in 1957), and the origin was <strong>Port
+Newark</strong>, not "Port Newark–Elizabeth" (Elizabeth opened
+1962)</td>
+<td><a href="http://assets.press.princeton.edu/chapters/s10724.pdf">http://assets.press.princeton.edu/chapters/s10724.pdf</a></td>
+</tr>
+<tr>
+<td>"with its ISO dimensions"</td>
+<td>CONFIRMED, and datable — but <strong>the widely-circulated timeline
+is corrupt</strong></td>
+<td>Verified against ISO's own records: <strong>ISO/TC 104 created
+1961</strong>; draft (ISO Recommendation 804) circulated May 1965; ISO
+Council accepted it <strong>February 1968</strong> as <strong>ISO/R
+668-1968 "Dimensions and ratings of freight containers"</strong>; 2nd
+ed. Oct 1970 added the 8 ft 6 in height. Companions: <strong>R
+790:1968</strong> (markings), <strong>R 830:1968</strong> (terminology),
+<strong>R 1161:1970</strong> (corner fittings), <strong>R
+1496:1970</strong> (specification/testing), <strong>R 1894:1970</strong>
+(minimum internal dimensions). ISO 668 became a full International
+Standard from <strong>1973</strong>. 🚩 The commonly cited timeline's
+"<strong>R-1897</strong>, October 1970" is a <strong>typo for ISO/R
+1894:1970</strong> (ISO/R 1897 is a phenol/cresol test method under TC
+47); "ISO 668 defined the terminology" is also wrong (terminology was R
+830), and the Council decision was February, not January 1968. The error
+originates in Rushton et al., <em>Handbook of Logistics</em> (2004) and
+is repeated verbatim by Wikipedia's <em>Containerization</em> article —
+an earlier draft of this audit repeated it too</td>
+<td><a href="https://cdn.standards.iteh.ai/samples/3397/c8286982808b49629df3238b3feddcaa/ISO-R-668-1970.pdf">https://cdn.standards.iteh.ai/samples/3397/c8286982808b49629df3238b3feddcaa/ISO-R-668-1970.pdf</a>
+; <a href="https://www.iso.org/committee/51156.html">https://www.iso.org/committee/51156.html</a></td>
+</tr>
+<tr>
+<td>"Containerization historically cut loading costs by one-to-two
+orders of magnitude"</td>
+<td><strong>IMPRECISE (defensible, but narrower than it
+sounds)</strong></td>
+<td>Correct figures, Levinson <em>The Box</em> <strong>p. 52</strong>:
+"Loading loose cargo on a medium-size cargo ship cost <strong>$5.83 per
+ton</strong> in 1956. McLean's experts pegged the cost of loading the
+Ideal-X at <strong>15.8 cents per ton</strong>." That is <strong>36.9× ≈
+1.57 orders of magnitude</strong>, so the stated range holds —
+<strong>but only for ship-<em>loading</em> cost, on a single figure pair
+that compares an industry average against McLean's own in-house estimate
+for one voyage.</strong> Levinson himself warns the underlying series
+does not exist ("Such data do not exist"). (Wikipedia's "$5.86 / 16
+cents" is a rounded misquote; an earlier draft of this audit used it.)
+The legitimate counterweight is Hummels, <em>JEP</em> 21(3):131–154
+(2007): "the ad-valorem impact of ocean shipping costs is not much lower
+today than in the 1950s"</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8014098/">https://pmc.ncbi.nlm.nih.gov/articles/PMC8014098/</a>
+; <a href="https://www.aeaweb.org/articles?id=10.1257/jep.21.3.131">https://www.aeaweb.org/articles?id=10.1257/jep.21.3.131</a></td>
+</tr>
+<tr>
+<td>"Standard thesis (Levinson, 'The Box')"</td>
+<td>CONFIRMED</td>
+<td>Marc Levinson, <em>The Box: How the Shipping Container Made the
+World Smaller and the World Economy Bigger</em>, Princeton University
+Press, <strong>2006</strong> (2nd ed. with a new chapter, 5 April
+2016)</td>
+<td><a href="https://press.princeton.edu/books/paperback/9780691170817/the-box">https://press.princeton.edu/books/paperback/9780691170817/the-box</a></td>
+</tr>
+<tr>
+<td>"general cargo continues to move as manually handled break-bulk
+freight… as it did before the mid-1950s"</td>
+<td>CONFIRMED as a premise (historical half solid)</td>
+<td>Break-bulk — manually handled, heterogeneous cargo, ships spending
+as much time in port as at sea — was indeed dominant before the
+mid-1950s. This is true only as an explicit <em>counterfactual</em>
+premise: in the real world UNCTAD's <em>Review of Maritime Transport
+2024</em> records that "Containerization has reduced the need for
+general cargo ships, with breakbulk cargo increasingly transported in
+containers." The item frames it correctly</td>
+<td><a href="https://unctad.org/system/files/official-document/rmt2024ch2_en.pdf">https://unctad.org/system/files/official-document/rmt2024ch2_en.pdf</a>
+; <a href="http://assets.press.princeton.edu/chapters/s10724.pdf">http://assets.press.princeton.edu/chapters/s10724.pdf</a></td>
+</tr>
+<tr>
+<td>"Ocean freight stays labor-intensive"; "trade volume grows slower";
+"longshoring stays a large unionized workforce"; "slower, costlier
+long-distance logistics dampen trade"</td>
+<td>CONFIRMED as correctly-labelled obvious first-order effects</td>
+<td></td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="optional-replacement-for-c2_economics_business_36">Optional
+replacement for <code>C2_economics_business_36</code></h3>
+<p><code>known_answers[5]</code> — scope the cost claim so an agent
+cannot over-read it:</p>
+<ul>
+<li>OLD:
+<code>Containerization historically cut loading costs by one-to-two orders of magnitude (documented, not new).</code></li>
+<li>NEW:
+<code>Containerization cut ship-LOADING cost by roughly 37x on the canonical figure pair (loose cargo $5.83/ton in 1956 vs ~15.8 cents/ton for the Ideal-X; Levinson, The Box, p. 52) - note this compares an industry average against an in-house estimate for one voyage, and total ad-valorem ocean freight fell far less (Hummels 2007) (documented, not new).</code></li>
+</ul>
+<p>Otherwise the item is clean: the Ideal-X details, the Levinson
+citation, the ISO chronology and the break-bulk premise all verify.</p>
+<hr/>
+<h2 id="13-summary-table--all-graded-claims">13. Summary table — all
+graded claims</h2>
+<p>Only claims with a non-CONFIRMED verdict, plus the two priority
+claims, are itemised here; the per-item tables above carry the full
+set.</p>
+<div aria-label="13. Summary table — all
+graded claims table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">Claim</th>
+<th scope="col">Verdict</th>
+<th scope="col">Correct value</th>
+<th scope="col">Source URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C2_engineering_10</code></td>
+<td>Hippke: venue <em>IJA</em> 18 (2019), arXiv:1804.04727, submitted
+Apr 2018</td>
+<td><strong>CONFIRMED</strong></td>
+<td><em>Int. J. Astrobiology</em> 18 (2019) 393–395; v1 12 Apr 2018</td>
+<td><a href="https://arxiv.org/abs/1804.04727">https://arxiv.org/abs/1804.04727</a></td>
+</tr>
+<tr>
+<td><code>C2_engineering_10</code></td>
+<td>Hippke: "~400,000 t" for a "Hubble-class payload"</td>
+<td><strong>WRONG</strong></td>
+<td>400,000 t is for a <strong>45 t Apollo-class</strong> mission; a
+<strong>6.2 t JWST-class</strong> payload needs <strong>55,000
+t</strong>; Hubble is never mentioned</td>
+<td><a href="https://ar5iv.labs.arxiv.org/html/1804.04727">https://ar5iv.labs.arxiv.org/html/1804.04727</a></td>
+</tr>
+<tr>
+<td><code>C2_engineering_10</code></td>
+<td><code>hard_rules[1]</code> LOX/LH2 Isp ≤ ~450 s / v_e ≤ ~4.4
+km/s</td>
+<td><strong>WRONG</strong></td>
+<td>≤ ~465 s / 4.56 km/s (RL10B-2 = 465.5 s, flown since 1998)</td>
+<td><a href="https://en.wikipedia.org/wiki/RL10">https://en.wikipedia.org/wiki/RL10</a></td>
+</tr>
+<tr>
+<td><code>C2_engineering_10</code></td>
+<td>"sustained ~16 g for a minute may be lethal"</td>
+<td><strong>UNVERIFIABLE</strong></td>
+<td>Unsourced Wikipedia sentence with a live citation-needed tag; Eiband
+(NASA Memo 5-19-59E, 1959) says no lethal boundary is established</td>
+<td><a href="https://ntrs.nasa.gov/api/citations/19980228043/downloads/19980228043.pdf">https://ntrs.nasa.gov/api/citations/19980228043/downloads/19980228043.pdf</a></td>
+</tr>
+<tr>
+<td><code>C2_engineering_10</code></td>
+<td>Tsiolkovsky rocket equation (1903)</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Published by Tsiolkovsky 1903; <strong>first derived by W. Moore,
+1810–13</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Tsiolkovsky_rocket_equation">https://en.wikipedia.org/wiki/Tsiolkovsky_rocket_equation</a></td>
+</tr>
+<tr>
+<td><code>C2_engineering_10</code></td>
+<td>"McMahon elastic similarity, 1973; R. McN. Alexander"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>McMahon, <em>Science</em> 179:1201–04 (1973) is sole-authored;
+Alexander is a separate researcher</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/4689015/">https://pubmed.ncbi.nlm.nih.gov/4689015/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_06</code></td>
+<td>"Aluvihare/Betz/<strong>Rudensky</strong>, Nature Immunology
+2004"</td>
+<td><strong>WRONG</strong></td>
+<td>Aluvihare VR, <strong>Kallikourdis M</strong>, Betz AG, <em>Nat
+Immunol</em> 2004;5(3):266–71. Rudensky's work is Samstein et al.,
+<em>Cell</em> 2012</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/14758358/">https://pubmed.ncbi.nlm.nih.gov/14758358/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_06</code></td>
+<td>"<strong>Dunn</strong>, Old &amp; Schreiber… Science 2011"</td>
+<td><strong>WRONG</strong></td>
+<td>Schreiber RD, Old LJ, <strong>Smyth MJ</strong>, <em>Science</em>
+2011;331(6024):1565–70 — no Dunn</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/21436444/">https://pubmed.ncbi.nlm.nih.gov/21436444/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_06</code></td>
+<td>"Burnet-Thomas hypothesis (1957)"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Burnet 1957 (<em>BMJ</em> 1(5022):779–86); <strong>Thomas
+1959</strong></td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/13404306/">https://pubmed.ncbi.nlm.nih.gov/13404306/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_06</code></td>
+<td>VLRs in "lamprey/hagfish" — Nature 2004</td>
+<td><strong>IMPRECISE</strong></td>
+<td><em>Nature</em> 2004 is <strong>sea lamprey only</strong>; hagfish
+is <em>PNAS</em> 2005;102(26):9224–9</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/15964979/">https://pubmed.ncbi.nlm.nih.gov/15964979/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_06</code></td>
+<td>"IgE… (Ishizaka, 1966)"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Co-discovered by Johansson &amp; Bennich 1967; class named IgE
+1968</td>
+<td><a href="https://en.wikipedia.org/wiki/Immunoglobulin_E">https://en.wikipedia.org/wiki/Immunoglobulin_E</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_06</code></td>
+<td>"roughly 97% of animal species"</td>
+<td><strong>CONFIRMED (don't harden)</strong></td>
+<td>97% is citable (May 1988) but ~95% is equally common; the figure is
+an artifact of the total-species estimate</td>
+<td><a href="https://en.wikipedia.org/wiki/Invertebrate">https://en.wikipedia.org/wiki/Invertebrate</a></td>
+</tr>
+<tr>
+<td><code>C2_arts_humanities_11</code></td>
+<td>"Foreshortening… predate[s]… (e.g. <strong>Melozzo da
+Forli</strong>)"</td>
+<td><strong>WRONG</strong></td>
+<td>Melozzo is c. 1438–1494 — two generations <em>after</em>
+Brunelleschi and Alberti, inside the perspective tradition. Use Roman
+fresco (Villa of P. Fannius Synistor, 1st c. BC) or Lorenzetti 1342</td>
+<td><a href="https://en.wikipedia.org/wiki/Melozzo_da_Forl%C3%AC">https://en.wikipedia.org/wiki/Melozzo_da_Forl%C3%AC</a></td>
+</tr>
+<tr>
+<td><code>C2_arts_humanities_11</code></td>
+<td>"Kepler (1604)… introduced the point at infinity"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Kepler gave a <em>limiting-case</em> point at infinity for the
+parabola; the general projective concept is Desargues 1639</td>
+<td><a href="https://mathshistory.st-andrews.ac.uk/Biographies/Kepler/">https://mathshistory.st-andrews.ac.uk/Biographies/Kepler/</a></td>
+</tr>
+<tr>
+<td><code>C2_arts_humanities_11</code></td>
+<td>camera obscura "(Mozi, <strong>Aristotle</strong>, Alhazen)"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>The pinhole observation is in the <strong>pseudo-Aristotelian
+<em>Problemata</em></strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Problems_(Aristotle)">https://en.wikipedia.org/wiki/Problems_(Aristotle)</a></td>
+</tr>
+<tr>
+<td><code>C2_arts_humanities_11</code></td>
+<td>"<strong>Leonardo's</strong> paragone"</td>
+<td><strong>IMPRECISE</strong></td>
+<td><em>Paragone</em> is an art-historical label for the
+painting-vs-sculpture debate (Varchi 1546), not Leonardo's coinage</td>
+<td><a href="https://en.wikipedia.org/wiki/Paragone">https://en.wikipedia.org/wiki/Paragone</a></td>
+</tr>
+<tr>
+<td><code>C2_economics_business_08</code></td>
+<td>"5-20% of U.S. GDP" statistic; "Edward Cox 1855"</td>
+<td><strong>ABSENT — removal held</strong></td>
+<td>Zero occurrences of
+<code>%</code>/<code>GDP</code>/<code>Cox</code>/<code>Edward</code>
+anywhere in the item</td>
+<td>(programmatic scan of the audit <code>.jsonl</code>)</td>
+</tr>
+<tr>
+<td><code>C2_economics_business_08</code></td>
+<td>double liability "1863-1933"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>1933 Act ended it only for shares issued after 16 Jun 1933; 1935
+voluntary termination on existing shares; full abolition
+<strong>1953</strong></td>
+<td><a href="https://en.wikipedia.org/wiki/Double_liability">https://en.wikipedia.org/wiki/Double_liability</a></td>
+</tr>
+<tr>
+<td><code>C2_economics_business_08</code></td>
+<td>California "from 1849 until 1931"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Constitutional provision repealed by amendment <strong>4 Nov
+1930</strong>; Civil Code s.322 repeal effective 14 Aug 1931</td>
+<td><a href="https://www.bainbridgeoncorporations.com/p/a-brief-history-of-limited-liability">https://www.bainbridgeoncorporations.com/p/a-brief-history-of-limited-liability</a></td>
+</tr>
+<tr>
+<td><code>C2_economics_business_08</code></td>
+<td>Lloyd's: "the 1990s reconstruction… admitted limited-liability
+corporate capital"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Corporate members admitted <strong>1994</strong>, <em>before</em>
+R&amp;R (1995) and Equitas (Sept 1996)</td>
+<td><a href="https://en.wikipedia.org/wiki/Lloyd%27s_of_London">https://en.wikipedia.org/wiki/Lloyd%27s_of_London</a></td>
+</tr>
+<tr>
+<td><code>C2_economics_business_08</code></td>
+<td>"Murray Rothbard's position that liability for torts should be
+full/unlimited"</td>
+<td><strong>UNVERIFIABLE</strong></td>
+<td>5 retrieval routes failed; and Rothbard is conventionally read as a
+<em>defender</em> of contractual limited liability, so filing him under
+"critical literature" inverts his stance</td>
+<td><a href="https://cdn.mises.org/19_3_3.pdf">https://cdn.mises.org/19_3_3.pdf</a>
+(checked, no Rothbard)</td>
+</tr>
+<tr>
+<td><code>C2_economics_business_08</code></td>
+<td><code>hard_rules[1]</code> early UK railways/canals "unlimited or
+ambiguous liability"</td>
+<td><strong>UNVERIFIABLE in detail</strong></td>
+<td>Pre-1845 statutory companies each set liability terms by private
+Act; the "or ambiguous" hedge should stay</td>
+<td><a href="https://en.wikipedia.org/wiki/Companies_Clauses_Consolidation_Act_1845">https://en.wikipedia.org/wiki/Companies_Clauses_Consolidation_Act_1845</a></td>
+</tr>
+<tr>
+<td><code>C2_law_policy_09</code></td>
+<td>"HEAR Act (2016) <strong>lifting</strong> state SOL"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Pub. L. 114-308 (16 Dec 2016) <strong>preempts</strong> state SOLs
+and substitutes a uniform federal <strong>6-year period from actual
+discovery</strong></td>
+<td><a href="https://www.govinfo.gov/content/pkg/PLAW-114publ308/html/PLAW-114publ308.htm">https://www.govinfo.gov/content/pkg/PLAW-114publ308/html/PLAW-114publ308.htm</a></td>
+</tr>
+<tr>
+<td><code>C2_law_policy_09</code></td>
+<td>Merrill, "Property Rules, Liability Rules, and Adverse Possession,"
+1985</td>
+<td><strong>CONFIRMED</strong></td>
+<td>Thomas W. Merrill, <strong>79 Nw. U. L. Rev. 1122 (1985)</strong> —
+1985 is correct; only nit is "T. Merrill" → "Thomas W. Merrill"</td>
+<td><a href="https://scholarship.law.columbia.edu/faculty_scholarship/373/">https://scholarship.law.columbia.edu/faculty_scholarship/373/</a></td>
+</tr>
+<tr>
+<td><code>C2_law_policy_09</code></td>
+<td>South Africa TRC "1995-1998"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Act No. 34 of 1995; main report Oct 1998; but the Amnesty Committee
+ran on and the TRC ended work <strong>March 2003</strong> — precise span
+<strong>1995–2003</strong></td>
+<td><a href="https://www.justice.gov.za/trc/report/finalreport/victims_main_vol7.pdf">https://www.justice.gov.za/trc/report/finalreport/victims_main_vol7.pdf</a></td>
+</tr>
+<tr>
+<td><code>C2_law_policy_09</code></td>
+<td>"murder has no SOL in <strong>most</strong> U.S. states"</td>
+<td><strong>IMPRECISE (understated)</strong></td>
+<td><strong>No</strong> U.S. state imposes a limitations period on
+murder; 18 U.S.C. § 3281 for federal capital offences</td>
+<td><a href="https://www.law.cornell.edu/uscode/text/18/3281">https://www.law.cornell.edu/uscode/text/18/3281</a></td>
+</tr>
+<tr>
+<td><code>C2_law_policy_37</code></td>
+<td>"About 95% of US convictions are guilty pleas"</td>
+<td><strong>IMPRECISE (coarse)</strong></td>
+<td><em>Frye</em> (2012): <strong>97% federal / 94% state</strong>;
+current federal 97.2–97.6%; no post-2006 national state estimate. "~95%"
+is <em>Padilla</em>'s round number, so not invented</td>
+<td><a href="https://tile.loc.gov/storage-services/service/ll/usrep/usrep566/usrep566134/usrep566134.pdf">https://tile.loc.gov/storage-services/service/ll/usrep/usrep566/usrep566134/usrep566134.pdf</a></td>
+</tr>
+<tr>
+<td><code>C2_economics_business_36</code></td>
+<td>"cut loading costs by one-to-two orders of magnitude"</td>
+<td><strong>IMPRECISE (defensible but narrow)</strong></td>
+<td>Levinson p. 52: <strong>$5.83/ton → 15.8¢/ton = 36.9× ≈ 1.57 orders
+of magnitude</strong> ✓, but it is a <em>loading</em>-cost pair
+comparing an industry average to an in-house estimate for one voyage;
+total ad-valorem ocean freight fell far less (Hummels 2007)</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8014098/">https://pmc.ncbi.nlm.nih.gov/articles/PMC8014098/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_34</code></td>
+<td>"Anucleate red cells cannot become cancerous" + <code>query</code>'s
+apoptosis premise</td>
+<td><strong>IMPRECISE (both halves)</strong></td>
+<td>Anucleate RBCs undergo regulated <strong>eryptosis</strong>;
+red-lineage cancers arise in nucleated precursors (erythroblasts,
+HSCs)</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/15956782/">https://pubmed.ncbi.nlm.nih.gov/15956782/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_34</code></td>
+<td>"Nucleated erythrocytes are the… norm in birds, reptiles,
+amphibians, fish"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Real convergent exceptions: enucleate RBCs in ≥5 plethodontid
+salamander clades (~99% in <em>Batrachoseps attenuatus</em>) and in fish
+genus <em>Maurolicus</em></td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/18328681/">https://pubmed.ncbi.nlm.nih.gov/18328681/</a></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_34</code></td>
+<td>"A rigid nucleus makes erythrocytes larger and
+<strong>stiffer</strong>"</td>
+<td>"larger" CONFIRMED; "stiffer" <strong>UNVERIFIABLE</strong></td>
+<td>Larger ✓ (chicken MCV 124–152 fL vs human 80–100). No comparative
+deformability measurement found; Keerthivasan 2011 says only
+"likely"</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/">https://pmc.ncbi.nlm.nih.gov/articles/PMC12289124/</a></td>
+</tr>
+<tr>
+<td><code>C2_materials_chemistry_07</code></td>
+<td>a-IGZO "<strong>Hosono et al.</strong> 2004"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>Conventionally <strong>Nomura et al.</strong>, <em>Nature</em>
+432(7016):488–492 (2004); Hosono is last author</td>
+<td><a href="https://www.nature.com/articles/nature03090">https://www.nature.com/articles/nature03090</a></td>
+</tr>
+<tr>
+<td><code>C2_materials_chemistry_07</code></td>
+<td>a-Si:H mobility "~1 cm2/V.s"</td>
+<td><strong>CONFIRMED (qualify)</strong></td>
+<td>Correct for <strong>drift/field-effect</strong> mobility;
+extended-state mobility is 10–20+</td>
+<td><a href="https://arxiv.org/abs/2408.03678">https://arxiv.org/abs/2408.03678</a></td>
+</tr>
+<tr>
+<td><code>C2_materials_chemistry_07</code></td>
+<td>HDA ice "~1.17 g/cm3"</td>
+<td><strong>CONFIRMED (range top)</strong></td>
+<td>Standard range <strong>1.15–1.17</strong>; MDA (~1.06) reported
+2023</td>
+<td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10879119/">https://pmc.ncbi.nlm.nih.gov/articles/PMC10879119/</a></td>
+</tr>
+<tr>
+<td><code>C2_materials_chemistry_35</code></td>
+<td>"the <strong>1960s</strong> beverage-can revolution"</td>
+<td><strong>IMPRECISE</strong></td>
+<td>First all-aluminum can <strong>1958</strong> (Primo); Coors
+<strong>22 Jan 1959</strong>; 1963 drawn-and-ironed can drove the 1960s
+ramp; steel displaced only by the 1980s–90s</td>
+<td><a href="https://www.lightmetalage.com/news/industry-news/applications-design/60-years-of-the-aluminum-can/">https://www.lightmetalage.com/news/industry-news/applications-design/60-years-of-the-aluminum-can/</a></td>
+</tr>
+<tr>
+<td><code>C2_materials_chemistry_35</code></td>
+<td>Al PBR ~1.3; native oxide ~4 nm</td>
+<td><strong>CONFIRMED</strong></td>
+<td>PBR = 1.28; native oxide <strong>2–4 nm</strong> (to ~5 nm with age)
+— "~4 nm" is the range top</td>
+<td><a href="https://en.wikipedia.org/wiki/Pilling%E2%80%93Bedworth_ratio">https://en.wikipedia.org/wiki/Pilling%E2%80%93Bedworth_ratio</a>
+; <a href="https://www.sciencedirect.com/science/article/abs/pii/S0169433215011617">https://www.sciencedirect.com/science/article/abs/pii/S0169433215011617</a></td>
+</tr>
+<tr>
+<td><em>(audit self-correction)</em></td>
+<td>three rows in an earlier draft of this report</td>
+<td><strong>CORRECTED</strong></td>
+<td>Wikipedia was wrong and this audit initially repeated it: Ideal-X
+containers were <strong>33 ft not 35 ft</strong> and sailed from
+<strong>Port Newark</strong> not "Port Newark–Elizabeth"; Levinson's
+figures are <strong>$5.83 / 15.8¢</strong> not "$5.86 / 16¢"; and the
+ISO timeline's "<strong>R-1897</strong>" is a typo for <strong>ISO/R
+1894:1970</strong> (with terminology in R 830, and a February not
+January 1968 Council decision)</td>
+<td><a href="http://assets.press.princeton.edu/chapters/s10724.pdf">http://assets.press.princeton.edu/chapters/s10724.pdf</a>
+; <a href="https://cdn.standards.iteh.ai/samples/3397/c8286982808b49629df3238b3feddcaa/ISO-R-668-1970.pdf">https://cdn.standards.iteh.ai/samples/3397/c8286982808b49629df3238b3feddcaa/ISO-R-668-1970.pdf</a></td>
+</tr>
+</tbody>
+</table></div>
+<hr/>
+<h2 id="14-counts-by-verdict">14. Counts by verdict</h2>
+<p>Counting distinct graded factual claims across the ten items
+(compound <code>known_answers</code> entries are counted once per
+checkable sub-claim; the full per-item tables are the authoritative
+list).</p>
+<div aria-label="14. Counts by verdict table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Verdict</th>
+<th scope="col">Count</th>
+<th scope="col">Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CONFIRMED</strong></td>
+<td><strong>110</strong></td>
+<td>spread across all ten items; includes every statute/treaty/case cite
+in <code>C2_economics_business_08</code> and
+<code>C2_law_policy_09</code> (several verified against primary statute
+text or official U.S. Reports scans), and every condensed-matter fact in
+<code>C2_materials_chemistry_07</code></td>
+</tr>
+<tr>
+<td><strong>WRONG</strong></td>
+<td><strong>4</strong></td>
+<td><code>C2_engineering_10</code> ×2 (Hippke 400,000 t / Hubble-class;
+<code>hard_rules[1]</code> Isp ceiling),
+<code>C2_biology_medicine_06</code> ×2 (Rudensky; Dunn) — plus 1
+substantively wrong <em>example</em> in
+<code>C2_arts_humanities_11</code> (Melozzo), giving <strong>5</strong>
+if that is counted as WRONG rather than a bad illustration</td>
+</tr>
+<tr>
+<td><strong>IMPRECISE</strong></td>
+<td><strong>22</strong></td>
+<td><code>C2_arts_humanities_11</code> ×3,
+<code>C2_biology_medicine_06</code> ×3,
+<code>C2_biology_medicine_34</code> ×3,
+<code>C2_economics_business_08</code> ×3, <code>C2_engineering_10</code>
+×2, <code>C2_law_policy_09</code> ×3 (HEAR Act, TRC span, "most
+states"), <code>C2_law_policy_37</code> ×2 (95% figure, trial-penalty
+magnitude), <code>C2_economics_business_36</code> ×1,
+<code>C2_materials_chemistry_07</code> ×1,
+<code>C2_materials_chemistry_35</code> ×1</td>
+</tr>
+<tr>
+<td><strong>UNVERIFIABLE</strong></td>
+<td><strong>4</strong></td>
+<td><code>C2_engineering_10</code> (16 g lethality),
+<code>C2_economics_business_08</code> ×2 (Rothbard; early UK railway
+liability), <code>C2_biology_medicine_34</code> ("stiffer"). Plus one
+partial: the Posner pin-cite in <code>C2_law_policy_09</code> (book
+confirmed, passage not opened)</td>
+</tr>
+<tr>
+<td><strong>FABRICATED</strong></td>
+<td><strong>0</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Per-item damage report</strong> (edits needed before
+release):</p>
+<div aria-label="14. Counts by verdict table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">WRONG</th>
+<th scope="col">IMPRECISE</th>
+<th scope="col">UNVERIFIABLE</th>
+<th scope="col">Release-blocking?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>C2_engineering_10</code></td>
+<td>2</td>
+<td>2</td>
+<td>1</td>
+<td><strong>YES</strong> — a wrong figure in <code>known_answers</code>
+and a wrong <code>hard_rule</code></td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_06</code></td>
+<td>2</td>
+<td>3</td>
+<td>0</td>
+<td><strong>YES</strong> — two wrong author lists in
+<code>known_answers</code></td>
+</tr>
+<tr>
+<td><code>C2_arts_humanities_11</code></td>
+<td>1 (example)</td>
+<td>3</td>
+<td>0</td>
+<td><strong>YES</strong> — the Melozzo example contradicts the point it
+is cited for</td>
+</tr>
+<tr>
+<td><code>C2_biology_medicine_34</code></td>
+<td>0</td>
+<td>3</td>
+<td>1</td>
+<td>Recommended — the eryptosis point is load-bearing for the item's
+malaria thread</td>
+</tr>
+<tr>
+<td><code>C2_economics_business_08</code></td>
+<td>0</td>
+<td>3</td>
+<td>2</td>
+<td>Recommended — all date-precision; the Rothbard line is the one worth
+cutting</td>
+</tr>
+<tr>
+<td><code>C2_law_policy_09</code></td>
+<td>0</td>
+<td>3</td>
+<td>0 (+1 partial)</td>
+<td>Recommended — the HEAR Act mischaracterisation matters <em>for this
+item specifically</em></td>
+</tr>
+<tr>
+<td><code>C2_law_policy_37</code></td>
+<td>0</td>
+<td>2</td>
+<td>0</td>
+<td>Optional — the 95% figure is <em>Padilla</em>'s own; worth restoring
+Frye's split</td>
+</tr>
+<tr>
+<td><code>C2_economics_business_36</code></td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>Optional — scope the loading-cost claim</td>
+</tr>
+<tr>
+<td><code>C2_materials_chemistry_07</code></td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td><code>C2_materials_chemistry_35</code></td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>Optional</td>
+</tr>
+</tbody>
+</table></div>
+<hr/>
+<h2 id="15-overall-assessment-are-c2s-baselines-trustworthy">15. Overall
+assessment: are C2's baselines trustworthy?</h2>
+<p><strong>Broadly yes, with four items needing edits first.</strong>
+The verdict distribution — 110 CONFIRMED, 4–5 WRONG, 22 IMPRECISE, 4
+UNVERIFIABLE, <strong>0 FABRICATED</strong> — is a healthy profile for a
+benchmark of this size. Every paper, book, statute, treaty and case
+cited across the ten items <strong>exists</strong> with the stated
+author and title. There is no invented-citation problem in C2. That is
+the single most important finding, because a fabricated
+<code>known_answers</code> entry would silently corrupt the novelty
+baseline in a way no agent could detect or contest.</p>
+<p><strong>The real failure mode is misattribution and figure drift, and
+it clusters in <code>known_answers</code> — the worst possible
+place.</strong> <code>known_answers</code> is what every agent answer is
+scored against for New/Surprise, so an error there does not merely
+mislead a reader; it <em>inverts the grade</em>. Three concrete
+instances:</p>
+<ol type="1">
+<li><strong><code>C2_engineering_10</code>'s Hippke figure.</strong> The
+item's entire design is to pre-declare Hippke's result KNOWN so agents
+cannot earn cheap Surprise. But the pre-declared anchor is wrong: an
+agent that correctly reports 55,000 t for a telescope-class payload now
+<em>disagrees with the rubric</em> and can be marked down for a correct
+fact. The same item's <code>hard_rules[1]</code> sets an Isp ceiling
+(450 s) that real flown hardware exceeds (465.5 s), so an agent citing
+the RL10B-2 correctly could be scored as violating a hard rule. Both are
+self-inflicted scoring hazards, not merely cosmetic errors.</li>
+<li><strong><code>C2_biology_medicine_06</code>'s two author
+lists.</strong> Rudensky-for-Kallikourdis and Dunn-on-the-
+2011-<em>Science</em>-paper are the classic LLM-generated-citation
+signature: right paper, right year, right journal, plausible-but-wrong
+senior author drawn from the topic's most famous name. Worth treating as
+a systematic risk indicator for the rest of the benchmark.</li>
+<li><strong><code>C2_arts_humanities_11</code>'s Melozzo
+example.</strong> Cited to prove foreshortening <em>predates</em> the
+vanishing-point construction, but Melozzo works two generations after
+Alberti and inside the perspective tradition. The claim it is meant to
+support is true; the evidence offered refutes itself.</li>
+</ol>
+<p><strong>A distinct, subtler category: absolutes that the comparative
+literature contradicts.</strong> <code>C2_biology_medicine_34</code>
+states that anucleate red cells lack the death machinery that nucleated
+ones have — but mammalian RBCs undergo regulated
+<strong>eryptosis</strong>, and the item's <code>query</code> builds its
+Plasmodium/apoptosis thread on exactly that premise. Similarly
+"nucleated erythrocytes are the norm in birds, reptiles, amphibians,
+fish" has real convergent exceptions (plethodontid salamanders,
+<em>Maurolicus</em>). These are not citation errors; they are
+over-confident biology, and a well-read agent that <em>correctly</em>
+raises eryptosis would be penalised as off-premise.</p>
+<p><strong>On the flagged economics item, the prior pass's work held
+cleanly.</strong> A programmatic scan found no percentage, no GDP
+reference, and no trace of "Edward Cox" anywhere in
+<code>C2_economics_business_08</code>. Nothing comparable crept in to
+replace them. Its remaining ~19 claims are unusually well-sourced for
+legal history — I verified the Companies Act 1879's re-registration and
+reserve-liability provisions against the <strong>primary statute
+text</strong>, and the Butler 1911 quote, the four law-review citations,
+Modigliani-Miller and Markowitz all check out precisely. The only
+residue worth acting on is the Rothbard parenthetical, which sits in the
+same sentence as the epistemic hedge the prior removal left behind — the
+same signature as the excised "Edward Cox" line, and my recommendation
+is to cut or rewrite it.</p>
+<p><strong>No item is entirely error-free, but two carry no WRONG
+verdicts at all:</strong> <code>C2_law_policy_37</code> and
+<code>C2_economics_business_36</code> need only optional precision work
+(restore <em>Frye</em>'s 97%/94% split; scope the loading-cost claim to
+<em>loading</em> rather than freight generally). The error rate tracks
+citation density, which is the expected pattern and suggests retrieval
+noise rather than systematic invention.</p>
+<p><strong>A methodological finding worth carrying to the other
+categories.</strong> Three claims in this audit's own first draft were
+wrong because Wikipedia was wrong and I trusted it: the Ideal-X's
+container length (33 ft, not 35 ft) and departure port (Port Newark, not
+Port Newark–Elizabeth); Levinson's cost pair ($5.83/15.8¢, not
+$5.86/16¢); and the ISO container timeline, whose widely-copied "ISO/R
+1897" is a typo for <strong>ISO/R 1894:1970</strong> that originates in
+Rushton et al., <em>Handbook of Logistics</em> (2004) and propagates
+through Wikipedia. Each was caught only by going to the primary document
+(Princeton's hosted chapter of <em>The Box</em>, ISO's own deliverables
+catalogue). Any C2-style claim currently resting on a Wikipedia
+corroboration should be treated as provisional; the primary sources
+exist and are reachable.</p>
+<p><strong>Recommendation.</strong> Apply the exact replacements in §§1
+and 3–10 above — 4 WRONG fixes plus 17 precision fixes plus 2
+recommended cuts. Do not publish <code>C2_engineering_10</code>,
+<code>C2_biology_medicine_06</code> or
+<code>C2_arts_humanities_11</code> unedited. After those edits, C2's
+baselines are trustworthy enough to score against.</p>
+<p><strong>Two audit caveats.</strong> (a) The session's WebSearch
+budget (200 calls) was exhausted partway through; the majority of
+verdicts were therefore established by direct WebFetch against primary
+sources — arguably stronger evidence than search snippets, but it meant
+some low-value claims were corroborated via Wikipedia rather than a
+primary document, and those are labelled as such. (b) Two claims
+resisted every retrieval route available — the Rothbard tort-liability
+attribution (five routes: two mises.org book pages, the <em>Power and
+Market</em> CDN PDF, the <em>JLS</em> 19(3) article full text, two
+search proxies) and the Posner adverse-possession pin-cite (Internet
+Archive lending-restricted, Google Books rate-limited). Both are flagged
+rather than guessed. Merrill's 1985 year, initially unverifiable, was
+resolved from the author's own institutional repository and is
+<strong>correct as written</strong>.</p>
+<hr/>
+<h2 id="16-provenance--integrity-note-for-whoever-applies-these-fixes">16.
+Provenance / integrity note for whoever applies these fixes</h2>
+<ul>
+<li><strong>No <code>.jsonl</code> file was edited by this
+audit.</strong> All 26 <code>OLD</code> strings above were re-validated
+against <code>question/crest_challenges.audit.jsonl</code> at the end of
+the audit: each matches <strong>exactly once</strong>, byte-for-byte, so
+every replacement can be applied as a literal find-and-replace without
+disambiguation.</li>
+<li><code>question/crest_challenges.audit.jsonl</code>
+<strong>was</strong> modified during this audit window, but by
+<strong>other auditors working other categories</strong> —
+<code>doc/misc/hallucination_audit_live_log.jsonl</code> gained 13
+entries for C1, C4 and C5 items while this audit ran. All ten C2 items
+were re-hashed afterwards and are unchanged. If these C2 fixes are
+applied later, re-confirm the <code>OLD</code> strings first in case a
+sibling pass touches C2.</li>
+<li>Suggested log lines for
+<code>hallucination_audit_live_log.jsonl</code>, in priority order:
+<ol type="1">
+<li><code>C2_engineering_10</code> — Hippke 400,000 t / "Hubble-class" →
+Apollo-class 45 t; add JWST 6.2 t → 55,000 t</li>
+<li><code>C2_engineering_10</code> — <code>hard_rules[1]</code> Isp
+ceiling 450 s → 465 s</li>
+<li><code>C2_biology_medicine_06</code> —
+Aluvihare/Betz/<strong>Rudensky</strong> → Aluvihare,
+<strong>Kallikourdis</strong> &amp; Betz</li>
+<li><code>C2_biology_medicine_06</code> — <strong>Dunn</strong>, Old
+&amp; Schreiber (Science 2011) → Schreiber, Old &amp;
+<strong>Smyth</strong></li>
+<li><code>C2_arts_humanities_11</code> — Melozzo da Forlì → Roman fresco
+/ Lorenzetti 1342</li>
+<li><code>C2_engineering_10</code> — cut the unsourced "~16 g for a
+minute may be lethal"</li>
+<li><code>C2_biology_medicine_34</code> — eryptosis correction
+(anucleate RBCs are not death-machinery-free)</li>
+<li><code>C2_law_policy_09</code> — HEAR Act "lifting" → preempts with a
+6-year discovery-triggered period</li>
+<li><code>C2_economics_business_08</code> — double liability /
+California / Lloyd's date precision; Rothbard cut</li>
+<li><code>C2_law_policy_09</code> — TRC span 1995–1998 → 1995–2003;
+"most U.S. states" → "no U.S. state"</li>
+<li><code>C2_law_policy_37</code> — restore <em>Frye</em>'s 97% federal
+/ 94% state split (optional)</li>
+<li><code>C2_economics_business_36</code> — scope the loading-cost claim
+to <em>loading</em> (optional)</li>
+</ol></li>
+<li><strong>Still open, needs a manual paywalled/primary-text
+check:</strong> a citable primary source for the Rothbard tort-liability
+attribution, and the Posner adverse-possession pin-cite. Merrill's 1985
+year is <strong>resolved and correct</strong> (79 Nw. U. L. Rev. 1122
+(1985)).</li>
+</ul>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

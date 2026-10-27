@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Archived runtime · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../README.html">CREST</a><a href="../../../docs/crest-guide.html">Research pipeline</a><a href="../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest--creativity-of-deep-research-agents">CREST — Creativity of
+deep-Research agenTs</a></li><li><a href="#the-finding-crest-is-built-to-test">The finding CREST is built
+to test</a></li><li><a href="#quickstart-run-from-the-repo-root-the-parent-of-crest">Quickstart
+(run from the repo root, the parent of crest/ )</a></li><li><a href="#entrants-pinned-in-harnessagentspy--two-distinct-arms">Entrants
+(pinned in harness/agents.py ) — TWO DISTINCT ARMS</a></li><li><a href="#the-five-categories">The five categories</a></li><li><a href="#layout">Layout</a></li><li><a href="#status-honest">Status (honest)</a></li></ul></nav></details><article><h1 id="crest--creativity-of-deep-research-agents">CREST — Creativity of
+deep-Research agenTs</h1>
+<p>A benchmark for the <strong>creativity</strong> (New / Useful /
+Surprising) of deep-research web agents. 50 expert-authored challenges,
+10 per category (C1 Constrained, C2 Counterfactual, C3 Cross-Domain, C4
+Meta-Creativity, C5 Open-Ended) across 6 domains (8–9 each). Each item
+is scored 1–10 on <strong>New</strong> (the axis reported as
+<code>new</code> — departure from a dated prior-art set, not novelty in
+the world), <strong>Useful</strong>, and <strong>Surprising</strong> (a
+primary axis, but weakly anchored) by a multi-vendor judge panel, after
+a factual-grounding check. The <strong>full panel scores every
+entrant</strong> and <code>same_family</code> is stamped on each judge
+row; leave-one-family-out is a post-hoc robustness filter, not the
+protocol. Primary endpoint is <code>min(New, Useful, Surprising)</code>
+— all three axes; see <code>judge/rubric.md</code>.</p>
+<h2 id="the-finding-crest-is-built-to-test">The finding CREST is built
+to test</h2>
+<p>Agent creativity is <strong>task-dependent</strong>: predicted strong
+on cross-domain (C3) and counterfactual (C2) synthesis, at parity on
+meta-creativity (C4), with predicted nulls on constrained (C1) and
+open-ended (C5) tasks. The mixed win/loss pattern is the point — see
+<code>doc/design.md</code>.</p>
+<h2 id="quickstart-run-from-the-repo-root-the-parent-of-crest">Quickstart
+(run from the repo root, the parent of <code>crest/</code>)</h2>
+<pre class="bash" tabindex="0"><code>$EDITOR crest/config/eval_config.yaml           # choose benchmark subset, agents, judges
+python crest/run_eval.py                         # writes crest/result/runs/&lt;run_id&gt;/
+python crest/run_eval.py --config crest/config/eval_config.aiml.yaml   # the AI/ML item set instead
+python -m crest.harness.run_crest --agents claude_shallow --subset adhoc   # one entrant, ad-hoc
+python -m crest.analysis.stats --run crest/result/latest/records.jsonl
+python -m crest.analysis.costs --run crest/result/runs/&lt;run_id&gt;   # cost, from config/prices.yaml
+bash crest/analysis/ci_check.sh                  # pre-release gate</code></pre>
+<p><code>--dry-run</code> resolves config, agents, challenges and keys
+and makes <strong>no model calls</strong> — always the first thing to
+run against a config you have edited. A deep-arm run costs real money
+per task, so <code>run_eval.py</code> also requires <code>--yes</code>
+before it will start one. Requires <code>ANTHROPIC_API_KEY</code>,
+<code>OPENAI_API_KEY</code>, <code>GOOGLE_API_KEY</code> (pool several
+Anthropic keys via <code>ANTHROPIC_API_KEYS</code> — see
+<code>harness/keys.py</code>).</p>
+<p>There is <strong>no <code>--resume</code></strong>: every run mints a
+fresh, immutable <code>run_id</code>. Cost control is the
+<strong>cross-run generation cache</strong>
+(<code>harness/cache.py</code>, on by default), which serves an
+already-paid-for answer keyed by (challenge text, agent, model, adapter
+fingerprint) from <em>any</em> prior run, so a re-run costs only
+judging. <code>--override-cache</code> re-generates everything;
+<code>--override-cache-agents &lt;keys&gt;</code> re-generates only the
+named entrants. To repair judge failures in an existing run without
+re-paying for generation, use
+<code>python -m crest.harness.rejudge --run &lt;run_dir&gt;</code>. The
+per-entrant scripts in <code>eval/</code> work; each goes through
+<code>_common.py::cli()</code>, which applies the same key preflight and
+cost guard as <code>run_eval.py</code> — see
+<code>eval/readme.md</code>.</p>
+<h2 id="entrants-pinned-in-harnessagentspy--two-distinct-arms">Entrants
+(pinned in <code>harness/agents.py</code>) — TWO DISTINCT ARMS</h2>
+<p><strong>Shallow</strong> (chat model + provider-native web search,
+ONE turn — <em>not</em> deep research): <code>claude_shallow</code>
+claude-sonnet-5 · <code>openai_shallow</code> gpt-5.6 ·
+<code>gemini_shallow</code> gemini-3.1-pro-preview.</p>
+<p><strong>Deep</strong> (managed multi-step background research loop;
+minutes and dollars per call): <code>openai_deepresearch</code>
+gpt-5.6-sol (effort=high, max_tool_calls=40) ·
+<code>gemini_deepresearch_max</code> deep-research-max-preview-04-2026
+(Interactions API).</p>
+<p>The <code>*_dr</code> keys were renamed <code>*_shallow</code>
+because they are single-turn search-augmented chat, and the old name
+overstated them. <code>o3-deep-research</code> /
+<code>o4-mini-deep-research</code> were <strong>shut down
+2026-07-23</strong> (they still appear in <code>models.list()</code> but
+every call 404s), so OpenAI deep research is now a pattern on a general
+model. Anthropic ships no turnkey deep-research endpoint, so the deep
+arm has no Anthropic entrant — an asymmetry to disclose, not a null
+result for Claude. See <code>eval/readme.md</code> and
+<code>doc/misc/deep_research_apis.md</code>.</p>
+<h2 id="the-five-categories">The five categories</h2>
+<div aria-label="The five categories table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">ID</th>
+<th scope="col">Category</th>
+<th scope="col">What it tests</th>
+<th scope="col">Predicted direction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>Constrained Synthesis</td>
+<td>invent within strict, checkable rules</td>
+<td>predicted null</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Counterfactual Reasoning</td>
+<td>reason through a what-if world</td>
+<td>favored</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Cross-Domain Synthesis</td>
+<td>map a distant field's formal structure</td>
+<td>favored</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Meta-Creativity</td>
+<td>invent a method, not an answer</td>
+<td>parity</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Open-Ended Synthesis</td>
+<td>many valid answers</td>
+<td>predicted null</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each challenge ships with a <strong>dated known-answers list</strong>
+(the prior-art set novelty is scored against) and <strong>hard
+rules</strong> (Useful), plus labels (category, domain, isolated axis,
+pre/post-cutoff). <code>expert_baseline</code> and
+<code>author_expected_surprises</code> are retained for provenance but
+are <strong>judge-hidden</strong> since 2026-07-30: ablating the
+baseline barely moved Surprising, and in 7 items it doubled as an answer
+key. <code>predicted_direction</code> moved to
+<code>analysis/preregistration.yaml</code>, <code>rationale</code> to
+<code>question/item_design.jsonl</code>, and <code>category_name</code>
+was dropped; <code>question/schema.json</code> is now actually enforced
+on load (it never was before). The agent sees only a short, open prompt;
+that judge-side machinery is never shown to it. Field list, counts and
+balance: <code>doc/datasheet.md</code> §2. Every measured figure from
+the shipped run: <code>doc/design.md</code> §0 — the single source of
+truth, cited rather than restated everywhere else.</p>
+<h2 id="layout">Layout</h2>
+<pre tabindex="0"><code>crest/
+  readme.md            you are here
+  run_eval.py          MAIN entry point (config-driven)
+  config/              eval_config.yaml — choose benchmark(s), agents, judges
+                       eval_config.aiml.yaml — same, pointed at the AI/ML item set
+                       prices.yaml — per-model prices for analysis/costs.py; ships ALL NULL
+  question/           crest_challenges.jsonl (50) · schema.json (enforced on load)
+                       item_design.jsonl (per-item rationale) · quarantine.yaml
+                       crest_aiml_challenges.jsonl (a SECOND 50-item AI/ML set, 10/category over 6
+                       AI/ML domains; validates under schema v3.2.0). It is NOT part of the released
+                       benchmark and no paper claims it: it has NO item_design.jsonl rows and has
+                       had no citation or live-web audit. It now has its own config
+                       (config/eval_config.aiml.yaml) and is NOT gated by ci_check.sh at all: the
+                       schema-load, sidecar-bijection and second-item-file checks were all REMOVED
+                       from that script (see its header). The earlier claim of coverage here named
+                       checks that no longer exist; its own run validates it on load. It HAS been
+                       run and scored -- three runs at 243/249/1 records, the 249 promoted into
+                       tracked result/leaderboard.crest_aiml.json -- so "not part of the released
+                       benchmark" describes what the papers claim, not what exists.
+                       On the mechanical checks it is CLEANER than the science set
+                       (100% of prior-art entries dated, vs 51%). See doc/misc/aiml_dataset_build.md
+  harness/             agents.py (entrants) · run_crest.py (core loop) · results.py (run-dir writer)
+                       cache.py (cross-run generation cache) · keys.py (key pooling) · rejudge.py
+  judge/               score.py (judge panel + grounding check) · rubric.md · judge_config*.yaml
+  analysis/            stats.py (mixed-effects, TOST, crossover, bootstrap, ICC/α)
+                       preregistration.yaml · ci_check.sh (pre-release gate) · validate_items.py
+                       ablate_fields.py · apply_audit_fixes.py · stall_check.py
+                       costs.py (cost from records × config/prices.yaml; refuses to guess — emits
+                       null with a reason and reports priced-vs-total coverage)
+                       audit_novelty_gate.py (items whose novelty rule offers an example their own
+                       prior-art set already contains; heuristic, and its docstring states the
+                       defect class it CANNOT see)
+                       promote_leaderboard.py (tracked result/leaderboard.json)
+  eval/                per-entrant eval scripts + readme (one entrant each; --dry-run supported)
+  result/              run outputs (runs/&lt;run_id&gt;/…), gitignored; see result/readme.md
+  doc/                design.md · datasheet.md · related_work.md · analysis notes
+  paper/               p2_benchmark_only/ (chosen) · p3_caesar_hybrid/ (IP-gated upgrade) · compile.sh</code></pre>
+<h2 id="status-honest">Status (honest)</h2>
+<p>A full 250-task run exists (50 items x 5 entrants, all three judges
+per record). <strong>Do not cite per-agent creativity numbers
+yet</strong>, for three reasons:</p>
+<ol type="1">
+<li><strong>No ranking claim is supportable.</strong> Judge severity
+exceeds the between-entrant spread on every axis, and the earlier
+leave-one-family-out protocol assigned judge panels <em>by entrant
+family</em>, which made the leaderboard unidentifiable. Scoring is now
+full-panel; LOFO is a robustness check.</li>
+<li><strong>Surprising is weakly anchored, but it binds.</strong>
+Ablating <code>expert_baseline</code> barely moves Surprising, so it is
+no longer sent to the judge — the axis rests on the judge's own expert
+prior, which is a limitation to report. It was briefly dropped from the
+endpoint on the further argument that it is redundant with novelty; that
+argument does not survive its own numbers — Surprising is the sole
+binding axis in a fifth of all records, and the high New/Surprising
+correlation is <strong>contaminated by the v1 judge prompt</strong>,
+which stated that correlation <em>to the judge</em>, so it cannot be
+cited as evidence the axes are inseparable. The primary endpoint is
+<code>min(New, Useful, Surprising)</code> — all three axes —
+consistently across <code>analysis/stats.py::_composite</code>,
+<code>analysis/preregistration.yaml</code> and
+<code>judge/rubric.md</code>. <code>stats.py::min2()</code> reports the
+New/Useful pair as a robustness check.</li>
+<li><strong>The gate is green, and that is not the same as
+release-ready.</strong> <code>analysis/ci_check.sh</code> now passes all
+of its checks, including the <code>C1_materials_chemistry_01</code>
+self-consistency failure this entry used to describe. What still blocks
+release is in <code>doc/datasheet.md</code>: no human study, no
+Croissant metadata, the run directory undistributed, and both
+field-ablation deltas unreproducible. Run the gate for the live failure
+list rather than trusting a transcript of it; two failures previously
+counted against <code>C2_materials_chemistry_07</code> and
+<code>C4_materials_chemistry_43</code> were validator false positives —
+a 50% false-positive rate on a blocking gate — and were fixed. The
+quarantine is now <strong>empty</strong> — the one quarantined item was
+released 2026-07-31 with a redrafted baseline that is model-drafted,
+<em>not</em> expert-written, and still needs a physiologist's review;
+<code>question/quarantine.yaml</code> keeps that record plus a
+watch-list of same-class items.</li>
+</ol>
+<p>All figures behind points 1 and 2 are in <code>doc/design.md</code>
+§0.</p>
+<p>Live web search is <strong>not</strong> contamination-controlled
+(<code>FrozenIndex</code> raises; a frozen shared index is future work)
+and the judge panel is <strong>not</strong> human-validated. What the
+run <em>does</em> support is a methodological finding: LOFO over a
+three-vendor panel makes an LLM-judge leaderboard unidentifiable. See
+<code>doc/misc/iclr_metareview.md</code> and
+<code>doc/misc/field_justification.md</code> (both measured on
+superseded runs — read their headers first).</p>
+</article><footer><a href="../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

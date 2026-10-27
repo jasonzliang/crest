@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Item vetting · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../README.html">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest-item-vetting--adversarial-red-team">CREST Item Vetting —
+Adversarial Red-Team</a></li><li><a href="#-partly-superseded-2026-07-29-pass-annotated-2026-07-31">⚠
+PARTLY SUPERSEDED (2026-07-29 pass; annotated 2026-07-31)</a></li><li><a href="#method">Method</a></li><li><a href="#per-item-assessment">Per-item assessment</a></li><li><a href="#summary">Summary</a></li></ul></nav></details><article><h1 id="crest-item-vetting--adversarial-red-team">CREST Item Vetting —
+Adversarial Red-Team</h1>
+<blockquote>
+<h2 id="-partly-superseded-2026-07-29-pass-annotated-2026-07-31">⚠
+PARTLY SUPERSEDED (2026-07-29 pass; annotated 2026-07-31)</h2>
+<p>This was a <strong>desk review</strong>: every grade below was
+assigned by reading the item, with <strong>no web access and no
+execution</strong>. Two later passes contradict it, and where they do,
+<strong>they win</strong>:</p>
+<ol type="1">
+<li><strong>Live-web citation audit of all 50 items</strong> (~610
+claims, <code>doc/misc/audit_live_*.md</code>, 2026-07-30). It found
+real defects in items this pass graded PASS, and it <strong>overturns
+the headline G5 finding</strong>: the claim below that "all
+<code>known_answers</code> are dated &amp; non-empty" is false — most
+entries carry no year at all. The measured rates and the counting
+convention are in <code>datasheet.md</code> §2 ("Prior-art dating"),
+which is authoritative for them; they are deliberately not restated
+here, because they were restated in four files and went stale in three.
+The dating error direction is one-sided: prior art is consistently made
+to look <em>younger</em> than it is, which inflates novelty.</li>
+<li><strong>Mechanical self-consistency checking</strong>
+(<code>analysis/validate_items.py</code>, wired into
+<code>analysis/ci_check.sh</code>). It reports <strong>2 BLOCKING
+contradictions, both in <code>C1_materials_chemistry_01</code></strong>
+— an earlier count of 4 across 3 items included two validator false
+positives, since fixed. The pre-release gate currently FAILS on them.
+<code>_01</code> was graded REVISE below; the two false positives
+(<code>_07</code>, <code>_43</code>) were graded PASS/KEEP.</li>
+</ol>
+<p><strong>Field drift.</strong> The Method paragraph below describes
+reading <code>predicted_direction</code> and the designer
+<code>rationale</code> on each item. <strong>Neither field exists any
+more:</strong> <code>predicted_direction</code> and
+<code>category_name</code> were removed in schema v2.0.0 (predictions
+moved to <code>analysis/preregistration.yaml</code>), and
+<code>rationale</code> moved to <code>question/item_design.jsonl</code>
+in v3.0.0. A judge-hidden <code>author_expected_surprises</code> field
+was added. Items now ship ten fields, not twelve.</p>
+<p><strong>What still stands.</strong> The per-item table is retained as
+the historical record of the desk pass; rows contradicted by a later
+pass are marked inline with <strong><code>→ SUPERSEDED</code></strong>.
+The zero-fabrication finding was <em>confirmed</em> by the live audit
+across all five categories. The REVISE dispositions were acted on.</p>
+<p><strong>Not re-graded here.</strong> This annotation corrects
+statements known to be false; it does not re-run the five gates against
+the current file. Treat an unannotated PASS as "not contradicted yet",
+not as verified.</p>
+</blockquote>
+<h2 id="method">Method</h2>
+<p>This is an adversarial item-vetting pass over all 50 CREST challenges
+in <code>question/crest_challenges.jsonl</code> (ids ending
+<code>00</code>–<code>29</code> are the 30 original items;
+<code>30</code>–<code>49</code> are the 20 newly-added items). Each item
+was read in full — <code>query</code>, <code>hard_rules</code>,
+<code>known_answers</code>, <code>expert_baseline</code>, and (at the
+time) the per-item <code>predicted_direction</code> and designer
+<code>rationale</code> — and stress-tested against five gates. The goal
+is not to re-grade a model's answer but to ask whether each
+<em>item</em> actually measures what it claims to. Gates are marked
+<strong>PASS / WEAK / FAIL</strong>; each item gets a disposition
+(<strong>KEEP / REVISE / CUT</strong>) with a one-line reason. This
+report does <strong>not</strong> modify the dataset.</p>
+<p><strong>The five gates:</strong></p>
+<ol type="1">
+<li><strong>G1 Contamination-resistance</strong> — is the answer NOT
+memorizable / not sitting on a single indexed page (genuinely
+multi-hop)? All items are invention or counterfactual tasks with no
+canonical published answer, and each <code>known_answers</code> list
+deliberately pre-claims the memorizable/first-order content, forcing
+work beyond recall. <em>(→ SUPERSEDED in strength: this was judged by
+reading. The decisive test — a tool-ablation check, scoring a no-web
+model and cutting anything it answers — has never been run, and runs are
+live-web, not contamination-controlled. Read every G1 PASS as "no
+memorizable answer was apparent", not as measured.)</em></li>
+<li><strong>G2 Synthesis-required</strong> — does answering truly need
+multi-source synthesis rather than a single lookup?</li>
+<li><strong>G3 Axis-isolation</strong> — does it genuinely exercise its
+labeled isolated axis (C1 usefulness, C2 surprise, C3 novelty, C4
+balanced, C5 novelty) rather than a confound?</li>
+<li><strong>G4 Headroom</strong> — is it hard enough not to be saturated
+by a strong agent (not trivially answerable)?</li>
+<li><strong>G5 Metadata</strong> — <code>known_answers</code> dated
+&amp; non-empty, <code>hard_rules</code> checkable,
+<code>expert_baseline</code> present. <em>(→ SUPERSEDED: the "dated"
+half of this gate was graded by inspection and is wrong at file scale —
+see the header and <code>datasheet.md</code> §2. Every G5 PASS below
+should be read as "non-empty and present", never as "dated".)</em></li>
+</ol>
+<h2 id="per-item-assessment">Per-item assessment</h2>
+<p><code>n/12</code>-style dating counts below are over an item's
+<strong>substantive</strong> <code>known_answers</code> entries,
+excluding its leading <code>Dated as of …</code> header entry — the same
+convention as <code>datasheet.md</code> §2.</p>
+<div aria-label="Per-item assessment table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">id</th>
+<th scope="col">cat</th>
+<th scope="col">domain</th>
+<th scope="col">G1</th>
+<th scope="col">G2</th>
+<th scope="col">G3</th>
+<th scope="col">G4</th>
+<th scope="col">G5</th>
+<th scope="col">disp.</th>
+<th scope="col">reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1_biology_medicine_00</td>
+<td>C1</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ SUPERSEDED</strong></td>
+<td>KEEP</td>
+<td>CRAB novel-MOA; 7 checkable rules + falsifiable experiment cleanly
+isolate usefulness. <strong>Live audit: 2 WRONG
+<code>known_answers</code> entries</strong> ("dynobactin N" does not
+exist — it is dynobactin A; "RG6114" is inavolisib, not the LepB
+inhibitor G0775). Both corrected in the shipped file 2026-07-30</td>
+</tr>
+<tr>
+<td>C1_materials_chemistry_01</td>
+<td>C1</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>WEAK</del> <strong>→ FAIL</strong></td>
+<td><strong>REVISE</strong></td>
+<td>Perovskite top-cell; 12 parametric rules isolate usefulness; KA
+band-gaps self-flagged unverified. <strong>2 BLOCKING
+self-contradictions</strong> (<code>validate_items.py</code>): R4
+requires mu ∈ [0.40, 0.90] but the item's own
+<code>expert_baseline</code> reports mu ≈ 0.39; R6 permits a
+chalcogenide (S, Se) while R9 bans Se. The rules exclude the class they
+were written to admit</td>
+</tr>
+<tr>
+<td>C1_economics_business_02</td>
+<td>C1</td>
+<td>econ</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>GPU spot-market mechanism; formal IC/budget-balance rules make
+usefulness provable</td>
+</tr>
+<tr>
+<td>C1_law_policy_03</td>
+<td>C1</td>
+<td>law</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>LEO-debris instrument; treaty-article + incentive-compat constraints
+isolate legal-operability</td>
+</tr>
+<tr>
+<td>C1_engineering_04</td>
+<td>C1</td>
+<td>eng</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>FDM energy-absorber; strict SEA/plateau/reusability envelope;
+usefulness fully checkable</td>
+</tr>
+<tr>
+<td>C1_arts_humanities_05</td>
+<td>C1</td>
+<td>arts</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>WEAK</td>
+<td>KEEP</td>
+<td>Mnemonic fixed form; usefulness = order-recall efficacy grounded in
+serial-recall science; KA self-flagged unverified</td>
+</tr>
+<tr>
+<td>C1_biology_medicine_30</td>
+<td>C1</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Molecular-glue triple; ternary-geometry/lysine/E3-coexpression
+feasibility isolates usefulness (lighter rule-set)</td>
+</tr>
+<tr>
+<td>C1_materials_chemistry_31</td>
+<td>C1</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Li superionic conductor; quantitative barrier/window/abundance
+targets isolate usefulness</td>
+</tr>
+<tr>
+<td>C1_engineering_32</td>
+<td>C1</td>
+<td>eng</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Daytime radiative cooler; radiative-balance inequality gives
+checkable usefulness</td>
+</tr>
+<tr>
+<td>C1_arts_humanities_33</td>
+<td>C1</td>
+<td>arts</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Novel tuning; cents-error/pitch-count arithmetic makes usefulness
+directly checkable</td>
+</tr>
+<tr>
+<td>C2_biology_medicine_06</td>
+<td>C2</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>No-adaptive-immunity world; first-order pre-claimed, surprise via
+cross-field 2nd-order + coherence lock</td>
+</tr>
+<tr>
+<td>C2_materials_chemistry_07</td>
+<td>C2</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>No-crystallinity world; six-arena scaffold, surprise via
+inverted/net-benefit consequences. A "1 BLOCKING self-contradiction: one
+hard rule permits 'Si' while another bans it" verdict was recorded here
+and was a <strong>validator FALSE POSITIVE</strong>, since fixed —
+<code>validate_items.py</code> reports nothing against this item</td>
+</tr>
+<tr>
+<td>C2_economics_business_08</td>
+<td>C2</td>
+<td>econ</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>No limited liability; partial-counterfactual record anchors
+surprising-but-true cascades</td>
+</tr>
+<tr>
+<td>C2_law_policy_09</td>
+<td>C2</td>
+<td>law</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>FAIL</del> <strong>→ FIXED</strong></td>
+<td><del>REVISE</del> <strong>KEEP</strong></td>
+<td>Statute-of-limitations world; design strong. The placeholder
+<code>expert_baseline</code> stub was <strong>replaced with the real
+818-char convergent-expectation text</strong>; its enumeration of
+intended surprises was split into the judge-hidden
+<code>author_expected_surprises</code> field</td>
+</tr>
+<tr>
+<td>C2_engineering_10</td>
+<td>C2</td>
+<td>eng</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>1.5g world; scaling-law scaffold, surprise via gravity-invariants
+and direction-reversals</td>
+</tr>
+<tr>
+<td>C2_arts_humanities_11</td>
+<td>C2</td>
+<td>arts</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>No linear perspective; canon pre-claimed, surprise via distant
+knock-ons + self-undermining test</td>
+</tr>
+<tr>
+<td>C2_biology_medicine_34</td>
+<td>C2</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ SUPERSEDED</strong></td>
+<td>KEEP (conditional)</td>
+<td>Non-enucleated RBCs; anti-obvious rule isolates surprise — but the
+"concrete baseline" was not one. <strong>64% of
+<code>expert_baseline</code> was an answer key</strong>; the residue was
+156 chars, failing schema <code>minLength(200)</code>, so the item was
+<strong>quarantined 2026-07-30</strong>. <strong>Restored
+2026-07-31</strong> with a 1,620-char baseline (measured on the shipped
+file) that is explicitly <strong>model-drafted, not expert-written, and
+still needs physiologist review</strong></td>
+</tr>
+<tr>
+<td>C2_materials_chemistry_35</td>
+<td>C2</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Non-protective Al oxide; industrial-chain 2nd-order beyond
+substitute-metal baseline</td>
+</tr>
+<tr>
+<td>C2_economics_business_36</td>
+<td>C2</td>
+<td>econ</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ WATCH</strong></td>
+<td>KEEP</td>
+<td>No shipping container; landed-cost/port-geography 2nd-order
+surprise. <strong>58% of <code>expert_baseline</code> was answer
+key</strong> (230 chars remain); on the quarantine watch-list</td>
+</tr>
+<tr>
+<td>C2_law_policy_37</td>
+<td>C2</td>
+<td>law</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ WATCH</strong></td>
+<td>KEEP</td>
+<td>No plea bargaining; prosecutorial-incentive 2nd-order surprise;
+multi-source rule. <strong>59% of <code>expert_baseline</code> was
+answer key</strong> (210 chars remain); on the quarantine
+watch-list</td>
+</tr>
+<tr>
+<td>C3_biology_medicine_12</td>
+<td>C3</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Category theory→differentiation; novelty gate blocks Rosen/MES;
+structural-fidelity rules</td>
+</tr>
+<tr>
+<td>C3_materials_chemistry_13</td>
+<td>C3</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Pop-gen→solid-state; trivial mappings banned; novelty on deeper
+terms + disanalogy</td>
+</tr>
+<tr>
+<td>C3_economics_business_14</td>
+<td>C3</td>
+<td>econ</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Knot theory→ownership networks; unoccupied niche; invariance proof
+required</td>
+</tr>
+<tr>
+<td>C3_law_policy_15</td>
+<td>C3</td>
+<td>law</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>WEAK</del> <strong>→ CLEARED</strong></td>
+<td>KEEP</td>
+<td>RG→federalism; Galam-gated; novelty on competence-allocation
+dictionary. <strong>Live audit verified all 10 prior-art entries and the
+RG mathematics; its central negative claim survived ten independent
+query forms</strong> — the auditor's best-constructed item in the set.
+The self-flagged-unverified caveat is discharged</td>
+</tr>
+<tr>
+<td>C3_engineering_16</td>
+<td>C3</td>
+<td>eng</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Pop-gen→software evolution; Lehman-gated; equation-level
+correspondences + predictions</td>
+</tr>
+<tr>
+<td>C3_arts_humanities_17</td>
+<td>C3</td>
+<td>arts</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ SUPERSEDED</strong></td>
+<td>PASS</td>
+<td>PASS</td>
+<td><strong>REVISE</strong></td>
+<td>Gauge theory→translation; shallow "meaning=invariant" gated;
+holonomy/curvature layer required. <strong>Live audit: the novelty gate
+is materially wrong, not merely loose.</strong> The item asserts
+existing work carries "the invariance HEADLINE only — no connection, no
+curvature, no Wilson loop"; Coda et al., arXiv:2203.08189 (2022) already
+builds fiber bundles whose fibers are admissible interpretations,
+motivated by linguistic ambiguity. <strong>Still missing from
+<code>known_answers</code></strong> — the gate over-rewards</td>
+</tr>
+<tr>
+<td>C3_biology_medicine_38</td>
+<td>C3</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Optimal transport→non-transport biology; homonym/trajectory uses
+gated; novelty on duality/slackness</td>
+</tr>
+<tr>
+<td>C3_materials_chemistry_39</td>
+<td>C3</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Sheaf cohomology→materials; TDA/K-theory gated; H^1 obstruction
+needs a lab referent</td>
+</tr>
+<tr>
+<td>C3_law_policy_40</td>
+<td>C3</td>
+<td>law</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Queueing→non-backlog law; M/M/c gated;
+variability-amplification/feedback novelty</td>
+</tr>
+<tr>
+<td>C3_arts_humanities_41</td>
+<td>C3</td>
+<td>arts</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Spectral graph→humanities; character-networks gated;
+Cheeger-coupling novelty</td>
+</tr>
+<tr>
+<td>C4_biology_medicine_18</td>
+<td>C4</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Replication-propensity score; forbidden-signal constraint forces
+New+Useful+Surprise to bind</td>
+</tr>
+<tr>
+<td>C4_materials_chemistry_19</td>
+<td>C4</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Discovery-value metric; all three axes jointly gated;
+anti-remoteness requirement</td>
+</tr>
+<tr>
+<td>C4_economics_business_20</td>
+<td>C4</td>
+<td>econ</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Data-capital valuation; four break-properties + auditability force
+balance</td>
+</tr>
+<tr>
+<td>C4_law_policy_21</td>
+<td>C4</td>
+<td>law</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Regulator-capture metric; banned-proxy constraint forces balanced
+invention</td>
+</tr>
+<tr>
+<td>C4_engineering_22</td>
+<td>C4</td>
+<td>eng</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Cross-domain margin-efficiency index; prior-art + invariance +
+falsifiability bind all three</td>
+</tr>
+<tr>
+<td>C4_arts_humanities_23</td>
+<td>C4</td>
+<td>arts</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Restitution adjudication framework; hard cases + new-mechanism force
+balance; post-cutoff grounding</td>
+</tr>
+<tr>
+<td>C4_biology_medicine_42</td>
+<td>C4</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ WEAK</strong></td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ FAIL</strong></td>
+<td><strong>REVISE</strong></td>
+<td>Preclinical-model selection method; ≥3 traditions + new variable + 2
+hard cases bind all three. <strong>Live audit: 0/12
+<code>known_answers</code> entries dated</strong>, and the two
+literatures that would refute its flagship novelty claim are absent
+(Belzung &amp; Lemoine 2011 mechanistic/homological validity;
+Wehling/Wendler translatability scoring, 2009–2017). Milder version of
+<code>_45</code>'s defect</td>
+</tr>
+<tr>
+<td>C4_materials_chemistry_43</td>
+<td>C4</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ SUPERSEDED</strong></td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ FAIL</strong></td>
+<td><strong>REVISE</strong></td>
+<td>Synthesis-route ranking; discriminating hard cases invert
+green-metrics baseline. A "1 BLOCKING self-contradiction: the rules
+offer 'atom economy' as a genuinely NEW mechanism while it already
+appears in this item's own <code>known_answers</code>" verdict was a
+<strong>validator FALSE POSITIVE</strong>, since fixed. Still standing:
+<strong>0 of its 12 substantive entries dated</strong>; four existing
+aggregators (GREENSCOPE, EATOS, DOZN, Andraos) and the criticality
+methodology (Graedel 2012) are missing</td>
+</tr>
+<tr>
+<td>C4_economics_business_44</td>
+<td>C4</td>
+<td>econ</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ WEAK</strong></td>
+<td>KEEP</td>
+<td>Killer-acquisition screen; below-threshold/zero-overlap hard cases
+invert concentration-test baseline. Only 2/12 entries dated (the best of
+the <code>_4x</code> batch); the Art. 22 entry is stale in a way that
+breaks its own H1 premise</td>
+</tr>
+<tr>
+<td>C4_engineering_45</td>
+<td>C4</td>
+<td>eng</td>
+<td>PASS</td>
+<td>PASS</td>
+<td><del>PASS</del> <strong>→ FAIL</strong></td>
+<td><del>PASS</del> <strong>→ FAIL</strong></td>
+<td><del>PASS</del> <strong>→ FAIL</strong></td>
+<td><del>KEEP</del> <strong>DO NOT RELEASE</strong></td>
+<td>Reparability/upgradeability index. <strong>The novelty gate is
+INVERTED, not merely loose.</strong> Hard rule (d) offers "a
+software-lock/parts-pairing penalty as a hard multiplier" as its example
+of a genuinely NEW mechanism, but <code>known_answers[1]</code> is the
+iFixit Repairability Score, whose published rubric already applies a
+<strong>global</strong> parts-pairing penalty (up to −100%).
+<code>expert_baseline</code> asserts the opposite ("the convergent
+baseline rarely penalizes software parts-pairing"), so a judge reading
+the item would <em>confirm</em> the false positive rather than catch it.
+Also 0/12 entries dated, one flatly wrong attribution (Martin &amp;
+Ishii — <strong>still unfixed in the shipped file</strong>), and the
+only operative EU repairability score (Reg (EU) 2023/1669) is absent. On
+the quarantine watch-list</td>
+</tr>
+<tr>
+<td>C5_biology_medicine_24</td>
+<td>C5</td>
+<td>bio_med</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>Categorically-new modality; 26-entry KA + undruggable-biology
+reasoning; high headroom</td>
+</tr>
+<tr>
+<td>C5_materials_chemistry_25</td>
+<td>C5</td>
+<td>mat_chem</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>New solid-state class; 33-entry KA; single-organizing-principle bar;
+high headroom</td>
+</tr>
+<tr>
+<td>C5_economics_business_26</td>
+<td>C5</td>
+<td>econ</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>New market for a missing market; IC argument + buildable-now floor
+keep it hard</td>
+</tr>
+<tr>
+<td>C5_law_policy_27</td>
+<td>C5</td>
+<td>law</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>New future-generations instrument; open-world non-existence proof
+across many jurisdictions</td>
+</tr>
+<tr>
+<td>C5_engineering_28</td>
+<td>C5</td>
+<td>eng</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>New engineering device; 3-corpus white-space map; no off-the-shelf
+integration allowed</td>
+</tr>
+<tr>
+<td>C5_arts_humanities_29</td>
+<td>C5</td>
+<td>arts</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>PASS</td>
+<td>KEEP</td>
+<td>New poetic form; 33-entry cross-lingual catalogue + collision rule;
+high headroom</td>
+</tr>
+<tr>
+<td>C5_economics_business_46</td>
+<td>C5</td>
+<td>econ</td>
+<td>PASS</td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td>PASS</td>
+<td><strong>REVISED</strong></td>
+<td>"Invent an economic index"; was negative-verify only and saturable.
+<strong>Fix applied:</strong> 5 hard rules (was 3) incl. a multi-source
+absence proof and a non-saturation guard; 21-entry prior-art
+catalogue</td>
+</tr>
+<tr>
+<td>C5_law_policy_47</td>
+<td>C5</td>
+<td>law</td>
+<td>PASS</td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>PASS</del> <strong>→ WEAK</strong></td>
+<td><strong>REVISED</strong></td>
+<td>"Invent a voting method". <strong>Fix applied</strong> (5 rules,
+absence proof, non-saturation guard, 20-method catalogue) — but the
+suggested named social-choice property was not added, and the catalogue
+is <strong>still incomplete</strong>: Phragmén 1894, Nanson 1882 and
+random ballot are absent, and Bucklin is dated 1909 when the method is
+Condorcet 1793</td>
+</tr>
+<tr>
+<td>C5_engineering_48</td>
+<td>C5</td>
+<td>eng</td>
+<td>PASS</td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td>PASS</td>
+<td><strong>REVISED</strong></td>
+<td>"Invent a planar linkage". <strong>Fix applied:</strong> 5 rules
+incl. a determinate Grübler–Kutzbach mobility bar, absence proof and
+non-saturation guard; 21-entry catalogue</td>
+</tr>
+<tr>
+<td>C5_arts_humanities_49</td>
+<td>C5</td>
+<td>arts</td>
+<td>PASS</td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>WEAK</del> <strong>→ REVISED</strong></td>
+<td><del>PASS</del> <strong>→ FAIL</strong></td>
+<td><strong>REVISED</strong></td>
+<td>"Invent a musical form". <strong>Fix applied</strong> (5 rules,
+absence proof, non-saturation guard, 21-entry catalogue), but the
+suggested fully-worked realized example was not required, and the
+catalogue is <strong>bare and undated</strong> — confirmed by two
+independent audit passes</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="summary">Summary</h2>
+<p><strong>Dispositions (as graded 2026-07-29):</strong> KEEP = 45 ·
+REVISE = 5 · CUT = 0. <em>(The table below no longer reproduces that
+split: four rows -- <code>01</code>, <code>17</code>, <code>42</code>,
+<code>43</code> -- had their disposition cell overwritten with
+<strong>REVISE</strong> without a strikethrough, unlike <code>45</code>
+(<code>~~KEEP~~ **DO NOT RELEASE**</code>). Parsing the table as it
+stands gives KEEP 40 / REVISE 5 / REVISED 4 / DO-NOT-RELEASE 1. The
+45/5/0 line is the ORIGINAL 2026-07-29 grading; the table records the
+state after later revisions.)</em></p>
+<p><strong>→ SUPERSEDED.</strong> After the live-web audit and
+mechanical validation, the standing count is: 5 REVISE items
+<strong>fixed or acted on</strong> (09's baseline restored; 46–49
+hardened to 5 rules with absence-proof and non-saturation guards), and
+<strong>6 items newly flagged</strong> that this pass graded KEEP —
+<code>01</code> (the only item with BLOCKING self-contradictions),
+<code>00</code> (2 wrong prior-art entries, since corrected),
+<code>17</code> (over-permissive novelty gate, unfixed),
+<code>42</code>/<code>44</code> (undated / pruned prior art), and
+<code>45</code> (<strong>inverted novelty gate — "do not
+release"</strong>). Plus <code>34</code>, quarantined and then restored
+on a model-drafted baseline. <code>07</code> and <code>43</code> were
+flagged here too and were <strong>validator false positives, since
+fixed</strong> — they are not part of the count. The pre-release gate
+(<code>analysis/ci_check.sh</code>) fails on <code>01</code>'s two
+blocking contradictions.</p>
+<h3 id="revise-items-and-the-specific-fix">REVISE items and the specific
+fix</h3>
+<blockquote>
+<p><strong>Status 2026-07-31: all five were acted on.</strong> 09's
+baseline was restored in full. 46–49 were hardened — each now carries
+<strong>5 hard rules</strong> (was 3) including a multi-source absence
+proof and an explicit non-saturation guard, plus a ~21-entry prior-art
+catalogue. The <em>generic</em> hardening landed; two of the
+<em>item-specific</em> bars proposed below did not (47's named
+social-choice property, 49's fully-worked realized example), and 47's
+and 49's catalogues remain incomplete/undated.</p>
+</blockquote>
+<ul>
+<li><strong>C2_law_policy_09</strong> (G5 FAIL — <strong>now
+FIXED</strong>) — <code>expert_baseline</code> was a placeholder stub
+(<code>"See expert-baseline field content above."</code>) instead of the
+real reference answer. For a C2 surprise item the baseline is
+load-bearing (Surprise is scored against it), so this must be fixed.
+<strong>Fix:</strong> restore the actual expert-baseline text (the
+convergent "evidentiary decay silently reconstitutes a de facto
+limitations period / archive-power migration / perpetual-reparations"
+narrative the rationale references). No other change needed — G1–G4 all
+pass.</li>
+<li><strong>C5_economics_business_46, C5_law_policy_47,
+C5_engineering_48, C5_arts_humanities_49</strong> (G2/G3/G4 WEAK) — this
+lightweight C5 subset is a distinctly easier tier than the C5 originals:
+only 3 hard rules, short deliverables, and a novelty check that is pure
+negative-verification ("confirm no established X does this") rather than
+genuine multi-source synthesis. A strong agent saturates them, and the
+loose bar cannot distinguish real creative novelty from arbitrary
+novelty. <strong>Fix (per item):</strong> raise the difficulty and
+synthesis load — require the invention to be constructed from and
+contrasted against ≥3 named source families, add a
+quantitative/functional bar (46: combine ≥3 heterogeneous public
+datasets with a stated identification argument; 47: satisfy a named
+social-choice property that a listed method fails, e.g. a specific
+monotonicity/participation criterion; 48: hit a quantified performance
+target with a first-order kinematic analysis; 49: supply a fully worked
+realized example and prove non-reduction to hybrids of catalogued
+forms), and expand the
+<code>hard_rules</code>/<code>known_answers</code> toward the depth of
+ids 24–29.</li>
+</ul>
+<h3 id="systematic-patterns">Systematic patterns</h3>
+<ul>
+<li><strong>By gate.</strong>
+<ul>
+<li><em>G1 (contamination):</em> uniformly strong <strong>on
+inspection</strong>. The invention/counterfactual format plus
+<code>known_answers</code> lists that pre-claim the memorizable and
+first-order content make the whole set look genuinely multi-hop; no item
+was found answerable from a single indexed page. <strong>→ SUPERSEDED as
+a measurement:</strong> no tool-ablation check was run, and runs use
+live web search with no frozen index, so search-time contamination is
+uncontrolled and unmeasured.</li>
+<li><em>G2 (synthesis):</em> strong except the C5 lightweight subset
+(46–49). C5 as a category leans on "prove absence"
+negative-verification, which is thinner synthesis than the
+literature-fusion demanded by C1/C3/C4; the C5 <em>originals</em>
+(24–29) compensate with rich prior-art surveys, but 46–49 do not.</li>
+<li><em>G3 (axis-isolation):</em> solid across the board. Note two
+inherent (well-mitigated) entanglements: C3's "novelty" overlaps
+"surprise" (a novel structural mapping is also surprising) — handled by
+explicit novelty gates + expert baselines; and the C1 arts/invention
+items (05, 33) lean novelty-adjacent — handled by concrete
+functional/usefulness checks. Only 46–49 are genuinely WEAK (novelty
+labeled but the bar can't separate genuine from arbitrary novelty).
+<strong>→ SUPERSEDED twice over.</strong> (a) The "handled by … expert
+baselines" mitigation no longer operates: <code>expert_baseline</code>
+is judge-hidden as of 2026-07-30 because ablating it barely moved
+Surprising, and New and Surprising correlate hard in the run data. That
+correlation is <strong>CONTAMINATED</strong> — the v1 judge prompt
+stated it to the judge — so it does <strong>not</strong> license the
+conclusion "the axes do not dissociate", which an earlier version of
+this line drew. Figures and caveat: <code>design.md</code> §0. (b) The
+axis labels were measured against judge verdicts and mostly do not bind:
+valid for C1/usefulness only, wrong-signed for novelty. Rates:
+<code>design.md</code> §0. The 56% / 21% / 15% previously quoted here
+came from superseded run <code>111856Z</code> (n=196).</li>
+<li><em>G4 (headroom):</em> C1/C3/C4 are the hardest tiers and clearly
+unsaturated; only 46–49 are saturable.</li>
+<li><em>G5 (metadata):</em> <del>all <code>known_answers</code> are
+dated &amp; non-empty</del> <strong>→ FALSE, see header.</strong>
+<code>known_answers</code> is non-empty everywhere (8–33 entries per
+item) and <code>hard_rules</code> are checkable (5–12 rules per item in
+the shipped file), but most prior-art entries carry no year, and the
+<code>_3x</code>/<code>_4x</code> half of the file is far worse than the
+first half — rates in <code>datasheet.md</code> §2. One hard FAIL at the
+time (09, broken <code>expert_baseline</code>) — since fixed; a second
+(34) was found later by schema enforcement.</li>
+</ul></li>
+<li><del><strong>Missing <code>category_name</code> in every new
+item.</strong></del> <strong>→ MOOT.</strong> <code>category_name</code>
+was removed from <em>all</em> 50 items in schema v2.0.0 (it was
+derivable from <code>category</code>, and one item shipped a long-form
+value that made <code>groupby</code> yield six categories). There is
+nothing to backfill.</li>
+<li><strong>Self-flagged unverified <code>known_answers</code>.</strong>
+Three items (01, 05, 15) noted that the web-search budget was exhausted
+before verification. <strong>→ Now resolved by the live audit:</strong>
+<code>15</code> is fully verified (all 10 prior-art entries check out);
+<code>05</code> and <code>33</code> and <code>32</code> came back clean;
+<code>01</code>'s Cs₂TiI₆ band gap is half-corroborated (the 1.56 eV
+direct figure holds; the indirect figure does not reproduce) and it
+retains two IMPRECISE entries plus the two blocking rule contradictions
+above.</li>
+<li><strong>Weakest category = C5.</strong> Its open-ended novelty
+framing makes synthesis thin and headroom fragile; the originals hold up
+only because of large <code>known_answers</code> sets and heavy
+deliverables. <strong>Strongest = C3</strong> (equation/theorem-level
+fidelity, highest headroom) and <del><strong>C4</strong></del> <strong>→
+SUPERSEDED on C4.</strong> The live audit rates C4-new the
+<em>weakest</em> block in the file: <code>_45</code>'s novelty gate is
+inverted, <code>_42</code>'s is close behind, and 46 of 48 substantive
+prior-art entries across <code>_42</code>–<code>_45</code> carry no year
+at all. C3's own standing is also qualified — the audit found five
+mathematical errors in C3 hard rules and one materially wrong novelty
+gate (<code>_17</code>), though it confirmed zero fabrications across
+~155 checked claims.</li>
+</ul>
+<h3 id="do-the-newly-added-items-3049-hold-up-as-well-as-the-originals">Do
+the newly-added items (30–49) hold up as well as the originals?</h3>
+<p><strong>→ SUPERSEDED. The answer measured by the live audit is:
+no.</strong> The desk pass concluded "mostly yes", reasoning that the
+new C1 (30–33), C2 (34–37), C3 (38–41) and C4 (42–45) items reuse the
+originals' isolation logic — checkable feasibility envelopes,
+anti-obvious coherence rules, well-anchored expert baselines, novelty
+gates — and graded them PASS on all five gates. Two things that reading
+could not see turned out to separate the halves of the file:</p>
+<ol type="1">
+<li><strong>The citation cliff.</strong> Prior-art dating collapses from
+the <code>_1x</code> block to the <code>_3x</code>/<code>_4x</code>
+blocks (rates: <code>datasheet.md</code> §2). Whoever wrote the back
+half of the file stopped citing, and an undated bare name cannot gate
+novelty at all — a judge cannot ask "absent as of date D" when D is
+unstated.</li>
+<li><strong>Gate inversion.</strong> <code>_45</code>'s hard rule offers
+as its example of a new mechanism something its own prior-art list
+already implements, and its baseline asserts the opposite of the truth,
+so the gate awards novelty for reproducing published prior art.
+<code>_42</code> and <code>_43</code> have milder versions.</li>
+</ol>
+<p>The <strong>C5 lightweight subset (46–49)</strong> — the one weakness
+this pass did catch — has since been hardened. The metadata regressions
+it named have both closed: <code>category_name</code> no longer exists
+on any item, and 09's placeholder baseline was replaced. They were
+replaced by different ones: 34's baseline is model-drafted, and
+<code>_3x</code>/<code>_4x</code> prior art is largely undated.</p>
+</article><footer><a href="../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

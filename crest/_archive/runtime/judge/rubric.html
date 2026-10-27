@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Judge rubric · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../README.html">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest-judge-rubric--new--useful--surprising-all-three-primary">CREST
+Judge Rubric — New / Useful / Surprising (all three primary)</a></li><li><a href="#what-the-judge-actually-receives">What the judge actually
+receives</a></li><li><a href="#primary-endpoint">Primary endpoint</a></li><li><a href="#new--110">New — 1–10</a></li><li><a href="#useful-viability--soundness--appropriateness--110">Useful
+(viability / soundness / appropriateness) — 1–10</a></li><li><a href="#surprising--110-a-primary-axis-weakly-anchored">Surprising —
+1–10, a PRIMARY axis (weakly anchored)</a></li><li><a href="#grounding-gate-applied-before-scoring-not-part-of-the-axes">Grounding
+gate (applied before scoring, not part of the axes)</a></li><li><a href="#reporting">Reporting</a></li></ul></nav></details><article><h1 id="crest-judge-rubric--new--useful--surprising-all-three-primary">CREST
+Judge Rubric — New / Useful / Surprising (all three primary)</h1>
+<blockquote>
+<p><strong>This file is the human-readable mirror of the deployed
+prompt, <code>judge/score.py::_judge_prompt</code>
+(<code>JUDGE_PROMPT_VERSION = v3</code>, hash <code>d4c68e7b</code>,
+gated by <code>analysis/ci_check.sh</code>).</strong> It has drifted
+before, so it is maintained clause-by-clause against that function.
+Where the two disagree, <strong>the code is authoritative and this file
+is the bug.</strong> Last diffed at commit <code>af65640</code>
+(2026-07-31).</p>
+</blockquote>
+<blockquote>
+<p><strong>What changed and why.</strong> <code>expert_baseline</code>
+is no longer sent to the judge, and all three axes are primary. Both
+follow from an ablation on the deployed judge
+(<code>analysis/ablate_fields.py</code>, 10 items × 5 entrants = 50
+answers; result in the run's <code>ablation.json</code>): withholding
+the prior-art set moved New by <strong>+0.98</strong> (load-bearing),
+while withholding <code>expert_baseline</code> moved Surprising by
+<strong>−0.02</strong> (it anchored nothing). Surprising is still scored
+and reported and is a PRIMARY axis, but it is
+<strong>unanchored</strong>, and correlates with New at <strong>r =
+0.883</strong> on run 2026-07-31T040653Z (n = 250, at RECORD level,
+which is what the endpoint uses; pooling the 750 per-judge rows gives
+0.946). Recompute per run — never quote a fixed figure. <strong>This
+correlation is CONTAMINATED and is not evidence that the axes are
+inseparable:</strong> 040653Z was judged under prompt v1, which told the
+judge Surprising "correlates with non-redundancy at r~0.95". v2 dropped
+that clause (and the −0.02 figure) as circular, so the correlation must
+be re-measured on a v2 re-judge from stored transcripts
+(<code>harness/rejudge.py</code>) before it is quoted as a finding.</p>
+</blockquote>
+<h2 id="what-the-judge-actually-receives">What the judge actually
+receives</h2>
+<p><code>_judge_prompt</code> assembles exactly four content blocks:</p>
+<ol type="1">
+<li><strong>TASK</strong> — the item's <code>query</code>.</li>
+<li><strong>DATED PRIOR-ART SET</strong> — <code>known_answers</code>,
+capped at 200 entries (a runaway guard that <em>warns</em> rather than
+truncating in silence).</li>
+<li><strong>HARD RULES</strong> — <code>hard_rules</code>.</li>
+<li><strong>ANSWER TO SCORE (author identity withheld)</strong> — the
+full answer text, capped at 400,000 chars (guard only: the longest
+answer observed is 57,282).</li>
+</ol>
+<p>Nothing else reaches the judge on a scoring run. In particular
+<strong><code>expert_baseline</code>,
+<code>author_expected_surprises</code>, <code>category</code>,
+<code>domain</code>, <code>axis_isolated</code>,
+<code>time_sensitivity</code>, the agent's name, and every other
+entrant's answer are all withheld</strong> —
+<code>expert_baseline</code> reappears as a fifth block only under the
+<code>restore_expert_baseline</code> ablation arm, which exists to
+reproduce the pre-withdrawal condition. The judge returns one JSON
+object —
+<code>{"new", "useful", "surprising", "rule_compliance", "hard_rules_violated", "prior_art_omitted", "rationale" (≤40 words)}</code>
+— and no prose. <code>rule_compliance</code> (0-10) and
+<code>prior_art_omitted</code> are v3 additions: rule conformance is its
+own axis and must <strong>not</strong> cap Useful, and a judge that
+knows prior art the dated list omits names it there rather than silently
+scoring against it.</p>
+<p><strong>Panel and aggregation</strong>
+(<code>judge/score.py::JudgePanel</code>,
+<code>judge/judge_config.live.yaml</code>):</p>
+<ul>
+<li><strong>Blind</strong> to agent identity — de facto, by
+construction: the prompt carries no agent name.</li>
+<li><strong>Full panel, not leave-one-family-out.</strong>
+<code>leave_one_family_out: false</code> is the shipped default: with
+only three vendors, LOFO made judge identity perfectly confounded with
+entrant family and introduced a larger bias than the self-preference it
+removed. Every judge row is stamped <code>same_family</code>, so LOFO is
+recoverable post-hoc (the <code>same_family == False</code> rows) and
+self-preference enters the model as a covariate instead. Measured
+justification: <code>judge_config.live.yaml</code>.</li>
+<li><strong>No answer-order randomization</strong> — not an
+unimplemented control but a <em>vacuous</em> one: scoring is
+single-answer, not pairwise, so there is no order to randomize. The
+claim has been withdrawn rather than left standing. Known-answer-list
+order and axis order are also <strong>not</strong> randomized.</li>
+<li>Per-axis scores are aggregated by <strong>median</strong> across
+surviving judges. Below <code>min_judges: 3</code> the record is flagged
+<code>judge_degraded</code> rather than silently averaged; if every
+judge fails the record is <code>judge_error</code> with
+<code>creativity: null</code> — never a fake 0.</li>
+</ul>
+<h2 id="primary-endpoint">Primary endpoint</h2>
+<p><strong><code>min(New, Useful, Surprising)</code> — graded, on the
+1–10 scale, not a threshold.</strong> This is the definition in code
+(<code>analysis/stats.py::_composite</code>) and in
+<code>analysis/preregistration.yaml</code>;
+<code>stats.py::min2()</code> reports the New/Useful pair as a
+robustness check only. All three axes are in the <code>min</code>,
+because on the shipped run Surprising is the <strong>sole binding axis
+in 51 of 250 records (20%)</strong> — the <code>min</code> is doing real
+work on a fifth of the data. Mechanically this is a floor, not an
+average: a 9/7/2 record scores 2, not 7.</p>
+<p>The old "at or above threshold on all three axes" indicator survives
+only for backward comparability (<code>threshold_all_three: 6.0</code>,
+reported per record as <code>creative_all_three</code>): it is
+unpre-registered, its rate swung <strong>5.4–36.1%</strong> across
+thresholds 5–7 on the PILOT and <strong>46.4–56.0%</strong> on the
+canonical run 040653Z, and 13.6% of that run's records sit exactly on
+6.00 on some axis (34/250). Adding Surprising to a two-axis gate removes
+<strong>1 of 250</strong> records at t = 6 and <strong>3</strong> at t =
+7. Earlier figures on these lines came from runs since deleted; see
+<code>result/superseded_runs.json</code>.</p>
+<p>Grounded in the standard definition of creativity (novelty +
+usefulness) plus Boden's surprise. Humans do <strong>not</strong>
+currently own any axis: <strong>no human validation study has been
+run</strong> (see "Reporting" below), so every number in this repo is
+LLM-panel-derived.</p>
+<p>For each output, given the challenge's <code>known_answers</code>
+(dated) and <code>hard_rules</code>:</p>
+<h2 id="new--110">New — 1–10</h2>
+<p>This is <strong>not</strong> a claim about novelty in the world. It
+is novelty against a specific, dated, published reference set — which is
+precisely what makes it reproducible, and what an unanchored novelty
+rating is not: LLM judges rate generated content as highly novel while
+domain experts conclude the opposite (the "novelty mirage"), and our own
+ablation reproduces that at +0.98. The honest reading of a high score is
+"not reducible to the listed prior art as of the stated date", and the
+reference set is published so any omission can be contested.</p>
+<ul>
+<li><strong>1–3:</strong> restates an entry in the dated prior-art
+set.</li>
+<li><strong>4–6:</strong> recombines entries with minor extension.</li>
+<li><strong>7–10:</strong> a synthesis or connection not reducible to
+the entries.</li>
+<li><em>Judge against the dated set ONLY, not the web at large and not
+your own knowledge: content absent from the set counts as non-redundant
+even if the judge believes it has seen it, and content present in the
+set does not, even if it looks fresh.</em></li>
+<li><strong>Known limitation:</strong> the set is author-assembled and
+was found INCOMPLETE by live audit (e.g. <code>C5_law_policy_47</code>
+lists 20 voting methods but still omits Phragmén 1894, Nanson 1882 and
+random ballot — verified against the shipped file), so an agent
+rediscovering absent prior art is over-credited. Requiring a resolvable
+DOI per entry is the fix. A second, larger defect: only <strong>48% of
+<code>known_answers</code> entries carry an explicit year</strong>
+file-wide (340/708), and just <strong>17% (<code>_3x</code>) / 16%
+(<code>_4x</code>)</strong> in the back half of the file, so for those
+items "dated prior-art set" overstates what is shipped
+(<code>doc/misc/audit_live_C4_remainder.md</code> §2).</li>
+</ul>
+<h2 id="useful-viability--soundness--appropriateness--110">Useful
+(viability / soundness / appropriateness) — 1–10</h2>
+<ul>
+<li>Is the idea sound, workable, and appropriate to the challenge,
+<strong>on its merits</strong>?</li>
+<li><strong>Hard rules do NOT cap this axis</strong> (changed in judge
+prompt v3, 2026-07-31). They are scored independently as
+<code>rule_compliance</code> (0–10). Under the old <code>≤3</code> cap
+the two were welded together: <code>corr(min(N,U,S), Useful)</code> ran
+0.976 / 0.957, the composite <em>equalled</em> Useful in 190 of 250
+records, and Useful was ~85% explained by the single binary "did any
+judge cite a violation" (clean judge rows averaged 8.63, citing rows
+2.84). The creativity endpoint was the compliance gate. Reporting them
+separately makes their correlation a result rather than an
+artifact.</li>
+<li>Useful is scored on the idea's merit, <strong>not</strong> on
+citations. <em>(Grounding is a separate gate — see below.)</em></li>
+<li>Hard rules are checked <strong>by the judge, in-prompt</strong> —
+there is no deterministic pre-filter. The only programmatic rule
+checking that ships is <code>analysis/validate_items.py</code>, which
+tests items against <em>themselves</em> (it currently reports
+<strong>0</strong> mechanical contradictions across all 50 items; the 2
+it once reported in <code>C1_materials_chemistry_01</code> were fixed),
+not answers against rules. A clean result there means no
+<em>mechanical</em> contradiction was found — semantic rule/baseline
+conflicts are not decidable by it, as the tool's own footer says.</li>
+<li><em>Not a judge instruction:</em> "Useful gates New" is an
+<strong>aggregation</strong> property, delivered by the <code>min</code>
+endpoint, not a clause in the prompt. The prompt's only anti-nonsense
+instruction is "Do NOT reward nonsense", attached to Surprising.</li>
+</ul>
+<h2 id="surprising--110-a-primary-axis-weakly-anchored">Surprising —
+1–10, a PRIMARY axis (weakly anchored)</h2>
+<ul>
+<li>Non-obviousness conditioned on correctness, judged against the
+judge's own sense of expert expectation. <strong>Deliberately
+unanchored:</strong> <code>expert_baseline</code> was supplied here
+until 2026-07-30 and an ablation showed it moved this axis by −0.02. In
+7 items it also carried the author's enumeration of the intended
+surprises (58%, 59% and 64% of the field in three of them), making
+Surprising graded recall against a key rather than
+expectation-violation. That enumeration now lives in the judge-hidden
+<code>author_expected_surprises</code> field;
+<code>question/quarantine.yaml</code> tracks the three items.</li>
+<li>It is reported for continuity and because Boden's surprise criterion
+motivates the design, but it tracks New closely (r = 0.883; see the
+header note — that figure is prompt-v1-contaminated) and adding it to a
+two-axis gate eliminates only 1 of 250 records at t = 6. <strong>Do not
+treat it as independent evidence.</strong></li>
+</ul>
+<h2 id="grounding-gate-applied-before-scoring-not-part-of-the-axes">Grounding
+gate (applied before scoring, not part of the axes)</h2>
+<p><code>judge/score.py::grounding_gate</code>. <strong>What ships is a
+PILOT proxy, not the FACT-precision gate this section used to
+describe.</strong> It counts <em>citation-worthy cues</em> (dated facts,
+statistics, currency, named studies) with a regex, and:</p>
+<ul>
+<li>an empty answer <strong>fails</strong> as <code>empty_answer</code>;
+a non-empty answer under <code>_MIN_SUBSTANTIVE_CHARS</code>
+(<strong>1000</strong>, raised from 40 after 10 truncated-adapter
+preambles of 90–349 chars were scored 1/1/1) fails as
+<code>too_short</code>;</li>
+<li>a pure-invention answer making ≤2 uncited verifiable factual claims
+<strong>passes</strong> with zero citations (the old
+<code>&gt;= min_citations</code> floor wrongly zeroed the invent tasks,
+C1/C5);</li>
+<li>otherwise it needs ≥1 citation <strong>and</strong> a
+claims-per-citation ratio ≤ <code>_MAX_CLAIMS_PER_CITATION</code>
+(<strong>20</strong>). This is a ratio, not an OR: the earlier "has ≥1
+citation" disjunct let a single URL carry 60 fabricated dated
+statistics.</li>
+</ul>
+<p>There is <strong>no frozen snapshot</strong>, no per-claim entailment
+check, and no FACT precision threshold. The stronger
+<code>metric: fact_precision, threshold: 0.8</code> gate exists only as
+design intent in <code>doc/judge_protocol_intent.md</code>, marked
+<code>[NOT IMPLEMENTED]</code> there, and must not be cited as a shipped
+control.</p>
+<p><strong>Fail ⇒ the answer is UNSCORED
+(<code>creativity: null</code>), not zero.</strong> A fake 0 folded into
+results was explicitly rejected; a failing record carries
+<code>scoring_status</code> ∈ {<code>empty_answer</code>,
+<code>too_short</code>, <code>grounding_fail</code>}.</p>
+<p><strong>Measured contribution: none, so far.</strong> Across 245
+records (superseded run 2026-07-31T020425Z, since deleted —
+<code>result/superseded_runs.json</code>) the anti-fabrication clause
+fired <strong>zero</strong> times; all 11 rejections were <strong>empty
+strings</strong> from one entrant (<code>claude_shallow</code>, an
+adapter failure), which is why <code>empty_answer</code> is a
+<em>separate</em> <code>scoring_status</code> from
+<code>grounding_fail</code> — conflating them mislabelled an adapter bug
+as Claude being ungrounded. On the canonical run 040653Z the gate never
+fires at all: 250/250 scored, shortest answer 2,495 chars. The gate is
+retained as a cheap guard against an untooled or confabulating entrant,
+but <strong>the paper must not claim it as a working control on this
+field of entrants.</strong></p>
+<h2 id="reporting">Reporting</h2>
+<p>Report the axes <strong>separately per category</strong> (a profile,
+not one number).</p>
+<ul>
+<li><strong>Implemented:</strong> inter-judge reliability —
+Krippendorff's α (interval) and ICC(1,1)/ICC(1,k), plus the per-judge
+severity table, in <code>analysis/stats.py::reliability_report</code>.
+On the canonical run the full-panel ICC(1,k) is <strong>0.0 / 0.618 /
+0.0</strong> (New / Useful / Surprising) against a 0.80 bar: the panel
+misses it on every axis, and by the most on Surprising. That one-way
+model absorbs judge severity into error, so it is a
+<strong>floor</strong>; removing the judge effect two-way gives ICC(3,k)
+<strong>0.736 / 0.807 / 0.759</strong>, which is the ceiling and clears
+the bar on Useful only. Report both, and recompute per run — never quote
+a fixed figure. Severity is reported alongside α by design: it varies by
+<strong>3.32 / 3.20 / 3.74</strong> points per axis on a 1–10 scale,
+exceeding the between-agent spread (2.06 on the composite), so α alone
+would hide the effect that decided the leaderboard.</li>
+<li><strong>Not implemented:</strong> length bins — length is logged per
+record (<code>output_len_tokens</code>) but no analysis stratifies or
+adjusts for it, so "per category × length bin" is not something this
+repo currently produces.</li>
+<li><strong>Not implemented:</strong> judge↔︎human agreement. There is no
+human panel, no human scores, and no human-agreement threshold anywhere
+in the code — <code>human_validation_required_categories</code> survives
+only as design intent in <code>doc/judge_protocol_intent.md</code>, read
+by nothing. Any claim that C1/C5 are human-anchored, or that the panel
+is "authoritative on C2/C3/C4", is unsupported by the shipped
+artifact.</li>
+<li><strong>No ranking claim is made</strong>
+(<code>analysis/preregistration.yaml: ranking_claims: none</code>),
+because judge severity exceeded the between-agent spread.</li>
+</ul>
+</article><footer><a href="../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

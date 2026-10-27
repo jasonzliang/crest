@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Citation audit: C4 remainder · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#live-web-citation-audit--c4-remainder-items-_42--_45">Live-web
+citation audit — C4 remainder (items _42 … _45)</a></li><li><a href="#0-headline">0. Headline</a></li><li><a href="#1-summary-table">1. Summary table</a></li><li><a href="#2-counts">2. Counts</a></li><li><a href="#3-the-_45-novelty-gate-is-void--expanded">3. The _45 novelty gate is void — expanded</a></li><li><a href="#4-exact-replacement-strings">4. Exact replacement strings</a></li><li><a href="#5-missing-prior-art-omission--gate-failure">5. MISSING prior art
+(omission = gate failure)</a></li><li><a href="#6-overall-judgement--are-these-four-gates-strong-enough-to-score-novelty-against">6.
+Overall judgement — are these four gates strong enough to score novelty
+against?</a></li></ul></nav></details><article><h1 id="live-web-citation-audit--c4-remainder-items-_42--_45">Live-web
+citation audit — C4 remainder (items _42 … _45)</h1>
+<p>Auditor pass: live WebSearch/WebFetch, 2026-07-30. Scope:
+<code>C4_biology_medicine_42</code>,
+<code>C4_materials_chemistry_43</code>,
+<code>C4_economics_business_44</code>, <code>C4_engineering_45</code>
+Source under audit:
+<code>/Users/jason/Desktop/rome/crest/question/crest_challenges.audit.jsonl</code>
+(working copy, <strong>not edited</strong>). Fields examined:
+<code>known_answers</code>, <code>expert_baseline</code>,
+<code>hard_rules</code>, <code>rationale</code>, <code>query</code>.</p>
+<hr/>
+<h2 id="0-headline">0. Headline</h2>
+<ol type="1">
+<li><strong>Zero fabrications in 48 entries.</strong> Every named
+metric, method, standard, statute, case and paper resolves to a real
+artifact. The prior auditor's "low fabrication risk" read is
+<strong>confirmed</strong>.</li>
+<li><strong>The prior auditor's "bare undated name list" observation is
+confirmed and is worse than stated.</strong> 46 of 48 substantive
+<code>known_answers</code> entries across these four items carry
+<strong>no year at all</strong> (95.8%). Both dated entries are in
+<code>_44</code>. See §2 for the file-wide comparison — <code>_1x</code>
+is 88.4% dated, <code>_4x</code> is 15.8%.</li>
+<li><strong>The dating bias is one-directional, as predicted.</strong>
+Every brand-vs-concept slip found makes prior art look <em>younger</em>
+/ less specified than it is (OECD AOP, EN 45554, ESPR, French durability
+index, ISO 14044). No error was found in the opposite direction.</li>
+<li><strong>One hard WRONG:</strong>
+<code>Modularity index (Martin &amp; Ishii)</code> in <code>_45</code>.
+Martin &amp; Ishii's Design-for-Variety method produces the
+<strong>Generational Variety Index</strong> and the <strong>Coupling
+Index</strong>, not a "modularity index."</li>
+<li><strong>One materially stale legal claim:</strong>
+<code>EU Merger Regulation Article 22 referral practice</code> in
+<code>_44</code>, gutted for below-threshold deals by the CJEU on 3 Sept
+2024 — well inside the list's own stated ~Jan 2026 currency.</li>
+<li><strong>The most serious defect is not a citation error —
+<code>_45</code>'s novelty gate is void.</strong> Its own worked example
+of a "genuinely new" mechanism (a parts-pairing/software-lock penalty as
+a hard multiplier) is <strong>already implemented by the first entry in
+its own <code>known_answers</code> list</strong>: iFixit's current
+Repairability Scoring Rubric applies a <em>global</em> parts-pairing
+penalty of <strong>up to −100%</strong>. A submission that proposes
+precisely the mechanism the item suggests would be scored as novel while
+reproducing published prior art. <code>_45</code>'s
+<code>expert_baseline</code> asserts the opposite of the truth
+here.</li>
+</ol>
+<hr/>
+<h2 id="1-summary-table">1. Summary table</h2>
+<p>Verdict key: <strong>C</strong> = CONFIRMED · <strong>I</strong> =
+IMPRECISE · <strong>W</strong> = WRONG · <strong>U</strong> =
+UNVERIFIABLE · <strong>F</strong> = FABRICATED (none found)</p>
+<h3 id="c4_biology_medicine_42">C4_biology_medicine_42</h3>
+<div aria-label="C4_biology_medicine_42 table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Claim (as written)</th>
+<th scope="col">V</th>
+<th scope="col">Correct / precise value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>Willner's validity triad: face, construct, predictive validity</code></td>
+<td>C</td>
+<td>Willner 1984, <em>Psychopharmacology</em> 83:1–16</td>
+<td><a href="https://link.springer.com/article/10.1007/BF00427414">https://link.springer.com/article/10.1007/BF00427414</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>FDA Drug Development Tool (DDT) and Animal Model Qualification Program</code></td>
+<td><strong>I</strong></td>
+<td>AMQP is scoped <strong>only to the Animal Rule</strong> (efficacy
+where human trials are unethical/infeasible) — not general translational
+model selection. As of 1 Jan 2026: 5 projects, <strong>1 qualified DDT
+ever</strong>. The pathway for organoid/MPS/in-silico tools is
+<strong>ISTAND</strong>, which the list omits.</td>
+<td><a href="https://www.fda.gov/drugs/animal-model-qualification-program-amqp/overview-animal-model-qualification-program">https://www.fda.gov/drugs/animal-model-qualification-program-amqp/overview-animal-model-qualification-program</a>
+· <a href="https://www.fda.gov/drugs/drug-development-tool-ddt-qualification-programs/innovative-science-and-technology-approaches-new-drugs-istand-program">https://www.fda.gov/drugs/drug-development-tool-ddt-qualification-programs/innovative-science-and-technology-approaches-new-drugs-istand-program</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>Biomarker/model 'Context of Use' (COU) qualification concept</code></td>
+<td>C</td>
+<td>Real FDA concept, central to the DDT qualification framework (21st
+Century Cures Act, 2016). Undated bare name.</td>
+<td><a href="https://www.fda.gov/drugs/development-approval-process-drugs/drug-development-tool-ddt-qualification-programs">https://www.fda.gov/drugs/development-approval-process-drugs/drug-development-tool-ddt-qualification-programs</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>ARRIVE 2.0 preclinical reporting guidelines</code></td>
+<td>C</td>
+<td>Percie du Sert et al. 2020, <em>PLoS Biol</em> 18(7):e3000410 (pub.
+14 Jul 2020); original ARRIVE = Kilkenny et al. 2010</td>
+<td><a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3000410">https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3000410</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>SYRCLE risk-of-bias tool for animal studies</code></td>
+<td>C</td>
+<td>Hooijmans, Rovers, de Vries et al. 2014, <em>BMC Med Res
+Methodol</em> 14:43</td>
+<td><a href="https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/1471-2288-14-43">https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/1471-2288-14-43</a></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>GRADE evidence-certainty framework</code></td>
+<td>C</td>
+<td>GRADE Working Group (Atkins et al.) 2004, <em>BMJ</em> 328:1490</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/15205295/">https://pubmed.ncbi.nlm.nih.gov/15205295/</a></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>Bradford Hill viewpoints for causal inference</code></td>
+<td>C</td>
+<td>Hill 1965, <em>Proc R Soc Med</em> 58:295–300; nine viewpoints</td>
+<td><a href="https://journals.sagepub.com/doi/10.1177/003591576505800503">https://journals.sagepub.com/doi/10.1177/003591576505800503</a></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>3Rs framework (Replacement, Reduction, Refinement)</code></td>
+<td>C</td>
+<td>Russell &amp; Burch 1959, <em>The Principles of Humane Experimental
+Technique</em>, Methuen</td>
+<td><a href="https://norecopa.no/textbase/the-principles-of-humane-experimental-technique">https://norecopa.no/textbase/the-principles-of-humane-experimental-technique</a></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>CAMARADES preclinical systematic-review ... methods</code></td>
+<td>C</td>
+<td>Founded <strong>2004</strong> by Macleod &amp; Howells,
+Edinburgh</td>
+<td><a href="https://clinical-brain-sciences.ed.ac.uk/camarades/about-camarades">https://clinical-brain-sciences.ed.ac.uk/camarades/about-camarades</a></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>OECD Adverse Outcome Pathway (AOP) framework</code></td>
+<td><strong>I</strong></td>
+<td><strong>Brand-vs-concept.</strong> OECD AOP Development Programme
+launched <strong>2012</strong>; the concept is <strong>Ankley et al.
+2010</strong>, <em>Environ Toxicol Chem</em> 29:730–741. Crediting "OECD
+AOP" alone dates the prior art 2 years young.</td>
+<td><a href="https://academic.oup.com/etc/article/38/6/1152/7737077">https://academic.oup.com/etc/article/38/6/1152/7737077</a></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>WHO/IPCS mode-of-action human-relevance framework</code></td>
+<td>C</td>
+<td>Meek et al. 2003 (ILSI-RSI); Boobis et al. 2006 (cancer), 2008
+(non-cancer); Meek et al. 2014 update</td>
+<td><a href="https://pubmed.ncbi.nlm.nih.gov/18259981/">https://pubmed.ncbi.nlm.nih.gov/18259981/</a></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>Microphysiological systems qualification efforts (e.g., IQ MPS)</code></td>
+<td>C</td>
+<td>IQ MPS <strong>Affiliate formed June 2018</strong>, from an IQ
+working group created 2014 at NCATS' request</td>
+<td><a href="https://www.iqmps.org/">https://www.iqmps.org/</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c4_materials_chemistry_43">C4_materials_chemistry_43</h3>
+<div aria-label="C4_materials_chemistry_43 table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Claim</th>
+<th scope="col">V</th>
+<th scope="col">Correct / precise value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>E-factor (Sheldon)</code></td>
+<td>C</td>
+<td>Sheldon <strong>1992</strong>, <em>Chem. Ind.</em> (London), 7 Dec
+1992, 903 ("Organic Synthesis — Past, Present and Future"); EQ
+hazard-weighted variant shortly after. Confirmed independently by
+Sheldon's own 30-year retrospective (2023).</td>
+<td><a href="https://pubs.rsc.org/en/content/articlelanding/2023/gc/d2gc04747k">https://pubs.rsc.org/en/content/articlelanding/2023/gc/d2gc04747k</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>Atom economy (Trost)</code></td>
+<td>C</td>
+<td>Trost <strong>1991</strong>, <em>Science</em>
+254(5037):1471–1477</td>
+<td><a href="https://www.science.org/doi/10.1126/science.1962206">https://www.science.org/doi/10.1126/science.1962206</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>12 Principles of Green Chemistry (Anastas &amp; Warner)</code></td>
+<td>C</td>
+<td>1998, <em>Green Chemistry: Theory and Practice</em>, OUP</td>
+<td><a href="https://global.oup.com/academic/product/green-chemistry-9780198506980">https://global.oup.com/academic/product/green-chemistry-9780198506980</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>EcoScale route-assessment score</code></td>
+<td>C</td>
+<td>Van Aken, Strekowski &amp; Patiny <strong>2006</strong>,
+<em>Beilstein J. Org. Chem.</em> 2:3; 6 parameters, 0–100 scale</td>
+<td><a href="https://www.beilstein-journals.org/bjoc/articles/2/3">https://www.beilstein-journals.org/bjoc/articles/2/3</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>Process Mass Intensity (PMI); ACS GCI Pharmaceutical Roundtable metrics</code></td>
+<td>C</td>
+<td>PMI selected as the Roundtable's key metric <strong>2011</strong>;
+Jimenez-Gonzalez, Ponder, Broxterman &amp; Manley 2011, <em>Org. Process
+Res. Dev.</em> 15(4):912–917</td>
+<td><a href="https://pubs.acs.org/doi/10.1021/op200097d">https://pubs.acs.org/doi/10.1021/op200097d</a></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>CHEM21 unified green-metrics toolkit</code></td>
+<td>C</td>
+<td>McElroy, Constantinou, Jones, Summerton &amp; Clark
+<strong>2015</strong>, <em>Green Chem.</em> 17:3111–3121</td>
+<td><a href="https://pubs.rsc.org/en/content/articlelanding/2015/gc/c5gc00340g">https://pubs.rsc.org/en/content/articlelanding/2015/gc/c5gc00340g</a></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>Reaction Mass Efficiency (RME)</code></td>
+<td>C</td>
+<td>Constable, Curzons &amp; Cunningham <strong>2002</strong>, <em>Green
+Chem.</em> 4(6):521–527</td>
+<td><a href="https://pubs.rsc.org/en/content/articlelanding/2002/gc/b206169b">https://pubs.rsc.org/en/content/articlelanding/2002/gc/b206169b</a></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>Solvent selection guides (GSK, Pfizer, CHEM21)</code></td>
+<td>C</td>
+<td>Pfizer: Alfonsi et al. 2008; GSK: Henderson et al. 2011; CHEM21:
+Prat et al. 2016 — all <em>Green Chem.</em></td>
+<td><a href="https://learning.acsgcipr.org/guides-and-metrics/solvent-selection-guides/solvent-selection-guides-summary-and-further-reading/">https://learning.acsgcipr.org/guides-and-metrics/solvent-selection-guides/solvent-selection-guides-summary-and-further-reading/</a></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>Life Cycle Assessment (ISO 14040/14044)</code></td>
+<td><strong>I</strong></td>
+<td><strong>ISO 14040:2006</strong> and <strong>ISO 14044:2006</strong>
+(+ Amd 1:2017, Amd 2:2020); the 2006 pair consolidated first editions
+issued 1997–2000. Both still current as of 2026 — no newer edition.
+Undated citation of a versioned standard with amendments is not usable
+as a dated baseline.</td>
+<td><a href="https://www.iso.org/standard/38498.html">https://www.iso.org/standard/38498.html</a></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>Green Aspiration Level / Relative Process Greenness</code></td>
+<td>C</td>
+<td>Roschangar, <strong>Sheldon</strong> &amp; Senanayake
+<strong>2015</strong>, <em>Green Chem.</em> 17:752–768. Sheldon is a
+genuine co-author — <strong>no "right paper / wrong famous name" failure
+here</strong> despite the prominent name.</td>
+<td><a href="https://pubs.rsc.org/en/content/articlelanding/2015/gc/c4gc01563k">https://pubs.rsc.org/en/content/articlelanding/2015/gc/c4gc01563k</a></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>Element criticality assessments (USGS, EU Critical Raw Materials list)</code></td>
+<td><strong>I</strong></td>
+<td>Both are <strong>re-issued lists</strong>, so undated citation is
+unusable. USGS: final <strong>2025</strong> list = <strong>60</strong>
+commodities (Fed. Reg. 7 Nov 2025), up from 50 in 2022. EU:
+<strong>2023</strong> CRM list (34 CRMs / 17 SRMs); Critical Raw
+Materials Act in force <strong>23 May 2024</strong>, review every 4
+years. The <em>methodology</em> (needed for H1) is Graedel et al. 2012 —
+omitted, see §5.</td>
+<td><a href="https://www.federalregister.gov/documents/2025/11/07/2025-19813/final-2025-list-of-critical-minerals">https://www.federalregister.gov/documents/2025/11/07/2025-19813/final-2025-list-of-critical-minerals</a>
+· <a href="https://www.iea.org/policies/17662-european-critical-raw-materials-act">https://www.iea.org/policies/17662-european-critical-raw-materials-act</a></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>Techno-economic analysis (TEA) and anticipatory LCA</code></td>
+<td>C</td>
+<td>Anticipatory LCA: Wender et al. <strong>2014</strong>, <em>Environ.
+Sci. Technol.</em> 48(18):10531–10538</td>
+<td><a href="https://pubs.acs.org/doi/10.1021/es5016923">https://pubs.acs.org/doi/10.1021/es5016923</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c4_economics_business_44">C4_economics_business_44</h3>
+<div aria-label="C4_economics_business_44 table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Claim</th>
+<th scope="col">V</th>
+<th scope="col">Correct / precise value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>Herfindahl-Hirschman Index (HHI)</code></td>
+<td>C</td>
+<td>Hirschman 1945 (<em>National Power and the Structure of Foreign
+Trade</em>); Herfindahl 1950 (dissertation, US steel); adopted in the
+1982 US Merger Guidelines</td>
+<td><a href="https://www.justice.gov/archives/atr/1982-merger-guidelines-and-ascent-hypothetical-monopolist-paradigm">https://www.justice.gov/archives/atr/1982-merger-guidelines-and-ascent-hypothetical-monopolist-paradigm</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>US DOJ/FTC Merger Guidelines (2010 horizontal; 2023 update)</code></td>
+<td><strong>I</strong></td>
+<td>"2023 update" understates: the joint <strong>2023 Merger Guidelines
+(18 Dec 2023) superseded and replaced</strong> both the 2010 Horizontal
+Merger Guidelines <em>and</em> the 2020 Vertical Merger Guidelines with
+a single unified set. Confirmed still in effect: retained by FTC
+(Ferguson memo) and DOJ, <strong>18 Feb 2025</strong>.</td>
+<td><a href="https://www.ftc.gov/system/files/ftc_gov/pdf/ferguson-memo-re-merger-guidelines.pdf">https://www.ftc.gov/system/files/ftc_gov/pdf/ferguson-memo-re-merger-guidelines.pdf</a>
+· <a href="https://www.justice.gov/atr/media/1389861/dl">https://www.justice.gov/atr/media/1389861/dl</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>GUPPI (Gross Upward Pricing Pressure Index)</code></td>
+<td><strong>I</strong></td>
+<td>Unattributed. GUPPI is <strong>Salop &amp; Moresi 2009</strong>
+(extending a working-paper version of Farrell &amp; Shapiro) and
+<strong>Moresi 2010</strong>; entered the 2010 HMG. Listing GUPPI
+unattributed next to an attributed UPP entry invites the reader to
+credit both to Farrell–Shapiro, which is wrong.</td>
+<td><a href="https://media.crai.com/wp-content/uploads/2020/09/16163618/the-use-of-UPPIs-in-merger-analysis-Moresi-Feb-2010.pdf">https://media.crai.com/wp-content/uploads/2020/09/16163618/the-use-of-UPPIs-in-merger-analysis-Moresi-Feb-2010.pdf</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>Upward Pricing Pressure (UPP), Farrell-Shapiro</code></td>
+<td>C</td>
+<td>Farrell &amp; Shapiro <strong>2010</strong>, <em>B.E. J. Theor.
+Econ.</em> 10(1) art. 9</td>
+<td><a href="https://faculty.haas.berkeley.edu/shapiro/alternative.pdf">https://faculty.haas.berkeley.edu/shapiro/alternative.pdf</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>SSNIP / hypothetical-monopolist market definition</code></td>
+<td>C</td>
+<td><strong>1982</strong> US DOJ Merger Guidelines (paradigm predates by
+~2 decades but 1982 is the canonical adoption)</td>
+<td><a href="https://www.justice.gov/archives/atr/1982-merger-guidelines-and-ascent-hypothetical-monopolist-paradigm">https://www.justice.gov/archives/atr/1982-merger-guidelines-and-ascent-hypothetical-monopolist-paradigm</a></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>Cunningham, Ederer &amp; Ma, 'Killer Acquisitions' (2021)</code></td>
+<td>C</td>
+<td><strong>Exact:</strong> Colleen Cunningham, Florian Ederer, Song Ma,
+<em>J. Polit. Econ.</em> <strong>129(3):649–702 (2021)</strong>. Not
+fabricated, no author substitution. Note scope limit worth stating: the
+evidence base is <strong>pharmaceutical only</strong>.</td>
+<td><a href="https://www.journals.uchicago.edu/doi/abs/10.1086/712506">https://www.journals.uchicago.edu/doi/abs/10.1086/712506</a>
+· <a href="https://lbsresearch.london.edu/id/eprint/1632/1/cem_jpe.pdf">https://lbsresearch.london.edu/id/eprint/1632/1/cem_jpe.pdf</a></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>EU Merger Regulation Article 22 referral practice</code></td>
+<td><strong>W</strong></td>
+<td><strong>Materially stale.</strong> CJEU, <strong>3 Sept
+2024</strong>, joined cases <strong>C-611/22 P and C-625/22 P
+(Illumina/GRAIL)</strong>: set aside the General Court and annulled the
+Commission's acceptance decisions, holding the Commission <strong>may
+not encourage or accept Art. 22 referrals from NCAs that themselves lack
+jurisdiction</strong> under national law. The Commission's March 2021
+Art. 22 policy for below-threshold deals is dead; the live route is
+<strong>national call-in powers</strong>. A list claiming currency to
+~Jan 2026 must say this — otherwise <code>_44</code>'s central
+below-threshold hook (H1) points at a defunct instrument.</td>
+<td><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:62022CJ0611">https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:62022CJ0611</a>
+· <a href="https://curia.europa.eu/site/upload/docs/application/pdf/2024-09/cp240127en.pdf">https://curia.europa.eu/site/upload/docs/application/pdf/2024-09/cp240127en.pdf</a></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>EU Digital Markets Act gatekeeper-designation criteria</code></td>
+<td><strong>I</strong></td>
+<td>Regulation <strong>(EU) 2022/1925</strong> (14 Sept 2022). The
+killer-acquisition-relevant provision is not the designation criteria
+but <strong>Article 14</strong>: gatekeepers must inform the Commission
+of <em>any</em> intended concentration involving digital-sector services
+or data collection, <strong>irrespective of whether it is
+notifiable</strong> under the EUMR or national rules. That is the
+operative below-threshold visibility mechanism and the entry misses
+it.</td>
+<td><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R1925">https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R1925</a></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>UK CMA theories of harm, incl. loss of dynamic/potential competition</code></td>
+<td>C</td>
+<td><strong>Merger Assessment Guidelines, CMA129, 18 March 2021</strong>
+— explicit "loss of dynamic competition" ToH (2010 guidelines had only
+"perceived potential competition"); also covers <strong>reverse</strong>
+killer acquisitions</td>
+<td><a href="https://assets.publishing.service.gov.uk/media/61f952dd8fa8f5388690df76/MAGs_for_publication_2021_--_.pdf">https://assets.publishing.service.gov.uk/media/61f952dd8fa8f5388690df76/MAGs_for_publication_2021_--_.pdf</a></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>Potential-competition doctrine (actual and perceived potential entrant)</code></td>
+<td>C</td>
+<td>Actual potential entrant = <em>FTC v. Procter &amp; Gamble</em>, 386
+U.S. 568 (<strong>1967</strong>); perceived potential entrant =
+<em>United States v. Falstaff Brewing</em>, 410 U.S. 526
+(<strong>1973</strong>); refined in <em>United States v. Marine
+Bancorporation</em>, 418 U.S. 602 (<strong>1974</strong>)</td>
+<td><a href="https://supreme.justia.com/cases/federal/us/418/602/">https://supreme.justia.com/cases/federal/us/418/602/</a></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>Contestable-markets theory (Baumol, Panzar, Willig)</code></td>
+<td>C</td>
+<td><strong>1982</strong>, <em>Contestable Markets and the Theory of
+Industry Structure</em>, Harcourt Brace Jovanovich</td>
+<td><a href="https://archive.org/details/contestablemarke0000baum">https://archive.org/details/contestablemarke0000baum</a></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>Innovation-competition analysis (EU Dow/DuPont, Bayer/Monsanto)</code></td>
+<td>C</td>
+<td>Dow/DuPont <strong>M.7932, 27 March 2017</strong>; Bayer/Monsanto
+<strong>M.8084, 21 March 2018</strong> (C(2018) 1709 final)</td>
+<td><a href="https://ec.europa.eu/competition/mergers/cases1/202150/M_8084_8063752_13335_9.pdf">https://ec.europa.eu/competition/mergers/cases1/202150/M_8084_8063752_13335_9.pdf</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="c4_engineering_45">C4_engineering_45</h3>
+<div aria-label="C4_engineering_45 table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Claim</th>
+<th scope="col">V</th>
+<th scope="col">Correct / precise value</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>iFixit Repairability Score</code></td>
+<td>C (but see §3)</td>
+<td>Real; <strong>0–10</strong>, introduced <strong>2011</strong>.
+Current <em>Repairability Scoring Rubric v2.x</em>: Design for Repair
+<strong>80%</strong>, Service Manual <strong>10%</strong>, Parts
+Availability &amp; Cost <strong>10%</strong>; Unique Product Identifier
+= gate; <strong>Parts Pairing = penalty only, global, up to
+−100%</strong>. Software-update duration explicitly <em>not yet</em>
+included.</td>
+<td><a href="https://www.ifixit.com/Wiki/Repairability_Scoring_Rubric_v2.2">https://www.ifixit.com/Wiki/Repairability_Scoring_Rubric_v2.2</a>
+· <a href="https://www.ifixit.com/News/75533/how-ifixit-scores-repairability">https://www.ifixit.com/News/75533/how-ifixit-scores-repairability</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>French Indice de Reparabilite / Indice de Durabilite</code></td>
+<td><strong>I</strong></td>
+<td>Two distinct instruments needing separate dates.
+<em>Réparabilité</em>: loi AGEC 2020-105 (10 Feb 2020), décret
+<strong>2020-1757</strong> (29 Dec 2020), in force <strong>1 Jan
+2021</strong>, 1–10. <em>Durabilité</em>: décret <strong>2024-316 of 5
+April 2024</strong>; applies to <strong>TVs from 8 Jan 2025</strong> and
+<strong>washing machines from 8 April 2025</strong>; adds reliability
+sub-criteria on top of the repairability criteria; 1–10 over 7
+sub-criteria.</td>
+<td><a href="https://www.ecologie.gouv.fr/politiques-publiques/indice-durabilite">https://www.ecologie.gouv.fr/politiques-publiques/indice-durabilite</a>
+· <a href="https://www.economie.gouv.fr/particuliers/mes-droits-conso/bien-consommer/tout-savoir-sur-lindice-de-durabilite">https://www.economie.gouv.fr/particuliers/mes-droits-conso/bien-consommer/tout-savoir-sur-lindice-de-durabilite</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>EU Ecodesign for Sustainable Products Regulation repairability scoring</code></td>
+<td><strong>I</strong></td>
+<td><strong>Brand-vs-concept, and wrong instrument for an operative
+score.</strong> ESPR = Regulation <strong>(EU) 2024/1781</strong>,
+published 28 June 2024, in force <strong>18 July 2024</strong> — an
+<em>enabling framework</em>; repairability scoring arrives only via
+delegated acts. The <strong>operative</strong> EU repairability score
+today is the <strong>A–E repairability class on the
+smartphone/slate-tablet energy label</strong>, Regulation <strong>(EU)
+2023/1669</strong> (16 June 2023), applying from <strong>20 June
+2025</strong>, with companion ecodesign Reg. <strong>(EU)
+2023/1670</strong>. Citing ESPR alone dates the operative score ~2 years
+young and omits the only one in force.</td>
+<td><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=OJ:L_202401781">https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=OJ:L_202401781</a>
+· <a href="https://eur-lex.europa.eu/eli/reg_del/2023/1669/oj/eng">https://eur-lex.europa.eu/eli/reg_del/2023/1669/oj/eng</a>
+· <a href="https://single-market-economy.ec.europa.eu/news/new-eu-rules-durable-energy-efficient-and-repairable-smartphones-and-tablets-start-applying-2025-06-20_en">https://single-market-economy.ec.europa.eu/news/new-eu-rules-durable-energy-efficient-and-repairable-smartphones-and-tablets-start-applying-2025-06-20_en</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>EN 45554 (assessing repair, reuse, upgrade of energy-related products)</code></td>
+<td><strong>I</strong></td>
+<td><strong>EN 45554:2020</strong>, exact title <em>"General methods for
+the assessment of the ability to repair, reuse and upgrade
+energy-related products"</em>; ratified by CENELEC <strong>2 Dec
+2019</strong>, published Feb 2020 (BS EN 45554:2020 dated 30 Apr 2020);
+fulfils standardisation request <strong>M/543</strong>.
+<strong>Brand-vs-concept:</strong> its scoring/aggregation framework was
+built on the <strong>JRC Repair Scoring System (Cordella, Alfieri &amp;
+Sanfelix 2019, JRC114337)</strong> and its disassembly index on the
+<strong>eDiM</strong> metric (Vanegas et al. 2016; Peeters et al. 2018,
+JRC107773) — i.e. the method is 2016–2019, not 2020. Also: EN 45554
+covers <strong>product-related <em>and</em> support-related</strong>
+criteria and deliberately <strong>excludes spare-part price</strong> as
+too volatile to score.</td>
+<td><a href="https://www.en-standard.eu/bs-en-45554-2020-general-methods-for-the-assessment-of-the-ability-to-repair-reuse-and-upgrade-energy-related-products/">https://www.en-standard.eu/bs-en-45554-2020-general-methods-for-the-assessment-of-the-ability-to-repair-reuse-and-upgrade-energy-related-products/</a>
+· <a href="https://publications.jrc.ec.europa.eu/repository/bitstream/JRC114337/jrc114337_report_repair_scoring_system_final_report_v3.2_pubsy_clean.pdf">https://publications.jrc.ec.europa.eu/repository/bitstream/JRC114337/jrc114337_report_repair_scoring_system_final_report_v3.2_pubsy_clean.pdf</a>
+· <a href="https://ecostandard.org/news_events/en-45554-a-standard-that-works-for-the-environment/">https://ecostandard.org/news_events/en-45554-a-standard-that-works-for-the-environment/</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>FMEA / FMECA</code></td>
+<td>C</td>
+<td>US <strong>MIL-P-1629 (1949)</strong> first description;
+MIL-STD-1629 (1974); <strong>MIL-STD-1629A, 24 Nov 1980</strong>;
+MIL-STD-1629A <strong>cancelled without replacement 24 Aug
+1998</strong></td>
+<td><a href="https://everyspec.com/MIL-STD/MIL-STD-1600-1699/MIL_STD_1629A_1556/">https://everyspec.com/MIL-STD/MIL-STD-1600-1699/MIL_STD_1629A_1556/</a></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>MTTR and maintainability engineering (MIL-HDBK-470A)</code></td>
+<td>C</td>
+<td><strong>MIL-HDBK-470A, 4 Aug 1997</strong>, <em>Designing and
+Developing Maintainable Products and Systems</em>, Vols I &amp; II;
+status <strong>active</strong></td>
+<td><a href="https://acqnotes.com/Attachments/MIL-HDBK-470A.pdf">https://acqnotes.com/Attachments/MIL-HDBK-470A.pdf</a></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>Design for Disassembly (DfD)</code></td>
+<td><strong>U</strong></td>
+<td>Bare generic term with no year and no attribution; no single
+canonical dated source located in this pass. Cannot function as a dated
+baseline. It <em>is</em> operationalised by a datable metric — eDiM
+(2016/2018) — which the list omits. Recommend anchoring or
+deleting.</td>
+<td><a href="https://publications.jrc.ec.europa.eu/repository/bitstream/JRC107773/jrc107773_20180302_-_edim_2_clean_-_online.pdf">https://publications.jrc.ec.europa.eu/repository/bitstream/JRC107773/jrc107773_20180302_-_edim_2_clean_-_online.pdf</a></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>Design for Serviceability metrics</code></td>
+<td>C</td>
+<td>Gershenson &amp; Ishii, <em>"Life-Cycle Serviceability Design"</em>,
+ASME 1991 Design Technical Conferences / 3rd Int. Conf. on Design Theory
+&amp; Methodology, Miami, 22–25 Sept <strong>1991</strong>; <em>"Design
+for Serviceability"</em> in Kusiak (ed.), <em>Concurrent
+Engineering</em>, <strong>1992</strong></td>
+<td><a href="https://asmedigitalcollection.asme.org/IDETC-CIE/proceedings-abstract/DETC91/07477/127/1107344">https://asmedigitalcollection.asme.org/IDETC-CIE/proceedings-abstract/DETC91/07477/127/1107344</a></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>Right-to-Repair legislative criteria (US state laws; EU right-to-repair directive)</code></td>
+<td><strong>I</strong></td>
+<td>EU: <strong>Directive (EU) 2024/1799 of 13 June 2024</strong>, in
+force <strong>30 July 2024</strong>, applies from <strong>31 July
+2026</strong>. US: Oregon <strong>SB 1596</strong>, signed <strong>28
+March 2024</strong>, effective <strong>1 Jan 2025</strong> — the
+<strong>first US law banning parts pairing</strong>, and therefore
+directly determinative for H1, yet unnamed.</td>
+<td><a href="https://eur-lex.europa.eu/eli/dir/2024/1799/oj/eng">https://eur-lex.europa.eu/eli/dir/2024/1799/oj/eng</a>
+· <a href="https://www.oregonlegislature.gov/bills_laws/lawsstatutes/2024orLaw0069.pdf">https://www.oregonlegislature.gov/bills_laws/lawsstatutes/2024orLaw0069.pdf</a></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>Material Circularity Indicator (Ellen MacArthur Foundation)</code></td>
+<td>C</td>
+<td>EMF with <strong>Granta Design</strong>, <strong>2015</strong>,
+LIFE-co-funded; 0–1 scale; methodology updated <strong>2019</strong> for
+biological materials. Scope caveat: MCI measures <strong>material-flow
+circularity</strong>, not reparability — a weak "tradition" for this
+gate.</td>
+<td><a href="https://www.ellenmacarthurfoundation.org/material-circularity-indicator">https://www.ellenmacarthurfoundation.org/material-circularity-indicator</a>
+· <a href="https://content.ellenmacarthurfoundation.org/m/77e62bc9924c20d0/original/Circularity-Indicators-Methodology.pdf">https://content.ellenmacarthurfoundation.org/m/77e62bc9924c20d0/original/Circularity-Indicators-Methodology.pdf</a></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>Modularity index (Martin &amp; Ishii)</code></td>
+<td><strong>WRONG</strong></td>
+<td>Martin &amp; Ishii's <em>Design for Variety</em> method yields
+<strong>two indices: the Generational Variety Index (GVI)</strong> —
+redesign effort for future generations — <strong>and the Coupling Index
+(CI)</strong> — coupling among components. Neither is a "modularity
+index." Martin &amp; Ishii 2002, <em>Research in Engineering Design</em>
+13(4); earlier ASME IDETC 2000. Actual
+product-<strong>modularity</strong> measures belong to others:
+Gershenson et al. 1999 (additive intra-/inter-module
+similarity+dependency ratios); Mikkola &amp; Gassmann
+<strong>modularization function</strong> (2000/2001, IEEE TEM
+2003).</td>
+<td><a href="https://link.springer.com/article/10.1007/s00163-002-0020-2">https://link.springer.com/article/10.1007/s00163-002-0020-2</a>
+· <a href="https://www.semanticscholar.org/paper/DESIGN-FOR-VARIETY:-A-METHODOLOGY-FOR-DEVELOPING-Martin-Ishii/8cd2c70bdd95497c379e1bd5000dcf89ce7a44eb">https://www.semanticscholar.org/paper/DESIGN-FOR-VARIETY:-A-METHODOLOGY-FOR-DEVELOPING-Martin-Ishii/8cd2c70bdd95497c379e1bd5000dcf89ce7a44eb</a></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>Total Cost of Ownership / life-cycle cost analysis</code></td>
+<td><strong>U</strong></td>
+<td>Bare generic term, no year, no attribution, no standard number. Not
+traceable to a dated artifact; cannot serve as a novelty baseline.
+Recommend dating (to a specific LCC standard the authors verify) or
+deleting.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="non-known_answers-claims-expert_baseline-hard_rules-rationale">Non-<code>known_answers</code>
+claims (<code>expert_baseline</code>, <code>hard_rules</code>,
+<code>rationale</code>)</h3>
+<div aria-label="Non- known_answers claims ( expert_baseline , hard_rules , rationale ) table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">Claim</th>
+<th scope="col">V</th>
+<th scope="col">Correction</th>
+<th scope="col">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_45</code> <code>expert_baseline</code></td>
+<td>"The convergent baseline <strong>rarely penalizes software
+parts-pairing or digital locks</strong>"</td>
+<td><strong>WRONG</strong></td>
+<td>The reference baseline for this item — iFixit, listed first in its
+own <code>known_answers</code> — applies a <strong>global scorecard
+penalty of up to −100%</strong> for parts pairing, and treats
+software-calibration lockout as a complete repair failure. iFixit's own
+words: <em>"Our scoring penalty for this repair-stopper is severe, and
+it's a global scorecard penalty."</em></td>
+<td><a href="https://www.ifixit.com/News/75533/how-ifixit-scores-repairability">https://www.ifixit.com/News/75533/how-ifixit-scores-repairability</a>
+· <a href="https://www.ifixit.com/Wiki/Repairability_Scoring_Rubric_v2.2">https://www.ifixit.com/Wiki/Repairability_Scoring_Rubric_v2.2</a></td>
+</tr>
+<tr>
+<td><code>_45</code> <code>hard_rules</code> (d)</td>
+<td>worked example of a NEW mechanism: "a software-lock/parts-pairing
+penalty <strong>as a hard multiplier</strong>"</td>
+<td><strong>WRONG as a novelty example</strong></td>
+<td>Already prior art in entry #1 of the same item. A global penalty "up
+to −100%" is functionally a hard multiplier that can zero the
+score.</td>
+<td>as above</td>
+</tr>
+<tr>
+<td><code>_45</code> <code>rationale</code></td>
+<td>"no standard repairability index fuses … with a
+<strong>software-lock hard multiplier</strong> and an
+intrinsic-vs-institutional reparability split"</td>
+<td><strong>WRONG</strong> (first clause)</td>
+<td>iFixit's rubric does exactly the first half. On the second half: EN
+45554 already separates <strong>product-related</strong> from
+<strong>support-related</strong> criteria, which is close to the
+proposed intrinsic-vs-institutional split.</td>
+<td><a href="https://ecostandard.org/news_events/en-45554-a-standard-that-works-for-the-environment/">https://ecostandard.org/news_events/en-45554-a-standard-that-works-for-the-environment/</a></td>
+</tr>
+<tr>
+<td><code>_45</code> <code>hard_rules</code> (d)</td>
+<td>second example: "a stage separating <strong>intrinsic hardware
+reparability from institutional/legal reparability</strong>"</td>
+<td><strong>I</strong> (weakly novel)</td>
+<td>EN 45554's product-related vs support-related parameter split, and
+the JRC RSS's separation of design vs commercial-practice parameters,
+already do most of this work. Not disqualifying, but not clean-novel
+either.</td>
+<td><a href="https://publications.jrc.ec.europa.eu/repository/bitstream/JRC114337/jrc114337_report_repair_scoring_system_final_report_v3.2_pubsy_clean.pdf">https://publications.jrc.ec.europa.eu/repository/bitstream/JRC114337/jrc114337_report_repair_scoring_system_final_report_v3.2_pubsy_clean.pdf</a></td>
+</tr>
+<tr>
+<td><code>_45</code> <code>expert_baseline</code></td>
+<td>"into a roughly 0-10 score derived mainly from a physical teardown,
+<strong>following EN 45554</strong>"</td>
+<td><strong>I</strong></td>
+<td>0–10 is the <strong>iFixit</strong> and <strong>French</strong>
+scale. EN 45554 does <strong>not</strong> prescribe a 0–10 scale; it
+defines parameters and classification bands and leaves
+weighting/aggregation to implementing measures, and it explicitly
+excludes spare-part price. Attributing the 0–10 teardown score to EN
+45554 conflates three instruments.</td>
+<td><a href="https://standards.iteh.ai/catalog/standards/clc/ed9b48c0-a4a9-421a-a14f-4ff341199918/en-45554-2020">https://standards.iteh.ai/catalog/standards/clc/ed9b48c0-a4a9-421a-a14f-4ff341199918/en-45554-2020</a></td>
+</tr>
+</tbody>
+</table></div>
+<hr/>
+<h2 id="2-counts">2. Counts</h2>
+<h3 id="by-verdict">By verdict</h3>
+<div aria-label="By verdict table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Verdict</th>
+<th scope="col"><code>known_answers</code> entries</th>
+<th scope="col">+ baseline/rule claims</th>
+<th scope="col">Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CONFIRMED</td>
+<td>33</td>
+<td>0</td>
+<td><strong>33</strong></td>
+</tr>
+<tr>
+<td>IMPRECISE</td>
+<td>11</td>
+<td>2</td>
+<td><strong>13</strong></td>
+</tr>
+<tr>
+<td>WRONG</td>
+<td>2</td>
+<td>3</td>
+<td><strong>5</strong></td>
+</tr>
+<tr>
+<td>UNVERIFIABLE</td>
+<td>2</td>
+<td>0</td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td><strong>FABRICATED</strong></td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>Total</td>
+<td>48</td>
+<td>5</td>
+<td><strong>53</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Per item (<code>known_answers</code> only):</p>
+<div aria-label="By verdict table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">C</th>
+<th scope="col">I</th>
+<th scope="col">W</th>
+<th scope="col">U</th>
+<th scope="col">F</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_42</code></td>
+<td>10</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>_43</code></td>
+<td>10</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>_44</code></td>
+<td>8</td>
+<td>3</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>_45</code></td>
+<td>5</td>
+<td>4</td>
+<td>1</td>
+<td>2</td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="undated--uncited-bare-names">Undated / uncited bare names</h3>
+<p>Definitions: <strong>dated</strong> = entry contains an explicit
+year. <strong>fully bare</strong> = no year <em>and</em> no
+personal-name/institution/document-number anchor of any kind.</p>
+<div aria-label="Undated / uncited bare names table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">entries</th>
+<th scope="col">dated</th>
+<th scope="col">undated</th>
+<th scope="col"><strong>fully bare</strong></th>
+<th scope="col">fully-bare entries</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_42</code></td>
+<td>12</td>
+<td>0</td>
+<td>12 (100%)</td>
+<td><strong>5</strong></td>
+<td>COU concept · ARRIVE 2.0 · SYRCLE · GRADE · 3Rs framework</td>
+</tr>
+<tr>
+<td><code>_43</code></td>
+<td>12</td>
+<td>0</td>
+<td>12 (100%)</td>
+<td><strong>4</strong></td>
+<td>EcoScale · RME · Green Aspiration Level / RPG · TEA + anticipatory
+LCA</td>
+</tr>
+<tr>
+<td><code>_44</code></td>
+<td>12</td>
+<td>2</td>
+<td>10 (83%)</td>
+<td><strong>4</strong></td>
+<td>HHI · GUPPI · SSNIP · potential-competition doctrine</td>
+</tr>
+<tr>
+<td><code>_45</code></td>
+<td>12</td>
+<td>0</td>
+<td>12 (100%)</td>
+<td><strong>4</strong> (5 if the un-named statutes count)</td>
+<td>FMEA/FMECA · Design for Disassembly · Design for Serviceability
+metrics · TCO/LCC — <em>plus</em> "Right-to-Repair legislative
+criteria," which names no statute</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>48</strong></td>
+<td><strong>2 (4.2%)</strong></td>
+<td><strong>46 (95.8%)</strong></td>
+<td><strong>17 (35.4%)</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p>An undated bare name cannot function as a dated novelty baseline at
+all: a judge cannot ask "is the submission's mechanism absent from every
+listed framework as of date D" when D is unstated. 17 entries fail even
+the weaker test of being traceable to a specific artifact without an
+external search.</p>
+<h3 id="file-wide-comparison--testing-the-prior-auditors-observation">File-wide
+comparison — testing the prior auditor's observation</h3>
+<p>Fraction of <code>known_answers</code> entries containing an explicit
+year, by item-number decade (all 50 items, dating preamble
+excluded):</p>
+<div aria-label="File-wide
+comparison — testing the prior auditor's observation table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">group</th>
+<th scope="col">items</th>
+<th scope="col">entries</th>
+<th scope="col">dated</th>
+<th scope="col">% dated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_0x</code></td>
+<td>10</td>
+<td>140</td>
+<td>62</td>
+<td>44.3%</td>
+</tr>
+<tr>
+<td><code>_1x</code></td>
+<td>10</td>
+<td>112</td>
+<td>99</td>
+<td><strong>88.4%</strong></td>
+</tr>
+<tr>
+<td><code>_2x</code></td>
+<td>10</td>
+<td>211</td>
+<td>139</td>
+<td>65.9%</td>
+</tr>
+<tr>
+<td><code>_3x</code></td>
+<td>10</td>
+<td>99</td>
+<td>17</td>
+<td>17.2%</td>
+</tr>
+<tr>
+<td><code>_4x</code></td>
+<td>10</td>
+<td>146</td>
+<td>23</td>
+<td><strong>15.8%</strong></td>
+</tr>
+<tr>
+<td>whole file</td>
+<td>50</td>
+<td>708</td>
+<td>340</td>
+<td>48.0%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Verdict on the observation: CONFIRMED, and it
+generalises.</strong> <code>_4x</code> is ~5.6× less dated than
+<code>_1x</code>. The four items in scope are the extreme: 2/48 = 4.2%.
+Note <code>_3x</code> (17.2%) is essentially as bad as <code>_4x</code>
+— the citation-density cliff is not <code>_4x</code>-specific, it is a
+<code>_3x</code>+<code>_4x</code> phenomenon. Whoever wrote the back
+half of the file stopped citing.</p>
+<h3 id="direction-of-the-dating-bias">Direction of the dating bias</h3>
+<p>Every date-related defect found points the same way — prior art
+appears <strong>younger or vaguer</strong> than reality, so a submission
+looks <strong>more novel</strong>:</p>
+<div aria-label="Direction of the dating bias table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">Credited to</th>
+<th scope="col">Actually</th>
+<th scope="col">Understatement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_42</code></td>
+<td>"OECD AOP framework" (programme 2012)</td>
+<td>concept Ankley et al. 2010</td>
+<td>2 yr</td>
+</tr>
+<tr>
+<td><code>_45</code></td>
+<td>EN 45554 (2020 brand)</td>
+<td>JRC RSS 2019, eDiM 2016/2018</td>
+<td>1–4 yr</td>
+</tr>
+<tr>
+<td><code>_45</code></td>
+<td>ESPR 2024/1781 "repairability scoring"</td>
+<td>operative score is Reg 2023/1669, applying 2025</td>
+<td>wrong instrument</td>
+</tr>
+<tr>
+<td><code>_45</code></td>
+<td>"Indice de durabilité" (2024/2025)</td>
+<td>supersedes indice de réparabilité, in force 2021</td>
+<td>3–4 yr</td>
+</tr>
+<tr>
+<td><code>_43</code></td>
+<td>"ISO 14040/14044" undated</td>
+<td>2006 editions consolidating 1997–2000 first editions</td>
+<td>up to 9 yr</td>
+</tr>
+<tr>
+<td><code>_44</code></td>
+<td>"2023 update" to 2010 HMG</td>
+<td>2023 Guidelines <em>replaced</em> 2010 HMG + 2020 VMG</td>
+<td>scope, not date</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Zero counter-examples.</strong> The bias is systematic, not
+random noise — consistent with the pattern already confirmed elsewhere
+in this dataset.</p>
+<hr/>
+<h2 id="3-the-_45-novelty-gate-is-void--expanded">3. The
+<code>_45</code> novelty gate is void — expanded</h2>
+<p>This is the finding that should block release of <code>_45</code> in
+its current form, and it is not a citation error.</p>
+<ul>
+<li><code>hard_rules</code> (d) requires "≥1 decision variable,
+aggregation rule, or stage <strong>absent from every listed
+framework</strong>", and offers as its worked example <em>"a
+software-lock/parts-pairing penalty as a hard multiplier."</em></li>
+<li><code>known_answers[1]</code> is
+<code>iFixit Repairability Score</code>.</li>
+<li>iFixit's current rubric (v2.x) lists <strong>Parts Pairing</strong>
+as: <em>"Penalty only, global, up to −100%."</em> iFixit's explainer:
+<em>"Our scoring penalty for this repair-stopper is severe, and it's a
+global scorecard penalty."</em></li>
+<li><code>expert_baseline</code> asserts the opposite: <em>"The
+convergent baseline rarely penalizes software parts-pairing or digital
+locks."</em></li>
+<li>H1 — "fully modular, unglued hardware but parts-pairing/software
+locks that block third-party repair" — is precisely the case iFixit's
+rubric is built to handle, and precisely the case Oregon SB 1596 (eff. 1
+Jan 2025) legislates against.</li>
+</ul>
+<p>Consequence: a model that proposes exactly the mechanism the item
+suggests satisfies (d) and is scored <strong>novel</strong>, while in
+fact reproducing the reference implementation named in the item's own
+prior-art list. The gate produces a false positive by construction. And
+because <code>expert_baseline</code> states the false claim, a judge
+reading only the item would confirm the false positive rather than catch
+it.</p>
+<p><code>_42</code>'s gate has a milder version of the same problem: its
+example new mechanism is "a quantified mechanism-divergence penalty,"
+but <strong>Belzung &amp; Lemoine (2011)</strong> already formalise
+<em>homological</em> validity (species/strain) and <em>mechanistic</em>
+validity as first-class criteria — and <strong>Wehling/Wendler
+translatability scoring (2009–2017)</strong> is already a weighted,
+aggregated, retrospectively validated (Spearman r = 0.91)
+fitness-for-purpose scoring procedure with disease-area-specific
+weights. Neither is listed.</p>
+<hr/>
+<h2 id="4-exact-replacement-strings">4. Exact replacement strings</h2>
+<p>Each <code>old</code> below was verified by script to occur
+<strong>exactly once</strong> in
+<code>question/crest_challenges.audit.jsonl</code> (48/48
+<code>known_answers</code> strings + 5 prose strings, all unique). No
+<code>.jsonl</code> file was modified. Apply to the live
+<code>crest_challenges.jsonl</code> after confirming the same uniqueness
+there.</p>
+<p>Priority: <strong>P0</strong> = must fix before release (wrong/void
+gate) · <strong>P1</strong> = stale or misleading · <strong>P2</strong>
+= add missing date/citation.</p>
+<h3 id="p0">P0</h3>
+<pre tabindex="0"><code># _45 — WRONG attribution
+old: Modularity index (Martin &amp; Ishii)
+new: Design for Variety indices - Generational Variety Index (GVI) and Coupling Index (CI) (Martin &amp; Ishii 2002, Research in Engineering Design 13(4)); product-modularity measures proper (Gershenson et al. 1999; Mikkola &amp; Gassmann modularization function, 2001/2003)
+
+# _45 — expert_baseline states the opposite of the truth
+old: The convergent baseline rarely penalizes software parts-pairing or digital locks, and gives little explicit credit for open diagnostic access when hardware is hard to open.
+new: The convergent baseline already penalizes parts pairing: iFixit's current rubric (v2.x) applies a global scorecard penalty of up to -100% for parts pairing, and Oregon SB 1596 (effective 1 Jan 2025) bans it outright. What the convergent baseline still lacks is explicit credit for open diagnostic access and published schematics when hardware is hard to open, and any principled rule for trading the two off.
+
+# _45 — hard_rule (d) worked examples are both prior art
+old: (e.g., a software-lock/parts-pairing penalty as a hard multiplier, or a stage separating intrinsic hardware reparability from institutional/legal reparability)
+new: (note: a parts-pairing penalty is NOT novel - iFixit v2.x already applies a global penalty up to -100%, and EN 45554 already separates product-related from support-related criteria; a qualifying new mechanism must go beyond both, e.g. a scale-invariant tradeoff rule that lets verified diagnostic-bus access and published schematics offset disassembly difficulty, with a stated exchange rate)
+
+# _45 — rationale repeats the false novelty claim
+old: New: no standard repairability index fuses physical-teardown scoring, maintainability engineering, and modularity metrics with a software-lock hard multiplier and an intrinsic-vs-institutional reparability split.
+new: New: no standard repairability index fuses physical-teardown scoring, maintainability engineering, and modularity metrics into a single graded index with an explicit, stated exchange rate between physical disassembly difficulty and institutional openness (diagnostic access, schematics, indefinite spare supply). Parts-pairing penalties are prior art (iFixit v2.x) and do not count toward hard_rule (d).
+
+# _44 — stale legal instrument
+old: EU Merger Regulation Article 22 referral practice
+new: EU Merger Regulation Article 22 referral practice (2021 Commission Guidance; curtailed by CJEU Illumina/GRAIL, C-611/22 P and C-625/22 P, 3 Sept 2024 - no referral where the referring Member State itself lacks jurisdiction), and the national below-threshold call-in powers that replaced it</code></pre>
+<h3 id="p1">P1</h3>
+<pre tabindex="0"><code># _45
+old: EU Ecodesign for Sustainable Products Regulation repairability scoring
+new: EU Ecodesign for Sustainable Products Regulation (Regulation (EU) 2024/1781, in force 18 July 2024) as an enabling framework for repairability scoring via delegated acts; the only operative EU repairability score to date is the A-E repairability class on the smartphone/slate-tablet energy label (Regulation (EU) 2023/1669, applying from 20 June 2025; companion ecodesign Regulation (EU) 2023/1670)
+
+old: EN 45554 (assessing repair, reuse, upgrade of energy-related products)
+new: EN 45554:2020, "General methods for the assessment of the ability to repair, reuse and upgrade energy-related products" (ratified by CENELEC 2 Dec 2019, published 2020, under standardisation request M/543; product-related and support-related criteria; spare-part price deliberately excluded as too volatile to score); its scoring/aggregation approach derives from the JRC Repair Scoring System (Cordella, Alfieri &amp; Sanfelix 2019, JRC114337) and its disassembly index from the eDiM ease-of-disassembly metric (Vanegas et al. 2016; Peeters et al. 2018, JRC107773)
+
+old: French Indice de Reparabilite / Indice de Durabilite
+new: French Indice de reparabilite (loi AGEC 2020-105 of 10 Feb 2020; decret 2020-1757; in force 1 Jan 2021; scored 1-10) and Indice de durabilite (decret 2024-316 of 5 April 2024; televisions from 8 Jan 2025, washing machines from 8 April 2025; adds reliability sub-criteria)
+
+old: Right-to-Repair legislative criteria (US state laws; EU right-to-repair directive)
+new: Right-to-Repair legislative criteria (EU: Directive (EU) 2024/1799 of 13 June 2024, in force 30 July 2024, applying from 31 July 2026; US: Oregon SB 1596, signed 28 March 2024, effective 1 Jan 2025 - the first US statute banning parts pairing)
+
+old: into a roughly 0-10 score derived mainly from a physical teardown, following EN 45554
+new: into a roughly 0-10 score derived mainly from a physical teardown (the 0-10 scale is iFixit's and the French index's; EN 45554 itself defines parameters and classification bands and leaves weighting to implementing measures)
+
+old: iFixit Repairability Score
+new: iFixit Repairability Score (0-10; introduced 2011; current Repairability Scoring Rubric v2.x: Design for Repair 80%, service manual 10%, parts availability and cost 10%, unique product identifier as a gate, and a GLOBAL parts-pairing penalty of up to -100%; software-update duration not yet scored)
+
+# _44
+old: US DOJ/FTC Merger Guidelines (2010 horizontal; 2023 update)
+new: US DOJ/FTC Merger Guidelines (2010 Horizontal Merger Guidelines, superseded by the joint 2023 Merger Guidelines of 18 Dec 2023, which replaced both the 2010 HMG and the 2020 Vertical Merger Guidelines; confirmed retained by FTC and DOJ on 18 Feb 2025)
+
+old: GUPPI (Gross Upward Pricing Pressure Index)
+new: GUPPI (Gross Upward Pricing Pressure Index; Salop &amp; Moresi 2009, Moresi 2010 - not Farrell-Shapiro)
+
+old: EU Digital Markets Act gatekeeper-designation criteria
+new: EU Digital Markets Act (Regulation (EU) 2022/1925) gatekeeper-designation criteria, and the Article 14 duty on gatekeepers to inform the Commission of any intended digital-sector concentration irrespective of whether it is otherwise notifiable
+
+# _43
+old: Element criticality assessments (USGS, EU Critical Raw Materials list)
+new: Element criticality assessments (USGS 2025 List of Critical Minerals, 60 commodities, final 7 Nov 2025; EU 2023 CRM list of 34 CRMs / 17 SRMs under the Critical Raw Materials Act, in force 23 May 2024, reviewed every 4 years; underlying methodology: Graedel et al. 2012, Environ. Sci. Technol. 46:1063 - supply risk, environmental implications, vulnerability to supply restriction)
+
+old: Life Cycle Assessment (ISO 14040/14044)
+new: Life Cycle Assessment (ISO 14040:2006 and ISO 14044:2006, incl. ISO 14044 Amd 1:2017 and Amd 2:2020; 2006 editions consolidated first editions issued 1997-2000; both still current)
+
+# _42
+old: FDA Drug Development Tool (DDT) and Animal Model Qualification Program
+new: FDA Drug Development Tool (DDT) Qualification Programs (framework under the 21st Century Cures Act, 2016), comprising the Animal Model Qualification Program (AMQP - scoped to the Animal Rule; 1 qualified DDT as of Jan 2026) and the ISTAND pilot, which is the pathway for organoid, MPS and in-silico tools
+
+old: OECD Adverse Outcome Pathway (AOP) framework
+new: OECD Adverse Outcome Pathway (AOP) framework (concept: Ankley et al. 2010, Environ. Toxicol. Chem. 29:730-741; OECD AOP Development Programme launched 2012)</code></pre>
+<h3 id="p2--datecitation-only-no-substantive-change">P2 — date/citation
+only, no substantive change</h3>
+<pre tabindex="0"><code># _42
+old: Willner's validity triad: face, construct, predictive validity for disease models
+new: Willner's validity triad: face, construct, predictive validity for disease models (Willner 1984, Psychopharmacology 83:1-16)
+
+old: Biomarker/model 'Context of Use' (COU) qualification concept
+new: Biomarker/model 'Context of Use' (COU) qualification concept (FDA DDT qualification framework, 21st Century Cures Act 2016)
+
+old: ARRIVE 2.0 preclinical reporting guidelines
+new: ARRIVE 2.0 preclinical reporting guidelines (Percie du Sert et al. 2020, PLoS Biol 18(7):e3000410; original ARRIVE: Kilkenny et al. 2010)
+
+old: SYRCLE risk-of-bias tool for animal studies
+new: SYRCLE risk-of-bias tool for animal studies (Hooijmans et al. 2014, BMC Med Res Methodol 14:43)
+
+old: GRADE evidence-certainty framework
+new: GRADE evidence-certainty framework (GRADE Working Group / Atkins et al. 2004, BMJ 328:1490)
+
+old: Bradford Hill viewpoints for causal inference
+new: Bradford Hill viewpoints for causal inference (Hill 1965, Proc R Soc Med 58:295-300; nine viewpoints)
+
+old: 3Rs framework (Replacement, Reduction, Refinement)
+new: 3Rs framework (Replacement, Reduction, Refinement; Russell &amp; Burch 1959, The Principles of Humane Experimental Technique)
+
+old: CAMARADES preclinical systematic-review and meta-analysis methods
+new: CAMARADES preclinical systematic-review and meta-analysis methods (founded 2004, Macleod &amp; Howells, Edinburgh)
+
+old: WHO/IPCS mode-of-action human-relevance framework
+new: WHO/IPCS mode-of-action human-relevance framework (Meek et al. 2003; Boobis et al. 2006 cancer, 2008 non-cancer; Meek et al. 2014 update)
+
+old: Microphysiological systems qualification efforts (e.g., IQ MPS)
+new: Microphysiological systems qualification efforts (e.g., IQ MPS Affiliate, formed June 2018 from a 2014 IQ working group set up at NCATS' request)
+
+# _43
+old: E-factor (Sheldon)
+new: E-factor (Sheldon 1992, Chem. Ind. (London), 7 Dec 1992, 903; hazard-weighted EQ variant shortly after)
+
+old: Atom economy (Trost)
+new: Atom economy (Trost 1991, Science 254(5037):1471-1477)
+
+old: 12 Principles of Green Chemistry (Anastas &amp; Warner)
+new: 12 Principles of Green Chemistry (Anastas &amp; Warner 1998, Green Chemistry: Theory and Practice, OUP)
+
+old: EcoScale route-assessment score
+new: EcoScale route-assessment score (Van Aken, Strekowski &amp; Patiny 2006, Beilstein J. Org. Chem. 2:3; six parameters, 0-100)
+
+old: Process Mass Intensity (PMI); ACS GCI Pharmaceutical Roundtable metrics
+new: Process Mass Intensity (PMI), adopted as the ACS GCI Pharmaceutical Roundtable's key metric in 2011 (Jimenez-Gonzalez, Ponder, Broxterman &amp; Manley 2011, Org. Process Res. Dev. 15:912-917)
+
+old: CHEM21 unified green-metrics toolkit
+new: CHEM21 unified green-metrics toolkit (McElroy, Constantinou, Jones, Summerton &amp; Clark 2015, Green Chem. 17:3111-3121)
+
+old: Reaction Mass Efficiency (RME)
+new: Reaction Mass Efficiency (RME) (Constable, Curzons &amp; Cunningham 2002, Green Chem. 4:521-527)
+
+old: Solvent selection guides (GSK, Pfizer, CHEM21)
+new: Solvent selection guides (Pfizer: Alfonsi et al. 2008; GSK: Henderson et al. 2011; CHEM21: Prat et al. 2016 - all Green Chem.)
+
+old: Green Aspiration Level / Relative Process Greenness
+new: Green Aspiration Level / Relative Process Greenness (Roschangar, Sheldon &amp; Senanayake 2015, Green Chem. 17:752-768)
+
+old: Techno-economic analysis (TEA) and anticipatory LCA
+new: Techno-economic analysis (TEA) and anticipatory LCA (Wender et al. 2014, Environ. Sci. Technol. 48:10531-10538)
+
+# _44
+old: Herfindahl-Hirschman Index (HHI)
+new: Herfindahl-Hirschman Index (HHI; Hirschman 1945, Herfindahl 1950; adopted in the 1982 US Merger Guidelines)
+
+old: Upward Pricing Pressure (UPP), Farrell-Shapiro
+new: Upward Pricing Pressure (UPP), Farrell &amp; Shapiro 2010, B.E. J. Theor. Econ. 10(1)
+
+old: SSNIP / hypothetical-monopolist market definition
+new: SSNIP / hypothetical-monopolist market definition (1982 US DOJ Merger Guidelines)
+
+old: Cunningham, Ederer &amp; Ma, 'Killer Acquisitions' (2021)
+new: Cunningham, Ederer &amp; Ma, 'Killer Acquisitions' (2021), J. Polit. Econ. 129(3):649-702 - evidence base is pharmaceutical-sector only
+
+old: UK CMA theories of harm, incl. loss of dynamic/potential competition
+new: UK CMA theories of harm, incl. loss of dynamic/potential competition and reverse killer acquisitions (Merger Assessment Guidelines, CMA129, 18 March 2021)
+
+old: Potential-competition doctrine (actual and perceived potential entrant)
+new: Potential-competition doctrine (actual potential entrant: FTC v. Procter &amp; Gamble, 386 U.S. 568 (1967); perceived potential entrant: United States v. Falstaff Brewing, 410 U.S. 526 (1973); refined in United States v. Marine Bancorporation, 418 U.S. 602 (1974))
+
+old: Contestable-markets theory (Baumol, Panzar, Willig)
+new: Contestable-markets theory (Baumol, Panzar &amp; Willig 1982, Contestable Markets and the Theory of Industry Structure, Harcourt Brace Jovanovich)
+
+old: Innovation-competition analysis (EU Dow/DuPont, Bayer/Monsanto)
+new: Innovation-competition analysis (EU Dow/DuPont, M.7932, 27 March 2017; Bayer/Monsanto, M.8084, 21 March 2018)
+
+# _45
+old: FMEA / FMECA
+new: FMEA / FMECA (US MIL-P-1629, 1949; MIL-STD-1629A, 24 Nov 1980, cancelled without replacement 1998)
+
+old: MTTR and maintainability engineering (MIL-HDBK-470A)
+new: MTTR and maintainability engineering (MIL-HDBK-470A, 4 Aug 1997, Designing and Developing Maintainable Products and Systems; active)
+
+old: Design for Disassembly (DfD)
+new: Design for Disassembly (DfD), operationalised by disassembly-time metrics (eDiM: Vanegas et al. 2016; Peeters et al. 2018, JRC107773 - MOST-based)
+
+old: Design for Serviceability metrics
+new: Design for Serviceability metrics (Gershenson &amp; Ishii, 'Life-Cycle Serviceability Design', ASME DTM 1991; 'Design for Serviceability', in Kusiak (ed.), Concurrent Engineering, 1992)
+
+old: Material Circularity Indicator (Ellen MacArthur Foundation)
+new: Material Circularity Indicator (Ellen MacArthur Foundation with Granta Design, 2015; updated 2019; 0-1 scale; measures material-flow circularity, not reparability)</code></pre>
+<p><strong><code>Total Cost of Ownership / life-cycle cost analysis</code></strong>
+— no verified dated anchor found. Either date it to a specific LCC
+standard the authors verify, or delete it: as written it is an undatable
+generic term that cannot gate anything.</p>
+<hr/>
+<h2 id="5-missing-prior-art-omission--gate-failure">5. MISSING prior art
+(omission = gate failure)</h2>
+<h3 id="_42-preclinical-model-selection--4-material-omissions"><code>_42</code>
+preclinical-model selection — 4 material omissions</h3>
+<ol type="1">
+<li><strong>Wehling/Wendler translatability score</strong> — Wehling
+2009, <em>Nat Rev Drug Discov</em>; Wendler &amp; Wehling 2012, <em>J
+Transl Med</em> 10:39; disease-area-specific version 2017, <em>J Transl
+Med</em>. <strong>This is the most damaging omission in the whole
+audit.</strong> It is already a reusable, weighted, aggregated scoring
+procedure for exactly this decision — availability/quality of in-vitro
+and in-vivo results, clinical data, biomarkers, personalisation, with
+disease-area-specific weights, a bounded output, a stated go/no-go
+threshold (sum &gt; 4), and retrospective validation at Spearman r =
+0.91. <code>_42</code> asks the model to invent this. <a href="https://link.springer.com/article/10.1186/1479-5876-10-39">https://link.springer.com/article/10.1186/1479-5876-10-39</a>
+· <a href="https://link.springer.com/article/10.1186/s12967-017-1329-y">https://link.springer.com/article/10.1186/s12967-017-1329-y</a></li>
+<li><strong>Belzung &amp; Lemoine 2011</strong>, <em>Biol Mood Anxiety
+Disord</em> 1:9 — five-criterion extension of Willner: homological
+(species + strain), pathogenic (onto- + triggering), mechanistic, face
+(ethological + biomarker), predictive (induction + remission). The item
+anchors on Willner's <em>triad</em> and then proposes a
+"mechanism-divergence penalty" as new — but homological + mechanistic
+validity is close to that, and 15 years old. <a href="https://biolmoodanxietydisord.biomedcentral.com/articles/10.1186/2045-5380-1-9">https://biolmoodanxietydisord.biomedcentral.com/articles/10.1186/2045-5380-1-9</a></li>
+<li><strong>FDA ISTAND pilot</strong> (Innovative Science and Technology
+Approaches for New Drugs) — the actual DDT qualification pathway for
+organoids, MPS and in-silico tools. The item's <code>query</code>
+explicitly names organoids, organ-on-chip and in-silico models but its
+only regulatory qualification entry (AMQP) is Animal-Rule-scoped. <a href="https://www.fda.gov/drugs/drug-development-tool-ddt-qualification-programs/innovative-science-and-technology-approaches-new-drugs-istand-program">https://www.fda.gov/drugs/drug-development-tool-ddt-qualification-programs/innovative-science-and-technology-approaches-new-drugs-istand-program</a></li>
+<li><strong>ASME V&amp;V 40-2018</strong> + <strong>FDA 2023 guidance,
+"Assessing the Credibility of Computational Modeling and Simulation in
+Medical Device Submissions"</strong> — risk-informed model-credibility
+framework, where credibility must be commensurate with the weight placed
+on the model. The item admits in-silico models to scope but supplies no
+credibility framework for them. <a href="https://www.asme.org/codes-standards/find-codes-standards/assessing-credibility-of-computational-modeling-through-verification-and-validation-application-to-medical-devices">https://www.asme.org/codes-standards/find-codes-standards/assessing-credibility-of-computational-modeling-through-verification-and-validation-application-to-medical-devices</a>
+· <a href="https://www.fda.gov/media/154985/download">https://www.fda.gov/media/154985/download</a></li>
+</ol>
+<h3 id="_43-synthesis-route-ranking--5-material-omissions"><code>_43</code>
+synthesis-route ranking — 5 material omissions</h3>
+<ol type="1">
+<li><strong>GREENSCOPE</strong> (US EPA; Ruiz-Mercado et al., ~2003
+onward) — multi-criteria process sustainability aggregator, <strong>139
+indicators</strong> across mass efficiency / environment / energy /
+economy. An existing instance of the artifact the item asks to invent.
+<a href="https://www.epa.gov/chemical-research/assessing-chemical-process-sustainability-greenscope">https://www.epa.gov/chemical-research/assessing-chemical-process-sustainability-greenscope</a></li>
+<li><strong>EATOS</strong> (Eissen &amp; Metzger 2002) — Environmental
+Assessment Tool for Organic Syntheses; mass index S⁻¹ + environmental
+factor E with hazard weighting on input <em>and</em> output. Predates
+and prefigures weighted aggregation of green metrics. <a href="https://pubmed.ncbi.nlm.nih.gov/12203284/">https://pubmed.ncbi.nlm.nih.gov/12203284/</a></li>
+<li><strong>DOZN 2.0 / 2.1 / 3.0</strong> (Merck/MilliporeSigma, 2017 →)
+— quantitative 12-principles evaluator producing per-principle scores
+and a single aggregate. <a href="https://www.sciencedirect.com/science/article/pii/S0022328X22001152">https://www.sciencedirect.com/science/article/pii/S0022328X22001152</a></li>
+<li><strong>Andraos, unified reaction metrics + global
+material-efficiency algorithm</strong> — <em>Org. Process Res. Dev.</em>
+2005 (Parts I &amp; II) and the 2009 global algorithm applied to
+competing Tamiflu synthesis plans. An existing algorithm for ranking
+<em>whole routes</em> of arbitrary complexity, i.e. exactly hard_rule
+(a). <a href="https://pubs.acs.org/doi/10.1021/op049803n">https://pubs.acs.org/doi/10.1021/op049803n</a>
+· <a href="https://pubs.acs.org/doi/10.1021/op800157z">https://pubs.acs.org/doi/10.1021/op800157z</a></li>
+<li><strong>Graedel et al. 2012</strong>, <em>Environ. Sci.
+Technol.</em> 46:1063 — three-dimensional metal criticality methodology
+(supply risk / environmental implications / vulnerability to supply
+restriction), Yale. The item lists the USGS and EU criticality
+<em>lists</em> (outputs) but not the quantitative <em>method</em>, which
+is what H1's PGM-vs-earth-abundant tradeoff actually needs. <a href="https://pubs.acs.org/doi/10.1021/es203534z">https://pubs.acs.org/doi/10.1021/es203534z</a></li>
+</ol>
+<p>Consequence for the gate: the "supply-criticality-weighted atom
+economy" composite may still be new as a specific formula, but hard_rule
+(d) as written — "absent from <em>every</em> listed framework" — is
+trivially satisfiable when the four strongest existing aggregators are
+not listed.</p>
+<h3 id="_44-killer-acquisition-screen--4-material-omissions"><code>_44</code>
+killer-acquisition screen — 4 material omissions</h3>
+<ol type="1">
+<li><strong>FTC 6(b) study of non-HSR-reported acquisitions by five tech
+platforms, 2010–2019</strong> (15 Sept 2021) — 616 non-reportable
+transactions over $1M; 94 above threshold but exempt. The empirical
+foundation for H1's below-threshold premise, and
+<strong>non-pharma</strong>, which matters because the only cited
+empirical study (Cunningham et al.) is pharma-only. <a href="https://www.ftc.gov/system/files/documents/reports/non-hsr-reported-acquisitions-select-technology-platforms-2010-2019-ftc-study/p201201technologyplatformstudy2021.pdf">https://www.ftc.gov/system/files/documents/reports/non-hsr-reported-acquisitions-select-technology-platforms-2010-2019-ftc-study/p201201technologyplatformstudy2021.pdf</a></li>
+<li><strong>The three 2019 policy reports</strong> that actually
+proposed the reforms this item asks a model to reinvent: <strong>Furman
+Review, "Unlocking digital competition"</strong> (March 2019);
+<strong>Crémer / de Montjoye / Schweitzer, "Competition policy for the
+digital era"</strong> (April 2019, for DG COMP — burden-shifting for
+acquisitions by dominant platforms); <strong>Stigler Center Committee on
+Digital Platforms</strong> (Sept 2019 — recommends transaction-value HSR
+thresholds because turnover-only screens miss nascent firms). <a href="https://assets.publishing.service.gov.uk/media/5c88150ee5274a230219c35f/unlocking_digital_competition_furman_review_web.pdf">https://assets.publishing.service.gov.uk/media/5c88150ee5274a230219c35f/unlocking_digital_competition_furman_review_web.pdf</a>
+· <a href="https://euagenda.eu/upload/publications/untitled-257961-ea.pdf">https://euagenda.eu/upload/publications/untitled-257961-ea.pdf</a>
+· <a href="https://publicknowledge.org/wp-content/uploads/2021/11/Stigler-Committee-on-Digital-Platforms-Final-Report.pdf">https://publicknowledge.org/wp-content/uploads/2021/11/Stigler-Committee-on-Digital-Platforms-Final-Report.pdf</a></li>
+<li><strong>HSR premerger notification regime, current state</strong> —
+the query names "filing-threshold status" as an input, so this is
+load-bearing. FTC 2024 Final Rule published 12 Nov 2024, effective
+<strong>10 Feb 2025</strong>, expanded disclosure of overlaps and
+minority holdings — then <strong>vacated by the US District Court for
+the Eastern District of Texas on 12 Feb 2026</strong>. Neither the rule
+nor its vacatur appears in the list. <a href="https://www.federalregister.gov/documents/2024/11/12/2024-25024/premerger-notification-reporting-and-waiting-period-requirements">https://www.federalregister.gov/documents/2024/11/12/2024-25024/premerger-notification-reporting-and-waiting-period-requirements</a>
+· <a href="https://www.bakerbotts.com/thought-leadership/publications/2026/february/new-hsr-rules-overturned-by-federal-court-what-filers-need-to-know">https://www.bakerbotts.com/thought-leadership/publications/2026/february/new-hsr-rules-overturned-by-federal-court-what-filers-need-to-know</a></li>
+<li><strong>National below-threshold call-in powers</strong> (Italy,
+Ireland, Denmark, Sweden, Hungary, Latvia and others) — post-Illumina,
+this is the <em>only</em> live EU route to a below-threshold review, and
+it is the mechanism the Commission itself now points to. The list's Art.
+22 entry is a dead end without it. <a href="https://www.crowell.com/en/insights/client-alerts/one-year-after-illuminagrail-how-are-eu-competition-authorities-now-dealing-with-below-threshold-mergers">https://www.crowell.com/en/insights/client-alerts/one-year-after-illuminagrail-how-are-eu-competition-authorities-now-dealing-with-below-threshold-mergers</a></li>
+</ol>
+<h3 id="_45-reparabilityupgradeability-index--6-material-omissions"><code>_45</code>
+reparability/upgradeability index — 6 material omissions</h3>
+<ol type="1">
+<li><strong>Regulation (EU) 2023/1669</strong> (energy labelling,
+smartphones/slate tablets, <strong>A–E repairability class</strong>,
+applying from <strong>20 June 2025</strong>) and <strong>Regulation (EU)
+2023/1670</strong> (companion ecodesign). The only operative EU
+repairability score in existence, entirely absent — while the list
+instead cites the ESPR framework, which has not yet produced one. <a href="https://eur-lex.europa.eu/eli/reg_del/2023/1669/oj/eng">https://eur-lex.europa.eu/eli/reg_del/2023/1669/oj/eng</a></li>
+<li><strong>JRC Repair Scoring System</strong> — Cordella, Alfieri &amp;
+Sanfelix 2019, <em>Analysis and development of a scoring system for
+repair and upgrade of products</em>, JRC114337; plus
+<strong>JRC128672</strong> (2022, smartphones/slate tablets
+application). This is the actual source of the EU scoring and
+aggregation method the item credits to EN 45554 / ESPR: prioritise parts
+→ select criteria → assign classification scores → aggregate. <a href="https://publications.jrc.ec.europa.eu/repository/bitstream/JRC114337/jrc114337_report_repair_scoring_system_final_report_v3.2_pubsy_clean.pdf">https://publications.jrc.ec.europa.eu/repository/bitstream/JRC114337/jrc114337_report_repair_scoring_system_final_report_v3.2_pubsy_clean.pdf</a></li>
+<li><strong>eDiM (ease of Disassembly Metric)</strong> — Vanegas et al.
+2016; Peeters, Tecchio, Ardente, Vanegas, Coughlan &amp; Duflou 2018,
+JRC107773. MOST-based disassembly-time calculation underpinning EN
+45554's disassembly index. The item's whole <code>query</code> turns on
+"teardown data, fastener/joint types" but supplies no disassembly-time
+primitive. <a href="https://publications.jrc.ec.europa.eu/repository/bitstream/JRC107773/jrc107773_20180302_-_edim_2_clean_-_online.pdf">https://publications.jrc.ec.europa.eu/repository/bitstream/JRC107773/jrc107773_20180302_-_edim_2_clean_-_online.pdf</a></li>
+<li><strong>EN 45552</strong> (durability) and <strong>EN 45553</strong>
+(remanufacture) — EN 45554's sibling standards from the same M/543
+series. Citing one of a coordinated family without the family
+understates the standardisation prior art.</li>
+<li><strong>IEEE 1874-2013</strong>, <em>Documentation Schema for Repair
+and Assembly of Electronic Devices</em> (oManual) — machine-readable
+repair-documentation standard. The item lists "documentation" as an
+input with no standard behind it. <a href="https://standards.ieee.org/ieee/1874/5739/">https://standards.ieee.org/ieee/1874/5739/</a></li>
+<li><strong>Oregon SB 1596</strong> (signed 28 March 2024, effective
+<strong>1 Jan 2025</strong>) — the first US statute banning parts
+pairing. Absent even though the item's entire claimed novelty and its H1
+case are about parts pairing. <a href="https://www.oregonlegislature.gov/bills_laws/lawsstatutes/2024orLaw0069.pdf">https://www.oregonlegislature.gov/bills_laws/lawsstatutes/2024orLaw0069.pdf</a></li>
+</ol>
+<hr/>
+<h2 id="6-overall-judgement--are-these-four-gates-strong-enough-to-score-novelty-against">6.
+Overall judgement — are these four gates strong enough to score novelty
+against?</h2>
+<p><strong>No, not as written.</strong> Ranked by remaining usability
+after the P0/P1 fixes above:</p>
+<div aria-label="6.
+Overall judgement — are these four gates strong enough to score novelty
+against? table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Item</th>
+<th scope="col">Gate strength</th>
+<th scope="col">Assessment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_44</code> economics</td>
+<td><strong>Adequate after fixes</strong></td>
+<td>The only item with any dated entries (2/12), and its two proposed
+new mechanisms — a pipeline shelving-incentive index and a
+dynamic-contestability score for bottleneck-input control independent of
+current overlap — were not found in the published literature in this
+pass. But the Art. 22 entry is stale in a way that breaks H1's premise,
+and four significant literatures (FTC 6(b), the three 2019 reports, HSR
+current state, national call-in powers) are missing. Fix those and this
+gate holds.</td>
+</tr>
+<tr>
+<td><code>_43</code> chemistry</td>
+<td><strong>Weak but repairable</strong></td>
+<td>Attributions are all correct — best-attributed of the four. But
+every entry is undated, and the four strongest existing
+<em>aggregators</em> (GREENSCOPE, EATOS, DOZN, Andraos) plus the actual
+criticality <em>methodology</em> (Graedel 2012) are missing. "Absent
+from every listed framework" is far too easy to satisfy against this
+list. Adding the five omissions and dating all twelve entries makes it
+serviceable.</td>
+</tr>
+<tr>
+<td><code>_42</code> biology</td>
+<td><strong>Weak</strong></td>
+<td>Zero dated entries. One regulatory scope error (AMQP ≠ general model
+selection). Critically, an existing weighted-and-validated
+translatability <em>scoring procedure</em> (Wehling/Wendler) and an
+existing mechanistic/homological validity framework (Belzung &amp;
+Lemoine 2011) are both absent — so the item's two flagship novelty
+claims are gated against a list that has been pruned of exactly the
+prior art that would refute them. Needs the four omissions plus dates
+before it can score novelty.</td>
+</tr>
+<tr>
+<td><code>_45</code> engineering</td>
+<td><strong>Broken — do not release</strong></td>
+<td>Not a citation problem. The item's own worked example of a novel
+mechanism is implemented by the first entry in its own prior-art list
+(iFixit's global parts-pairing penalty, up to −100%), its second example
+is close to EN 45554's product-related/support-related split, its
+<code>expert_baseline</code> asserts the opposite of the truth on the
+decisive point, one attribution is flatly wrong (Martin &amp; Ishii),
+two entries are undatable generics, and the single most on-point
+regulatory instrument in the world (Reg (EU) 2023/1669's A–E
+repairability class) is absent. The gate will systematically award
+novelty credit for reproducing published prior art. Requires the P0
+rewrite of <code>hard_rules</code> (d), <code>expert_baseline</code> and
+<code>rationale</code>, not just citation patching.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>On the fabrication question:</strong> the prior auditor's
+prediction was right — 0 fabrications in 48 entries, 0 "right paper /
+wrong famous name" substitutions. Notably, the one place where a
+famous-name substitution would have been easy to make and easy to miss —
+<code>Green Aspiration Level (Roschangar, Sheldon &amp; Senanayake 2015)</code>,
+where Sheldon is also the E-factor's author — checks out: Sheldon is a
+genuine co-author.</p>
+<p><strong>On the novelty question:</strong> the prior auditor's framing
+— "low fabrication risk but weak novelty gates" — understates the second
+half. The problem is not merely that these gates are weak; it is that
+<code>_45</code>'s gate is <em>inverted</em>, and <code>_42</code>'s is
+close behind. Both would reward a submission for re-deriving prior art,
+and both contain <code>expert_baseline</code> prose that would lead a
+judge to confirm rather than catch the error. Undated entries make a
+novelty gate unenforceable; a wrong <code>expert_baseline</code> makes
+it actively misleading. The second failure mode is worse and is not
+fixed by adding years.</p>
+<p><strong>Minimum before public release:</strong></p>
+<ol type="1">
+<li>Apply all five P0 replacements (the four <code>_45</code>
+prose/attribution fixes and the <code>_44</code> Art. 22 fix).</li>
+<li>Date all 48 entries (P1 + P2 blocks give verified text for 47 of
+them; <code>Total Cost of Ownership / life-cycle cost analysis</code>
+needs a decision).</li>
+<li>Add the 19 named missing prior-art items in §5 to the relevant
+<code>known_answers</code> lists.</li>
+<li>Re-run the same audit against <code>_3x</code>, which is
+statistically as under-cited as <code>_4x</code> (17.2% vs 15.8% dated)
+and was not covered by either pass.</li>
+</ol>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

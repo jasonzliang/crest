@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="light" name="color-scheme"/>
+<meta content="Current CREST pipeline, models, caching, and overall pairwise method." name="description"/>
+<title>Research pipeline · CREST</title>
+<style>
+    :root { --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --paper:#fff; --wash:#f5f8f9; --code:#eef3f5; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:var(--accent); text-decoration-thickness:1px; text-underline-offset:3px; overflow-wrap:anywhere; }
+    a:hover { text-decoration-thickness:2px; }
+    :focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+    .skip-link { position:fixed; top:-100px; left:1rem; padding:.65rem 1rem; background:var(--ink); color:white; z-index:20; }
+    .skip-link:focus { top:1rem; }
+    .layout { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:250px minmax(0,1fr); }
+    .sidebar { padding:3.2rem 1.5rem 2rem 2rem; border-right:1px solid var(--line); background:var(--wash); }
+    .sidebar-inner { position:sticky; top:1.7rem; max-height:calc(100vh - 3.4rem); overflow:auto; }
+    .brand { font-size:1.05rem; font-weight:800; letter-spacing:.16em; color:var(--accent); }
+    .sidebar-label { margin:.2rem 0 1.8rem; color:var(--muted); font-size:.8rem; }
+    nav ul { list-style:none; padding:0; margin:0; }
+    nav li { margin:0 0 .3rem; }
+    nav a { display:block; padding:.4rem .55rem; margin-left:-.55rem; font-size:.86rem; line-height:1.5; text-decoration:none; border-radius:4px; }
+    nav a:hover { background:#e4edef; }
+    .sidebar-note { font-size:.75rem; line-height:1.6; color:var(--muted); border-top:1px solid var(--line); padding-top:1.2rem; margin-top:1.5rem; }
+    main { min-width:0; padding:3rem clamp(1.5rem,4.5vw,4.5rem) 5rem; }
+    .hero { padding-bottom:2rem; border-bottom:2px solid var(--ink); margin-bottom:2.5rem; }
+    .eyebrow { margin:0 0 .7rem; color:var(--accent); font-size:.8rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { font-size:clamp(2rem,3.8vw,3.15rem); line-height:1.13; letter-spacing:-.035em; margin:0 0 1rem; max-width:21ch; font-weight:750; }
+    .subtitle { max-width:65ch; color:var(--muted); font-size:1.1rem; line-height:1.65; margin:0; }
+    .meta { margin-top:1.35rem; font-size:.8rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:.35rem 1.4rem; }
+    article { counter-reset:guide-section; }
+    h2 { counter-increment:guide-section; font-size:1.65rem; line-height:1.3; margin:3.5rem 0 1rem; padding-top:1.4rem; border-top:1px solid var(--line); letter-spacing:-.025em; }
+    h2:first-child { margin-top:0; border-top:0; padding-top:0; }
+    h2::before { content:counter(guide-section,decimal-leading-zero) " / "; font-size:.8rem; font-weight:600; letter-spacing:.06em; color:var(--accent); vertical-align:middle; }
+    h3 { margin:1.8rem 0 .65rem; font-size:1.12rem; line-height:1.4; }
+    p { margin:.65rem 0 1rem; }
+    li { padding-left:.15rem; margin:.4rem 0; }
+    ul { padding-left:1.3rem; }
+    code { font: .88em/1.55 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace; background:var(--code); padding:.12em .3em; border-radius:3px; overflow-wrap:anywhere; }
+    pre { background:var(--code); border:1px solid var(--line); border-radius:6px; padding:1.15rem 1.25rem; overflow:auto; line-height:1.6; font-size:.88rem; }
+    pre code { background:none; padding:0; font-size:1em; overflow-wrap:normal; }
+    .table-scroll { overflow:auto; margin:1.25rem 0 1.6rem; border:1px solid var(--line); border-radius:6px; }
+    table { border-collapse:collapse; width:100%; text-align:left; font-size:.9rem; line-height:1.6; }
+    th { background:#eaf1f3; font-weight:650; color:#183d49; }
+    th,td { padding:.8rem .9rem; vertical-align:top; border-bottom:1px solid var(--line); min-width:115px; overflow-wrap:anywhere; }
+    tr:last-child td { border-bottom:0; }
+    tr:nth-child(even) td { background:#fafcfc; }
+    table code { font-size:.85em; }
+    .key-message { margin:1.5rem 0; padding:1rem 1.3rem; border-left:4px solid var(--accent); background:#eef6f6; }
+    .key-message p { margin:.35rem 0 0; }
+    .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:1.5rem 0; border-block:1px solid var(--line); padding:1.25rem 0; gap:1.4rem; }
+    .stats strong { display:block; font-size:2rem; line-height:1.2; letter-spacing:-.04em; color:var(--accent); }
+    .stats span { display:block; margin-top:.4rem; font-size:.8rem; line-height:1.5; color:var(--muted); }
+    .dated-note { margin:1rem 0; padding:1rem 1.25rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; }
+    details { border:1px solid var(--line); border-radius:6px; margin:1rem 0; padding:0 1.15rem; }
+    summary { cursor:pointer; padding:1rem 0; font-weight:650; color:var(--accent); line-height:1.5; }
+    summary:hover { color:var(--ink); }
+    details[open] { padding-bottom:.65rem; }
+    details[open] summary { border-bottom:1px solid var(--line); margin-bottom:1rem; }
+    footer { margin-top:3rem; padding-top:1rem; border-top:1px solid var(--line); font-size:.82rem; color:var(--muted); }
+    @media (min-width:1200px) { #comparison ~ .table-scroll table, #costs ~ .table-scroll table { font-size:.87rem; } }
+    @media (max-width:900px) {
+      .layout { display:block; }
+      .sidebar { padding:1.4rem 1.5rem; border-right:0; border-bottom:1px solid var(--line); }
+      .sidebar-inner { position:static; max-height:none; overflow:visible; }
+      .sidebar-label { margin:.15rem 0 .8rem; }
+      nav ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 .9rem; }
+      nav a { font-size:.8rem; padding:.3rem .45rem; margin-left:-.45rem; }
+      .sidebar-note { display:none; }
+      main { padding:2rem 1.5rem 3rem; }
+      h2 { font-size:1.45rem; margin-top:2.7rem; }
+      table { min-width:620px; }
+    }
+    @media (max-width:420px) {
+      body { font-size:15px; }
+      main { padding-inline:1.1rem; }
+      .sidebar { padding-inline:1.1rem; }
+      .stats { gap:.8rem; }
+      .stats strong { font-size:1.65rem; }
+      .stats span { font-size:.73rem; }
+      h1 { font-size:2rem; }
+    }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print {
+      @page { margin:17mm; }
+      body { font-size:10pt; background:white; color:#000; }
+      .layout { display:block; }
+      .sidebar,.skip-link,footer { display:none; }
+      main { padding:0; }
+      .hero { margin-bottom:1.2rem; padding-bottom:1rem; }
+      h1 { font-size:27pt; }
+      h2 { font-size:17pt; margin-top:1.8rem; break-after:avoid; }
+      h3,summary { break-after:avoid; }
+      a { color:inherit; }
+      details { border:0; padding:0; }
+      details::details-content { content-visibility:visible; display:block; }
+      details > :not(summary) { display:block !important; }
+      summary { list-style:none; padding:.5rem 0; }
+      .table-scroll { overflow:visible; border:0; }
+      table { min-width:0; font-size:9pt; }
+      th,td { padding:.4rem; }
+      thead { display:table-header-group; }
+      tr { break-inside:avoid; }
+      pre { white-space:pre-wrap; overflow:visible; font-size:8.5pt; }
+      pre code { overflow-wrap:anywhere; }
+      .stats { break-inside:avoid; }
+    }
+  </style>
+<style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body>
+<a class="skip-link" href="#main-content">Skip to guide</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
+<main id="main-content" tabindex="-1"><details class="contents"><summary>On this page</summary><nav aria-label="Guide contents"><ul><li><a href="#overview">The experiment</a></li><li><a href="#running">Run the stages</a></li><li><a href="#models">Research settings</a></li><li><a href="#operations">Budgets and parallelism</a></li><li><a href="#files">Results and cache</a></li><li><a href="#judging">Judging and ranking</a></li><li><a href="judge-models.html">Judge models</a></li><li><a href="index.html">All documents</a></li></ul></nav><p class="sidebar-note">Updated October 26, 2026.<br/>Current settings and method; no claim that the full benchmark is complete.</p></details><header class="hero"><p class="eyebrow">CREST pipeline</p><h1>Research pipeline</h1><p class="subtitle">Generate once, judge complete answers in both orders, and rank the observed preferences with uncertainty.</p></header>
+<article>
+<h2 id="overview">The experiment</h2>
+<p>Caesar, OpenAI research, and Gemini Deep Research independently answer the same 50 questions. The dataset is bundled in <a href="../crest/data/queries_n50.jsonl">crest/data/queries_n50.jsonl</a>, copied byte-for-byte from Rome's 50-question file. Loading preserves each exact query string.</p>
+<div class="stats"><div><strong>150</strong><span>planned answers · 50 × 3 systems</span></div><div><strong>600</strong><span>planned judgments · 3 pairs × 2 judges × 2 orders × 50</span></div><div><strong>1</strong><span>overall A/B winner per judgment, guided by New, Useful, and Surprising</span></div></div>
+<p>This is an exploratory comparison of the saved answers under the selected judges and rubric. A ranking is not an absolute measurement of creativity or evidence that all future answers will follow the same ordering.</p>
+<h2 id="running">Run the three stages</h2>
+<p>Use Python 3.11–3.13 and install the project and Rome dependencies as described in <a href="../README.html#install">Getting started</a>. Export <code>OPENAI_API_KEY</code> and <code>GOOGLE_API_KEY</code> or <code>GEMINI_API_KEY</code>; CREST does not automatically load credentials from dotenv files.</p>
+<pre><code>python -m crest plan --config crest.mbp.yaml --limit 1
+python stage1_generate.py --config crest.mbp.yaml --limit 1
+
+# Replace the placeholder with stage 1's printed run_dir.
+CREST_RUN=results/YYYY-MM-DD/UTC-TIMESTAMP-UNIQUE-ID
+python stage2_judge.py "$CREST_RUN" --config crest.mbp.yaml
+python stage3_analyze.py "$CREST_RUN" --config crest.mbp.yaml</code></pre>
+<p>Planning is local. Generation and judging make paid calls; analysis is local. Omit <code>--limit 1</code> for all 50 questions. The default configuration is <a href="../crest.yaml">crest.yaml</a>; <a href="../crest.mbp.yaml">crest.mbp.yaml</a> selects the measured-resource profile for the 64 GB <code>jason-mbp</code>. Complete the pilot before starting the first full Caesar batch. <code>python -m crest run</code> runs all stages. Later stages otherwise select the latest generation run, so use an explicit result path when managing multiple experiments.</p>
+<p>To recover an existing run, repeat stage 1 with <code>--run "$CREST_RUN"</code>, then repeat stages 2 and 3. Completed work is reused; remote job IDs are retrieved after interruption. Ambiguous submissions require manual reconciliation before retrying and are never blindly resubmitted.</p>
+<h2 id="models">Current research settings</h2>
+<div aria-label="Research systems and settings" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">System</th><th scope="col">Model and workflow</th><th scope="col">Main settings</th></tr></thead><tbody>
+<tr><td>Caesar</td><td><code>gpt-6.1-sol</code> main/synthesis; <code>gpt-6-luna</code> exploration and knowledge-base helpers at low reasoning.</td><td>Mini-like exploration: up to 250 iterations, 11 additional starting queries, quick exploration with 2 workers; 3 drafts, up to 15 Q&amp;A rounds per draft, then merge. Q&amp;A reduces adaptively to preserve writing budget and time.</td></tr>
+<tr><td>OpenAI</td><td><code>gpt-6.1-sol</code>, Responses API with hosted web search and background execution.</td><td>High reasoning, 40,000 output-token allowance, 25 tool calls, standard tier.</td></tr>
+<tr><td>Gemini</td><td><code>deep-research-preview-04-2026</code>, managed Interactions API agent.</td><td>Standard Deep Research, visualization off, collaborative planning off. Google controls its underlying model; no backbone override.</td></tr>
+</tbody></table></div>
+<p>Google <a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">introduced these agents with Gemini 3.1 Pro</a>; <code>gemini-3.1-pro-preview</code> is CREST's billing reference, not a model-selection field. The OpenAI entrant is a native Sol+search workflow, not a reproduction of ChatGPT's complete product harness. Caesar's different helper models are part of the recorded system configuration.</p>
+<p>The deployed Caesar source is version 0.4.31; each generation records its source version, Git commit, and runtime hashes. Both Luna helpers stay at <code>low</code>. Although <a href="https://developers.openai.com/api/docs/models/gpt-6-luna">Luna supports <code>none</code></a>, equivalent Caesar answer quality has not been established.</p>
+<p>The judges are <strong>GPT-6 Astra high + Gemini 4 Argon high</strong>, with 32,768 output tokens each and no tools. See <a href="judge-models.html">Judge models</a>.</p>
+<h2 id="operations">Budgets and parallelism</h2>
+<p><strong>$5 per answer is a target, not a guaranteed cap.</strong> All 150 answers target $750; judging costs extra. Caesar reserves estimated request costs against a $5 SDK/handler guard and keeps $3 for synthesis, reducing exploration and Q&amp;A when needed. Its per-answer limit is 7,200 seconds and per-call timeout is 600 seconds. New exploration pages stop after 45 minutes; accepted calls finish before ingestion. Q&amp;A reserves 300 seconds per remaining writing/refinement/merge call. These time allocations improve the chance of completion but cannot guarantee a complete answer before the deadline. Native provider APIs expose no hard dollar cap. Gemini research costs use a conservative estimate; an estimated overrun is not a final invoice. Cost reports retain failed paid attempts, partial observations, and unknown bills.</p>
+<div aria-label="Adaptive job limits" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">Stage / provider</th><th scope="col">Default: start → maximum</th><th scope="col">64 GB jason-mbp: start → maximum</th></tr></thead><tbody>
+<tr><td>Research · Caesar</td><td>1 → 4</td><td>10 → 10</td></tr>
+<tr><td>Research · OpenAI</td><td>3 → 12</td><td>2 → 6</td></tr>
+<tr><td>Research · Gemini</td><td>2 → 8</td><td>1 → 4</td></tr>
+<tr><td><strong>Research total</strong></td><td><strong>6 → 24</strong></td><td><strong>13 → 20</strong></td></tr>
+<tr><td>Each judge</td><td>4 → 16</td><td>2 → 8</td></tr>
+<tr><td><strong>Judging total</strong></td><td><strong>8 → 32</strong></td><td><strong>4 → 16</strong></td></tr>
+</tbody></table></div>
+<p>Each provider gains a slot after two successful uncached jobs and halves capacity on HTTP 429. Shared cooldowns honor available retry/reset headers. Native background-job creation retries only explicit 429 rejections; idempotent polling/cancellation also retry transient failures, with four total attempts. Caesar separately allows bounded SDK retries for 429 and server 5xx errors, retaining reservations for uncertain failed attempts against its budget. Limits apply per pipeline process; other account traffic and hosted-agent usage can still cause rate limits.</p>
+<h2 id="files">Results, snapshots, and cache</h2>
+<pre><code>results/
+  .cache/generation/                 shared answer cache
+  YYYY-MM-DD/UTC-TIMESTAMP-ID/
+    run.json                        questions, jobs, stage registry
+    01-generate-UTC-TIMESTAMP/       answers.jsonl and readable answers/
+    02-judge-UTC-TIMESTAMP/          judgments and frozen inputs/settings/rubric
+    03-analysis-UTC-TIMESTAMP/       ranking.json, ranking.csv, report.md
+    .cache/judgments/               this run's judgment cache
+    .cache/analysis/                this run's local analysis cache</code></pre>
+<p>Every invocation creates a new timestamped stage folder. Stage 1's <code>answers.jsonl</code> is canonical; Markdown answers are reading copies. Stage 3 identifies and reads its precise stage-2 snapshot.</p>
+<p>Canonical answer and judgment rows retain model, usage, cost, and a top-level <code>timing</code> object: UTC ISO <code>started_at</code>/<code>completed_at</code>, <code>duration_seconds</code>, <code>source</code>, and <code>definition</code>. Elapsed time includes provider queueing, polling, retries, and interruptions, excluding local scheduling before execution. Cache hits preserve original durations; older checkpoints are backfilled where possible, with unavailable timestamps or duration left null.</p>
+<p>Changing the judge or rubric reuses answers. Changing one researcher's generation settings requires a new generation run and invalidates only affected shared-cache work. Existing runs retain generation snapshots. Concurrency/retry changes preserve paid cache entries. Increment a provider's <code>revision</code> only for intentional fresh calls, not to bypass an unresolved submission.</p>
+<h2 id="judging">Judging and ranking</h2>
+<p>Each judge returns exactly <code>{"reason": "…", "winner": "A"}</code> or the same structure with B. New, Useful, and Surprising inform one holistic choice; there are no criterion winners or numeric weights. The <a href="../crest/prompts/nus_pairwise.txt">rubric</a> prioritizes substance over length, polish, confidence, or citation count.</p>
+<p>Rank by overall wins divided by comparisons on common complete questions, balancing opponents, judges, and answer orders. A complete 50-question run gives each system 400 comparisons. Reports retain ties, opponent cycles, per-judge diagnostics, missingness, and paired whole-question bootstrap uncertainty. Read <a href="judging-method.html">Research evaluation</a> for the denominator, interpretation, and limits.</p>
+</article><footer><a href="../README.html">Getting started</a> · <a href="judging-method.html">Research evaluation</a> · <a href="index.html">All documents</a></footer>
+</main>
+</body></html>

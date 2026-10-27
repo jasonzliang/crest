@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Category coverage · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#do-we-need-more-categories--coverage-analysis">Do we need more
+categories? — coverage analysis</a></li><li><a href="#double-check-revised-is-c6-scientific-hypothesis-generation-really-a-distinct-category">Double-check
+(revised): is C6 Scientific Hypothesis Generation really a distinct
+category?</a></li><li><a href="#what-the-5-categories-are-and-why-they-are-principled">What the
+5 categories are, and why they are principled</a></li><li><a href="#coverage-check-against-the-major-creativity-taxonomies">Coverage
+check against the major creativity taxonomies</a></li><li><a href="#recommendation">Recommendation</a></li><li><a href="#interaction-with-the-count-question--settled">Interaction with
+the count question — SETTLED</a></li><li><a href="#one-line-verdict">One-line verdict</a></li></ul></nav></details><article><h1 id="do-we-need-more-categories--coverage-analysis">Do we need more
+categories? — coverage analysis</h1>
+<p><strong>Short answer: No. The 5 categories are theory-complete for
+creative <em>process</em>, and on a hard double-check (below) even the
+strongest candidate — Scientific Hypothesis Generation — does not
+clearly earn a 6th <em>category</em>. Stay at 5 and scale to
+50.</strong></p>
+<h2 id="double-check-revised-is-c6-scientific-hypothesis-generation-really-a-distinct-category">Double-check
+(revised): is C6 Scientific Hypothesis Generation really a distinct
+category?</h2>
+<p>Verdict: <strong>defensible as a task, weak as a distinct category
+for THIS taxonomy — do not add it.</strong></p>
+<ol type="1">
+<li><strong>Process redundancy.</strong> CREST's categories are creative
+<em>processes</em>; abductive hypothesis generation overlaps C3
+(recombine distant evidence), C1 (constrained invention), and C4
+(product-type "invent an X"). It introduces no new <em>mechanism</em>,
+and the finding is about mechanism dissociation.</li>
+<li><strong>Likely non-dissociation from C3.</strong> Its predicted
+mechanism and direction pattern with C3 (favored), so it adds breadth
+but little discriminating power — and risks failing CREST's own
+discriminant-validity bar (the thing that makes the taxonomy
+credible).</li>
+<li><strong>Harder to score validly.</strong> "Useful hypothesis" =
+testable + plausible + explanatory (contested, expert-dependent), and
+bounding "novel hypothesis" against a dated known-answers list is very
+hard (huge hypothesis space). Steelman for adding it: C4 ("invent a
+method") is already a product-type category, so C6 ("invent a
+hypothesis") is structurally parallel, and it is the single most
+on-mission task for a <em>research</em> agent. But that is a
+<em>use-case</em> argument, not a <em>process</em> argument — and mixing
+a use-case axis into a process taxonomy is exactly the inconsistency to
+avoid. <strong>Represent hypothesis-generation as domain instances
+inside C1/C5 instead.</strong></li>
+</ol>
+<h2 id="what-the-5-categories-are-and-why-they-are-principled">What the
+5 categories are, and why they are principled</h2>
+<p>CREST's categories are not arbitrary; each instantiates a distinct
+creative <em>process</em> from the literature, and together they were
+chosen so an agent's creativity can <em>dissociate</em> across them (the
+dissociation is the paper's finding).</p>
+<div aria-label="What the
+5 categories are, and why they are principled table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">CREST</th>
+<th scope="col">Creative process</th>
+<th scope="col">Theory anchor</th>
+<th scope="col">Isolated axis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1 Constrained</td>
+<td>exploratory (search a fixed space)</td>
+<td>Boden 2004; Simonton 2003</td>
+<td>Useful</td>
+</tr>
+<tr>
+<td>C2 Counterfactual</td>
+<td>reasoning over a causal model</td>
+<td>Byrne 2005 (rational imagination)</td>
+<td>Surprising</td>
+</tr>
+<tr>
+<td>C3 Cross-Domain</td>
+<td>combinational (structure-mapping)</td>
+<td>Gentner 1983; Falkenhainer 1989</td>
+<td>New</td>
+</tr>
+<tr>
+<td>C4 Meta-Creativity</td>
+<td>reflective / space-altering</td>
+<td>Boden (transformational, meta)</td>
+<td>all three</td>
+</tr>
+<tr>
+<td>C5 Open-Ended</td>
+<td>transformational / blind variation</td>
+<td>Boden 2004; Campbell 1960</td>
+<td>New</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="coverage-check-against-the-major-creativity-taxonomies">Coverage
+check against the major creativity taxonomies</h2>
+<ul>
+<li><strong>Boden's trichotomy</strong> (combinational / exploratory /
+transformational): fully covered (C3 / C1 / C5). ✓</li>
+<li><strong>Rhodes' 4 P's</strong> (Person, Process, Product, Press):
+CREST is a <em>Process×Product</em> benchmark; Person and Press don't
+apply to an agent. ✓ (correctly out of scope)</li>
+<li><strong>Guilford / Torrance divergent thinking</strong> (fluency,
+flexibility, originality, elaboration): CREST measures
+<strong>originality</strong> (New) well, but does <strong>not</strong>
+measure <strong>fluency/flexibility</strong> — the ability to generate
+<em>many, diverse</em> valid ideas. This is a genuine gap, but filling
+it needs a <em>set-level</em> scoring protocol (score a set of ideas on
+quantity × diversity × quality, à la NoveltyBench/Torrance), not the
+single-best per-item scoring CREST uses. → <strong>v2 extension, not a
+drop-in category.</strong></li>
+<li><strong>Getzels &amp; Csikszentmihalyi problem-finding</strong>:
+CREST tests creative problem-<em>solving</em>, not
+problem-<em>finding</em> (posing novel questions). Distinct and
+research-relevant. → candidate.</li>
+<li><strong>Scientific creativity / hypothesis generation</strong>
+(Klahr &amp; Dunbar; Simonton): generating a novel, <em>testable</em>,
+non-obvious hypothesis from evidence. C4 is method-invention and C2 is
+counterfactual reasoning — neither is hypothesis generation. →
+<strong>strongest candidate</strong>, because it is precisely what a
+<em>research</em> agent is for.</li>
+</ul>
+<h2 id="recommendation">Recommendation</h2>
+<ol type="1">
+<li><strong>Keep the 5 as the core that carries the finding.</strong>
+They are complete over creative <em>process</em> and each is
+theory-grounded; adding categories dilutes per-cell power (already thin
+at ~6/cell) and invites scope creep. For the task-dependence claim, 5 is
+right.</li>
+<li><strong>Do not add C6 as a category</strong> (see the double-check
+above): it is redundant in <em>process</em>, likely non-dissociating
+from C3, and hard to score validly. If hypothesis-generation coverage is
+wanted, add it as <em>domain instances</em> within C1 (constrained) and
+C5 (open-ended), not a 6th category.</li>
+<li><strong>Defer C7 Divergent Fluency/Flexibility to v2.</strong>
+Valuable, but it requires a different (set-level) scoring model; bolting
+it onto the single-best rubric would weaken construct validity.</li>
+<li><strong>Do not confuse domains with categories.</strong> CREST
+already spans 6 <em>domains</em> (bio/med, materials, econ, law,
+engineering, arts) — that is breadth. Categories are <em>process
+types</em>. Adding domains ≠ adding categories.</li>
+</ol>
+<h2 id="interaction-with-the-count-question--settled">Interaction with
+the count question — SETTLED</h2>
+<p>The scale-up recommended below happened: the shipped set is 5
+categories × 10 items = <strong>50</strong>, and C6 was not added. This
+section is retained as the rationale for the current taxonomy, not as an
+open decision. (The count audit it originally cross-referenced,
+<code>question_audit.md</code>, was a review of the earlier 30-item set
+and has been deleted as spent; <code>doc/item_vetting.md</code> and
+<code>doc/misc/audit_live_*.md</code> are the per-item record for the
+shipped 50.)</p>
+<h2 id="one-line-verdict">One-line verdict</h2>
+<p>Five categories are sufficient and defensible; the taxonomy stayed at
+5 and the budget went to <strong>10 items/category (50 total)</strong>
+rather than a 6th category.</p>
+<p><em>Refs: Boden 2004; Gentner 1983; Falkenhainer 1989; Byrne 2005;
+Simonton 2003; Campbell 1960; Guilford 1967 / Torrance 1974 (divergent
+thinking); Rhodes 1961 (4 P's); Getzels &amp; Csikszentmihalyi 1976
+(problem-finding); Klahr &amp; Dunbar 1988 (scientific discovery).
+Benchmark comparanda: NoveltyBench (set diversity), LiveIdeaBench
+(divergent), CreativityPrism (cross-domain), Si et al. 2024 (research
+ideation).</em></p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

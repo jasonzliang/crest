@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Benchmark design (P2) · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../README.html">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest--benchmark-design-spec-p2">CREST — Benchmark Design Spec
+(P2)</a></li><li><a href="#0-canonical-measured-figures--single-source-of-truth">0.
+Canonical measured figures — SINGLE SOURCE OF TRUTH</a></li><li><a href="#1-the-claim-mechanistic-scope-not-a-blanket-win">1. The claim
+(mechanistic scope, not a blanket win)</a></li><li><a href="#2-categories--domains-the-spine">2. Categories × domains (the
+spine)</a></li><li><a href="#3-per-item-contents">3. Per-item contents</a></li><li><a href="#4-contamination--length-controls">4. Contamination &amp; length
+controls</a></li><li><a href="#5-judge-design-bound-it-dont-validate-a-biased-judge">5. Judge
+design (bound it; don't "validate" a biased judge)</a></li><li><a href="#6-objective-judge-free-signals">6. Objective, judge-free
+signals</a></li><li><a href="#7-human-validation-cheap--native">7. Human validation (cheap +
+native)</a></li><li><a href="#8-external-anchors-capabilitygrounding-only--never-creativity">8.
+External anchors (capability/grounding only — never creativity)</a></li><li><a href="#9-report-a-profile-not-one-number">9. Report a profile, not one
+number</a></li><li><a href="#10-release--reproducibility">10. Release &amp;
+reproducibility</a></li><li><a href="#11-do-not-list-from-the-auditssweep">11. DO-NOT list (from the
+audits/sweep)</a></li><li><a href="#12-reviewer-defense-checklist-the-5-bars">12. Reviewer-defense
+checklist (the 5 bars)</a></li><li><a href="#13-p2-framing-constraints-from-the-p2p3-decision">13. P2 framing
+constraints (from the P2/P3 decision)</a></li></ul></nav></details><article><h1 id="crest--benchmark-design-spec-p2">CREST — Benchmark Design Spec
+(P2)</h1>
+<p>Productionizes
+<code>documentation/caesar/caesar_creativity_eval_spec.md</code>
+(external — that path is in the <code>science_moonshot</code> tree, not
+this repo) into the released benchmark, under the <strong>P2
+framing</strong>: CREST is the hero; Caesar is one cited entrant
+(arXiv:2604.20855); the finding is cross-agent and axis-dependent.</p>
+<h2 id="0-canonical-measured-figures--single-source-of-truth">0.
+Canonical measured figures — SINGLE SOURCE OF TRUTH</h2>
+<p>Recomputed 2026-07-31 from the shipped run
+<code>result/runs/2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3/records.jsonl</code>
+(<strong>250 records</strong> = 50 items x 5 entrants, 3 judges each,
+250/250 scored) via
+<code>python -m crest.analysis.stats --run &lt;that file&gt;</code>.</p>
+<p><strong>Cite this table; do not restate a number from it
+elsewhere.</strong> Five separate audits found the same defect — a
+figure corrected in one file and left stale in the file next to it — so
+a duplicate here is a bug, not redundancy. <em>Dataset composition</em>
+(item/domain/axis counts, dating, schema) is deliberately NOT here; it
+lives in <code>datasheet.md</code> §2, which is authoritative for
+it.</p>
+<div aria-label="0.
+Canonical measured figures — SINGLE SOURCE OF TRUTH table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">quantity</th>
+<th scope="col">value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>primary endpoint <code>min(New, Useful, Surprising)</code></td>
+<td>mean <strong>5.448</strong>, bootstrap 95% CI [5.144, 5.752]</td>
+</tr>
+<tr>
+<td>robustness pair <code>stats.py::min2()</code> =
+<code>min(New, Useful)</code></td>
+<td>mean <strong>5.664</strong>; r(min2, min3) =
+<strong>0.9886</strong></td>
+</tr>
+<tr>
+<td>per-axis means</td>
+<td>New 8.140 · Useful 5.772 · Surprising 7.508</td>
+</tr>
+<tr>
+<td>per-entrant composite — <strong>not a leaderboard</strong>, see
+§10</td>
+<td>openai_deepresearch 6.24 · openai_shallow 6.18 · claude_shallow 5.72
+· gemini_deepresearch_max 4.92 · gemini_shallow 4.18</td>
+</tr>
+<tr>
+<td>between-entrant spread on the composite</td>
+<td><strong>2.06</strong></td>
+</tr>
+<tr>
+<td>per-judge severity SPREAD, per axis (New/Useful/Surprising)</td>
+<td><strong>3.32 / 3.20 / 3.74</strong> — every one larger than the 2.06
+entrant spread</td>
+</tr>
+<tr>
+<td>judge_google leniency on the composite</td>
+<td><strong>+2.72</strong> vs judge_openai, <strong>+3.38</strong> vs
+judge_anthropic; those two differ by <strong>0.65</strong></td>
+</tr>
+<tr>
+<td>ICC(1,k), one-way — judge severity left in the error term</td>
+<td><strong>0.0 / 0.618 / 0.0</strong>; misses the 0.80 bar on all three
+axes</td>
+</tr>
+<tr>
+<td>ICC(3,k), two-way — judge main effect removed</td>
+<td><strong>0.736 / 0.807 / 0.759</strong>; only Useful clears 0.80</td>
+</tr>
+<tr>
+<td>judge share of VARIANCE vs judge share of SS</td>
+<td>var <strong>0.632 / 0.290 / 0.682</strong> · SS <strong>0.535 /
+0.215 / 0.590</strong>. Two DIFFERENT quantities — never interchange or
+average them</td>
+</tr>
+<tr>
+<td>r(New, Surprising)</td>
+<td><strong>0.883</strong> record-level; <strong>0.946</strong> pooling
+the 750 per-judge rows. <strong>CONTAMINATED</strong> — the v1 judge
+prompt itself told the judge "Surprising correlates with non-redundancy
+at r~0.95", so this number may NOT be cited as evidence the axes are
+inseparable until a run scored under prompt v2 exists
+(<code>JUDGE_PROMPT_VERSION</code>, <code>judge/score.py</code>).
+r(New,Useful)=0.415, r(Useful,Surprising)=0.395 record-level.</td>
+</tr>
+<tr>
+<td>Surprising is the SOLE lowest axis</td>
+<td><strong>51 / 250</strong> records (20%) — the reason it stays in the
+endpoint</td>
+</tr>
+<tr>
+<td>lowest-axis census (sole / including ties)</td>
+<td>Useful 143 / 190 · Surprising 51 / 102 · New 1 / 29</td>
+</tr>
+<tr>
+<td><code>creative_all_three</code> (all three &gt;= 6)</td>
+<td><strong>54.0%</strong>; 56.0% at t=5, 46.4% at t=7</td>
+</tr>
+<tr>
+<td>marginal effect of the Surprising gate</td>
+<td>dropping it from the "&gt;= t on all axes" gate changes
+<strong>1</strong> of 250 records at t=6 and <strong>3</strong> at
+t=7</td>
+</tr>
+<tr>
+<td><code>axis_isolated</code> binds? (labelled axis is lowest: sole /
+incl. ties; chance 33%)</td>
+<td>usefulness <strong>68% / 80%</strong> · surprise <strong>14% /
+40%</strong> · novelty <strong>0% / 11%</strong>. Valid for
+C1/usefulness ONLY; the novelty label is wrong-signed (those items are
+novelty-EASY)</td>
+</tr>
+<tr>
+<td>hard rules bind</td>
+<td>mean Useful <strong>2.84</strong> on the 329 judge rows citing a
+violation vs <strong>8.63</strong> on the 421 that cite none</td>
+</tr>
+<tr>
+<td>grounding gate</td>
+<td><strong>0</strong> of 250 records failed on this run, so the gate
+contributed nothing here. NOT RECOMPUTABLE: the widely-quoted "zero
+anti-fabrication firings; all 11 rejections were empty strings, 245
+records" was measured on run <code>2026-07-30T081356Z</code>, which is
+<strong>not on disk</strong> (<code>result/</code> is gitignored). Treat
+the 245/11 figures as unverifiable provenance, not as a reproducible
+measurement.</td>
+</tr>
+<tr>
+<td>field ablations (<code>analysis/ablate_fields.py</code>)</td>
+<td>withholding <code>known_answers</code> moves New by
+<strong>+0.98</strong> (the "novelty mirage"); withholding
+<code>expert_baseline</code> moves Surprising by <strong>-0.02</strong>.
+NOT RECOMPUTABLE from the run dir either — the ablation arms are not
+persisted; re-run the script to re-derive.</td>
+</tr>
+<tr>
+<td>conjunctive-threshold sensitivity on the PILOT</td>
+<td>rate swung <strong>5.4-36.1%</strong> across thresholds 5-7. Pilot
+records are not on disk; unverifiable, retained as the reason the
+threshold gate was demoted.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="1-the-claim-mechanistic-scope-not-a-blanket-win">1. The claim
+(mechanistic scope, not a blanket win)</h2>
+<p>Do <strong>not</strong> claim "Caesar is more creative than SOTA."
+The Caesar human data are a null overall (63/112, 95% CI [0.47, 0.65],
+p=0.22) and reverse the LLM judge on C1/C5. Claim instead a
+<strong>scope</strong> result, theory-grounded (Gentner
+structure-mapping; Byrne counterfactual): architectures that improve
+<strong>cross-domain (C3)</strong> and <strong>counterfactual
+(C2)</strong> synthesis, <strong>parity</strong> on meta-creativity
+(C4), with <strong>predicted nulls</strong> on constrained (C1) and
+open-ended (C5). The nulls confirm the mechanism and defuse
+"self-serving benchmark."</p>
+<p>These per-category directions now live in
+<code>analysis/preregistration.yaml</code> (they were removed from the
+item file, where a <code>predicted_direction</code> field could be
+edited after seeing results). That registration is <strong>not
+externally timestamped</strong>, so describe it as "the authors' stated
+prior expectation, recorded in the repository" — never as
+pre-registered. Note also that only C2/C3 are entailed by the
+mechanistic account; parity on C4 and nulls on C1/C5 are free
+parameters.</p>
+<h2 id="2-categories--domains-the-spine">2. Categories × domains (the
+spine)</h2>
+<ul>
+<li><strong>5 categories</strong> (C1–C5) as the failure-mode axes (see
+README table).</li>
+<li><strong>≥6 domains</strong>: biology/medicine, materials/chemistry,
+economics/business, law/policy, engineering, arts/humanities.</li>
+<li><strong>50 challenges</strong> (10 per category) so per-cell n = 10
+supports mixed-effects (challenge as random effect), retiring n=5
+Cliff's-Delta. Counts and balance: <code>datasheet.md</code> §2.</li>
+<li><strong>Dual-label</strong> every item: isolated N/U/S axis, domain,
+pre/post-training-cutoff.</li>
+<li>Include <strong>axis-isolating</strong> items (novelty-dominant,
+usefulness-dominant, surprise-dominant) so the aggregate cannot hide a
+weak axis. <strong>MEASURED: this holds for C1/usefulness only</strong>
+— see the <code>axis_isolated</code> row of §0. Narrow the claim
+accordingly.</li>
+</ul>
+<h2 id="3-per-item-contents">3. Per-item contents</h2>
+<p>Each challenge ships with: dated <strong>known-answers</strong> list
+(the prior-art set <strong>novelty</strong> is scored against — the axis
+formerly called "New") and <strong>hard rules</strong> to check
+(constrained items). Every query must require <strong>deep multi-source
+web synthesis</strong>, never a single-fact lookup.</p>
+<ul>
+<li><strong><code>expert_baseline</code> is JUDGE-HIDDEN since
+2026-07-30.</strong> It was the "Surprising" anchor until an ablation
+showed withholding it moved that axis by the amount in §0, while in 7
+items it doubled as the author's enumeration of the intended surprises
+(turning Surprising into graded recall against a key). Retained in the
+dataset for provenance; <code>judge/score.py::_judge_prompt</code> no
+longer sends it. Its answer-key content was split into a second
+judge-hidden field,
+<strong><code>author_expected_surprises</code></strong>.</li>
+<li>Fields REMOVED from <code>question/crest_challenges.jsonl</code>:
+<code>predicted_direction</code> →
+<code>analysis/preregistration.yaml</code> (it was a 5-row lookup on
+<code>category</code> sitting in editable data, so it could evidence no
+ordering); <code>rationale</code> →
+<code>question/item_design.jsonl</code>; <code>category_name</code>
+(derivable from <code>category</code>). The current field list and
+schema version live in <code>datasheet.md</code> §2.</li>
+<li><code>question/schema.json</code> is now <strong>enforced on
+load</strong> by <code>harness/run_crest.load_challenges</code>. It
+previously shipped unapplied — no <code>jsonschema</code> import existed
+anywhere in the repo — so <code>required</code> was decorative.</li>
+<li>Items with a defect that makes their scores uninterpretable are
+listed in <code>question/quarantine.yaml</code> and dropped from runs
+with a loud notice.</li>
+</ul>
+<h2 id="4-contamination--length-controls">4. Contamination &amp; length
+controls</h2>
+<ul>
+<li><strong>Post-cutoff subset</strong> (events/facts after baseline
+models' cutoffs) + a <strong>frozen dated corpus snapshot</strong>
+served through <strong>one shared search index</strong> (every agent
+searches the same frozen corpus — fair + reproducible). Report results
+split pre/post-cutoff. [NOT BUILT:
+<code>harness/agents.FrozenIndex</code> deliberately raises. Every run
+to date used LIVE provider-native web search and is <strong>not</strong>
+contamination-controlled; the manifest records that caveat per run.
+<code>time_sensitivity</code> is now written to
+<code>records.jsonl</code>, so the pre/post-cutoff split is computable
+in principle — but the label distribution (<code>datasheet.md</code> §2,
+"Splits") makes it unusable.]</li>
+<li><strong>Length/verbosity confound</strong> (Caesar paper r=0.47):
+pre-register <strong>≥3 length bins</strong>; report
+<strong>length-matched</strong> comparisons for every category.</li>
+</ul>
+<h2 id="5-judge-design-bound-it-dont-validate-a-biased-judge">5. Judge
+design (bound it; don't "validate" a biased judge)</h2>
+<ul>
+<li>Multi-vendor panel + <strong>≥1 open-weight</strong> judge. [NOT
+YET: the live panel is Anthropic + OpenAI + Google only; a genuinely
+third-party-hosted open-weight judge is the outstanding gap — see
+<code>judge/judge_config.live.yaml</code>.]</li>
+<li><strong>REVERSED 2026-07-30: the FULL PANEL scores every
+entrant</strong> (<code>leave_one_family_out: false</code>). With
+exactly 3 vendors, LOFO made judge identity perfectly confounded with
+entrant family: <code>judge_google</code> is a severity outlier (§0),
+LOFO removed it deterministically for exactly the Google entrants, no
+judge scored all five entrants, and ~60% of the observed spread tracked
+panel composition. The anti-self-preference control introduced a larger
+bias than the one it removed. LOFO is <strong>demoted to a robustness
+check</strong>: every judge row is stamped <code>same_family</code>, so
+the LOFO subset is recoverable post-hoc and self-preference enters the
+model as a covariate (<code>analysis/stats.py</code> MixedLM).</li>
+<li><strong>Primary endpoint:
+<code>min(New, Useful, Surprising)</code></strong> — all three axes.
+Surprising was briefly demoted; the demotion did not survive
+re-measurement (it is the sole binding axis in 20% of records). It
+remains <strong>WEAKLY ANCHORED</strong>: its judge-visible anchor field
+barely moved it when ablated, and it correlates hard with New — but that
+correlation is <strong>CONTAMINATED by the v1 rubric</strong> and must
+not be used as evidence the axes are inseparable. Figures and the full
+caveat: §0. The thresholded "all three ≥ 6" indicator is retained only
+for backward comparability; its threshold sensitivity is in §0.</li>
+<li>Report <strong>inter-judge agreement</strong> (Krippendorff α / ICC,
+implemented in <code>analysis/stats.py::reliability_report</code>) plus
+<strong>per-judge severity</strong>, blinded. Both the one-way ICC(1,k)
+and the two-way ICC(3,k) are reported because the judge main effect
+dominates the one-way figure — §0. <del>answer-order randomized</del> —
+VACUOUS and removed: scoring is single-answer, not pairwise, so there is
+no answer order to randomize.</li>
+<li>Scope: reliable on <strong>C2/C3/C4</strong>, <strong>unreliable on
+C1/C5</strong> — stated, not hidden.</li>
+<li><strong>Humans own the New/Surprising axes.</strong> [FUTURE WORK:
+no human validation has been run; see §7.]</li>
+</ul>
+<h2 id="6-objective-judge-free-signals">6. Objective, judge-free
+signals</h2>
+<ul>
+<li><strong>Distributional diversity</strong> across repeated
+generations (embedding-dispersion; anti-mode-collapse), especially for
+C5.</li>
+<li><strong>Citation faithfulness</strong> (grounding gate; see
+§8).</li>
+<li><strong>Do NOT</strong> use corpus-/training-novelty metrics
+(NovAScore, Creativity Index, etc.) as headline signals — they penalize
+grounded citation (a grounded agent scores below an ungrounded
+confabulator). Backfire.</li>
+</ul>
+<h2 id="7-human-validation-cheap--native">7. Human validation (cheap +
+native)</h2>
+<ul>
+<li>Re-analyze the existing 112 Caesar comparisons correctly:
+mixed-effects (rater + item random effects), Krippendorff α, per-item
+unit, multiplicity correction.</li>
+<li>Small native-artifact re-run: ~200–300 pairwise comparisons on
+<strong>real long-form cited outputs</strong> (not LLM-normalized),
+~10–15 domain-qualified raters, focused on C2/C3/C4. ~$3–8K, weeks,
+likely IRB-exempt. Power the categories actually claimed (~100/arm for a
+~65% effect); do NOT power the pooled claim.</li>
+<li>Use human data to <strong>bound</strong> (not certify) the
+judge.</li>
+</ul>
+<h2 id="8-external-anchors-capabilitygrounding-only--never-creativity">8.
+External anchors (capability/grounding only — never creativity)</h2>
+<ul>
+<li><strong>Grounding GATE:</strong> DeepResearch Bench
+<strong>FACT</strong> (citation faithfulness). Fail the gate ⇒ the
+record is UNSCORED (<code>creativity: null</code>,
+<code>scoring_status</code> <code>grounding_fail</code> or
+<code>empty_answer</code>) — never a fake 0 folded into the results.
+Defuses novelty-by-hallucination; run on ALL entrants' CREST outputs
+(cross-agent, not a Caesar showcase). [SHIPPED VERSION IS A PILOT PROXY,
+not FACT: <code>judge/score.py::grounding_gate</code> is a regex
+cue-counter. Its anti-fabrication clause has never fired (§0), so on a
+field of entrants that all use provider-native search it contributes
+nothing beyond an empty-answer check and must not be claimed as a
+working control. The declared
+<code>grounding_gate.metric: fact_precision</code> was materially
+stronger than the gate that runs; that config was deleted and survives
+as documentation only in
+<code>doc/judge_protocol_intent.md</code>.]</li>
+<li>Optional capability control: DeepResearch Bench RACE or
+LiveResearchBench — reported as capability, NEVER as creativity, NEVER a
+coverage leaderboard.</li>
+</ul>
+<h2 id="9-report-a-profile-not-one-number">9. Report a profile, not one
+number</h2>
+<p>Per category × length bin: New + Useful + Surprising + coherence +
+grounding + diversity. Show wins (C2, C3) AND predicted nulls (C1, C5)
+transparently.</p>
+<h2 id="10-release--reproducibility">10. Release &amp;
+reproducibility</h2>
+<p>Release benchmark + prompts + frozen snapshots + judge configs +
+human labels + all transcripts publicly (defuses "self-serving
+benchmark"; enables re-scoring). Datasheet in <code>datasheet.md</code>.
+Version + leaderboard. <code>analysis/ci_check.sh</code> is the
+pre-release gate that mechanically enforces this list; it is currently
+<strong>RED</strong> — run it for the live failure list rather than
+transcribing one here. <strong>No leaderboard has been
+promoted</strong>, because judge severity exceeds the between-entrant
+spread (§0) and no ranking claim is supportable.</p>
+<h2 id="11-do-not-list-from-the-auditssweep">11. DO-NOT list (from the
+audits/sweep)</h2>
+<ul>
+<li>No LiveIdeaBench / AGC-Bench / CreativityPrism / SerenQA as a RUN
+venue (retrieval-neutralizing or wrong world). Borrow rubrics only.</li>
+<li>No NoveltyBench headline (intra-model diversity; backfire).</li>
+<li>No coverage/reference benchmarks (ResearcherBench coverage,
+DeepScholar, ResearchRubrics, ReportBench, DEER) as a creativity signal
+— anti-Surprise.</li>
+<li>No corpus-novelty metrics as headline (penalize grounding).</li>
+<li>No fiction/EQ/tool-affordance benchmarks (wrong domain).</li>
+</ul>
+<h2 id="12-reviewer-defense-checklist-the-5-bars">12. Reviewer-defense
+checklist (the 5 bars)</h2>
+<ul class="task-list">
+<li><label><input type="checkbox"/>Human validation of the judge
+(agreement + IRR).</label></li>
+<li><label><input type="checkbox"/>An external axis the authors did not
+design (FACT faithfulness).</label></li>
+<li><label><input type="checkbox"/>Self-preference + contamination
+control (<code>same_family</code> as a covariate with
+leave-one-family-out as a robustness check — see §5; post-cutoff.
+Neither a frozen index nor a contamination control exists
+yet).</label></li>
+<li><label><input type="checkbox"/>Adequate N + correct significance
+(per-item; mixed-effects; correction).</label></li>
+<li><label><input type="checkbox"/>Novelty tied to usefulness/soundness
+(grounding gate).</label></li>
+</ul>
+<h2 id="13-p2-framing-constraints-from-the-p2p3-decision">13. P2 framing
+constraints (from the P2/P3 decision)</h2>
+<ul>
+<li>Caesar is CITED (arXiv:2604.20855), not described in-paper
+(IP/anonymity + COI).</li>
+<li>The grounding gate is cross-agent, not a Caesar-well-sourced
+showcase.</li>
+<li>A Caesar ablation is an OPTIONAL, IP-gated secondary module, added
+only if all five decision triggers are green (see
+<code>paper/p2_benchmark_only/crest_paper_outline.md</code>; the file
+was previously cited here as <code>crest_p2_iclr2027_outline.md</code>,
+which does not exist in this repo).</li>
+</ul>
+</article><footer><a href="../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+

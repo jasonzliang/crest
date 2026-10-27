@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>ICLR meta-review · CREST</title><style>
+:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
+body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
+a:hover { text-decoration-thickness:2px; }
+:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
+.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
+.skip:focus { top:1rem; }
+.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
+.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
+.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
+main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
+.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
+.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
+h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
+h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
+h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
+h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
+p { margin:.65rem 0 1rem; }
+li { margin:.35rem 0; }
+ul,ol { padding-left:1.5rem; }
+blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
+pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
+code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
+pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
+.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
+table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
+th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
+th { background:#eaf1f3; color:#183d49; }
+tr:last-child td { border-bottom:0; }
+tr:nth-child(even) td { background:#fafcfc; }
+.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
+summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
+.contents ul { list-style:none; padding-left:0; }
+.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
+.contents li { break-inside:avoid; font-size:.9rem; }
+img,svg,video { max-width:100%; height:auto; }
+math { max-width:100%; overflow:auto; }
+hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
+footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
+.index-group { margin:1rem 0; }
+.index-group a { font-weight:550; }
+.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
+@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
+</style><style id="crest-site-navigation">
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../../../../../README.html">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><p class="metadata">HTML edition · Converted October 26, 2026 · Original content and dates retained</p><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#area-chair-meta-review--crest-iclr-datasets--benchmarks">Area
+Chair Meta-Review — CREST (ICLR Datasets &amp; Benchmarks)</a></li><li><a href="#1-spot-checks">1. Spot-checks</a></li><li><a href="#1b-the-objection-all-four-reviewers-missed--and-it-is-the-one-that-kills-the-leaderboard">1b.
+The objection all four reviewers missed — and it is the one that kills
+the leaderboard</a></li><li><a href="#2-double-counting-contradictions-and-root-causes">2.
+Double-counting, contradictions, and root causes</a></li><li><a href="#3-triage-blocking--major--minor">3. Triage: BLOCKING / MAJOR /
+MINOR</a></li><li><a href="#4-prioritized-remediation-plan">4. Prioritized remediation
+plan</a></li><li><a href="#5-honest-minimum-viable-claim-today-with-no-new-data">5. Honest
+minimum viable claim, today, with no new data</a></li><li><a href="#6-ac-summary">6. AC summary</a></li></ul></nav></details><article><h1 id="area-chair-meta-review--crest-iclr-datasets--benchmarks">Area
+Chair Meta-Review — CREST (ICLR Datasets &amp; Benchmarks)</h1>
+<p><strong>Reviewers:</strong> 4 independent red-teams of the per-item
+field schema, all 3/10. <strong>AC action:</strong> spot-check the
+decision-relevant claims, deduplicate, triage, and produce one plan.</p>
+<p><strong>Evidence base.</strong> All run-data numbers below are
+computed on a frozen snapshot of
+<code>result/runs/2026-07-30T081356Z__crest__full50__git84f7a96__51ea6b/records.jsonl</code>
+taken at <strong>154 records / 147 scored / 32 of 50 items / 5 agents /
+2 judges per record</strong>. The live run was still appending, so
+reviewer numbers computed at n=138 and mine at n=147 differ by small
+amounts. Where a reviewer's number and mine disagree I report both and
+say which direction the discrepancy runs. <strong>No
+Caesar/author-system records exist in either run directory</strong> —
+this matters for p3 and is stated again in §5.</p>
+<blockquote>
+<p><strong>EVERY RUN NUMBER IN THIS FILE IS SUPERSEDED (annotated
+2026-07-31).</strong> This review was written against a <em>partial,
+2-judge</em> snapshot of a run that is <strong>no longer on
+disk</strong> (<code>result/</code> is gitignored), so none of its
+statistics is reproducible and several are wrong by large factors
+against the shipped instrument. The canonical run is
+<code>2026-07-31T040653Z</code> (250 records, 50/50 items, 3 judges
+each) and its recomputed figures live in
+<strong><code>doc/design.md</code> §0</strong>, which is the single
+source of truth. Read this file for its <em>arguments, triage and
+root-cause analysis</em> — that is what it is retained for — and take no
+number from it. Specific reversals: the "sole binding axis in 1 of
+138/147 records" premise behind demoting Surprising is wrong (§SC-6,
+§RC-B); the per-category <code>axis_isolated</code> hit rates in §RC-A
+are superseded; the truncation bug (§SC-8, §RC-A) is fixed, so every
+finding this file marks "downstream of RC-A" needs re-measuring, not
+citing.</p>
+</blockquote>
+<p><strong>AC decision (stated up front, then justified):</strong></p>
+<ul>
+<li><strong>p3_caesar_hybrid — reject this cycle.</strong> Its headline
+claim has zero supporting records, its ablation claim has zero
+supporting records, and its central rhetorical defense ("winning only
+where the mechanism predicts") rests on a pre-registration that
+<code>git log -S caesar_win</code> falsifies in one command.</li>
+<li><strong>p2_benchmark_only — major revision, not reject.</strong> The
+artifact is real and one nearly-free re-judge plus honest text can
+support a genuine, publishable methodological contribution. But it
+cannot go out with its current abstract.</li>
+</ul>
+<hr/>
+<h2 id="1-spot-checks">1. Spot-checks</h2>
+<p>I checked eight claims, chosen because each would flip my decision if
+false. Two reviewer claims are overturned in detail while their
+substance survives; three reviewer numbers are worse than the reviewer
+stated; one reviewer argument I discard as a weak instrument.</p>
+<h3 id="sc-1--canary-strings-asserted-but-absent-holds">SC-1 — Canary
+strings asserted but absent. <strong>HOLDS.</strong></h3>
+<p><code>grep -ci canary question/crest_challenges.jsonl</code> →
+<strong>0</strong>. <code>doc/datasheet.md:50-52</code> states "Each
+item embeds a canary string enabling post-hoc detection in future model
+training corpora" and <code>datasheet.md</code> §5 further leans on it
+("not a training set (canaries + license restrict training use)").
+<code>paper/p2_benchmark_only/sections/03_benchmark_design.tex</code>
+and <code>paper/p3_caesar_hybrid/sections/03_crest_benchmark.tex</code>
+both repeat the claim. The only <code>canary</code> hits in the repo are
+these prose assertions plus incidental occurrences in agent transcripts.
+One command, contradicts a datasheet claim. This is the archetype of a
+D&amp;B integrity failure.</p>
+<h3 id="sc-2--frozen-retrieval-snapshot-released-holds-worse-than-stated">SC-2
+— Frozen retrieval snapshot released. <strong>HOLDS (worse than
+stated).</strong></h3>
+<p><code>harness/agents.py:62-66</code> — <code>class FrozenIndex</code>
+whose constructor raises <code>NotImplementedError</code>;
+<code>harness/run_crest.py:236</code> calls it with the comment
+<code># raises (future work)</code>. The p2 abstract nonetheless asserts
+"a frozen, shared retrieval index gives a fair, reproducible,
+contamination-controlled run mode" and "We release the challenges, judge
+harness, <strong>frozen snapshots</strong>, and datasheet." The p3
+abstract lists "frozen retrieval snapshot" among released artifacts.
+<code>datasheet.md</code> goes further than the reviewers noted: it
+claims the manifest is "Released as a manifest (URL + timestamp +
+SHA-256 per document)." Three documents describe a released artifact
+that is a stub that deliberately raises.</p>
+<h3 id="sc-3--rubricmd-is-loaded-by-no-code-the-deployed-prompt-drops-its-key-clause-holds">SC-3
+— rubric.md is loaded by no code; the deployed prompt drops its key
+clause. <strong>HOLDS.</strong></h3>
+<p><code>grep -rn rubric --include=*.py .</code> returns two
+occurrences, both inside comments (<code>harness/run_crest.py:82</code>,
+<code>harness/cache.py:6</code>). <code>judge/rubric.md</code> is
+documentation only. <code>rubric.md:17</code> — "<em>Judge against the
+dated known-answers list, NOT against the web at large (avoids
+penalizing grounding).</em>" — is <strong>absent</strong> from
+<code>_judge_prompt</code> (<code>judge/score.py:96-123</code>).</p>
+<p>Partial credit to the authors that R1 did not give: the deployed
+prompt does say "New: novelty vs the DATED KNOWN ANSWERS below." So the
+list is named. But the scoring anchor immediately after is
+"<strong>Restating anything already known</strong> =&gt; 1-3", which is
+unanchored and re-delegates to judge world-knowledge, and the
+anti-web-at-large instruction that would resolve the ambiguity is gone.
+Substantive claim upheld.</p>
+<p><strong>Two further findings in this family that no reviewer
+flagged</strong>, and they are sharper:
+<code>judge/judge_config.yaml</code> sets
+<code>randomize_answer_order: true</code> and
+<code>grounding_gate: {metric: fact_precision, threshold: 0.8}</code>.
+<code>judge_config.live.yaml</code>'s own header states that "Only
+<code>judges</code> and <code>threshold_all_three</code> are read by
+<code>JudgePanel.from_config</code>." So the shipped config file
+<strong>declares two experimental controls that no code reads</strong> —
+and one of them (<code>fact_precision</code>) is a materially different
+grounding gate from the cue-counting heuristic actually implemented in
+<code>grounding_gate()</code>. <code>analysis/stats.py:414</code>
+completes the pattern: <code>--prereg</code> defaults to
+<code>crest/analysis/preregistration.yaml</code>, which does not exist,
+and <code>prereg</code> appears at exactly one line in the file — the
+argparse definition. It is never consumed.</p>
+<h3 id="sc-4--predicted_direction-is-not-a-pre-registration-holds-verbatim">SC-4
+— <code>predicted_direction</code> is not a pre-registration.
+<strong>HOLDS, verbatim.</strong></h3>
+<p><code>git show eadce0c:crest/question/schema.json</code> — the
+original enum was
+<code>["caesar_win", "parity", "predicted_null"]</code>. The original
+data:
+<code>{('C2','caesar_win'): 10, ('C3','caesar_win'): 10, ('C1','predicted_null'): 10, ('C5','predicted_null'): 10, ('C4','parity'): 10}</code>.
+The value was renamed to <code>favored</code> in <code>b89761e</code>
+(2026-07-29 23:34), <strong>14h13m</strong> after <code>eadce0c</code>
+(2026-07-29 09:21), in a commit titled "reorganize + config-driven eval
+entry point + model adapters + <strong>honesty fixes</strong>". No
+commit in the history contains predictions without results.
+<code>paper/p2_benchmark_only/sections/05_experiments.tex:4</code>
+claims "We pre-register the per-category predictions and the analysis
+plan before scoring <strong>(OSF, timestamped)</strong>" — there is no
+OSF identifier anywhere in the repo.</p>
+<p>A field whose enum was named after the intended winner is not a
+pre-registration; it is a statement of hope. This is the most damaging
+single finding in the whole set, because p3's defense against "you found
+this post hoc" is <em>entirely</em> this field.</p>
+<h3 id="sc-5--hard_rules-self-contradiction-in-c1_materials_chemistry_01-holds-all-four-sub-claims">SC-5
+— <code>hard_rules</code> self-contradiction in
+C1_materials_chemistry_01. <strong>HOLDS (all four
+sub-claims).</strong></h3>
+<p>Read verbatim from the item:</p>
+<ul>
+<li><strong>Se permit/ban.</strong> R6: "X may be a halide (Cl, Br, I),
+a <strong>chalcogenide (S, Se)</strong>, a nitride, or an oxide". R9:
+"(This deliberately bans Ag, Au, Pd, Pt, Rh, Ir, Re, In, Te,
+<strong>Se</strong>, Bi, and Sb…)". Direct contradiction.</li>
+<li><strong>R4 excludes the item's own reference answer.</strong> R4
+requires mu = rB/rX in <strong>[0.40, 0.90]</strong> and explains it was
+"deliberately widened below the classic 0.414 radius-ratio cutoff
+<strong>to admit sulfide perovskites</strong>." The item's own
+<code>expert_baseline</code> reports "octahedral
+mu~<strong>0.39</strong>-0.42 (Shannon radii)" for BaZrS3/BaHfS3 (Zr4+
+0.72 / S2- 1.84 = 0.391). The rule written to admit sulfide perovskites
+excludes the sulfide perovskite the item nominates.</li>
+<li><strong>R2 permits a motif and bans its definition.</strong> R2
+permits "a vacancy-ordered A2BX6" and in the same sentence requires
+"Corner-sharing BX6 octahedral connectivity in at least 2 dimensions …
+this bans 0-D/1-D <strong>isolated</strong>-octahedra motifs."
+Vacancy-ordered A2BX6 (Cs2SnI6-type) <em>is</em> the isolated-octahedra
+motif.</li>
+<li><strong>R11 ∧ R12 unsatisfiable for a retrieval-only agent.</strong>
+R11 demands "predicted energy above the convex hull … &lt;= 50 meV/atom,
+with the competing decomposition products explicitly named"; R12 voids
+the answer if the composition "appear[s] in … ICSD/<strong>Materials
+Project</strong>/OQMD/AFLOW". A composition with a citable hull energy
+is in the database; one absent from the database has no citable hull
+energy. A web-research agent cannot run its own DFT.</li>
+</ul>
+<p><strong>Reviewer overturned on a citation, upheld on the
+finding:</strong> R2 asserts the R11/R12 catch-22 "also in
+C1_materials_chemistry_31." That item has <strong>7</strong> hard rules,
+no R11 or R12 — the citation <strong>FAILS</strong>. The defect
+<em>is</em> present in that item under different numbering: R1 requires
+checking "ICSD, Materials Project" for non-existence while R3 requires
+"the DFT/<strong>Materials Project</strong> band gap" and R4 the
+"<strong>Materials Project</strong> grand-potential/reaction phase
+diagram." Same catch-22, wrong rule labels.</p>
+<p>I also confirm <strong>C3_arts_humanities_17 R5</strong> misstates a
+theorem it forbids misstating: it requires correct use of "'holonomy
+around a contractible loop is trivial iff the connection is flat'." As
+written for a single loop the forward direction is false — a non-flat
+connection can have trivial holonomy around a particular contractible
+loop. The correct statement quantifies over <em>all</em> contractible
+loops.</p>
+<h3 id="sc-6--the-three-axis-structure-collapses-holds-two-reviewer-numbers-overturned">SC-6
+— The three-axis structure collapses. <strong>HOLDS; two reviewer
+numbers overturned.</strong></h3>
+<p>On my n=147 snapshot. <em>(Superseded — do not lift these values;
+<code>design.md</code> §0 has the canonical recomputation on 250 records
+/ 3 judges. The verdict "collapses" also no longer follows: the
+New/Surprising correlation is contaminated by the v1 judge prompt, so it
+cannot evidence inseparability either way.)</em></p>
+<div aria-label="SC-6
+— The three-axis structure collapses. HOLDS; two reviewer
+numbers overturned. table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">Quantity</th>
+<th scope="col">R3 claim</th>
+<th scope="col">AC measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>r(New, Surprising), aggregated</td>
+<td>—</td>
+<td><strong>0.938</strong></td>
+</tr>
+<tr>
+<td>r(New, Surprising), per-judge verdicts</td>
+<td>—</td>
+<td><strong>0.929</strong></td>
+</tr>
+<tr>
+<td>ICC(1,1) New / Useful / Surprising</td>
+<td>0.420 / 0.181 / 0.226</td>
+<td><strong>0.395 / 0.184 / 0.226</strong></td>
+</tr>
+<tr>
+<td>Disattenuated r(New, Surprising)</td>
+<td>"&gt;1.0"</td>
+<td><strong>3.11</strong></td>
+</tr>
+<tr>
+<td>kappa on <code>creative_all_three</code> between judges</td>
+<td>0.149</td>
+<td><strong>0.135</strong></td>
+</tr>
+<tr>
+<td><code>all_three</code> rate at threshold 6.0</td>
+<td>—</td>
+<td><strong>27.2%</strong></td>
+</tr>
+<tr>
+<td>rate across +/-1 point (t=5 / t=7)</td>
+<td>6.3% – 37.0%</td>
+<td><strong>5.4% – 36.1%</strong></td>
+</tr>
+<tr>
+<td>records with an axis exactly 6.00</td>
+<td>25%</td>
+<td><strong>25.9%</strong></td>
+</tr>
+<tr>
+<td>Adding S&gt;=6 to an N&amp;U&gt;=6 gate</td>
+<td>removes 1 of 41</td>
+<td><strong>removes 2 of 42</strong></td>
+</tr>
+<tr>
+<td>Leaderboard tau(New, Surprising)</td>
+<td>1.00</td>
+<td><strong>0.80</strong> (r = 0.977)</td>
+</tr>
+<tr>
+<td>Surprising is <em>sole</em> binding axis</td>
+<td>1 of 138</td>
+<td><strong>22 of 147</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Overturned:</strong> tau is 0.80, not 1.00 —
+<code>claude_shallow</code> and <code>gemini_shallow</code> swap (they
+are 0.37 apart on New). And "Surprising is the sole binding axis in 1 of
+138 records" is wrong as written: by argmin it is the sole minimum in
+<strong>22 of 147</strong>. R3 appears to have computed the
+<em>threshold</em>-relative version, which does replicate (S is the sole
+sub-threshold axis in 2 of 147; it removes 2 of 42 from an N&amp;U
+gate). R3 should state the defensible version.</p>
+<p><strong>Worse than stated:</strong> a disattenuated correlation of
+<strong>3.11</strong> is not "high" — it is a model violation. It says
+the two axes are one latent variable and the reliability estimate is
+mis-specified. That is stronger evidence for R3's conclusion than R3's
+own framing.</p>
+<p><strong>R3's bar citation is apples-to-oranges, and the corrected
+comparison still fails.</strong>
+<code>benchmark_best_practices.md:125</code> sets the 0.80 bar on
+<strong>ICC(k)</strong> — panel reliability — not on ICC(1,1). Applying
+the doc's own Spearman-Brown formula to my ICC(1) estimates for the
+deployed <strong>k=2</strong> panel: ICC(2) = <strong>0.566 New / 0.311
+Useful / 0.369 Surprising</strong>. Judges needed to reach
+ICC(k)&gt;=0.80: <strong>6.1 / 17.7 / 13.7</strong>. Comparison
+repaired; conclusion unchanged and quantified. Useful — the axis that
+binds 96 of 147 records — would need an 18-judge panel at the current
+instrument's reliability.</p>
+<p><strong>Score leakage HOLDS and is 2 items, not 1.</strong>
+<code>expert_baseline</code> is injected verbatim at
+<code>score.py:118</code>. <code>C1_materials_chemistry_01</code> ends:
+"Predicted expert scores on the isolated axis: Useful ~7-8 …, New ~3-4,
+Surprising ~2-3." <code>C3_arts_humanities_17</code> leaks the same
+way.</p>
+<p><strong>Surprise pre-specification HOLDS, and this is the mechanism,
+not a side-effect.</strong> R3 says 9 of 10 surprise-isolated items
+pre-specify the surprising content. My read of the C2
+<code>expert_baseline</code> fields confirms the substance.
+<code>C2_biology_medicine_34</code>, in full: "The baseline would not
+anticipate that erythrocyte apoptosis machinery could reshape
+<em>Plasmodium</em> virulence evolution, that stiffer cells force a
+different splenic filtration architecture, or that fetal nucleated red
+cells crossing the placenta would rewrite prenatal diagnostics." That is
+an answer key with three enumerated answers, handed to the judge.
+<code>C2_materials_chemistry_07</code> is explicit: "coherent
+consequences beyond this list are the surprising ones."</p>
+<h3 id="sc-7--hard_rules-bind-r2s-concession-holds-and-it-is-the-artifacts-best-asset">SC-7
+— <code>hard_rules</code> bind (R2's concession). <strong>HOLDS, and it
+is the artifact's best asset.</strong></h3>
+<p>Useful when a judge cites a rule violation: <strong>2.69</strong>
+(n=221 verdicts). Without: <strong>8.37</strong> (n=73). Gap
+<strong>5.68</strong>. R2's 2.84/8.27 replicates at the earlier n. I add
+a dose-response check the reviewers did not run:
+<code>corr(n_hard_rules, mean Useful) = **-0.495**</code> across 32
+items — <strong>correctly signed</strong>. This is the only
+correctly-signed dose-response in the artifact and it is the one thing
+p2 can defensibly claim today (§5).</p>
+<p>But the same data shows the judge cannot agree on <em>which</em> rule
+was broken: mean Jaccard on the violated-rule sets between the two
+judges is <strong>0.127</strong>, with exact-set agreement
+<strong>11.6%</strong>, and both judges report no violation in only
+<strong>11 of 147</strong> records. So the <em>presence</em> of a
+violation is a strong signal and its <em>identity</em> is noise. Both
+facts must be reported.</p>
+<h3 id="sc-8--12000-character-truncation-holds-substantially-worse-than-r2-stated">SC-8
+— 12000-character truncation. <strong>HOLDS; substantially worse than R2
+stated.</strong></h3>
+<p><code>judge/score.py:121</code> — <code>{report_text[:12000]}</code>.
+Measured against the transcripts:</p>
+<ul>
+<li>mean answer length <strong>21,451</strong> chars, median 17,972, max
+57,282;</li>
+<li><strong>66.0%</strong> of scored answers (97 of 147) exceed 12,000
+chars;</li>
+<li>for those, the judge sees a mean of <strong>49%</strong> of the
+answer;</li>
+<li><strong>56.8%</strong> of all violation citations come from records
+whose answer was cut.</li>
+</ul>
+<p>R2 quoted ~38%; the true exposure is that two-thirds of answers are
+judged at roughly half length. Hard rules of the form "the answer must
+state every ion's oxidation state," "the specific radii used must be
+reported," "report the DFT band gap" are satisfied in exactly the
+methods/table sections that get cut. Truncation therefore
+<em>manufactures</em> violations, and a violation caps Useful at &lt;=3,
+and Useful is the sole binding axis for <strong>96 of 147</strong>
+records.</p>
+<hr/>
+<h2 id="1b-the-objection-all-four-reviewers-missed--and-it-is-the-one-that-kills-the-leaderboard">1b.
+The objection all four reviewers missed — and it is the one that kills
+the leaderboard</h2>
+<p>Leave-one-family-out, with a 3-vendor panel and one severity-outlier
+judge, assigns a <strong>different panel to each entrant family by
+construction</strong>:</p>
+<div aria-label="1b.
+The objection all four reviewers missed — and it is the one that kills
+the leaderboard table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">entrant</th>
+<th scope="col">family</th>
+<th scope="col">panel actually used</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>openai_shallow</code>, <code>openai_deepresearch</code></td>
+<td>openai</td>
+<td>{anthropic, <strong>google</strong>}</td>
+</tr>
+<tr>
+<td><code>claude_shallow</code></td>
+<td>anthropic</td>
+<td>{<strong>google</strong>, openai}</td>
+</tr>
+<tr>
+<td><code>gemini_shallow</code>,
+<code>gemini_deepresearch_max</code></td>
+<td>google</td>
+<td>{anthropic, openai} — <strong>no google</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>And <code>judge_google</code> is a severity outlier, measured
+<strong>within the same records</strong> (paired, so this is pure
+severity and not content):</p>
+<div aria-label="1b.
+The objection all four reviewers missed — and it is the one that kills
+the leaderboard table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">judge</th>
+<th scope="col">n verdicts</th>
+<th scope="col">New</th>
+<th scope="col">Useful</th>
+<th scope="col">Surprising</th>
+<th scope="col">flags <code>creative</code></th>
+<th scope="col">mean #violations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>judge_anthropic</code></td>
+<td>122</td>
+<td>5.24</td>
+<td>3.42</td>
+<td>4.04</td>
+<td><strong>6.6%</strong></td>
+<td>2.48</td>
+</tr>
+<tr>
+<td><code>judge_openai</code></td>
+<td>85</td>
+<td>5.46</td>
+<td>2.64</td>
+<td>4.48</td>
+<td><strong>7.1%</strong></td>
+<td>3.61</td>
+</tr>
+<tr>
+<td><code>judge_google</code></td>
+<td>87</td>
+<td>7.89</td>
+<td>6.49</td>
+<td>8.08</td>
+<td><strong>55.2%</strong></td>
+<td>1.16</td>
+</tr>
+</tbody>
+</table></div>
+<p>Paired within-record differences on min(N,U,S):
+<code>google - openai = **+2.04**</code>,
+<code>google - anthropic = **+3.24**</code>,
+<code>anthropic - openai = **-0.02**</code>.</p>
+<p>So two judges are calibrated to each other and the third is ~2-3
+points more lenient, and LOFO deterministically removes the lenient one
+<strong>exactly for the Google entrants</strong>. Consequence:</p>
+<pre tabindex="0"><code>observed min-axis leaderboard        google on panel?
+  openai_shallow          5.20            yes
+  openai_deepresearch     5.10            yes
+  claude_shallow          3.14            yes
+  gemini_shallow          3.08            NO
+  gemini_deepresearch_max 2.34            NO
+observed spread                       = 2.86
+mean(with lenient judge) - mean(without) = 1.77</code></pre>
+<p><strong>About 60% of the entire observed leaderboard spread is
+attributable to which judge families LOFO happened to leave in.</strong>
+The two bottom-ranked entrants are precisely the two never scored by the
+lenient judge, and the design provides <strong>no common-judge
+comparison</strong> for them at all — <code>judge_google</code> never
+scores a Google entrant, so there is no judge shared by all five
+entrants. The leaderboard is not identifiable from this data.</p>
+<p>This also explains R3's finding more economically than R3 does: if
+one severity dimension dominates every axis for every entrant, of course
+New and Surprising produce the same ranking.</p>
+<p>The anti-self-preference control (O7) has, at k=2, introduced a
+larger bias than the one it removes. The fix is cheap (§4, item 1) — but
+nothing in either paper survives without it.</p>
+<hr/>
+<h2 id="2-double-counting-contradictions-and-root-causes">2.
+Double-counting, contradictions, and root causes</h2>
+<p>Four reviewers found four field defects. There are <strong>four root
+causes</strong>, and they do not map one-to-one onto the four
+fields.</p>
+<h3 id="rc-a--one-12-character-instrument-bug-drives-most-of-the-field-objections">RC-A
+— One 12-character instrument bug drives most of the "field"
+objections</h3>
+<p><code>report_text[:12000]</code> truncates 66% of answers to ~49%.
+Truncation manufactures hard-rule violations. A violation caps Useful at
+&lt;=3. Useful is the sole binding axis in 96 of 147 records.
+Therefore:</p>
+<ul>
+<li>R2's "the rules are unverifiable by construction" is
+<strong>partly</strong> a truncation artifact, not a rule-authoring
+artifact;</li>
+<li>R3's "Useful ICC(1,1) = 0.184, the worst axis" is downstream of
+judges disagreeing about content half of them cannot see;</li>
+<li>R4's "<code>axis_isolated</code> has negative discriminative
+validity" is <strong>entirely</strong> downstream. My measurement of the
+labeled-axis hit rate is not the flat 28% R4 reports — it is violently
+heterogeneous: <strong>C1 (labeled <code>usefulness</code>) 82%, C2
+(<code>surprise</code>) 41%, C3 (<code>novelty</code>) 4%, C5
+(<code>novelty</code>) 3%</strong>, overall 35% vs 33% chance.
+<code>axis_isolated</code> is not an invalid label. It is a
+<em>valid</em> label for C1 and a label that Useful-domination
+overwrites for C3/C5. Fix RC-A and this objection has to be re-measured
+from scratch.</li>
+</ul>
+<p><strong>Direct contradiction between R2 and R4.</strong> R2's
+positive finding (hard_rules demonstrably bind, 5.68-point gap) <em>is
+the mechanism of</em> R4's negative finding (the labeled axis is not the
+binding axis). They cannot both be reported as independent defects. R4's
+<code>axis_isolated</code> objection should be withdrawn as an
+independent charge and folded into RC-A.</p>
+<h3 id="rc-b--new-and-surprising-are-two-names-for-one-measurement-against-one-author-written-key">RC-B
+— New and Surprising are two names for one measurement against one
+author-written key</h3>
+<p><code>known_answers</code> is a <strong>negative</strong> key ("do
+not credit this"). <code>expert_baseline</code> is a
+<strong>positive</strong> key that in C2 literally enumerates the
+intended surprises. Both are pasted into the same prompt. So both axes
+ask the judge one question: <em>is this content on the author's
+list?</em> Hence r=0.93, disattenuated 3.11, identical rankings, kappa
+0.135.</p>
+<p>R1's "the novelty yardstick is uncitable" and R3's "Surprising is
+redundant" and R3's "graded recall against an author key" are
+<strong>one defect with two field names</strong>. Any remediation that
+touches only <code>known_answers</code> or only
+<code>expert_baseline</code> will not move the correlation.</p>
+<p>The authors already know this.
+<code>doc/misc/field_justification.md</code> reports "CREST's own judges
+score New and Surprising at r = 0.77-0.94, with 28% of verdicts
+assigning identical values," cites the CFA literature showing two-factor
+beats three-factor, and recommends demoting Surprising to secondary. The
+finding is in the repo and not in the papers.</p>
+<h3 id="rc-c--documentation-as-claim-the-papers-describe-an-instrument-that-was-never-built">RC-C
+— Documentation-as-claim: the papers describe an instrument that was
+never built</h3>
+<p>One defect, eight instances, spread across all four reviews: canaries
+(SC-1), frozen index (SC-2), <code>rubric.md</code> not loaded and its
+key clause dropped (SC-3), <code>randomize_answer_order: true</code>
+read by nothing (SC-3),
+<code>grounding_gate.metric: fact_precision</code> read by nothing
+(SC-3), <code>--prereg</code> pointing at a nonexistent file that is
+never consumed (SC-3), OSF timestamp (SC-4), human validation (13
+assertion sites, zero data). <code>schema.json</code> belongs here too:
+it is a well-formed JSON Schema that <strong>no code validates</strong>
+— <code>grep -rn "jsonschema" --include=*.py .</code> returns nothing —
+so its <code>required</code> list, including <code>known_answers</code>,
+is decorative, and <code>Challenge.from_json</code>
+(<code>run_crest.py:35-38</code>) uses <code>d.get()</code>, so a
+missing <code>known_answers</code> becomes <code>None</code> and the
+judge silently reads "(none provided)".</p>
+<p>This is not four field problems. It is one process problem:
+<strong>specification documents are being shipped as evidence.</strong>
+For a D&amp;B submission that is the single most reputationally
+expensive category of error, because every instance is falsifiable in
+one command.</p>
+<h3 id="rc-d--under-powered-by-construction-and-the-projects-own-doc-says-so">RC-D
+— Under-powered by construction, and the project's own doc says so</h3>
+<p>R3's rater-level unreliability and R4's item-level power complaint
+are the same complaint at two levels of the design.</p>
+<ul>
+<li><strong>Rater level:</strong> ICC(1) = 0.395/0.184/0.226; deployed
+panel k=2 gives ICC(2) = 0.566/0.311/0.369; the project's own
+<code>benchmark_best_practices.md:125</code> bar of ICC(k)&gt;=0.80
+needs 6/18/14 judges.</li>
+<li><strong>Item level:</strong> MDE for a paired agent contrast at n=10
+items/cell is <strong>2.47</strong> points (R4: 2.26); the observed C2
+spread — p2's declared positive control — is <strong>1.75</strong> (R4:
+1.83). Below MDE. <code>category x domain</code> cells are n=1 (10
+cells) or n=2 (20 cells), so the <code>(1|challenge)+(1|judge)</code>
+model <em>with a domain term</em> promised in
+<code>p2/05_experiments.tex:8</code> is not identifiable.</li>
+<li>ICC(item) is far lower than R4 reported: <strong>0.171 New / 0.041
+Useful / 0.006 min3</strong> (R4 said 0.359). Items explain essentially
+no variance in the compound endpoint. R4 understated this.</li>
+</ul>
+<p><code>benchmark_best_practices.md</code> prescribes the remedies —
+size the panel by Spearman-Brown, use
+<code>min(New, Useful, Surprising)</code> on the 1-10 scale instead of a
+"fragile threshold crossing", report ICC(k) as headline, encode
+checkable constraints as a "deterministic pre-filter before human
+rating." <strong>None of the four was done.</strong> The most efficient
+rebuttal the authors can write is one that follows their own
+document.</p>
+<h3 id="reviewer-arguments-i-discard">Reviewer arguments I discard</h3>
+<p><strong>R1's dose-response argument (corr(n known_answers, mean New)
+= +0.51).</strong> I measure <strong>+0.341</strong> on 32 items, so the
+sign replicates and the magnitude does not. But the argument is a weak
+instrument regardless: list length is not a dose of novelty difficulty.
+Authors wrote longer lists for well-trodden areas, which are also the
+areas where a judge with no anchor rates generously. The positive
+correlation is as consistent with "authors calibrated list length to
+field maturity" as with "the field does not work." R1 should drop this
+and lead with the zero-citation finding, which is unarguable.</p>
+<p><strong>R1's "22 items in 11 wordings" / "7 items with
+obviousness-tags."</strong> Both undercount the heterogeneity. With a
+combined pattern I find <strong>20 of 50 items</strong> carry
+judge-directive prose inside <code>known_answers</code>, <strong>38
+entries</strong>, and <strong>27 distinct normalized wordings</strong> —
+not 11. And <strong>11 items</strong> (not 7) contain obviousness-tags
+rather than prior art. Crucially the split is <em>systematic by
+category</em>, which R1 missed: for C1/C3/C5 <code>known_answers</code>
+holds published prior art; for C2 it holds the author's list of
+"obvious" counterfactual consequences — e.g.
+<code>C2_law_policy_37</code>: "Dockets overwhelmed and huge backlogs
+form without negotiated pleas (obvious)." There is no publication
+asserting that. So <code>known_answers</code> is not one field measuring
+one construct noisily; it is <strong>two constructs sharing a
+key</strong>, and the C2 half cannot carry a citation even in principle.
+That reframing matters for remediation: adding DOIs fixes C1/C3/C5 and
+is <em>impossible</em> for C2, which needs a separate field.</p>
+<p><strong>R1's zero-URL/zero-DOI count and missing prior art.</strong>
+Confirmed: <strong>729</strong> entries, <strong>0</strong> containing
+<code>http</code>, <strong>0</strong> containing a DOI,
+<strong>50.6%</strong> with no 4-digit year (R1: 52.6%). And
+<code>C5_law_policy_47</code> has 21 entries covering FPTP through
+liquid democracy while omitting Phragmén (1894), Nanson (1882), and
+random ballot / random dictatorship (Gibbard 1977) — three methods whose
+defining principles are absent from all 21 listed entries. An agent that
+proposes sortition-over-ballots earns New credit for a 1977 result.
+Upheld.</p>
+<hr/>
+<h2 id="3-triage-blocking--major--minor">3. Triage: BLOCKING / MAJOR /
+MINOR</h2>
+<p><strong>The line I draw.</strong> For a D&amp;B submission the
+reviewer's decision turns on two things: (i) does the released artifact
+match its description, and (ii) is the headline claim identifiable from
+the released data. So:</p>
+<ul>
+<li><strong>BLOCKING</strong> = the <em>submitted claim</em> cannot be
+made true within a rebuttal cycle, either because it needs new data
+collection or because making it true requires withdrawing the paper's
+contribution. Note that "the fix is cheap" does not make an objection
+non-blocking if the fix changes every number in the paper — a rebuttal
+cannot introduce an entirely new results section.</li>
+<li><strong>MAJOR</strong> = repairable before camera-ready with
+existing data plus engineering, or removable by an honest text edit that
+leaves a contribution standing.</li>
+<li><strong>MINOR</strong> = hygiene. A reviewer will note it and it
+will not move a score.</li>
+</ul>
+<h3 id="blocking">BLOCKING</h3>
+<p><strong>B1. The leaderboard is confounded with panel composition
+(§1b).</strong> 1.77 of the 2.86-point observed spread tracks whether
+the lenient judge was on the panel; no judge is shared by all five
+entrants. Every ranking, dissociation, and crossover claim in both
+papers is unidentifiable. The re-judge that fixes it is nearly free, but
+it replaces the entire results section — that is a revision, not a
+rebuttal.</p>
+<p><strong>B2. "Human-validated judge panel" with zero human
+data.</strong> Asserted in <strong>13 places</strong> including <em>both
+abstracts</em>, p2 §01's contribution list, all of p2 §04, both
+conclusions, and <code>datasheet.md</code>.
+<code>find . -iname "*human*" -o -iname "*annot*" -o -iname "*rater*"</code>
+returns <strong>nothing</strong>. p2 §04 goes furthest: it reports a
+"bounded scope (honest)" result that the panel "is reliable on C2/C3/C4
+but <em>not</em> on C1/C5" and builds a validity-stratification protocol
+on it. That stratification is derived from a study that does not exist.
+Credible expert annotation cannot be collected in a rebuttal window, and
+for a benchmark whose entire instrument is a subjective LLM judge with
+ICC(k=2)=0.31 on the binding axis, an unvalidated judge is a fundamental
+artifact deficiency, not a missing appendix.</p>
+<p><strong>B3. The three-axis construct is not identified
+(RC-B).</strong> "The first benchmark to score deep-research outputs on
+the full New/Useful/Surprising triad" is p3's stated contribution. A
+disattenuated New-Surprising correlation of 3.11, Surprising removing 2
+of 42 records from an N&amp;U gate, and 9 of 10 C2 items handing the
+judge the answer key together mean the triad is a dyad plus a leak.
+Repairing it means rewriting <code>expert_baseline</code> for 50 items
+<em>and</em> re-measuring. The paper can retreat to a two-axis claim —
+which <code>doc/misc/field_justification.md</code> already recommends —
+but the triad claim as submitted cannot be rescued.</p>
+<p><strong>B4. Pre-registration misrepresentation (SC-4).</strong>
+<code>git log -S caesar_win</code> plus two <code>git show</code>
+commands. Enum named after the intended winner; renamed 14 hours
+pre-submission in a commit titled "honesty fixes"; no commit with
+predictions and no results; "(OSF, timestamped)" with no OSF record;
+<code>--prereg</code> pointing at a file that does not exist and is
+never read. The only repair is to delete every pre-registration claim —
+which removes p3's sole defense against "this is post hoc," i.e. removes
+the argument the paper is built on. Unrecoverable this cycle.</p>
+<h3 id="major">MAJOR</h3>
+<p><strong>M1. 12000-char truncation (SC-8, RC-A).</strong> Judge-only
+re-run. Must be first; every other number depends on it.</p>
+<p><strong>M2. Self-contradictory and unsatisfiable hard rules
+(SC-5).</strong> At least 1 item verified in full detail with four
+independent defects; R2 reports &gt;=6 of 50. Needs a rule audit plus
+re-judge. Bounded work.</p>
+<p><strong>M3. <code>expert_baseline</code> leaks target scores (2
+items) and answer keys (all C2).</strong> Data edit plus re-judge. Cheap
+and high-value.</p>
+<p><strong>M4. Asserted-absent artifacts other than human data:</strong>
+canaries, order randomization, <code>fact_precision</code> gate, dead
+config keys, unvalidated <code>schema.json</code>. Canaries and order
+randomization are each &lt;20 lines — <em>implement them</em>. The
+frozen index is not; <em>delete the claim</em>.</p>
+<p><strong>M5. <code>threshold_all_three = 6.0</code> is
+unpre-registered and fragile</strong> (27.2% at 6.0; 5.4%-36.1% across
++/-1; 25.9% of records sit exactly at 6.00). Switch the primary endpoint
+to <code>min(N,U,S)</code> on the 1-10 scale, per the project's own
+<code>benchmark_best_practices.md</code>. Analysis-only.</p>
+<p><strong>M6. Schema and loader hygiene:</strong>
+<code>schema.json</code> never validated,
+<code>additionalProperties</code> unset, no <code>enum</code> on
+<code>domain</code>, no <code>minItems</code> on
+<code>known_answers</code>, <code>category_name</code> absent from the
+schema and silently dropped by <code>from_json</code> and present in
+<strong>6</strong> distinct values (one item carries a long-form
+description as its value), <code>hard_rules</code> not in
+<code>required</code>, <code>time_sensitivity</code> not written to
+<code>records.jsonl</code>, <code>d.get()</code> turning a missing
+<code>known_answers</code> into "(none provided)". Half a day, no
+re-run, plus a CI test.</p>
+<p><strong>M7. Statistical over-reach:</strong> drop <code>domain</code>
+from the mixed model (cells n=1-2, not identifiable); report the MDE;
+state that C2 fails as a positive control at 1.75 &lt; 2.47. Text plus
+re-analysis.</p>
+<h3 id="minor">MINOR</h3>
+<ul>
+<li><code>time_sensitivity</code> has <code>post_cutoff</code> n=1 and
+is never written to records — drop the field or populate it. It
+currently supports no contamination analysis at all.</li>
+<li>50.6% of <code>known_answers</code> entries lack a year despite the
+field's own "dated" framing.</li>
+<li><code>rationale</code> is 20.3% of item bytes and is never read at
+runtime (the authors already document this).</li>
+<li>With k=2 after LOFO, "median-aggregated" is a mean of two.
+Reword.</li>
+</ul>
+<hr/>
+<h2 id="4-prioritized-remediation-plan">4. Prioritized remediation
+plan</h2>
+<p>Ordered by (value / effort), and by dependency — item 1 must precede
+all analysis because every number changes.</p>
+<div aria-label="4. Prioritized remediation
+plan table" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Change</th>
+<th scope="col">Kills</th>
+<th scope="col">Effort</th>
+<th scope="col">Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Re-judge everything with a common panel and no
+truncation.</strong> Delete <code>[:12000]</code> (chunk-and-aggregate,
+or a long-context judge). Score every record with <strong>all
+three</strong> judges — LOFO becomes a robustness check with a judge
+random effect, not the primary. Report per-judge severity openly.</td>
+<td>B1, M1, and forces a re-measure of the folded-in
+<code>axis_isolated</code> charge</td>
+<td>hours</td>
+<td><strong>re-judge only</strong> (cache exists)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Delete every claim the repo cannot instantiate.</strong>
+"human-validated" (13 sites), "(OSF, timestamped)", "frozen retrieval
+snapshot"/"frozen snapshots", "canary", "order-randomized",
+"pre-register(ed)" wherever no artifact exists. Delete the dead
+<code>--prereg</code> arg and the two unread
+<code>judge_config.yaml</code> keys, or implement them. <strong>Make
+p3's abstract placeholder disclaimer visible text — it is currently a
+LaTeX comment and invisible in the PDF.</strong></td>
+<td>B4, most of M4, all of RC-C</td>
+<td>~1 day</td>
+<td><strong>text only</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Demote Surprising to secondary; make <code>min(N,U,S)</code>
+the primary endpoint.</strong> Report ICC(k) as headline with
+ICC(1)+kappa alongside. Disclose the New-Surprising collapse in the
+paper, with the disattenuated-r&gt;1 result stated as a model
+violation.</td>
+<td>B3 as fatal, M5, R3 in full</td>
+<td>1-2 days</td>
+<td><strong>text + re-analysis</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Strip the answer keys out of the judge prompt.</strong>
+Remove the 2 predicted-score leaks. Split the field:
+<code>expert_baseline</code> (the <em>expected</em> answer,
+judge-visible) vs <code>author_expected_surprises</code> (sidecar, never
+shown).</td>
+<td>M3, half of RC-B</td>
+<td>2-3 days</td>
+<td>data edit + <strong>re-judge</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Audit and repair <code>hard_rules</code>; make the checkable
+subset deterministic.</strong> (a) machine-check every rule pair for
+permit/ban collisions over element and structure vocabularies; (b)
+<strong>assert that every item's own <code>expert_baseline</code>
+satisfies that item's own rules</strong> — C1_materials_chemistry_01
+fails this today; (c) implement
+<code>benchmark_best_practices.md</code>'s prescription: a deterministic
+pre-filter for the arithmetic rules (charge balance, t, mu, tau,
+abundance, toxicity) so the LLM judge only scores in-constraint outputs.
+Report violation-set Jaccard (0.127) as a known limit.</td>
+<td>M2, R2 in full</td>
+<td>~1 week</td>
+<td>data + code + <strong>re-judge</strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Cite the novelty yardstick and split its two
+constructs.</strong> Add a URL or DOI to every prior-art entry (729
+entries, 0 citations today). Add a <code>kind</code> tag:
+<code>prior_art</code> vs <code>obvious_consequence</code> — 11 items
+currently mix them and all 10 C2 items are the latter, which cannot be
+cited even in principle and needs its own field. Add the missing prior
+art (Phragmén 1894, Nanson 1882, Gibbard 1977 for C5_law_policy_47).
+Move all judge-directive prose (20 items, 38 entries, 27 wordings) out
+of the data and into <strong>one</strong> template rendered by
+<code>score.py</code>.</td>
+<td>R1 in full, half of RC-B</td>
+<td>1-2 weeks</td>
+<td>data edit + <strong>re-judge</strong></td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Schema and loader hygiene + CI.</strong>
+<code>additionalProperties: false</code>, <code>minItems</code> on
+<code>known_answers</code>, <code>enum</code> on <code>domain</code>,
+add <code>category_name</code> and <code>hard_rules</code>; validate on
+load; make <code>from_json</code> <strong>raise</strong> on missing
+<code>known_answers</code> instead of emitting "(none provided)"; fix
+the 6th <code>category_name</code> value; write or delete
+<code>time_sensitivity</code>. One CI test that validates all 50
+items.</td>
+<td>M6, R4's schema bullets</td>
+<td>half a day</td>
+<td><strong>code only</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Re-scope the statistics to what n supports.</strong> Drop
+<code>domain</code> from the model. Publish the MDE and state C2 is
+underpowered as a positive control (1.75 &lt; 2.47). Either scope claims
+to categories at n=50 (MDE 1.11) or add items. Ship the "statistics
+card" the project's own doc asks for.</td>
+<td>M7, RC-D at item level</td>
+<td>2-3 days</td>
+<td><strong>text + re-analysis</strong></td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Human validation.</strong> &gt;=3 experts, all five
+categories, a stratified subset; Krippendorff alpha (ordinal) plus
+judge-human agreement against the human-human ceiling. Panel sizing from
+the measured ICC(1), which today implies 6/18/14 judges — so this study
+is also what tells you whether to fix the instrument instead of buying
+judges.</td>
+<td>B2 — the only real fix</td>
+<td>weeks, real budget</td>
+<td><strong>new human data</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Do 1-3 before anything else.</strong> Items 1 and 2 together
+cost about a day and a half and remove every objection that a reviewer
+can verify in one command. Item 3 converts the strongest surviving
+objection into a disclosed limitation using the authors' own internal
+analysis. That is the whole rebuttal.</p>
+<hr/>
+<h2 id="5-honest-minimum-viable-claim-today-with-no-new-data">5. Honest
+minimum viable claim, today, with no new data</h2>
+<h3 id="what-this-artifact-can-support">What this artifact can
+support</h3>
+<ol type="1">
+<li><p><strong>A released benchmark artifact.</strong> 50
+expert-authored deep-research creativity challenges with per-item
+scoring machinery and an open judge harness, agent-facing prompts held
+short and open (median ~110 words) with the scoring machinery
+judge-side. That design choice is real, defensible, and novel. This is a
+genuine D&amp;B contribution and it is not what the reviewers
+attacked.</p></li>
+<li><p><strong>One positive empirical finding: <code>hard_rules</code>
+bind.</strong> Useful is <strong>2.69</strong> when a judge cites a rule
+violation vs <strong>8.37</strong> when it does not (n=294 verdicts),
+and <code>corr(n_hard_rules, mean Useful) = -0.50</code> across 32
+items. This is the artifact's only correctly-signed dose-response, and —
+importantly — it is a <strong>within-verdict</strong> contrast, so it
+survives the panel-composition confound that destroys the leaderboard.
+Report it with its limit: judges agree a rule was broken but not which
+one (Jaccard 0.127).</p></li>
+<li><p><strong>A publishable negative/methodological finding.</strong>
+On 147 verdicts: New and Surprising are not separable (per-judge r=0.93;
+disattenuated correlation 3.11, a model violation); single-rater ICC(1)
+is 0.40/0.18/0.23 so the deployed 2-judge panel reaches ICC(2) of
+0.57/0.31/0.37; the binding axis is Useful in 96 of 147 records; and —
+the sharpest result — <strong>leave-one-family-out with a 3-vendor panel
+makes the leaderboard unidentifiable</strong>, because judge severity
+varies by 2-3 points on the 1-10 scale and LOFO assigns panels by
+entrant family. That last result is a real, generalizable warning to
+everyone building LLM-judge leaderboards with self-preference controls,
+and CREST is in a strong position to be the paper that reports
+it.</p></li>
+</ol>
+<p>A paper making claims 1-3 is honest, is supported by data in this
+repo today, and is interesting. It is a different paper from either
+submission.</p>
+<h3 id="what-it-currently-claims-and-must-stop-claiming">What it
+currently claims and must stop claiming</h3>
+<p><strong>p2, <code>sections/00_abstract.tex:2</code>:</strong></p>
+<ul>
+<li><em>"Entrants run under their provider-native web search, and a
+frozen, shared retrieval index gives a fair, reproducible,
+contamination-controlled run mode."</em> — <strong>delete the second
+clause.</strong> <code>FrozenIndex.__init__</code> raises.</li>
+<li><em>"Scoring uses a <strong>human-validated</strong>,
+leave-one-family-out, <strong>median-aggregated</strong> multi-vendor
+judge panel"</em> — delete "human-validated" (no human data);
+"median-aggregated" is a mean of two after LOFO.</li>
+<li><em>"Evaluating a field of frontier deep-research agents, we find
+that agent creativity is axis- and task-dependent and dissociates across
+systems: the pattern is theory-predicted"</em> —
+<strong>withdraw.</strong> Replace with something like: "In a pilot on
+five frontier agents we find that judge-severity variance under
+leave-one-family-out exceeds the between-agent spread, and we therefore
+make no ranking claim."</li>
+<li><em>"We release the challenges, judge harness, <strong>frozen
+snapshots</strong>, and datasheet."</em> — delete "frozen
+snapshots".</li>
+</ul>
+<p><strong>p2 elsewhere:</strong></p>
+<ul>
+<li><code>01_introduction.tex:11</code> <em>"A validated judge. A
+<strong>human-validated</strong>, leave-one-family-out judge panel …
+reported with per-category reliability and honest bounds on where it
+fails."</em> — delete "human-validated"; the per-category reliability
+numbers must be the measured ones.</li>
+<li><code>04_judge_validation.tex:8</code> and <code>:10</code> — the
+entire "Human validation" paragraph and the "reliable on C2/C3/C4 but
+<em>not</em> on C1/C5" validity-stratification describe a study that
+does not exist. Cut, or relabel as planned work in future tense.</li>
+<li><code>05_experiments.tex:4</code> <em>"(OSF, timestamped)"</em> —
+delete.</li>
+<li><code>05_experiments.tex:10</code> <em>"All headline numbers
+therefore come from the pre-registered frozen-index run and remain
+<strong>[PLACEHOLDER]</strong>."</em> — a D&amp;B submission cannot ship
+with placeholder headline numbers while the abstract asserts a finding.
+Fill from the re-judged run (plan item 1) or remove the finding from the
+abstract. As submitted the abstract and §5 contradict each other.</li>
+<li><code>09_conclusion.tex:2</code> — "contamination-controlled",
+"human-validated", "frozen snapshots", and <em>"Our cross-agent finding
+is that creativity does not order current agents on a single scale---it
+dissociates by task in a theory-predicted way"</em> all go.</li>
+</ul>
+<p><strong>p3, <code>sections/00_abstract.tex</code>:</strong></p>
+<ul>
+<li><em>"<strong>human-validated</strong>, multi-vendor
+leave-one-family-out judge panel"</em> — delete "human-validated".</li>
+<li><em>"Using CREST we report a task-dependent effect: an
+exploration-based research agent … is more creative on tasks that
+require connecting distant fields or counterfactual ('what-if')
+reasoning, but not on single-answer or open-ended tasks."</em> —
+<strong>withdraw.</strong> There are <strong>no Caesar records in either
+run directory.</strong> The five agents present are
+<code>claude_shallow</code>, <code>gemini_shallow</code>,
+<code>openai_shallow</code>, <code>openai_deepresearch</code>,
+<code>gemini_deepresearch_max</code>.</li>
+<li><em>"Ablations indicate the effect is mechanism-driven---disabling
+one component of the agent degrades one task type but not others"</em> —
+<strong>withdraw.</strong> No ablation data exists.</li>
+<li><em>"whereas winning only where the mechanism predicts, on a
+benchmark whose own author's system does not top every category, argues
+the effect is real"</em> — <strong>delete.</strong> This argument is
+entirely load-bearing on the pre-registration, and
+<code>git log -S caesar_win</code> shows the prediction field was named
+after the intended winner and renamed 14 hours before submission.</li>
+<li><em>"We release CREST---questions, <strong>frozen retrieval
+snapshot</strong>, judge, and analysis"</em> — delete "frozen retrieval
+snapshot".</li>
+<li>The <code>% [NUMBERS ARE PLACEHOLDERS: …]</code> disclaimer is a
+<strong>LaTeX comment</strong> and does not render. Either make it
+visible text or do not submit p3 this cycle. Shipping an abstract that
+asserts findings while the disclaimer is invisible is the version of
+this problem that a reviewer will describe as deliberate.</li>
+</ul>
+<p><strong>p3 elsewhere:</strong> <code>03_crest_benchmark.tex:30</code>
+<em>"We <strong>pre-register</strong> the per-task-type prediction"</em>
+and <code>:35</code> <em>"the pre-registered predicted direction"</em> →
+"the authors' stated prior expectation, recorded in the item file; not
+externally timestamped."</p>
+<p><strong><code>doc/datasheet.md:47-52</code></strong> — the
+frozen-index manifest ("Released as a manifest (URL + timestamp +
+SHA-256 per document)") and the canary claim. Delete or implement. Note
+the canary claim is also load-bearing for the datasheet's licensing
+argument in §5, which must change too.</p>
+<hr/>
+<h2 id="6-ac-summary">6. AC summary</h2>
+<p>The four reviewers are substantially right and somewhat over-counted.
+Of eight decision-relevant claims I checked, <strong>six HOLD</strong>,
+<strong>two are PARTIAL</strong> (R3's tau=1.00 and sole-binding-axis
+framing; R2's C1_31 citation), and in <strong>four cases the true state
+is worse than the reviewer reported</strong> (truncation 66% not 38%;
+disattenuated r 3.11 not "&gt;1"; ICC(item) 0.006-0.18 not 0.359; two
+score-leaking items not one). One reviewer argument — R1's dose-response
+— I discard as a weak instrument. One reviewer charge — R4's
+<code>axis_isolated</code> invalidity — I fold into another root cause
+and it must be re-measured after the truncation fix.</p>
+<p>More importantly: <strong>all four reviewers missed the objection
+that actually decides the paper.</strong> Leave-one-family-out with a
+3-vendor panel and a 2-3 point judge-severity spread makes the
+leaderboard non-identifiable, and accounts for roughly 60% of the
+observed agent spread. The four field-schema critiques are about
+<em>whether the axes mean anything</em>; this one is about <em>whether
+the headline number means anything</em>. It does not.</p>
+<p>The good news, and the authors should hear it: <strong>the single
+highest-value fix costs hours, not weeks.</strong> A judge-only re-run
+with a common panel and no truncation (a generation cache exists) plus a
+day of deleting unsupported claims removes every objection a reviewer
+can verify in one command. What remains after that is a real artifact
+and an honest, genuinely interesting methodological result about the
+limits of LLM-judged creativity. That paper is publishable. Neither of
+the papers currently in front of me is.</p>
+</article><footer><a href="../../../../../docs/index.html">Browse all documents</a></footer></main></body></html>
+
