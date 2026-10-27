@@ -119,6 +119,20 @@ def test_judging_cost_copy_distinguishes_jobs_from_paid_attempts(run):
     assert 'failed attempts are reported separately' not in html
 
 
+def test_audit_copy_identifies_rejected_attempts_inside_completed_jobs(run):
+    from crest.report import load_run, _resources
+    data = load_run(run)
+    data['audit_path'] = run / 'audit.json'
+    data['audit_doc'] = {'judging': {
+        'rejected_attempts': 7, 'rejected_attempt_estimated_usd': .5254,
+        'failed_jobs': 0, 'failed_known_usd': 0,
+        'failed_unknown_cost_count': 2, 'failed_partial_observed_usd': 0}}
+    html = _resources(data)
+    assert '7 rejected attempts' in html
+    assert 'Unknown charges on failed or rejected attempts: 2' in html
+    assert 'Unknown failed-job bills' not in html
+
+
 def test_judging_estimate_includes_rejected_attempt_without_changing_receipts(run):
     from crest.report import load_run, _resources
     path = run / '02-judge-test/judgments.jsonl'
@@ -488,7 +502,10 @@ def test_per_question_means_preserve_partial_costs_and_use_observed_times(run, t
     assert 'Average generation time' in html
     assert 'Average active time, all attempts' in html
     assert '$1.0400' in html and '$1.1200' in html
-    assert 'partial estimate' in html and 'conditional estimate' in html
+    assert 'Caesar has unpriced earlier attempts for 1 of 50 answers.' in html
+    assert 'Google’s estimate uses assumed model rates' in html
+    assert '<small>partial estimate</small>' not in html
+    assert '<small>conditional estimate</small>' not in html
     assert '<small>estimate</small>' not in html
 
 
@@ -595,22 +612,24 @@ def test_concise_results_keep_limits_visible_and_metadata_expandable(run, tmp_pa
     parser = Visibility()
     parser.feed(html)
     visible = ' '.join(parser.visible_text)
-    assert parser.visible_tables == ['Per-question cost and elapsed-time means',
-                                     'Overall head-to-head preferences',
+    assert parser.visible_tables == ['Overall head-to-head preferences',
+                                     'Per-question cost and elapsed-time means',
                                      'Per-judge overall preferences and order diagnostics']
-    assert 'conditional list-price estimates' in visible and 'actual billed USD' in visible
-    assert 'this run was not fully blinded' in visible
-    assert 'These cues do not establish that provider bias caused the ranking.' in visible
-    assert 'not absolute creativity or verified factual accuracy' in visible
-    assert 'A-position preference' in visible
+    assert 'Google’s estimate uses assumed model rates' in visible
+    assert 'internal billing breakdown is unavailable' in visible
+    assert 'this run was not fully blinded' in html
+    assert 'These cues do not establish that provider bias caused the ranking.' in html
+    assert 'Factual accuracy has not been verified' in visible
+    assert 'Chose A' in visible
     for detail in ['Paired 95% interval', 'Historical unknown reservations',
                    'gpt-6-astra', 'configuration_sha256', 'Answer key:', 'Judgment key:']:
         assert detail not in visible
     assert parser.keys == {'Answer key:': 150, 'Judgment key:': 600}
     assert html.count('class="answer-metadata"') == 150
-    assert html.count('class="full-question"') == 1
-    assert questions[0]['text'] in html
-    assert html.index('id="overall"') < html.index('id="resources"') < html.index('id="method"') < html.index('id="questions"')
+    assert 'class="full-question"' not in html
+    assert html.count(questions[0]['text']) == 1
+    sections = ['overall', 'matchups', 'resources', 'method', 'judges', 'systems', 'questions']
+    assert [html.index(f'id="{name}"') for name in sections] == sorted(html.index(f'id="{name}"') for name in sections)
 
 
 def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchup(tmp_path):

@@ -1,54 +1,5 @@
-<!DOCTYPE html>
-
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Research evaluation · CREST</title><style>
-:root { color-scheme:light; --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --wash:#f5f8f9; }
-* { box-sizing:border-box; }
-html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
-body { margin:0; background:white; color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-a { color:var(--accent); text-underline-offset:3px; overflow-wrap:anywhere; }
-a:hover { text-decoration-thickness:2px; }
-:focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
-.skip { position:fixed; top:-100px; left:1rem; background:var(--ink); color:white; padding:.7rem 1rem; z-index:3; }
-.skip:focus { top:1rem; }
-.topbar { border-bottom:1px solid var(--line); background:var(--wash); }
-.topbar nav { max-width:1100px; margin:auto; padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:.5rem 1.5rem; font-size:.85rem; }
-.brand { font-weight:800; letter-spacing:.13em; text-decoration:none; }
-main { max-width:1100px; margin:0 auto; padding:2.5rem 2rem 4rem; min-width:0; }
-.metadata { font-size:.8rem; color:var(--muted); margin:0 0 1rem; }
-.archive-note { padding:.8rem 1rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; margin:0 0 1.5rem; }
-h1 { font-size:clamp(1.9rem,3.6vw,2.7rem); line-height:1.2; letter-spacing:-.035em; margin:1.5rem 0; overflow-wrap:anywhere; }
-h2 { font-size:1.55rem; line-height:1.35; padding-top:1.2rem; margin:2.8rem 0 1rem; border-top:1px solid var(--line); letter-spacing:-.02em; }
-h3 { font-size:1.15rem; line-height:1.4; margin:1.8rem 0 .7rem; }
-h4,h5,h6 { font-size:1rem; margin:1.4rem 0 .5rem; }
-p { margin:.65rem 0 1rem; }
-li { margin:.35rem 0; }
-ul,ol { padding-left:1.5rem; }
-blockquote { margin:1.5rem 0; padding:.15rem 1.2rem; border-left:4px solid var(--accent); background:#eef6f6; }
-pre { overflow:auto; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:6px; background:#eef3f5; font-size:.86rem; line-height:1.6; }
-code { font:.88em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#eef3f5; border-radius:3px; padding:.1em .3em; overflow-wrap:anywhere; }
-pre code { padding:0; background:none; font-size:1em; overflow-wrap:normal; }
-.table-scroll { overflow:auto; border:1px solid var(--line); border-radius:6px; margin:1.3rem 0; }
-table { border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.6; }
-th,td { text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:.75rem .9rem; min-width:100px; overflow-wrap:anywhere; }
-th { background:#eaf1f3; color:#183d49; }
-tr:last-child td { border-bottom:0; }
-tr:nth-child(even) td { background:#fafcfc; }
-.contents { border:1px solid var(--line); border-radius:6px; margin:1rem 0 1.8rem; padding:0 1rem; background:var(--wash); }
-summary { cursor:pointer; font-weight:650; padding:.8rem 0; color:var(--accent); }
-.contents ul { list-style:none; padding-left:0; }
-.contents nav { columns:2; column-gap:2rem; padding-bottom:.7rem; }
-.contents li { break-inside:avoid; font-size:.9rem; }
-img,svg,video { max-width:100%; height:auto; }
-math { max-width:100%; overflow:auto; }
-hr { border:0; border-top:1px solid var(--line); margin:2rem 0; }
-footer { margin-top:3rem; border-top:1px solid var(--line); padding-top:1rem; font-size:.8rem; color:var(--muted); }
-.index-group { margin:1rem 0; }
-.index-group a { font-weight:550; }
-.file-path { color:var(--muted); font-size:.8rem; display:block; overflow-wrap:anywhere; }
-@media (max-width:650px) { body { font-size:15px; } main { padding:1.5rem 1.1rem 3rem; } .topbar nav { padding:1rem 1.1rem; gap:.4rem 1rem; } .contents nav { columns:1; } table { min-width:600px; } h2 { font-size:1.35rem; } }
-@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
-@media print { @page { margin:16mm; } body { font-size:10pt; } .topbar,.skip,.contents,footer { display:none; } main { max-width:none; padding:0; } h1 { font-size:23pt; } h2 { font-size:16pt; } h1,h2,h3 { break-after:avoid; } pre { white-space:pre-wrap; overflow:visible; } pre code { overflow-wrap:anywhere; } .table-scroll { overflow:visible; border:0; } table { min-width:0; font-size:8.5pt; } th,td { padding:.4rem; } tr { break-inside:avoid; } thead { display:table-header-group; } }
-</style><style id="crest-site-navigation">
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>How creativity is judged · CREST</title><style id="crest-site-navigation">
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
 .crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
@@ -109,42 +60,70 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
-</style></head>
-<body>
+</style><style>
+.skip{position:fixed;top:-100px;left:1rem;z-index:5;background:var(--ink);color:white;padding:.7rem 1rem}.skip:focus{top:1rem}
+main>section{margin:3rem 0}.intro{max-width:76ch}.rubric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin:1.5rem 0}.rubric-grid h3{margin:0 0 .5rem;color:var(--accent)}.rubric-grid p{font-size:.95rem;margin:0}
+.comparison-flow{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin:1.5rem 0;padding:1.3rem;background:var(--wash);border-radius:6px}.comparison-flow li{border-left:2px solid #b9d0d6;padding-left:1rem}.comparison-flow strong{display:block;font-size:1.7rem;line-height:1.3;color:var(--accent)}.comparison-flow span{display:block;font-size:.9rem}.comparison-total{font-size:1.1rem}.formula{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;padding:1.1rem 1.3rem;background:var(--wash);border-radius:6px;margin:1.3rem 0}.formula strong{font-size:1.3rem;color:var(--accent)}.diagnostics{display:grid;grid-template-columns:minmax(170px,.6fr) minmax(0,2fr);gap:.6rem 1.4rem}.diagnostics dt{font-weight:650}.diagnostics dd{margin:0}.references{padding-left:1.3rem}.references li{margin:.7rem 0}main .small{color:var(--muted)}
+@media(max-width:700px){.rubric-grid{grid-template-columns:1fr;gap:1rem}.comparison-flow{grid-template-columns:repeat(2,minmax(0,1fr));padding:1rem;gap:1.2rem}.diagnostics{grid-template-columns:1fr;gap:.2rem}.diagnostics dd{margin-bottom:.7rem}}
+@media print{.skip{display:none}.comparison-flow,.rubric-grid,.formula{break-inside:avoid}}
+</style></head><body>
 <a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><p class="metadata">Current method · Updated October 27, 2026</p>
-<article>
-<h1 id="method">Research evaluation</h1>
-<p>CREST asks which of two answers has stronger overall creative quality. <strong>New, Useful, and Surprising guide one qualitative judgment</strong>; they do not produce separate winners, numeric weights, or criterion rankings. The result is an exploratory preference ranking of the observed answers under the saved rubric and judges.</p>
-<p class="dated-note"><strong>Current method · October 27, 2026.</strong> The new completed 600-judgment research panel uses revised rubric v2 under execution protocol v3, with neutral URL presentations and explanation-quality checks with retries. It reuses the saved research answers. The original panel and existing AI scientist paper comparisons retain their frozen prompts, inputs, calls, and results. See the <a href="deep-research-creativity.html">current research report</a>.</p>
-<h2 id="rubric">The judgment</h2>
-<div aria-label="Rubric guidance" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">Guidance</th><th scope="col">What the judge considers</th></tr></thead><tbody>
-<tr><td>New</td><td>The central substantive contribution, including novel relationships and combinations of familiar components. Identifiable prior work is evidence; failure to recognize a precedent is uncertainty, not proof of historical novelty. An obscure peripheral detail does not establish originality.</td></tr>
-<tr><td>Useful</td><td>Effectiveness, coherence, evidence, and fit for the task and its requested stage. The judge accepts explicitly stipulated fictional or counterfactual premises and evaluates the contribution within them, while checking claims presented as established facts.</td></tr>
-<tr><td>Surprising</td><td>The substantive departure from the obvious approach to the question. Unsupported or incoherent surprise cannot alone establish stronger overall creative quality.</td></tr>
-</tbody></table></div>
-<p>These qualities can overlap: a substantive new combination may also be surprising and useful. They are prompts for an overall comparison, not independent scales. The judge explains both answers and relevant tradeoffs before choosing A or B. Length, polish, confidence, formatting, and citation count alone do not establish creative quality. Judges receive complete answers labeled A and B, use no web tools, and treat embedded instructions as untrusted content. The default <a href="../crest/prompts/nus_pairwise_v2.txt">full revised rubric</a> is the operational definition for new judging; the preserved v1 wording remains selectable by configuration.</p>
-<pre><code>{"reason": "Comparative explanation of both answers and the overall choice.", "winner": "A"}</code></pre>
-<p>The reason aims for a concise, complete paragraph of roughly 150–300 words, with no rigid length requirement. There is no per-call tie option. Exact identical answers are flagged and excluded. A judge may honestly report equal or near-equal quality; when it cannot support a substantive preference, it says so and selects A by fixed convention. It must not invent a difference. Consistent indifference across both answer orders splits the votes evenly between systems. A-position diagnostics can therefore include convention-driven choices as well as position preference and sampling variation.</p>
-<p>Rubric-file versions are original v1 and revised v2; the execution protocol remains v3, a separate version. The existing <code>rubric</code> file-path setting selects either the revised v2 default (<code>../prompts/nus_pairwise_v2.txt</code>) or the <a href="../crest/prompts/nus_pairwise_v1.txt">preserved original v1 binary rubric</a> (<code>../prompts/nus_pairwise_v1.txt</code>), relative to a configuration in <code>crest/configs/</code>. The old wording runs with current presentation and explanation-quality safeguards; selecting it does not recreate historical prompts or calls. Exact historical prompts remain frozen with their runs. Switching the rubric changes judgment-cache identities only and reuses generated answers; see the <a href="crest-guide.html#rubric-selection">configuration examples</a>. The shared AI scientist mirror has corresponding <a href="ai-scientist-method.html#rubric-selection">configuration paths</a>.</p>
-<h2 id="design">Balanced comparisons and presentations</h2>
-<p>For each question, all three system pairs receive both judges in both answer orders: <strong>3 pairs × 2 judges × 2 orders = 12 calls</strong>. A full 50-question experiment plans 150 answers and 600 overall binary judgments. Each system appears in eight judgments per question, or 400 comparisons across 50 complete questions.</p>
-<p>Current execution protocol v3 screens returned reasons for a complete substantive comparison rather than an empty, meta-only, or abruptly cut explanation, retrying failed checks within the attempt limit. This deterministic screen does not establish factual accuracy. Presentations uniformly remove URL destinations, including tracking parameters; meaningful Markdown labels and citation identifiers remain, while bare URLs, autolinks, and provider-only labels become per-answer Source N references in first-occurrence order. No links are resolved and no network lookup is performed. Both answer orders use the same transformed texts, and raw originals remain available. The presentation policy is not complete blinding; these controls do not establish empirical judge validity.</p>
-<p>Swapped labels are mapped back to system identities. Both votes are retained even when the same judge changes its preferred system after swapping. This balances presentation exposure and makes inconsistency visible; it does not remove every position or style effect. <a href="https://arxiv.org/abs/2306.05685">Zheng et al., 2023</a> document position, verbosity, and self-enhancement biases in LLM judging.</p>
-<h2 id="ranking">Overall win rate</h2>
-<p>The score is <strong>wins ÷ comparisons</strong>, averaged over the same questions, opponents, judges, and answer orders. With <em>Q</em> complete questions, each system has 8<em>Q</em> comparisons. This is a normalized Borda-style win count; no N/U/S scores are averaged. <a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright's pairwise-ranking analysis</a> supplies background for Borda aggregation, not a validation of this creativity rubric.</p>
-<p>Only common complete-question blocks enter the main ranking: every system answer and every required valid judgment must be present. The report gives excluded question IDs and reasons. This keeps exposure balanced but conditions the result on completed questions; it does not correct selective failures. Exact aggregate ties share a rank, and the opponent matrix retains preference cycles.</p>
-<p>The <a href="ai-scientist-method.html#crest-consistency">AI scientist paper comparison</a> uses the same overall judging and balanced win-rate principle. It samples paper pairs instead of shared questions, with different completeness and uncertainty rules suited to that design. The existing paper panel keeps its original frozen rubric and protocol; the revised method remains prospective for a new paper comparison.</p>
-<h2 id="uncertainty">Uncertainty and diagnostics</h2>
-<p>The paired bootstrap resamples whole questions with replacement, keeping each question's systems, opponents, judges, and answer orders together. The same draws produce system intervals and paired win-rate differences. Defaults are 1,000 draws and seed 2026. Resampling shared evaluation examples follows the approach discussed by <a href="https://aclanthology.org/P18-1128/">Dror et al., 2018, §3.2</a>.</p>
-<p>Reports show per-judge rankings and opponent matrices, A-position preference, swapped-presentation inconsistency, judge disagreement, paired contrasts, and bootstrap ordering stability. Ordering stability is not a Bayesian probability of superiority. A single call per presentation cannot separate position effects from sampling variability or the fixed indifference convention.</p>
-<p>Intervals describe sensitivity to this curated question mix, conditional on frozen answers, chosen judges, rubric, and observed calls. They omit regeneration variance, a population of possible judges, and uncertainty about rubric validity.</p>
-<h2 id="limits">Evidence and interpretation limits</h2>
-<p><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger, 2012, <em>The Standard Definition of Creativity</em></a> identify originality and effectiveness as necessary qualities. <a href="https://api.pageplace.de/preview/DT0400.9780191639890_A23590668/preview-9780191639890_A23590668.pdf">Boden, 2011, <em>Creativity and Art</em>, Introduction, pp. 1–2</a> discusses novel, surprising, valuable ideas and unfamiliar combinations of familiar ideas. These accounts motivate the guidance and the requirement that surprise contribute to an effective, meaningful response.</p>
-<p><a href="https://filestore.aqa.org.uk/content/research/CERP_RP_CW_20062012_2.pdf?download=1">Whitehouse and Pollitt, 2012, <em>Using Adaptive Comparative Judgement to Obtain a Highly Reliable Rank Order in Summative Assessment</em></a> illustrates holistic pairwise judgment with human assessors. That study used educational work, trained human judges, adaptive pairing, and a Rasch model; CREST does not inherit its validity or reliability findings.</p>
-<p><strong>No empirical human or domain-expert validation of this rubric or judge panel has been performed.</strong> The literature supplies conceptual and methodological motivation, not a validation of CREST's operational choices or rankings. Failure to recall prior art is not verified novelty. Different provider families are not independent human raters, and neutral presentations cannot hide all stylistic or content cues.</p>
-<p>The <strong>original 600-judgment panel</strong> withheld provider names from answer labels but was not fully blinded: Google grounding URLs appeared in all 50 Google answers, and <code>utm_source=openai</code> tracking parameters appeared in 40 of 50 OpenAI answers. These markers reveal provenance; their effect on that ranking is unproven. The <strong>new completed panel</strong> uses neutral URL presentations and explanation-quality checks with retries. The original panel’s inputs and results remain frozen; the new controls do not establish complete blinding or validate either panel.</p>
-<p>Report the outcome as <strong>these judges' overall creative-quality preferences for these answers</strong>, with coverage and uncertainty attached. Human and domain-expert calibration remains necessary before stronger validity claims.</p>
-</article>
+<main id="document-main" tabindex="-1">
+<header class="intro"><p class="metadata">Research evaluation</p>
+<h1 id="method">How creativity is judged</h1>
+<p class="subtitle">Two AI judges compare answers in pairs. Each chooses one overall winner, guided by New, Useful and Surprising. The ranking is the share of comparisons each system wins.</p>
+<p><a href="deep-research-creativity.html">View the research results</a> · <a href="crest-guide.html">Run the pipeline</a></p></header>
+<nav class="section-nav" aria-label="On this page"><a href="#rubric">The rubric</a><a href="#design">Comparison design</a><a href="#ranking">Ranking</a><a href="#uncertainty">Error bars</a><a href="#limits">Limits and references</a></nav>
+<section id="rubric"><h2>One overall choice</h2>
+<div class="rubric-grid">
+<div><h3>New</h3><p>What does the central idea contribute? Familiar parts can form an original combination. Unfamiliarity alone does not prove novelty.</p></div>
+<div><h3>Useful</h3><p>How well does the idea serve the task? Judge its reasoning and support within the question’s premises and requested stage of development.</p></div>
+<div><h3>Surprising</h3><p>How does the approach depart from the expected answer? An unexpected move earns credit for its substantive contribution, rather than arbitrary novelty.</p></div>
+</div>
+<p>The judge weighs these qualities together, explains both answers and their tradeoffs, then selects A or B. There are no separate criterion winners, numeric ratings or fixed weights. Length, polish and citation count alone do not establish creative quality.</p>
+<pre aria-label="Judgment format"><code>{"reason": "Comparative explanation of both answers and the overall choice.", "winner": "A"}</code></pre>
+<p>If the judge cannot support a substantive preference, it must say so and choose A by convention. When it does this consistently in both answer orders, each system receives one vote. Identical presented answers are excluded before judging.</p>
+<details id="rubric-selection"><summary>Rubric files and configuration</summary>
+<p>The default is <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a>. The alternative <a href="../crest/prompts/nus_pairwise_v1.txt">nus_pairwise_v1.txt</a> is selectable through the <code>rubric</code> path in the configuration. Changing that path reuses the answers and creates different judgment cache identities. The selected wording uses the current presentation and response checks; saved runs retain their exact prompts. See <a href="crest-guide.html#rubric-selection">configuration examples</a>.</p>
+</details></section>
+<section id="design"><h2>Every pair, in both orders</h2>
+<ol class="comparison-flow" aria-label="Judgment count: 50 questions times 3 system pairs times 2 judges times 2 answer orders">
+<li><strong>50</strong><span>shared questions</span></li>
+<li><strong>3</strong><span>system pairs</span></li>
+<li><strong>2</strong><span>judges per pair</span></li>
+<li><strong>2</strong><span>answer orders</span></li>
+</ol>
+<p class="comparison-total"><strong>600 judgments total.</strong> Each question produces 12 choices. Each system appears in 8 of them, giving <strong>400 comparisons per system</strong> across all 50 questions.</p>
+<p>Judges receive the question and complete answers labeled A and B, without provider labels or web tools. URL destinations are hidden uniformly; meaningful citation labels and prose remain. Bare links and provider-only citation markers receive neutral source labels. Original answers are preserved in the report. Style and content can still reveal a system’s identity.</p>
+<p>Responses must contain a valid A/B choice and a complete comparative explanation. Automated checks reject obvious empty, meta-only or abruptly cut explanations, with bounded retries. These checks cannot verify the explanation’s factual claims.</p>
+</section>
+<section id="ranking"><h2>From votes to a ranking</h2>
+<div class="formula" aria-label="Win rate equals wins divided by comparisons"><strong>Win rate</strong><span>=</span><span>wins ÷ comparisons</span></div>
+<p>Every question, opponent, judge and answer order receives equal weight. Both orderings count even when a judge changes its preferred system after the swap. Exact aggregate ties share a rank. The head-to-head table shows each direct matchup separately, including any preference cycle.</p>
+<p>Only questions with all three answers and every required valid judgment enter the main ranking. Exclusions and their reasons are reported; completing fewer questions can change which tasks the ranking represents.</p>
+<p class="small">This is a normalized Borda-style win count. <a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright (2018)</a> analyze ranking by pairwise wins. Their results provide methodological background, rather than validation of this rubric or these judges.</p>
+</section>
+<section id="uncertainty"><h2>What the error bars show</h2>
+<p>The 95% intervals describe how the win rates change when the completed questions are resampled. The default analysis draws 1,000 samples of whole questions with replacement, keeping every question’s answers and judgments together. The same draws produce intervals for differences between systems. <a href="https://aclanthology.org/P18-1128/">Dror et al. (2018, §3.2)</a> discuss bootstrap evaluation.</p>
+<p>These intervals hold the saved answers, judges, rubric and calls fixed. They do not include variation from generating new answers, choosing other judges or changing the rubric, and do not establish coverage across all creative tasks.</p>
+<h3>Checks on judge behavior</h3>
+<dl class="diagnostics">
+<dt>A-position preference</dt><dd>How often a judge chooses A, across the balanced presentations.</dd>
+<dt>Swapped inconsistency</dt><dd>How often a judge changes its preferred system when the same answers exchange positions.</dd>
+<dt>Judge disagreement</dt><dd>How often the two judges choose different systems for the same presentation.</dd>
+</dl>
+<p class="small">Swapped inconsistency can reflect order effects, call variability or the fixed convention for indifference. One call per presentation cannot separate these causes. Agreement does not establish accuracy. Detailed bootstrap ordering fractions are resampling frequencies, rather than probabilities that a system is truly superior.</p>
+</section>
+<section id="limits"><h2>Scope and supporting literature</h2>
+<p><strong>The ranking records these judges’ preferences for these answers.</strong> It does not measure absolute creativity, verify historical novelty or establish factual accuracy. No human or domain-expert validation of this rubric or judge panel has been performed. Using two provider families does not make their errors independent.</p>
+<p>The method draws on the following work:</p>
+<ul class="references">
+<li><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger (2012), <cite>The Standard Definition of Creativity</cite></a>: originality and effectiveness as central qualities.</li>
+<li><a href="https://api.pageplace.de/preview/DT0400.9780191639890_A23590668/preview-9780191639890_A23590668.pdf">Boden (2011), <cite>Creativity and Art</cite>, Introduction, pp. 1–2</a>: novel, surprising and valuable ideas, including unfamiliar combinations of familiar ideas.</li>
+<li><a href="https://arxiv.org/abs/2306.05685">Zheng et al. (2023), <cite>Judging LLM-as-a-Judge</cite></a>: position, verbosity and self-enhancement biases in LLM judging. Balanced orders and neutral links do not eliminate every bias.</li>
+</ul>
+<p class="small">These sources motivate the design; they do not validate CREST’s specific operational choices. The <a href="ai-scientist-method.html#crest-consistency">AI scientist paper comparison</a> shares the overall preference principle, with a different sampling design and uncertainty calculation.</p>
+</section>
 <footer><a href="index.html">All documents</a> · <a href="../README.html">Getting started</a></footer>
-</main></body></html>
+</main>
+</body></html>

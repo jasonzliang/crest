@@ -1,116 +1,11 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
-<meta content="light" name="color-scheme"/>
-<meta content="Current CREST pipeline, models, caching, and overall pairwise method." name="description"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="Run CREST's three stages: generate research answers, compare their creativity, and analyze the ranking.">
 <title>Research pipeline · CREST</title>
-<style>
-    :root { --ink:#172c3e; --muted:#526574; --accent:#0b5967; --line:#d7e1e6; --paper:#fff; --wash:#f5f8f9; --code:#eef3f5; }
-    * { box-sizing:border-box; }
-    html { scroll-behavior:smooth; scroll-padding-top:1.5rem; }
-    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    a { color:var(--accent); text-decoration-thickness:1px; text-underline-offset:3px; overflow-wrap:anywhere; }
-    a:hover { text-decoration-thickness:2px; }
-    :focus-visible { outline:3px solid #b45a13; outline-offset:4px; border-radius:2px; }
-    .skip-link { position:fixed; top:-100px; left:1rem; padding:.65rem 1rem; background:var(--ink); color:white; z-index:20; }
-    .skip-link:focus { top:1rem; }
-    .layout { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:250px minmax(0,1fr); }
-    .sidebar { padding:3.2rem 1.5rem 2rem 2rem; border-right:1px solid var(--line); background:var(--wash); }
-    .sidebar-inner { position:sticky; top:1.7rem; max-height:calc(100vh - 3.4rem); overflow:auto; }
-    .brand { font-size:1.05rem; font-weight:800; letter-spacing:.16em; color:var(--accent); }
-    .sidebar-label { margin:.2rem 0 1.8rem; color:var(--muted); font-size:.8rem; }
-    nav ul { list-style:none; padding:0; margin:0; }
-    nav li { margin:0 0 .3rem; }
-    nav a { display:block; padding:.4rem .55rem; margin-left:-.55rem; font-size:.86rem; line-height:1.5; text-decoration:none; border-radius:4px; }
-    nav a:hover { background:#e4edef; }
-    .sidebar-note { font-size:.75rem; line-height:1.6; color:var(--muted); border-top:1px solid var(--line); padding-top:1.2rem; margin-top:1.5rem; }
-    main { min-width:0; padding:3rem clamp(1.5rem,4.5vw,4.5rem) 5rem; }
-    .hero { padding-bottom:2rem; border-bottom:2px solid var(--ink); margin-bottom:2.5rem; }
-    .eyebrow { margin:0 0 .7rem; color:var(--accent); font-size:.8rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
-    h1 { font-size:clamp(2rem,3.8vw,3.15rem); line-height:1.13; letter-spacing:-.035em; margin:0 0 1rem; max-width:21ch; font-weight:750; }
-    .subtitle { max-width:65ch; color:var(--muted); font-size:1.1rem; line-height:1.65; margin:0; }
-    .meta { margin-top:1.35rem; font-size:.8rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:.35rem 1.4rem; }
-    article { counter-reset:guide-section; }
-    h2 { counter-increment:guide-section; font-size:1.65rem; line-height:1.3; margin:3.5rem 0 1rem; padding-top:1.4rem; border-top:1px solid var(--line); letter-spacing:-.025em; }
-    h2:first-child { margin-top:0; border-top:0; padding-top:0; }
-    h2::before { content:counter(guide-section,decimal-leading-zero) " / "; font-size:.8rem; font-weight:600; letter-spacing:.06em; color:var(--accent); vertical-align:middle; }
-    h3 { margin:1.8rem 0 .65rem; font-size:1.12rem; line-height:1.4; }
-    p { margin:.65rem 0 1rem; }
-    li { padding-left:.15rem; margin:.4rem 0; }
-    ul { padding-left:1.3rem; }
-    code { font: .88em/1.55 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace; background:var(--code); padding:.12em .3em; border-radius:3px; overflow-wrap:anywhere; }
-    pre { background:var(--code); border:1px solid var(--line); border-radius:6px; padding:1.15rem 1.25rem; overflow:auto; line-height:1.6; font-size:.88rem; }
-    pre code { background:none; padding:0; font-size:1em; overflow-wrap:normal; }
-    .table-scroll { overflow:auto; margin:1.25rem 0 1.6rem; border:1px solid var(--line); border-radius:6px; }
-    table { border-collapse:collapse; width:100%; text-align:left; font-size:.9rem; line-height:1.6; }
-    th { background:#eaf1f3; font-weight:650; color:#183d49; }
-    th,td { padding:.8rem .9rem; vertical-align:top; border-bottom:1px solid var(--line); min-width:115px; overflow-wrap:anywhere; }
-    tr:last-child td { border-bottom:0; }
-    tr:nth-child(even) td { background:#fafcfc; }
-    table code { font-size:.85em; }
-    .key-message { margin:1.5rem 0; padding:1rem 1.3rem; border-left:4px solid var(--accent); background:#eef6f6; }
-    .key-message p { margin:.35rem 0 0; }
-    .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:1.5rem 0; border-block:1px solid var(--line); padding:1.25rem 0; gap:1.4rem; }
-    .stats strong { display:block; font-size:2rem; line-height:1.2; letter-spacing:-.04em; color:var(--accent); }
-    .stats span { display:block; margin-top:.4rem; font-size:.8rem; line-height:1.5; color:var(--muted); }
-    .dated-note { margin:1rem 0; padding:1rem 1.25rem; background:#fbf6e9; border-left:4px solid #997024; font-size:.9rem; }
-    details { border:1px solid var(--line); border-radius:6px; margin:1rem 0; padding:0 1.15rem; }
-    summary { cursor:pointer; padding:1rem 0; font-weight:650; color:var(--accent); line-height:1.5; }
-    summary:hover { color:var(--ink); }
-    details[open] { padding-bottom:.65rem; }
-    details[open] summary { border-bottom:1px solid var(--line); margin-bottom:1rem; }
-    footer { margin-top:3rem; padding-top:1rem; border-top:1px solid var(--line); font-size:.82rem; color:var(--muted); }
-    @media (min-width:1200px) { #comparison ~ .table-scroll table, #costs ~ .table-scroll table { font-size:.87rem; } }
-    @media (max-width:900px) {
-      .layout { display:block; }
-      .sidebar { padding:1.4rem 1.5rem; border-right:0; border-bottom:1px solid var(--line); }
-      .sidebar-inner { position:static; max-height:none; overflow:visible; }
-      .sidebar-label { margin:.15rem 0 .8rem; }
-      nav ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 .9rem; }
-      nav a { font-size:.8rem; padding:.3rem .45rem; margin-left:-.45rem; }
-      .sidebar-note { display:none; }
-      main { padding:2rem 1.5rem 3rem; }
-      h2 { font-size:1.45rem; margin-top:2.7rem; }
-      table { min-width:620px; }
-    }
-    @media (max-width:420px) {
-      body { font-size:15px; }
-      main { padding-inline:1.1rem; }
-      .sidebar { padding-inline:1.1rem; }
-      .stats { gap:.8rem; }
-      .stats strong { font-size:1.65rem; }
-      .stats span { font-size:.73rem; }
-      h1 { font-size:2rem; }
-    }
-    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
-    @media print {
-      @page { margin:17mm; }
-      body { font-size:10pt; background:white; color:#000; }
-      .layout { display:block; }
-      .sidebar,.skip-link,footer { display:none; }
-      main { padding:0; }
-      .hero { margin-bottom:1.2rem; padding-bottom:1rem; }
-      h1 { font-size:27pt; }
-      h2 { font-size:17pt; margin-top:1.8rem; break-after:avoid; }
-      h3,summary { break-after:avoid; }
-      a { color:inherit; }
-      details { border:0; padding:0; }
-      details::details-content { content-visibility:visible; display:block; }
-      details > :not(summary) { display:block !important; }
-      summary { list-style:none; padding:.5rem 0; }
-      .table-scroll { overflow:visible; border:0; }
-      table { min-width:0; font-size:9pt; }
-      th,td { padding:.4rem; }
-      thead { display:table-header-group; }
-      tr { break-inside:avoid; }
-      pre { white-space:pre-wrap; overflow:visible; font-size:8.5pt; }
-      pre code { overflow-wrap:anywhere; }
-      .stats { break-inside:avoid; }
-    }
-  </style>
 <style id="crest-site-navigation">
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
@@ -172,76 +67,151 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
-</style></head>
+</style>
+<style>
+.skip-link{position:fixed;top:-100px;left:1rem;padding:.7rem 1rem;background:#172c3e;color:white;z-index:20}.skip-link:focus{top:1rem}
+.guide-hero{max-width:760px}.eyebrow{color:#0b5967;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}.guide-hero .report-link{display:inline-block;margin:.3rem 0 1rem;font-weight:650}
+main>section{margin:3rem 0}.guide-nav{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;margin:1rem 0 2rem;padding:.8rem 0;border-block:1px solid #d7e1e6}.guide-nav a{padding:.35rem 0;min-height:40px}
+.pipeline{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin:1rem 0}.pipeline li{position:relative;padding:1.2rem 1.3rem;background:#f0f6f6;border-top:3px solid #0b5967;border-radius:0 0 5px 5px;min-width:0}.pipeline li+li::before{content:"→";position:absolute;left:-1.2rem;top:2rem;color:#526574}.stage-number{font:650 .8rem/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#0b5967;letter-spacing:.08em}.pipeline h3{font-size:1.25rem;margin:.35rem 0}.pipeline p{font-size:.9rem;margin:.45rem 0}.pipeline .output{display:block;margin-top:.8rem;font-size:.8rem;color:#526574}
+.quick-start{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.8rem}.quick-start>div{min-width:0}.quick-start h3{margin-top:0}.command-label{font-size:.8rem;color:#526574}.quick-start pre{margin:.5rem 0}pre{max-width:100%}.note{border-left:3px solid #b4652b;padding:.15rem 0 .15rem 1rem;margin:1rem 0}.note p{margin:.35rem 0}.table-scroll table{min-width:590px}.table-scroll th:first-child{min-width:145px}
+.file-layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:1.8rem;align-items:start}.file-layout pre{margin:0}.file-layout ul{margin:0;padding-left:1.2rem}.file-layout li{margin-bottom:.8rem}.formula{font-size:1.1rem;padding:1rem 1.3rem;background:#f0f6f6;border-radius:5px;color:#183d49}.formula strong{font-variant-numeric:tabular-nums}.nus{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.2rem;padding:0;list-style:none}.nus li{border-top:1px solid #d7e1e6;padding-top:.7rem;font-size:.9rem}.nus strong{display:block;color:#0b5967}.guide-details{padding-top:.1rem}.guide-details pre{max-width:100%}.guide-details ul{padding-left:1.2rem}
+@media(max-width:740px){.pipeline,.quick-start,.file-layout,.nus{grid-template-columns:1fr}.pipeline{gap:1.2rem}.pipeline li+li::before{content:"↓";left:auto;right:1.1rem;top:-1.35rem}.quick-start,.file-layout{gap:1.3rem}.nus{gap:.4rem}.guide-nav{gap:.25rem 1rem}main>section{margin:2.2rem 0}.pipeline li{padding:1rem 1.2rem}}
+@media print{.guide-nav,.report-link{display:none}.pipeline{gap:.8rem}.pipeline li{break-inside:avoid}.quick-start,.file-layout{display:block}pre{white-space:pre-wrap}.table-scroll table{min-width:0}}
+</style>
+</head>
 <body>
-<a class="skip-link" href="#main-content">Skip to guide</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
-<main id="main-content" tabindex="-1"><details class="contents"><summary>On this page</summary><nav aria-label="Guide contents"><ul><li><a href="#overview">The experiment</a></li><li><a href="#running">Run the stages</a></li><li><a href="#models">Research settings</a></li><li><a href="#operations">Budgets and parallelism</a></li><li><a href="#files">Results and cache</a></li><li><a href="#judging">Judging and ranking</a></li><li><a href="judge-models.html">Judge models</a></li><li><a href="index.html">All documents</a></li></ul></nav><p class="sidebar-note">Updated October 27, 2026.<br/>Current settings and method; the revised-rubric research panel is complete. Earlier panels retain their frozen protocols and results.</p></details><header class="hero"><p class="eyebrow">CREST pipeline</p><h1>Research pipeline</h1><p class="subtitle">Generate once, judge complete answers in both orders, and rank the observed preferences with uncertainty.</p></header>
-<article>
-<h2 id="overview">The experiment</h2>
-<p>Caesar, OpenAI research, and Gemini Deep Research independently answer the same 50 questions. The dataset is bundled in <a href="../crest/data/queries_n50.jsonl">crest/data/queries_n50.jsonl</a>, copied byte-for-byte from Rome's 50-question file. Loading preserves each exact query string.</p>
-<div class="stats"><div><strong>150</strong><span>saved answers · 50 × 3 systems</span></div><div><strong>600</strong><span>completed judgments · 3 pairs × 2 judges × 2 orders × 50</span></div><div><strong>1</strong><span>overall A/B winner per judgment, guided by New, Useful, and Surprising</span></div></div>
-<p>The new completed research panel uses revised rubric v2 and execution protocol v3, reusing the saved answers with neutral URL presentations and explanation-quality checks with retries. See the <a href="deep-research-creativity.html">current research report</a>. The original research panel and existing AI scientist paper panel retain their frozen inputs and results.</p>
-<p>This is an exploratory comparison of the saved answers under the selected judges and rubric. A ranking is not an absolute measurement of creativity or evidence that all future answers will follow the same ordering.</p>
-<h2 id="running">Run the three stages</h2>
-<p>Use Python 3.11–3.13 and install the project and Rome dependencies as described in <a href="../README.html#install">Getting started</a>. Export <code>OPENAI_API_KEY</code> and <code>GOOGLE_API_KEY</code> or <code>GEMINI_API_KEY</code>; CREST does not automatically load credentials from dotenv files.</p>
-<pre><code>python -m crest plan --config crest/configs/crest.mbp.yaml --limit 1
-python -m crest generate --config crest/configs/crest.mbp.yaml --limit 1
-
-# Replace the placeholder with stage 1's printed run_dir.
-CREST_RUN=crest/results/YYYY-MM-DD/HH-MM-SS-TZ-UNIQUE-ID
-python -m crest judge --run "$CREST_RUN" --config crest/configs/crest.mbp.yaml
-python -m crest analyze --run "$CREST_RUN" --config crest/configs/crest.mbp.yaml</code></pre>
-<p>Planning is local. Generation and judging make paid calls; analysis is local. Omit <code>--limit 1</code> for all 50 questions. The default configuration is <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>; <a href="../crest/configs/crest.mbp.yaml">crest/configs/crest.mbp.yaml</a> selects the measured-resource profile for the 64 GB <code>jason-mbp</code>. Complete the pilot before starting the first full Caesar batch. <code>python -m crest run</code> runs all stages. Later stages otherwise select the latest generation run, so use an explicit result path when managing multiple experiments.</p>
-<p>To recover an existing run, repeat stage 1 with <code>--run "$CREST_RUN"</code>, then repeat stages 2 and 3. Completed work is reused; remote job IDs are retrieved after interruption. Ambiguous submissions require manual reconciliation before retrying and are never blindly resubmitted.</p>
-<h2 id="models">Current research settings</h2>
-<div aria-label="Research systems and settings" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">System</th><th scope="col">Model and workflow</th><th scope="col">Main settings</th></tr></thead><tbody>
-<tr><td>Caesar</td><td><code>gpt-6.1-sol</code> main/synthesis; <code>gpt-6-luna</code> exploration and knowledge-base helpers at low reasoning.</td><td>Regular exploration: up to 250 iterations and 11 additional starting queries; quick exploration is disabled by default. Then 3 drafts, up to 15 Q&amp;A rounds per draft, and a merge. Q&amp;A reduces adaptively to preserve writing budget and time.</td></tr>
-<tr><td>OpenAI</td><td><code>gpt-6.1-sol</code>, Responses API with hosted web search and background execution.</td><td>High reasoning, 40,000 output-token allowance, 25 tool calls, standard tier.</td></tr>
-<tr><td>Gemini</td><td><code>deep-research-preview-04-2026</code>, managed Interactions API agent.</td><td>Standard Deep Research, visualization off, collaborative planning off. Google controls its underlying model; no backbone override.</td></tr>
+<a class="skip-link" href="#main-content">Skip to guide</a>
+<header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
+<main id="main-content" tabindex="-1">
+<header class="guide-hero">
+<p class="eyebrow">Pipeline guide</p>
+<h1>Generate. Compare. Rank.</h1>
+<p class="subtitle">CREST runs three research systems on the same questions, saves their answers, and compares creative quality with two AI judges.</p>
+<a class="report-link" href="deep-research-creativity.html">Read the completed 50-question comparison →</a>
+</header>
+<nav class="guide-nav" aria-label="Guide contents"><a href="#overview">Pipeline</a><a href="#running">Quick start</a><a href="#models">Systems</a><a href="#operations">Parallelism</a><a href="#files">Results and reuse</a><a href="#judging">Ranking method</a></nav>
+<section id="overview" aria-labelledby="overview-title">
+<h2 id="overview-title">Three stages, one result directory</h2>
+<ol class="pipeline">
+<li><span class="stage-number">01</span><h3>Generate answers</h3><p>Caesar, OpenAI (Sol + web search), and Google Deep Research answer each question independently.</p><span class="output">50 questions → 150 saved answers</span></li>
+<li><span class="stage-number">02</span><h3>Compare each pair</h3><p>Two judges choose one overall A/B winner, guided by New, Useful and Surprising. Every pair appears in both orders.</p><span class="output">150 answers → 600 judgments</span></li>
+<li><span class="stage-number">03</span><h3>Analyze preferences</h3><p>Count wins, rank the systems, and report uncertainty, judge agreement and order effects.</p><span class="output">600 judgments → ranking and diagnostics</span></li>
+</ol>
+<p class="small">The bundled <a href="../crest/data/queries_n50.jsonl">dataset</a> preserves Caesar’s 50 question texts and adds their five paper categories, with 10 questions per category. These counts describe a complete run; a one-question pilot produces 3 answers and 12 judgments.</p>
+</section>
+<section id="running" aria-labelledby="running-title">
+<h2 id="running-title">Start with one question</h2>
+<p>Run these commands from the repository root. Generation and judging make paid API calls; planning and analysis run locally.</p>
+<details class="guide-details"><summary>Install and set credentials</summary>
+<p>Use Python 3.11–3.13. Caesar also needs the sibling <code>../rome</code> checkout and its dependencies.</p>
+<pre><code>python -m pip install -e '.[test]'
+python -m pip install -e ../rome
+export OPENAI_API_KEY=...
+export GOOGLE_API_KEY=...</code></pre>
+<p class="small"><code>GEMINI_API_KEY</code> also works. Credentials come from the environment. To use an existing Rome environment, set <code>research.caesar.python_executable</code> in your configuration.</p>
+</details>
+<div class="quick-start">
+<div><h3>1. Plan and generate</h3><p class="command-label">Preview missing calls, then create the pilot run.</p>
+<pre><code>python -m crest plan --limit 1
+python -m crest generate --limit 1</code></pre>
+<p class="small">Copy the printed <code>run_dir</code> into <code>CREST_RUN</code> below. Omit <code>--limit 1</code> to generate all 50 questions.</p></div>
+<div><h3>2. Judge and analyze</h3><p class="command-label">Replace the placeholder with your result directory.</p>
+<pre><code>CREST_RUN=crest/results/YYYY-MM-DD/HH-MM-SS-TZ-ID
+python -m crest judge --run "$CREST_RUN"
+python -m crest analyze --run "$CREST_RUN"</code></pre>
+<p class="small">For all three stages together, use <code>python -m crest run</code>. Add <code>--dry-run</code> to preview work without API calls.</p></div>
+</div>
+<p>Commands use <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>. Add <code>--config crest/configs/crest.mbp.yaml</code> for the 64 GB <code>jason-mbp</code> profile. Use the same configuration for each stage.</p>
+<details class="guide-details"><summary>Resume generation or rerun judging</summary>
+<pre><code>python -m crest generate --run "$CREST_RUN"
+python -m crest judge --run "$CREST_RUN"
+python -m crest analyze --run "$CREST_RUN"</code></pre>
+<p>Completed matching work is reused. To change judges or rubric, edit your configuration and rerun stages 2 and 3 with this directory. Stage 1’s saved answers stay available. Later stages otherwise select the latest generation run; an explicit <code>--run</code> avoids ambiguity.</p>
+</details>
+</section>
+<section id="models" aria-labelledby="models-title">
+<h2 id="models-title">Research systems and judges</h2>
+<div class="table-scroll" role="region" aria-label="Configured research systems" tabindex="0"><table>
+<thead><tr><th scope="col">System</th><th scope="col">Configured workflow</th></tr></thead>
+<tbody>
+<tr><th scope="row">Caesar</th><td><code>gpt-6.1-sol</code> for main reasoning and synthesis; <code>gpt-6-luna</code> at low reasoning for exploration and knowledge-base helpers. Regular exploration allows up to 250 iterations, followed by three drafts and a merge. Synthesis rounds adjust to remaining budget and time.</td></tr>
+<tr><th scope="row">OpenAI (Sol + web search)</th><td><code>gpt-6.1-sol</code> with high reasoning and hosted web search through the Responses API.</td></tr>
+<tr><th scope="row">Google Deep Research</th><td>Managed <code>deep-research-preview-04-2026</code> agent. Its backend model is provider-controlled; the configured billing reference is not a model override.</td></tr>
 </tbody></table></div>
-<p>Google <a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">introduced these agents with Gemini 3.1 Pro</a>; <code>gemini-3.1-pro-preview</code> is CREST's billing reference, not a model-selection field. The OpenAI entrant is a native Sol+search workflow, not a reproduction of ChatGPT's complete product harness. Caesar's different helper models are part of the recorded system configuration.</p>
-<p>The deployed Caesar source is version 0.4.31; each generation records its source version, Git commit, and runtime hashes. Both Luna helpers stay at <code>low</code>. Although <a href="https://developers.openai.com/api/docs/models/gpt-6-luna">Luna supports <code>none</code></a>, equivalent Caesar answer quality has not been established.</p>
-<p>The judges are <strong>GPT-6 Astra high + Gemini 4 Argon high</strong>, with 32,768 output tokens each and no tools. See <a href="judge-models.html">Judge models</a>.</p>
-<h2 id="operations">Budgets and parallelism</h2>
-<p><strong>$5 per answer is a target, not a guaranteed cap.</strong> All 150 answers target $750; judging costs extra. Caesar reserves estimated request costs against a $5 SDK/handler guard and keeps $3 for synthesis, reducing exploration and Q&amp;A when needed. Its per-answer limit is 7,200 seconds and per-call timeout is 600 seconds. New exploration pages stop after 45 minutes; accepted calls finish before ingestion. Q&amp;A reserves 300 seconds per remaining writing/refinement/merge call. These time allocations improve the chance of completion but cannot guarantee a complete answer before the deadline. Native provider APIs expose no hard dollar cap. Gemini research costs use a conservative estimate; an estimated overrun is not a final invoice. Cost reports retain failed paid attempts, partial observations, and unknown bills.</p>
-<div aria-label="Adaptive job limits" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">Stage / provider</th><th scope="col">Default: start → maximum</th><th scope="col">64 GB jason-mbp: start → maximum</th></tr></thead><tbody>
-<tr><td>Research · Caesar</td><td>1 → 4</td><td>20 → 20</td></tr>
-<tr><td>Research · OpenAI</td><td>3 → 12</td><td>2 → 6</td></tr>
-<tr><td>Research · Gemini</td><td>2 → 8</td><td>1 → 4</td></tr>
-<tr><td><strong>Research total</strong></td><td><strong>6 → 24</strong></td><td><strong>23 → 30</strong></td></tr>
-<tr><td>Each judge</td><td>4 → 16</td><td>8 → 16</td></tr>
-<tr><td><strong>Judging total</strong></td><td><strong>8 → 32</strong></td><td><strong>16 → 32</strong></td></tr>
+<p><strong>Judges:</strong> GPT-6 Astra high and Gemini 4 Argon high, with no tools. Each receives the same rubric and complete saved answer pair. See <a href="judge-models.html">judge settings</a>.</p>
+<p class="small">Editable presets describe future runs. Saved configuration records describe the exact settings and source version used for each answer in a completed run.</p>
+</section>
+<section id="operations" aria-labelledby="operations-title">
+<h2 id="operations-title">Parallelism, retries and budget</h2>
+<p>Providers run concurrently. A provider gains one slot after two successful uncached jobs and halves its limit after HTTP 429, with a shared cooldown.</p>
+<div class="table-scroll" role="region" aria-label="Concurrent job limits" tabindex="0"><table>
+<thead><tr><th scope="col">Work</th><th scope="col">Default: start → maximum</th><th scope="col">jason-mbp: start → maximum</th></tr></thead>
+<tbody>
+<tr><th scope="row">Caesar answers</th><td>1 → 4</td><td>20 → 20</td></tr>
+<tr><th scope="row">OpenAI answers</th><td>3 → 12</td><td>2 → 6</td></tr>
+<tr><th scope="row">Google answers</th><td>2 → 8</td><td>1 → 4</td></tr>
+<tr><th scope="row">Research total</th><td>6 → 24</td><td>23 → 30</td></tr>
+<tr><th scope="row">Both judges combined</th><td>8 → 32</td><td>16 → 32</td></tr>
 </tbody></table></div>
-<p>Each provider gains a slot after two successful uncached jobs and halves capacity on HTTP 429. Shared cooldowns honor available retry/reset headers. Native background-job creation retries only explicit 429 rejections; idempotent polling/cancellation also retry transient failures, with four total attempts. Caesar separately allows bounded SDK retries for 429 and server 5xx errors, retaining reservations for uncertain failed attempts against its budget. Limits apply per pipeline process; other account traffic and hosted-agent usage can still cause rate limits.</p>
-<h2 id="files">Results, snapshots, and cache</h2>
+<p class="small">Limits apply to one pipeline process. Other account traffic can still trigger rate limits. Each judge can reach 16 concurrent requests.</p>
+<div class="note"><p><strong>$5 per answer is a target.</strong> Caesar reserves estimated request costs and writing time; its configured worker timeout is two hours. Neither setting guarantees a complete answer or a final invoice below $5. Hosted research APIs expose no hard dollar cap, and judging costs extra.</p></div>
+<details class="guide-details"><summary>What happens after a failed request?</summary><p>Retries are bounded, with backoff and provider cooldowns. Native job creation is retried only after an explicit rate-limit rejection; uncertain submissions require reconciliation. Existing remote job IDs are retrieved after interruption. Invalid judge responses can receive up to four attempts, with failed attempts retained in cost records.</p></details>
+</section>
+<section id="files" aria-labelledby="files-title">
+<h2 id="files-title">Find results and reuse work</h2>
+<div class="file-layout">
 <pre><code>crest/results/
-  .cache/generation/                 shared answer cache
-  .cache/latest.json                 latest generation-run pointer
+  .cache/
+    generation/        shared answer cache
+    latest.json        latest run pointer
   YYYY-MM-DD/HH-MM-SS-TZ-ID/
-    run.json                        questions, jobs, stage registry
-    01-generate-YYYY-MM-DD_HH-MM-SS-TZ/  answers.jsonl, configurations.json, answers/
-    02-judge-YYYY-MM-DD_HH-MM-SS-TZ/     judgments and frozen inputs/settings/rubric
-    03-analysis-YYYY-MM-DD_HH-MM-SS-TZ/  ranking.json, ranking.csv, report.md
-    .cache/judgments/               this run's judgment cache
-    .cache/analysis/                this run's local analysis cache</code></pre>
-<p>The visible results root contains date folders. Shared cache and navigation metadata live under <code>.cache/</code>; later stages default to the run selected by <code>.cache/latest.json</code>, with legacy root-level <code>latest.json</code> accepted when the hidden pointer is absent. Pass <code>--run PATH</code> to select another run. <code>crest/configs/</code> contains editable presets. Each generation’s <code>configurations.json</code> maps short configuration IDs to full frozen settings and provenance; answer rows retain the ID and full SHA-256. Readable copies use flat names such as <code>answers/q01-caesar-&lt;cfgshort&gt;.md</code>. IDs group configurations without changing paid cache identities.</p>
-<p>Every invocation creates a new timestamped stage folder. The YAML setting <code>results_timezone: America/Chicago</code> controls new directory names and their date buckets; select another IANA timezone to change it. The default uses <code>CDT</code> or <code>CST</code> according to daylight saving time, distinguishing repeated local hours. For example, <code>2026-10-27T04:17:53Z</code> becomes <code>2026-10-26/23-17-53-CDT-8bbde248</code>. Manifest and event timestamps remain UTC, and existing frozen stage names retain their original paths. Stage 1's <code>answers.jsonl</code> is canonical; Markdown answers are reading copies. Stage 3 identifies and reads its precise stage-2 snapshot.</p>
-<p>Canonical answer and judgment rows retain model, usage, cost, and a top-level <code>timing</code> object: UTC ISO <code>started_at</code>/<code>completed_at</code>, <code>duration_seconds</code>, <code>source</code>, and <code>definition</code>. Elapsed time includes provider queueing, polling, retries, and interruptions, excluding local scheduling before execution. Cache hits preserve original durations; older checkpoints are backfilled where possible, with unavailable timestamps or duration left null.</p>
-<p>Changing the judge or rubric reuses answers. Switching rubric text changes only judgment-cache identities; generation answers and their cache remain reusable. Changing one researcher's generation settings requires a new generation run and invalidates only affected shared-cache work. Existing runs retain generation snapshots. Concurrency/retry changes preserve paid cache entries. Increment a provider's <code>revision</code> only for intentional fresh calls, not to bypass an unresolved submission.</p>
-<h2 id="judging">Judging and ranking</h2>
-<h3 id="rubric-selection">Choose the rubric file</h3>
-<p>The existing <code>rubric</code> configuration field selects the prompt by file path, relative to the configuration file. Rubric file versions are original v1 and revised v2; the execution protocol remains v3 and is versioned separately. Use the explicit versioned file paths below. The revised rubric remains the default for new judging. In a configuration under <code>crest/configs/</code>, use:</p>
-<pre><code># Revised v2 rubric: default for new judging.
+    run.json
+    01-generate-…/
+      answers.jsonl
+      configurations.json
+      answers/
+    02-judge-…/
+      judgments.jsonl
+      rubric.txt
+    03-analysis-…/
+      ranking.json
+      ranking.csv
+      report.md
+    .cache/
+      judgments/
+      analysis/</code></pre>
+<ul>
+<li><strong>One run, separate stages.</strong> Each executed stage creates a dated directory inside its run. Analysis reads a precise judgment snapshot.</li>
+<li><strong>Local directory names.</strong> <code>results_timezone: America/Chicago</code> uses local dates and <code>CDT</code>/<code>CST</code>. Recorded event timestamps stay in UTC.</li>
+<li><strong>Answers carry their settings.</strong> Configuration IDs link each answer to frozen models, settings and source provenance. JSONL files are canonical; Markdown files are reading copies.</li>
+<li><strong>Costs and times stay with the work.</strong> Records retain usage, cost estimates, unknown charges and elapsed time. Cache hits preserve the original timing.</li>
+</ul>
+</div>
+<details class="guide-details"><summary>Which changes reuse the cache?</summary>
+<ul><li>Changing judges or rubric reuses saved answers and regenerates only judgments that no longer match.</li><li>Changing research settings needs a new generation run; unaffected answers can come from the shared cache.</li><li>Changing concurrency or retry settings preserves paid cache identities.</li><li>For intentional fresh calls, increment the provider’s <code>revision</code>. Resolve uncertain submissions before doing so.</li></ul>
+</details>
+</section>
+<section id="judging" aria-labelledby="judging-title">
+<h2 id="judging-title">How the ranking works</h2>
+<ul class="nus"><li><strong>New</strong>What is original about the central contribution?</li><li><strong>Useful</strong>How well does it serve this question and support its payoff?</li><li><strong>Surprising</strong>How meaningfully does its approach depart from the expected one?</li></ul>
+<p>These qualities guide <strong>one overall A/B choice</strong>, with a comparative explanation. They are not separate scores or votes. Every pair receives two judges in both answer orders, giving 12 judgments per question.</p>
+<p class="formula"><strong>Win rate = wins ÷ comparisons</strong><br><span class="small">A complete run gives each system 400 comparisons: 50 questions × 2 opponents × 2 judges × 2 orders.</span></p>
+<p>Questions, opponents, judges and orders receive equal weight. If the judge cannot support a substantive preference, the rubric instructs it to choose A; consistent indifference in both orders splits the votes evenly.</p>
+<p>Reported 95% intervals resample whole questions 1,000 times, keeping each question’s comparisons together. They describe sensitivity to the question mix while holding the saved answers and judges fixed. These are observed AI preferences, with no human validation or independent fact-checking.</p>
+<details id="rubric-selection" class="guide-details"><summary>Choose the rubric file</summary>
+<p>The default <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a> emphasizes substantive contributions, task-relative usefulness and meaningful surprise. It treats unfamiliarity as uncertainty about novelty. The <a href="../crest/prompts/nus_pairwise_v1.txt">v1 wording</a> is also available. Select either file with the configuration’s <code>rubric</code> field:</p>
+<pre><code># In a configuration under crest/configs/:
 rubric: ../prompts/nus_pairwise_v2.txt
-
-# To select the preserved original v1 binary rubric instead:
+# Or use the original wording:
 # rubric: ../prompts/nus_pairwise_v1.txt</code></pre>
-<p>The <a href="../crest/prompts/nus_pairwise_v1.txt">preserved original v1 rubric</a> contains the exact original v1 binary-rubric text from commit <code>bbf206c</code>. Selecting it uses that wording with the current presentation and explanation-quality safeguards; it does not restore the old execution protocol or reproduce historical calls. Each historical stage retains its own exact frozen prompt. A rubric switch changes judgment-cache identities without regenerating saved answers. See <a href="ai-scientist-method.html#rubric-selection">AI scientist rubric selection</a> for that pipeline’s corresponding paths.</p>
-
-<p>Each judge returns exactly <code>{"reason": "…", "winner": "A"}</code> or the same structure with B. New, Useful, and Surprising guide one holistic choice; the qualities may overlap and are not independent scales. There are no criterion winners, scores, or numeric weights. The default <a href="../crest/prompts/nus_pairwise_v2.txt">revised rubric</a> evaluates central contributions, including substantive combinations; task-relative effectiveness within stipulated premises; and meaningful unexpected approaches. It treats unrecognized prior art as uncertainty and prioritizes substance over length, polish, confidence, or citation count.</p>
-<p><strong>Current execution protocol v3 (October 27, 2026)</strong> uses deterministic screens for complete comparative reasons, retries failed checks within the attempt limit, and removes all URL destinations uniformly from presentations. Meaningful citation labels remain; bare URLs, autolinks, and provider-only labels become per-answer Source N references. Raw answers remain available, and both orders use the same presentation. These controls do not verify facts or ensure complete blinding. Completed runs retain their frozen prompts, inputs, and results.</p>
-<p>A reason should fully compare both answers, with roughly 150–300 words as soft guidance. Equal or near-equal quality may be stated honestly. If there is no supportable substantive preference, the judge says so and chooses A by fixed convention; both orders then split votes evenly when indifference is consistent. A-position diagnostics include any convention-driven choices. Exact identical answers are excluded before judging. No empirical human or domain-expert validation has been performed.</p>
-<p>Rank by overall wins divided by comparisons on common complete questions, balancing opponents, judges, and answer orders. A complete 50-question run gives each system 400 comparisons. Reports retain ties, opponent cycles, per-judge diagnostics, missingness, and paired whole-question bootstrap uncertainty. Read <a href="judging-method.html">Research evaluation</a> for the denominator, interpretation, and limits.</p>
-</article><footer><a href="../README.html">Getting started</a> · <a href="judging-method.html">Research evaluation</a> · <a href="index.html">All documents</a></footer>
+<p>Either file uses the same presentation and validation: URL destinations are hidden uniformly, meaningful citation labels remain, and explanations are screened before acceptance. Original answers and the exact judging prompt remain saved.</p>
+</details>
+<details class="guide-details"><summary>Method and references</summary>
+<p>The complete design, exclusions and diagnostics are in <a href="judging-method.html">Research evaluation</a>. Creativity guidance draws on <a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger (2012)</a>; pairwise win ranking has a basis in <a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright (2018)</a>. <a href="https://aclanthology.org/P18-1128/">Dror et al. (2018)</a> discuss resampling in evaluation, and <a href="https://arxiv.org/abs/2306.05685">Zheng et al. (2023)</a> examine LLM judge biases. These references do not validate this rubric as a general creativity test.</p>
+<p>The five question categories follow <a href="https://arxiv.org/abs/2604.20855">the Caesar paper</a>, Appendix B.1. The <a href="deep-research-creativity.html">completed report</a> includes all 150 answers and 600 judgment explanations.</p>
+</details>
+</section>
+<footer><a href="../README.html">Getting started</a> · <a href="judging-method.html">Research evaluation</a> · <a href="index.html">All documents</a></footer>
 </main>
-</body></html>
+</body>
+</html>

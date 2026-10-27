@@ -350,7 +350,7 @@ def _system_order(data):
 def _ranking(data):
     report = data['ranking']
     parts = ['<section id="overall"><h2>Observed creativity ranking</h2>',
-             '<p>Each system appears in 400 of the 600 pairwise judgments '
+             '<p>Ranked by how often each system’s answer was preferred. Each system appears in 400 of the 600 judgments '
              '(50 questions × 2 opponents × 2 judges × 2 answer orders). '
              'Win rate is wins ÷ 400. Lines show 95% intervals from resampling the questions.</p>']
     for row in report['ranking']:
@@ -398,16 +398,18 @@ def _head_to_head(data):
              _table(['Row / column', *[LABELS[a] for a in agents]], rows,
                     'Overall head-to-head preferences', 'class="matrix"', row_headers=True)]
     cycles = report['diagnostics']['cycles']
-    parts.append('<p class="small">' + ('Observed preference cycles: ' + '; '.join(' → '.join(LABELS[a] for a in cycle) for cycle in cycles)
-                                      if cycles else 'No strict three-system preference cycle appears in the observed matrix.') + '</p></section>')
+    if cycles:
+        parts.append('<p class="small">Preference cycle: '
+                     + '; '.join(' → '.join(LABELS[a] for a in cycle) for cycle in cycles) + '.</p>')
+    parts.append('</section>')
     return ''.join(parts)
 
 
 def _judges(data):
     report = data['ranking']
     agents = _system_order(data)
-    parts = ['<section id="judges"><h2>Judge results and presentation diagnostics</h2><p>Both judges see every pair in both orders, without tools. '
-             'Different provider families do not establish independent errors or eliminate style preferences.</p>']
+    parts = ['<section id="judges"><h2>How the judges compare</h2>'
+             '<p>Both judges evaluated every pair in both orders, without tools.</p>']
     rows = []
     for judge in JUDGES:
         settings = data['judges'][judge]
@@ -417,12 +419,13 @@ def _judges(data):
         label = _judge_label(data, judge) + (f' · {effort}' if effort else '')
         rows.append([_text(label), *[_pct(by_agent[a]['preference_rate']) for a in agents],
                      _pct(diag['position_a_preference']['rate']), _pct(diag['swapped_inconsistency']['rate'])])
-    parts.append(_table(['Judge', *[LABELS[a] + ' win rate' for a in agents], 'A-position preference', 'Swapped inconsistency'], rows, 'Per-judge overall preferences and order diagnostics'))
+    parts.append(_table(['Judge', *[LABELS[a] + ' win rate' for a in agents], 'Chose A', 'Changed winner after swap'], rows, 'Per-judge overall preferences and order diagnostics'))
     diag = report['diagnostics']
     parts.append(f'<p>Judges disagree on {_pct(diag["judge_disagreement"]["rate"])} of matched presentations '
                  f'({diag["judge_disagreement"]["disagreements"]} / {diag["judge_disagreement"]["comparisons"]}). '
-                 'Swapped inconsistency means a judge changes its preferred system when presentation is reversed; '
-                 'it mixes position effects with call variability. Agreement is not verified accuracy.</p>')
+                 '“Chose A” shows how often the first answer won. “Changed winner after swap” shows how often '
+                 'a judge preferred a different system when the answer order was reversed. '
+                 'This can reflect order effects or variation between calls.</p>')
     parts.append('<details><summary>Frozen judge configurations</summary><pre>'
                  + _text(json.dumps(data['judges'], ensure_ascii=False, indent=2)) + '</pre></details></section>')
     return ''.join(parts)
@@ -470,38 +473,44 @@ def _resources(data):
     averages = []
     for agent in agents:
         r = generation[agent]
-        basis = ('conditional estimate' if r['cost_assessment']['basis_counts'].get('conditional_list_price_scenario')
-                 else 'partial estimate' if r['unknown_cost_answers'] else '')
-        basis_note = f'<br><small>{basis}</small>' if basis else ''
-        averages.append([_text(LABELS[agent]), _money(r['mean_known_cost_usd']) + basis_note,
+        averages.append([_text(LABELS[agent]), _money(r['mean_known_cost_usd']),
                          _duration(r['mean_duration_seconds']), _duration(r['mean_lifetime_duration_seconds'])])
     parts.append(_table(['System', 'Average estimated cost', 'Average generation time',
                          'Average active time, all attempts'], averages, 'Per-question cost and elapsed-time means'))
-    parts.append('<p class="small">Cost excludes unknown additional charges. Generation time covers the final successful job; '
-                 'active time includes earlier attempts. Missing times are excluded.</p>')
+    cost_notes = [f'{_text(LABELS[a])} has unpriced '
+                  + ('earlier attempts' if not generation[a]['unknown_current_cost_answers'] else 'attempts')
+                  + f' for {generation[a]["unknown_cost_answers"]} of 50 answers.'
+                  for a in agents if generation[a]['unknown_cost_answers']
+                  and not generation[a]['cost_assessment']['basis_counts'].get('conditional_list_price_scenario')]
+    parts.append('<p class="small">Google’s estimate uses assumed model rates because its internal billing breakdown is unavailable. '
+                 'Unreported charges are excluded. '
+                 'Generation time covers the final successful job; active time includes earlier attempts.</p>')
     google = generation['gemini']
-    parts.append(f'<p>Google Deep Research costs are conditional list-price estimates; actual billed USD is unknown. '
-                 f'{google["estimated_above_target"]} saved estimates exceed the $5 target, which is not a hard provider spending cap. '
-                 'These flags do not establish invoice overruns.</p>')
-    parts.append('<details class="resource-details"><summary>Cost accounting, timing coverage and audit records</summary>'
-                 '<p>Saved cumulative answer estimates include embedded recovery history, even when additional charges are unknown. '
-                 'The current-attempt column is separate and is not added again. Unknown reservations are exposure, not measured spend.</p>'
-                 '<p>Google Deep Research scenarios use high-context reference pricing; per-loop backend models are unknown.</p>'
-                 '<p class="small">Cost means divide saved cumulative known or conditional estimate components by all 50 questions; '
-                 'unknown additional charges are excluded. Time means use only answers with available timing, with coverage below; '
-                 'missing times are not counted as zero.</p>')
+    if google['estimated_above_target']:
+        parts.append(f'<p class="small">{google["estimated_above_target"]} Google answer estimates exceed the $5 target. '
+                     'The target is not a provider spending cap; actual bills have not been verified.</p>')
+    parts.append('<details class="resource-details"><summary>Cost accounting, timing coverage and audit records</summary>')
+    if cost_notes:
+        parts.append('<p>' + ' '.join(cost_notes) + '</p>')
+    parts.append('<p>Cumulative costs include recorded recovery attempts. The current attempt is part of that total. '
+                 'Reservations estimate possible charges for unresolved attempts; they are not measured spend.</p>'
+                 '<p>Google’s pricing scenario uses high-context Gemini 3.1 Pro rates, counts tool tokens as additional input, '
+                 'and charges searches at full price. The service does not report the model and pricing tier for each internal step.</p>'
+                 '<p class="small">Cost means divide the recorded totals by all 50 questions. Time means use only answers '
+                 'with recorded durations; missing times are excluded.</p>')
     rows = []
     for agent in agents:
         r = generation[agent]
+        basis = (f'{r["unknown_cost_answers"]} / 50 use assumed pricing'
+                 if r['cost_assessment']['basis_counts'].get('conditional_list_price_scenario')
+                 else f'{r["unknown_cost_answers"]} / 50 have unreported charges')
         rows.append([_text(LABELS[agent]), _money(r['known_cost_usd']), _money(r['current_attempt_known_cost_usd']),
-                     str(r['unknown_cost_answers']) + ' / 50', _money(r['historical_unknown_reserved_usd']),
+                     basis, _money(r['historical_unknown_reserved_usd']),
                      _money(r['current_unknown_reserved_usd'])])
-    parts.append(_table(['System', 'Saved cumulative estimate', 'Current-attempt estimate', 'Incomplete estimates',
+    parts.append(_table(['System', 'Saved cumulative estimate', 'Current-attempt estimate', 'Cost record coverage',
                          'Historical unknown reservations', 'Current unknown reservations'], rows, 'Generation cost ledgers'))
-    parts.append('<p class="small">Known ledger subtotals omit unknown additional charges. Failed jobs not linked to the saved '
-                 'answer’s recovery history can add charges. Analysis uses the same shared cost assessments, including partial known '
-                 'components and explicitly conditional Google Deep Research pricing scenarios. '
-                 'Judging is additional: ' + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) for j in JUDGES) + '.</p>')
+    parts.append('<p class="small">Judging is additional: '
+                 + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) for j in JUDGES) + '.</p>')
     prior = data['resources']['prior_judging']
     paid = data['resources']['paid_judging']
     scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in JUDGES)
@@ -510,8 +519,7 @@ def _resources(data):
     parts.append(f'<p><strong>600 scored verdicts from 600 judgment jobs ({scored_attempts} API attempts): '
                  f'{_money(scored, 6)}. All {paid["records"]} judgment jobs ({paid_attempts} API attempts): '
                  f'{_money(paid["cumulative_known_estimate_usd"], 6)}.</strong> '
-                 'Job estimates include retained rejected attempts. Selected-response costs and usage cover only the successful attempt. '
-                 'Unknown additional charges are excluded.</p>')
+                 'Job estimates include retained rejected attempts. Selected-response costs and usage cover only the successful attempt.</p>')
     if prior['records']:
         parts.append(f'<p>The total includes {prior["records"]} prior or superseded judgment jobs once: '
                      f'{_money(prior["cumulative_known_estimate_usd"])} '
@@ -525,11 +533,6 @@ def _resources(data):
                      'Provider responses, repeated prompts and usage events are omitted from this HTML.</p>'
                      '<pre tabindex="0" aria-label="Prior judgment cost summary">'
                      + _text(json.dumps(compact_prior, ensure_ascii=False, indent=2)) + '</pre></details>')
-    parts.append('<p class="small">Estimate classifications: ' + '; '.join(
-        _text(LABELS[a]) + ' — usage-priced ' + _money(generation[a]['cost_assessment']['usage_priced_estimate_usd'])
-        + ', conditional scenarios ' + _money(generation[a]['cost_assessment']['conditional_scenario_estimate_usd'])
-        + ', other recorded estimates ' + _money(generation[a]['cost_assessment']['recorded_provider_estimate_usd'])
-        for a in agents) + '. Pricing assumptions, sources, aggregate usage and conditional scenarios are retained with each answer below.</p>')
     parts.append('<p class="small">Pricing references: '
                  '<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">OpenAI Sol</a>, '
                  '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">OpenAI Luna</a>, and '
@@ -561,12 +564,16 @@ def _resources(data):
                      + '; failed-attempt known estimates already included: ' + _money(ledger.get('failed_known_usd'))
                      + '. Model-based reserved exposure for unresolved charges: ' + _money(ledger.get('unknown_reserved_usd'))
                      + '. This exposure is not a guaranteed invoice bound and is not added to known spend.</p>')
-        parts.append('<p class="small">Audit judging estimate for the 600 scored judgment jobs: '
-                     + _money(judging_audit.get('known_estimated_usd'), 6) + '; separate failed jobs '
-                     + _money(judging_audit.get('failed_known_usd')) + '. Unknown failed-job bills: '
+        rejected = judging_audit.get('rejected_attempts')
+        if rejected:
+            parts.append(f'<p class="small">The {rejected} rejected attempts add '
+                         + _money(judging_audit.get('rejected_attempt_estimated_usd'))
+                         + ' in recorded costs, already included above.</p>')
+        parts.append('<p class="small">Unknown charges on failed or rejected attempts: '
                      + _text(judging_audit.get('failed_unknown_cost_count', 'not recorded'))
-                     + '; partial observations on unpriced failures: '
-                     + _money(judging_audit.get('failed_partial_observed_usd')) + ' (not a final bill).</p>')
+                     + '. Separate failed-job estimate: ' + _money(judging_audit.get('failed_known_usd'))
+                     + '; partial cost observations on unpriced attempts: '
+                     + _money(judging_audit.get('failed_partial_observed_usd')) + '.</p>')
         warnings = doc.get('warnings') or []
         if warnings:
             counts = {a: sum(r.get('agent') == a and (r.get('unknown_attempt_count') or 0) > 0
@@ -620,12 +627,9 @@ def _questions(data):
              'Expand an answer or reason to inspect the source content; no API or network request is needed.</p>']
     for index, question in enumerate(data['questions'], 1):
         qid = question['id']
-        title = question['text'][:150] + ('…' if len(question['text']) > 150 else '')
         parts.append(f'<details class="question" id="question-{index}"><summary>'
-                     f'<span class="question-number">{index:02d}</span><span class="question-title">{_text(title)}</span>'
+                     f'<span class="question-number">{index:02d}</span><span class="question-title">{_text(question["text"])}</span>'
                      '</summary><div class="question-content">')
-        if len(question['text']) > 150:
-            parts.append(f'<p class="full-question">{_text(question["text"])}</p>')
         parts.append('<h3 class="evidence-heading">Answers</h3>')
         for agent in agents:
             row = answers[qid, agent]
@@ -702,51 +706,55 @@ def _method(data):
         and j.get('presentation_version') == 'citation-neutral-v1' for j in data['judgments'])
     if revised:
         provenance = ('<p>URL destinations were hidden uniformly in judge presentations; meaningful citation labels and '
-                      'answer content were retained. Original answers are preserved below. Style can still reveal provenance, '
-                      'so this does not establish complete blinding.</p>'
-                      '<p>The revised rubric credits central contributions and combinations, treats unfamiliarity as uncertainty, '
-                      'and evaluates usefulness within the question\'s premises. Equal-merit cases choose A by convention; '
-                      'consistent indifference across both orders splits votes evenly. Mechanical explanation checks '
-                      'reject obvious incomplete or noncomparative responses; they do not verify factual accuracy.</p>')
+                      'answer content were retained. Original answers are preserved below. Wording can still reveal '
+                      'which system wrote an answer.</p>'
+                      '<p>Originality can come from combining familiar ideas. Usefulness is judged within the question’s '
+                      'premises; unfamiliarity alone is not evidence of novelty. If a judge cannot support a substantive '
+                      'preference, it must say so and choose A. Doing this in both orders gives each system one win.</p>'
+                      '<p>Incomplete or noncomparative explanations trigger retries. These checks do not verify the judges’ claims.</p>')
     elif openai_tracking or google_grounding:
         provenance = ('<p>Provider labels were withheld, but this run was not fully blinded. '
                       f'Links reveal provenance in {openai_tracking} / 50 {LABELS["openai"]} answers '
                       f'and {google_grounding} / 50 {LABELS["gemini"]} answers. '
                       'These cues do not establish that provider bias caused the ranking.</p>')
-    return ('<section id="method"><h2>How to read the results</h2>'
-            '<p>Two judges compared each answer pair in both orders, guided jointly by New, Useful and Surprising. '
-            'The ranking measures their preferences on these 50 curated questions, not absolute creativity or verified factual accuracy.</p>'
-            '<p>Intervals reflect the question mix with saved answers and judges held fixed; '
-            'they exclude variability from new answers or other judges.</p>'
-            + provenance +
-            '<details><summary>Scoring method, uncertainty and references</summary>'
-            '<p>All three systems answer the same 50 questions. Each of three pairs receives two judges in both answer orders: '
-            '12 overall A/B choices per question, 600 judgments total. New, Useful and Surprising guide one qualitative comparison; '
-            'there are no separate criterion winners or numeric criterion weights. Opponents, judges, orders and questions receive '
-            'equal weight. The win fraction is a normalized Borda-style count; '
-            '<a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright</a> provide background on pairwise ranking.</p>'
-            f'<p>Uncertainty is the saved 1,000-resample whole-question bootstrap (seed {_text(bootstrap["seed"])}). '
-            'Each draw retains all dependent comparisons for the sampled questions; paired contrasts share those draws. '
-            'These are descriptive percentile intervals, not the finite-pool concentration bounds used for AI scientist papers. '
-            '<a href="https://aclanthology.org/P18-1128/">Dror et al., 2018</a> discuss paired resampling in evaluation.</p>'
-            '<p>Intervals condition on the saved answers, judges, rubric and observed calls. They describe sensitivity to this '
-            'curated question mix, not variability from generating new answers or choosing new judges. '
-            '<a href="https://arxiv.org/abs/2306.05685">Zheng et al., 2023</a> document position and style biases in LLM judging. '
-            'Balanced presentation and diagnostics do not prove that those biases disappear.</p>'
-            '<p><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger, 2012</a> identify originality and effectiveness '
-            'as central to creativity. This does not validate this rubric as a general creativity instrument. Recall-based source '
-            'placeability is not verified historical novelty, and judge agreement is not independent factual validation.</p></details></section>')
+    return ('<section id="method"><h2>How the comparison works</h2>'
+            '<p>Each question produces 12 decisions: three answer pairs, evaluated by two judges in both orders.</p>'
+            '<dl class="method-summary">'
+            '<dt>Choose a winner</dt><dd>Each judge chooses A or B using <strong>New</strong> (original contribution), '
+            '<strong>Useful</strong> (fit and support), and <strong>Surprising</strong> (departure from the expected approach). '
+            'These guide one overall decision, with no separate scores.</dd>'
+            '<dt>Count the votes</dt><dd>Every decision counts equally. Each system appears in 400 decisions; '
+            'wins ÷ 400 gives its win rate.</dd>'
+            '<dt>Read the error bars</dt><dd>We resample the 50 questions 1,000 times, keeping each question’s 12 decisions '
+            'together. The middle 95% of the resulting win rates forms the interval.</dd></dl>'
+            '<p class="small">The ranking describes these saved answers and judge preferences. The intervals show sensitivity '
+            'to the question mix; they do not cover new answers or different judges. Factual accuracy has not been verified, '
+            'and answer length or style may influence preferences.</p>'
+            '<details><summary>Rubric, presentation and references</summary>' + provenance +
+            f'<p>The bootstrap uses seed {_text(bootstrap["seed"])}. All systems use the same sampled questions when '
+            'calculating ranking differences.</p>'
+            '<ul><li><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger, 2012</a>: '
+            'originality and effectiveness as core creativity criteria.</li>'
+            '<li><a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright, 2018</a>: '
+            'ranking by pairwise win counts (Borda counting).</li>'
+            '<li><a href="https://aclanthology.org/P18-1128/">Dror et al., 2018</a>: '
+            'resampling methods and their assumptions in evaluation.</li>'
+            '<li><a href="https://arxiv.org/abs/2306.05685">Zheng et al., 2023</a>: '
+            'position and verbosity biases in LLM judging.</li></ul>'
+            '<p class="small">These sources inform the design; they do not validate this rubric or its judgments against human experts.</p>'
+            '</details></section>')
 
 
 CSS = """
 .skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:white;padding:.7rem 1rem}.skip-link:focus{top:1rem}
-main>section,.detailed-results>section{margin:3rem 0}main>nav{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin:1.5rem 0;padding:1rem 0}
+main>section{margin:3rem 0}main>nav{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin:1.5rem 0;padding:1rem 0}
+.method-summary{display:grid;grid-template-columns:10rem minmax(0,1fr);gap:1rem 1.5rem}.method-summary dt{font-weight:650;color:#0b5967}.method-summary dd{margin:0}
 .metadata,.small,small{color:#526574}.small{font-size:.9rem}.metadata{font-size:.8rem}.subtitle{max-width:76ch}
 .run-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin:1.8rem 0}.run-stats strong{display:block;color:#0b5967;font-size:1.9rem}.run-stats span{font-size:.85rem;color:#526574}
 .ranking-row{display:grid;grid-template-columns:minmax(160px,1.1fr) minmax(150px,2fr) 130px;gap:1rem;align-items:center;margin:1.1rem 0}.rank-label{display:flex;align-items:center;gap:.7rem}.rank{color:#526574;font-size:1.3rem}.ranking-row svg{width:100%;height:48px}.score{text-align:right;font-variant-numeric:tabular-nums}.score strong{display:block;font-size:1.4rem}.score small{display:block;font-size:.8rem;line-height:1.5}
 .table-scroll{max-width:100%;overflow:auto}.table-scroll table{min-width:630px}.table-scroll .matrix{table-layout:fixed;min-width:700px}.matrix th,.matrix td{vertical-align:middle;padding:.9rem}.matrix th:first-child{width:29%}.matrix thead th,.matrix td{text-align:center}.matrix tbody th{font-weight:650;line-height:1.5}.heat-cell,.diagonal{display:flex;align-items:center;justify-content:center;min-height:3rem;padding:.6rem;font-variant-numeric:tabular-nums}.heat-cell{background:rgba(11,89,103,var(--shade))}.diagonal{background:#f0f3f5;color:#71818c}
-.question{padding:0;border:1px solid #d7e1e6;border-radius:6px;margin:1rem 0}.question>summary{display:grid;grid-template-columns:2rem minmax(0,1fr) 1rem;gap:.8rem;align-items:start;padding:1.2rem;font-size:1rem;list-style:none}.question>summary::-webkit-details-marker{display:none}.question>summary::after{content:"+";font-size:1.2rem;line-height:1.2;text-align:center}.question[open]>summary::after{content:"−"}.question-number{color:#526574;font-weight:400;font-variant-numeric:tabular-nums}.question-title{min-width:0}.question-content{padding:0 1.2rem 1rem}.question .evidence-heading{margin:1rem 0 .5rem}.question .answer{border-top:1px solid #d7e1e6;margin:0;padding:.15rem 0}.question .answer>summary{font-size:1rem;padding:1rem 0}.question .full-question,.reason,.answer-text{white-space:pre-wrap;overflow-wrap:anywhere}.answer-text{max-height:40rem;overflow:auto;background:#f5f8f9;padding:1.2rem;font-size:.95rem;line-height:1.8}.answer-metadata{margin:1rem 0}.cost-record pre{max-height:32rem;white-space:pre-wrap;overflow-wrap:anywhere}.question .judgments{border-top:1px solid #d7e1e6;margin:1rem 0 0;padding-top:.5rem}.judgment-group{margin:1.5rem 0;padding-top:1rem;border-top:1px solid #d7e1e6}.judgment-group:first-of-type{margin-top:.5rem;padding-top:0;border-top:0}.judgment-group>h4{font-size:1rem;margin:.5rem 0}.question .judgment{margin:.3rem 0;padding:.2rem 0}.judgment .presentation{font-size:.85rem;color:#526574;margin:.2rem 0 1rem}.judgment .reason{margin:.7rem 0 1.5rem}summary{overflow-wrap:anywhere}code{overflow-wrap:anywhere}footer{padding:1rem 0;margin-top:3rem}
-@media(max-width:650px){.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{max-height:32rem;padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
+.question{padding:0;border:1px solid #d7e1e6;border-radius:6px;margin:1rem 0}.question>summary{display:grid;grid-template-columns:2rem minmax(0,1fr) 1rem;gap:.8rem;align-items:start;padding:1.2rem;font-size:1rem;list-style:none}.question>summary::-webkit-details-marker{display:none}.question>summary::after{content:"+";font-size:1.2rem;line-height:1.2;text-align:center}.question[open]>summary::after{content:"−"}.question-number{color:#526574;font-weight:400;font-variant-numeric:tabular-nums}.question-title{min-width:0}.question-content{padding:0 1.2rem 1rem}.question .evidence-heading{margin:1rem 0 .5rem}.question .answer{border-top:1px solid #d7e1e6;margin:0;padding:.15rem 0}.question .answer>summary{font-size:1rem;padding:1rem 0}.reason,.answer-text{white-space:pre-wrap;overflow-wrap:anywhere}.answer-text{max-height:40rem;overflow:auto;background:#f5f8f9;padding:1.2rem;font-size:.95rem;line-height:1.8}.answer-metadata{margin:1rem 0}.cost-record pre{max-height:32rem;white-space:pre-wrap;overflow-wrap:anywhere}.question .judgments{border-top:1px solid #d7e1e6;margin:1rem 0 0;padding-top:.5rem}.judgment-group{margin:1.5rem 0;padding-top:1rem;border-top:1px solid #d7e1e6}.judgment-group:first-of-type{margin-top:.5rem;padding-top:0;border-top:0}.judgment-group>h4{font-size:1rem;margin:.5rem 0}.question .judgment{margin:.3rem 0;padding:.2rem 0}.judgment .presentation{font-size:.85rem;color:#526574;margin:.2rem 0 1rem}.judgment .reason{margin:.7rem 0 1.5rem}summary{overflow-wrap:anywhere}code{overflow-wrap:anywhere}footer{padding:1rem 0;margin-top:3rem}
+@media(max-width:650px){.method-summary{grid-template-columns:1fr;gap:.25rem}.method-summary dd{margin-bottom:1rem}.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{max-height:32rem;padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
 @media print{.skip-link,main>nav{display:none}.ranking-row{break-inside:avoid}.answer-text{max-height:none;overflow:visible}details>summary{break-after:avoid}}
 """
 
@@ -760,13 +768,12 @@ def _render(data, destination):
              '<main id="main-content" tabindex="-1"><header><p class="metadata">Completed 50-question research comparison</p>',
              '<h1>Deep research creativity</h1><p class="subtitle">Three research systems answered the same questions. '
              'Two AI judges compared overall creative quality, using New, Useful and Surprising.</p></header>',
-             '<nav aria-label="Report contents"><a href="#overall">Ranking</a><a href="#resources">Cost and time</a>'
-             '<a href="#method">Interpretation</a><a href="#details">Detailed results</a>'
-             '<a href="#questions">Answers and evidence</a></nav>',
+             '<nav aria-label="Report contents"><a href="#overall">Ranking</a><a href="#matchups">Head-to-head</a>'
+             '<a href="#resources">Cost and time</a><a href="#method">Method</a>'
+             '<a href="#judges">Judges</a><a href="#questions">Answers</a></nav>',
              '<div class="run-stats"><div><strong>50</strong><span>questions</span></div>'
              '<div><strong>150</strong><span>answers</span></div><div><strong>600</strong><span>pairwise judgments</span></div></div>',
-             _ranking(data), _resources(data), _method(data),
-             '<div id="details" class="detailed-results">', _head_to_head(data), _judges(data), _models(data), '</div>',
+             _ranking(data), _head_to_head(data), _resources(data), _method(data), _judges(data), _models(data),
              _questions(data),
              '<footer>CREST · Offline report<details><summary>Run provenance</summary>'
              f'<p>Run {_text(run.name)}<br>Frozen analysis: {_text(data["analysis_dir"].name)} · '
