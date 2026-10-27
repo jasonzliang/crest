@@ -294,10 +294,8 @@ def test_shared_site_navigation_and_current_document_titles_are_retained(report,
     assert any(tag == "header" and attrs.get("class") == "crest-site-header" for tag, attrs in doc.tags)
     assert "<h1>AI scientist comparison</h1>" in html
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
-    assert "../README.html" in links
-    assert "crest-guide.html" in links
-    assert "ai-scientist-creativity.html" in links
-    assert "index.html" in links
+    assert links[:5] == ["../README.html", "crest-guide.html", "deep-research-creativity.html",
+                         "ai-scientist-creativity.html", "index.html"]
 
 
 def test_main_reading_order_starts_with_progress_then_evidence_and_method(report, tmp_path):

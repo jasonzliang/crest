@@ -78,7 +78,7 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style>
 <style>
-.guide-hero{max-width:760px}.eyebrow{color:#0b5967;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700}.guide-hero .report-link{display:inline-block;margin:.3rem 0 1rem;font-weight:650}
+.report-link{display:inline-block;margin:.3rem 0 1rem;font-weight:650}
 .guide-nav{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;margin:1rem 0 2rem;padding:.8rem 0;border-block:1px solid #d7e1e6}.guide-nav a{padding:.35rem 0;min-height:40px}
 .pipeline{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin:1rem 0}.pipeline li{position:relative;padding:1.2rem 1.3rem;background:#f0f6f6;border-top:3px solid #0b5967;border-radius:0 0 5px 5px;min-width:0}.pipeline li+li::before{content:"→";position:absolute;left:-1.2rem;top:2rem;color:#526574}.stage-number{font:650 .8rem/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#0b5967;letter-spacing:.08em}.pipeline h3{font-size:1.25rem;margin:.35rem 0}.pipeline p{font-size:.9rem;margin:.45rem 0}.pipeline .output{display:block;margin-top:.8rem;font-size:.8rem;color:#526574}
 .quick-start{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.8rem}.quick-start>div{min-width:0}.quick-start h3{margin-top:0}.command-label{font-size:.8rem;color:#526574}.quick-start pre{margin:.5rem 0}pre{max-width:100%}.note{border-left:3px solid #b4652b;padding:.15rem 0 .15rem 1rem;margin:1rem 0}.note p{margin:.35rem 0}.table-scroll table{min-width:590px}.table-scroll th:first-child{min-width:145px}
@@ -89,14 +89,11 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to guide</a>
-<header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
+<header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="deep-research-creativity.html">Deep research comparison</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
 <main id="main-content" tabindex="-1">
-<header class="guide-hero">
-<p class="eyebrow">Pipeline guide</p>
-<h1>Generate. Compare. Rank.</h1>
-<p class="subtitle">CREST runs three research systems on the same questions, saves their answers, and compares creative quality with two AI judges.</p>
+<h1>Research pipeline</h1>
+<p>CREST runs three research systems on the same questions, saves their answers, and compares creative quality with two AI judges.</p>
 <a class="report-link" href="deep-research-creativity.html">Read the completed 50-question comparison →</a>
-</header>
 <nav class="guide-nav" aria-label="Guide contents"><a href="#overview">Pipeline</a><a href="#running">Quick start</a><a href="#models">Systems</a><a href="#operations">Parallelism</a><a href="#files">Results and reuse</a><a href="#judging">Ranking method</a></nav>
 <section id="overview" aria-labelledby="overview-title">
 <h2 id="overview-title">Three stages, one result directory</h2>
@@ -219,7 +216,6 @@ rubric: ../prompts/nus_pairwise_v2.txt
 <p>The five question categories follow <a href="https://arxiv.org/abs/2604.20855">the Caesar paper</a>, Appendix B.1. The <a href="deep-research-creativity.html">completed report</a> includes all 150 answers and 600 judgment explanations.</p>
 </details>
 </section>
-<footer><a href="../README.html">Getting started</a> · <a href="judging-method.html">Research evaluation</a> · <a href="index.html">All documents</a></footer>
 </main>
 </body>
 </html>

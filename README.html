@@ -71,8 +71,8 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style></head>
-<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="README.html">CREST</a><a href="docs/crest-guide.html">Research pipeline</a><a href="docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><p class="metadata">Getting started</p><article>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="README.html">CREST</a><a href="docs/crest-guide.html">Research pipeline</a><a href="docs/deep-research-creativity.html">Deep research comparison</a><a href="docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="docs/index.html">All documents</a></nav></header>
+<main id="document-main" tabindex="-1"><article>
 <h1>Getting started</h1>
 <p>Compare Caesar, OpenAI (Sol + web search), and Google Deep Research on the same 50 questions. Two judges choose <strong>one overall A/B winner</strong>, guided by New, Useful and Surprising. Rank the systems by their share of wins.</p>
 <p>A complete run produces <strong>150 answers and 600 judgments</strong>: every pair, both judges, both answer orders. The <a href="docs/deep-research-creativity.html">completed comparison</a> includes all answers and explanations. For setup and methods, read the <a href="docs/crest-guide.html">pipeline guide</a> and <a href="docs/judging-method.html">research evaluation</a>.</p>
@@ -118,4 +118,4 @@ python -m crest analyze --run "$CREST_RUN" --config crest/configs/crest.mbp.yaml
 <p>This runs both <code>tests/</code> and <code>crest_ais/tests/</code> in parallel, with one worker per logical CPU core. Use <code>python -m pytest -n 0</code> for serial debugging, or <code>python -m pytest -n 4</code> to choose the worker count.</p>
 <p>Historical protocols, questions, papers, and results live under <a href="crest/_archive/index.html">crest/_archive/</a> and remain separate from the current method. Old caches are not automatically imported.</p>
 <p>Apache License 2.0 — <a href="LICENSE">LICENSE</a>.</p>
-</article><footer><a href="docs/index.html">All documents</a></footer></main></body></html>
+</article></main></body></html>
