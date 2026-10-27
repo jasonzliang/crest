@@ -1,1 +1,9 @@
 crest_ais/data/**/*.pdf filter=lfs diff=lfs merge=lfs -text
+
+# Documentation and saved evidence are not application source code.
+README.html linguist-documentation
+docs/** linguist-documentation
+docs/deep-research-creativity.html linguist-generated
+docs/ai-scientist-creativity.html linguist-generated
+crest/_archive/** linguist-documentation
+crest_ais/data/** linguist-detectable=false
