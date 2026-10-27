@@ -208,8 +208,8 @@ python stage3_analyze.py "$CREST_RUN" --config crest.mbp.yaml</code></pre>
 <tr><td>Research · OpenAI</td><td>3 → 12</td><td>2 → 6</td></tr>
 <tr><td>Research · Gemini</td><td>2 → 8</td><td>1 → 4</td></tr>
 <tr><td><strong>Research total</strong></td><td><strong>6 → 24</strong></td><td><strong>13 → 20</strong></td></tr>
-<tr><td>Each judge</td><td>4 → 16</td><td>2 → 8</td></tr>
-<tr><td><strong>Judging total</strong></td><td><strong>8 → 32</strong></td><td><strong>4 → 16</strong></td></tr>
+<tr><td>Each judge</td><td>4 → 16</td><td>8 → 16</td></tr>
+<tr><td><strong>Judging total</strong></td><td><strong>8 → 32</strong></td><td><strong>16 → 32</strong></td></tr>
 </tbody></table></div>
 <p>Each provider gains a slot after two successful uncached jobs and halves capacity on HTTP 429. Shared cooldowns honor available retry/reset headers. Native background-job creation retries only explicit 429 rejections; idempotent polling/cancellation also retry transient failures, with four total attempts. Caesar separately allows bounded SDK retries for 429 and server 5xx errors, retaining reservations for uncertain failed attempts against its budget. Limits apply per pipeline process; other account traffic and hosted-agent usage can still cause rate limits.</p>
 <h2 id="files">Results, snapshots, and cache</h2>

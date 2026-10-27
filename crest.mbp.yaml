@@ -12,10 +12,10 @@ research:
     concurrency: 4
 judges:
   openai:
-    initial_concurrency: 2
-    concurrency: 8
+    initial_concurrency: 8
+    concurrency: 16
   gemini:
-    initial_concurrency: 2
-    concurrency: 8
+    initial_concurrency: 8
+    concurrency: 16
 analysis:
   workers: 1
