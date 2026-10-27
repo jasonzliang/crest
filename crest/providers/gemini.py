@@ -29,6 +29,7 @@ RESEARCH_AGENT = "deep-research-preview-04-2026"
 BILLING_MODEL = "gemini-3.1-pro-preview"
 ARGON_MODEL = "gemini-4-argon"
 ACTIVE_STATUSES = ("queued", "in_progress")
+TERMINAL_STATUSES = {"completed", "failed", "incomplete", "cancelled"}
 
 
 async def generate(prompt: str, settings: dict, job: Job, *, client=None) -> dict:
@@ -67,6 +68,15 @@ async def judge(prompt: str, settings: dict, job: Job, *, client=None) -> dict:
 
 
 async def _run(body, settings, job, client, *, research):
+    _observe_pre_cancel(job, job.state.get("pre_cancel_raw"), settings, research=research)
+    saved = job.state.get("raw")
+    remote_id = job.state.get("remote_id")
+    if (isinstance(saved, dict) and saved.get("status") in TERMINAL_STATUSES
+            and isinstance(saved.get("id"), str) and saved["id"]
+            and (saved["id"] == remote_id or not remote_id and job.state.get("submission_unknown"))):
+        job.save(remote_id=saved["id"], remote_status=saved["status"], submission_unknown=False)
+        if saved["status"] == "completed" or _receipt(saved, settings, research=research)["cost_usd"] is not None:
+            return _terminal_result(saved, settings, job, research=research)
     key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not key:
         raise ValueError("Set GOOGLE_API_KEY or GEMINI_API_KEY to use Gemini")
@@ -101,10 +111,8 @@ async def _interact(body, settings, job, client, key, *, research):
                              deadline=time.time() + 60)
         status = raw.get("status")
         job.save(remote_status=status)
-        if status == "completed":
-            return _result(raw, settings, research=research)
         if status not in ACTIVE_STATUSES:
-            raise RuntimeError(f"Gemini interaction ended with status {status!r}: {raw.get('error')}")
+            return _terminal_result(raw, settings, job, research=research)
     try:
         async with asyncio.timeout(max(0, deadline - time.time())):
             if remote_id:
@@ -124,10 +132,8 @@ async def _interact(body, settings, job, client, key, *, research):
             while True:
                 status = raw.get("status")
                 job.save(raw=raw, remote_status=status)
-                if status == "completed":
-                    return _result(raw, settings, research=research)
                 if status not in ACTIVE_STATUSES:
-                    raise RuntimeError(f"Gemini interaction ended with status {status!r}: {raw.get('error')}")
+                    return _terminal_result(raw, settings, job, research=research)
                 if research:
                     usage = _usage(raw)
                     cost = _cost(usage, settings.get("billing_model", BILLING_MODEL), research=True)
@@ -136,11 +142,11 @@ async def _interact(body, settings, job, client, key, *, research):
                         break
                 await asyncio.sleep(float(settings.get("poll_interval_seconds", 5)))
                 raw = await _request(client, "GET", _url(remote_id), headers, job, settings, deadline=deadline)
-        await _cancel(client, remote_id, headers, job, settings)
-        raise RuntimeError(f"Gemini research budget target exceeded by conservative estimate ${cost:.4f}; cancellation attempted")
+        await _cancel(client, remote_id, headers, job, settings, research=research)
+        raise RuntimeError(f"Gemini research budget target exceeded by conditional reference estimate ${cost:.4f}; cancellation attempted")
     except TimeoutError:
         if remote_id:
-            await _cancel(client, remote_id, headers, job, settings)
+            await _cancel(client, remote_id, headers, job, settings, research=research)
         raise TimeoutError("Gemini interaction exceeded its timeout") from None
 
 
@@ -161,17 +167,29 @@ async def _request(client, method, url, headers, job, settings, *, body=None, de
     try:
         raw = response.json()
     except ValueError:
-        job.save(raw={"http_status": response.status_code, "body": response.text})
+        evidence = {"http_status": response.status_code, "body": response.text}
+        if method == "GET":
+            job.save(poll_raw=evidence, poll_http_status=response.status_code)
+        else:
+            job.save(raw=evidence)
         response.raise_for_status()
         raise
-    job.save(raw=raw)
+    matching = isinstance(raw, dict) and raw.get("id") == job.state.get("remote_id")
+    if method == "GET" and (not response.is_success or not matching):
+        job.save(poll_raw=raw, poll_http_status=response.status_code)
+    else:
+        job.save(raw=raw)
     response.raise_for_status()
+    if method == "GET" and not matching:
+        raise RuntimeError("Gemini retrieval returned invalid or mismatched interaction data")
     if not isinstance(raw, dict):
         raise RuntimeError("Gemini response must be an interaction object")
     return raw
 
 
-async def _cancel(client, remote_id, headers, job, settings):
+async def _cancel(client, remote_id, headers, job, settings, *, research):
+    job.save(pre_cancel_raw=job.state.get("raw"))
+    _observe_pre_cancel(job, job.state.get("pre_cancel_raw"), settings, research=research)
     try:
         async with asyncio.timeout(10):
             response = await request(client, "POST", _url(remote_id) + "/cancel",
@@ -272,8 +290,9 @@ def _cost(usage, model, *, research, pricing_date=None):
                 return None
             tool_cost += item["count"] * .014
         # Aggregate loops do not expose each request's context tier. The
-        # upper envelope uses the high tier and charges tool-use prompts as
-        # additional input; account-level free searches are not deducted.
+        # reference scenario uses the high tier and charges tool-use prompts as
+        # additional input; account-level free searches are not deducted. The
+        # aggregate receipt does not establish this scenario as a cost bound.
         inputs += tools
     elif tools not in (None, 0) or any(item.get("count") != 0 for item in (grounding or [])):
         return None
@@ -291,8 +310,7 @@ def _cost(usage, model, *, research, pricing_date=None):
             + (outputs + thoughts) * output_rate) / 1_000_000 + tool_cost
 
 
-def _result(raw, settings, *, research):
-    text, citations = _answer(raw)
+def _receipt(raw, settings, *, research):
     usage = _usage(raw)
     model = (settings.get("billing_model", BILLING_MODEL) if research
              else raw.get("model", settings.get("model", BILLING_MODEL)))
@@ -308,7 +326,7 @@ def _result(raw, settings, *, research):
         budget = settings.get("budget_usd", 5.0)
         warnings.append(f"Research budget ${budget:g} is a target; the managed agent exposes no dollar cap.")
         if cost is not None:
-            warnings.append("Research cost is a conservative upper-envelope estimate: high context tier, tool-use prompts as additional input, and undiscounted searches; per-loop context tiers are unavailable.")
+            warnings.append("Research cost is a conditional high-context reference scenario: tool-use prompts as additional input and undiscounted searches; actual per-loop models, context tiers and billable search eligibility are unavailable. This is not a proven cost bound.")
             if cost > budget:
                 warnings.append(f"Estimated cost ${cost:.4f} exceeds the ${budget:g} research budget target.")
         else:
@@ -317,5 +335,28 @@ def _result(raw, settings, *, research):
         warnings.append("Cost unknown: model pricing or essential usage is unavailable.")
     if cost is not None:
         warnings.append("Cost uses published standard model rates; excludes account-specific discounts and cache storage.")
-    return {"text": text, "citations": citations, "model": model, "usage": usage,
+    return {"model": model, "usage": usage,
             "cost_usd": cost, "cost_estimated": cost is not None, "warnings": warnings, "raw": raw, **pricing}
+
+
+def _result(raw, settings, *, research):
+    text, citations = _answer(raw)
+    return {"text": text, "citations": citations, **_receipt(raw, settings, research=research)}
+
+
+def _terminal_result(raw, settings, job, *, research):
+    try:
+        if raw.get("status") != "completed":
+            raise RuntimeError(f"Gemini interaction ended with status {raw.get('status')!r}: {raw.get('error')}")
+        return _result(raw, settings, research=research)
+    except RuntimeError:
+        job.save(provider_result=_receipt(raw, settings, research=research))
+        raise
+
+
+def _observe_pre_cancel(job, raw, settings, *, research):
+    if isinstance(raw, dict) and raw.get("status") in ACTIVE_STATUSES:
+        receipt = _receipt(raw, settings, research=research)
+        if receipt["cost_usd"] is not None:
+            job.save(observed_usage=receipt["usage"], observed_cost_usd=receipt["cost_usd"],
+                     observed_cost_scope="partial_pre_cancel")

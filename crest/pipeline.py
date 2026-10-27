@@ -14,7 +14,7 @@ from pathlib import Path
 import subprocess
 import uuid
 
-from .cache import Cache, digest, write_json
+from .cache import Cache, CacheCorruption, digest, write_json
 from .config import load_questions
 from .concurrency import AdaptiveLimiter
 from .costs import assess_cost
@@ -282,7 +282,11 @@ class Pipeline:
             job.rate_controller = controller
             cached = job.state.get('status') == 'completed'
             if cached:
-                result = job.state['result']
+                result = job.state.get('result')
+                if stage == 'generate' and (not isinstance(result, dict) or
+                        not isinstance(result.get('text'), str) or not result['text'].strip()):
+                    raise CacheCorruption(f'Completed checkpoint has no complete answer text: {job.path}; '
+                                          'preserve and inspect it before retrying')
             else:
                 started = timestamp()
                 first_started, _ = _start_checkpoint(job.state)
@@ -404,6 +408,7 @@ class Pipeline:
                                                        'error': f'{type(exc).__name__}: {exc}',
                                                        'cost_usd': result.get('cost_usd', raw_usage.get('cost_usd')),
                                                        'observed_cost_usd': state.get('observed_cost_usd'),
+                                                       'observed_cost_scope': state.get('observed_cost_scope'),
                                                        'usage': result.get('usage') or state.get('observed_usage') or raw_usage,
                                                        'budget_exceeded': bool(state.get('budget_exceeded') or
                                                                                state.get('cancel_reason') == 'budget' or

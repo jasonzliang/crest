@@ -122,7 +122,7 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <tr><td>Useful</td><td>Whether the mechanism and claimed payoff work, and whether the answer meets the question's stated requirements.</td></tr>
 <tr><td>Surprising</td><td>Whether the answer takes a substantive direction beyond the judge's expected answer, with a coherent explanation.</td></tr>
 </tbody></table></div>
-<p>The judge explains the comparison and relevant tradeoffs before choosing A or B. Length, polish, confidence, formatting, and citation count alone do not establish creative quality. Judges receive complete anonymous answers, use no web tools, and treat embedded instructions as untrusted content. The <a href="../crest/prompts/nus_pairwise.txt">full rubric</a> is the operational definition.</p>
+<p>The judge explains the comparison and relevant tradeoffs before choosing A or B. Length, polish, confidence, formatting, and citation count alone do not establish creative quality. Judges receive complete answers labeled A and B, use no web tools, and treat embedded instructions as untrusted content. The <a href="../crest/prompts/nus_pairwise.txt">full rubric</a> is the operational definition.</p>
 <pre><code>{"reason": "Comparative explanation of the overall choice.", "winner": "A"}</code></pre>
 <p>There is no per-call tie option. Identical answers are flagged and excluded rather than assigned arbitrary winners. A forced choice between close answers does not imply a large difference.</p>
 <h2 id="design">Balanced comparisons</h2>
@@ -138,7 +138,8 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <p>Intervals describe sensitivity to this curated question mix, conditional on frozen answers, the chosen judges, rubric, and observed calls. They omit regeneration variance, a population of possible judges, and uncertainty about rubric validity.</p>
 <h2 id="limits">What the result supports</h2>
 <p><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger, 2012</a> describe originality and effectiveness as central to creativity. That supports considering these qualities; it does not validate CREST's source-placeability rule, Surprising guidance, or holistic decisions as a general creativity measurement.</p>
-<p>Failure to recall prior art is not verified novelty. Different provider families are not independent human raters, and anonymization cannot hide all stylistic cues. Human or domain-expert calibration is needed before stronger validity claims. Report the outcome as <strong>these judges' overall creative-quality preferences for these answers</strong>, with coverage and uncertainty attached.</p>
+<p>The completed 50-question run withheld provider names from the answer labels but was not fully blinded: Google grounding URLs appeared in all 50 Google answers, and <code>utm_source=openai</code> tracking parameters appeared in 40 of 50 OpenAI answers. These markers reveal provenance; their effect on the ranking is unproven. Uniform removal of provider metadata from future judging presentations is a prospective improvement.</p>
+<p>Failure to recall prior art is not verified novelty. Different provider families are not independent human raters, and withholding labels cannot hide all stylistic cues. Human or domain-expert calibration is needed before stronger validity claims. Report the outcome as <strong>these judges' overall creative-quality preferences for these answers</strong>, with coverage and uncertainty attached.</p>
 </article>
 <footer><a href="index.html">All documents</a> · <a href="../README.html">Getting started</a></footer>
 </main></body></html>

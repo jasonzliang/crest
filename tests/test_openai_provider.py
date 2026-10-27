@@ -44,6 +44,50 @@ def invoke(handler, job, settings=None, *, judge=False):
     return asyncio.run(run())
 
 
+@pytest.mark.parametrize("remote_id", ["resp_123", None])
+def test_resume_uses_saved_terminal_response_without_another_request(tmp_path, remote_id):
+    raw = completed()
+    job = FakeJob(tmp_path, {"remote_id": remote_id, "submission_unknown": remote_id is None,
+                             "raw": raw, "submitted_at": 0})
+    result = invoke(lambda request: pytest.fail("Saved completion must not make HTTP requests"), job)
+    assert result["text"] == "A full answer."
+    assert job.state["remote_id"] == "resp_123"
+    assert job.state["submission_unknown"] is False
+
+
+def test_resume_does_not_accept_saved_response_for_another_remote_id(tmp_path):
+    job = FakeJob(tmp_path, {"remote_id": "resp_current", "raw": completed()})
+    raw = completed(id="resp_current", output=[{"type": "message", "status": "completed",
+                                               "content": [{"type": "output_text", "text": "Current answer"}]}])
+    assert invoke(lambda request: httpx.Response(200, json=raw), job)["text"] == "Current answer"
+
+
+@pytest.mark.parametrize("response", [httpx.Response(404, json={"error": "expired"}),
+                                      httpx.Response(200, json={"error": "invalid response"}),
+                                      httpx.Response(200, json=completed(id="another-response"))])
+def test_retrieval_error_preserves_last_response_evidence(tmp_path, response):
+    raw = completed(status="in_progress")
+    job = FakeJob(tmp_path, {"remote_id": "resp_123", "raw": raw})
+    with pytest.raises((httpx.HTTPError, openai.ProviderError)):
+        invoke(lambda request: response, job)
+    assert job.state["raw"] == raw
+    assert "poll_raw" in job.state
+
+
+@pytest.mark.parametrize("status", ["incomplete", "failed", "cancelled"])
+def test_terminal_failure_preserves_normalized_paid_receipt(tmp_path, status):
+    job = FakeJob(tmp_path)
+    raw = completed(status=status)
+    with pytest.raises(openai.ProviderError):
+        invoke(lambda request: httpx.Response(200, json=raw), job)
+    receipt = job.state["provider_result"]
+    assert receipt["cost_usd"] == pytest.approx(.00467)
+    assert receipt["usage"]["cached_input_tokens"] == 200
+    assert receipt["raw"] == raw
+    with pytest.raises(openai.ProviderError):
+        invoke(lambda request: pytest.fail("Saved terminal failure must not be refetched"), job)
+
+
 def test_create_checkpoints_id_before_poll_and_preserves_full_result(tmp_path):
     job = FakeJob(tmp_path)
     calls = []
@@ -289,6 +333,42 @@ def test_cancellation_preserves_response_observed_before_cancel(tmp_path):
         invoke(lambda request: httpx.Response(200, json=raw if request.method == "GET"
                else {"id": "resp_123", "status": "cancelled"}), job, {"timeout_seconds": 0})
     assert job.state["pre_cancel_raw"] == raw
+
+
+def test_cancellation_keeps_partial_estimate_and_resume_reconciles_by_get(tmp_path):
+    raw = completed(status="in_progress")
+    job = FakeJob(tmp_path, {"remote_id": "resp_123", "submitted_at": time.time() - 10, "raw": raw})
+    with pytest.raises(TimeoutError):
+        invoke(lambda request: httpx.Response(200, json=raw if request.method == "GET"
+               else {"id": "resp_123", "status": "cancelled"}), job, {"timeout_seconds": 0})
+    assert job.state["observed_cost_usd"] == pytest.approx(.00467)
+    assert job.state["observed_cost_scope"] == "partial_pre_cancel"
+    assert job.state["observed_usage"]["cached_input_tokens"] == 200
+    assert job.state.get("provider_result", {}).get("cost_usd") is None
+    methods = []
+    def reconciled(request):
+        methods.append(request.method)
+        return httpx.Response(200, json=completed())
+    assert invoke(reconciled, job)["text"] == "A full answer."
+    assert methods == ["GET"]
+    assert job.state["observed_cost_usd"] == pytest.approx(.00467)
+
+
+@pytest.mark.parametrize("remote_id", ["resp_123", None])
+def test_unpriced_saved_terminal_receipt_can_reconcile_without_reposting(tmp_path, remote_id):
+    raw = {"id": "resp_123", "status": "cancelled"}
+    job = FakeJob(tmp_path, {"remote_id": remote_id, "submission_unknown": remote_id is None, "raw": raw,
+                             "pre_cancel_raw": completed(status="in_progress")})
+    methods = []
+    def reconcile(request):
+        methods.append(request.method)
+        return httpx.Response(200, json=completed(status="cancelled"))
+    with pytest.raises(openai.ProviderError):
+        invoke(reconcile, job)
+    assert methods == ["GET"]
+    assert job.state["provider_result"]["cost_usd"] == pytest.approx(.00467)
+    assert job.state["observed_cost_usd"] == pytest.approx(.00467)
+    assert job.state["observed_cost_scope"] == "partial_pre_cancel"
 
 
 def test_unknown_search_action_keeps_cost_unknown(tmp_path):

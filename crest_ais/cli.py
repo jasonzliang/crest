@@ -53,7 +53,7 @@ def load_config(path: Path | None = None, *, data_root: Path | None = None) -> d
 
 def _new_plan(config, args):
     root = config["data_root"]
-    catalog = prepare_catalog(root)
+    catalog = prepare_catalog(root, agents=list(DEFAULT_AGENTS))
     agents = {}
     for name in DEFAULT_AGENTS:
         manifest = json.loads((root / "data" / name / "manifest.json").read_text(encoding="utf-8"))

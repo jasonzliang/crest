@@ -54,6 +54,91 @@ def run(handler, job, *, method="generate", settings=None):
     return asyncio.run(exercise())
 
 
+@pytest.mark.parametrize("remote_id", ["research-1", None])
+def test_resume_uses_saved_terminal_response_without_another_request(tmp_path, remote_id):
+    raw = completed()
+    job = FakeJob(tmp_path, remote_id=remote_id, submission_unknown=remote_id is None,
+                  raw=raw, submitted_at=0)
+    result = run(lambda request: pytest.fail("Saved completion must not make HTTP requests"), job)
+    assert result["text"] == "Full research answer"
+    assert job.state["remote_id"] == "research-1"
+    assert job.state["submission_unknown"] is False
+
+
+def test_resume_does_not_accept_saved_response_for_another_remote_id(tmp_path):
+    job = FakeJob(tmp_path, remote_id="research-current", raw=completed())
+    raw = completed("Current answer", id="research-current")
+    assert run(lambda request: httpx.Response(200, json=raw), job)["text"] == "Current answer"
+
+
+@pytest.mark.parametrize("response", [httpx.Response(404, json={"error": "expired"}),
+                                      httpx.Response(503, text="unavailable"),
+                                      httpx.Response(200, json=["invalid interaction"]),
+                                      httpx.Response(200, json={"error": "invalid interaction"}),
+                                      httpx.Response(200, json=completed(id="another-interaction")),
+                                      httpx.Response(200, text="invalid JSON")])
+def test_retrieval_error_preserves_last_interaction_evidence(tmp_path, response):
+    raw = completed(status="in_progress")
+    job = FakeJob(tmp_path, remote_id="research-1", raw=raw)
+    with pytest.raises((httpx.HTTPError, RuntimeError, ValueError)):
+        run(lambda request: response, job, settings={"retry_attempts": 1})
+    assert job.state["raw"] == raw
+    assert "poll_raw" in job.state
+
+
+@pytest.mark.parametrize("status", ["incomplete", "failed", "cancelled"])
+@pytest.mark.parametrize("method", ["generate", "judge"])
+def test_terminal_failure_preserves_normalized_paid_receipt(tmp_path, status, method):
+    research = method == "generate"
+    raw = completed(status=status, **({} if research else {
+        "model": "gemini-4-argon", "created": "2026-10-26T12:00:00Z"}))
+    if not research:
+        raw["usage"]["grounding_tool_count"] = []
+    job = FakeJob(tmp_path)
+    with pytest.raises(RuntimeError, match="status"):
+        run(lambda request: httpx.Response(200, json=raw), job, method=method,
+            settings={} if research else {"model": "gemini-4-argon"})
+    receipt = job.state["provider_result"]
+    assert receipt["cost_usd"] == pytest.approx(.03614 if research else .00431)
+    assert receipt["usage"]["cached_input_tokens"] == 100
+    assert receipt["raw"] == raw
+    with pytest.raises(RuntimeError, match="status"):
+        run(lambda request: pytest.fail("Saved terminal failure must not be refetched"), job,
+            method=method, settings={} if research else {"model": "gemini-4-argon"})
+
+
+@pytest.mark.parametrize("remote_id", ["research-1", None])
+def test_unpriced_saved_terminal_receipt_can_reconcile_without_reposting(tmp_path, remote_id):
+    raw = {"id": "research-1", "status": "cancelled"}
+    job = FakeJob(tmp_path, remote_id=remote_id, submission_unknown=remote_id is None, raw=raw)
+    methods = []
+    def reconcile(request):
+        methods.append(request.method)
+        return httpx.Response(200, json=completed(status="cancelled"))
+    with pytest.raises(RuntimeError, match="status"):
+        run(reconcile, job)
+    assert methods == ["GET"]
+    assert job.state["provider_result"]["cost_usd"] == pytest.approx(.03614)
+
+
+def test_cancellation_keeps_partial_estimate_and_resume_reconciles_by_get(tmp_path):
+    raw = completed(status="in_progress")
+    job = FakeJob(tmp_path, remote_id="research-1", submitted_at=time.time() - 100, raw=raw)
+    with pytest.raises(TimeoutError):
+        run(lambda request: httpx.Response(200, json=raw if request.method == "GET"
+            else {"id": "research-1", "status": "cancelled"}), job, settings={"timeout_seconds": 1})
+    assert job.state["observed_cost_usd"] == pytest.approx(.03614)
+    assert job.state["observed_cost_scope"] == "partial_pre_cancel"
+    assert job.state["observed_usage"]["cached_input_tokens"] == 100
+    assert job.state.get("provider_result", {}).get("cost_usd") is None
+    methods = []
+    def reconcile(request):
+        methods.append(request.method)
+        return httpx.Response(200, json=completed())
+    assert run(reconcile, job)["text"] == "Full research answer"
+    assert methods == ["GET"]
+
+
 def test_research_request_uses_standard_agent_and_checkpoints_before_poll(tmp_path):
     job = FakeJob(tmp_path)
     calls = []
@@ -212,11 +297,12 @@ def test_usage_keeps_separate_reasoning_and_unknown_costs_honest(tmp_path):
     assert result["usage"]["reasoning_tokens"] == 50
     assert result["usage"]["tool_use_tokens"] == 0
     assert result["usage"]["search_queries"] == 2
-    # Agent loop contexts are unknown: use the higher published tier and
-    # undiscounted searches for a conservative estimate.
+    # This conditional reference assumes high context pricing and full-price
+    # searches; the managed agent's actual models and billing are unavailable.
     assert result["cost_usd"] == pytest.approx((900 * 4 + 100 * .4 + 250 * 18) / 1_000_000 + 2 * .014)
     assert result["cost_estimated"] is True
-    assert any("upper" in warning for warning in result["warnings"])
+    assert any("conditional" in warning and "not a proven cost bound" in warning
+               for warning in result["warnings"])
     unknown = run(lambda r: httpx.Response(200, json=completed(usage={})), FakeJob(tmp_path))
     assert unknown["cost_usd"] is None
     assert unknown["usage"]["input_tokens"] is None

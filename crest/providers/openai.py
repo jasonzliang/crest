@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 ADAPTER_VERSION = "openai-responses-v3"
 API_URL = "https://api.openai.com/v1/responses"
 ACTIVE = {"queued", "in_progress"}
+TERMINAL = {"completed", "failed", "incomplete", "cancelled"}
 
 
 class ProviderError(RuntimeError):
@@ -135,6 +136,7 @@ def _result(raw, settings, is_judge):
 
 
 async def _cancel(client, job, reason, settings):
+    _observe_pre_cancel(job, job.state.get("raw"))
     job.save(cancel_requested=True, cancel_reason=reason, cancel_status="unknown",
              pre_cancel_raw=job.state.get("raw"))
     url = f"{API_URL}/{quote(job.state['remote_id'], safe='')}/cancel"
@@ -153,6 +155,17 @@ async def _cancel(client, job, reason, settings):
 
 
 async def _run(prompt, settings, job, *, client, is_judge):
+    _observe_pre_cancel(job, job.state.get("pre_cancel_raw"))
+    saved = job.state.get("raw")
+    remote_id = job.state.get("remote_id")
+    if (isinstance(saved, dict) and saved.get("status") in TERMINAL
+            and isinstance(saved.get("id"), str) and saved["id"]
+            and (saved["id"] == remote_id or not remote_id and job.state.get("submission_unknown"))):
+        job.save(remote_id=saved["id"], remote_status=saved["status"], submission_unknown=False)
+        # Cancellation acknowledgments can omit usage. Keep the known ID and
+        # retrieve a final receipt rather than making that omission permanent.
+        if saved["status"] == "completed" or _account(saved)[1] is not None:
+            return _terminal_result(saved, settings, job, is_judge)
     if job.state.get("submission_unknown") and not job.state.get("remote_id"):
         raise ProviderError("OpenAI submission status unknown; refusing an automatic second paid submission")
     if client is None:
@@ -191,10 +204,8 @@ async def _run(prompt, settings, job, *, client, is_judge):
     while True:
         if raw is not None:
             job.save(raw=raw, remote_status=raw.get("status"))
-            if raw.get("status") == "completed":
-                return _result(raw, settings, is_judge)
             if raw.get("status") not in ACTIVE:
-                raise ProviderError(f"OpenAI response status is {raw.get('status')!r}, expected completed")
+                return _terminal_result(raw, settings, job, is_judge)
             usage, cost = _account(raw)
             if cost is not None and cost > settings.get("budget_usd", 5.0):
                 job.save(observed_usage=usage, observed_cost_usd=cost)
@@ -216,11 +227,12 @@ async def _run(prompt, settings, job, *, client, is_judge):
                                      deadline=time.time() + 60 if raw is None else deadline,
                                      timeout=retrieval_timeout)
             fetched = _raw(response)
-            if not response.is_success:
+            matching = isinstance(fetched, dict) and fetched.get("id") == job.state["remote_id"]
+            if not response.is_success or not matching:
                 job.save(poll_raw=fetched, poll_http_status=response.status_code)
             response.raise_for_status()
-            if not isinstance(fetched, dict):
-                raise ProviderError("OpenAI retrieval returned invalid response data")
+            if not matching:
+                raise ProviderError("OpenAI retrieval returned invalid or mismatched response data")
             raw = fetched
         except httpx.HTTPError as exc:
             job.save(poll_error=str(exc))
@@ -228,3 +240,23 @@ async def _run(prompt, settings, job, *, client, is_judge):
                 await _cancel(client, job, "timeout", settings)
                 raise TimeoutError("OpenAI response timed out; cancellation requested (see cancel_status)") from exc
             raise
+
+
+def _terminal_result(raw, settings, job, is_judge):
+    """Keep a priced receipt even when the terminal response cannot be an answer."""
+    try:
+        return _result(raw, settings, is_judge)
+    except ProviderError:
+        usage, cost = _account(raw)
+        job.save(provider_result={"model": raw.get("model", settings.get("model", "gpt-6.1-sol")),
+                                  "usage": usage, "cost_usd": cost,
+                                  "cost_estimated": cost is not None, "raw": raw})
+        raise
+
+
+def _observe_pre_cancel(job, raw):
+    if isinstance(raw, dict) and raw.get("status") in ACTIVE:
+        usage, cost = _account(raw)
+        if cost is not None:
+            job.save(observed_usage=usage, observed_cost_usd=cost,
+                     observed_cost_scope="partial_pre_cancel")

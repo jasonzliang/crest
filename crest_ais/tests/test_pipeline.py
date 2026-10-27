@@ -117,6 +117,43 @@ def _manifest(root, papers):
     (directory / "manifest.json").write_text(json.dumps({"agent_id": "scientistone", "display_name": "ScientistOne", "papers": papers}))
 
 
+def test_default_plan_ignores_additional_collections(tmp_path):
+    from crest_ais.cli import _new_plan
+    from crest_ais.catalog import DEFAULT_AGENTS
+
+    def add_collection(agent, number):
+        relative = f"data/{agent}/paper.pdf"
+        if agent == "sakana_ai_scientist_v2":
+            # This collection deliberately requires an audited release hash.
+            source = Path(__file__).resolve().parents[1] / "data" / agent / "pdfs" / "label-noise.pdf"
+            path = tmp_path / relative
+            path.parent.mkdir(parents=True)
+            path.write_bytes(source.read_bytes())
+            paper = {"id": "paper", "pdf_path": relative,
+                     "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        else:
+            paper = _pdf(tmp_path, relative,
+                         [f"Abstract\nComplete research mechanism {number} and substantive experimental evidence."])
+        manifest = {"agent_id": agent, "display_name": agent, "papers": [paper]}
+        (tmp_path / "data" / agent / "manifest.json").write_text(json.dumps(manifest))
+
+    for number, agent in enumerate(DEFAULT_AGENTS):
+        add_collection(agent, number)
+    config = {"data_root": tmp_path, "judges": JUDGES,
+              "rubric": Path(__file__).resolve().parents[1] / "prompts" / "rubric.txt"}
+    args = SimpleNamespace(pairs_per_matchup=None, seed=None)
+    baseline = _new_plan(config, args)
+
+    add_collection("additional_scientist", 5)
+    plan = _new_plan(config, args)
+
+    assert set(plan["agents"]) == {"scientistone", "scientisttwo", "sakana_ai_scientist",
+                                   "sakana_ai_scientist_v2", "sakana_agentic_scientist"}
+    assert len(plan["catalog"]) == 5
+    assert plan["selection"] == baseline["selection"]
+    assert plan["fingerprint"] == baseline["fingerprint"]
+
+
 def test_pdf_validation_blinding_and_complete_page_text(tmp_path):
     paper = _pdf(tmp_path, "data/scientistone/paper.pdf", [
         "Secret Research Title\nScientistOne Team\nAbstract\nA unique mechanism.\n1 Introduction\nFull introduction.",

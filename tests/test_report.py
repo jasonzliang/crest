@@ -136,7 +136,8 @@ def test_uses_saved_bootstrap_intervals_preserves_exact_ties_and_all_evidence(tm
     assert '200 / 400' in text
     assert '1,000' in text and 'question' in text
     assert 'Serfling' not in text
-    assert 'Sol + hosted web search' in text
+    assert 'OpenAI (Sol + web search)' in text
+    assert 'this run was not fully blinded' not in text
     assert 'not an override' in text
     assert 'Lifetime budget compliance is not established' in text
     assert 'fetch(' not in text and '<script src=' not in text
@@ -411,17 +412,20 @@ def test_per_question_means_preserve_partial_costs_and_use_observed_times(run, t
     output = tmp_path / 'page.html'
     write_report(run, output, audit=audit)
     html = output.read_text()
-    assert 'Mean cumulative estimate / question' in html
-    assert 'Mean successful-attempt elapsed' in html
-    assert 'Mean audited lifetime active execution' in html
+    assert 'Average estimated cost' in html
+    assert 'Average generation time' in html
+    assert 'Average active time, all attempts' in html
     assert '$1.0400' in html and '$1.1200' in html
-    assert 'incomplete known components' in html and 'conditional scenario' in html
+    assert 'partial estimate' in html and 'conditional estimate' in html
+    assert '<small>estimate</small>' not in html
 
 
-def test_shallow_answer_links_and_full_configuration_provenance(run, tmp_path):
+def test_native_answer_disclosures_and_full_configuration_provenance(run, tmp_path):
     from crest.artifacts import answer_metadata, configuration_record
     from crest.report import write_report
     rows = json.loads(answers_path(run).read_text())
+    rows[1]['result']['text'] += ' https://vertexaisearch.cloud.google.com/grounding-api-redirect/example'
+    rows[2]['result']['text'] += ' https://example.org/?utm_source=openai'
     row = rows[0]
     task = {'agent': 'caesar', 'settings': {'model': 'gpt-6.1-sol', 'note': '<img src=x onerror=alert(1)>'},
             'adapter_version': 1, 'source_identity': None}
@@ -437,6 +441,27 @@ def test_shallow_answer_links_and_full_configuration_provenance(run, tmp_path):
     output = tmp_path / 'page.html'
     write_report(run, output)
     html = output.read_text()
+    assert 'class="answer-links"' not in html
+    assert 'class="full-question"' not in html
+    assert html.count('Invent a useful research proposal for question 0.') == 1
+    assert 'this run was not fully blinded' in html
+    assert 'Links reveal provenance in 1 / 50 OpenAI (Sol + web search) answers' in html
+    assert 'and 1 / 50 Google Deep Research answers' in html
+    assert 'These cues do not establish that provider bias caused the ranking.' in html
+    for label, source in [('Caesar', 'https://github.com/jasonzliang/caesar-agent'),
+                          ('OpenAI (Sol + web search)', 'https://developers.openai.com/api/docs/guides/tools-web-search'),
+                          ('Google Deep Research', 'https://ai.google.dev/gemini-api/docs/deep-research')]:
+        assert f'<a href="{source}">{label}</a>' in html
+    for index in range(1, 51):
+        for agent, label in [('caesar', 'Caesar'),
+                             ('gemini', 'Google Deep Research'),
+                             ('openai', 'OpenAI (Sol + web search)')]:
+            assert (f'<details class="answer" id="answer-{index}-{agent}">'
+                    f'<summary>{label}</summary>') in html
+            assert f'aria-label="{label} answer, question {index}"' in html
+    assert '<summary>GPT-6 Astra · preferred' in html
+    assert '<summary>Gemini 4 Argon · preferred' in html
+    assert '&quot;model&quot;: &quot;gpt-6-astra&quot;' in html
     assert row['answer_file'] in html
     assert 'Local Markdown:' in html
     assert not re.search(r'href="[^\"]*' + re.escape(row['answer_file']) + r'"', html)
@@ -447,6 +472,130 @@ def test_shallow_answer_links_and_full_configuration_provenance(run, tmp_path):
     dump(registry, {configuration_id: configuration})
     with pytest.raises(ValueError, match='configuration|registry'):
         write_report(run, output)
+
+
+def test_concise_results_keep_limits_visible_and_metadata_expandable(run, tmp_path):
+    from crest.report import write_report
+    rows = json.loads(answers_path(run).read_text())
+    rows[1]['result']['text'] += ' https://vertexaisearch.cloud.google.com/grounding-api-redirect/example'
+    rows[2]['result']['text'] += ' https://example.org/?utm_source=openai'
+    dump(answers_path(run), rows)
+    questions_file = run / '02-judge-test/questions.json'
+    questions = json.loads(questions_file.read_text())
+    questions[0]['text'] = 'A long question that needs its full text preserved. ' * 5
+    dump(questions_file, questions)
+    manifest = json.loads((run / 'run.json').read_text())
+    manifest['questions'] = questions
+    dump(run / 'run.json', manifest)
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+
+    class Visibility(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.stack, self.visible_text, self.visible_tables = [], [], []
+            self.keys = {'Answer key:': 0, 'Judgment key:': 0}
+
+        def visible(self):
+            return all(i + 1 < len(self.stack) and self.stack[i + 1][0] == 'summary'
+                       for i, (tag, _) in enumerate(self.stack) if tag == 'details')
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == 'table' and self.visible():
+                self.visible_tables.append(next(a['aria-label'] for _, a in reversed(self.stack)
+                                                if 'aria-label' in a))
+            if tag not in {'meta', 'br'}:
+                self.stack.append((tag, attrs))
+
+        def handle_endtag(self, tag):
+            assert self.stack.pop()[0] == tag
+
+        def handle_data(self, text):
+            if any(tag == 'main' for tag, _ in self.stack) and self.visible():
+                self.visible_text.append(text)
+            for key, cls in [('Answer key:', 'answer-metadata'), ('Judgment key:', 'judgment-metadata')]:
+                if key in text:
+                    assert any(cls in a.get('class', '').split() for _, a in self.stack)
+                    self.keys[key] += 1
+
+    parser = Visibility()
+    parser.feed(html)
+    visible = ' '.join(parser.visible_text)
+    assert parser.visible_tables == ['Per-question cost and elapsed-time means',
+                                     'Overall head-to-head preferences',
+                                     'Per-judge overall preferences and order diagnostics']
+    assert 'conditional list-price estimates' in visible and 'actual billed USD' in visible
+    assert 'this run was not fully blinded' in visible
+    assert 'These cues do not establish that provider bias caused the ranking.' in visible
+    assert 'not absolute creativity or verified factual accuracy' in visible
+    assert 'A-position preference' in visible
+    for detail in ['Paired 95% interval', 'Historical unknown reservations',
+                   'gpt-6-astra', 'configuration_sha256', 'Answer key:', 'Judgment key:']:
+        assert detail not in visible
+    assert parser.keys == {'Answer key:': 150, 'Judgment key:': 600}
+    assert html.count('class="answer-metadata"') == 150
+    assert html.count('class="full-question"') == 1
+    assert questions[0]['text'] in html
+    assert html.index('id="overall"') < html.index('id="resources"') < html.index('id="method"') < html.index('id="questions"')
+
+
+def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchup(tmp_path):
+    from crest.report import load_run, write_report
+    preference = {'openai': 0, 'caesar': 1, 'gemini': 2}
+    run = make_run(tmp_path / 'run', choose=lambda q, pair, judge, order: min(pair, key=preference.get))
+    assert [r['agent'] for r in load_run(run)['ranking']['ranking']] == ['openai', 'caesar', 'gemini']
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+
+    class Layout(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.stack, self.columns, self.rows, self.answers, self.groups, self.presentations = [], [], [], [], [], []
+            self.diagonals = self.question_numbers = self.question_titles = 0
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            classes = attrs.get('class', '').split()
+            if 'answer' in classes:
+                self.answers.append(attrs['id'])
+            if 'judgment-group' in classes:
+                self.groups.append(0)
+            if 'judgment' in classes:
+                self.groups[-1] += 1
+            if 'diagonal' in classes:
+                assert attrs['aria-label'] == 'Same system; no comparison'
+                assert attrs['role'] == 'img'
+                self.diagonals += 1
+            self.question_numbers += 'question-number' in classes
+            self.question_titles += 'question-title' in classes
+            if tag not in {'meta', 'br'}:
+                self.stack.append((tag, attrs))
+
+        def handle_endtag(self, tag):
+            assert self.stack.pop()[0] == tag
+
+        def handle_data(self, text):
+            if any(tag == 'table' and a.get('class') == 'matrix' for tag, a in self.stack):
+                scope = next((a.get('scope') for tag, a in reversed(self.stack) if tag == 'th'), None)
+                if scope == 'col':
+                    self.columns.append(text)
+                elif scope == 'row':
+                    self.rows.append(text)
+            if any('presentation' in a.get('class', '').split() for _, a in self.stack):
+                self.presentations.append(text)
+
+    parser = Layout()
+    parser.feed(output.read_text())
+    names = ['OpenAI (Sol + web search)', 'Caesar', 'Google Deep Research']
+    assert parser.columns == ['Row / column', *names]
+    assert parser.rows == names and parser.diagonals == 3
+    assert parser.answers == [f'answer-{i}-{agent}' for i in range(1, 51) for agent in ['openai', 'caesar', 'gemini']]
+    assert parser.groups == [4] * 150
+    assert len(parser.presentations) == 600
+    assert set(parser.presentations) == {f'A: {a} · B: {b}' for a in names for b in names if a != b}
+    assert parser.question_numbers == parser.question_titles == 50
 
 
 def test_all_frozen_configurations_render_with_nonnull_shared_prompt_template(run, tmp_path):

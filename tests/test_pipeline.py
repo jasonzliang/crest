@@ -75,6 +75,90 @@ class FakeProvider:
                 'usage': {}, 'cost_usd': .01, 'cost_estimated': True, 'warnings': [], 'raw': {}}
 
 
+@pytest.mark.parametrize('result', [{}, {'text': ''}, {'text': '  '}, {'text': None}, [], None])
+def test_malformed_completed_generation_is_never_accepted_or_resubmitted(tmp_path, result):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {'openai': config['research']['openai']}
+    provider = FakeProvider('openai')
+    pipeline = Pipeline(config, providers={'openai': provider})
+    task = pipeline.generation_jobs()[0]
+    job = pipeline.cache.job(task['key'])
+    job.save(status='completed', result=result)
+    original = job.path.read_bytes()
+    for _ in range(2):
+        summary = asyncio.run(pipeline.generate())
+        assert summary['failed'] == 1
+        assert summary['completed'] == summary['cached'] == 0
+        assert not (Path(summary['directory']) / 'answers.jsonl').read_text()
+        error = json.loads((Path(summary['directory']) / 'errors.jsonl').read_text())
+        assert 'CacheCorruption' in error['error']
+    assert provider.generations == []
+    assert job.path.read_bytes() == original
+
+
+@pytest.mark.parametrize('name,expected_cost', [('openai', .004), ('gemini', .0076)])
+def test_terminal_native_failure_reports_computable_estimate(tmp_path, monkeypatch, name, expected_cost):
+    import importlib
+    from types import SimpleNamespace
+    import httpx
+    module = importlib.import_module('crest.providers.' + name)
+    monkeypatch.setenv('GOOGLE_API_KEY', 'offline-test-key')
+    raw = {'id': 'paid-terminal', 'status': 'incomplete', 'model': 'gpt-6.1-sol',
+           'service_tier': 'default', 'output': [],
+           'usage': {'input_tokens': 1000, 'input_tokens_details': {'cached_tokens': 0, 'cache_write_tokens': 0},
+                     'output_tokens': 200, 'output_tokens_details': {'reasoning_tokens': 0}, 'total_tokens': 1200}}
+    if name == 'gemini':
+        raw = {'id': 'paid-terminal', 'status': 'failed', 'steps': [],
+               'usage': {'total_input_tokens': 1000, 'total_cached_tokens': 0,
+                         'total_output_tokens': 200, 'total_thought_tokens': 0,
+                         'total_tool_use_tokens': 0, 'total_tokens': 1200, 'grounding_tool_count': []}}
+    async def generate(prompt, settings, job):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(
+                lambda request: httpx.Response(200, json=raw))) as client:
+            return await module.generate(prompt, settings, job, client=client)
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name]}
+    pipeline = Pipeline(config, providers={name: SimpleNamespace(ADAPTER_VERSION=module.ADAPTER_VERSION,
+                                                                generate=generate)})
+    summary = asyncio.run(pipeline.generate())
+    error = json.loads((Path(summary['directory']) / 'errors.jsonl').read_text())
+    assert summary['failed'] == 1
+    assert summary['completed'] == 0
+    assert error['cost_usd'] == pytest.approx(expected_cost)
+    assert error['cost_details']['cumulative_known_estimate_usd'] == pytest.approx(expected_cost)
+    assert error['usage']['input_tokens'] == 1000
+    assert not (Path(summary['directory']) / 'answers.jsonl').read_text()
+
+
+def test_timeout_failure_keeps_precancel_estimate_separate_from_final_cost(tmp_path):
+    from types import SimpleNamespace
+    import httpx
+    from crest.providers import openai
+    raw = {'id': 'paid-timeout', 'status': 'in_progress', 'model': 'gpt-6.1-sol',
+           'service_tier': 'default', 'output': [],
+           'usage': {'input_tokens': 1000, 'input_tokens_details': {'cached_tokens': 0, 'cache_write_tokens': 0},
+                     'output_tokens': 200, 'output_tokens_details': {'reasoning_tokens': 0}, 'total_tokens': 1200}}
+    def handler(request):
+        return httpx.Response(200, json=raw if request.method == 'GET'
+                              else {'id': 'paid-timeout', 'status': 'cancelled'})
+    async def generate(prompt, settings, job):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await openai.generate(prompt, settings, job, client=client)
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {'openai': config['research']['openai']}
+    pipeline = Pipeline(config, providers={'openai': SimpleNamespace(ADAPTER_VERSION=openai.ADAPTER_VERSION,
+                                                                    generate=generate)})
+    task = pipeline.generation_jobs()[0]
+    pipeline.cache.job(task['key']).save(status='running', remote_id='paid-timeout', submitted_at=0, raw=raw)
+    summary = asyncio.run(pipeline.generate())
+    error = json.loads((Path(summary['directory']) / 'errors.jsonl').read_text())
+    assert error['cost_usd'] is None
+    assert error['observed_cost_usd'] == pytest.approx(.004)
+    assert error['observed_cost_scope'] == 'partial_pre_cancel'
+    assert error['usage']['input_tokens'] == 1000
+    assert error['cost_details']['cumulative_known_estimate_usd'] is None
+
+
 @pytest.mark.parametrize('total, exceeded', [(4.6, False), (5.1, True)])
 def test_recovery_cumulative_cost_uses_original_answer_budget(tmp_path, total, exceeded):
     config = fixture_config(tmp_path, n=1)
