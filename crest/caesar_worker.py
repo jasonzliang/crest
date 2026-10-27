@@ -196,17 +196,29 @@ class IncompleteSDKOutput(ValueError):
     """Known billed output was truncated; a budgeted rewrite can be attempted."""
 
 
+def _error_body(error):
+    body = getattr(error, "body", None)
+    if not isinstance(body, dict):
+        return {}
+    return body["error"] if isinstance(body.get("error"), dict) else body
+
+
 def _retry_after_seconds(error):
     headers = getattr(getattr(error, "response", None), "headers", {})
-    value = headers.get("retry-after", headers.get("Retry-After"))
-    try:
-        advised = float(value)
-    except (TypeError, ValueError):
+    body = _error_body(error)
+    values = [headers.get("retry-after", headers.get("Retry-After")), body.get("retry_after"), body.get("retry_after_seconds")]
+    delay = 0.
+    for value in values:
         try:
-            advised = parsedate_to_datetime(value).timestamp() - time.time()
-        except (TypeError, ValueError, OverflowError):
-            advised = 0.
-    return max(0., advised) if math.isfinite(advised) else 0.
+            advised = float(value)
+        except (TypeError, ValueError):
+            try:
+                advised = parsedate_to_datetime(value).timestamp() - time.time()
+            except (TypeError, ValueError, OverflowError):
+                continue
+        if math.isfinite(advised):
+            delay = max(delay, advised)
+    return delay
 
 
 class BudgetExceeded(RuntimeError):
@@ -218,7 +230,8 @@ class UsageAudit:
 
     Reservations use a conservative UTF-8 byte bound for input and the requested
     output limit. Ambiguous failures retain reservations and stop Rome retry ladders.
-    Confirmed 429 rejections release reservations and retry here with bounded backoff;
+    Confirmed 429 rejections release reservations; transient 5xx retries retain theirs.
+    Both retry here with bounded attempts/backoff and a new budget check each time;
     SDK-internal retries are disabled so every attempt remains visible.
     """
     def __init__(self, budget: float, path: Path, prices=None, *, retry_attempts=4):
@@ -302,7 +315,7 @@ class UsageAudit:
                 event.update(status="failed", status_code=status, error_type=type(error).__name__,
                              error_message=_redact(str(error)), unknown_cost=not rejected,
                              cost_usd=0. if rejected else None)
-                if status == 429:
+                if status == 429 or isinstance(status, int) and 500 <= status < 600:
                     event["retry_after_seconds"] = _retry_after_seconds(error)
                 if rejected:
                     event["reserved_usd"] = 0.
@@ -347,12 +360,15 @@ class UsageAudit:
                 choices = getattr(response, "choices", [])
                 if any(getattr(choice, "finish_reason", None) not in (None, "stop") for choice in choices):
                     raise IncompleteSDKOutput("SDK returned incomplete or unexpected chat output")
+            return event
 
-    def retry_delay(self, error, attempt):
+    def retry_delay(self, error, attempt, failed_event=None):
         if not isinstance(error, Exception):
             raise error
         status = getattr(error, "status_code", None)
-        if status != 429 or getattr(error, "code", None) == "insufficient_quota" or attempt + 1 >= self.retry_attempts:
+        reserved = bool(failed_event and failed_event.get("reserved_usd", 0) > 0)
+        transient = status == 429 or reserved and isinstance(status, int) and 500 <= status < 600
+        if not transient or _error_body(error).get("retryable") is False or getattr(error, "code", None) == "insufficient_quota" or attempt + 1 >= self.retry_attempts:
             outcome = "rejected" if status in (401, 403, 429) else "billing outcome unknown"
             raise SDKRequestFailed(f"{type(error).__name__}: {outcome}; stopped after {attempt + 1} attempt(s)") from error
         return max(min(30., 2. ** attempt) + random.uniform(0., 1.), _retry_after_seconds(error))
@@ -387,8 +403,8 @@ class UsageAudit:
                 try:
                     result = sync_request(instance, cast_to, options, **kwargs)
                 except BaseException as error:
-                    audit.after(token, error=error)
-                    time.sleep(audit.retry_delay(error, attempt))
+                    failed = audit.after(token, error=error)
+                    time.sleep(audit.retry_delay(error, attempt, failed))
                     continue
                 audit.completed(token, result)
                 return result
@@ -399,8 +415,8 @@ class UsageAudit:
                 try:
                     result = await async_request(instance, cast_to, options, **kwargs)
                 except BaseException as error:
-                    audit.after(token, error=error)
-                    await asyncio.sleep(audit.retry_delay(error, attempt))
+                    failed = audit.after(token, error=error)
+                    await asyncio.sleep(audit.retry_delay(error, attempt, failed))
                     continue
                 await audit.acompleted(token, result)
                 return result
@@ -527,13 +543,18 @@ def _committed_spend(audit):
 
 @contextmanager
 def adaptive_synthesis_budget(agent, settings, audit):
-    """Spend QA allowances per draft while reserving later writing and merging."""
+    """Allocate QA money and elapsed time while retaining later writes and merging."""
     synthesizer = getattr(agent, "synthesizer", None)
     original_qa = getattr(synthesizer, "_generate_qa_pairs", None)
     original_merge = getattr(synthesizer, "_merge_artifacts", None)
+    timeout = float(settings.get("timeout_seconds", 7200))
+    deadline = getattr(agent, "_crest_worker_deadline", time.monotonic() + timeout)
+    write_seconds = min(300., timeout / 24)
     records = {"requested_qa_rounds_per_draft": settings.get("synthesis_iterations", 15),
                "drafts": [], "merge_requested": settings.get("synthesis_merge_artifacts", True),
-               "merge_completed": False, "write_allowance_per_call_usd": .35}
+               "merge_completed": False, "write_allowance_per_call_usd": .35,
+               "time_policy": {"timeout_seconds": timeout, "exploration_time_limit_seconds": timeout * .375,
+                    "write_allowance_per_call_seconds": write_seconds, "best_effort": True}}
     agent._crest_synthesis_budget = records
     if original_qa is None:
         yield records
@@ -545,16 +566,47 @@ def adaptive_synthesis_budget(agent, settings, audit):
         committed = _committed_spend(audit)
         ceiling = min(audit.budget, float(settings.get("handler_budget_usd", 5.)))
         allowance = max(0., (ceiling - committed - writes * .35) / remaining_drafts)
+        qa_started = time.monotonic()
+        time_allowance = max(0., (deadline - qa_started - writes * write_seconds) / remaining_drafts)
+        qa_deadline = qa_started + time_allowance
+        time_limited = False
+        first_check = True
+        original_shutdown = getattr(synthesizer, "_shutdown_requested", None)
+        original_next = getattr(synthesizer, "_generate_next_query", None)
+        def should_stop():
+            nonlocal time_limited, first_check
+            initial = first_check
+            first_check = False
+            if original_shutdown is not None and original_shutdown():
+                return True
+            now = time.monotonic()
+            if now >= qa_deadline:
+                time_limited = True
+                return not (initial and deadline - now > write_seconds)
+            return False
+        def next_query(*args, **kwargs):
+            return None if should_stop() else original_next(*args, **kwargs)
         previous_limit, previous_limited = audit.request_limit, audit.request_limited
         audit.request_limit, audit.request_limited = committed + allowance, False
+        synthesizer._shutdown_requested = should_stop
+        if original_next is not None:
+            synthesizer._generate_next_query = next_query
         try:
             pairs = original_qa(*args, **kwargs)
         finally:
             limited = audit.request_limited
             audit.request_limit, audit.request_limited = previous_limit, previous_limited
+            if original_shutdown is None:
+                del synthesizer._shutdown_requested
+            else:
+                synthesizer._shutdown_requested = original_shutdown
+            if original_next is not None:
+                synthesizer._generate_next_query = original_next
         records["drafts"].append({"draft": draft, "requested_qa_rounds": synthesizer.synthesis_iterations,
             "completed_qa_rounds": len(pairs), "budget_limited": limited, "qa_allowance_usd": allowance,
-            "remaining_write_allowance_usd": writes * .35})
+            "remaining_write_allowance_usd": writes * .35, "time_limited": time_limited,
+            "qa_time_allowance_seconds": time_allowance, "qa_elapsed_seconds": time.monotonic() - qa_started,
+            "remaining_write_allowance_seconds": writes * write_seconds})
         atomic_json(audit.path.with_name("synthesis-budget.json"), records)
         return pairs
     def merge(*args, **kwargs):
@@ -582,20 +634,31 @@ def _quick_explore_with_synthesis_reserve(agent, settings, audit):
     original_page = agent._quick_perceive_and_think
     original_ingest = agent.kb_manager.add_texts
     original_synthesize = agent.synthesizer.synthesize_artifact
+    started = getattr(agent, "_crest_worker_started", time.monotonic())
+    deadline = getattr(agent, "_crest_worker_deadline", started + float(settings.get("timeout_seconds", 7200)))
+    exploration_seconds = (deadline - started) * .375
+    exploration_deadline = started + exploration_seconds
+    time_limited = False
     stop = None
     audit.exploration_limit, audit.exploration_limited = limit, False
     def page(*args, **kwargs):
+        nonlocal time_limited
+        if time.monotonic() >= exploration_deadline:
+            time_limited = True
+            return None
         if audit.exploration_limited or _committed_spend(audit) >= limit:
             audit.exploration_limited = True
             return None
         return original_page(*args, **kwargs)
     def finish_exploration():
         nonlocal stop
-        if audit.exploration_limited and stop is None:
+        if (audit.exploration_limited or time_limited) and stop is None:
             stop = {"mode": "quick", "iterations_completed": len(agent.visited_urls),
                 "max_submission_iteration": agent.current_iteration,
                 "committed_usd": _committed_spend(audit), "synthesis_reserve_usd": reserve,
-                "exploration_limit_usd": limit}
+                "exploration_limit_usd": limit, "reason": "time_reserve" if time_limited else "budget_reserve",
+                "time_limited": time_limited, "exploration_time_limit_seconds": exploration_seconds,
+                "elapsed_seconds": time.monotonic() - started}
             agent._crest_exploration_budget_stop = stop
             atomic_json(audit.path.with_name("exploration-budget-stop.json"), stop)
         audit.exploration_limit = previous_limit
@@ -626,15 +689,21 @@ def _explore_with_synthesis_reserve(agent, settings, audit):
     reserve = float(settings.get("synthesis_reserve_usd", 3.))
     # The handler's separate guard also needs enough room for final writing.
     ceiling = min(audit.budget, float(settings.get("handler_budget_usd", settings.get("handler_cost_limit", 5.))))
+    started = getattr(agent, "_crest_worker_started", time.monotonic())
+    deadline = getattr(agent, "_crest_worker_deadline", started + float(settings.get("timeout_seconds", 7200)))
+    exploration_seconds = (deadline - started) * .375
     stop = None
     def perceive(*args, **kwargs):
         usage = audit.snapshot()
         committed = usage["known_cost_usd"] + sum(item["reserved_usd"] for item in usage["in_flight"])
         committed += sum(item.get("reserved_usd", 0) for item in usage["events"] if item["status"] == "failed")
-        if committed >= max(0., ceiling - reserve):
+        time_limited = time.monotonic() >= started + exploration_seconds
+        if time_limited or committed >= max(0., ceiling - reserve):
             raise ExplorationBudgetReserved({"iterations_completed": max(0, agent.current_iteration - 1),
                 "committed_usd": committed, "synthesis_reserve_usd": reserve,
-                "exploration_limit_usd": max(0., ceiling - reserve)})
+                "exploration_limit_usd": max(0., ceiling - reserve),
+                "reason": "time_reserve" if time_limited else "budget_reserve", "time_limited": time_limited,
+                "exploration_time_limit_seconds": exploration_seconds, "elapsed_seconds": time.monotonic() - started})
         return original_perceive(*args, **kwargs)
     agent.perceive = perceive
     try:
@@ -656,6 +725,40 @@ def _agent_name(key):
     return "".join(char for char in ("crest" + key[:20]) if char.isalnum()).ljust(8, "0")[:32]
 
 
+
+def recovery_history(source, prompt):
+    """Verify each preserved attempt once; never double-count embedded summaries."""
+    history, seen = [], set()
+    cursor = Path(source).resolve()
+    while True:
+        if cursor in seen:
+            raise ValueError("Recovery ancestry contains a cycle")
+        seen.add(cursor)
+        request = json.loads((cursor / "caesar-request.json").read_text())
+        record = json.loads((cursor / "caesar-result.json").read_text())
+        if request.get("prompt") != prompt:
+            raise ValueError("Recovery ancestry contains a different prompt")
+        result = record.get("result") or {}
+        raw = record.get("raw") or result.get("raw") or {}
+        usage = raw.get("new_attempt_usage_audit") or record.get("usage") or result.get("usage") or {}
+        prior = raw.get("recovery") or {}
+        known = float(usage["known_cost_usd"])
+        unknown = [event for event in usage.get("events", []) if event.get("unknown_cost")]
+        unknown += usage.get("in_flight", [])
+        reserved = [float(event.get("reserved_usd", 0)) for event in unknown]
+        if not math.isfinite(known) or known < 0 or any(not math.isfinite(value) or value <= 0 for value in reserved):
+            raise ValueError("Previous usage lacks a conservative cost bound")
+        worker_id = request.get("worker_id") or request.get("job_key") or cursor.name
+        history.append({"source_job": str(cursor), "known_cost_usd": known,
+            "unknown_reserved_usd": sum(reserved), "cost_unknown": bool(usage.get("unknown_cost")),
+            "collection_name": "crest_" + hashlib.sha256(worker_id.encode()).hexdigest()[:40]})
+        parent = prior.get("source_job") or (request.get("settings") or {}).get("recovery_from")
+        if not parent:
+            original_budget = float(usage.get("budget_target_usd", (request.get("settings") or {}).get("budget_usd", 5)))
+            return list(reversed(history)), original_budget
+        cursor = Path(parent).resolve()
+
+
 def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     """Copy a reviewed failed attempt's local knowledge; never mutate its ledger."""
     source, output_dir = Path(settings["recovery_from"]).resolve(), Path(output_dir).resolve()
@@ -665,15 +768,10 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     record = json.loads((source / "caesar-result.json").read_text())
     if record.get("status") != "failed" or request.get("prompt") != prompt:
         raise ValueError("Recovery requires a failed attempt for the exact same prompt")
-    usage = record.get("usage") or {}
     prior = (record.get("raw") or {}).get("recovery") or {}
-    known = float(usage.get("known_cost_usd", 0)) + prior.get("previous_known_cost_usd", 0)
-    unknown = [event for event in usage.get("events", []) if event.get("unknown_cost")]
-    unknown += usage.get("in_flight", [])
-    if any(not event.get("reserved_usd") for event in unknown):
-        raise ValueError("Previous unknown usage has no conservative cost reservation")
-    reserved = sum(event["reserved_usd"] for event in unknown) + prior.get("previous_unknown_reserved_usd", 0)
-    original_budget = float(prior.get("original_budget_usd", usage.get("budget_target_usd", 5)))
+    ancestry, original_budget = recovery_history(source, prompt)
+    known = sum(item["known_cost_usd"] for item in ancestry)
+    reserved = sum(item["unknown_reserved_usd"] for item in ancestry)
     budget = float(settings.get("budget_usd", 5))
     if not 0 < budget <= min(4.3, original_budget - known - reserved):
         raise ValueError("Recovery needs an explicit budget at most $4.30 and within the prior residual")
@@ -684,7 +782,7 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     checkpoint = json.loads(paths[0].read_text())
     if checkpoint.get("config", {}).get("starting_query") != prompt or not checkpoint.get("visited_urls"):
         raise ValueError("Recovery checkpoint has no matching explored knowledge")
-    collection = prior.get("collection_name") or "crest_" + hashlib.sha256(request.get("worker_id", request["job_key"]).encode()).hexdigest()[:40]
+    collection = prior.get("collection_name") or ancestry[0]["collection_name"]
     shutil.copytree(source_output / "chroma", output_dir / "chroma")
     checkpoint["cost"] = {"accumulated_cost": 0., "call_count": 0, "sessions": []}
     atomic_json(output_dir / "__rome__" / f"agent_{_agent_name(job_key)}.checkpoint.json", checkpoint)
@@ -694,7 +792,7 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     recovery = {"source_job": str(source), "source_checkpoint_sha256": hashlib.sha256(paths[0].read_bytes()).hexdigest(),
         "collection_name": collection, "iteration": checkpoint["iteration"], "visited_urls": len(checkpoint["visited_urls"]),
         "previous_known_cost_usd": known, "previous_unknown_reserved_usd": reserved,
-        "previous_cost_unknown": bool(usage.get("unknown_cost") or prior.get("previous_cost_unknown")),
+        "previous_cost_unknown": any(item["cost_unknown"] for item in ancestry), "ancestry": ancestry,
         "original_budget_usd": original_budget, "new_attempt_budget_usd": budget,
         "budgeted_total_exposure_usd": known + reserved + budget}
     atomic_json(output_dir / "recovery.json", recovery)
@@ -702,7 +800,9 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
 
 
 def run_worker(request: dict, result_path: Path) -> int:
+    worker_started = time.monotonic()
     settings = request.get("settings", {})
+    worker_deadline = worker_started + float(settings.get("timeout_seconds", 7200))
     output_dir = Path(request["output_dir"])
     if settings.get("recovery_from"):
         source = Path(settings["recovery_from"]).resolve()
@@ -716,7 +816,7 @@ def run_worker(request: dict, result_path: Path) -> int:
     exploration_stop = None
     recovery = None
     try:
-        with _deadline(settings.get("timeout_seconds", 7200)), _safe_logging(), _runtime(settings, audit) as agent_class:
+        with _deadline(max(.001, worker_deadline - time.monotonic())), _safe_logging(), _runtime(settings, audit) as agent_class:
             config = build_config(request["prompt"], settings, output_dir, request.get("worker_id", request["job_key"]))
             if settings.get("recovery_from"):
                 recovery = prepare_synthesis_recovery(request["prompt"], settings, output_dir, request["job_key"], config)
@@ -725,6 +825,7 @@ def run_worker(request: dict, result_path: Path) -> int:
                     sock.bind(("127.0.0.1", 0))
                     config["ChromaServerManager"]["port"] = sock.getsockname()[1]
             agent = agent_class(name=_agent_name(request["job_key"]), repository=str(output_dir), config=config)
+            agent._crest_worker_started, agent._crest_worker_deadline = worker_started, worker_deadline
             with adaptive_synthesis_budget(agent, settings, audit) as synthesis_budget:
                 if recovery is not None:
                     if agent.current_iteration != recovery["iteration"] or not agent.visited_urls or agent.kb_manager.size() < 1:
@@ -739,16 +840,22 @@ def run_worker(request: dict, result_path: Path) -> int:
                                     expected_iterations=settings.get("synthesis_iterations", 15))
             if exploration_stop is not None:
                 result["raw"]["exploration_budget_stop"] = exploration_stop
-                result["warnings"].append(f"Exploration stopped after {exploration_stop['iterations_completed']} iterations to reserve ${exploration_stop['synthesis_reserve_usd']:g} for synthesis.")
+                time_note = (f" at its {exploration_stop['exploration_time_limit_seconds'] / 60:g}-minute new-page limit, preserving time and"
+                             if exploration_stop.get("time_limited") else " to reserve")
+                result["warnings"].append(f"Exploration stopped after {exploration_stop['iterations_completed']} iterations{time_note} ${exploration_stop['synthesis_reserve_usd']:g} for synthesis.")
             if recovery is not None:
                 result["raw"]["recovery"] = recovery
                 result["raw"]["new_attempt_usage_audit"] = copy.deepcopy(result["usage"])
                 result["usage"]["new_attempt_cost_usd"] = result["cost_usd"]
                 result["usage"]["recovery_previous_known_cost_usd"] = recovery["previous_known_cost_usd"]
                 result["usage"]["recovery_previous_unknown_reserved_usd"] = recovery["previous_unknown_reserved_usd"]
-                if recovery["previous_cost_unknown"]:
+                cumulative_known = recovery["previous_known_cost_usd"] + result["usage"]["known_cost_usd"]
+                result["usage"]["known_cost_usd"] = result["usage"]["cumulative_known_cost_usd"] = cumulative_known
+                if recovery["previous_cost_unknown"] or result["usage"]["unknown_cost"]:
                     result["cost_usd"] = result["usage"]["cost_usd"] = None
                     result["usage"]["unknown_cost"] = True
+                else:
+                    result["cost_usd"] = result["usage"]["cost_usd"] = cumulative_known
                 result["warnings"].append("Explicit synthesis-only recovery reused copied knowledge; prior attempt billing remains separately recorded.")
             result["raw"]["synthesis_budget"] = synthesis_budget
             reduced = [row for row in synthesis_budget["drafts"] if row["completed_qa_rounds"] < row["requested_qa_rounds"]]

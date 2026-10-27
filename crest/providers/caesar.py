@@ -9,10 +9,12 @@ import math
 import os
 from pathlib import Path
 import signal
+import subprocess
 import sys
 import time
+import tomllib
 
-from crest.caesar_worker import PROTOCOL_VERSION, atomic_json
+from crest.caesar_worker import PROTOCOL_VERSION, atomic_json, recovery_history
 
 ADAPTER_VERSION = "caesar-subprocess-v1"
 # Only public execution settings cross the worker boundary. Credentials are inherited.
@@ -42,17 +44,27 @@ def identity_metadata(settings: dict) -> dict:
         digest.update(b"\0")
     # Adapter/worker edits invalidate even when the manually maintained version is unchanged.
     own_digest = hashlib.sha256(Path(__file__).read_bytes() + Path(__file__).parents[1].joinpath("caesar_worker.py").read_bytes()).hexdigest()
-    metadata = {"adapter_version": ADAPTER_VERSION, "protocol_version": PROTOCOL_VERSION,
+    project = root / "pyproject.toml"
+    source_version = tomllib.loads(project.read_text()).get("project", {}).get("version") if project.is_file() else None
+    try:
+        git = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5)
+        source_commit = git.stdout.strip() if git.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        source_commit = None
+    metadata = {"rome_source_version": source_version, "rome_git_commit": source_commit,
+            "adapter_version": ADAPTER_VERSION, "protocol_version": PROTOCOL_VERSION,
             "rome_source_sha256": digest.hexdigest(), "adapter_source_sha256": own_digest,
             "rome_source_available": bool(files)}
     if settings.get("recovery_from"):
         source = Path(settings["recovery_from"]).resolve()
-        paths = [source / "caesar-request.json", source / "caesar-result.json"]
+        prompt = json.loads((source / "caesar-request.json").read_text())["prompt"]
+        ancestry, _ = recovery_history(source, prompt)
+        paths = [Path(item["source_job"]) / name for item in ancestry for name in ("caesar-request.json", "caesar-result.json")]
         paths += sorted((source / "caesar-output" / "__rome__").glob("*.checkpoint.json"))
         paths += sorted(path for path in (source / "caesar-output" / "chroma").rglob("*") if path.is_file())
         recovery_digest = hashlib.sha256()
         for path in paths:
-            recovery_digest.update(str(path.relative_to(source)).encode() + b"\0" + path.read_bytes() + b"\0")
+            recovery_digest.update(str(path.resolve()).encode() + b"\0" + path.read_bytes() + b"\0")
         metadata["recovery_source_sha256"] = recovery_digest.hexdigest()
     return metadata
 

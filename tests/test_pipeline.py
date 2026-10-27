@@ -75,6 +75,23 @@ class FakeProvider:
                 'usage': {}, 'cost_usd': .01, 'cost_estimated': True, 'warnings': [], 'raw': {}}
 
 
+@pytest.mark.parametrize('total, exceeded', [(4.6, False), (5.1, True)])
+def test_recovery_cumulative_cost_uses_original_answer_budget(tmp_path, total, exceeded):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {'caesar': config['research']['caesar']}
+    config['research']['caesar']['budget_usd'] = 4.25
+    provider = FakeProvider('caesar')
+    async def recovered(prompt, settings, job):
+        return {'text': 'Recovered answer', 'cost_usd': total,
+                'usage': {'new_attempt_cost_usd': total - .5}, 'warnings': [],
+                'raw': {'recovery': {'original_budget_usd': 5.0}}}
+    provider.generate = recovered
+    pipeline = Pipeline(config, providers={'caesar': provider})
+    asyncio.run(pipeline.generate())
+    result = pipeline.answers()[0]['result']
+    assert bool(result.get('budget_exceeded')) is exceeded
+
+
 def test_timestamped_stages_resume_and_rubric_change_never_rebuys_answers(tmp_path):
     config = fixture_config(tmp_path)
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}

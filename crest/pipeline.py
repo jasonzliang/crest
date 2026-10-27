@@ -318,6 +318,10 @@ class Pipeline:
                         if missing:
                             result['text'] += '\n\nSources:\n' + '\n'.join(dict.fromkeys(missing))
                     budget, cost = task['settings'].get('budget_usd'), result.get('cost_usd')
+                    if stage == 'generate' and task['agent'] == 'caesar':
+                        recovery = (result.get('raw') or {}).get('recovery') or {}
+                        # Recovered answer costs include the earlier attempts.
+                        budget = recovery.get('original_budget_usd', budget)
                     if budget and cost is not None and cost > budget:
                         result.setdefault('warnings', []).append(f'Estimated cost ${cost:.2f} exceeded ${budget:.2f} target')
                         result['budget_exceeded'] = True
