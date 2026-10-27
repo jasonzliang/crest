@@ -3,6 +3,7 @@
 Usage: python -m crest.report RUN --output docs/deep-research-creativity.html
 Only complete 50-question, three-system comparisons can be written. Rendering
 never submits jobs, changes analysis, or reads mutable generation caches.
+Category headings use saved metadata or the bundled query dataset.
 
 Optional enrichment uses the existing crest-final-audit-v1 artifact produced by
 crest-final-audit.py. It must be complete, ready, and match the frozen answer
@@ -432,40 +433,6 @@ def _judges(data):
     return ''.join(parts)
 
 
-def _judgment_attempt_count(rows):
-    """Count retained API attempts once; legacy jobs represent one attempt."""
-    jobs = {row['key']: row for row in rows}
-    attempts = set()
-    for key, row in jobs.items():
-        receipts = row.get('attempts')
-        if receipts:
-            for index, receipt in enumerate(receipts):
-                identity = receipt.get('key')
-                attempts.add(('key', identity) if identity else ('position', key, index))
-        else:
-            attempts.add(('key', key))
-    return len(attempts)
-
-
-def _prior_judgment_summary(row):
-    """Keep cost receipt references without duplicating provider response payloads."""
-    cost = cost_for_row(row)
-    receipts = row.get('attempts') or [row]
-    summary = {key: row[key] for key in (
-        'key', 'question_id', 'stage', 'source_judgment_directory', 'cache_record',
-        'cost_usd', 'cost_scope') if key in row}
-    summary.update(
-        judge=row.get('judge', row.get('provider')),
-        known_cost_usd=cost['cumulative_known_estimate_usd'],
-        unknown_cost_count=row.get('unknown_cost_count', sum(not _number(r.get('cost_usd')) for r in receipts)),
-        estimate_incomplete=cost['estimate_incomplete'],
-        api_attempt_count=_judgment_attempt_count([row]),
-        attempts=[{key: receipt[key] for key in (
-            'key', 'status', 'cost_usd', 'cache_record', 'submission_unknown',
-            'observed_cost_usd', 'observed_cost_scope') if key in receipt} for receipt in receipts])
-    return summary
-
-
 def _resources(data):
     generation, judging = data['resources']['generation'], data['resources']['judging']
     agents = _system_order(data)
@@ -478,11 +445,6 @@ def _resources(data):
                          _duration(r['mean_duration_seconds']), _duration(r['mean_lifetime_duration_seconds'])])
     parts.append(_table(['System', 'Average estimated cost', 'Average generation time',
                          'Average active time, all attempts'], averages, 'Per-question cost and elapsed-time means'))
-    cost_notes = [f'{_text(LABELS[a])} has unpriced '
-                  + ('earlier attempts' if not generation[a]['unknown_current_cost_answers'] else 'attempts')
-                  + f' for {generation[a]["unknown_cost_answers"]} of 50 answers.'
-                  for a in agents if generation[a]['unknown_cost_answers']
-                  and not generation[a]['cost_assessment']['basis_counts'].get('conditional_list_price_scenario')]
     parts.append('<p class="small">Google’s estimate uses assumed model rates because its internal billing breakdown is unavailable. '
                  'Unreported charges are excluded. '
                  'Generation time covers the final successful job; active time includes earlier attempts.</p>')
@@ -490,11 +452,8 @@ def _resources(data):
     if google['estimated_above_target']:
         parts.append(f'<p class="small">{google["estimated_above_target"]} Google answer estimates exceed the $5 target. '
                      'The target is not a provider spending cap; actual bills have not been verified.</p>')
-    parts.append('<details class="resource-details"><summary>Cost accounting, timing coverage and audit records</summary>')
-    if cost_notes:
-        parts.append('<p>' + ' '.join(cost_notes) + '</p>')
-    parts.append('<p>Cumulative costs include recorded recovery attempts. The current attempt is part of that total. '
-                 'Reservations estimate possible charges for unresolved attempts; they are not measured spend.</p>'
+    parts.append('<details class="resource-details"><summary>Cost totals and timing</summary>')
+    parts.append('<p>Generation totals include recorded recovery attempts.</p>'
                  '<p>Google’s pricing scenario uses high-context Gemini 3.1 Pro rates, counts tool tokens as additional input, '
                  'and charges searches at full price. The service does not report the model and pricing tier for each internal step.</p>'
                  '<p class="small">Cost means divide the recorded totals by all 50 questions. Time means use only answers '
@@ -502,38 +461,12 @@ def _resources(data):
     rows = []
     for agent in agents:
         r = generation[agent]
-        basis = (f'{r["unknown_cost_answers"]} / 50 use assumed pricing'
-                 if r['cost_assessment']['basis_counts'].get('conditional_list_price_scenario')
-                 else f'{r["unknown_cost_answers"]} / 50 have unreported charges')
-        rows.append([_text(LABELS[agent]), _money(r['known_cost_usd']), _money(r['current_attempt_known_cost_usd']),
-                     basis, _money(r['historical_unknown_reserved_usd']),
-                     _money(r['current_unknown_reserved_usd'])])
-    parts.append(_table(['System', 'Saved cumulative estimate', 'Current-attempt estimate', 'Cost record coverage',
-                         'Historical unknown reservations', 'Current unknown reservations'], rows, 'Generation cost ledgers'))
+        rows.append([_text(LABELS[agent]), _money(r['known_cost_usd'])])
+    parts.append(_table(['System', 'Total generation estimate'], rows, 'Generation cost totals'))
     parts.append('<p class="small">Judging is additional: '
                  + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) for j in JUDGES) + '.</p>')
-    prior = data['resources']['prior_judging']
-    paid = data['resources']['paid_judging']
     scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in JUDGES)
-    scored_attempts = _judgment_attempt_count(data['judgments'])
-    paid_attempts = _judgment_attempt_count([*data['judgments'], *data['prior_judgments']])
-    parts.append(f'<p><strong>600 scored verdicts from 600 judgment jobs ({scored_attempts} API attempts): '
-                 f'{_money(scored, 6)}. All {paid["records"]} judgment jobs ({paid_attempts} API attempts): '
-                 f'{_money(paid["cumulative_known_estimate_usd"], 6)}.</strong> '
-                 'Job estimates include retained rejected attempts. Selected-response costs and usage cover only the successful attempt.</p>')
-    if prior['records']:
-        parts.append(f'<p>The total includes {prior["records"]} prior or superseded judgment jobs once: '
-                     f'{_money(prior["cumulative_known_estimate_usd"])} '
-                     f'({prior["unknown_count"]} incomplete estimates). They add no ranking votes. '
-                     'This subtotal is already included in the all-job total and is not added again to audit totals covering the same keys.</p>')
-        prior_rows = {row['key']: row for row in data['prior_judgments']}
-        compact_prior = [_prior_judgment_summary(row) for row in prior_rows.values()]
-        parts.append('<details><summary>Prior or superseded paid judgment ledger</summary>'
-                     '<p class="small">Full receipts remain in the canonical ledger: '
-                     f'<code>{_text(data["prior_judgments_path"])}</code>. '
-                     'Provider responses, repeated prompts and usage events are omitted from this HTML.</p>'
-                     '<pre tabindex="0" aria-label="Prior judgment cost summary">'
-                     + _text(json.dumps(compact_prior, ensure_ascii=False, indent=2)) + '</pre></details>')
+    parts.append(f'<p><strong>Total for 600 judgments: {_money(scored)}.</strong> Includes retries.</p>')
     parts.append('<p class="small">Pricing references: '
                  '<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">OpenAI Sol</a>, '
                  '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">OpenAI Luna</a>, and '
@@ -548,46 +481,16 @@ def _resources(data):
                      str(r['lifetime_duration_count']) + ' / 50'])
     parts.append(_table(['System', 'Median successful-attempt elapsed', 'Min–max successful-attempt elapsed', 'Timed answers',
                          'Audited median cumulative active execution', 'Active-time audit coverage'], rows, 'Saved answer elapsed times'))
-    parts.append('<p class="small">Canonical client elapsed includes provider queueing, polling, retries and interruptions, '
-                 'excluding local scheduling before execution. Cache hits retain the original duration. These final-job durations '
-                 'are not cumulative across earlier restarted jobs. Unknown timing remains unavailable.</p>')
+    parts.append('<p class="small">Elapsed time includes provider queueing, polling and retries. '
+                 'Active time adds earlier attempts and excludes gaps between them. Cache hits retain original durations.</p>')
     if data['audit_path']:
-        doc = data['audit_doc']
-        ledger, judging_audit = doc.get('ledger', {}), doc.get('judging', {})
-        parts.append(f'<p class="small">Final audit: {_text(data["audit_path"].name)}; '
-                     f'{len(data["audit_records"])} / 150 answer identities and frozen-input hashes matched. '
-                     'Cumulative active execution sums deduplicated attempt intervals and excludes gaps between recovery attempts.</p>')
-        parts.append(_table(['System', 'Audited cumulative attempt estimate'], [
-            [_text(LABELS[a]), _money(generation[a]['audited_known_cost_usd'])] for a in agents],
-            'Audited lifetime generation estimates'))
-        parts.append('<p>Audit-wide deduplicated generation attempt estimate: '
-                     + _money(ledger.get('known_generation_attempt_usd'))
-                     + '; failed-attempt known estimates already included: ' + _money(ledger.get('failed_known_usd'))
-                     + '. Model-based reserved exposure for unresolved charges: ' + _money(ledger.get('unknown_reserved_usd'))
-                     + '. This exposure is not a guaranteed invoice bound and is not added to known spend.</p>')
-        rejected = judging_audit.get('rejected_attempts')
-        if rejected:
-            parts.append(f'<p class="small">The {rejected} rejected attempts add '
-                         + _money(judging_audit.get('rejected_attempt_estimated_usd'))
-                         + ' in recorded costs, already included above.</p>')
-        parts.append('<p class="small">Unknown charges on failed or rejected attempts: '
-                     + _text(judging_audit.get('failed_unknown_cost_count', 'not recorded'))
-                     + '. Separate failed-job estimate: ' + _money(judging_audit.get('failed_known_usd'))
-                     + '; partial cost observations on unpriced attempts: '
-                     + _money(judging_audit.get('failed_partial_observed_usd')) + '.</p>')
-        warnings = doc.get('warnings') or []
-        if warnings:
-            counts = {a: sum(r.get('agent') == a and (r.get('unknown_attempt_count') or 0) > 0
-                             for r in data['audit_records'].values()) for a in AGENTS}
-            subjects = '; '.join(f'{n} {LABELS[a]} answers have unresolved prior charges' for a, n in counts.items() if n)
-            clarified = subjects + '; retained reservations are model-based estimates, not invoice bounds.'
-            warnings = [clarified if subjects and isinstance(w, str) and 'uncertain final billing' in w
-                        and 'bounded exposure' in w else w for w in warnings]
-            parts.append('<details><summary>Final audit notes</summary><ul>'
-                         + ''.join('<li>' + _text(warning) + '</li>' for warning in warnings) + '</ul></details>')
-    else:
-        parts.append('<p class="small">No final lifetime audit was supplied. Lifetime budget compliance is not established; '
-                     'successful-attempt times alone cannot validate a cumulative two-hour limit.</p>')
+        differs = any(_number(generation[a]['audited_known_cost_usd'])
+                      and (not _number(generation[a]['known_cost_usd']) or not math.isclose(
+                          generation[a]['audited_known_cost_usd'], generation[a]['known_cost_usd'])) for a in agents)
+        if differs:
+            parts.append(_table(['System', 'Audited cumulative attempt estimate'], [
+                [_text(LABELS[a]), _money(generation[a]['audited_known_cost_usd'])] for a in agents],
+                'Audited lifetime generation estimates'))
     parts.append('</details></section>')
     return ''.join(parts)
 
@@ -626,71 +529,87 @@ def _questions(data):
     parts = ['<section id="questions"><h2>All questions, answers and judgments</h2>',
              '<p>Every question includes all three complete answers and its 12 saved overall judgments. '
              'Expand an answer or reason to inspect the source content; no API or network request is needed.</p>']
+    catalog = _jsonl(ROOT / 'crest/data/queries_n50.jsonl')
+    categories = {row['query']: row['category'] for row in catalog}
+    groups = {row['category']: [] for row in catalog}
     for index, question in enumerate(data['questions'], 1):
-        qid = question['id']
-        parts.append(f'<details class="question" id="question-{index}"><summary>'
-                     f'<span class="question-number">{index:02d}</span><span class="question-title">{_text(question["text"])}</span>'
-                     '</summary><div class="question-content">')
-        parts.append('<h3 class="evidence-heading">Answers</h3>')
-        for agent in agents:
-            row = answers[qid, agent]
-            cost = cost_for_row(row)
-            audited = data['audit_records'].get((qid, agent))
-            record = {'cost_details': cost, 'usage': row['result'].get('usage'), 'timing': row.get('timing')}
-            usage = record['usage']
-            event_note = ''
-            if isinstance(usage, dict) and isinstance(usage.get('events'), list):
-                count = len(usage['events'])
-                record['usage'] = {key: value for key, value in usage.items() if key != 'events'}
-                source = data['generation_dir'].name + '/answers.jsonl'
-                record['omitted_usage_events'] = {'count': count, 'source': source,
-                                                'field': 'result.usage.events', 'answer_key': row['key']}
-                event_note = (f'<p class="small">Usage events omitted from this HTML: {count}. '
-                              f'Canonical source: <code>{_text(source)}</code>, field <code>result.usage.events</code>; '
-                              f'answer key <code>{_text(row["key"])}</code>.</p>')
-            audit_note = ''
-            if audited:
-                record['final_audit'] = audited
-                active = audited.get('active_attempt_seconds') if audited.get('timing_complete') is True else None
-                audit_note = (' · audited cumulative attempt estimate ' + _money(audited.get('known_usd'))
-                              + ' · audited cumulative active execution ' + _duration(active))
-            artifact = data['answer_artifacts'][row['key']]
-            artifact_note = ''
-            if artifact:
-                relative = artifact.relative_to(data['generation_dir'])
-                artifact_note = f'Local Markdown: <code>{_text(relative)}</code><br>'
-            identity = row.get('configuration_id')
-            configuration = data['configurations'].get(identity) if identity else None
-            if configuration is None:
-                configuration = {'source': 'legacy run manifest; per-answer configuration was not recorded',
-                                 'settings': data['manifest'].get('config', {}).get('research', {}).get(agent)}
-            parts.append(f'<details class="answer" id="answer-{index}-{agent}"><summary>{_text(LABELS[agent])}</summary>'
-                         f'<div class="answer-text" role="region" tabindex="0" aria-label="{_text(LABELS[agent])} answer, question {index}">{_evidence_text(row["result"]["text"])}</div>'
-                         '<details class="answer-metadata"><summary>Answer metadata and source records</summary>'
-                         f'<p class="small">Saved cumulative estimate {_money(cost["cumulative_known_estimate_usd"])} · saved job elapsed '
-                         f'{_duration((row.get("timing") or {}).get("duration_seconds"))}{audit_note}</p>'
-                         '<details class="configuration"><summary>Research configuration</summary>'
-                         f'<pre tabindex="0" aria-label="Frozen configuration">{_text(json.dumps(configuration, ensure_ascii=False, indent=2))}</pre></details>'
-                         f'<details class="cost-record"><summary>Cost, usage and timing record</summary>'
-                         f'{event_note}'
-                         f'<pre tabindex="0" aria-label="Cost, usage and timing record">{_text(json.dumps(record, ensure_ascii=False, indent=2))}</pre></details>'
-                         f'<p class="small">{artifact_note}Answer key: <code>{_text(row["key"])}</code></p></details></details>')
-        parts.append('<details class="judgments"><summary>Read all 12 overall judgments</summary>')
-        for pair in combinations(agents, 2):
-            parts.append('<section class="judgment-group">'
-                         f'<h4>{_text(LABELS[pair[0]])} vs {_text(LABELS[pair[1]])}</h4>')
-            matched = [j for j in judgments[qid] if frozenset(j['pair']) == frozenset(pair)]
-            for j in sorted(matched, key=lambda r: (r['judge'], r['order'])):
-                order = j['order']
-                winner = order[0 if j['verdict']['winner'] == 'A' else 1]
-                parts.append(f'<details class="judgment"><summary>{_text(_judge_label(data, j["judge"]))} '
-                             f'· preferred {_text(LABELS[winner])}</summary>'
-                             f'<p class="presentation">A: {_text(LABELS[order[0]])} · B: {_text(LABELS[order[1]])}</p>'
-                             f'<p class="reason">{_evidence_text(j["verdict"]["reason"])}</p>'
-                             '<details class="judgment-metadata"><summary>Judgment source record</summary>'
-                             f'<p class="small">Judgment key: <code>{_text(j["key"])}</code></p></details></details>')
-            parts.append('</section>')
-        parts.append('</details></div></details>')
+        category = question.get('category')
+        if not isinstance(category, str) or not category.strip():
+            category = categories.get(question['text'], 'Other questions')
+        groups.setdefault(category, []).append((index, question))
+    for group_number, (category, questions) in enumerate(groups.items(), 1):
+        if not questions:
+            continue
+        parts.append(f'<section class="question-category" data-category="{_text(category)}" '
+                     f'aria-labelledby="category-{group_number}">'
+                     f'<h3 id="category-{group_number}">{_text(category)} '
+                     f'<small>{len(questions)} questions</small></h3>')
+        for index, question in questions:
+            qid = question['id']
+            parts.append(f'<details class="question" id="question-{index}"><summary>'
+                         f'<span class="question-number">{index:02d}</span><span class="question-title">{_text(question["text"])}</span>'
+                         '</summary><div class="question-content">')
+            parts.append('<h4 class="evidence-heading">Answers</h4>')
+            for agent in agents:
+                row = answers[qid, agent]
+                cost = cost_for_row(row)
+                audited = data['audit_records'].get((qid, agent))
+                record = {'cost_details': cost, 'usage': row['result'].get('usage'), 'timing': row.get('timing')}
+                usage = record['usage']
+                event_note = ''
+                if isinstance(usage, dict) and isinstance(usage.get('events'), list):
+                    count = len(usage['events'])
+                    record['usage'] = {key: value for key, value in usage.items() if key != 'events'}
+                    source = data['generation_dir'].name + '/answers.jsonl'
+                    record['omitted_usage_events'] = {'count': count, 'source': source,
+                                                    'field': 'result.usage.events', 'answer_key': row['key']}
+                    event_note = (f'<p class="small">Usage events omitted from this HTML: {count}. '
+                                  f'Canonical source: <code>{_text(source)}</code>, field <code>result.usage.events</code>; '
+                                  f'answer key <code>{_text(row["key"])}</code>.</p>')
+                audit_note = ''
+                if audited:
+                    record['final_audit'] = audited
+                    active = audited.get('active_attempt_seconds') if audited.get('timing_complete') is True else None
+                    audit_note = (' · audited cumulative attempt estimate ' + _money(audited.get('known_usd'))
+                                  + ' · audited cumulative active execution ' + _duration(active))
+                artifact = data['answer_artifacts'][row['key']]
+                artifact_note = ''
+                if artifact:
+                    relative = artifact.relative_to(data['generation_dir'])
+                    artifact_note = f'Local Markdown: <code>{_text(relative)}</code><br>'
+                identity = row.get('configuration_id')
+                configuration = data['configurations'].get(identity) if identity else None
+                if configuration is None:
+                    configuration = {'source': 'legacy run manifest; per-answer configuration was not recorded',
+                                     'settings': data['manifest'].get('config', {}).get('research', {}).get(agent)}
+                parts.append(f'<details class="answer" id="answer-{index}-{agent}"><summary>{_text(LABELS[agent])}</summary>'
+                             f'<div class="answer-text" role="region" tabindex="0" aria-label="{_text(LABELS[agent])} answer, question {index}">{_evidence_text(row["result"]["text"])}</div>'
+                             '<details class="answer-metadata"><summary>Answer metadata and source records</summary>'
+                             f'<p class="small">Saved cumulative estimate {_money(cost["cumulative_known_estimate_usd"])} · saved job elapsed '
+                             f'{_duration((row.get("timing") or {}).get("duration_seconds"))}{audit_note}</p>'
+                             '<details class="configuration"><summary>Research configuration</summary>'
+                             f'<pre tabindex="0" aria-label="Frozen configuration">{_text(json.dumps(configuration, ensure_ascii=False, indent=2))}</pre></details>'
+                             f'<details class="cost-record"><summary>Cost, usage and timing record</summary>'
+                             f'{event_note}'
+                             f'<pre tabindex="0" aria-label="Cost, usage and timing record">{_text(json.dumps(record, ensure_ascii=False, indent=2))}</pre></details>'
+                             f'<p class="small">{artifact_note}Answer key: <code>{_text(row["key"])}</code></p></details></details>')
+            parts.append('<details class="judgments"><summary>Read all 12 overall judgments</summary>')
+            for pair in combinations(agents, 2):
+                parts.append('<section class="judgment-group">'
+                             f'<h4>{_text(LABELS[pair[0]])} vs {_text(LABELS[pair[1]])}</h4>')
+                matched = [j for j in judgments[qid] if frozenset(j['pair']) == frozenset(pair)]
+                for j in sorted(matched, key=lambda r: (r['judge'], r['order'])):
+                    order = j['order']
+                    winner = order[0 if j['verdict']['winner'] == 'A' else 1]
+                    parts.append(f'<details class="judgment"><summary>{_text(_judge_label(data, j["judge"]))} '
+                                 f'· preferred {_text(LABELS[winner])}</summary>'
+                                 f'<p class="presentation">A: {_text(LABELS[order[0]])} · B: {_text(LABELS[order[1]])}</p>'
+                                 f'<p class="reason">{_evidence_text(j["verdict"]["reason"])}</p>'
+                                 '<details class="judgment-metadata"><summary>Judgment source record</summary>'
+                                 f'<p class="small">Judgment key: <code>{_text(j["key"])}</code></p></details></details>')
+                parts.append('</section>')
+            parts.append('</details></div></details>')
+        parts.append('</section>')
     parts.append('</section>')
     return ''.join(parts)
 
@@ -749,6 +668,7 @@ def _method(data):
 CSS = """
 .skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:white;padding:.7rem 1rem}.skip-link:focus{top:1rem}
 #judges>details{margin:.3rem 0}
+.question-category{margin-top:2rem}.question-category>h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .8rem}
 .method-summary{display:grid;grid-template-columns:10rem minmax(0,1fr);gap:1rem 1.5rem}.method-summary dt{font-weight:650;color:#0b5967}.method-summary dd{margin:0}
 .metadata,.small,small{color:#526574}.small{font-size:.9rem}.metadata{font-size:.8rem}.subtitle{max-width:76ch}
 .run-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin:1.8rem 0}.run-stats strong{display:block;color:#0b5967;font-size:1.9rem}.run-stats span{font-size:.85rem;color:#526574}

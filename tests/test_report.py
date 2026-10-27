@@ -1,6 +1,5 @@
 """Offline publication, provenance, accounting and escaping contracts for CREST HTML."""
 from copy import deepcopy
-from html import unescape
 from html.parser import HTMLParser
 from itertools import combinations
 import json
@@ -109,17 +108,16 @@ def test_revised_method_describes_judge_presentations_not_raw_url_metadata():
     assert 'this run was not fully blinded' not in html
 
 
-def test_judging_cost_copy_distinguishes_jobs_from_paid_attempts(run):
+def test_judging_summary_keeps_verdict_count_when_jobs_retry(run):
     from crest.report import load_run, _resources
     data = load_run(run)
     data['judgments'][0]['attempts'] = [{'status': 'rejected'}, {'status': 'completed'}]
     html = _resources(data)
-    assert '601 API attempts' in html
-    assert '600 judgment jobs' in html
-    assert 'failed attempts are reported separately' not in html
+    assert 'Total for 600 judgments: $60.0000' in html
+    assert 'Includes retries' in html
 
 
-def test_audit_copy_identifies_rejected_attempts_inside_completed_jobs(run):
+def test_retry_audit_details_stay_out_of_cost_summary(run):
     from crest.report import load_run, _resources
     data = load_run(run)
     data['audit_path'] = run / 'audit.json'
@@ -127,10 +125,11 @@ def test_audit_copy_identifies_rejected_attempts_inside_completed_jobs(run):
         'rejected_attempts': 7, 'rejected_attempt_estimated_usd': .5254,
         'failed_jobs': 0, 'failed_known_usd': 0,
         'failed_unknown_cost_count': 2, 'failed_partial_observed_usd': 0}}
+    original = deepcopy(data['audit_doc'])
     html = _resources(data)
-    assert '7 rejected attempts' in html
-    assert 'Unknown charges on failed or rejected attempts: 2' in html
-    assert 'Unknown failed-job bills' not in html
+    assert 'rejected attempts' not in html
+    assert 'Unknown charges' not in html
+    assert data['audit_doc'] == original
 
 
 def test_judging_estimate_includes_rejected_attempt_without_changing_receipts(run):
@@ -144,9 +143,8 @@ def test_judging_estimate_includes_rejected_attempt_without_changing_receipts(ru
     original = path.read_bytes()
     data = load_run(run)
     html = _resources(data)
-    assert '600 scored verdicts from 600 judgment jobs (601 API attempts): $60.050000' in html
-    assert 'Job estimates include retained rejected attempts' in html
-    assert 'Selected-response costs and usage cover only the successful attempt' in html
+    assert 'Total for 600 judgments: $60.0500' in html
+    assert 'Includes retries' in html
     assert path.read_bytes() == original
     assert data['judgments'][0]['result']['cost_usd'] == .1
 
@@ -225,7 +223,7 @@ def test_uses_saved_bootstrap_intervals_preserves_exact_ties_and_all_evidence(tm
     assert 'OpenAI (Sol + web search)' in text
     assert 'this run was not fully blinded' not in text
     assert 'not an override' in text
-    assert 'Lifetime budget compliance is not established' in text
+    assert 'Lifetime budget compliance is not established' not in text
     assert 'fetch(' not in text and '<script src=' not in text
 
 
@@ -355,7 +353,7 @@ def final_audit(run):
                                          run / '02-judge-test/judgments.jsonl', run / '02-judge-test/judges.json']}}
 
 
-def test_real_final_audit_enriches_active_attempt_times_and_retains_its_warnings(run, tmp_path):
+def test_final_audit_enriches_timing_without_repeating_audit_notes(run, tmp_path):
     from crest.report import load_run, write_report
     audit = run / '04-audit-test/audit.json'
     dump(audit, final_audit(run))
@@ -365,12 +363,13 @@ def test_real_final_audit_enriches_active_attempt_times_and_retains_its_warnings
     output = tmp_path / 'page.html'
     write_report(run, output)
     html = output.read_text()
-    assert 'Billing remains estimated; no invoice has been verified.' in html
-    assert 'Lifetime budget compliance is not established' not in html
-    assert 'model-based reserved exposure' in html.lower()
+    assert data['audit_doc']['warnings'] == ['Billing remains estimated; no invoice has been verified.']
+    assert 'Billing remains estimated; no invoice has been verified.' not in html
+    assert 'model-based reserved exposure' not in html.lower()
+    assert 'Audited cumulative attempt estimate' not in html
 
 
-def test_uncertain_billing_note_clarifies_reservations_without_mutating_audit(run, tmp_path):
+def test_cost_history_notes_are_omitted_without_mutating_audit(run, tmp_path):
     from crest.report import write_report
     doc = final_audit(run)
     raw_warning = '10 completed answers have uncertain final billing; see bounded exposure'
@@ -382,8 +381,9 @@ def test_uncertain_billing_note_clarifies_reservations_without_mutating_audit(ru
     output = tmp_path / 'page.html'; write_report(run, output, audit=audit)
     html = output.read_text()
     assert raw_warning not in html
-    assert '10 Caesar answers have unresolved prior charges' in html
-    assert 'model-based estimates, not invoice bounds' in html
+    assert '10 Caesar answers have unresolved prior charges' not in html
+    assert 'model-based estimates, not invoice bounds' not in html
+    assert 'Final audit notes' not in html
     assert audit.read_bytes() == original
 
 
@@ -502,7 +502,7 @@ def test_per_question_means_preserve_partial_costs_and_use_observed_times(run, t
     assert 'Average generation time' in html
     assert 'Average active time, all attempts' in html
     assert '$1.0400' in html and '$1.1200' in html
-    assert 'Caesar has unpriced earlier attempts for 1 of 50 answers.' in html
+    assert 'Caesar has unpriced' not in html
     assert 'Google’s estimate uses assumed model rates' in html
     assert '<small>partial estimate</small>' not in html
     assert '<small>conditional estimate</small>' not in html
@@ -689,6 +689,50 @@ def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchu
     assert parser.question_numbers == parser.question_titles == 50
 
 
+def test_questions_group_by_dataset_category_without_changing_snapshot_order_or_ids(run, tmp_path):
+    from crest.report import ROOT, write_report
+    source = [json.loads(line) for line in (ROOT / 'crest/data/queries_n50.jsonl').read_text().splitlines()]
+    path = run / '02-judge-test/questions.json'
+    questions = json.loads(path.read_text())
+    for question, row in zip(questions, reversed(source)):
+        question['text'] = row['query']
+    dump(path, questions)
+    manifest = json.loads((run / 'run.json').read_text())
+    manifest['questions'] = questions
+    dump(run / 'run.json', manifest)
+    original = path.read_bytes()
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+
+    class Groups(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.sections, self.groups = [], {}
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == 'section':
+                self.sections.append(attrs.get('data-category'))
+            if attrs.get('class') == 'question':
+                category = next((c for c in reversed(self.sections) if c), None)
+                self.groups.setdefault(category, []).append(attrs['id'])
+
+        def handle_endtag(self, tag):
+            if tag == 'section':
+                self.sections.pop()
+
+    parser = Groups()
+    parser.feed(output.read_text())
+    lookup = {row['query']: row['category'] for row in source}
+    expected = {row['category']: [] for row in source}
+    for index, question in enumerate(questions, 1):
+        expected[lookup[question['text']]].append(f'question-{index}')
+    assert list(parser.groups) == list(expected)
+    assert parser.groups == expected
+    assert all(len(group) == 10 for group in parser.groups.values())
+    assert path.read_bytes() == original
+
+
 def test_all_frozen_configurations_render_with_nonnull_shared_prompt_template(run, tmp_path):
     from crest.artifacts import answer_metadata, configuration_record
     from crest.report import load_run, write_report
@@ -736,7 +780,7 @@ def test_legacy_answer_link_fallback_and_unsafe_artifact_path_refusal(run, tmp_p
         write_report(run, output)
 
 
-def test_superseded_paid_judgments_add_costs_once_and_never_add_votes(run, tmp_path):
+def test_superseded_judgments_are_retained_but_excluded_from_published_cost_and_votes(run, tmp_path):
     from crest.report import load_run, write_report
     current = [json.loads(line) for line in (run / '02-judge-test/judgments.jsonl').read_text().splitlines()]
     prior = [{'key': f'prior-{i}', 'stage': 'judge', 'cost_usd': .2, 'usage': {}, 'model': 'gpt-6-astra',
@@ -751,10 +795,9 @@ def test_superseded_paid_judgments_add_costs_once_and_never_add_votes(run, tmp_p
     output = tmp_path / 'page.html'
     write_report(run, output)
     text = output.read_text()
-    assert '4 prior or superseded judgment jobs' in text
-    assert '$0.8000' in text
-    assert '600 scored verdicts from 600 judgment jobs (600 API attempts): $60.000000' in text
-    assert 'All 604 judgment jobs (604 API attempts): $60.800000' in text
+    assert 'superseded' not in text
+    assert 'Total for 600 judgments: $60.0000' in text
+    assert '$60.8000' not in text
     assert text.count('class="judgment"') == 600
     # An old paid key cannot also be counted as a currently scored verdict.
     prior[0]['key'] = current[0]['key']
@@ -763,7 +806,7 @@ def test_superseded_paid_judgments_add_costs_once_and_never_add_votes(run, tmp_p
         load_run(run)
 
 
-def test_prior_judgment_attempt_count_deduplicates_job_keys(run):
+def test_duplicate_prior_jobs_do_not_change_published_current_cost(run):
     from crest.report import load_run, _resources
     prior = {'key': 'prior-job', 'stage': 'judge', 'valid_for_ranking': False,
              'cost_usd': .3, 'cost_scope': 'all_judgment_attempts', 'attempts': [
@@ -773,13 +816,16 @@ def test_prior_judgment_attempt_count_deduplicates_job_keys(run):
     path.write_text(''.join(json.dumps(prior) + '\n' for _ in range(2)))
     data = load_run(run)
     html = _resources(data)
-    assert 'All 601 judgment jobs (602 API attempts): $60.300000' in html
-    assert '1 prior or superseded judgment jobs' in html
+    assert data['resources']['prior_judging']['records'] == 1
+    assert data['resources']['paid_judging']['cumulative_known_estimate_usd'] == pytest.approx(60.3)
+    assert 'Total for 600 judgments: $60.0000' in html
+    assert '$60.3000' not in html
+    assert 'superseded' not in html
     assert data['ranking']['coverage']['valid_judgments'] == 600
 
 
 @pytest.mark.parametrize('ledger_directory', ['02-judge-test', ''])
-def test_prior_ledger_html_omits_raw_payloads_and_retains_cost_receipt_summary(run, tmp_path, ledger_directory):
+def test_prior_ledger_stays_in_source_records_and_out_of_html(run, tmp_path, ledger_directory):
     from crest.report import load_run, write_report, _questions
     evidence = _questions(load_run(run))
     marker = 'PRIOR_RAW_PAYLOAD_RETAINED_ONLY_IN_CANONICAL_JSONL'
@@ -803,21 +849,14 @@ def test_prior_ledger_html_omits_raw_payloads_and_retains_cost_receipt_summary(r
     write_report(run, output)
     html = output.read_text()
     assert marker not in html
-    assert ledger.relative_to(run).as_posix() in html
-    assert 'Full receipts remain in the canonical ledger' in html
-    compact = re.search(r'<pre[^>]*aria-label="Prior judgment cost summary"[^>]*>(.*?)</pre>', html, re.S)
-    assert compact is not None and len(compact.group(1)) < 5000
-    records = json.loads(unescape(compact.group(1)))
-    assert len(records) == 1
-    record = records[0]
-    assert record['key'] == 'prior-paid-job' and record['judge'] == 'openai'
-    assert record['stage'] == 'judge' and record['source_judgment_directory'] == '02-judge-previous'
-    assert record['cost_usd'] is None and record['known_cost_usd'] == .2
-    assert record['unknown_cost_count'] == 1 and record['api_attempt_count'] == 2
-    assert [(r['key'], r['status'], r['cost_usd']) for r in record['attempts']] == [
-        ('prior-rejected', 'rejected', .2), ('prior-unpriced', 'failed', None)]
-    assert record['attempts'][1]['cache_record'] == 'cache/attempts/prior-unpriced.json'
-    assert 'All 601 judgment jobs (602 API attempts): $60.200000' in html
+    assert ledger.relative_to(run).as_posix() not in html
+    assert 'prior-paid-job' not in html
+    data = load_run(run)
+    assert data['prior_judgments'] == [prior, prior]
+    assert data['resources']['prior_judging']['cumulative_known_estimate_usd'] == .2
+    assert data['resources']['prior_judging']['unknown_count'] == 1
+    assert 'Total for 600 judgments: $60.0000' in html
+    assert '$60.2000' not in html
     assert evidence in html
     assert html.count('class="answer"') == 150 and html.count('class="reason"') == 600
     assert ledger.read_bytes() == original
