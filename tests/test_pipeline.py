@@ -92,6 +92,33 @@ def test_recovery_cumulative_cost_uses_original_answer_budget(tmp_path, total, e
     assert bool(result.get('budget_exceeded')) is exceeded
 
 
+def test_fresh_restart_cannot_raise_frozen_remaining_time(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {'caesar': config['research']['caesar']}
+    config['research']['caesar'].update(budget_history_from=str(tmp_path / 'prior'), timeout_seconds=3600)
+    provider = FakeProvider('caesar')
+    received = []
+    original = provider.generate
+    async def capture(prompt, settings, job):
+        received.append(settings['timeout_seconds'])
+        return await original(prompt, settings, job)
+    provider.generate = capture
+    pipeline = Pipeline(config, providers={'caesar': provider})
+    pipeline._ensure_run()
+    pipeline.config['research']['caesar']['timeout_seconds'] = 7200
+    asyncio.run(pipeline.generate())
+    assert received == [3600]
+
+
+def test_budget_history_path_is_resolved_and_cannot_mix_with_recovery(tmp_path):
+    p = tmp_path / 'config.yaml'
+    p.write_text('research:\n  caesar:\n    budget_history_from: prior-job\n')
+    assert load_config(p)['research']['caesar']['budget_history_from'] == str(tmp_path / 'prior-job')
+    p.write_text('research:\n  caesar:\n    budget_history_from: prior-job\n    recovery_from: prior-job\n')
+    with pytest.raises(ValueError, match='not both'):
+        load_config(p)
+
+
 def test_timestamped_stages_resume_and_rubric_change_never_rebuys_answers(tmp_path):
     config = fixture_config(tmp_path)
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}

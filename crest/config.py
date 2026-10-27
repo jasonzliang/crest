@@ -27,14 +27,18 @@ DEFAULTS = {
     'research': {
         'caesar': {
             'rome_path': '../rome', 'python_executable': sys.executable,
-            'recovery_from': None,
+            'recovery_from': None, 'budget_history_from': None,
             'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna',
             'kb_model': 'gpt-6-luna', 'budget_usd': 5.0, 'handler_budget_usd': 5.0,
+            'reasoning_effort': 'medium', 'synthesis_reasoning_effort': 'medium',
+            'exploration_reasoning_effort': 'low', 'kb_reasoning_effort': 'low',
             'max_iterations': 250, 'synthesis_drafts': 3, 'synthesis_iterations': 15,
-            'additional_starting_queries': 11, 'use_quick_explore': True,
+            'synthesis_top_k': 15, 'synthesis_top_n': 10,
+            'additional_starting_queries': 11, 'use_quick_explore': False,
             'quick_explore_insights': True, 'quick_explore_workers': 2,
             'adapt_role': True, 'synthesis_merge_artifacts': True,
-            'max_completion_tokens': 6000, 'exploration_max_completion_tokens': 2000,
+            'max_completion_tokens': 25000, 'query_max_completion_tokens': 6000,
+            'exploration_max_completion_tokens': 2000, 'kb_max_completion_tokens': 2000,
             'synthesis_reserve_usd': 3.0,
             'call_timeout_seconds': 600,
             'timeout_seconds': 7200, 'initial_concurrency': 1, 'concurrency': 4, 'revision': 1,
@@ -92,19 +96,23 @@ def load_config(path: Path | str = ROOT / 'crest.yaml') -> dict:
         config[key] = str((path.parent / p).resolve())
     p = Path(config['research']['caesar']['rome_path']).expanduser()
     config['research']['caesar']['rome_path'] = str((path.parent / p).resolve())
-    recovery = config['research']['caesar']['recovery_from']
-    if recovery is not None:
-        if not isinstance(recovery, str) or not recovery.strip():
-            raise ValueError('research.caesar.recovery_from must be a nonempty path or null')
-        config['research']['caesar']['recovery_from'] = str(
-            (path.parent / Path(recovery).expanduser()).resolve())
+    caesar = config['research']['caesar']
+    for field in ('recovery_from', 'budget_history_from'):
+        source = caesar[field]
+        if source is not None:
+            if not isinstance(source, str) or not source.strip():
+                raise ValueError(f'research.caesar.{field} must be a nonempty path or null')
+            caesar[field] = str((path.parent / Path(source).expanduser()).resolve())
+    if caesar['recovery_from'] and caesar['budget_history_from']:
+        raise ValueError('Choose recovery_from or budget_history_from, not both')
     if '{question}' not in config['research_prompt']:
         raise ValueError('research_prompt must contain {question}')
     for section in ('research', 'judges'):
         for name, settings in config[section].items():
             for key in ('concurrency', 'initial_concurrency', 'retry_attempts', 'max_output_tokens', 'max_tool_calls', 'max_iterations',
                         'synthesis_drafts', 'synthesis_iterations', 'max_completion_tokens',
-                        'exploration_max_completion_tokens', 'quick_explore_workers'):
+                        'query_max_completion_tokens', 'synthesis_top_k', 'synthesis_top_n',
+                        'exploration_max_completion_tokens', 'kb_max_completion_tokens', 'quick_explore_workers'):
                 if key in settings and (isinstance(settings[key], bool) or
                                         not isinstance(settings[key], int) or settings[key] < 1):
                     raise ValueError(f'{section}.{name}.{key} must be a positive integer')

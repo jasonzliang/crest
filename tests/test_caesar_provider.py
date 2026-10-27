@@ -44,7 +44,7 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     second = worker.build_config("Q", {"exploration_model": "custom-explore", "kb_model": "custom-kb"}, tmp_path / "two", "def")
     assert first["CaesarAgent"]["max_iterations"] == 250
     assert first["CaesarAgent"]["max_depth"] == 6
-    assert first["CaesarAgent"]["use_quick_explore"] is True
+    assert first["CaesarAgent"]["use_quick_explore"] is False
     assert first["CaesarAgent"]["quick_explore_insights"] is True
     assert first["CaesarAgent"]["quick_explore_workers"] == 2
     assert first["CaesarAgent"]["adapt_role"] is True
@@ -53,14 +53,14 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     assert first["CaesarAgent"]["max_web_searches"] == 5
     assert first["ArtifactSynthesizer"]["synthesis_drafts"] == 3
     assert first["ArtifactSynthesizer"]["synthesis_iterations"] == 15
-    assert first["ArtifactSynthesizer"]["synthesis_top_k"] == 8
+    assert first["ArtifactSynthesizer"]["synthesis_top_k"] == 15
     assert first["ArtifactSynthesizer"]["synthesis_generate_images"] == 0
     assert first["ArtifactSynthesizer"]["synthesis_merge_clarify"] is False
     assert first["BraveSearch"]["use_ddgs"] is True
     assert first["ChromaClientManager"]["enable_reranking"] is False
     assert first["LLMHandler"]["model"] == "gpt-6.1-sol"
     assert first["LLMHandler"]["cost_limit"] == 5
-    assert first["LLMHandler"]["max_completion_tokens"] == 6000
+    assert first["LLMHandler"]["max_completion_tokens"] == 25000
     assert first["LLMHandler"]["timeout"] == 600
     assert first["CaesarAgent"]["exploration_llm_config"]["timeout"] == 600
     assert first["LLMHandler"]["max_input_tokens"] == 64000
@@ -537,6 +537,7 @@ def test_exploration_reserve_leaves_budget_for_real_synthesis_and_rejects_no_ins
             self.pages = 0
             self.synthesizer = SimpleNamespace(synthesize_artifact=self.synthesize)
         def perceive(self):
+            if getattr(self, "synthesis_probe", False): return "content", []
             pay("page")
             self.pages += 1
             return "content", []
@@ -546,7 +547,8 @@ def test_exploration_reserve_leaves_budget_for_real_synthesis_and_rejects_no_ins
                 self.perceive()
             return self.synthesize()
         def synthesize(self):
-            assert self.perceive.__func__ is Agent.perceive  # Reserve guard is inactive now.
+            self.synthesis_probe = True
+            assert self.perceive() == ("content", [])
             if not self.pages:
                 return artifact(num_drafts=0)
             if synthesis_fails:

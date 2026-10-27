@@ -23,6 +23,8 @@ import time
 from email.utils import parsedate_to_datetime
 from uuid import uuid4
 
+from crest.caesar_metrics import iteration_metrics
+
 PROTOCOL_VERSION = "caesar-worker-v1"
 SOL = "gpt-6.1-sol"
 LUNA = "gpt-6-luna"
@@ -61,7 +63,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
         "LLMHandler": {
             "provider": "openai", "model": model, "reasoning_effort": settings.get("reasoning_effort", "medium"),
             "cost_limit": settings.get("handler_budget_usd", settings.get("handler_cost_limit", 5.)),
-            "max_completion_tokens": settings.get("max_completion_tokens", 6000),
+            "max_completion_tokens": settings.get("max_completion_tokens", 25000),
             "max_input_tokens": settings.get("max_input_tokens", 64000),
             "timeout": settings.get("call_timeout_seconds", 600), "max_retries": 0,
         },
@@ -71,7 +73,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "additional_starting_queries": settings.get("additional_starting_queries", 11),
             "max_web_searches": settings.get("max_web_searches", 5),
             "draw_graph": False, "adapt_role": settings.get("adapt_role", True),
-            "use_quick_explore": settings.get("use_quick_explore", True),
+            "use_quick_explore": settings.get("use_quick_explore", False),
             "quick_explore_insights": settings.get("quick_explore_insights", True),
             "quick_explore_workers": settings.get("quick_explore_workers", 2),
             "save_graph_interval": settings.get("save_graph_interval", 50),
@@ -86,8 +88,8 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "synthesis_classic_mode": False, "synthesis_drafts": settings.get("synthesis_drafts", 3),
             "synthesis_iterations": settings.get("synthesis_iterations", 15),
             "synthesis_reasoning_effort": settings.get("synthesis_reasoning_effort", "medium"),
-            "synthesis_top_k": settings.get("retrieval_chunks", 8),
-            "synthesis_top_n": settings.get("retrieval_chunks", 8),
+            "synthesis_top_k": settings.get("synthesis_top_k", settings.get("retrieval_chunks", 15)),
+            "synthesis_top_n": settings.get("synthesis_top_n", settings.get("retrieval_chunks", 10)),
             "synthesis_merge_artifacts": settings.get("synthesis_merge_artifacts", True), "synthesis_merge_clarify": False,
             "synthesis_eli5": False, "synthesis_human_eval": False, "synthesis_generate_images": 0,
         },
@@ -96,7 +98,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "collection_name": collection, "enable_reranking": False, "use_shared_server": False,
             "model": settings.get("kb_model", LUNA), "reasoning_effort": settings.get("kb_reasoning_effort", "low"),
             "embedding_model": settings.get("embedding_model", "text-embedding-3-small"),
-            "top_k": settings.get("retrieval_chunks", 8),
+            "top_k": settings.get("synthesis_top_k", settings.get("retrieval_chunks", 15)),
         },
         "ChromaServerManager": {"host": "127.0.0.1", "port": settings.get("chroma_port", 8000),
                                 "persist_path": str(output_dir / "chroma"),
@@ -542,6 +544,43 @@ def _committed_spend(audit):
 
 
 @contextmanager
+def synthesis_query_completion_limits(agent, settings):
+    """Keep query/refinement requests short without limiting draft/merge output."""
+    synthesizer = getattr(agent, "synthesizer", None)
+    original = getattr(synthesizer, "_llm_call", None)
+    if original is None:
+        yield
+        return
+    def call(*args, **kwargs):
+        label = kwargs.get("label", args[4] if len(args) > 4 else "LLM")
+        if label not in {"NEXT_QUERY", "REFINE"}:
+            return original(*args, **kwargs)
+        chat = agent.chat_completion
+        handler = getattr(agent, "llm_handler", None)
+        previous = getattr(handler, "max_completion_tokens", None)
+        limit = min(int(settings.get("query_max_completion_tokens", 6000)), previous or int(settings.get("max_completion_tokens", 25000)))
+        def short_chat(*chat_args, **chat_kwargs):
+            overrides = dict(chat_kwargs.get("override_config") or {})
+            overrides["max_completion_tokens"] = limit
+            chat_kwargs["override_config"] = overrides
+            return chat(*chat_args, **chat_kwargs)
+        agent.chat_completion = short_chat
+        if previous is not None:
+            handler.max_completion_tokens = limit
+        try:
+            return original(*args, **kwargs)
+        finally:
+            agent.chat_completion = chat
+            if previous is not None:
+                handler.max_completion_tokens = previous
+    synthesizer._llm_call = call
+    try:
+        yield
+    finally:
+        synthesizer._llm_call = original
+
+
+@contextmanager
 def adaptive_synthesis_budget(agent, settings, audit):
     """Allocate QA money and elapsed time while retaining later writes and merging."""
     synthesizer = getattr(agent, "synthesizer", None)
@@ -565,7 +604,8 @@ def adaptive_synthesis_budget(agent, settings, audit):
         writes = remaining_drafts + remaining_drafts - 1 + int(synthesizer.synthesis_merge_artifacts)
         committed = _committed_spend(audit)
         ceiling = min(audit.budget, float(settings.get("handler_budget_usd", 5.)))
-        allowance = max(0., (ceiling - committed - writes * .35) / remaining_drafts)
+        write_allowance = min(writes * .35, max(0., ceiling - committed) * .7)
+        allowance = max(0., (ceiling - committed - write_allowance) / remaining_drafts)
         qa_started = time.monotonic()
         time_allowance = max(0., (deadline - qa_started - writes * write_seconds) / remaining_drafts)
         qa_deadline = qa_started + time_allowance
@@ -604,7 +644,7 @@ def adaptive_synthesis_budget(agent, settings, audit):
                 synthesizer._generate_next_query = original_next
         records["drafts"].append({"draft": draft, "requested_qa_rounds": synthesizer.synthesis_iterations,
             "completed_qa_rounds": len(pairs), "budget_limited": limited, "qa_allowance_usd": allowance,
-            "remaining_write_allowance_usd": writes * .35, "time_limited": time_limited,
+            "remaining_write_allowance_usd": write_allowance, "time_limited": time_limited,
             "qa_time_allowance_seconds": time_allowance, "qa_elapsed_seconds": time.monotonic() - qa_started,
             "remaining_write_allowance_seconds": writes * write_seconds})
         atomic_json(audit.path.with_name("synthesis-budget.json"), records)
@@ -738,25 +778,56 @@ def recovery_history(source, prompt):
         record = json.loads((cursor / "caesar-result.json").read_text())
         if request.get("prompt") != prompt:
             raise ValueError("Recovery ancestry contains a different prompt")
+        if record.get("status") not in {"failed", "completed"}:
+            raise ValueError("Budget ancestry requires a terminal failed/completed attempt")
         result = record.get("result") or {}
         raw = record.get("raw") or result.get("raw") or {}
         usage = raw.get("new_attempt_usage_audit") or record.get("usage") or result.get("usage") or {}
-        prior = raw.get("recovery") or {}
+        if raw.get("recovery") and raw.get("budget_history"):
+            raise ValueError("Ambiguous budget ancestry modes")
+        prior = raw.get("recovery") or raw.get("budget_history") or {}
         known = float(usage["known_cost_usd"])
         unknown = [event for event in usage.get("events", []) if event.get("unknown_cost")]
         unknown += usage.get("in_flight", [])
+        if usage.get("unknown_cost") and not unknown:
+            raise ValueError("Previous unknown usage has no bounded request entries")
         reserved = [float(event.get("reserved_usd", 0)) for event in unknown]
         if not math.isfinite(known) or known < 0 or any(not math.isfinite(value) or value <= 0 for value in reserved):
             raise ValueError("Previous usage lacks a conservative cost bound")
         worker_id = request.get("worker_id") or request.get("job_key") or cursor.name
         history.append({"source_job": str(cursor), "known_cost_usd": known,
-            "unknown_reserved_usd": sum(reserved), "cost_unknown": bool(usage.get("unknown_cost")),
+            "unknown_reserved_usd": sum(reserved), "cost_unknown": bool(usage.get("unknown_cost") or unknown),
             "collection_name": "crest_" + hashlib.sha256(worker_id.encode()).hexdigest()[:40]})
-        parent = prior.get("source_job") or (request.get("settings") or {}).get("recovery_from")
+        previous_settings = request.get("settings") or {}
+        if previous_settings.get("recovery_from") and previous_settings.get("budget_history_from"):
+            raise ValueError("Recovery and budget-history modes are mutually exclusive")
+        parent = prior.get("source_job") or previous_settings.get("recovery_from") or previous_settings.get("budget_history_from")
         if not parent:
             original_budget = float(usage.get("budget_target_usd", (request.get("settings") or {}).get("budget_usd", 5)))
+            if not math.isfinite(original_budget) or original_budget <= 0:
+                raise ValueError("Original budget must be positive and finite")
             return list(reversed(history)), original_budget
         cursor = Path(parent).resolve()
+
+
+
+def prepare_budget_history(prompt, settings):
+    """Reserve lifetime spend while starting completely fresh research state."""
+    source = Path(settings["budget_history_from"]).resolve()
+    ancestry, original_budget = recovery_history(source, prompt)
+    original_budget = min(original_budget, float(settings.get("budget_usd", 5.)))
+    known = sum(item["known_cost_usd"] for item in ancestry)
+    reserved = sum(item["unknown_reserved_usd"] for item in ancestry)
+    remaining = original_budget - known - reserved
+    if not math.isfinite(remaining) or remaining <= 0:
+        raise ValueError("No budget remains after prior known charges and unknown reservations")
+    configured_reserve = float(settings.get("synthesis_reserve_usd", 3.))
+    return {"mode": "fresh_restart", "source_job": str(source), "ancestry": ancestry,
+        "original_budget_usd": original_budget, "previous_known_cost_usd": known,
+        "previous_unknown_reserved_usd": reserved, "previous_cost_unknown": any(item["cost_unknown"] for item in ancestry),
+        "new_attempt_budget_usd": remaining, "budgeted_total_exposure_usd": known + reserved + remaining,
+        "configured_synthesis_reserve_usd": configured_reserve,
+        "effective_synthesis_reserve_usd": configured_reserve * remaining / original_budget}
 
 
 def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
@@ -804,20 +875,38 @@ def run_worker(request: dict, result_path: Path) -> int:
     settings = request.get("settings", {})
     worker_deadline = worker_started + float(settings.get("timeout_seconds", 7200))
     output_dir = Path(request["output_dir"])
-    if settings.get("recovery_from"):
-        source = Path(settings["recovery_from"]).resolve()
+    if settings.get("recovery_from") and settings.get("budget_history_from"):
+        raise ValueError("Recovery and fresh budget-history modes are mutually exclusive")
+    history_source = settings.get("recovery_from") or settings.get("budget_history_from")
+    if history_source:
+        source = Path(history_source).resolve()
         if source == output_dir.resolve() or source in output_dir.resolve().parents or source in Path(result_path).resolve().parents:
             raise ValueError("Recovery must not write into its original failed job")
     output_dir.mkdir(parents=True, exist_ok=True)
-    audit = UsageAudit(settings.get("budget_usd", 5.), output_dir / "usage.json", settings.get("model_pricing"), retry_attempts=settings.get("retry_attempts", 4))
+    budget_history = None
+    attempt_settings = dict(settings)
+    if settings.get("budget_history_from"):
+        try:
+            budget_history = prepare_budget_history(request["prompt"], settings)
+        except Exception as error:
+            atomic_json(result_path, {"status": "failed", "error": f"{type(error).__name__}: {error}",
+                "usage": {"known_cost_usd": 0., "cost_usd": 0., "unknown_cost": False,
+                          "successful_calls": 0, "failed_calls": 0, "events": [], "in_flight": []}})
+            return 1
+        attempt_settings.update(budget_usd=budget_history["new_attempt_budget_usd"],
+            handler_budget_usd=min(float(settings.get("handler_budget_usd", 5.)), budget_history["new_attempt_budget_usd"]),
+            synthesis_reserve_usd=budget_history["effective_synthesis_reserve_usd"])
+        atomic_json(output_dir / "budget-history.json", budget_history)
+    audit = UsageAudit(attempt_settings.get("budget_usd", 5.), output_dir / "usage.json", settings.get("model_pricing"), retry_attempts=settings.get("retry_attempts", 4))
     agent = None
     record = None
     artifact = None
     exploration_stop = None
     recovery = None
+    metrics = None
     try:
-        with _deadline(max(.001, worker_deadline - time.monotonic())), _safe_logging(), _runtime(settings, audit) as agent_class:
-            config = build_config(request["prompt"], settings, output_dir, request.get("worker_id", request["job_key"]))
+        with _deadline(max(.001, worker_deadline - time.monotonic())), _safe_logging(), _runtime(attempt_settings, audit) as agent_class:
+            config = build_config(request["prompt"], attempt_settings, output_dir, request.get("worker_id", request["job_key"]))
             if settings.get("recovery_from"):
                 recovery = prepare_synthesis_recovery(request["prompt"], settings, output_dir, request["job_key"], config)
             if "chroma_port" not in settings:
@@ -826,13 +915,13 @@ def run_worker(request: dict, result_path: Path) -> int:
                     config["ChromaServerManager"]["port"] = sock.getsockname()[1]
             agent = agent_class(name=_agent_name(request["job_key"]), repository=str(output_dir), config=config)
             agent._crest_worker_started, agent._crest_worker_deadline = worker_started, worker_deadline
-            with adaptive_synthesis_budget(agent, settings, audit) as synthesis_budget:
+            with iteration_metrics(agent, audit, Path(result_path).parent) as metrics, synthesis_query_completion_limits(agent, attempt_settings), adaptive_synthesis_budget(agent, attempt_settings, audit) as synthesis_budget:
                 if recovery is not None:
                     if agent.current_iteration != recovery["iteration"] or not agent.visited_urls or agent.kb_manager.size() < 1:
                         raise ValueError("Native recovery did not load the copied checkpoint and knowledge")
                     artifact = agent.synthesizer.synthesize_artifact()
                 else:
-                    artifact, exploration_stop = _explore_with_synthesis_reserve(agent, settings, audit)
+                    artifact, exploration_stop = _explore_with_synthesis_reserve(agent, attempt_settings, audit)
             if getattr(agent, "shutdown_called", False):
                 raise RuntimeError("Caesar was interrupted before completing synthesis")
             result = extract_result(artifact, settings.get("model", SOL), audit.snapshot(),
@@ -843,21 +932,26 @@ def run_worker(request: dict, result_path: Path) -> int:
                 time_note = (f" at its {exploration_stop['exploration_time_limit_seconds'] / 60:g}-minute new-page limit, preserving time and"
                              if exploration_stop.get("time_limited") else " to reserve")
                 result["warnings"].append(f"Exploration stopped after {exploration_stop['iterations_completed']} iterations{time_note} ${exploration_stop['synthesis_reserve_usd']:g} for synthesis.")
-            if recovery is not None:
-                result["raw"]["recovery"] = recovery
+            accounting = recovery or budget_history
+            if accounting is not None:
+                mode = "recovery" if recovery is not None else "budget_history"
+                result["raw"][mode] = accounting
                 result["raw"]["new_attempt_usage_audit"] = copy.deepcopy(result["usage"])
                 result["usage"]["new_attempt_cost_usd"] = result["cost_usd"]
-                result["usage"]["recovery_previous_known_cost_usd"] = recovery["previous_known_cost_usd"]
-                result["usage"]["recovery_previous_unknown_reserved_usd"] = recovery["previous_unknown_reserved_usd"]
-                cumulative_known = recovery["previous_known_cost_usd"] + result["usage"]["known_cost_usd"]
+                result["usage"]["new_attempt_budget_target_usd"] = audit.budget
+                result["usage"]["budget_target_usd"] = accounting["original_budget_usd"]
+                result["usage"][mode + "_previous_known_cost_usd"] = accounting["previous_known_cost_usd"]
+                result["usage"][mode + "_previous_unknown_reserved_usd"] = accounting["previous_unknown_reserved_usd"]
+                cumulative_known = accounting["previous_known_cost_usd"] + result["usage"]["known_cost_usd"]
                 result["usage"]["known_cost_usd"] = result["usage"]["cumulative_known_cost_usd"] = cumulative_known
-                if recovery["previous_cost_unknown"] or result["usage"]["unknown_cost"]:
+                if accounting["previous_cost_unknown"] or result["usage"]["unknown_cost"]:
                     result["cost_usd"] = result["usage"]["cost_usd"] = None
                     result["usage"]["unknown_cost"] = True
                 else:
                     result["cost_usd"] = result["usage"]["cost_usd"] = cumulative_known
-                result["warnings"].append("Explicit synthesis-only recovery reused copied knowledge; prior attempt billing remains separately recorded.")
+                result["warnings"].append("Explicit synthesis-only recovery reused copied knowledge; prior attempt billing remains separately recorded." if recovery is not None else "Fresh research inherited prior charges and unknown reservations without reusing old knowledge.")
             result["raw"]["synthesis_budget"] = synthesis_budget
+            result["raw"]["iteration_metrics"] = {"records": metrics.records, "summary": metrics.summary(), "trace_path": str(metrics.path)}
             reduced = [row for row in synthesis_budget["drafts"] if row["completed_qa_rounds"] < row["requested_qa_rounds"]]
             if reduced:
                 result["warnings"].append("Some requested Q&A rounds did not complete; actual counts and budget limits are recorded for each draft.")
@@ -869,7 +963,8 @@ def run_worker(request: dict, result_path: Path) -> int:
     except BaseException as error:
         exploration_stop = exploration_stop or getattr(agent, "_crest_exploration_budget_stop", None)
         record = {"status": "failed", "error": _redact(f"{type(error).__name__}: {error}"),
-                  "usage": audit.snapshot(), "raw": {"artifact": artifact, "exploration_budget_stop": exploration_stop, "synthesis_budget": getattr(agent, "_crest_synthesis_budget", None), "recovery": recovery}, "protocol_version": PROTOCOL_VERSION}
+                  "usage": audit.snapshot(), "raw": {"artifact": artifact, "exploration_budget_stop": exploration_stop, "synthesis_budget": getattr(agent, "_crest_synthesis_budget", None), "recovery": recovery, "budget_history": budget_history,
+                  "iteration_metrics": {"records": metrics.records, "summary": metrics.summary(), "trace_path": str(metrics.path)} if metrics is not None else None}, "protocol_version": PROTOCOL_VERSION}
     finally:
         if agent is not None:
             try:

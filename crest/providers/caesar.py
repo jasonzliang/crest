@@ -27,8 +27,9 @@ SETTINGS = frozenset({
     "additional_starting_queries", "max_web_searches", "synthesis_drafts",
     "synthesis_iterations", "retrieval_chunks", "max_completion_tokens",
     "exploration_max_completion_tokens", "kb_max_completion_tokens", "max_input_tokens",
+    "query_max_completion_tokens", "synthesis_top_k", "synthesis_top_n",
     "budget_usd", "handler_budget_usd", "handler_cost_limit", "timeout_seconds",
-    "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts", "recovery_from",
+    "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts", "recovery_from", "budget_history_from",
 })
 
 
@@ -43,7 +44,8 @@ def identity_metadata(settings: dict) -> dict:
         digest.update(path.read_bytes())
         digest.update(b"\0")
     # Adapter/worker edits invalidate even when the manually maintained version is unchanged.
-    own_digest = hashlib.sha256(Path(__file__).read_bytes() + Path(__file__).parents[1].joinpath("caesar_worker.py").read_bytes()).hexdigest()
+    own_digest = hashlib.sha256(Path(__file__).read_bytes() + Path(__file__).parents[1].joinpath("caesar_worker.py").read_bytes()
+                                + Path(__file__).parents[1].joinpath("caesar_metrics.py").read_bytes()).hexdigest()
     project = root / "pyproject.toml"
     source_version = tomllib.loads(project.read_text()).get("project", {}).get("version") if project.is_file() else None
     try:
@@ -55,17 +57,21 @@ def identity_metadata(settings: dict) -> dict:
             "adapter_version": ADAPTER_VERSION, "protocol_version": PROTOCOL_VERSION,
             "rome_source_sha256": digest.hexdigest(), "adapter_source_sha256": own_digest,
             "rome_source_available": bool(files)}
-    if settings.get("recovery_from"):
-        source = Path(settings["recovery_from"]).resolve()
+    if settings.get("recovery_from") and settings.get("budget_history_from"):
+        raise ValueError("Recovery and budget-history modes are mutually exclusive")
+    history_source = settings.get("recovery_from") or settings.get("budget_history_from")
+    if history_source:
+        source = Path(history_source).resolve()
         prompt = json.loads((source / "caesar-request.json").read_text())["prompt"]
         ancestry, _ = recovery_history(source, prompt)
         paths = [Path(item["source_job"]) / name for item in ancestry for name in ("caesar-request.json", "caesar-result.json")]
-        paths += sorted((source / "caesar-output" / "__rome__").glob("*.checkpoint.json"))
-        paths += sorted(path for path in (source / "caesar-output" / "chroma").rglob("*") if path.is_file())
+        if settings.get("recovery_from"):
+            paths += sorted((source / "caesar-output" / "__rome__").glob("*.checkpoint.json"))
+            paths += sorted(path for path in (source / "caesar-output" / "chroma").rglob("*") if path.is_file())
         recovery_digest = hashlib.sha256()
         for path in paths:
             recovery_digest.update(str(path.resolve()).encode() + b"\0" + path.read_bytes() + b"\0")
-        metadata["recovery_source_sha256"] = recovery_digest.hexdigest()
+        metadata["recovery_source_sha256" if settings.get("recovery_from") else "budget_history_source_sha256"] = recovery_digest.hexdigest()
     return metadata
 
 

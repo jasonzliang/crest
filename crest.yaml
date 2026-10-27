@@ -8,15 +8,23 @@ research:
   caesar:
     rome_path: ../rome
     model: gpt-6.1-sol
+    reasoning_effort: medium
+    synthesis_reasoning_effort: medium
     exploration_model: gpt-6-luna
+    exploration_reasoning_effort: low
     kb_model: gpt-6-luna
+    kb_reasoning_effort: low
+    max_completion_tokens: 25000
+    query_max_completion_tokens: 6000
     budget_usd: 5.0
     handler_budget_usd: 5.0
     max_iterations: 250
     synthesis_drafts: 3
     synthesis_iterations: 15
+    synthesis_top_k: 15
+    synthesis_top_n: 10
     additional_starting_queries: 11
-    use_quick_explore: true
+    use_quick_explore: false
     quick_explore_insights: true
     quick_explore_workers: 2
     adapt_role: true
