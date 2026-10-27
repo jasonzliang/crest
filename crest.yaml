@@ -1,0 +1,51 @@
+# Paths are relative to this file. Credentials come only from the environment.
+questions: crest/data/queries_n50.jsonl
+rubric: crest/prompts/nus_pairwise.txt
+cache_dir: results/.cache/generation
+output_dir: results
+
+research:
+  caesar:
+    rome_path: ../rome
+    model: gpt-6.1-sol
+    exploration_model: gpt-6.1-sol
+    kb_model: gpt-6.1-sol
+    budget_usd: 5.0
+    handler_budget_usd: 4.0
+    max_iterations: 30
+    synthesis_drafts: 2
+    synthesis_iterations: 5
+    synthesis_reserve_usd: 1.5
+    initial_concurrency: 1
+    concurrency: 4
+  openai:
+    model: gpt-6.1-sol
+    reasoning_effort: high
+    budget_usd: 5.0
+    max_output_tokens: 40000
+    max_tool_calls: 25
+    initial_concurrency: 3
+    concurrency: 12
+  gemini:
+    agent: deep-research-preview-04-2026
+    billing_model: gemini-3.1-pro-preview
+    budget_usd: 5.0
+    initial_concurrency: 2
+    concurrency: 8
+
+judges:
+  openai:
+    model: gpt-6.1-sol
+    reasoning_effort: medium
+    initial_concurrency: 4
+    concurrency: 16
+  gemini:
+    model: gemini-3.1-pro-preview
+    thinking_level: high
+    initial_concurrency: 4
+    concurrency: 16
+
+analysis:
+  bootstrap_samples: 1000
+  seed: 2026
+  workers: 0  # Automatic CPU parallelism for bootstrap analysis.

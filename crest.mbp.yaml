@@ -1,0 +1,21 @@
+# Conservative laptop profile. All unspecified settings inherit the defaults.
+# Run with the Python environment that has Rome's dependencies installed.
+research:
+  caesar:
+    initial_concurrency: 1
+    concurrency: 2
+  openai:
+    initial_concurrency: 2
+    concurrency: 6
+  gemini:
+    initial_concurrency: 1
+    concurrency: 4
+judges:
+  openai:
+    initial_concurrency: 2
+    concurrency: 8
+  gemini:
+    initial_concurrency: 2
+    concurrency: 8
+analysis:
+  workers: 1
