@@ -81,7 +81,7 @@ def site_header(project_root: Path, destination: Path) -> str:
     def link(path):
         return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
     return ('<header class="crest-site-header"><nav aria-label="Documentation">'
-            f'<a class="crest-brand" href="{link(root / "README.html")}">CREST</a>'
+            '<a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a>'
             f'<a href="{link(root / "docs/crest-guide.html")}">Research pipeline</a>'
             f'<a href="{link(root / "docs/deep-research-creativity.html")}">Deep research comparison</a>'
             f'<a href="{link(root / "docs/ai-scientist-creativity.html")}">AI scientist comparison</a>'

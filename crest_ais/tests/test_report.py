@@ -294,7 +294,7 @@ def test_shared_site_navigation_and_current_document_titles_are_retained(report,
     assert any(tag == "header" and attrs.get("class") == "crest-site-header" for tag, attrs in doc.tags)
     assert "<h1>AI scientist comparison</h1>" in html
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
-    assert links[:5] == ["../README.html", "crest-guide.html", "deep-research-creativity.html",
+    assert links[:5] == ["https://github.com/jasonzliang/crest", "crest-guide.html", "deep-research-creativity.html",
                          "ai-scientist-creativity.html", "index.html"]
 
 
