@@ -112,31 +112,33 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 </style></head>
 <body>
 <a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><p class="metadata">Judge settings and current method</p>
+<main id="document-main" tabindex="-1"><p class="metadata">Evaluation settings</p>
 <article>
 <h1 id="judges">Judge models</h1>
-<p>CREST uses <strong>GPT-6 Astra and Gemini 4 Argon, both at high reasoning/thinking</strong>. Each compares complete answers labeled A and B in both orders and returns <a href="judging-method.html">one overall A/B winner</a>. The 600-judgment research panel screens comparative explanations with retries and uniformly hides URL destinations while retaining meaningful citation labels and raw originals. This reduces explicit provenance cues; it does not ensure complete blinding. The published AI scientist paper comparison uses its own frozen prompts, presentations, settings, and results; see the <a href="judging-method.html#limits">interpretation limits</a>. The panel was chosen for capability, without evidence that it is optimal for this rubric.</p>
+<p><strong>GPT-6 Astra and Gemini 4 Argon</strong> judge every answer pair in both orders, using high reasoning/thinking. Each returns <a href="judging-method.html">one overall A/B winner</a> and a comparative explanation.</p>
+<p>Judges receive complete answers without provider labels or tools. URL destinations are hidden while meaningful citation labels remain. Explanations are checked for obvious incomplete or noncomparative responses, with bounded retries. Wording can still reveal the authoring system. The published <a href="ai-scientist-method.html">paper comparison</a> retains its own saved prompts and presentations.</p>
 <div aria-label="Configured judges" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">Setting</th><th scope="col">OpenAI</th><th scope="col">Google</th></tr></thead><tbody>
 <tr><td>Model</td><td><code>gpt-6-astra</code></td><td><code>gemini-4-argon</code></td></tr>
 <tr><td>Reasoning / thinking</td><td>high</td><td>high</td></tr>
 <tr><td>Output allowance</td><td>32,768 tokens</td><td>32,768 tokens</td></tr>
 <tr><td>Request</td><td>Responses API, standard tier</td><td>Interactions API</td></tr>
-<tr><td>Shared controls</td><td colspan="2">Strict structured output, no tools, background polling, both answer orders, 900-second timeout.</td></tr>
+<tr><td>Response</td><td colspan="2">Structured JSON containing a reason and one A/B winner; background polling with a 900-second timeout.</td></tr>
 </tbody></table></div>
-<p><a href="https://developers.openai.com/api/docs/guides/evaluation-best-practices">OpenAI's evaluation guidance</a> recommends starting with a strong judge such as Astra and validating agreement against human labels. <a href="https://ai.google.dev/gemini-api/docs/models/gemini-4-argon">Argon's model documentation</a> lists high thinking and structured-output support. Neither source establishes that this panel is optimal for CREST.</p>
+<p><a href="https://developers.openai.com/api/docs/guides/evaluation-best-practices">OpenAI recommends Astra as a starting judge</a> and checking agreement with human labels. <a href="https://ai.google.dev/gemini-api/docs/models/gemini-4-argon">Argon supports high thinking and structured output</a>. These capabilities do not establish that this panel is optimal for the rubric.</p>
 <p>The <code>rubric</code> file-path setting selects the judging instructions. Both available files use the same presentation and explanation-quality safeguards. Changing the rubric creates distinct judgment-cache identities while reusing saved answers. See <a href="crest-guide.html#rubric-selection">CREST configuration examples</a> and <a href="ai-scientist-method.html#rubric-selection">AI scientist configuration examples</a>. Completed runs retain their exact frozen prompts.</p>
-<p>See the <a href="deep-research-creativity.html">research report</a> for the completed panel and its diagnostics.</p>
+
 <h2 id="cost">Judge costs are additional</h2>
 <p>A complete 50-question experiment requires 300 valid judgments per judge; retries can add calls. Output allowance includes reasoning/thinking; it is headroom, not predicted usage. Judge spending is separate from the $5-per-answer generation targets.</p>
-<div aria-label="Standard text pricing checked October 26, 2026" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">Model</th><th scope="col">Input / million</th><th scope="col">Cached input / million</th><th scope="col">Output / million</th></tr></thead><tbody>
+<div aria-label="Standard text token pricing" class="table-scroll" role="region" tabindex="0"><table><thead><tr><th scope="col">Model</th><th scope="col">Input / million</th><th scope="col">Cached input / million</th><th scope="col">Output / million</th></tr></thead><tbody>
 <tr><td>GPT-6 Astra</td><td>$10</td><td>$1</td><td>$50</td></tr>
 <tr><td>Gemini 4 Argon, through Nov. 30, 2026</td><td>$2</td><td>$0.10</td><td>$10</td></tr>
 <tr><td>Gemini 4 Argon, from Dec. 1, 2026</td><td>$4</td><td>$0.20</td><td>$20</td></tr>
 </tbody></table></div>
-<p>Prices checked October 26, 2026: <a href="https://developers.openai.com/api/docs/models/gpt-6-astra">Astra</a>, <a href="https://ai.google.dev/gemini-api/docs/pricing#gemini-4-argon">Argon</a>. Astra's 30-minute cache writes cost $12.50/million; above 272K input tokens, input/cache rates double and output rises 1.5×. Argon uses implicit caching.</p>
-<p>Illustration only: at 10,000 uncached input and 3,000 billed output tokens per call, 300 calls to each judge cost about $90 at October rates, before retries or cache-write differences. Actual totals depend on observed usage; this is not a forecast or spending cap. The adapters price both selected models, handle queued jobs, and retain unknown costs when essential usage is missing.</p>
+<p>Published standard rates: <a href="https://developers.openai.com/api/docs/models/gpt-6-astra">Astra</a> and <a href="https://ai.google.dev/gemini-api/docs/pricing#gemini-4-argon">Argon</a>. Astra cache writes cost $12.50/million; requests above 272K input tokens pay double input/cache rates and 1.5× output rates. Argon supports implicit caching.</p>
+<p>Actual estimates depend on recorded input, cached input and billed output tokens, including reasoning/thinking. See <a href="deep-research-creativity.html#resources">the completed comparison’s cost records</a> for measured usage and unresolved charges.</p>
 <h2 id="interpretation">Different models, shared limitations</h2>
-<p>The researchers use Sol/Luna for Caesar, Sol for native OpenAI research, and Google's managed Deep Research agent. Using Astra and Argon avoids identical researcher/judge model IDs but does not establish independent errors or remove provider/style preferences. Keep the common panel, per-judge views, disagreement, and swapped-order diagnostics. No empirical human or domain-expert validation of this rubric or panel has been performed. Human calibration remains necessary for stronger claims; see the <a href="judging-method.html#limits">method's interpretation limits</a>.</p>
+<p>Caesar and the OpenAI research workflow use Sol; Caesar’s helpers use Luna. Google controls its managed Deep Research backend. Different researcher and judge model IDs do not establish independent errors or eliminate provider and style preferences.</p>
+<p>No human or domain-expert validation of this rubric and panel has been performed. Read the <a href="deep-research-creativity.html#judges">per-judge results and order diagnostics</a> alongside the <a href="judging-method.html#limits">method’s limits</a>.</p>
 </article>
 <footer><a href="index.html">All documents</a> · <a href="../README.html">Getting started</a></footer>
 </main></body></html>

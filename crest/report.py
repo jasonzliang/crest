@@ -427,7 +427,8 @@ def _judges(data):
                  'a judge preferred a different system when the answer order was reversed. '
                  'This can reflect order effects or variation between calls.</p>')
     parts.append('<details><summary>Frozen judge configurations</summary><pre>'
-                 + _text(json.dumps(data['judges'], ensure_ascii=False, indent=2)) + '</pre></details></section>')
+                 + _text(json.dumps(data['judges'], ensure_ascii=False, indent=2)) + '</pre></details>')
+    parts.extend([_models(data), '</section>'])
     return ''.join(parts)
 
 
@@ -604,7 +605,7 @@ def _models(data):
         else:
             detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Per-answer configuration records retain helper settings and recovery provenance.'
         rows.append([_text(LABELS[agent]), _text(', '.join(models)), _text(detail)])
-    return ('<section id="systems"><details><summary>Models and research workflows</summary>'
+    return ('<details id="systems"><summary>Models and research workflows</summary>'
             + _table(['System', 'Recorded result model / billing reference', 'Workflow'], rows, 'Frozen research systems')
             + '<p class="small">Google introduced its April 2026 Deep Research agents as built with Gemini 3.1 Pro '
             '(<a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">Google announcement</a>). '
@@ -613,7 +614,7 @@ def _models(data):
             '(<a href="https://developers.openai.com/api/docs/deprecations">deprecation notice</a>; '
             '<a href="https://developers.openai.com/api/docs/guides/deep-research">deep research guide</a>). '
             'The OpenAI results here come from the Sol workflow recorded above.</p>'
-            + '</details></section>')
+            + '</details>')
 
 
 def _questions(data):
@@ -747,7 +748,7 @@ def _method(data):
 
 CSS = """
 .skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:white;padding:.7rem 1rem}.skip-link:focus{top:1rem}
-main>section{margin:3rem 0}main>nav{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin:1.5rem 0;padding:1rem 0}
+#judges>details{margin:.3rem 0}
 .method-summary{display:grid;grid-template-columns:10rem minmax(0,1fr);gap:1rem 1.5rem}.method-summary dt{font-weight:650;color:#0b5967}.method-summary dd{margin:0}
 .metadata,.small,small{color:#526574}.small{font-size:.9rem}.metadata{font-size:.8rem}.subtitle{max-width:76ch}
 .run-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin:1.8rem 0}.run-stats strong{display:block;color:#0b5967;font-size:1.9rem}.run-stats span{font-size:.85rem;color:#526574}
@@ -773,7 +774,7 @@ def _render(data, destination):
              '<a href="#judges">Judges</a><a href="#questions">Answers</a></nav>',
              '<div class="run-stats"><div><strong>50</strong><span>questions</span></div>'
              '<div><strong>150</strong><span>answers</span></div><div><strong>600</strong><span>pairwise judgments</span></div></div>',
-             _ranking(data), _head_to_head(data), _resources(data), _method(data), _judges(data), _models(data),
+             _ranking(data), _head_to_head(data), _resources(data), _method(data), _judges(data),
              _questions(data),
              '<footer>CREST · Offline report<details><summary>Run provenance</summary>'
              f'<p>Run {_text(run.name)}<br>Frozen analysis: {_text(data["analysis_dir"].name)} · '

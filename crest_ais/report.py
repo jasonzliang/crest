@@ -160,13 +160,13 @@ def _overall(report, ready, colors):
                  'New, Useful, and Surprising jointly. We average the win percentages against '
                  f'the other {_count(opponents)} scientist{ "s" if opponents != 1 else ""}, '
                  'giving each opponent equal weight even when sampled pair counts differ. '
-                 'This need not equal the share of all raw votes. Scores apply to the opponent '
-                 'set in this comparison; adding a scientist changes that set. '
-                 'This describes the judges’ preferences for these papers, not absolute '
-                 'creativity. Equal scores share a rank.</p>')
+                 'This can differ from the share of all raw votes. Scores describe these papers '
+                 'and opponents; equal scores share a rank.</p>')
     if ready:
-        parts.append('<p class="small">The ranking describes the sampled pairs; the ranking across '
-                     'all eligible pairs remains uncertain.</p>')
+        exploratory = report.get("uncertainty", {}).get("inference_scope") == "exploratory_fixed_size_reference"
+        parts.append('<p class="small">These judge preferences do not measure absolute creativity. '
+                     + ('Sampling ranges are exploratory, with no confidence guarantee. ' if exploratory else '')
+                     + 'The ranking across all eligible paper pairs remains uncertain.</p>')
     parts.append(_sampling_uncertainty(report, ready))
     parts.append('</section>')
     return "".join(parts)
@@ -218,7 +218,7 @@ def _sampling_uncertainty(report, ready):
 
 def _concepts():
     definitions = {
-        "new": "How clearly the judge can connect the paper’s least familiar contribution to earlier research. A weaker connection can suggest novelty; the judge’s memory cannot verify it.",
+        "new": "How the judge relates the paper’s least familiar contribution to earlier research. The judge’s memory cannot establish historical novelty.",
         "useful": "Whether the paper explains how its approach works and provides evidence for its claimed benefit.",
         "surprising": "How far the paper’s central approach departs from the obvious approach to its question.",
     }
@@ -687,10 +687,8 @@ details{border-top:1px solid var(--line);border-bottom:1px solid var(--line);mar
 .canonical-names{font-size:.8rem}.canonical-names>div{margin:.7rem 0}.canonical-names dt{font-weight:650}.canonical-names dd{margin:.15rem 0;color:var(--muted)}
 .paper-record summary{font-size:.72rem;font-weight:400}.paper-record pre{font-weight:400}.key-limits{font-size:.86rem}
 @media(max-width:760px){.overall-row{grid-template-columns:minmax(0,1fr) 110px;gap:.3rem 1rem}.chart-axis{grid-template-columns:minmax(0,1fr);gap:0}.axis-ticks{grid-column:1}.coverage-table{min-width:630px}.score>strong{font-size:1.25rem}.agent-label{min-width:0;overflow-wrap:anywhere}.unit{max-width:42ch}}
-#main-content>section~section{border-top:1px solid var(--line);padding-top:2rem}
 #method>p{max-width:none}
 .heatmap{min-width:var(--heatmap-min-width,650px)}
-#main-content>nav[aria-label="Report contents"]{border-bottom:1px solid var(--line);padding-bottom:1rem;margin-bottom:1.5rem}
 #reasons .judgment-tools{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem .9rem;margin:1.2rem 0;font-size:.8rem}
 #reasons .judgment-tools label{font-weight:650}#reasons select{max-width:100%;padding:.45rem .6rem;border:1px solid #a6bac3;border-radius:3px;background:white;color:var(--ink);font:inherit}
 #judgment-count{color:var(--muted);font-size:.77rem}#reasons .judgment-table-scroll{position:relative;max-height:48rem;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}

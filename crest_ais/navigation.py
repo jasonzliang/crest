@@ -24,6 +24,9 @@ main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.
 main .section-heading h2{margin:0}
 main>section:not(.index-group)>h2:first-child{margin-top:0}
 main>section{border-top:0}
+#main-content>section{margin:2.2rem 0 0;padding-top:1.5rem}
+#main-content>section~section{border-top:1px solid var(--line);padding-top:2rem}
+#main-content>nav[aria-label="Report contents"]{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin:1.5rem 0;padding:1rem 0;border-bottom:1px solid var(--line)}
 main>header,main .hero{border-bottom:0}
 main .stats,main .judgment{border:0}
 main p{margin:.65rem 0 1rem;line-height:1.7}

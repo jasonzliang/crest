@@ -60,10 +60,10 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style><style>.recommendation{border-left:4px solid #0b5967;background:#eef6f6;padding:.5rem 1.2rem;margin:1.5rem 0}main ul,main ol{padding-left:1.3rem}main li{margin:.8rem 0}</style></head><body><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="../README.html">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header><main id="document-main" tabindex="-1">
-<p class="metadata">Literature review · October 26, 2026</p>
+<p class="metadata">Method rationale</p>
 <h1>Overall creativity judgment</h1>
-<p><strong>Use one overall A/B decision for the final ranking, with New, Useful, and Surprising considered together.</strong> This matches the question we want to answer: which paper makes the stronger creative contribution?</p>
-<aside class="recommendation"><p>The studies below support considering these qualities together. They do <strong>not</strong> show that this exact LLM judging method is more accurate or reliable than averaging three separate criterion winners on scientific papers.</p></aside>
+<p><strong>Use one overall A/B decision, considering New, Useful and Surprising together.</strong> The question is which answer or paper makes the stronger overall creative contribution.</p>
+<aside class="recommendation"><p>The studies below show that creativity criteria can interact and carry different importance across tasks. They do not establish that this LLM judging method agrees with experts better than separate criterion judgments.</p></aside>
 <h2>Two different questions</h2>
 <div class="table-scroll" role="region" aria-label="Judging approaches" tabindex="0"><table><thead><tr><th scope="col">Approach</th><th scope="col">What the result means</th></tr></thead><tbody>
 <tr><td>One joint creativity winner</td><td>Which contribution is stronger overall, considering the qualities and their tradeoffs?</td></tr>
@@ -72,7 +72,7 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <p>Those answers can differ. A paper might have a slight advantage in New and Surprising but a serious weakness in Useful. Equal binary voting still gives it two of three wins. That follows from the voting rule; it is not evidence that the paper is more creative overall. A joint judgment can consider the seriousness of the weakness, although the prompt alone does not guarantee good judgment.</p>
 <h2>What the studies show</h2>
 <ul>
-<li><strong>Novelty and usefulness can have different influence.</strong> Diedrich and colleagues found that novelty mattered more, and that its effect depended on usefulness. Raters were told to consider both qualities; the study did not test LLM judges, scientific papers, or surprise. <a href="https://doi.org/10.1037/a0038688">Diedrich et al. (2015)</a>.</li>
+<li><strong>Novelty and usefulness can interact.</strong> Diedrich and colleagues found that novelty predicted creativity ratings more strongly; usefulness added predictive value among highly novel ideas. Overall-creativity raters were instructed to consider both qualities. The study evaluated divergent-thinking ideas, without LLM judges or a surprise criterion. <a href="https://doi.org/10.1037/a0038688">Diedrich et al. (2015)</a>.</li>
 <li><strong>The task changes what matters.</strong> Usefulness contributed more to creativity ratings of real urban-planning proposals than to alternate-use ideas. Participants rated the separate qualities before overall creativity. The findings suggest that the task affects how people combine the qualities; they do not establish that separate ratings should be avoided. <a href="https://research.gold.ac.uk/id/eprint/32137/">Lloyd-Cox et al. (2022)</a>.</li>
 <li><strong>Surprise can add information.</strong> Acar and colleagues found that surprise helped explain creativity ratings after accounting for originality and value. This supports including surprise, but does not establish a one-third weight or a scoring rule for scientific papers. Only the primary abstract was available for this review. <a href="https://doi.org/10.1080/10400419.2017.1302776">Acar et al. (2017)</a>.</li>
 </ul>
@@ -86,6 +86,6 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <li>Average overall votes within each matchup, then weight opponents equally. This handles unequal comparison volume without turning N/U/S into numerical scores.</li>
 <li>Report judge disagreement, order sensitivity, and sampling limits. Validate the method against blinded domain-expert preferences before claiming human-level agreement on scientific creativity.</li>
 </ol>
-<p><strong>The remaining empirical question:</strong> does joint judging predict expert preferences better than separate judgments for these papers and these models? Neither the literature reviewed nor this pipeline run answers that comparison. A targeted human-validation study would be needed.</p>
+<p>A direct comparison against domain-expert preferences would be needed to determine whether joint or separate judgments work better for these answers, papers and models. This benchmark does not test that question.</p>
 <footer><a href="ai-scientist-method.html">Paper comparison method</a> · <a href="ai-scientist-creativity.html">AI scientist comparison</a> · <a href="index.html">All documents</a></footer>
 </main></body></html>
