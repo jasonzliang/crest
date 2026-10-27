@@ -47,6 +47,15 @@ def by_agent(rows):
     return {row["agent"]: row for row in rows}
 
 
+def core_cost_fields(cost):
+    return {key: cost[key] for key in ("known_usd", "unknown_count", "records")}
+
+
+def failure_cost_fields(cost):
+    return core_cost_fields(cost) | {key: cost[key] for key in (
+        "partial_observed_estimate_usd", "observed_count", "budget_exceeded_count")}
+
+
 class AnalysisTests(unittest.TestCase):
     def test_swapped_labels_map_back_to_agent_and_rank_three_entrants(self):
         result = report(experiment())
@@ -290,7 +299,7 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(result["coverage"]["complete_questions"], 0)
         self.assertEqual(result["coverage"]["valid_judgments"], 6)
         self.assertEqual(len(result["coverage"]["excluded_questions"][0]["missing_judgments"]), 6)
-        self.assertEqual(result["costs"]["failures"], {"known_usd": 2.52, "unknown_count": 0, "records": 6,
+        self.assertEqual(failure_cost_fields(result["costs"]["failures"]), {"known_usd": 2.52, "unknown_count": 0, "records": 6,
                          "partial_observed_estimate_usd": 0.0, "observed_count": 0, "budget_exceeded_count": 0})
         self.assertAlmostEqual(result["costs"]["judging"]["known_usd"], 0.06)
         self.assertAlmostEqual(result["costs"]["total"]["known_usd"], 2.58)
@@ -312,15 +321,15 @@ class AnalysisTests(unittest.TestCase):
         ]
         failures.append(copy.deepcopy(failures[1]))
         result = report(([], [], []), failures=failures)
-        self.assertEqual(result["costs"]["failures"], {"known_usd": 1.25, "unknown_count": 1, "records": 4,
+        self.assertEqual(failure_cost_fields(result["costs"]["failures"]), {"known_usd": 1.25, "unknown_count": 1, "records": 4,
                          "partial_observed_estimate_usd": 0.0, "observed_count": 0, "budget_exceeded_count": 0})
-        self.assertEqual(result["costs"]["failure_by_stage"]["generate"],
+        self.assertEqual(failure_cost_fields(result["costs"]["failure_by_stage"]["generate"]),
                          {"known_usd": 0.25, "unknown_count": 0, "records": 1,
                           "partial_observed_estimate_usd": 0.0, "observed_count": 0, "budget_exceeded_count": 0})
-        self.assertEqual(result["costs"]["failure_by_stage"]["judge"],
+        self.assertEqual(failure_cost_fields(result["costs"]["failure_by_stage"]["judge"]),
                          {"known_usd": 1.0, "unknown_count": 1, "records": 3,
                           "partial_observed_estimate_usd": 0.0, "observed_count": 0, "budget_exceeded_count": 0})
-        self.assertEqual(result["costs"]["total"], {"known_usd": 1.25, "unknown_count": 1, "records": 4})
+        self.assertEqual(core_cost_fields(result["costs"]["total"]), {"known_usd": 1.25, "unknown_count": 1, "records": 4})
 
     def test_budget_cancellation_keeps_observed_estimate_separate_from_unknown_final_cost(self):
         failure = {"stage": "generate", "key": "cancelled-job", "provider": "gemini",
@@ -355,6 +364,36 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(cost["budget_exceeded_count"], 1)
         self.assertEqual(result["costs"]["total"]["known_usd"], 6.0)
         self.assertEqual(result["costs"]["total"]["unknown_count"], 0)
+
+    def test_partial_caesar_known_components_remain_in_cost_totals(self):
+        data = experiment()
+        data[1][0]["result"].update(cost_usd=None, usage={"known_cost_usd": 3.05, "unknown_cost": True},
+            raw={"usage_audit": {"known_cost_usd": 3.05, "cumulative_known_cost_usd": 3.05,
+                                 "unknown_cost": True},
+                 "new_attempt_usage_audit": {"known_cost_usd": 1.4, "unknown_cost": False},
+                 "budget_history": {"previous_known_cost_usd": 1.65,
+                                    "previous_unknown_reserved_usd": .48, "previous_cost_unknown": True}})
+        result = report(data)
+        self.assertAlmostEqual(result["costs"]["generation"]["known_usd"], 5.05)
+        self.assertAlmostEqual(result["costs"]["generation"]["partial_known_estimate_usd"], 3.05)
+        self.assertAlmostEqual(result["costs"]["total"]["known_usd"], 6.25)
+        self.assertEqual(result["costs"]["generation"]["unknown_count"], 1)
+        self.assertEqual(result["costs"]["generation"]["unresolved_reserved_exposure_usd"], .48)
+
+    def test_superseded_paid_judgments_contribute_cost_once_and_never_votes(self):
+        data = experiment()
+        old = copy.deepcopy(data[2][0])
+        old.update(key="superseded-paid", cost_usd=.42)
+        old["verdict"]["winner"] = "B"
+        data[2].append(old)
+        prior = {"key": old["key"], "stage": "judge", "judge": old["judge"],
+                 "cost_usd": .42, "valid_for_ranking": False}
+        result = report(data, prior_judgments=[prior, copy.deepcopy(prior)])
+        self.assertEqual(result["coverage"]["complete_questions"], 1)
+        self.assertEqual(result["coverage"]["superseded_judgments_excluded"], 1)
+        self.assertEqual(result["ranking"][0]["preference_rate"], 1.0)
+        self.assertEqual(result["costs"]["prior_judgments"]["known_usd"], .42)
+        self.assertAlmostEqual(result["costs"]["total"]["known_usd"], 4.62)
 
     def test_inputs_are_not_mutated(self):
         data = experiment(2)

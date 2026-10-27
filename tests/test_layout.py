@@ -45,21 +45,19 @@ def isolated_checkout(tmp_path):
     return checkout, dependencies
 
 
-@pytest.mark.parametrize('stage', ['stage1_generate', 'stage2_judge', 'stage3_analyze'])
-@pytest.mark.parametrize('invocation', ['script', 'module'])
-def test_stage_entry_points_import_from_an_uninstalled_checkout(isolated_checkout, tmp_path, stage, invocation):
+@pytest.mark.parametrize('stage', ['generate', 'judge', 'analyze'])
+def test_module_cli_imports_from_an_uninstalled_checkout(isolated_checkout, stage):
     checkout, dependencies = isolated_checkout
     env = os.environ | {'PYTHONPATH': str(dependencies), 'PYTHONNOUSERSITE': '1'}
-    if invocation == 'script':
-        arguments = [str(checkout / 'crest' / (stage + '.py'))]
-        working_directory = tmp_path
-    else:
-        arguments = ['-m', 'crest.' + stage]
-        working_directory = checkout
-    result = subprocess.run([sys.executable, '-S', *arguments, '--help'],
-                            cwd=working_directory, env=env, text=True,
+    result = subprocess.run([sys.executable, '-S', '-m', 'crest', stage, '--help'],
+                            cwd=checkout, env=env, text=True,
                             capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr
     assert '--config' in result.stdout
-    if stage != 'stage1_generate':
-        assert 'result_dir' in result.stdout
+    assert '--run' in result.stdout
+
+
+def test_redundant_stage_wrappers_are_preserved_only_in_the_archive():
+    for filename in ('stage1_generate.py', 'stage2_judge.py', 'stage3_analyze.py'):
+        assert not (ROOT / 'crest' / filename).exists()
+        assert (ROOT / 'crest/_archive/entrypoints' / filename).is_file()

@@ -1,0 +1,435 @@
+"""Offline publication, provenance, accounting and escaping contracts for CREST HTML."""
+from copy import deepcopy
+from html.parser import HTMLParser
+from itertools import combinations
+import json
+import re
+
+import pytest
+
+from crest.analysis import analyze
+
+
+AGENTS = ['caesar', 'gemini', 'openai']
+JUDGES = ['gemini', 'openai']
+
+
+def dump(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value), encoding='utf-8')
+
+
+def make_run(root, *, choose=None):
+    choose = choose or (lambda q, pair, judge, order: pair[q % 2])
+    questions = [{'id': f'q{i:03}', 'text': f'Invent a useful research proposal for question {i}.'} for i in range(50)]
+    answers, judgments = [], []
+    for i, q in enumerate(questions):
+        for agent in AGENTS:
+            answers.append({'question_id': q['id'], 'agent': agent, 'key': f'answer-{q["id"]}-{agent}',
+                            'result': {'text': f'Complete substantive answer from {agent} for {q["id"]}.',
+                                       'model': 'gpt-6.1-sol' if agent != 'gemini' else 'gemini-3.1-pro-preview',
+                                       'cost_usd': 1.0, 'cost_estimated': True, 'usage': {},
+                                       'raw': {'agent': 'deep-research-preview-04-2026'} if agent == 'gemini' else {}},
+                            'timing': {'started_at': '2026-10-27T00:00:00+00:00',
+                                       'completed_at': '2026-10-27T00:01:40+00:00', 'duration_seconds': 100,
+                                       'source': 'checkpoint:first_started_at/completed_at',
+                                       'definition': 'Client elapsed; excludes local scheduling.'}})
+        for pair in combinations(AGENTS, 2):
+            for judge in JUDGES:
+                for order in (pair, pair[::-1]):
+                    winner = choose(i, pair, judge, order)
+                    verdict = {'reason': 'A comparative reason about overall creative quality.',
+                               'winner': 'A' if winner == order[0] else 'B'}
+                    judgments.append({'question_id': q['id'], 'pair': list(pair), 'order': list(order),
+                                      'judge': judge, 'key': f'{q["id"]}-{pair}-{judge}-{order}',
+                                      'answer_keys': [f'answer-{q["id"]}-{agent}' for agent in order],
+                                      'verdict': verdict, 'cost_usd': .1,
+                                      'result': {'text': json.dumps(verdict), 'cost_usd': .1, 'raw': {}},
+                                      'timing': {'duration_seconds': 10, 'source': 'checkpoint'}})
+    generation, judging, analysis = '01-generate-test', '02-judge-test', '03-analysis-test'
+    manifest = {'schema': 'crest-run-v1', 'agents': AGENTS, 'questions': questions,
+                'config': {'research': {
+                    'caesar': {'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna', 'kb_model': 'gpt-6-luna', 'budget_usd': 5},
+                    'openai': {'model': 'gpt-6.1-sol', 'reasoning_effort': 'high', 'budget_usd': 5},
+                    'gemini': {'agent': 'deep-research-preview-04-2026', 'billing_model': 'gemini-3.1-pro-preview', 'budget_usd': 5}}},
+                'stages': [{'name': name, 'directory': directory, 'status': 'completed'} for name, directory in
+                           [('generate', generation), ('judge', judging), ('analysis', analysis)]]}
+    dump(root / 'run.json', manifest)
+    dump(root / generation / 'manifest.json', {'status': 'completed'})
+    dump(root / judging / 'manifest.json', {'status': 'completed', 'generation_directory': generation})
+    dump(root / analysis / 'manifest.json', {'status': 'completed', 'judgment_directory': judging})
+    dump(root / judging / 'questions.json', questions)
+    dump(root / judging / 'answers.json', answers)
+    dump(root / judging / 'judges.json', {'openai': {'model': 'gpt-6-astra', 'reasoning_effort': 'high'},
+                                        'gemini': {'model': 'gemini-4-argon', 'thinking_level': 'high'}})
+    (root / judging / 'judgments.jsonl').write_text(''.join(json.dumps(j) + '\n' for j in judgments))
+    (root / judging / 'rubric.txt').write_text('New, Useful and Surprising guide one overall A/B winner.')
+    ranking = analyze(questions, answers, judgments, agents=AGENTS, judges=JUDGES, bootstrap_samples=1000, seed=2026)
+    dump(root / analysis / 'ranking.json', ranking)
+    return root
+
+
+@pytest.fixture
+def run(tmp_path):
+    return make_run(tmp_path / 'experiment')
+
+
+def answers_path(run):
+    return run / '02-judge-test/answers.json'
+
+
+def ranking_path(run):
+    return run / '03-analysis-test/ranking.json'
+
+
+def test_refuses_incomplete_publication_without_overwriting_destination(run, tmp_path):
+    from crest.report import write_report
+    answers = json.loads(answers_path(run).read_text())
+    dump(answers_path(run), answers[:-1])
+    output = tmp_path / 'docs/deep-research-creativity.html'
+    output.parent.mkdir()
+    output.write_text('previous verified report')
+    with pytest.raises(ValueError, match='150|answer'):
+        write_report(run, output)
+    assert output.read_text() == 'previous verified report'
+
+
+@pytest.mark.parametrize('kind', ['missing', 'duplicate', 'invalid_winner', 'wrong_answer_key'])
+def test_refuses_missing_duplicate_or_mismatched_judgment_cells(run, tmp_path, kind):
+    from crest.report import write_report
+    file = run / '02-judge-test/judgments.jsonl'
+    rows = [json.loads(line) for line in file.read_text().splitlines()]
+    if kind == 'missing': rows.pop()
+    elif kind == 'duplicate': rows[-1] = deepcopy(rows[0])
+    elif kind == 'invalid_winner': rows[0]['verdict']['winner'] = 'tie'
+    else: rows[0]['answer_keys'][0] = 'some-other-paid-answer'
+    file.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    with pytest.raises(ValueError):
+        write_report(run, tmp_path / 'page.html')
+    assert not (tmp_path / 'page.html').exists()
+
+
+def test_rejects_stale_ranking_and_nonquestion_uncertainty(run, tmp_path):
+    from crest.report import write_report
+    original = json.loads(ranking_path(run).read_text())
+    for field in ('wins', 'bootstrap'):
+        ranking = deepcopy(original)
+        if field == 'wins': ranking['ranking'][0]['wins'] += 1
+        else: ranking['bootstrap'].update(unit='paper_pair', method='Serfling finite-pool bound')
+        dump(ranking_path(run), ranking)
+        with pytest.raises(ValueError):
+            write_report(run, tmp_path / 'page.html')
+
+
+def test_uses_saved_bootstrap_intervals_preserves_exact_ties_and_all_evidence(tmp_path):
+    from crest.report import load_run, write_report
+    run = make_run(tmp_path / 'run', choose=lambda q, pair, judge, order: order[0])
+    data = load_run(run)
+    assert [row['rank'] for row in data['ranking']['ranking']] == [1, 1, 1]
+    assert [row['wins'] for row in data['ranking']['ranking']] == [200, 200, 200]
+    output = tmp_path / 'preview.html'
+    write_report(run, output)
+    text = output.read_text()
+    assert text.count('class="question"') == 50
+    assert text.count('class="answer"') == 150
+    assert text.count('class="judgment"') == 600
+    assert '200 / 400' in text
+    assert '1,000' in text and 'question' in text
+    assert 'Serfling' not in text
+    assert 'Sol + hosted web search' in text
+    assert 'not an override' in text
+    assert 'Lifetime budget compliance is not established' in text
+    assert 'fetch(' not in text and '<script src=' not in text
+
+
+def test_partial_unknown_ledger_is_not_dropped_or_double_counted_as_zero(run):
+    from crest.report import load_run
+    rows = json.loads(answers_path(run).read_text())
+    caesar = next(row for row in rows if row['agent'] == 'caesar')
+    caesar['result'].update(cost_usd=None, raw={
+        'usage_audit': {'known_cost_usd': 3., 'cost_usd': None, 'unknown_cost': True,
+                        'budget_history_previous_unknown_reserved_usd': .4},
+        'new_attempt_usage_audit': {'known_cost_usd': 1., 'cost_usd': 1., 'unknown_cost': False, 'events': []},
+        'budget_history': {'previous_known_cost_usd': 2., 'previous_unknown_reserved_usd': .4}})
+    dump(answers_path(run), rows)
+    resources = load_run(run)['resources']['generation']['caesar']
+    assert resources['known_cost_usd'] == 52  # 49 ordinary dollars + 3 cumulative known.
+    assert resources['current_attempt_known_cost_usd'] == 50
+    assert resources['historical_unknown_reserved_usd'] == .4
+    assert resources['unknown_cost_answers'] == 1
+
+
+def test_missing_times_remain_unknown_and_cache_hits_keep_original_duration(run):
+    from crest.report import load_run
+    rows = json.loads(answers_path(run).read_text())
+    selected = [row for row in rows if row['agent'] == 'openai']
+    selected[0]['timing'] = None
+    selected[1]['cache_hit'] = True
+    selected[1]['timing']['duration_seconds'] = 75
+    dump(answers_path(run), rows)
+    resources = load_run(run)['resources']['generation']['openai']
+    assert resources['duration_count'] == 49
+    assert resources['duration_sum_seconds'] == 4875
+    assert resources['median_duration_seconds'] == 100
+    assert resources['unknown_duration_answers'] == 1
+
+
+def test_escapes_every_question_answer_reason_and_model_label(run, tmp_path):
+    from crest.report import write_report
+    payload = '<script>alert("unsafe")</script><img src=x onerror=alert(1)>'
+    rows = json.loads(answers_path(run).read_text())
+    rows[0]['result']['text'] = payload
+    dump(answers_path(run), rows)
+    file = run / '02-judge-test/judgments.jsonl'
+    judgments = [json.loads(line) for line in file.read_text().splitlines()]
+    judgments[0]['verdict']['reason'] = payload
+    judgments[0]['result']['text'] = json.dumps(judgments[0]['verdict'])
+    file.write_text(''.join(json.dumps(row) + '\n' for row in judgments))
+    settings = json.loads((run / '02-judge-test/judges.json').read_text())
+    settings['openai']['model'] = payload
+    dump(run / '02-judge-test/judges.json', settings)
+    # Changing wording doesn't alter the saved numerical preference results.
+    questions = json.loads((run / '02-judge-test/questions.json').read_text())
+    questions[0]['text'] = payload
+    dump(run / '02-judge-test/questions.json', questions)
+    manifest = json.loads((run / 'run.json').read_text()); manifest['questions'] = questions; dump(run / 'run.json', manifest)
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert payload not in html
+    assert '&lt;script&gt;' in html and '&lt;img' in html
+    class Tags(HTMLParser):
+        def __init__(self): super().__init__(); self.images = []
+        def handle_starttag(self, tag, attrs):
+            if tag == 'img': self.images.append(attrs)
+    parser = Tags(); parser.feed(html)
+    assert not parser.images
+
+
+def test_audit_requires_matching_run_and_answer_identity(run, tmp_path):
+    from crest.report import write_report
+    audit = tmp_path / 'audit.json'
+    dump(audit, {'audit_version': 'crest-final-audit-v1', 'status': 'complete', 'ready': True, 'run_dir': 'another-run'})
+    with pytest.raises(ValueError, match='audit'):
+        write_report(run, tmp_path / 'page.html', audit=audit)
+
+
+def test_manifest_stage_paths_cannot_escape_run_directory(run, tmp_path):
+    from crest.report import write_report
+    manifest = json.loads((run / '03-analysis-test/manifest.json').read_text())
+    manifest['judgment_directory'] = '../outside'
+    dump(run / '03-analysis-test/manifest.json', manifest)
+    with pytest.raises(ValueError, match='stage|directory|run'):
+        write_report(run, tmp_path / 'page.html')
+
+
+def final_audit(run):
+    rows = json.loads(answers_path(run).read_text())
+    return {'audit_version': 'crest-final-audit-v1', 'status': 'complete', 'ready': True,
+            'run_dir': str(run), 'errors': [], 'pending': [],
+            'warnings': ['Billing remains estimated; no invoice has been verified.'],
+            'generation': {'completed_answers': 150, 'snapshot_answer_rows': 150,
+                'answer_details': [{'question_id': row['question_id'], 'agent': row['agent'], 'key': row['key'],
+                    'status': 'completed', 'known_usd': 1., 'unknown_attempt_count': 0,
+                    'exposure_upper_usd': 1., 'attempt_keys': [row['key']],
+                    'active_attempt_seconds': 175., 'active_time_limit_seconds': 7200,
+                    'timing_complete': True} for row in rows]},
+            'judging': {'valid_calls': 600, 'complete_questions': 50, 'known_estimated_usd': 60.,
+                        'failed_known_usd': .25, 'failed_unknown_cost_count': 1,
+                        'failed_partial_observed_usd': .1},
+            'ranking': {'matches_independent_calculation': True},
+            'ledger': {'known_generation_attempt_usd': 151., 'unknown_reserved_usd': .4,
+                       'failed_known_usd': 1., 'unbounded_unknown_attempts': 0},
+            'input_sha256': {str(path): __import__('hashlib').sha256(path.read_bytes()).hexdigest()
+                            for path in [run / 'run.json', ranking_path(run),
+                                         run / '02-judge-test/questions.json', answers_path(run),
+                                         run / '02-judge-test/judgments.jsonl', run / '02-judge-test/judges.json']}}
+
+
+def test_real_final_audit_enriches_active_attempt_times_and_retains_its_warnings(run, tmp_path):
+    from crest.report import load_run, write_report
+    audit = run / '04-audit-test/audit.json'
+    dump(audit, final_audit(run))
+    data = load_run(run)
+    assert data['resources']['generation']['caesar']['median_duration_seconds'] == 100
+    assert data['resources']['generation']['caesar']['median_lifetime_duration_seconds'] == 175
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert 'Billing remains estimated; no invoice has been verified.' in html
+    assert 'Lifetime budget compliance is not established' not in html
+    assert 'model-based reserved exposure' in html.lower()
+
+
+def test_audit_hashes_must_match_selected_frozen_snapshot(run, tmp_path):
+    from crest.report import write_report
+    doc = final_audit(run)
+    doc['input_sha256'][str(answers_path(run))] = '0' * 64
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    with pytest.raises(ValueError, match='audit|hash|snapshot'):
+        write_report(run, tmp_path / 'page.html', audit=audit)
+
+
+def test_identical_answers_are_not_arbitrarily_published_as_complete(run, tmp_path):
+    from crest.report import write_report
+    rows = json.loads(answers_path(run).read_text())
+    rows[1]['result']['text'] = rows[0]['result']['text']
+    dump(answers_path(run), rows)
+    with pytest.raises(ValueError, match='Identical'):
+        write_report(run, tmp_path / 'page.html')
+
+
+def test_cost_totals_use_shared_assessment_and_keep_google_scenarios_conditional(run, tmp_path):
+    from crest.costs import summarize_costs
+    from crest.report import load_run, write_report
+    rows = json.loads(answers_path(run).read_text())
+    google = [row for row in rows if row['agent'] == 'gemini']
+    google[0]['result']['usage'] = {'input_tokens': 1000, 'cached_input_tokens': 100,
+        'output_tokens': 200, 'reasoning_tokens': 300, 'tool_use_tokens': 400,
+        'grounding_tool_count': [{'type': 'google_search', 'count': 2}]}
+    dump(answers_path(run), rows)
+    resource = load_run(run)['resources']['generation']['gemini']
+    assert resource['cost_assessment'] == summarize_costs(google)
+    assert resource['cost_assessment']['conditional_scenario_estimate_usd'] == 50
+    assert resource['cost_assessment']['usage_priced_estimate_usd'] == 0
+    assert resource['cost_assessment']['actual_billed_usd'] is None
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert 'Cost, usage and timing record' in html
+    assert 'high_tool_input_included_full_price_search' in html
+    assert '&quot;actual_billed_usd&quot;: null' in html
+
+
+def test_lifetime_audit_costs_are_separate_from_saved_attempt_assessment(run, tmp_path):
+    from crest.report import load_run, write_report
+    doc = final_audit(run)
+    doc['generation']['answer_details'][0]['known_usd'] = 2.5
+    path = tmp_path / 'audit.json'; dump(path, doc)
+    data = load_run(run, audit=path)
+    caesar = data['resources']['generation']['caesar']
+    assert caesar['known_cost_usd'] == 50
+    assert caesar['audited_known_cost_usd'] == 51.5
+    output = tmp_path / 'page.html'
+    write_report(run, output, audit=path)
+    assert 'Audited cumulative attempt estimate' in output.read_text()
+
+
+def test_all_unpriced_answers_and_incomplete_lifetime_times_remain_unknown(run, tmp_path):
+    from crest.report import load_run
+    rows = json.loads(answers_path(run).read_text())
+    for row in rows:
+        if row['agent'] == 'openai':
+            row['result']['cost_usd'] = None
+    dump(answers_path(run), rows)
+    doc = final_audit(run)
+    for row in doc['generation']['answer_details']:
+        if row['agent'] == 'openai':
+            row.update(timing_complete=False, active_attempt_seconds=100)
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    resources = load_run(run, audit=audit)['resources']['generation']['openai']
+    assert resources['known_cost_usd'] is None
+    assert resources['current_attempt_known_cost_usd'] is None
+    assert resources['unknown_cost_answers'] == 50
+    assert resources['median_lifetime_duration_seconds'] is None
+    assert resources['lifetime_duration_count'] == 0
+
+
+def test_shallow_answer_links_and_full_configuration_provenance(run, tmp_path):
+    from crest.artifacts import answer_metadata, configuration_record
+    from crest.report import write_report
+    rows = json.loads(answers_path(run).read_text())
+    row = rows[0]
+    task = {'agent': 'caesar', 'settings': {'model': 'gpt-6.1-sol', 'note': '<img src=x onerror=alert(1)>'},
+            'adapter_version': 1, 'source_identity': None}
+    configuration = configuration_record(task)
+    configuration_id = configuration['configuration_id']
+    row.update(answer_metadata(task, 1))
+    dump(answers_path(run), rows)
+    artifact = run / '01-generate-test' / row['answer_file']
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text(row['result']['text'])
+    registry = run / '01-generate-test/configurations.json'
+    dump(registry, {configuration_id: configuration})
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert row['answer_file'] in html
+    assert 'Local Markdown:' in html
+    assert not re.search(r'href="[^\"]*' + re.escape(row['answer_file']) + r'"', html)
+    assert configuration_id in html
+    assert '&quot;configuration_sha256&quot;' in html
+    assert '<img src=x' not in html and '&lt;img src=x' in html
+    configuration['settings']['model'] = 'a different model'
+    dump(registry, {configuration_id: configuration})
+    with pytest.raises(ValueError, match='configuration|registry'):
+        write_report(run, output)
+
+
+def test_all_frozen_configurations_render_with_nonnull_shared_prompt_template(run, tmp_path):
+    from crest.artifacts import answer_metadata, configuration_record
+    from crest.report import load_run, write_report
+    manifest_path = run / 'run.json'
+    manifest = json.loads(manifest_path.read_text())
+    template = 'Research the shared question carefully: {query}\nPreserve <primary> evidence.'
+    manifest['config']['research_prompt'] = template
+    dump(manifest_path, manifest)
+    rows = json.loads(answers_path(run).read_text())
+    registry = {}
+    for index, row in enumerate(rows):
+        task = {'agent': row['agent'], 'settings': manifest['config']['research'][row['agent']],
+                'adapter_version': 1, 'source_identity': None}
+        record = configuration_record(task, prompt_template=manifest['config']['research_prompt'])
+        registry[record['configuration_id']] = record
+        row.update(answer_metadata(task, index // 3 + 1, prompt_template=template))
+    dump(answers_path(run), rows)
+    dump(run / '02-judge-test/configurations.json', registry)
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    data = load_run(run)
+    assert len(data['configurations']) == 3
+    assert all(record['prompt_template'] == template for record in data['configurations'].values())
+    html = output.read_text()
+    assert html.count('class="answer"') == 150
+    assert html.count('class="judgment"') == 600
+    assert '&lt;primary&gt;' in html
+    assert 'fully-priced-only' not in html
+
+
+def test_legacy_answer_link_fallback_and_unsafe_artifact_path_refusal(run, tmp_path):
+    from crest.report import write_report
+    old = run / '01-generate-test/answers/q000/caesar.md'
+    old.parent.mkdir(parents=True); old.write_text('legacy readable copy')
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    assert 'answers/q000/caesar.md' in output.read_text()
+    rows = json.loads(answers_path(run).read_text())
+    rows[0]['answer_file'] = '../../private.md'
+    dump(answers_path(run), rows)
+    with pytest.raises(ValueError, match='answer.*path|artifact.*path'):
+        write_report(run, output)
+
+
+def test_superseded_paid_judgments_add_costs_once_and_never_add_votes(run, tmp_path):
+    from crest.report import load_run, write_report
+    current = [json.loads(line) for line in (run / '02-judge-test/judgments.jsonl').read_text().splitlines()]
+    prior = [{'key': f'prior-{i}', 'stage': 'judge', 'cost_usd': .2, 'usage': {}, 'model': 'gpt-6-astra',
+              'replacement_key': current[i]['key'], 'correction_id': 'duplicate-answer-correction',
+              'valid_for_ranking': False} for i in range(4)]
+    file = run / '02-judge-test/prior_judgment_costs.jsonl'
+    file.write_text(''.join(json.dumps(row) + '\n' for row in [*prior, prior[0]]))
+    before = load_run(run)
+    assert before['resources']['prior_judging']['records'] == 4
+    assert before['resources']['prior_judging']['cumulative_known_estimate_usd'] == pytest.approx(.8)
+    assert before['ranking']['coverage']['valid_judgments'] == 600
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    text = output.read_text()
+    assert '600 scored judgments + 4 prior or superseded paid calls' in text
+    assert '$0.8000' in text
+    assert text.count('class="judgment"') == 600
+    # An old paid key cannot also be counted as a currently scored verdict.
+    prior[0]['key'] = current[0]['key']
+    file.write_text(json.dumps(prior[0]) + '\n')
+    with pytest.raises(ValueError, match='prior|superseded'):
+        load_run(run)

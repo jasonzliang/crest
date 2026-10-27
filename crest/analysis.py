@@ -9,7 +9,9 @@ import os
 from pathlib import Path
 import random
 
-ANALYSIS_VERSION = "5"
+from .costs import summarize_costs
+
+ANALYSIS_VERSION = "8"
 
 
 def _valid_verdict(value):
@@ -33,11 +35,9 @@ def _known_cost(value):
     return type(value) in (int, float) and math.isfinite(value) and value >= 0
 
 
-def _costs(records, *, nested=False):
-    values = [(r.get("result") or {}).get("cost_usd") if nested else r.get("cost_usd")
-              for r in records]
-    known = [v for v in values if _known_cost(v)]
-    return {"known_usd": math.fsum(known), "unknown_count": len(values) - len(known), "records": len(values)}
+def _costs(records):
+    summary = summarize_costs(records)
+    return summary | {"known_usd": summary["cumulative_known_estimate_usd"]}
 
 
 def _failure_costs(records):
@@ -91,7 +91,8 @@ def _summarize_view(task):
 
 def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *,
             agents: list[str], judges: list[str], bootstrap_samples: int = 1000,
-            seed: int = 2026, failures: list[dict] | None = None, workers: int = 1) -> dict:
+            seed: int = 2026, failures: list[dict] | None = None, workers: int = 1,
+            prior_judgments: list[dict] | None = None) -> dict:
     """Rank binary preferences without imputing missing observations.
 
     A duplicate valid answer or judgment excludes its question. All views share
@@ -107,6 +108,9 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
     if type(workers) is not int or workers < 0:
         raise ValueError("workers must be a nonnegative integer (zero selects CPU count)")
     agents, judges = sorted(agents), sorted(judges)
+    prior_judgments = [row | {'stage': 'judge'} for row in prior_judgments or []]
+    superseded_keys = {row['key'] for row in prior_judgments}
+    superseded_excluded = 0
     question_ids = [q["id"] for q in questions]
     if len(set(question_ids)) != len(question_ids):
         raise ValueError("Question IDs must be unique")
@@ -124,6 +128,9 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
                 and answer.get("status", "completed") == "completed"):
             answer_counts[q][agent] += 1
     for judgment in judgments:
+        if judgment.get('key') in superseded_keys:
+            superseded_excluded += 1
+            continue
         q = judgment.get("question_id")
         if q not in observed:
             ignored += 1
@@ -216,7 +223,7 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
                 cycles.append(list(cycle))
     a_counts = Counter(j for block in votes for j, _, _, label in block if label == "A")
     choice_counts = Counter(j for block in votes for j, _, _, _ in block)
-    generation_cost, judging_cost = _costs(answers, nested=True), _costs(judgments)
+    generation_cost, judging_cost = _costs(answers), _costs(judgments)
     unique_failures = {}
     for failure in failures or []:
         unique_failures.setdefault((failure["stage"], failure["key"]), failure)
@@ -233,6 +240,7 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
                      "complete_question_ids": complete, "excluded_questions": excluded,
                      "expected_judgments_per_question": len(cells),
                      "valid_judgments": sum(map(len, observed.values())),
+                     "superseded_judgments_excluded": superseded_excluded,
                      "invalid_judgments": sum(invalid.values()), "ignored_judgments": ignored},
         "ranking": ranking, "paired_contrasts": paired_contrasts,
         "per_judge": {j: view[0] for j, view in judge_views.items()},
@@ -248,8 +256,9 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
             "swap_note": "Swapped-presentation inconsistency mixes order effects and sampling variability; one call per presentation cannot separate them."},
         "costs": {"generation": generation_cost, "judging": judging_cost,
                   "failures": failure_cost, "failure_by_stage": failure_by_stage,
-                  "total": {k: generation_cost[k] + judging_cost[k] + failure_cost[k] for k in generation_cost},
-                  "scope": "All supplied experiment records, including cached results, excluded questions and paid failures; failure jobs are deduplicated by stage/key. Known totals omit unknown costs.",
+                  "prior_judgments": _costs(prior_judgments),
+                  "total": _costs([*answers, *judgments, *failure_records, *prior_judgments]),
+                  "scope": "All supplied experiment records, including cached results, excluded questions and paid failures. Totals deduplicate jobs and prior attempts already covered by cumulative answer histories; stage subtotals can overlap. Known amounts are recorded estimate components, including the explicitly conditional Google pricing scenario, not invoices. Unknown portions are excluded, and reservations remain separate exposure.",
                   "observed_cost_note": "Partial observed estimates use incomplete usage and may use conservative pricing envelopes. Final billed costs remain unknown for these jobs; estimates are excluded from known totals.",
                   "this_run_usd": None, "this_run_note": "Current-run spending requires orchestration cache metadata and is not inferred here."},
         "bootstrap": {"unit": "question", "samples": bootstrap_samples, "seed": seed,
@@ -325,7 +334,11 @@ def write_report(report: dict, output_dir: Path) -> None:
     lines.extend(["", "## Costs", "", report["costs"]["scope"], ""])
     for name in ("generation", "judging", "total"):
         cost = report["costs"][name]
-        lines.append(f"- {name}: ${cost['known_usd']:.6f} known; {cost['unknown_count']} unknown costs across {cost['records']} records.")
+        lines.append(f"- {name}: ${cost['known_usd']:.6f} known estimate components; {cost['unknown_count']} incomplete estimates across {cost['records']} records.")
+    prior = report["costs"]["prior_judgments"]
+    lines.append(f"- superseded paid judgments: ${prior['known_usd']:.6f} known estimate components across {prior['records']} jobs; included once in total and excluded from ranking votes.")
+    total = report["costs"]["total"]
+    lines.extend(["", f"The estimate subtotal includes ${total['partial_known_estimate_usd']:.6f} in partial known components and ${total['conditional_scenario_estimate_usd']:.6f} in conditional Google pricing scenarios. Recorded unresolved reserved exposure is ${total['unresolved_reserved_exposure_usd']:.6f}, separate from estimated spend. Actual billed amounts remain unverified."])
     for stage, name in (("generate", "failed generations"), ("judge", "failed judgments")):
         cost = report["costs"]["failure_by_stage"][stage]
         lines.append(f"- {name}: ${cost['known_usd']:.6f} known; {cost['unknown_count']} unknown costs across {cost['records']} records (included in total).")

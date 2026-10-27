@@ -17,9 +17,9 @@ import uuid
 from .cache import Cache, digest, write_json
 from .config import load_questions
 from .concurrency import AdaptiveLimiter
-
-TRANSPORT_SETTINGS = {'concurrency', 'initial_concurrency', 'poll_interval_seconds',
-                      'retry_attempts', 'retry_backoff_base_seconds', 'retry_backoff_max_seconds'}
+from .costs import assess_cost
+from .artifacts import (TRANSPORT_SETTINGS, answer_metadata, configuration_record,
+                        reserve_directory, run_directory_name, stage_directory_name)
 
 
 def timestamp() -> str:
@@ -178,9 +178,9 @@ class Pipeline:
             return
         stamp = timestamp()
         root = Path(self.config['output_dir'])
-        date = datetime.now(timezone.utc).date().isoformat()
+        date = datetime.fromisoformat(stamp.replace('Z', '+00:00')).date().isoformat()
         jobs = self.generation_jobs()
-        self.run_dir = root / date / (stamp + '-' + uuid.uuid4().hex[:8])
+        self.run_dir = reserve_directory(root / date, run_directory_name(stamp, uuid.uuid4().hex[:8]))
         self.manifest = {'schema': 'crest-run-v1', 'created_at': stamp,
                          'questions': self.questions, 'agents': list(self.config['research']),
                          'generation_jobs': jobs, 'config': self.config, 'stages': []}
@@ -190,9 +190,9 @@ class Pipeline:
     def _new_stage(self, number: int, name: str) -> Path:
         if not self.run_dir:
             raise ValueError('Select an existing generation run with --run, or generate first')
-        path = self.run_dir / f'{number:02d}-{name}-{timestamp()}'
-        path.mkdir(parents=True, exist_ok=False)
-        stage = {'name': name, 'directory': path.name, 'started_at': timestamp(), 'status': 'running'}
+        started = timestamp()
+        path = reserve_directory(self.run_dir, stage_directory_name(number, name, started))
+        stage = {'name': name, 'directory': path.name, 'started_at': started, 'status': 'running'}
         write_json(path / 'manifest.json', stage)
         with self._manifest_lock():
             self.manifest['stages'].append(stage)
@@ -352,6 +352,17 @@ class Pipeline:
         summary = {'planned': len(tasks), 'completed': 0, 'cached': 0, 'failed': 0, 'skipped': 0}
         output = directory / ('answers.jsonl' if stage == 'generate' else 'judgments.jsonl')
         output.touch()
+        question_numbers = {question['id']: i + 1 for i, question in enumerate(self.questions)}
+        prompt_template = self.manifest['config'].get('research_prompt')
+        if stage == 'generate':
+            registry = {}
+            for task in tasks:
+                record = configuration_record(task, prompt_template=prompt_template)
+                identifier = record['configuration_id']
+                if identifier in registry and registry[identifier] != record:
+                    raise ValueError('Configuration identifier collision')
+                registry[identifier] = record
+            write_json(directory / 'configurations.json', registry)
         async def one(task):
             name = task['agent'] if stage == 'generate' else task['judge']
             if task.get('skip_reason'):
@@ -362,9 +373,13 @@ class Pipeline:
                 peaks[name] = max(peaks[name], controllers[name].snapshot()['active'])
                 try:
                     row, cached = await self._execute(task, stage, controllers[name])
+                    if stage == 'generate':
+                        row = (row | answer_metadata(task, question_numbers[task['question_id']],
+                                                     prompt_template=prompt_template)
+                               | {'cost_details': assess_cost(row['result'], agent=name, settings=task['settings'])})
                     _append(output, row)
                     if stage == 'generate':
-                        answer_path = directory / 'answers' / task['question_id'] / (name + '.md')
+                        answer_path = directory / row['answer_file']
                         answer_path.parent.mkdir(parents=True, exist_ok=True)
                         answer_path.write_text(row['result']['text'], encoding='utf-8')
                     summary['completed'] += 1
@@ -384,7 +399,7 @@ class Pipeline:
                     state = checkpoint.state if checkpoint else {}
                     raw = state.get('raw') if isinstance(state.get('raw'), dict) else {}
                     raw_usage = raw.get('usage') if isinstance(raw.get('usage'), dict) else {}
-                    _append(directory / 'errors.jsonl', {'key': task['key'], 'question_id': task['question_id'],
+                    error_row = {'key': task['key'], 'question_id': task['question_id'],
                                                        'stage': stage, 'provider': name,
                                                        'error': f'{type(exc).__name__}: {exc}',
                                                        'cost_usd': result.get('cost_usd', raw_usage.get('cost_usd')),
@@ -393,7 +408,12 @@ class Pipeline:
                                                        'budget_exceeded': bool(state.get('budget_exceeded') or
                                                                                state.get('cancel_reason') == 'budget' or
                                                                                result.get('budget_exceeded')),
-                                                       'cache_record': str(checkpoint.path) if checkpoint else None})
+                                                       'cache_record': str(checkpoint.path) if checkpoint else None}
+                    if stage == 'generate':
+                        receipt = result or {'cost_usd': error_row['cost_usd'], 'usage': error_row['usage'],
+                                             'raw': raw.get('raw') or {}}
+                        error_row['cost_details'] = assess_cost(receipt, agent=name, settings=task['settings'])
+                    _append(directory / 'errors.jsonl', error_row)
                     print(f'{stage}: {task["question_id"]} / {name}: FAILED ({type(exc).__name__})', flush=True)
         await asyncio.gather(*(one(task) for task in tasks))
         summary['parallelism'] = {name: controller.snapshot() | {'peak_slots': peaks[name]}
@@ -423,6 +443,17 @@ class Pipeline:
         directory = self._new_stage(2, 'judge')
         write_json(directory / 'questions.json', self.questions)
         write_json(directory / 'answers.json', answers)
+        registry_path = generation_source / 'configurations.json'
+        if registry_path.exists():
+            registry = json.loads(registry_path.read_text())
+        else:
+            records = [configuration_record(task, prompt_template=self.manifest['config'].get('research_prompt'))
+                       for task in self.manifest['generation_jobs']]
+            registry = {record['configuration_id']: record for record in records}
+        write_json(directory / 'configurations.json', registry)
+        prior_judgments = _read_jsonl(self.run_dir / 'prior_judgment_costs.jsonl')
+        (directory / 'prior_judgment_costs.jsonl').write_text(''.join(
+            json.dumps(row, ensure_ascii=False, allow_nan=False) + '\n' for row in prior_judgments), encoding='utf-8')
         write_json(directory / 'judges.json', judges)
         write_json(directory / 'tasks.json', tasks)
         (directory / 'rubric.txt').write_text(rubric)
@@ -440,6 +471,10 @@ class Pipeline:
         answers = json.loads((source / 'answers.json').read_text())
         judges = json.loads((source / 'judges.json').read_text())
         judgments = _read_jsonl(source / 'judgments.jsonl')
+        prior_path = source / 'prior_judgment_costs.jsonl'
+        if not prior_path.exists():
+            prior_path = self.run_dir / 'prior_judgment_costs.jsonl'
+        prior_judgments = _read_jsonl(prior_path)
         stage_manifest = json.loads((source / 'manifest.json').read_text())
         generation_source = self.run_dir / stage_manifest['generation_directory']
         failures = _read_jsonl(generation_source / 'errors.jsonl') + _read_jsonl(source / 'errors.jsonl')
@@ -450,6 +485,7 @@ class Pipeline:
         cache_key = digest({'analysis_version': ANALYSIS_VERSION, 'questions': questions,
                             'answers': stable(answers), 'judgments': stable(judgments),
                             'failures': stable(failures),
+                            'prior_judgments': stable(prior_judgments),
                             'agents': self.manifest['agents'], 'judges': list(judges),
                             'settings': {k: v for k, v in self.config['analysis'].items() if k != 'workers'}})
         job = self._stage_cache('analysis').job(cache_key)
@@ -458,7 +494,8 @@ class Pipeline:
             report = job.state['result']
         else:
             report = analyze(questions, answers, judgments, agents=self.manifest['agents'],
-                             judges=list(judges), failures=failures, **self.config['analysis'])
+                             judges=list(judges), failures=failures, prior_judgments=prior_judgments,
+                             **self.config['analysis'])
             job.save(status='completed', result=report, completed_at=timestamp())
         directory = self._new_stage(3, 'analysis')
         write_report(report, directory)

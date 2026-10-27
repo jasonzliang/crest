@@ -184,12 +184,12 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <h2 id="running">Run the three stages</h2>
 <p>Use Python 3.11–3.13 and install the project and Rome dependencies as described in <a href="../README.html#install">Getting started</a>. Export <code>OPENAI_API_KEY</code> and <code>GOOGLE_API_KEY</code> or <code>GEMINI_API_KEY</code>; CREST does not automatically load credentials from dotenv files.</p>
 <pre><code>python -m crest plan --config crest/configs/crest.mbp.yaml --limit 1
-python crest/stage1_generate.py --config crest/configs/crest.mbp.yaml --limit 1
+python -m crest generate --config crest/configs/crest.mbp.yaml --limit 1
 
 # Replace the placeholder with stage 1's printed run_dir.
-CREST_RUN=crest/results/YYYY-MM-DD/UTC-TIMESTAMP-UNIQUE-ID
-python crest/stage2_judge.py "$CREST_RUN" --config crest/configs/crest.mbp.yaml
-python crest/stage3_analyze.py "$CREST_RUN" --config crest/configs/crest.mbp.yaml</code></pre>
+CREST_RUN=crest/results/YYYY-MM-DD/HH-MM-SSZ-UNIQUE-ID
+python -m crest judge --run "$CREST_RUN" --config crest/configs/crest.mbp.yaml
+python -m crest analyze --run "$CREST_RUN" --config crest/configs/crest.mbp.yaml</code></pre>
 <p>Planning is local. Generation and judging make paid calls; analysis is local. Omit <code>--limit 1</code> for all 50 questions. The default configuration is <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>; <a href="../crest/configs/crest.mbp.yaml">crest/configs/crest.mbp.yaml</a> selects the measured-resource profile for the 64 GB <code>jason-mbp</code>. Complete the pilot before starting the first full Caesar batch. <code>python -m crest run</code> runs all stages. Later stages otherwise select the latest generation run, so use an explicit result path when managing multiple experiments.</p>
 <p>To recover an existing run, repeat stage 1 with <code>--run "$CREST_RUN"</code>, then repeat stages 2 and 3. Completed work is reused; remote job IDs are retrieved after interruption. Ambiguous submissions require manual reconciliation before retrying and are never blindly resubmitted.</p>
 <h2 id="models">Current research settings</h2>
@@ -215,13 +215,14 @@ python crest/stage3_analyze.py "$CREST_RUN" --config crest/configs/crest.mbp.yam
 <h2 id="files">Results, snapshots, and cache</h2>
 <pre><code>crest/results/
   .cache/generation/                 shared answer cache
-  YYYY-MM-DD/UTC-TIMESTAMP-ID/
+  YYYY-MM-DD/HH-MM-SSZ-ID/
     run.json                        questions, jobs, stage registry
-    01-generate-UTC-TIMESTAMP/       answers.jsonl and readable answers/
-    02-judge-UTC-TIMESTAMP/          judgments and frozen inputs/settings/rubric
-    03-analysis-UTC-TIMESTAMP/       ranking.json, ranking.csv, report.md
+    01-generate-YYYY-MM-DD_HH-MM-SSZ/     answers.jsonl, configurations.json, answers/
+    02-judge-YYYY-MM-DD_HH-MM-SSZ/        judgments and frozen inputs/settings/rubric
+    03-analysis-YYYY-MM-DD_HH-MM-SSZ/     ranking.json, ranking.csv, report.md
     .cache/judgments/               this run's judgment cache
     .cache/analysis/                this run's local analysis cache</code></pre>
+<p><code>crest/configs/</code> contains editable presets. Each generation’s <code>configurations.json</code> maps short configuration IDs to full frozen settings and provenance; answer rows retain the ID and full SHA-256. Readable copies use flat names such as <code>answers/q01-caesar-&lt;cfgshort&gt;.md</code>. IDs group configurations without changing paid cache identities.</p>
 <p>Every invocation creates a new timestamped stage folder. Stage 1's <code>answers.jsonl</code> is canonical; Markdown answers are reading copies. Stage 3 identifies and reads its precise stage-2 snapshot.</p>
 <p>Canonical answer and judgment rows retain model, usage, cost, and a top-level <code>timing</code> object: UTC ISO <code>started_at</code>/<code>completed_at</code>, <code>duration_seconds</code>, <code>source</code>, and <code>definition</code>. Elapsed time includes provider queueing, polling, retries, and interruptions, excluding local scheduling before execution. Cache hits preserve original durations; older checkpoints are backfilled where possible, with unavailable timestamps or duration left null.</p>
 <p>Changing the judge or rubric reuses answers. Changing one researcher's generation settings requires a new generation run and invalidates only affected shared-cache work. Existing runs retain generation snapshots. Concurrency/retry changes preserve paid cache entries. Increment a provider's <code>revision</code> only for intentional fresh calls, not to bypass an unresolved submission.</p>

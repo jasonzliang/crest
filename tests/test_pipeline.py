@@ -151,7 +151,7 @@ def test_timestamped_stages_resume_and_rubric_change_never_rebuys_answers(tmp_pa
     assert sum(len(p.generations) for p in providers.values()) == 6
 
 
-def test_analysis_script_accepts_result_dir_and_does_not_need_api_keys(tmp_path):
+def test_analysis_cli_accepts_run_dir_and_does_not_need_api_keys(tmp_path):
     import os
     import subprocess
     import sys
@@ -160,8 +160,9 @@ def test_analysis_script_accepts_result_dir_and_does_not_need_api_keys(tmp_path)
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    result = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'crest/stage3_analyze.py'),
-                             str(pipeline.run_dir), '--config', config['_config_path']],
+    env['PYTHONPATH'] = str(Path(__file__).parents[1])
+    result = subprocess.run([sys.executable, '-m', 'crest', 'analyze',
+                             '--run', str(pipeline.run_dir), '--config', config['_config_path']],
                             cwd=tmp_path, env=env, text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
     assert len(list(pipeline.run_dir.glob('03-analysis-*'))) == 2
@@ -255,7 +256,8 @@ def test_missing_credentials_stop_before_creating_a_paid_run(tmp_path):
     import sys
     config = fixture_config(tmp_path, n=1)
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    result = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'crest/stage1_generate.py'),
+    env['PYTHONPATH'] = str(Path(__file__).parents[1])
+    result = subprocess.run([sys.executable, '-m', 'crest', 'generate',
                              '--config', config['_config_path'], '--agents', 'openai'],
                             cwd=tmp_path, env=env, text=True, capture_output=True)
     assert result.returncode == 2
@@ -339,8 +341,9 @@ def test_standalone_judging_reuses_answers_without_keys_or_original_questions(tm
     asyncio.run(pipeline.run())
     Path(config['questions']).unlink()
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    completed = subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'crest/stage2_judge.py'),
-                                str(pipeline.run_dir), '--config', config['_config_path']],
+    env['PYTHONPATH'] = str(Path(__file__).parents[1])
+    completed = subprocess.run([sys.executable, '-m', 'crest', 'judge',
+                                '--run', str(pipeline.run_dir), '--config', config['_config_path']],
                                cwd=tmp_path, env=env, capture_output=True, text=True)
     assert completed.returncode == 0, completed.stderr
     stage = json.loads((pipeline.run_dir / 'run.json').read_text())['stages'][-1]
@@ -488,3 +491,106 @@ def test_malformed_cached_completion_time_is_unknown(tmp_path):
     row, _ = asyncio.run(pipeline._execute(task, 'generate'))
     assert row['timing']['completed_at'] is None
     assert row['timing']['duration_seconds'] is None
+
+
+def test_generation_cost_details_cover_cache_only_overrides_without_mutating_cache(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {'openai': config['research']['openai']}
+    provider = FakeProvider('openai')
+    class CacheOnlyPipeline(Pipeline):
+        async def _execute(self, task, stage, controller):
+            assert stage == 'generate'
+            result = self.cache.job(task['key']).state['result']
+            return {k: task[k] for k in ('key', 'question_id', 'agent')} | {'result': result}, True
+    pipeline = CacheOnlyPipeline(config, providers={'openai': provider})
+    task = pipeline.generation_jobs()[0]
+    result = {'text': 'Exact cached answer', 'model': 'gpt-6.1-sol', 'cost_usd': .25,
+              'raw': {'id': 'immutable-receipt'}, 'usage': {'input_tokens': 10}}
+    job = pipeline.cache.job(task['key'])
+    job.save(status='completed', result=result)
+    before = job.path.read_bytes()
+    keys = [row['key'] for row in pipeline.generation_jobs()]
+    asyncio.run(pipeline.generate())
+    answer = pipeline.answers()[0]
+    assert answer['cost_details']['cumulative_known_estimate_usd'] == .25
+    assert answer['cost_details']['actual_billed_usd'] is None
+    assert answer['result'] == result
+    assert answer['key'] == task['key']
+    assert job.path.read_bytes() == before
+    assert [row['key'] for row in pipeline.generation_jobs()] == keys
+    assert provider.generations == []
+
+
+def test_flat_answer_files_link_configuration_registry_without_changing_paid_keys(tmp_path):
+    import re
+    config = fixture_config(tmp_path, n=2)
+    config['research'] = {'openai': config['research']['openai']}
+    provider = FakeProvider('openai')
+    pipeline = Pipeline(config, providers={'openai': provider})
+    keys = [task['key'] for task in pipeline.generation_jobs()]
+    generated = asyncio.run(pipeline.generate())
+    stage = Path(generated['directory'])
+    registry = json.loads((stage / 'configurations.json').read_text())
+    assert len(registry) == 1
+    number = {question['id']: i + 1 for i, question in enumerate(pipeline.questions)}
+    for row in pipeline.answers():
+        assert re.fullmatch(r'answers/q\d{2}-openai-[a-f0-9]{12}\.md', row['answer_file'])
+        assert row['answer_file'].startswith(f"answers/q{number[row['question_id']]:02d}-")
+        assert (stage / row['answer_file']).read_bytes() == row['result']['text'].encode('utf-8')
+        record = registry[row['configuration_id']]
+        assert row['configuration_sha256'] == record['configuration_sha256']
+        assert len(row['configuration_sha256']) == 64
+        assert record['settings']['model'] == config['research']['openai']['model']
+    assert all(path.is_file() for path in (stage / 'answers').iterdir())
+    assert re.fullmatch(r'\d{2}-\d{2}-\d{2}Z-[a-f0-9]{8}', pipeline.run_dir.name)
+    assert re.fullmatch(r'01-generate-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}Z', stage.name)
+    assert [task['key'] for task in pipeline.generation_jobs()] == keys
+
+
+def test_judging_freezes_configuration_and_prior_cost_ledgers_and_invalidates_only_analysis(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    providers = {name: FakeProvider(name) for name in ('openai', 'gemini')}
+    pipeline = Pipeline(config, providers=providers)
+    generation = asyncio.run(pipeline.generate())
+    prior_path = pipeline.run_dir / 'prior_judgment_costs.jsonl'
+    prior = {'key': 'superseded-paid-1', 'stage': 'judge', 'judge': 'openai',
+             'cost_usd': .3, 'valid_for_ranking': False, 'replacement_key': 'replacement'}
+    prior_path.write_text(json.dumps(prior) + '\n')
+    stage = Path(asyncio.run(pipeline.judge())['directory'])
+    assert json.loads((stage / 'configurations.json').read_text()) == json.loads(
+        (Path(generation['directory']) / 'configurations.json').read_text())
+    assert (stage / 'prior_judgment_costs.jsonl').read_text() == prior_path.read_text()
+    first = pipeline.analyze()
+    assert first['report']['costs']['prior_judgments']['known_usd'] == .3
+    assert first['report']['costs']['total']['known_usd'] == pytest.approx(.74)
+    assert all(row['choices'] == 4 for row in first['report']['ranking'])
+    prior_path.write_text(prior_path.read_text() + json.dumps({**prior, 'key': 'superseded-paid-2', 'cost_usd': .2}) + '\n')
+    assert pipeline.analyze()['cache_hit'] is True
+    asyncio.run(pipeline.judge())
+    second = pipeline.analyze()
+    assert second['cache_hit'] is False
+    assert second['report']['ranking'] == first['report']['ranking']
+    assert second['report']['costs']['prior_judgments']['known_usd'] == .5
+    assert second['report']['costs']['total']['known_usd'] == pytest.approx(.94)
+    assert sum(len(provider.judgments) for provider in providers.values()) == 4
+
+
+def test_configuration_ids_follow_frozen_prompt_template_on_resume_and_legacy_registry_fallback(tmp_path):
+    import copy
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    providers = {name: FakeProvider(name) for name in ('openai', 'gemini')}
+    first = Pipeline(config, providers=providers)
+    generation = Path(asyncio.run(first.generate())['directory'])
+    expected = json.loads((generation / 'configurations.json').read_text())
+    assert all(row['prompt_template'] == config['research_prompt'] for row in expected.values())
+    current = copy.deepcopy(config)
+    current['research_prompt'] = 'A different current template: {question}'
+    resumed = Pipeline(current, providers=providers, run_dir=first.run_dir)
+    regenerated = Path(asyncio.run(resumed.generate())['directory'])
+    assert json.loads((regenerated / 'configurations.json').read_text()) == expected
+    (regenerated / 'configurations.json').unlink()  # Legacy stages lack the sidecar.
+    judged = Path(asyncio.run(resumed.judge())['directory'])
+    assert json.loads((judged / 'configurations.json').read_text()) == expected
+    assert sum(len(provider.generations) for provider in providers.values()) == 2
