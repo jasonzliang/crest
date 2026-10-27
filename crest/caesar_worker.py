@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import random
 import signal
+import shutil
 import socket
 import sys
 import tempfile
@@ -62,7 +63,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "cost_limit": settings.get("handler_budget_usd", settings.get("handler_cost_limit", 5.)),
             "max_completion_tokens": settings.get("max_completion_tokens", 6000),
             "max_input_tokens": settings.get("max_input_tokens", 64000),
-            "timeout": settings.get("call_timeout_seconds", 120), "max_retries": 0,
+            "timeout": settings.get("call_timeout_seconds", 600), "max_retries": 0,
         },
         "CaesarAgent": {
             "mode": "web", "starting_query": prompt, "allowed_domains": ["*"],
@@ -78,7 +79,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
                 "model": settings.get("exploration_model", LUNA),
                 "reasoning_effort": settings.get("exploration_reasoning_effort", "low"),
                 "max_completion_tokens": settings.get("exploration_max_completion_tokens", 2000),
-                "timeout": settings.get("call_timeout_seconds", 120),
+                "timeout": settings.get("call_timeout_seconds", 600),
             },
         },
         "ArtifactSynthesizer": {
@@ -450,11 +451,11 @@ def _runtime(settings: dict, audit: UsageAudit):
     original_async_init = openai.AsyncOpenAI.__init__
     def init(instance, *args, **kwargs):
         kwargs["max_retries"] = 0
-        kwargs.setdefault("timeout", settings.get("call_timeout_seconds", 120))
+        kwargs["timeout"] = settings.get("call_timeout_seconds", 600)
         original_init(instance, *args, **kwargs)
     def async_init(instance, *args, **kwargs):
         kwargs["max_retries"] = 0
-        kwargs.setdefault("timeout", settings.get("call_timeout_seconds", 120))
+        kwargs["timeout"] = settings.get("call_timeout_seconds", 600)
         original_async_init(instance, *args, **kwargs)
     openai.OpenAI.__init__ = init
     openai.AsyncOpenAI.__init__ = async_init
@@ -651,25 +652,86 @@ def _explore_with_synthesis_reserve(agent, settings, audit):
     return artifact, stop
 
 
+def _agent_name(key):
+    return "".join(char for char in ("crest" + key[:20]) if char.isalnum()).ljust(8, "0")[:32]
+
+
+def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
+    """Copy a reviewed failed attempt's local knowledge; never mutate its ledger."""
+    source, output_dir = Path(settings["recovery_from"]).resolve(), Path(output_dir).resolve()
+    if source == output_dir or source in output_dir.parents:
+        raise ValueError("Recovery output must be in a separate new job")
+    request = json.loads((source / "caesar-request.json").read_text())
+    record = json.loads((source / "caesar-result.json").read_text())
+    if record.get("status") != "failed" or request.get("prompt") != prompt:
+        raise ValueError("Recovery requires a failed attempt for the exact same prompt")
+    usage = record.get("usage") or {}
+    prior = (record.get("raw") or {}).get("recovery") or {}
+    known = float(usage.get("known_cost_usd", 0)) + prior.get("previous_known_cost_usd", 0)
+    unknown = [event for event in usage.get("events", []) if event.get("unknown_cost")]
+    unknown += usage.get("in_flight", [])
+    if any(not event.get("reserved_usd") for event in unknown):
+        raise ValueError("Previous unknown usage has no conservative cost reservation")
+    reserved = sum(event["reserved_usd"] for event in unknown) + prior.get("previous_unknown_reserved_usd", 0)
+    original_budget = float(prior.get("original_budget_usd", usage.get("budget_target_usd", 5)))
+    budget = float(settings.get("budget_usd", 5))
+    if not 0 < budget <= min(4.3, original_budget - known - reserved):
+        raise ValueError("Recovery needs an explicit budget at most $4.30 and within the prior residual")
+    source_output = source / "caesar-output"
+    paths = list((source_output / "__rome__").glob("*.checkpoint.json"))
+    if len(paths) != 1 or not (source_output / "chroma" / "chroma.sqlite3").is_file():
+        raise ValueError("Recovery requires one checkpoint and a persisted Chroma database")
+    checkpoint = json.loads(paths[0].read_text())
+    if checkpoint.get("config", {}).get("starting_query") != prompt or not checkpoint.get("visited_urls"):
+        raise ValueError("Recovery checkpoint has no matching explored knowledge")
+    collection = prior.get("collection_name") or "crest_" + hashlib.sha256(request.get("worker_id", request["job_key"]).encode()).hexdigest()[:40]
+    shutil.copytree(source_output / "chroma", output_dir / "chroma")
+    checkpoint["cost"] = {"accumulated_cost": 0., "call_count": 0, "sessions": []}
+    atomic_json(output_dir / "__rome__" / f"agent_{_agent_name(job_key)}.checkpoint.json", checkpoint)
+    config["CaesarAgent"].update(max_iterations=0, adapt_role=False, starting_url=checkpoint["config"]["starting_url"])
+    config["ChromaClientManager"]["collection_name"] = collection
+    config["LLMHandler"]["cost_limit"] = min(config["LLMHandler"]["cost_limit"], budget)
+    recovery = {"source_job": str(source), "source_checkpoint_sha256": hashlib.sha256(paths[0].read_bytes()).hexdigest(),
+        "collection_name": collection, "iteration": checkpoint["iteration"], "visited_urls": len(checkpoint["visited_urls"]),
+        "previous_known_cost_usd": known, "previous_unknown_reserved_usd": reserved,
+        "previous_cost_unknown": bool(usage.get("unknown_cost") or prior.get("previous_cost_unknown")),
+        "original_budget_usd": original_budget, "new_attempt_budget_usd": budget,
+        "budgeted_total_exposure_usd": known + reserved + budget}
+    atomic_json(output_dir / "recovery.json", recovery)
+    return recovery
+
+
 def run_worker(request: dict, result_path: Path) -> int:
     settings = request.get("settings", {})
     output_dir = Path(request["output_dir"])
+    if settings.get("recovery_from"):
+        source = Path(settings["recovery_from"]).resolve()
+        if source == output_dir.resolve() or source in output_dir.resolve().parents or source in Path(result_path).resolve().parents:
+            raise ValueError("Recovery must not write into its original failed job")
     output_dir.mkdir(parents=True, exist_ok=True)
     audit = UsageAudit(settings.get("budget_usd", 5.), output_dir / "usage.json", settings.get("model_pricing"), retry_attempts=settings.get("retry_attempts", 4))
     agent = None
     record = None
     artifact = None
     exploration_stop = None
+    recovery = None
     try:
-        with _deadline(settings.get("timeout_seconds", 1800)), _safe_logging(), _runtime(settings, audit) as agent_class:
+        with _deadline(settings.get("timeout_seconds", 7200)), _safe_logging(), _runtime(settings, audit) as agent_class:
             config = build_config(request["prompt"], settings, output_dir, request.get("worker_id", request["job_key"]))
+            if settings.get("recovery_from"):
+                recovery = prepare_synthesis_recovery(request["prompt"], settings, output_dir, request["job_key"], config)
             if "chroma_port" not in settings:
                 with socket.socket() as sock:
                     sock.bind(("127.0.0.1", 0))
                     config["ChromaServerManager"]["port"] = sock.getsockname()[1]
-            agent = agent_class(name="crest" + request["job_key"][:20], repository=str(output_dir), config=config)
+            agent = agent_class(name=_agent_name(request["job_key"]), repository=str(output_dir), config=config)
             with adaptive_synthesis_budget(agent, settings, audit) as synthesis_budget:
-                artifact, exploration_stop = _explore_with_synthesis_reserve(agent, settings, audit)
+                if recovery is not None:
+                    if agent.current_iteration != recovery["iteration"] or not agent.visited_urls or agent.kb_manager.size() < 1:
+                        raise ValueError("Native recovery did not load the copied checkpoint and knowledge")
+                    artifact = agent.synthesizer.synthesize_artifact()
+                else:
+                    artifact, exploration_stop = _explore_with_synthesis_reserve(agent, settings, audit)
             if getattr(agent, "shutdown_called", False):
                 raise RuntimeError("Caesar was interrupted before completing synthesis")
             result = extract_result(artifact, settings.get("model", SOL), audit.snapshot(),
@@ -678,6 +740,16 @@ def run_worker(request: dict, result_path: Path) -> int:
             if exploration_stop is not None:
                 result["raw"]["exploration_budget_stop"] = exploration_stop
                 result["warnings"].append(f"Exploration stopped after {exploration_stop['iterations_completed']} iterations to reserve ${exploration_stop['synthesis_reserve_usd']:g} for synthesis.")
+            if recovery is not None:
+                result["raw"]["recovery"] = recovery
+                result["raw"]["new_attempt_usage_audit"] = copy.deepcopy(result["usage"])
+                result["usage"]["new_attempt_cost_usd"] = result["cost_usd"]
+                result["usage"]["recovery_previous_known_cost_usd"] = recovery["previous_known_cost_usd"]
+                result["usage"]["recovery_previous_unknown_reserved_usd"] = recovery["previous_unknown_reserved_usd"]
+                if recovery["previous_cost_unknown"]:
+                    result["cost_usd"] = result["usage"]["cost_usd"] = None
+                    result["usage"]["unknown_cost"] = True
+                result["warnings"].append("Explicit synthesis-only recovery reused copied knowledge; prior attempt billing remains separately recorded.")
             result["raw"]["synthesis_budget"] = synthesis_budget
             reduced = [row for row in synthesis_budget["drafts"] if row["completed_qa_rounds"] < row["requested_qa_rounds"]]
             if reduced:
@@ -690,7 +762,7 @@ def run_worker(request: dict, result_path: Path) -> int:
     except BaseException as error:
         exploration_stop = exploration_stop or getattr(agent, "_crest_exploration_budget_stop", None)
         record = {"status": "failed", "error": _redact(f"{type(error).__name__}: {error}"),
-                  "usage": audit.snapshot(), "raw": {"artifact": artifact, "exploration_budget_stop": exploration_stop, "synthesis_budget": getattr(agent, "_crest_synthesis_budget", None)}, "protocol_version": PROTOCOL_VERSION}
+                  "usage": audit.snapshot(), "raw": {"artifact": artifact, "exploration_budget_stop": exploration_stop, "synthesis_budget": getattr(agent, "_crest_synthesis_budget", None), "recovery": recovery}, "protocol_version": PROTOCOL_VERSION}
     finally:
         if agent is not None:
             try:

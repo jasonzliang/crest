@@ -12,9 +12,9 @@ from crest import judging
 
 def verdict():
     return {
-        "new": {"reason": "A has a less readily placed building block.", "winner": "A"},
-        "useful": {"reason": "B explains a workable mechanism.", "winner": "B"},
-        "surprising": {"reason": "A takes a less expected direction.", "winner": "A"},
+        "reason": "A's less readily placed building block and unexpected central move "
+                  "produce a stronger creative proposal, despite B's clearer mechanism.",
+        "winner": "A",
     }
 
 
@@ -33,22 +33,28 @@ def experiment():
     return questions, answers, judges, "Compare New, Useful, and Surprising."
 
 
-def test_accepts_independent_binary_choices():
-    assert judging.validate_verdict(verdict()) == verdict()
-    assert judging.parse_verdict(json.dumps(verdict())) == verdict()
+@pytest.mark.parametrize("winner", ["A", "B"])
+def test_accepts_one_overall_binary_choice_with_reason_first(winner):
+    value = verdict()
+    value["winner"] = winner
+    assert judging.validate_verdict(value) == value
+    assert judging.parse_verdict(json.dumps(value)) == value
+    reversed_value = dict(reversed(list(value.items())))
+    assert list(judging.validate_verdict(reversed_value)) == ["reason", "winner"]
 
 
 @pytest.mark.parametrize("mutation", [
     lambda v: v.update(overall={"reason": "Overall.", "winner": "A"}),
-    lambda v: v.pop("new"),
-    lambda v: v["new"].update(winner="tie"),
-    lambda v: v["new"].update(winner=1),
-    lambda v: v["new"].update(winner="a"),
-    lambda v: v["new"].update(rating=4),
-    lambda v: v["new"].update(reason=" \n "),
-    lambda v: v["new"].update(reason=4),
-    lambda v: v["new"].pop("reason"),
-    lambda v: v.update(useful="A"),
+    lambda v: v.pop("winner"),
+    lambda v: v.update(winner="tie"),
+    lambda v: v.update(winner=1),
+    lambda v: v.update(winner="a"),
+    lambda v: v.update(rating=4),
+    lambda v: v.update(reason=" \n "),
+    lambda v: v.update(reason=4),
+    lambda v: v.pop("reason"),
+    lambda v: v.update(useful={"reason": "Mechanism.", "winner": "B"}),
+    lambda v: v.update(reason={"new": "A", "useful": "B", "surprising": "A"}),
 ])
 def test_rejects_scores_ties_extra_fields_and_missing_reasons(mutation):
     value = verdict()
@@ -67,30 +73,39 @@ def test_parsing_rejects_nonobject_malformed_and_duplicate_json_keys(text):
 
 
 @pytest.mark.parametrize("text", [
-    '{"new":{"reason":"First","winner":"A"},'
-    '"new":{"reason":"Second","winner":"B"},'
-    '"useful":{"reason":"Mechanism","winner":"A"},'
-    '"surprising":{"reason":"Direction","winner":"B"}}',
-    '{"new":{"reason":"Placement","winner":"A","winner":"B"},'
-    '"useful":{"reason":"Mechanism","winner":"A"},'
-    '"surprising":{"reason":"Direction","winner":"B"}}',
+    '{"reason":"First","reason":"Second","winner":"A"}',
+    '{"reason":"Creative proposal.","winner":"A","winner":"B"}',
 ])
 def test_duplicate_keys_rejected_even_when_last_value_would_be_valid(text):
     with pytest.raises(ValueError, match="duplicate"):
         judging.parse_verdict(text)
 
 
-def test_schema_requires_exact_binary_criterion_objects():
+def test_schema_requires_exact_flat_overall_binary_choice():
     schema = judging.SCHEMA
     assert schema["type"] == "object"
     assert schema["additionalProperties"] is False
-    assert set(schema["required"]) == {"new", "useful", "surprising"}
-    assert set(schema["properties"]) == {"new", "useful", "surprising"}
-    for criterion in schema["properties"].values():
-        assert criterion["additionalProperties"] is False
-        assert set(criterion["required"]) == {"reason", "winner"}
-        assert criterion["properties"]["winner"]["enum"] == ["A", "B"]
-        assert criterion["properties"]["reason"]["type"] == "string"
+    assert schema["required"] == ["reason", "winner"]
+    assert list(schema["properties"]) == ["reason", "winner"]
+    assert schema["properties"]["winner"] == {"type": "string", "enum": ["A", "B"]}
+    assert schema["properties"]["reason"]["type"] == "string"
+
+
+def test_rejects_previous_three_criterion_verdict():
+    legacy = {criterion: {"reason": "Criterion comparison.", "winner": "A"}
+              for criterion in ("new", "useful", "surprising")}
+    with pytest.raises(ValueError):
+        judging.validate_verdict(legacy)
+    with pytest.raises(ValueError):
+        judging.parse_verdict(json.dumps(legacy))
+
+
+def test_rendered_prompt_supplies_only_overall_choice_schema():
+    prompt = judging.build_prompt("Question", "First answer", "Second answer", "Rubric")
+    rendered_schema = json.loads(prompt.split("matching this schema:\n", 1)[1]
+                                .split("\n\nUNTRUSTED INPUT DATA", 1)[0])
+    assert list(rendered_schema["properties"]) == ["reason", "winner"]
+    assert rendered_schema["required"] == ["reason", "winner"]
 
 
 def test_schedules_all_pairs_judges_and_both_orders(experiment):

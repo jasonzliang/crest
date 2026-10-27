@@ -70,8 +70,7 @@ class FakeProvider:
                 'warnings': [], 'raw': {}}
     async def judge(self, prompt, settings, job):
         self.judgments.append(prompt)
-        verdict = {axis: {'reason': 'A addresses this criterion more directly than B.', 'winner': 'A'}
-                   for axis in ('new', 'useful', 'surprising')}
+        verdict = {'reason': 'A presents a more creative, useful approach than B.', 'winner': 'A'}
         return {'text': json.dumps(verdict), 'model': settings['model'], 'citations': [],
                 'usage': {}, 'cost_usd': .01, 'cost_estimated': True, 'warnings': [], 'raw': {}}
 
@@ -363,3 +362,85 @@ def test_changed_source_blocks_fresh_work_but_recovers_checkpointed_result(tmp_p
     recovered, cached = asyncio.run(pipeline._execute(task, 'generate'))
     assert recovered['result']['text'] == 'Previously paid answer'
     assert cached is False
+
+
+def test_answer_timing_is_saved_and_reused_without_measuring_cache_retrieval(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {'openai': config['research']['openai']}
+    provider = FakeProvider('openai')
+    pipeline = Pipeline(config, providers={'openai': provider})
+    first = asyncio.run(pipeline.generate())
+    row = json.loads((Path(first['directory']) / 'answers.jsonl').read_text())
+    timing = row['timing']
+    assert timing['duration_seconds'] >= 0
+    assert timing['started_at'].endswith('+00:00')
+    assert timing['completed_at'].endswith('+00:00')
+    assert timing['source'] == 'checkpoint:first_started_at/completed_at'
+    assert 'polling' in timing['definition']
+    state = pipeline.cache.job(row['key']).state
+    assert state['timing'] == timing
+    assert state['first_started_at'] == state['started_at']
+
+    second = asyncio.run(Pipeline(config, providers={'openai': provider}).generate())
+    cached = json.loads((Path(second['directory']) / 'answers.jsonl').read_text())
+    assert cached['cache_hit'] is True
+    assert cached['timing'] == timing
+    assert len(provider.generations) == 1
+
+
+def test_resumed_answer_timing_preserves_the_first_execution(tmp_path, monkeypatch):
+    stamps = iter(('20261025T010030.000000Z', '20261025T010100.000000Z'))
+    monkeypatch.setattr('crest.pipeline.timestamp', lambda: next(stamps))
+    config = fixture_config(tmp_path, n=1)
+    provider = FakeProvider('openai')
+    pipeline = Pipeline(config, providers={'openai': provider})
+    task = next(t for t in pipeline.generation_jobs() if t['agent'] == 'openai')
+    job = pipeline.cache.job(task['key'])
+    job.save(status='failed', started_at='20261025T010000.000000Z',
+             submitted_at=1792890005, remote_id='already-submitted')
+    row, cached = asyncio.run(pipeline._execute(task, 'generate'))
+    assert not cached
+    assert row['timing']['started_at'] == '2026-10-25T01:00:00+00:00'
+    assert row['timing']['duration_seconds'] == 60
+    state = pipeline.cache.job(task['key']).state
+    assert state['first_started_at'] == '20261025T010000.000000Z'
+    assert state['started_at'] != state['first_started_at']
+
+
+@pytest.mark.parametrize('start_fields, expected_start, expected_seconds, expected_source', [
+    ({'started_at': '20261025T010000.000000Z'}, '2026-10-25T01:00:00+00:00', 60,
+     'checkpoint:started_at/completed_at'),
+    ({'started_at': '20261025T010030.000000Z', 'submitted_at': 1792890000},
+     '2026-10-25T01:00:00+00:00', 60, 'checkpoint:submitted_at/completed_at'),
+    ({'worker_started_at': 1792890000}, '2026-10-25T01:00:00+00:00', 60,
+     'checkpoint:worker_started_at/completed_at'),
+    ({}, None, None, 'unavailable'),
+    ({'started_at': 'not-a-time', 'submitted_at': 'inf'}, None, None, 'unavailable'),
+    ({'started_at': '20261025T010200.000000Z'}, '2026-10-25T01:02:00+00:00', None,
+     'checkpoint:started_at/completed_at'),
+])
+def test_legacy_cached_answer_timing_uses_original_checkpoints_or_unknown(
+        tmp_path, start_fields, expected_start, expected_seconds, expected_source):
+    config = fixture_config(tmp_path, n=1)
+    provider = FakeProvider('openai')
+    pipeline = Pipeline(config, providers={'openai': provider})
+    task = next(t for t in pipeline.generation_jobs() if t['agent'] == 'openai')
+    pipeline.cache.job(task['key']).save(status='completed', result={'text': 'Paid answer'},
+        completed_at='20261025T010100.000000Z', **start_fields)
+    row, cached = asyncio.run(pipeline._execute(task, 'generate'))
+    assert cached
+    assert row['timing']['started_at'] == expected_start
+    assert row['timing']['duration_seconds'] == expected_seconds
+    assert row['timing']['source'] == expected_source
+    assert provider.generations == []
+
+
+def test_malformed_cached_completion_time_is_unknown(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    pipeline = Pipeline(config, providers={'openai': FakeProvider('openai')})
+    task = next(t for t in pipeline.generation_jobs() if t['agent'] == 'openai')
+    pipeline.cache.job(task['key']).save(status='completed', result={'text': 'Paid answer'},
+        started_at='20261025T010000.000000Z', completed_at='bad timestamp')
+    row, _ = asyncio.run(pipeline._execute(task, 'generate'))
+    assert row['timing']['completed_at'] is None
+    assert row['timing']['duration_seconds'] is None

@@ -9,15 +9,13 @@ import os
 from pathlib import Path
 import random
 
-CRITERIA = ("new", "useful", "surprising")
-ANALYSIS_VERSION = "4"
+ANALYSIS_VERSION = "5"
 
 
 def _valid_verdict(value):
-    return (isinstance(value, dict) and set(value) == set(CRITERIA)
-            and all(isinstance(v, dict) and set(v) == {"reason", "winner"}
-                    and isinstance(v["reason"], str) and bool(v["reason"].strip())
-                    and v["winner"] in ("A", "B") for v in value.values()))
+    return (isinstance(value, dict) and set(value) == {"reason", "winner"}
+            and isinstance(value["reason"], str) and bool(value["reason"].strip())
+            and value["winner"] in ("A", "B"))
 
 
 def _interval(values):
@@ -52,18 +50,18 @@ def _failure_costs(records):
 
 def _summarize_view(task):
     """Picklable independent view, sharing the parent's exact question draws."""
-    agents, votes, draws, criteria, selected_judges, include_contrasts = task
+    agents, votes, draws, selected_judges, include_contrasts = task
     vectors, wins, opportunities = [], Counter(), Counter()
     for block in votes:
         vector = Counter()
-        for judge, criterion, winner, loser, _ in block:
-            if criterion in criteria and judge in selected_judges:
+        for judge, winner, loser, _ in block:
+            if judge in selected_judges:
                 vector[winner] += 1
                 wins[winner, loser] += 1
                 opportunities[winner, loser] += 1
                 opportunities[loser, winner] += 1
         vectors.append(vector)
-    denominator = (len(agents) - 1) * 2 * len(selected_judges) * len(criteria) * len(votes)
+    denominator = (len(agents) - 1) * 2 * len(selected_judges) * len(votes)
     totals = {a: sum(v[a] for v in vectors) for a in agents}
     scores, ranks = {a: [] for a in agents}, {a: [] for a in agents}
     contrast_draws = {pair: [] for pair in combinations(agents, 2)} if include_contrasts else {}
@@ -164,17 +162,16 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
     for q in complete:
         block = []
         for pair, order, judge in cells:
-            for criterion, choice in observed[q][pair, order, judge].items():
-                index = 0 if choice["winner"] == "A" else 1
-                block.append((judge, criterion, order[index], order[1 - index], choice["winner"]))
+            choice = observed[q][pair, order, judge]
+            index = 0 if choice["winner"] == "A" else 1
+            block.append((judge, order[index], order[1 - index], choice["winner"]))
         votes.append(block)
     rng = random.Random(seed)
     draws = [[rng.randrange(len(complete)) for _ in complete]
              for _ in range(bootstrap_samples)] if complete else []
 
-    views = [(CRITERIA, judges)] + [((c,), judges) for c in CRITERIA] + [(CRITERIA, (j,)) for j in judges]
-    tasks = [(agents, votes, draws, criteria, selected_judges, i == 0)
-             for i, (criteria, selected_judges) in enumerate(views)]
+    tasks = [(agents, votes, draws, selected_judges, i == 0)
+             for i, selected_judges in enumerate([judges] + [(j,) for j in judges])]
     worker_count = min(workers or (os.cpu_count() or 1), len(tasks))
     # Pool startup costs more than small bootstrap calculations. A single
     # question's repeated draws cannot provide additional bootstrap variation.
@@ -186,29 +183,28 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
     else:
         summaries = list(map(_summarize_view, tasks))
     ranking, matrix, paired_contrasts = summaries[0]
-    criterion_views = dict(zip(CRITERIA, summaries[1:1 + len(CRITERIA)]))
-    judge_views = dict(zip(judges, summaries[1 + len(CRITERIA):]))
+    judge_views = dict(zip(judges, summaries[1:]))
     switched = disagreed = switch_count = disagreement_count = 0
     swap_counts, swap_totals = Counter(), Counter()
     judge_counts, judge_totals = Counter(), Counter()
     for q in complete:
-        def winner(pair, order, judge, criterion):
-            return order[0 if observed[q][pair, order, judge][criterion]["winner"] == "A" else 1]
+        def winner(pair, order, judge):
+            return order[0 if observed[q][pair, order, judge]["winner"] == "A" else 1]
         for pair in pairs:
-            for criterion in CRITERIA:
-                for judge in judges:
-                    switch_count += 1
-                    changed = winner(pair, pair, judge, criterion) != winner(pair, pair[::-1], judge, criterion)
-                    switched += changed
-                    swap_counts[judge, criterion] += changed
-                    swap_totals[judge, criterion] += 1
-                for order in (pair, pair[::-1]):
-                    for first, second in combinations(judges, 2):
-                        disagreement_count += 1
-                        changed = winner(pair, order, first, criterion) != winner(pair, order, second, criterion)
-                        disagreed += changed
-                        judge_counts[criterion] += changed
-                        judge_totals[criterion] += 1
+            for judge in judges:
+                switch_count += 1
+                changed = winner(pair, pair, judge) != winner(pair, pair[::-1], judge)
+                switched += changed
+                swap_counts[judge] += changed
+                swap_totals[judge] += 1
+            for order in (pair, pair[::-1]):
+                for first, second in combinations(judges, 2):
+                    disagreement_count += 1
+                    changed = winner(pair, order, first) != winner(pair, order, second)
+                    disagreed += changed
+                    for judge in (first, second):
+                        judge_counts[judge] += changed
+                        judge_totals[judge] += 1
     def disagreement(count, total):
         return {"disagreements": count, "comparisons": total, "rate": count / total if total else None}
     def position(count, total):
@@ -218,8 +214,8 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
         for cycle in ((a, b, c, a), (a, c, b, a)):
             if all(matrix[x][y] is not None and matrix[x][y] > 0.5 for x, y in zip(cycle, cycle[1:])):
                 cycles.append(list(cycle))
-    a_counts = Counter((j, c) for block in votes for j, c, _, _, label in block if label == "A")
-    choice_counts = Counter((j, c) for block in votes for j, c, _, _, _ in block)
+    a_counts = Counter(j for block in votes for j, _, _, label in block if label == "A")
+    choice_counts = Counter(j for block in votes for j, _, _, _ in block)
     generation_cost, judging_cost = _costs(answers, nested=True), _costs(judgments)
     unique_failures = {}
     for failure in failures or []:
@@ -230,8 +226,8 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
                         for stage in ("generate", "judge")}
     return {
         "analysis_version": ANALYSIS_VERSION,
-        "interpretation": "Exploratory equal-weight New/Useful/Surprising preference index for these observed answers under this rubric and selected judges; not an absolute creativity measurement.",
-        "method": "Equal-weight mean preference over criteria, opponents, judges and answer orders on common complete questions. Ties share competition ranks. The index is compensatory: gains on one criterion can offset losses on another; inspect criterion and judge views separately.",
+        "interpretation": "Exploratory overall creativity preference ranking of these observed answers under this rubric and selected judges; not an absolute creativity measurement.",
+        "method": "Each judgment chooses one overall A/B creativity winner guided by New, Useful and Surprising. Rank by wins divided by comparisons, weighting questions, opponents, judges and answer orders equally on common complete questions. Ties share competition ranks.",
         "agents": agents, "judges": judges,
         "coverage": {"total_questions": len(questions), "complete_questions": len(complete),
                      "complete_question_ids": complete, "excluded_questions": excluded,
@@ -239,20 +235,16 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
                      "valid_judgments": sum(map(len, observed.values())),
                      "invalid_judgments": sum(invalid.values()), "ignored_judgments": ignored},
         "ranking": ranking, "paired_contrasts": paired_contrasts,
-        "per_criterion": {c: view[0] for c, view in criterion_views.items()},
         "per_judge": {j: view[0] for j, view in judge_views.items()},
-        "pairwise": {"overall": matrix, "per_criterion": {c: v[1] for c, v in criterion_views.items()},
-                     "per_judge": {j: v[1] for j, v in judge_views.items()}},
+        "pairwise": {"overall": matrix, "per_judge": {j: v[1] for j, v in judge_views.items()}},
         "diagnostics": {"cycles": cycles,
             "position_a_preference": position(sum(a_counts.values()), sum(choice_counts.values())),
             "swapped_inconsistency": disagreement(switched, switch_count),
             "judge_disagreement": disagreement(disagreed, disagreement_count),
-            "by_judge_criterion": {j: {c: {
-                "position_a_preference": position(a_counts[j, c], choice_counts[j, c]),
-                "swapped_inconsistency": disagreement(swap_counts[j, c], swap_totals[j, c])}
-                for c in CRITERIA} for j in judges},
-            "judge_disagreement_per_criterion": {
-                c: disagreement(judge_counts[c], judge_totals[c]) for c in CRITERIA},
+            "by_judge": {j: {
+                "position_a_preference": position(a_counts[j], choice_counts[j]),
+                "swapped_inconsistency": disagreement(swap_counts[j], swap_totals[j]),
+                "judge_disagreement": disagreement(judge_counts[j], judge_totals[j])} for j in judges},
             "swap_note": "Swapped-presentation inconsistency mixes order effects and sampling variability; one call per presentation cannot separate them."},
         "costs": {"generation": generation_cost, "judging": judging_cost,
                   "failures": failure_cost, "failure_by_stage": failure_by_stage,
@@ -287,7 +279,7 @@ def write_report(report: dict, output_dir: Path) -> None:
     lines = ["# CREST preference ranking", "", report["interpretation"], "", report["method"], "",
              f"Complete question coverage: {coverage['complete_questions']} / {coverage['total_questions']}. "
              f"Each complete question requires {coverage['expected_judgments_per_question']} valid judgments and every agent answer.", "",
-             "Bootstrap 95% intervals resample whole questions, retaining all dependent criterion, judge and order observations. "
+             "Bootstrap 95% intervals resample whole questions, retaining all dependent judge and order observations. "
              "Intervals are descriptive; few complete questions can give degenerate intervals.", "",
              report["bootstrap"]["scope"], ""]
     def table(title, rows):
@@ -296,7 +288,7 @@ def write_report(report: dict, output_dir: Path) -> None:
             interval = format_interval(row["ci95"])
             lines.append(f"| {row['rank'] if row['rank'] is not None else 'unavailable'} | {label(row['agent'])} | {number(row['preference_rate'])} | {interval} |")
         lines.append("")
-    table("Overall", report["ranking"])
+    table("Overall creativity", report["ranking"])
     lines.extend(["## Paired overall-index contrasts", "",
                   "Each difference subtracts the second agent's overall index from the first, using the same question draws for both. Ordering fractions count bootstrap draws, including exact index ties.", "",
                   "| Pair (first − second) | Index difference | 95% paired interval | First higher | Equal | Second higher | Draws |",
@@ -305,8 +297,6 @@ def write_report(report: dict, output_dir: Path) -> None:
         stability = contrast["ordering_stability"]
         lines.append(f"| {' − '.join(map(label, contrast['pair']))} | {number(contrast['difference'])} | {format_interval(contrast['ci95'])} | {number(stability['first_higher'])} | {number(stability['equal'])} | {number(stability['second_higher'])} | {contrast['bootstrap_samples']} |")
     lines.append("")
-    for name, rows in report["per_criterion"].items():
-        table(f"Criterion: {name}", rows)
     for name, rows in report["per_judge"].items():
         table(f"Judge: {label(name)}", rows)
     agents = report["agents"]
@@ -321,17 +311,13 @@ def write_report(report: dict, output_dir: Path) -> None:
         title = "swapped-presentation inconsistency" if name == "swapped_inconsistency" else name.replace('_', ' ')
         lines.append(f"- {title}: {count}/{total}; fraction {number(detail['rate'])}.")
     lines.append("- Pairwise cycles: " + ("; ".join(" → ".join(map(label, c)) for c in report["diagnostics"]["cycles"]) or "none observed") + ".")
-    lines.extend(["", report["diagnostics"]["swap_note"], "", "## Judge × criterion diagnostics", "",
-                  "| Judge | Criterion | A wins / choices | A preference | Swapped inconsistencies / comparisons | Inconsistency fraction |",
-                  "| --- | --- | --- | --- | --- | --- |"])
-    for judge, criteria in report["diagnostics"]["by_judge_criterion"].items():
-        for criterion, detail in criteria.items():
-            position, swapped = detail["position_a_preference"], detail["swapped_inconsistency"]
-            lines.append(f"| {label(judge)} | {criterion} | {position['wins']}/{position['choices']} | {number(position['rate'])} | {swapped['disagreements']}/{swapped['comparisons']} | {number(swapped['rate'])} |")
-    lines.extend(["", "Judge disagreement by criterion:", "",
-                  "| Criterion | Disagreements / comparisons | Fraction |", "| --- | --- | --- |"])
-    for criterion, detail in report["diagnostics"]["judge_disagreement_per_criterion"].items():
-        lines.append(f"| {criterion} | {detail['disagreements']}/{detail['comparisons']} | {number(detail['rate'])} |")
+    lines.extend(["", report["diagnostics"]["swap_note"], "", "## Judge diagnostics", "",
+                  "| Judge | A wins / choices | A preference | Swapped inconsistencies / comparisons | Inconsistency fraction | Judge disagreements / comparisons | Disagreement fraction |",
+                  "| --- | --- | --- | --- | --- | --- | --- |"])
+    for judge, detail in report["diagnostics"]["by_judge"].items():
+        position, swapped, disagreed = (detail[name] for name in (
+            "position_a_preference", "swapped_inconsistency", "judge_disagreement"))
+        lines.append(f"| {label(judge)} | {position['wins']}/{position['choices']} | {number(position['rate'])} | {swapped['disagreements']}/{swapped['comparisons']} | {number(swapped['rate'])} | {disagreed['disagreements']}/{disagreed['comparisons']} | {number(disagreed['rate'])} |")
     lines.extend(["", "## Excluded coverage", "", f"Invalid judgments: {coverage['invalid_judgments']}; records for unknown questions: {coverage['ignored_judgments']}.", ""])
     lines.extend(f"- {label(q['question_id'])}: {', '.join(q['reasons'])}; missing answers: {', '.join(map(label, q['missing_answers'])) or 'none'}; missing judgment cells: {len(q['missing_judgments'])}." for q in coverage["excluded_questions"])
     if not coverage["excluded_questions"]:

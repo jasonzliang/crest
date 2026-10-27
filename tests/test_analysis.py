@@ -13,12 +13,11 @@ from crest.analysis import analyze, write_report
 
 AGENTS = ["a", "b", "c"]
 JUDGES = ["openai", "gemini"]
-CRITERIA = ("new", "useful", "surprising")
 
 
 def experiment(count=1, choose=None):
     questions, answers, judgments = [], [], []
-    choose = choose or (lambda q, pair, judge, order, criterion: pair[0])
+    choose = choose or (lambda q, pair, judge, order: pair[0])
     for number in range(count):
         question_id = f"q{number}"
         questions.append({"id": question_id, "text": f"Question {number}?"})
@@ -29,11 +28,9 @@ def experiment(count=1, choose=None):
         for pair in combinations(AGENTS, 2):
             for judge in JUDGES:
                 for order in (pair, pair[::-1]):
-                    verdict = {}
-                    for criterion in CRITERIA:
-                        winner = choose(number, pair, judge, order, criterion)
-                        verdict[criterion] = {"winner": "A" if winner == order[0] else "B",
-                                              "reason": "Comparative evidence."}
+                    winner = choose(number, pair, judge, order)
+                    verdict = {"winner": "A" if winner == order[0] else "B",
+                               "reason": "Comparative creativity evidence."}
                     judgments.append({"question_id": question_id, "pair": list(pair),
                                       "order": list(order), "judge": judge,
                                       "key": f"judge-{question_id}-{pair}-{judge}-{order}",
@@ -61,68 +58,62 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(result["diagnostics"]["position_a_preference"]["rate"], 0.5)
         self.assertEqual(result["diagnostics"]["swapped_inconsistency"]["rate"], 0.0)
 
-    def test_each_criterion_has_equal_weight_and_its_own_ranking(self):
-        orders = {"new": "abc", "useful": "cba", "surprising": "bac"}
-        data = experiment(choose=lambda q, pair, judge, order, criterion:
-                          min(pair, key=orders[criterion].index))
+    def test_balanced_overall_win_rates_weight_questions_and_opponents_equally(self):
+        orders = ("abc", "bca")
+        data = experiment(2, choose=lambda q, pair, judge, order: min(pair, key=orders[q].index))
         result = report(data)
-        self.assertEqual([r["agent"] for r in result["ranking"]], ["b", "a", "c"])
-        self.assertEqual(result["ranking"][0]["preference_rate"], 2 / 3)
-        self.assertEqual(result["per_criterion"]["useful"][0]["agent"], "c")
-        self.assertEqual(result["pairwise"]["per_criterion"]["useful"]["c"]["a"], 1.0)
+        self.assertEqual([(r["agent"], r["wins"], r["choices"], r["preference_rate"])
+                          for r in result["ranking"]],
+                         [("b", 12, 16, 0.75), ("a", 8, 16, 0.5), ("c", 4, 16, 0.25)])
+        self.assertEqual(result["pairwise"]["overall"]["a"]["b"], 0.5)
+        self.assertEqual(result["pairwise"]["overall"]["b"]["c"], 1.0)
+        self.assertNotIn("per_criterion", result)
+        self.assertNotIn("per_criterion", result["pairwise"])
 
     def test_position_bias_retains_exact_aggregate_ties_and_flags_swapped_inconsistency(self):
-        result = report(experiment(choose=lambda q, pair, judge, order, criterion: order[0]))
+        result = report(experiment(choose=lambda q, pair, judge, order: order[0]))
         self.assertEqual([r["rank"] for r in result["ranking"]], [1, 1, 1])
         self.assertEqual([r["preference_rate"] for r in result["ranking"]], [0.5, 0.5, 0.5])
         self.assertEqual(result["diagnostics"]["position_a_preference"]["rate"], 1.0)
         self.assertEqual(result["diagnostics"]["swapped_inconsistency"],
-                         {"disagreements": 18, "comparisons": 18, "rate": 1.0})
+                         {"disagreements": 6, "comparisons": 6, "rate": 1.0})
 
     def test_pairwise_cycles_remain_visible_even_when_aggregate_ranks_tie(self):
         preferred = {("a", "b"): "a", ("a", "c"): "c", ("b", "c"): "b"}
-        result = report(experiment(choose=lambda q, pair, judge, order, criterion: preferred[pair]))
+        result = report(experiment(choose=lambda q, pair, judge, order: preferred[pair]))
         self.assertEqual([r["rank"] for r in result["ranking"]], [1, 1, 1])
         self.assertEqual(result["diagnostics"]["cycles"], [["a", "b", "c", "a"]])
 
     def test_per_judge_rankings_and_disagreement_compare_mapped_winners(self):
-        result = report(experiment(choose=lambda q, pair, judge, order, criterion:
+        result = report(experiment(choose=lambda q, pair, judge, order:
                                    pair[0] if judge == "openai" else pair[1]))
         self.assertEqual(result["per_judge"]["openai"][0]["agent"], "a")
         self.assertEqual(result["per_judge"]["gemini"][0]["agent"], "c")
         self.assertEqual(result["diagnostics"]["judge_disagreement"],
-                         {"disagreements": 18, "comparisons": 18, "rate": 1.0})
+                         {"disagreements": 6, "comparisons": 6, "rate": 1.0})
         self.assertEqual(result["diagnostics"]["swapped_inconsistency"]["rate"], 0.0)
 
-    def test_opposing_position_preferences_remain_visible_by_judge_and_criterion(self):
-        def choose(q, pair, judge, order, criterion):
-            if criterion == "new":
-                return order[0] if judge == "openai" else order[1]
-            if criterion == "useful":
-                return pair[0]
-            return pair[0] if judge == "openai" else pair[1]
-        data = experiment(2, choose=choose)
+    def test_opposing_position_preferences_remain_visible_per_judge(self):
+        data = experiment(2, choose=lambda q, pair, judge, order:
+                          order[0] if judge == "openai" else order[1])
         data[2].pop()  # Every diagnostic must exclude this incomplete question.
         diagnostics = report(data)["diagnostics"]
         self.assertEqual(diagnostics["position_a_preference"]["rate"], 0.5)
-        views = diagnostics["by_judge_criterion"]
-        self.assertEqual(views["openai"]["new"]["position_a_preference"],
+        views = diagnostics["by_judge"]
+        self.assertEqual(views["openai"]["position_a_preference"],
                          {"wins": 6, "choices": 6, "rate": 1.0})
-        self.assertEqual(views["gemini"]["new"]["position_a_preference"],
+        self.assertEqual(views["gemini"]["position_a_preference"],
                          {"wins": 0, "choices": 6, "rate": 0.0})
-        self.assertEqual(views["openai"]["new"]["swapped_inconsistency"],
-                         {"disagreements": 3, "comparisons": 3, "rate": 1.0})
-        self.assertEqual(views["gemini"]["useful"]["position_a_preference"],
-                         {"wins": 3, "choices": 6, "rate": 0.5})
-        self.assertEqual(views["gemini"]["useful"]["swapped_inconsistency"],
-                         {"disagreements": 0, "comparisons": 3, "rate": 0.0})
-        self.assertEqual(diagnostics["judge_disagreement_per_criterion"], {
-            "new": {"disagreements": 6, "comparisons": 6, "rate": 1.0},
-            "useful": {"disagreements": 0, "comparisons": 6, "rate": 0.0},
-            "surprising": {"disagreements": 6, "comparisons": 6, "rate": 1.0}})
+        for judge in JUDGES:
+            self.assertEqual(views[judge]["swapped_inconsistency"],
+                             {"disagreements": 3, "comparisons": 3, "rate": 1.0})
+            self.assertEqual(views[judge]["judge_disagreement"],
+                             {"disagreements": 6, "comparisons": 6, "rate": 1.0})
+        self.assertEqual(diagnostics["judge_disagreement"],
+                         {"disagreements": 6, "comparisons": 6, "rate": 1.0})
 
     def test_paired_contrast_uses_same_question_draws_and_reports_ordering_ties(self):
-        data = experiment(2, choose=lambda q, pair, judge, order, criterion: pair[q % 2])
+        data = experiment(2, choose=lambda q, pair, judge, order: pair[q % 2])
         result = report(data, bootstrap_samples=4, seed=19)
         # Seed 19 draws the question blocks [0,0], [0,1], [1,1], [0,1].
         # For a minus b, their shared-draw index differences are .5, 0, -.5, 0.
@@ -137,7 +128,7 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(result, report(data, bootstrap_samples=4, seed=19))
 
     def test_contrasts_compare_overall_indices_on_common_blocks_not_head_to_head_votes(self):
-        data = experiment(2, choose=lambda q, pair, judge, order, criterion: pair[q % 2])
+        data = experiment(2, choose=lambda q, pair, judge, order: pair[q % 2])
         data[2].pop()
         result = report(data)
         self.assertEqual(result["pairwise"]["overall"]["a"]["b"], 1.0)
@@ -148,7 +139,7 @@ class AnalysisTests(unittest.TestCase):
                          {"first_higher": 1.0, "equal": 0.0, "second_higher": 0.0})
 
     def test_exact_index_ties_have_zero_contrasts_and_equal_bootstrap_ordering(self):
-        result = report(experiment(choose=lambda q, pair, judge, order, criterion: order[0]))
+        result = report(experiment(choose=lambda q, pair, judge, order: order[0]))
         for contrast in result["paired_contrasts"]:
             self.assertEqual(contrast["difference"], 0.0)
             self.assertEqual(contrast["ci95"], [0.0, 0.0])
@@ -166,7 +157,7 @@ class AnalysisTests(unittest.TestCase):
                 self.assertEqual(contrast["bootstrap_samples"], 0)
                 self.assertEqual(contrast["ordering_stability"],
                                  {"first_higher": None, "equal": None, "second_higher": None})
-        empty = report(([], [], []))["diagnostics"]["by_judge_criterion"]["openai"]["new"]
+        empty = report(([], [], []))["diagnostics"]["by_judge"]["openai"]
         self.assertEqual(empty["position_a_preference"], {"wins": 0, "choices": 0, "rate": None})
         self.assertEqual(empty["swapped_inconsistency"],
                          {"disagreements": 0, "comparisons": 0, "rate": None})
@@ -181,7 +172,7 @@ class AnalysisTests(unittest.TestCase):
         excluded = result["coverage"]["excluded_questions"][0]
         self.assertEqual(excluded["question_id"], "q1")
         self.assertEqual(len(excluded["missing_judgments"]), 1)
-        self.assertEqual(result["ranking"][0]["choices"], 24)
+        self.assertEqual(result["ranking"][0]["choices"], 8)
 
     def test_missing_or_empty_answer_excludes_otherwise_complete_question(self):
         for change in ("missing", "empty"):
@@ -199,9 +190,12 @@ class AnalysisTests(unittest.TestCase):
     def test_wrong_order_noncanonical_pairs_or_invalid_binary_verdict_cannot_fill_missing_cells(self):
         mutations = [lambda j: j.update(order=["a", "a"]),
                      lambda j: j.update(pair=["b", "a"]),
-                     lambda j: j["verdict"]["new"].update(winner="tie"),
-                     lambda j: j["verdict"]["new"].update(reason=""),
-                     lambda j: j["verdict"].update(overall="A")]
+                     lambda j: j["verdict"].update(winner="tie"),
+                     lambda j: j["verdict"].update(reason=""),
+                     lambda j: j["verdict"].update(overall="A"),
+                     lambda j: j.update(verdict={"new": {"reason": "N", "winner": "A"},
+                                                 "useful": {"reason": "U", "winner": "A"},
+                                                 "surprising": {"reason": "S", "winner": "A"}})]
         for mutate in mutations:
             with self.subTest(mutate=mutate):
                 data = experiment()
@@ -220,7 +214,7 @@ class AnalysisTests(unittest.TestCase):
                 self.assertIn(reason, result["coverage"]["excluded_questions"][0]["reasons"])
 
     def test_bootstrap_resamples_whole_questions_and_is_seed_deterministic(self):
-        data = experiment(2, choose=lambda q, pair, judge, order, criterion: pair[q % 2])
+        data = experiment(2, choose=lambda q, pair, judge, order: pair[q % 2])
         first = report(data, seed=19)
         self.assertEqual(first, report(data, seed=19))
         rows = by_agent(first["ranking"])
@@ -230,8 +224,8 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(first["bootstrap"]["unit"], "question")
 
     def test_process_workers_produce_exact_serial_results_with_shared_question_draws(self):
-        data = experiment(30, choose=lambda q, pair, judge, order, criterion:
-                          pair[(q + CRITERIA.index(criterion) + JUDGES.index(judge)) % 2])
+        data = experiment(30, choose=lambda q, pair, judge, order:
+                          pair[(q + (judge == "gemini" and q % 3 == 0)) % 2])
         data[2].pop()
         failures = [{"stage": "judge", "key": "failed-job", "cost_usd": 0.42}]
         serial = report(data, workers=1, failures=failures, seed=19, bootstrap_samples=10000)
@@ -384,7 +378,8 @@ class AnalysisTests(unittest.TestCase):
             self.assertIn("descriptive", markdown.lower())
             self.assertIn("question", markdown.lower())
             self.assertIn("Paired overall-index contrasts", markdown)
-            self.assertIn("Judge × criterion diagnostics", markdown)
+            self.assertIn("Judge diagnostics", markdown)
+            self.assertNotIn("Criterion:", markdown)
             self.assertIn("swapped-presentation inconsistency", markdown)
             self.assertIn("frozen answers", markdown)
             self.assertIn("not a Bayesian probability", markdown)

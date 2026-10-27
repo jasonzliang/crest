@@ -22,6 +22,8 @@ research:
     adapt_role: true
     synthesis_merge_artifacts: true
     synthesis_reserve_usd: 3.0
+    call_timeout_seconds: 600
+    timeout_seconds: 7200
     initial_concurrency: 1
     concurrency: 4
   openai:

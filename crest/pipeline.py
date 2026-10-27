@@ -8,6 +8,7 @@ import fcntl
 import importlib
 import itertools
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -23,6 +24,40 @@ TRANSPORT_SETTINGS = {'concurrency', 'initial_concurrency', 'poll_interval_secon
 
 def timestamp() -> str:
     return datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
+
+
+def _utc(value):
+    try:
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
+            return datetime.fromtimestamp(value, timezone.utc)
+        if isinstance(value, str):
+            parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            if parsed.tzinfo is not None:
+                return parsed.astimezone(timezone.utc)
+    except (ValueError, OverflowError, OSError):
+        pass
+    return None
+
+
+def _start_checkpoint(state):
+    if 'first_started_at' in state:
+        return state['first_started_at'], 'first_started_at'
+    candidates = [(parsed, state[key], key)
+                  for key in ('started_at', 'submitted_at', 'worker_started_at')
+                  if (parsed := _utc(state.get(key))) is not None]
+    return min(candidates, key=lambda item: item[0])[1:] if candidates else (None, None)
+
+
+def _job_timing(state):
+    value, source = _start_checkpoint(state)
+    start, finish = _utc(value), _utc(state.get('completed_at'))
+    duration = (finish - start).total_seconds() if start and finish and finish >= start else None
+    return {'started_at': start.isoformat() if start else None,
+            'completed_at': finish.isoformat() if finish else None,
+            'duration_seconds': duration,
+            'source': f'checkpoint:{source}/completed_at' if start and finish else 'unavailable',
+            'definition': 'Client elapsed time until saved completion, including provider queueing, polling, '
+                          'retries and interruptions; excludes local scheduling before execution.'}
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -209,7 +244,8 @@ class Pipeline:
             state = self.cache.job(task['key']).state
             result = state.get('result', {})
             if state.get('status') == 'completed' and isinstance(result.get('text'), str) and result['text'].strip():
-                answers.append({k: task[k] for k in ('key', 'question_id', 'agent')} | {'result': result})
+                answers.append({k: task[k] for k in ('key', 'question_id', 'agent')} |
+                               {'result': result, 'timing': _job_timing(state)})
         return answers
 
     def plan(self) -> dict:
@@ -248,7 +284,12 @@ class Pipeline:
             if cached:
                 result = job.state['result']
             else:
-                job.save(status='running', stage=stage, started_at=timestamp(), error=None)
+                started = timestamp()
+                first_started, _ = _start_checkpoint(job.state)
+                if not any(k != 'key' for k in job.state):
+                    first_started = started
+                job.save(status='running', stage=stage, started_at=started,
+                         first_started_at=first_started, error=None)
                 provider = self._provider(task['agent'] if stage == 'generate' else task['judge'])
                 call = provider.generate if stage == 'generate' else provider.judge
                 try:
@@ -280,7 +321,9 @@ class Pipeline:
                     if budget and cost is not None and cost > budget:
                         result.setdefault('warnings', []).append(f'Estimated cost ${cost:.2f} exceeded ${budget:.2f} target')
                         result['budget_exceeded'] = True
-                    job.save(status='completed', result=result, completed_at=timestamp(), error=None)
+                    completed = timestamp()
+                    job.save(status='completed', result=result, completed_at=completed, error=None,
+                             timing=_job_timing(job.state | {'completed_at': completed}))
                 except Exception as exc:
                     job.save(status='failed', error=f'{type(exc).__name__}: {exc}', failed_at=timestamp())
                     raise
@@ -294,6 +337,7 @@ class Pipeline:
                 row.update(result=result, cache_hit=cached)
             row['cache_record'] = str(job.path)
             row['retry_events'] = job.state.get('retry_events', [])
+            row['timing'] = _job_timing(job.state)
             return row, cached
 
     async def _run_tasks(self, tasks, stage: str, directory: Path) -> dict:

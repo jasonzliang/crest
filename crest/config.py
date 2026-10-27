@@ -27,6 +27,7 @@ DEFAULTS = {
     'research': {
         'caesar': {
             'rome_path': '../rome', 'python_executable': sys.executable,
+            'recovery_from': None,
             'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna',
             'kb_model': 'gpt-6-luna', 'budget_usd': 5.0, 'handler_budget_usd': 5.0,
             'max_iterations': 250, 'synthesis_drafts': 3, 'synthesis_iterations': 15,
@@ -35,6 +36,7 @@ DEFAULTS = {
             'adapt_role': True, 'synthesis_merge_artifacts': True,
             'max_completion_tokens': 6000, 'exploration_max_completion_tokens': 2000,
             'synthesis_reserve_usd': 3.0,
+            'call_timeout_seconds': 600,
             'timeout_seconds': 7200, 'initial_concurrency': 1, 'concurrency': 4, 'revision': 1,
         },
         'openai': {
@@ -90,6 +92,12 @@ def load_config(path: Path | str = ROOT / 'crest.yaml') -> dict:
         config[key] = str((path.parent / p).resolve())
     p = Path(config['research']['caesar']['rome_path']).expanduser()
     config['research']['caesar']['rome_path'] = str((path.parent / p).resolve())
+    recovery = config['research']['caesar']['recovery_from']
+    if recovery is not None:
+        if not isinstance(recovery, str) or not recovery.strip():
+            raise ValueError('research.caesar.recovery_from must be a nonempty path or null')
+        config['research']['caesar']['recovery_from'] = str(
+            (path.parent / Path(recovery).expanduser()).resolve())
     if '{question}' not in config['research_prompt']:
         raise ValueError('research_prompt must contain {question}')
     for section in ('research', 'judges'):
@@ -110,7 +118,7 @@ def load_config(path: Path | str = ROOT / 'crest.yaml') -> dict:
                     raise ValueError(f'{section}.{name}.{key} must be a boolean')
             if settings['initial_concurrency'] > settings['concurrency']:
                 settings['initial_concurrency'] = settings['concurrency']
-            for key in ('budget_usd', 'handler_budget_usd', 'timeout_seconds', 'poll_interval_seconds',
+            for key in ('budget_usd', 'handler_budget_usd', 'timeout_seconds', 'call_timeout_seconds', 'poll_interval_seconds',
                         'retry_backoff_base_seconds', 'retry_backoff_max_seconds', 'synthesis_reserve_usd'):
                 if key in settings and (not isinstance(settings[key], (int, float)) or
                                         isinstance(settings[key], bool) or not math.isfinite(settings[key]) or settings[key] <= 0):

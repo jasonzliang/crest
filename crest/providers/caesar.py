@@ -26,7 +26,7 @@ SETTINGS = frozenset({
     "synthesis_iterations", "retrieval_chunks", "max_completion_tokens",
     "exploration_max_completion_tokens", "kb_max_completion_tokens", "max_input_tokens",
     "budget_usd", "handler_budget_usd", "handler_cost_limit", "timeout_seconds",
-    "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts",
+    "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts", "recovery_from",
 })
 
 
@@ -42,9 +42,19 @@ def identity_metadata(settings: dict) -> dict:
         digest.update(b"\0")
     # Adapter/worker edits invalidate even when the manually maintained version is unchanged.
     own_digest = hashlib.sha256(Path(__file__).read_bytes() + Path(__file__).parents[1].joinpath("caesar_worker.py").read_bytes()).hexdigest()
-    return {"adapter_version": ADAPTER_VERSION, "protocol_version": PROTOCOL_VERSION,
+    metadata = {"adapter_version": ADAPTER_VERSION, "protocol_version": PROTOCOL_VERSION,
             "rome_source_sha256": digest.hexdigest(), "adapter_source_sha256": own_digest,
             "rome_source_available": bool(files)}
+    if settings.get("recovery_from"):
+        source = Path(settings["recovery_from"]).resolve()
+        paths = [source / "caesar-request.json", source / "caesar-result.json"]
+        paths += sorted((source / "caesar-output" / "__rome__").glob("*.checkpoint.json"))
+        paths += sorted(path for path in (source / "caesar-output" / "chroma").rglob("*") if path.is_file())
+        recovery_digest = hashlib.sha256()
+        for path in paths:
+            recovery_digest.update(str(path.relative_to(source)).encode() + b"\0" + path.read_bytes() + b"\0")
+        metadata["recovery_source_sha256"] = recovery_digest.hexdigest()
+    return metadata
 
 
 async def _notify_rate_limits(job, usage: dict) -> None:
@@ -137,7 +147,7 @@ async def generate(prompt: str, settings: dict, job, *, client=None) -> dict:
     if job.state.get("remote_status") in {"timed_out", "interrupted", "failed"}:
         raise RuntimeError("Caesar worker was interrupted or failed; review the saved audit before retrying")
     child = None
-    timeout = float(settings.get("timeout_seconds", 1800))
+    timeout = float(settings.get("timeout_seconds", 7200))
     started = job.state.get("worker_started_at", time.time())
     if job.state.get("worker_pid"):
         if not _worker_alive(job.state):

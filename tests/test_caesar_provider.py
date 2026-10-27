@@ -61,6 +61,8 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     assert first["LLMHandler"]["model"] == "gpt-6.1-sol"
     assert first["LLMHandler"]["cost_limit"] == 5
     assert first["LLMHandler"]["max_completion_tokens"] == 6000
+    assert first["LLMHandler"]["timeout"] == 600
+    assert first["CaesarAgent"]["exploration_llm_config"]["timeout"] == 600
     assert first["LLMHandler"]["max_input_tokens"] == 64000
     assert first["CaesarAgent"]["exploration_llm_config"]["max_completion_tokens"] == 2000
     assert first["CaesarAgent"]["exploration_llm_config"]["model"] == "gpt-6-luna"
@@ -963,3 +965,109 @@ def test_latest_luna_usage_uses_verified_cache_and_long_context_prices(tmp_path,
     with audit.installed(SDK):
         SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6-luna", "messages": [], "max_completion_tokens": 100}))
     assert audit.snapshot()["cost_usd"] == pytest.approx(expected)
+
+
+def recovery_source(tmp_path):
+    import networkx as nx
+    source = tmp_path / "old-job"
+    output = source / "caesar-output"
+    (output / "__rome__").mkdir(parents=True)
+    (output / "chroma").mkdir()
+    (output / "chroma" / "chroma.sqlite3").write_bytes(b"copied database")
+    (output / "chroma" / "chroma.sqlite3-wal").write_bytes(b"preserved WAL")
+    graph = nx.DiGraph()
+    graph.add_node("https://seed.test", insights="saved knowledge")
+    checkpoint = {"iteration": 2, "role": "Your role: saved role", "current_url": "https://seed.test", "url_stack": ["https://seed.test"],
+        "visited_urls": {"https://seed.test": 1}, "web_searches_used": 12, "reseeds_used": 0,
+        "traversal_history": [], "graph": nx.node_link_data(graph, edges="edges"),
+        "config": {"starting_query": "Q", "starting_url": "https://seed.test", "allowed_domains": ["*"]},
+        "cost": {"accumulated_cost": .44, "call_count": 19, "sessions": []}}
+    worker.atomic_json(output / "__rome__" / "agent_old.checkpoint.json", checkpoint)
+    worker.atomic_json(source / "caesar-request.json", {"prompt": "Q", "worker_id": "original-worker", "job_key": "original-job", "settings": {"budget_usd": 5}})
+    worker.atomic_json(source / "caesar-result.json", {"status": "failed", "error": "ambiguous timeout", "usage": {"known_cost_usd": .45898205, "unknown_cost": True, "budget_target_usd": 5,
+        "events": [{"status": "failed", "unknown_cost": True, "reserved_usd": .2114525}], "in_flight": []}})
+    return source
+
+
+def test_explicit_recovery_copies_store_and_uses_rome_checkpoint_without_exploration(tmp_path, monkeypatch):
+    audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+        from caesar.checkpoint import CheckpointManager
+    import networkx as nx
+    source = recovery_source(tmp_path)
+    original = {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
+    instances = []
+    class Agent(FakeAgent):
+        def __init__(self, name, repository, config):
+            instances.append(self)
+            self.repository, self.name, self.config = repository, name, config
+            self.starting_query, self.starting_url = "Q", config["CaesarAgent"]["starting_url"]
+            self.allowed_domains = ["*"]
+            self.current_iteration, self.web_searches_used, self.reseeds_used = 0, 0, 0
+            self.traversal_history, self.visited_urls, self.url_stack = [], {}, [self.starting_url]
+            self.current_depth, self.current_url = 1, self.starting_url
+            self.graph, self.role, self.load_saved_role = nx.DiGraph(), "default role", True
+            self.llm_handler = SimpleNamespace(accumulated_cost=0, call_count=0)
+            self.kb_manager = SimpleNamespace(size=lambda: 1)
+            self.synthesizer = SimpleNamespace(synthesize_artifact=lambda: artifact())
+            assert config["CaesarAgent"]["max_iterations"] == 0
+            assert config["CaesarAgent"]["adapt_role"] is False
+            assert config["LLMHandler"]["cost_limit"] == 4.3
+            assert CheckpointManager(self).load()
+            assert self.role == "Your role: saved role"
+            assert self.current_iteration == 2
+            assert self.llm_handler.accumulated_cost == 0
+            assert Path(repository, "chroma", "chroma.sqlite3-wal").read_bytes() == b"preserved WAL"
+        def get_log_dir(self): return str(Path(self.repository) / "__rome__")
+        def get_id(self): return "agent_" + self.name
+        def explore(self): pytest.fail("recovery must not perform exploration")
+        def shutdown(self): pass
+    @contextmanager
+    def runtime(settings, audit): yield Agent
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    path = tmp_path / "new-job" / "result.json"
+    request = {"prompt": "Q", "settings": {"recovery_from": str(source), "budget_usd": 4.3, "handler_budget_usd": 4.3}, "output_dir": str(path.parent / "output"), "job_key": "new-job"}
+    assert worker.run_worker(request, path) == 0
+    result = json.loads(path.read_text())["result"]
+    assert instances
+    assert result["raw"]["recovery"]["previous_known_cost_usd"] == .45898205
+    assert result["raw"]["recovery"]["previous_unknown_reserved_usd"] == .2114525
+    assert result["raw"]["recovery"]["budgeted_total_exposure_usd"] == pytest.approx(4.97043455)
+    assert result["cost_usd"] is None
+    assert original == {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
+
+
+@pytest.mark.parametrize("prompt,budget", [("wrong question", 4.3), ("Q", 5)])
+def test_recovery_rejects_wrong_question_or_excess_new_budget(tmp_path, prompt, budget):
+    source = recovery_source(tmp_path)
+    config = worker.build_config(prompt, {}, tmp_path / "new-output", "new-id")
+    with pytest.raises(ValueError):
+        worker.prepare_synthesis_recovery(prompt, {"recovery_from": str(source), "budget_usd": budget}, tmp_path / "new-output", "new-key", config)
+
+
+@pytest.mark.parametrize("timeout", [600, 37])
+def test_runtime_timeout_reaches_sdk_even_when_library_supplies_shorter_value(tmp_path, timeout):
+    import openai
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome"), "call_timeout_seconds": timeout}, audit):
+        with openai.OpenAI(api_key="offline", timeout=1) as client:
+            assert client.timeout == timeout
+            assert client.with_options(timeout=1).timeout == timeout
+    assert audit.snapshot()["successful_calls"] == 0
+
+
+def test_recovery_source_content_is_part_of_cache_identity(tmp_path):
+    source = recovery_source(tmp_path)
+    settings = {"rome_path": str(tmp_path), "recovery_from": str(source)}
+    old = caesar.identity_metadata(settings)
+    (source / "caesar-output" / "chroma" / "chroma.sqlite3-wal").write_bytes(b"different saved insights")
+    assert old != caesar.identity_metadata(settings)
+
+
+def test_recovery_cannot_overwrite_its_original_job(tmp_path):
+    source = recovery_source(tmp_path)
+    original = {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
+    with pytest.raises(ValueError):
+        worker.run_worker({"prompt": "Q", "settings": {"recovery_from": str(source), "budget_usd": 4.3},
+            "output_dir": str(source / "caesar-output"), "job_key": "new-job"}, tmp_path / "new-result.json")
+    assert original == {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
