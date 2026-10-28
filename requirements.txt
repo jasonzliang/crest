@@ -1,5 +1,5 @@
-# Runtime dependencies; kept in sync with pyproject.toml.
+# Runtime dependencies; pyproject.toml reads this file during packaging.
 httpx>=0.28,<1
-PyYAML>=6,<7
-psutil>=5.9
 markdown-it-py[linkify]>=4,<5
+psutil>=5.9
+PyYAML>=6,<7

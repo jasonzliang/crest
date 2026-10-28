@@ -1,23 +1,42 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "crest-research"
 version = "0.2.0"
 description = "Cached research generation, binary pairwise judging, and creativity ranking"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
-dependencies = ["httpx>=0.28,<1", "PyYAML>=6,<7", "psutil>=5.9", "markdown-it-py[linkify]>=4,<5"]
+dynamic = ["dependencies"]
 
 [project.optional-dependencies]
-test = ["pytest>=8", "pytest-xdist>=3.8,<4"]
-ais = ["PyMuPDF>=1.24,<2"]
+# The pymupdf import name was introduced in 1.24.3.
+ais = ["PyMuPDF>=1.24.3,<2"]
+# Includes PDF and layout checks; Caesar integration tests also need ../rome installed.
+test = [
+    "cssselect2",
+    "lxml",
+    "PyMuPDF>=1.24.3,<2",
+    "pytest>=8",
+    "pytest-xdist>=3.8,<4",
+    "tinycss2",
+]
 
 [project.scripts]
 crest = "crest.cli:main"
 
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
 [tool.setuptools.packages.find]
 include = ["crest", "crest.providers", "crest_ais", "crest_ais.providers"]
+namespaces = false
 
 [tool.setuptools.package-data]
 crest = ["prompts/*.txt", "data/*.jsonl", "configs/*.yaml"]
