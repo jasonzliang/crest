@@ -71,7 +71,7 @@ def _row(task, parent, cached):
     row = {k: task[k] for k in ('key', 'question_id', 'pair', 'order', 'judge',
                                  'answer_keys', 'answer_hashes')}
     row.update({k: task[k] for k in ('protocol_version', 'presentation_version',
-                                     'presented_answer_hashes') if k in task})
+                                     'presented_answer_hashes', 'rubric_kind') if k in task})
     attempts = parent.state.get('attempts')
     if attempts is None:  # A valid historical single-attempt checkpoint needs no mutation.
         attempts = [_attempt_record(parent, 1)]

@@ -3,15 +3,15 @@
   "judging_protocol": "nus-overall-pairwise-v3",
   "sampling_version": "crest-ais-v1",
   "presentation_version": "citation-neutral-v1",
-  "design": "Freeze eligible released-paper pools. Uniformly sample min(M,Na*Nb) paper pairs per scientist matchup, M=10 seed2026. All scientist matchups (ten for five scientists), two judges, both orders. Each judge gives ONE overall A/B creativity winner guided jointly by N/U/S; no criterion winners, criterion voting or numeric weighting. Average overall votes within matchups and weight opponents equally. Explicitly labeled human-AI co-discovery papers excluded from the primary pool. No fabricated missing votes. No Markdown files.",
-  "plan_fields": "version,judging_protocol,presentation_version,sampling_version,created_at,seed,pairs_per_matchup,agents (id->display),judges (id->settings),papers (selected records),catalog (all records),strata,selection,jobs,rubric,rubric_sha256,fingerprint",
+  "design": "Freeze eligible released-paper pools. Uniformly sample min(M,Na*Nb) paper pairs per scientist matchup, M=10 seed2026. All scientist matchups (ten for five scientists), two judges, both orders. Each judge gives ONE overall A/B creativity winner under the selected shared rubric (NUS by default, AUT-inspired optional); no criterion winners, criterion voting or numeric weighting. Average overall votes within matchups and weight opponents equally. Explicitly labeled human-AI co-discovery papers excluded from the primary pool. No fabricated missing votes. No Markdown files.",
+  "plan_fields": "version,judging_protocol,presentation_version,sampling_version,created_at,seed,pairs_per_matchup,agents (id->display),judges (id->settings),papers (selected records),catalog (all records),strata,selection,jobs,rubric,rubric_sha256,fingerprint,rubric_kind (AUT plans; absent on preserved NUS plans)",
   "paper_fields": "id,agent,title,pdf_path relative to crest_ais,source_url,pdf_url,sha256,topic,pages,blind_text_path,extraction_warnings,eligible_primary; preserve other metadata",
   "strata_fields": "agents [a,b],population_pairs,sampled_pairs",
-  "job_fields": "key,pair_id,agents [canonical a,b],papers [canonical paper_a,paper_b],order [paper_for_A,paper_for_B],judge,settings,prompt,judging_protocol,presentation_version,answer_hashes [SHA256 of raw ordered A/B text],presented_answer_hashes [SHA256 of ordered A/B judge presentations]",
+  "job_fields": "key,pair_id,agents [canonical a,b],papers [canonical paper_a,paper_b],order [paper_for_A,paper_for_B],judge,settings,prompt,judging_protocol,presentation_version,answer_hashes [SHA256 of raw ordered A/B text],presented_answer_hashes [SHA256 of ordered A/B judge presentations],rubric_kind (AUT jobs; absent on preserved NUS jobs)",
   "presentation": "Use the shared local citation-neutral-v1 transform to hide URL destinations and provider citation markers in judge inputs while preserving substantive prose and citation labels. Keep raw manuscript text unchanged. Include raw and presented answer hashes, presentation version and judging protocol in each new job's content-addressed identity. Reject pairs whose judge presentations are identical. No URL fetching or source verification.",
   "results": "list of {key,verdict:{reason:nonempty comparative str passing current reason screens,winner:A|B},cost_usd:float|null,usage,model,warnings}; failed or rejected jobs absent",
-  "reason_validation": "For new v3 live outputs, cached completions and analysis, require a reason that refers to both answers, contains comparative language and does not obviously end unfinished or mid-sentence. These modest deterministic syntax screens do not impose a word-count threshold or verify facts, full N/U/S coverage, substantive quality or winner-reason consistency. The prompt asks judges to aim for 150-300 words in a complete comparative paragraph. Rejected paid outputs retain their costs and become terminal invalid_verdict without automatic paid resubmission.",
-  "legacy_compatibility": "Frozen crest-ais-overall-v2 plans and saved results retain their exact original prompts, job identities and structural-only verdict parsing, including the old nonempty-reason rule. They remain readable and analyzable; frozen v2 plan validation reconstructs the original v2 prompt bytes and keys. The unchanged crest-ais-v1 sampling version preserves the paper-pair draw for new v3 plans. Existing saved runs and reports are not rewritten, and live dispatch requires the current v3 plan protocol.",
+  "reason_validation": "For new v3 live outputs, cached completions and analysis, require a reason that refers to both answers, contains comparative language and does not obviously end unfinished or mid-sentence. These modest deterministic syntax screens do not impose a word-count threshold or verify facts, full rubric coverage, substantive quality or winner-reason consistency. The prompt asks judges to aim for 150-300 words in a complete comparative paragraph. Rejected paid outputs retain their costs and become terminal invalid_verdict without automatic paid resubmission.",
+  "legacy_compatibility": "Frozen crest-ais-overall-v2 plans and saved results retain their exact original prompts, job identities and structural-only verdict parsing, including the old nonempty-reason rule. They remain readable and analyzable; frozen v2 plan validation reconstructs the original v2 prompt bytes and keys. The unchanged crest-ais-v1 sampling version preserves the paper-pair draw for new v3 plans. Existing saved runs and reports are not rewritten, and live dispatch requires the current v3 plan protocol. NUS v3 prompt bytes and job identities are also preserved. AUT v1 uses the v3 manuscript envelope with its own judging_protocol and rubric_kind.",
   "analysis_api": "analyze(plan:dict,results:list[dict])->dict",
   "report_fields": {
     "version": "str",
@@ -29,10 +29,22 @@
     "catalog": "all records",
     "judgments": "joined results including key,pair_id,order,judge,verdict,model,cost_usd",
     "uncertainty": "method,note",
-    "limitations": "list"
+    "limitations": "list",
+    "rubric_kind": "nus|aut-inspired; historical reports without the field are NUS"
   },
   "report_api": "write_report(report:dict,destination:Path,*,data_root:Path)->None. Self-contained shared HTML styling, overall-ranking bars, matchup heatmap, judge comparison, coverage, selected PDFs, and verbatim joint reasons. No N/U/S score charts. Escape text. Null means unavailable. All numbers derive from saved analysis.",
   "limits": "Fixed public-paper comparison, not a controlled benchmark of future systems. Topic/date/backbone/compute/publication-selection confounds. PDF text excludes visual plot inspection. Small pools include two eligible v3 papers and three v2 papers; show these limits prominently. Sampling uncertainty conditional on fixed released pool and judge instrument, not system generalization.",
   "test_plan": "Meaningful tests before implementation: sample reproducibility/inclusion; A/B remapping; matchup macro averages under unequal counts; partial blocks/no fake ranks; malformed/duplicate results; HTML no-results/escaping; cached resume and content changes. Then real bounded judging and reproducible report.",
-  "execution": "Default2 workers perprovider; explicit --workers-per-judge1..16 is an operational override recorded in judging.json without changing frozen prompts/settings/job keys. Respect provider backoff. Paid prior attempts remain accounted but never contribute new ranking decisions."
+  "execution": "Default2 workers perprovider; explicit --workers-per-judge1..16 is an operational override recorded in judging.json without changing frozen prompts/settings/job keys. Respect provider backoff. Paid prior attempts remain accounted but never contribute new ranking decisions.",
+  "supported_judging_protocols": [
+    "nus-overall-pairwise-v3",
+    "aut-inspired-overall-pairwise-v1"
+  ],
+  "rubric_selection": {
+    "default": "nus",
+    "canonical_directory": "crest/prompts/",
+    "nus": "nus_pairwise_v2.txt",
+    "aut-inspired": "aut_research_pairwise_v1.txt",
+    "policy": "Both pipelines share canonical rubric sources. Old AIS prompt paths are compatibility aliases. AUT is explicitly marked and uses separate protocol/job identities; mixed families are rejected."
+  }
 }

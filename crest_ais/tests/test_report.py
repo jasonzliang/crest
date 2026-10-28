@@ -77,6 +77,62 @@ def complete(report):
     return report
 
 
+def test_aut_report_labels_criteria_and_limits_instead_of_nus(report, tmp_path):
+    complete(report)
+    report['rubric_kind'] = 'aut-inspired'
+    row = judgment()
+    row.update(judging_protocol='aut-inspired-overall-pairwise-v1', rubric_kind='aut-inspired')
+    report['judgments'] = [row]
+    html = render(report, tmp_path)
+    assert 'AUT-inspired' in html
+    assert all(f'<dt>{name}</dt>' in html for name in ('Fluency', 'Flexibility', 'Originality'))
+    assert 'qualitative adaptation' in html
+    assert 'not comparable across paper topics' in html
+    assert 'preferences under this rubric' in html
+    assert 'aut-inspired-rubric.html' in html
+    assert 'New, Useful' not in html and 'Surprising jointly' not in html
+    assert '<dt>Elaboration</dt>' not in html
+
+
+def test_legacy_nus_report_rendering_matches_explicit_family(report, tmp_path):
+    legacy = render(report, tmp_path)
+    report['rubric_kind'] = 'nus'
+    assert render(report, tmp_path) == legacy
+    assert '<dt>Useful</dt>' in legacy and 'AUT-inspired' not in legacy
+
+
+@pytest.mark.parametrize('kind', ['unknown', 'mislabeled', 'mixed', 'row_mislabeled', 'missing_protocol', 'unknown_protocol', 'conflicting_protocols', 'bad_reason'])
+def test_report_rejects_inconsistent_rubric_metadata_before_overwriting(report, tmp_path, kind):
+    report['rubric_kind'] = 'aut-inspired'
+    row = judgment()
+    row.update(judging_protocol='aut-inspired-overall-pairwise-v1', rubric_kind='aut-inspired')
+    report['judgments'] = [row]
+    if kind == 'unknown':
+        report['rubric_kind'] = 'unrecognized'
+    elif kind == 'mislabeled':
+        report['rubric_kind'] = 'nus'
+    elif kind == 'mixed':
+        other = deepcopy(row)
+        other.update(key='j2', judging_protocol='nus-overall-pairwise-v3', rubric_kind='nus')
+        report['judgments'].append(other)
+    elif kind == 'row_mislabeled':
+        row['rubric_kind'] = 'nus'
+    elif kind == 'missing_protocol':
+        row.pop('judging_protocol')
+    elif kind == 'unknown_protocol':
+        row['judging_protocol'] = 'unsupported-overall-v1'
+    elif kind == 'conflicting_protocols':
+        row['protocol_version'] = 'nus-overall-pairwise-v3'
+    else:
+        row['verdict']['reason'] = 'Return JSON only.'
+    destination = tmp_path / 'docs/comparison.html'
+    destination.parent.mkdir()
+    destination.write_text('previous report')
+    with pytest.raises(ValueError):
+        render(report, tmp_path)
+    assert destination.read_text() == 'previous report'
+
+
 def test_no_judgments_cannot_turn_missing_scores_into_ranked_zeroes(report, tmp_path):
     html = render(report, tmp_path)
     doc = Document(html)

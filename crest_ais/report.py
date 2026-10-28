@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 from urllib.parse import quote, urlsplit
 
+from crest.rubrics import AUT_KIND, NUS_KIND, guidance_names, protocol_rubric_kind
+
 from .navigation import CSS as NAVIGATION_CSS, site_header
 from .protocol import validate_verdict
 
@@ -157,11 +159,14 @@ def _overall(report, ready, colors):
                      'Dot = observed win percentage · 50% = an even split</p>')
     opponents = max(0, len(report.get("agents", {})) - 1)
     parts.append('<p class="chart-note">Each judgment selects one overall winner, considering '
-                 'New, Useful, and Surprising jointly. We average the win percentages against '
+                 f'{guidance_names(report.get("rubric_kind", NUS_KIND))} jointly. We average the win percentages against '
                  f'the other {_count(opponents)} scientist{ "s" if opponents != 1 else ""}, '
                  'giving each opponent equal weight even when sampled pair counts differ. '
                  'This can differ from the share of all raw votes. Scores describe these papers '
                  'and opponents; equal scores share a rank.</p>')
+    if report.get('rubric_kind') == AUT_KIND:
+        parts.append('<p class="small">Scores are preferences under this rubric, '
+                     'not standardized AUT scores or latent creativity estimates.</p>')
     if ready:
         exploratory = report.get("uncertainty", {}).get("inference_scope") == "exploratory_fixed_size_reference"
         parts.append('<p class="small">These judge preferences do not measure absolute creativity. '
@@ -216,7 +221,30 @@ def _sampling_uncertainty(report, ready):
     return "".join(parts)
 
 
-def _concepts():
+def _concepts(report):
+    if report.get('rubric_kind') == AUT_KIND:
+        definitions = {
+            'Fluency': 'Expressed coverage when the same task explicitly requests multiple ideas under comparable requirements. Raw idea counts are not comparable across paper topics and do not reveal generative fluency.',
+            'Flexibility': 'Meaningfully different conceptual directions and relationships that contribute to the research task; focused work need not offer unrequested alternatives.',
+            'Originality': 'The central contribution and substantive relationships relative to identifiable precedents in the work’s field. Unfamiliarity alone does not establish novelty.',
+        }
+        parts = ['<div id="concepts" aria-labelledby="concepts-heading">'
+                 '<h3 id="concepts-heading">AUT-inspired: Fluency, Flexibility, and Originality</h3>'
+                 '<p class="small">This is a qualitative adaptation for existing research outputs. '
+                 'The considerations guide one joint judgment and are not scored separately. '
+                 'Elaboration matters when it supports the contribution, not as word count.</p>'
+                 '<dl class="concept-definitions">']
+        for concept, definition in definitions.items():
+            parts.append(f'<div><dt>{concept}</dt><dd>{_text(definition)}</dd></div>')
+        parts.append('</dl><p class="small">Conceptual foundations: '
+                     '<a href="https://digitalcommons.unomaha.edu/psychfacpub/259/">'
+                     'Reiter-Palmon, Forthmann, and Barbot (2019)</a>, divergent-thinking scoring choices; '
+                     '<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4001084/">'
+                     'Benedek et al. (2013)</a>, subjective top-scoring and fluency–originality confounds. '
+                     'These studies do not validate this adaptation for scientific papers or its judgments '
+                     'against domain experts. <a href="aut-inspired-rubric.html">'
+                     'AUT-inspired rubric and limits</a></p></div>')
+        return ''.join(parts)
     definitions = {
         "new": "How the judge relates the paper’s least familiar contribution to earlier research. The judge’s memory cannot establish historical novelty.",
         "useful": "Whether the paper explains how its approach works and provides evidence for its claimed benefit.",
@@ -624,14 +652,15 @@ def _judgments(report, data_root, destination):
 
 
 def _method(report):
+    guidance = guidance_names(report.get('rubric_kind', NUS_KIND))
     parts = ['<section id="method" aria-labelledby="method-heading"><h2 id="method-heading">'
              'How the comparison works</h2><p>The lists of eligible released papers are saved '
              'before sampling. The separately labeled human–AI co-discovery paper is excluded. '
              'Distinct paper pairs are sampled uniformly within each scientist '
-             'matchup. Each judge chooses one overall creativity winner, considering New, Useful, '
-             'and Surprising jointly, in both paper orders. Each complete paper pair contributes '
+             f'matchup. Each judge chooses one overall creativity winner, considering {guidance} '
+             'jointly, in both paper orders. Each complete paper pair contributes '
              'four overall votes. Votes are averaged within the paper pair, then paper pairs '
-             'within a matchup. Each opponent matchup receives equal weight.</p>', _concepts(),
+             'within a matchup. Each opponent matchup receives equal weight.</p>', _concepts(report),
              '<h3>What this comparison leaves uncertain</h3><ul class="key-limits">'
              '<li>Topics, release dates, underlying AI models, computing resources, and which papers '
              'each team chose to release differ '
@@ -728,8 +757,17 @@ JUDGMENT_SCRIPT = """
 
 def write_report(report: dict, destination: Path, *, data_root: Path) -> None:
     """Write a self-contained report; links are relative to its final location."""
+    family = report.get('rubric_kind', NUS_KIND)
+    if family not in (NUS_KIND, AUT_KIND):
+        raise ValueError('Unsupported report rubric kind')
     for judgment in report.get("judgments", []):
-        validate_verdict(judgment.get("verdict"))
+        row_family = protocol_rubric_kind(judgment.get('judging_protocol', judgment.get('protocol_version')))
+        if row_family != family or judgment.get('rubric_kind', row_family) != family:
+            raise ValueError('Judgment rubric kind differs from the report')
+        for field in ('judging_protocol', 'protocol_version'):
+            if field in judgment and protocol_rubric_kind(judgment[field]) != family:
+                raise ValueError('Judgment protocol differs from the report rubric')
+        validate_verdict(judgment.get("verdict"), require_reason_quality=family == AUT_KIND)
     destination, data_root = Path(destination), Path(data_root)
     coverage = report.get("coverage", {})
     ready = _ready(report)
@@ -741,6 +779,9 @@ def write_report(report: dict, destination: Path, *, data_root: Path) -> None:
     introduction = (f'This completed comparison uses {sample}' if ready else
                     f'This comparison has not been judged yet. The plan uses {sample}' if completed == 0 else
                     f'This comparison is in progress and uses {sample}')
+    if family == AUT_KIND:
+        introduction += (' Judgments use an AUT-inspired qualitative adaptation for expressed research '
+                         'contributions, not a standardized AUT administration or a measure of author ability.')
     parts = ['<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width, initial-scale=1">',
              '<meta name="color-scheme" content="light"><title>AI scientist comparison · CREST</title>',

@@ -13,7 +13,8 @@ from itertools import combinations
 import math
 from statistics import fmean, variance
 
-from crest_ais.protocol import PROTOCOL_VERSION, requires_reason_quality, validate_plan_fingerprint, validate_verdict
+from crest_ais.protocol import PROTOCOL_VERSION, plan_rubric_kind, requires_reason_quality, validate_plan_fingerprint, validate_verdict
+from crest.rubrics import AUT_KIND, protocol_rubric_kind
 
 
 def _identity(value, name):
@@ -32,6 +33,7 @@ def _validate_plan(plan):
     """Verify the schedule itself cannot silently omit an expected judge/order."""
     if not isinstance(plan, dict):
         raise ValueError("plan must be an object")
+    plan_rubric_kind(plan)
     agents, judges = plan.get("agents"), plan.get("judges")
     if not isinstance(agents, dict) or len(agents) < 2:
         raise ValueError("plan must contain at least two agents")
@@ -151,6 +153,12 @@ def _validate_results(results, jobs, *, require_reason_quality=False):
             raise ValueError(f"unknown result key: {key}")
         if key in validated:
             raise ValueError(f"duplicate result key: {key}")
+        family = protocol_rubric_kind(jobs[key].get('judging_protocol'))
+        if result.get('rubric_kind', family) != family:
+            raise ValueError('Result rubric kind differs from its frozen job')
+        for field in ('judging_protocol', 'protocol_version'):
+            if field in result and protocol_rubric_kind(result[field]) != family:
+                raise ValueError('Result protocol differs from its frozen rubric')
         verdict = validate_verdict(result.get("verdict"), require_reason_quality=require_reason_quality)
         cost = result.get("cost_usd")
         if cost is not None and (isinstance(cost, bool) or not isinstance(cost, (int, float))
@@ -297,6 +305,7 @@ def analyze(plan: dict, results: list[dict]) -> dict:
     if isinstance(plan, dict) and "fingerprint" in plan:
         validate_plan_fingerprint(plan)
     agents, judges, catalog, selected, strata, jobs, blocks = _validate_plan(plan)
+    family = plan_rubric_kind(plan)
     results_by_key = _validate_results(results, jobs, require_reason_quality=requires_reason_quality(plan))
     extension = plan.get("extension")
     posthoc = isinstance(extension, dict) and extension.get("stage") == "post_initial_results"
@@ -385,10 +394,12 @@ def analyze(plan: dict, results: list[dict]) -> dict:
         if key in results_by_key:
             result = results_by_key[key]
             judgments.append({**deepcopy(result), "pair_id": job["pair_id"], "agents": deepcopy(job["agents"]),
+                              **({'judging_protocol': job['judging_protocol'], 'rubric_kind': family}
+                                 if family == AUT_KIND else {}),
                               "papers": deepcopy(job["papers"]), "order": deepcopy(job["order"]),
                               "judge": job["judge"], "model": result.get("model"),
                               "cost_usd": result.get("cost_usd"), "used_in_scores": job["pair_id"] in complete_blocks})
-    report = {"version": plan.get("version", PROTOCOL_VERSION),
+    report = {"version": plan.get("version", PROTOCOL_VERSION), "rubric_kind": family,
             "generated_at": datetime.now(timezone.utc).isoformat(), "status": status,
             "agents": deepcopy(agents), "judges": deepcopy(judges), "selection": deepcopy(plan.get("selection", {})),
             "coverage": {"expected_jobs": len(jobs), "completed_jobs": completed,
@@ -422,7 +433,9 @@ def analyze(plan: dict, results: list[dict]) -> dict:
                 "PDF text extraction excludes visual plot inspection and may omit equations, tables, or other content.",
                 "Only two judges and two answer orders define the fixed instrument; their errors and rubric validity are not quantified by sampling bands.",
                 "Only complete four-judgment paper-pair blocks contribute scores. Partial completion may be selective; primary ranks require the entire plan.",
-                "Opponent matchups receive equal weight, regardless of released collection sizes or sampled pair counts. Each verdict is one overall creativity choice guided jointly by New, Useful, and Surprising.",
+                ("Opponent matchups receive equal weight, regardless of released collection sizes or sampled pair counts. Each verdict is one overall creativity choice guided jointly by Fluency, Flexibility, and Originality. These papers address different research tasks, so expressed idea counts confer no fluency advantage. This AUT-inspired research-product comparison is not a standardized AUT score or a measure of divergent-thinking capacity."
+                 if family == AUT_KIND else
+                 "Opponent matchups receive equal weight, regardless of released collection sizes or sampled pair counts. Each verdict is one overall creativity choice guided jointly by New, Useful, and Surprising."),
                 "Small eligible pools, including Agentic v3's two autonomous papers when present, sharply limit representativeness.",
                 "Costs are usage-based estimates rather than provider invoices; missing usage is unknown, not free, and can leave charges unrecorded.",
             ]}

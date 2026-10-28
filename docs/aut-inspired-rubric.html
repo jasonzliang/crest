@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AUT-inspired rubric · CREST</title><style>
+.skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+#main-content>section{margin:2.2rem 0 0;padding-top:1.5rem}
+#main-content>section~section{border-top:1px solid var(--line);padding-top:2rem}
+#main-content>nav[aria-label="Report contents"]{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin:1.5rem 0;padding:1rem 0;border-bottom:1px solid var(--line)}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main ul,main ol{padding-left:1.5rem}main li{margin:.35rem 0}
+main blockquote{margin:1rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent);background:var(--wash)}
+main hr{margin:1.5rem 0;border:0;border-top:1px solid var(--line)}
+main img,main video{max-width:100%;height:auto}main svg{max-width:100%}
+main .archive-note{margin:1rem 0;padding:.8rem 1rem;border-left:3px solid #997024;background:#fbf6e9;color:var(--ink);font-size:.9rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere;background:#eef3f5;padding:.1rem .25rem;border-radius:3px}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal;background:transparent;padding:0;border-radius:0}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style></head><body><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="deep-research-creativity.html">Deep research comparison</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header><main id="main-content"><h1>AUT-inspired rubric</h1>
+<p>This rubric compares the creative ideas expressed in research answers and scientific papers. It borrows fluency, flexibility, and originality from the Alternate Uses Task (AUT), but produces one qualitative A/B preference—not a standardized AUT score or a measure of the creator’s ability.</p>
+<section id="shared"><h2>One source for both pipelines</h2>
+<div class="table-scroll"><table><thead><tr><th scope="col">Rubric</th><th scope="col">Shared source</th><th scope="col">Use</th></tr></thead><tbody>
+<tr><th scope="row">NUS</th><td><a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a></td><td>The default: New, Useful, and Surprising considered jointly.</td></tr>
+<tr><th scope="row">AUT-inspired</th><td><a href="../crest/prompts/aut_research_pairwise_v1.txt">aut_research_pairwise_v1.txt</a></td><td>An optional lens on expressed ideas, conceptual range, and originality.</td></tr>
+</tbody></table></div>
+<p>Both <code>crest</code> and <code>crest_ais</code> use the canonical files in <code>crest/prompts/</code>. The old AIS rubric paths remain compatibility aliases. Selecting another rubric creates different judging inputs; existing saved judgments and published rankings are unchanged.</p></section>
+<section id="criteria"><h2>What the judge considers</h2>
+<div class="table-scroll"><table><thead><tr><th scope="col">Consideration</th><th scope="col">Application to research outputs</th><th scope="col">Limit</th></tr></thead><tbody>
+<tr><th scope="row">Fluency</th><td>Distinct, relevant ideas expressed when a shared task explicitly asks for several ideas under comparable submission requirements.</td><td>This is coverage of the request, not measured generation ability. Raw counts confer no advantage for finished papers or different-topic comparisons.</td></tr>
+<tr><th scope="row">Flexibility</th><td>Substantively different mechanisms, assumptions, functions, or perspectives that contribute to the task.</td><td>Extra datasets, section headings, or named disciplines do not automatically add directions. A focused contribution can be stronger than a broad list.</td></tr>
+<tr><th scope="row">Originality</th><td>Unusual central contributions and meaningful new relationships, judged against identifiable relevant approaches.</td><td>Unfamiliarity, obscure wording, or an idea’s absence from the other answer does not establish historical novelty or statistical rarity.</td></tr>
+</tbody></table></div>
+<p>Elaboration helps the judge understand what an idea contributes; it is not a fourth score. The judge weighs the central contribution and the whole output, without numeric weights, criterion winners, or an automatic preference for the longest list.</p>
+<p>Coherence and evidence clarify what a contribution proposes or establishes. An exploratory hypothesis need not demonstrate a finished system. Hypothetical premises supplied by the question are accepted; an answer cannot assume away the task’s requirements.</p></section>
+<section id="evidence"><h2>What the research supports</h2>
+<ul>
+<li><strong>AUT has several scoring methods.</strong> Fluency, flexibility, and originality are common dimensions, but instructions, response validity, scoring level, and aggregation all matter. The adaptation above makes those choices explicit. <a href="https://digitalcommons.unomaha.edu/psychfacpub/259/">Reiter-Palmon, Forthmann, and Barbot (2019)</a>.</li>
+<li><strong>Quantity can contaminate quality scores.</strong> Benedek and colleagues found that summing originality ratings strongly tracked fluency in their divergent-thinking tasks. Their top-scoring results do not establish a universal best aggregation for research papers. We therefore use no sum or automatic quantity bonus. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4001084/">Benedek et al. (2013)</a>.</li>
+<li><strong>Categories and reference populations matter.</strong> Olson and colleagues describe flexibility as categories of uses and statistical originality relative to a response sample. Our two-artifact comparison supplies neither a standardized category system nor a normative sample. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8237676/">Olson et al. (2021)</a>.</li>
+<li><strong>AUT and NUS are compatible concepts.</strong> Stevenson and colleagues assessed AUT responses with originality, usefulness, and surprise ratings alongside flexibility. AUT is a task, not a universal formula that competes with NUS. <a href="https://arxiv.org/abs/2206.08932">Stevenson et al. (2022)</a>.</li>
+</ul>
+<p>The particular rules for finished research artifacts are design choices informed by this literature. These studies do not validate this pairwise rubric for scientific creativity or establish that it matches human judgment better than NUS.</p></section>
+<section id="examples"><h2>Checks used during review</h2>
+<div class="table-scroll"><table><thead><tr><th scope="col">Comparison</th><th scope="col">Required treatment</th></tr></thead><tbody>
+<tr><td>Repeated paraphrases versus independent proposals</td><td>Merge repetitions within each answer; judge the remaining contributions.</td></tr>
+<tr><td>One developed idea versus a long list</td><td>Explain the task-relevant tradeoff; neither quantity nor the single cleverest fragment wins automatically.</td></tr>
+<tr><td>Both answers satisfy a request for five valid ideas</td><td>Quantity does not distinguish them; compare their substance.</td></tr>
+<tr><td>A speculative mechanism versus claimed demonstrated efficacy</td><td>Apply evidence expectations appropriate to the claim and its development stage.</td></tr>
+<tr><td>Papers from different fields</td><td>Use each paper’s own task and field context; withhold unsupported count or breadth advantages.</td></tr>
+</tbody></table></div>
+<p>These are checks of the rubric’s logic, not measured model performance. Human alignment still needs blinded domain-expert judgments on representative outputs, with order, repetition, and length sensitivity checked separately.</p></section>
+<section id="configuration"><h2>Select the AUT-inspired rubric</h2>
+<p>In a new CREST judging configuration under <code>crest/configs/</code>, set:</p>
+<pre><code>rubric: ../prompts/aut_research_pairwise_v1.txt</code></pre>
+<p>In an AIS configuration under <code>crest_ais/configs/</code>, set:</p>
+<pre><code>"rubric": "../../crest/prompts/aut_research_pairwise_v1.txt"</code></pre>
+<p>Other settings stay as needed for the experiment. Paths are relative to the configuration file. Both examples resolve to the same rubric. Prepare new judging inputs when changing methods; do not edit frozen plans or combine NUS and AUT-inspired votes in one ranking.</p>
+<p>The response format remains <code>{"reason": "…", "winner": "A"}</code>, with <code>A</code> or <code>B</code> as the winner. The reason explains both outputs and any material comparison limits. The reported win percentages are preferences under the selected rubric, not AUT scale scores.</p>
+<p>If no creativity-relevant preference can be supported, the judge must say so and choose A by the existing fixed convention. In two consistent reversed-order judgments, this convention splits the votes; the choices should not be described as substantive evidence of superiority.</p></section></main></body></html>

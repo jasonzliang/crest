@@ -13,11 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_default_config_resolves_package_data_results_and_prompt_from_any_cwd(tmp_path, monkeypatch):
     from crest_ais.cli import load_config
     from crest.config import DEFAULT_CONFIG
+    from crest.rubrics import DEFAULT_NUS_RUBRIC
     monkeypatch.chdir(tmp_path)
     config = load_config()
     assert config["data_root"] == ROOT
     assert config["output_dir"] == ROOT / "results"
-    assert config["rubric"] == ROOT / "prompts" / "rubric_v2.txt"
+    assert config["rubric"] == DEFAULT_NUS_RUBRIC
     inherited = yaml.safe_load(DEFAULT_CONFIG.read_text())
     for judge in ("openai", "gemini"):
         assert config["judges"][judge]["model"] == inherited["judges"][judge]["model"]

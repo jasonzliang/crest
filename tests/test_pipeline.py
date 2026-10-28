@@ -235,6 +235,56 @@ def test_timestamped_stages_resume_and_rubric_change_never_rebuys_answers(tmp_pa
     assert sum(len(p.generations) for p in providers.values()) == 6
 
 
+def test_empty_aut_judgment_stage_keeps_family_from_frozen_rubric(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    Path(config['rubric']).write_text(
+        'RUBRIC ID: aut-inspired-pairwise-v1\nCompare fluency, flexibility, and originality.')
+
+    class IdenticalProvider(FakeProvider):
+        async def generate(self, prompt, settings, job):
+            result = await super().generate(prompt, settings, job)
+            return result | {'text': 'Exactly the same substantive mechanism.'}
+
+    providers = {name: IdenticalProvider(name) for name in ('openai', 'gemini')}
+    pipeline = Pipeline(config, providers=providers)
+    asyncio.run(pipeline.generate())
+    source = Path(asyncio.run(pipeline.judge())['directory'])
+    assert not (source / 'judgments.jsonl').read_text()
+    # Later edits to a config-selected file must not relabel a frozen stage.
+    Path(config['rubric']).write_text('Compare New, Useful, and Surprising.')
+    result = pipeline.analyze()
+    assert result['report']['rubric_kind'] == 'aut-inspired'
+    assert result['report']['coverage']['complete_questions'] == 0
+    assert all(not provider.judgments for provider in providers.values())
+
+
+def test_aut_rejudging_reuses_answers_and_persists_separate_family_receipts(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    providers = {name: FakeProvider(name) for name in ('openai', 'gemini')}
+    pipeline = Pipeline(config, providers=providers)
+    asyncio.run(pipeline.generate())
+    nus = Path(asyncio.run(pipeline.judge())['directory'])
+    nus_rows = [json.loads(line) for line in (nus / 'judgments.jsonl').read_text().splitlines()]
+    Path(config['rubric']).write_text(
+        'RUBRIC ID: aut-inspired-pairwise-v1\nCompare fluency, flexibility, and originality.')
+    aut = Path(asyncio.run(pipeline.judge())['directory'])
+    aut_rows = [json.loads(line) for line in (aut / 'judgments.jsonl').read_text().splitlines()]
+    assert {row['key'] for row in nus_rows}.isdisjoint(row['key'] for row in aut_rows)
+    assert sorted(row['answer_keys'] for row in nus_rows) == sorted(row['answer_keys'] for row in aut_rows)
+    assert all(row['protocol_version'] == 'aut-inspired-overall-pairwise-v1'
+               and row['rubric_kind'] == 'aut-inspired' for row in aut_rows)
+    assert sum(len(provider.generations) for provider in providers.values()) == 2
+    assert sum(len(provider.judgments) for provider in providers.values()) == 8
+    report = pipeline.analyze()['report']
+    assert report['rubric_kind'] == 'aut-inspired'
+    assert report['coverage']['complete_questions'] == 1
+    prior = [json.loads(line) for line in (aut / 'prior_judgment_costs.jsonl').read_text().splitlines()]
+    assert {row['key'] for row in prior} == {row['key'] for row in nus_rows}
+    assert all(row['valid_for_ranking'] is False for row in prior)
+
+
 def test_analysis_cli_accepts_run_dir_and_does_not_need_api_keys(tmp_path):
     import os
     import subprocess

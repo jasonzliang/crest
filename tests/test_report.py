@@ -83,6 +83,79 @@ def ranking_path(run):
     return run / '03-analysis-test/ranking.json'
 
 
+def make_aut_run(run):
+    from crest.presentation import PRESENTATION_VERSION, present_answer
+    path = run / '02-judge-test/judgments.jsonl'
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    answers = json.loads(answers_path(run).read_text())
+    answer_map = {(a['question_id'], a['agent']): a for a in answers}
+    for row in rows:
+        row.update(protocol_version='aut-inspired-overall-pairwise-v1', rubric_kind='aut-inspired',
+                   presentation_version=PRESENTATION_VERSION)
+        row['presented_answer_hashes'] = [hashlib.sha256(present_answer(
+            answer_map[row['question_id'], agent]['result']['text']).encode()).hexdigest()
+            for agent in row['order']]
+        row['verdict']['reason'] = 'A develops a distinct causal mechanism, while B supplies a familiar explanation.'
+        row['result']['text'] = json.dumps(row['verdict'])
+    path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    questions = json.loads((run / '02-judge-test/questions.json').read_text())
+    dump(ranking_path(run), analyze(questions, answers, rows, agents=AGENTS, judges=JUDGES,
+                                    bootstrap_samples=1000, seed=2026))
+    return rows
+
+
+def test_aut_publication_labels_the_actual_rubric_and_preserves_frozen_evidence(run, tmp_path):
+    from crest.report import write_report
+    make_aut_run(run)
+    evidence = (run / '02-judge-test/judgments.jsonl').read_bytes()
+    output = write_report(run, tmp_path / 'aut.html')
+    html = output.read_text()
+    assert 'AUT-inspired' in html
+    assert all(f'<strong>{name}</strong>' in html for name in ('Fluency', 'Flexibility', 'Originality'))
+    assert 'aut-inspired-rubric.html' in html
+    assert 'qualitative adaptation' in html
+    assert 'not comparable across paper topics' in html
+    assert 'preferences under this rubric' in html
+    assert '<strong>Useful</strong>' not in html and '<strong>Surprising</strong>' not in html
+    assert (run / '02-judge-test/judgments.jsonl').read_bytes() == evidence
+
+
+@pytest.mark.parametrize('kind', ['invalid', 'wrong_family', 'missing_aut_kind', 'mixed', 'row_mislabeled', 'bad_presentation', 'bad_reason'])
+def test_publication_rejects_inconsistent_aut_metadata(run, kind):
+    from crest.report import load_run
+    rows = make_aut_run(run)
+    ranking = json.loads(ranking_path(run).read_text())
+    if kind == 'invalid':
+        ranking['rubric_kind'] = 'unknown'
+    elif kind == 'wrong_family':
+        ranking['rubric_kind'] = 'nus'
+    elif kind == 'missing_aut_kind':
+        ranking.pop('rubric_kind')
+    elif kind == 'mixed':
+        rows[0].update(protocol_version='nus-overall-pairwise-v3', rubric_kind='nus')
+    elif kind == 'row_mislabeled':
+        rows[0]['rubric_kind'] = 'nus'
+    elif kind == 'bad_presentation':
+        rows[0]['presented_answer_hashes'] = ['wrong', 'wrong']
+    else:
+        rows[0]['verdict']['reason'] = 'Return JSON only.'
+        rows[0]['result']['text'] = json.dumps(rows[0]['verdict'])
+    dump(ranking_path(run), ranking)
+    (run / '02-judge-test/judgments.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    with pytest.raises(ValueError):
+        load_run(run)
+
+
+def test_legacy_nus_publication_rendering_matches_explicit_family(run, tmp_path):
+    from crest.report import load_run, _render
+    data = load_run(run)
+    data['ranking'].pop('rubric_kind', None)
+    legacy = _render(data, tmp_path / 'nus.html')
+    data['ranking']['rubric_kind'] = 'nus'
+    assert _render(data, tmp_path / 'nus.html') == legacy
+    assert '<strong>Useful</strong>' in legacy and 'AUT-inspired' not in legacy
+
+
 def test_revised_publication_rejects_meta_only_reason(run):
     from crest.report import load_run
     path = run / '02-judge-test/judgments.jsonl'

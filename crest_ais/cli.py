@@ -14,6 +14,7 @@ import yaml
 
 from crest.cache import write_json
 from crest.config import DEFAULT_CONFIG as CREST_DEFAULT_CONFIG
+from crest.rubrics import DEFAULT_NUS_RUBRIC
 from .catalog import DEFAULT_AGENTS, prepare_catalog
 from .pipeline import create_cohort_extension, create_extension, load_results, run_judging, save_plan
 from .protocol import make_plan
@@ -30,7 +31,7 @@ def load_config(path: Path | None = None, *, data_root: Path | None = None) -> d
     root = Path(data_root).expanduser().resolve() if data_root else (base / config.get("data_root", ".")).resolve()
     config["data_root"] = root
     config["output_dir"] = (root / config.get("output_dir", "results")).resolve()
-    config["rubric"] = (base / config.get("rubric", "../prompts/rubric_v2.txt")).resolve()
+    config["rubric"] = (base / config.get("rubric", DEFAULT_NUS_RUBRIC)).resolve()
     inheritance = (base / config.get("inherit_judges", CREST_DEFAULT_CONFIG)).resolve()
     inherited = yaml.safe_load(inheritance.read_text(encoding="utf-8"))
     judges = inherited.get("judges", {})

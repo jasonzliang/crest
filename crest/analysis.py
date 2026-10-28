@@ -10,16 +10,17 @@ from pathlib import Path
 import random
 
 from .costs import summarize_costs
+from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, protocol_rubric_kind
 
-ANALYSIS_VERSION = "9"
+ANALYSIS_VERSION = "10"
 
 
 def _valid_verdict(value, protocol_version=None):
     from .judging import validate_verdict
-    if protocol_version not in (None, 'nus-overall-pairwise-v2', 'nus-overall-pairwise-v3'):
+    if protocol_version not in (None, 'nus-overall-pairwise-v2', 'nus-overall-pairwise-v3', AUT_PROTOCOL):
         return False
     try:
-        validate_verdict(value, require_reason_quality=protocol_version == 'nus-overall-pairwise-v3')
+        validate_verdict(value, require_reason_quality=protocol_version in ('nus-overall-pairwise-v3', AUT_PROTOCOL))
     except (ValueError, TypeError):
         return False
     return True
@@ -97,7 +98,7 @@ def _summarize_view(task):
 def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *,
             agents: list[str], judges: list[str], bootstrap_samples: int = 1000,
             seed: int = 2026, failures: list[dict] | None = None, workers: int = 1,
-            prior_judgments: list[dict] | None = None) -> dict:
+            prior_judgments: list[dict] | None = None, rubric_kind: str | None = None) -> dict:
     """Rank binary preferences without imputing missing observations.
 
     A duplicate valid answer or judgment excludes its question. All views share
@@ -119,6 +120,21 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
     question_ids = [q["id"] for q in questions]
     if len(set(question_ids)) != len(question_ids):
         raise ValueError("Question IDs must be unique")
+    families = set()
+    if rubric_kind is not None:
+        if rubric_kind not in (NUS_KIND, AUT_KIND):
+            raise ValueError('Unsupported rubric kind')
+        families.add(rubric_kind)
+    for row in judgments:
+        if row.get('key') in superseded_keys or row.get('question_id') not in question_ids:
+            continue
+        family = protocol_rubric_kind(row.get('protocol_version'))
+        if row.get('rubric_kind', family) != family:
+            raise ValueError('Judgment rubric kind differs from its protocol')
+        families.add(family)
+    if len(families) > 1:
+        raise ValueError('Do not mix different rubric families in one ranking')
+    family = next(iter(families), NUS_KIND)
     pairs = list(combinations(agents, 2))
     cells = [(pair, order, judge) for pair in pairs for order in (pair, pair[::-1]) for judge in judges]
     expected = set(cells)
@@ -238,8 +254,12 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
                         for stage in ("generate", "judge")}
     return {
         "analysis_version": ANALYSIS_VERSION,
+        "rubric_kind": family,
         "interpretation": "Exploratory overall creativity preference ranking of these observed answers under this rubric and selected judges; not an absolute creativity measurement.",
-        "method": "Each judgment chooses one overall A/B creativity winner guided by New, Useful and Surprising. Rank by wins divided by comparisons, weighting questions, opponents, judges and answer orders equally on common complete questions. Ties share competition ranks.",
+        "method": ("Each judgment chooses one overall A/B creativity winner guided by Fluency, Flexibility, and Originality in an AUT-inspired research-product comparison. Fluency concerns expressed distinct-idea coverage only for shared tasks explicitly requesting multiple ideas under comparable submission requirements; it gives papers or different-topic artifacts no raw idea-count advantage. This is not a standardized AUT score or a measure of divergent-thinking capacity. "
+                   "Rank by wins divided by comparisons, weighting questions, opponents, judges and answer orders equally on common complete questions. Ties share competition ranks."
+                   if family == AUT_KIND else
+                   "Each judgment chooses one overall A/B creativity winner guided by New, Useful and Surprising. Rank by wins divided by comparisons, weighting questions, opponents, judges and answer orders equally on common complete questions. Ties share competition ranks."),
         "agents": agents, "judges": judges,
         "coverage": {"total_questions": len(questions), "complete_questions": len(complete),
                      "complete_question_ids": complete, "excluded_questions": excluded,

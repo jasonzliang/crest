@@ -30,6 +30,7 @@ from .analysis import analyze
 from .artifacts import configuration_record
 from .costs import cost_for_row, summarize_costs
 from .judging import parse_verdict, validate_verdict
+from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, NUS_PROTOCOL, protocol_rubric_kind
 from crest_ais.navigation import CSS as SITE_CSS, site_header
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,6 +125,9 @@ def _latest_analysis(run, manifest):
 
 def _validate(data):
     questions, answers, judgments, ranking = (data[k] for k in ('questions', 'answers', 'judgments', 'ranking'))
+    family = ranking.get('rubric_kind', NUS_KIND)
+    if family not in (NUS_KIND, AUT_KIND):
+        raise ValueError('Unsupported ranking rubric kind')
     if (len(questions) != 50 or len({q['id'] for q in questions}) != 50
             or len({q.get('text') for q in questions}) != 50
             or any(not isinstance(q.get('text'), str) or not q['text'].strip() for q in questions)):
@@ -160,9 +164,10 @@ def _validate(data):
             raise ValueError('Judgments require unique canonical keys')
         keys.add(row['key'])
         protocol = row.get('protocol_version')
-        if protocol not in (None, 'nus-overall-pairwise-v2', 'nus-overall-pairwise-v3'):
-            raise ValueError('Unsupported judging protocol')
-        strict_reason = protocol == 'nus-overall-pairwise-v3'
+        row_family = protocol_rubric_kind(protocol)
+        if row_family != family or row.get('rubric_kind', row_family) != family:
+            raise ValueError('Ranking and judgment rubric kinds must match the frozen protocol')
+        strict_reason = protocol in (NUS_PROTOCOL, AUT_PROTOCOL)
         verdict = validate_verdict(row.get('verdict'), require_reason_quality=strict_reason)
         text = (row.get('result') or {}).get('text')
         if text is not None and parse_verdict(text, require_reason_quality=strict_reason) != verdict:
@@ -178,8 +183,8 @@ def _validate(data):
             if row.get('presentation_version') != PRESENTATION_VERSION or row.get('presented_answer_hashes') != [
                     hashlib.sha256(present_answer(a['result']['text']).encode()).hexdigest() for a in ordered]:
                 raise ValueError('Judgment presentation hashes do not match the saved answers')
-    if any(j.get('protocol_version') == 'nus-overall-pairwise-v3' for j in judgments) and not all(
-            j.get('protocol_version') == 'nus-overall-pairwise-v3' for j in judgments):
+    protocols = {j.get('protocol_version') for j in judgments}
+    if protocols.intersection((NUS_PROTOCOL, AUT_PROTOCOL)) and len(protocols) != 1:
         raise ValueError('Do not mix judgments from different rubric protocols')
     if len(judgments) != 600 or seen != cells:
         raise ValueError('Final publication requires 600 valid overall judgments')
@@ -382,7 +387,8 @@ def _system_order(data):
 
 def _ranking(data):
     report = data['ranking']
-    parts = ['<section id="overall"><h2>Observed creativity ranking</h2>',
+    heading = 'Observed AUT-inspired preference ranking' if report.get('rubric_kind') == AUT_KIND else 'Observed creativity ranking'
+    parts = [f'<section id="overall"><h2>{heading}</h2>',
              '<p>Ranked by how often each system’s answer was preferred. Each system appears in 400 of the 600 judgments '
              '(50 questions × 2 opponents × 2 judges × 2 answer orders). '
              'Win rate is wins ÷ 400. Lines show 95% intervals from resampling the questions.</p>']
@@ -658,22 +664,48 @@ def _questions(data):
 
 def _method(data):
     bootstrap = data['ranking']['bootstrap']
+    aut = data['ranking'].get('rubric_kind') == AUT_KIND
+    winner_guidance = (
+        'Each judge chooses A or B using <strong>Fluency</strong> (expressed coverage only when a comparable '
+        'task explicitly requests multiple ideas), <strong>Flexibility</strong> (meaningful conceptual directions), '
+        'and <strong>Originality</strong> (substantive contributions and relationships). '
+        if aut else
+        'Each judge chooses A or B using <strong>New</strong> (original contribution), '
+        '<strong>Useful</strong> (fit and support), and <strong>Surprising</strong> (departure from the expected approach). '
+    )
+    scope = (
+        '<p>This AUT-inspired rubric is a qualitative adaptation for expressed research contributions. '
+        'Raw idea counts are not comparable across paper topics. Scores are preferences under this rubric, '
+        'not standardized AUT scores or measures of an author’s divergent-thinking ability. '
+        '<a href="aut-inspired-rubric.html">AUT-inspired rubric and limits</a>.</p>' if aut else ''
+    )
+    creativity_reference = (
+        '<ul><li><a href="https://digitalcommons.unomaha.edu/psychfacpub/259/">'
+        'Reiter-Palmon, Forthmann, and Barbot, 2019</a>: divergent-thinking scoring choices.</li>'
+        '<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4001084/">'
+        'Benedek et al., 2013</a>: subjective top-scoring and fluency–originality confounds.</li>' if aut else
+        '<ul><li><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger, 2012</a>: '
+        'originality and effectiveness as core creativity criteria.</li>'
+    )
     openai_tracking = sum(a['agent'] == 'openai' and 'utm_source=openai' in a['result']['text']
                           for a in data['answers'])
     google_grounding = sum(a['agent'] == 'gemini' and 'vertexaisearch.cloud.google.com' in a['result']['text']
                            for a in data['answers'])
     provenance = ''
     revised = bool(data.get('judgments')) and all(
-        j.get('protocol_version') == 'nus-overall-pairwise-v3'
+        j.get('protocol_version') in (NUS_PROTOCOL, AUT_PROTOCOL)
         and j.get('presentation_version') == 'citation-neutral-v1' for j in data['judgments'])
     if revised:
         provenance = ('<p>URL destinations were hidden uniformly in judge presentations; meaningful citation labels and '
                       'answer content were retained. Original answers are preserved below. Wording can still reveal '
                       'which system wrote an answer.</p>'
+                      + ('<p>Originality can come from combining familiar ideas. Elaboration supports evaluating '
+                      'the contribution; it is not a word-count score. If a judge cannot support a substantive '
+                      'preference, it must say so and choose A. Doing this in both orders gives each system one win.</p>' if aut else
                       '<p>Originality can come from combining familiar ideas. Usefulness is judged within the question’s '
                       'premises; unfamiliarity alone is not evidence of novelty. If a judge cannot support a substantive '
-                      'preference, it must say so and choose A. Doing this in both orders gives each system one win.</p>'
-                      '<p>Incomplete or noncomparative explanations trigger retries. These checks do not verify the judges’ claims.</p>')
+                      'preference, it must say so and choose A. Doing this in both orders gives each system one win.</p>')
+                      + '<p>Incomplete or noncomparative explanations trigger retries. These checks do not verify the judges’ claims.</p>')
     elif openai_tracking or google_grounding:
         provenance = ('<p>Provider labels were withheld, but this run was not fully blinded. '
                       f'Links reveal provenance in {openai_tracking} / 50 {LABELS["openai"]} answers '
@@ -681,9 +713,8 @@ def _method(data):
                       'These cues do not establish that provider bias caused the ranking.</p>')
     return ('<section id="method"><h2>How the comparison works</h2>'
             '<p>Each question produces 12 decisions: three answer pairs, evaluated by two judges in both orders.</p>'
-            '<dl class="method-summary">'
-            '<dt>Choose a winner</dt><dd>Each judge chooses A or B using <strong>New</strong> (original contribution), '
-            '<strong>Useful</strong> (fit and support), and <strong>Surprising</strong> (departure from the expected approach). '
+            + scope + '<dl class="method-summary">'
+            '<dt>Choose a winner</dt><dd>' + winner_guidance +
             'These guide one overall decision, with no separate scores.</dd>'
             '<dt>Count the votes</dt><dd>Every decision counts equally. Each system appears in 400 decisions; '
             'wins ÷ 400 gives its win rate.</dd>'
@@ -695,8 +726,7 @@ def _method(data):
             '<details><summary>Rubric, presentation and references</summary>' + provenance +
             f'<p>The bootstrap uses seed {_text(bootstrap["seed"])}. All systems use the same sampled questions when '
             'calculating ranking differences.</p>'
-            '<ul><li><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger, 2012</a>: '
-            'originality and effectiveness as core creativity criteria.</li>'
+            + creativity_reference +
             '<li><a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright, 2018</a>: '
             'ranking by pairwise win counts (Borda counting).</li>'
             '<li><a href="https://aclanthology.org/P18-1128/">Dror et al., 2018</a>: '

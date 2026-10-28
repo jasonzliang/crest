@@ -546,7 +546,9 @@ class Pipeline:
 
     def analyze(self) -> dict:
         from .analysis import ANALYSIS_VERSION, analyze, write_report
+        from .rubrics import AUT_KIND, rubric_kind
         source = self._latest_stage('judge')
+        family = rubric_kind((source / 'rubric.txt').read_text())
         questions = json.loads((source / 'questions.json').read_text())
         answers = json.loads((source / 'answers.json').read_text())
         judges = json.loads((source / 'judges.json').read_text())
@@ -563,6 +565,7 @@ class Pipeline:
                       for record in records]
             return sorted(values, key=digest)
         cache_key = digest({'analysis_version': ANALYSIS_VERSION, 'questions': questions,
+                            **({'rubric_kind': family} if family == AUT_KIND else {}),
                             'answers': stable(answers), 'judgments': stable(judgments),
                             'failures': stable(failures),
                             'prior_judgments': stable(prior_judgments),
@@ -575,6 +578,7 @@ class Pipeline:
         else:
             report = analyze(questions, answers, judgments, agents=self.manifest['agents'],
                              judges=list(judges), failures=failures, prior_judgments=prior_judgments,
+                             rubric_kind=family,
                              **self.config['analysis'])
             job.save(status='completed', result=report, completed_at=timestamp())
         directory = self._new_stage(3, 'analysis')
