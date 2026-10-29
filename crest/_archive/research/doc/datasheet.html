@@ -72,24 +72,11 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style><link rel="icon" type="image/svg+xml" href="../../../../docs/favicon.svg"></head>
 <body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/deep-research-creativity.html">Deep research comparison</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#1-motivation">1. Motivation</a></li><li><a href="#2-composition">2. Composition</a></li><li><a href="#3-collection-process">3. Collection process</a></li><li><a href="#4-preprocessing--frozen-index">4. Preprocessing / frozen
-index</a></li><li><a href="#5-uses">5. Uses</a></li><li><a href="#6-distribution--licensing">6. Distribution &amp; licensing</a></li><li><a href="#7-maintenance">7. Maintenance</a></li><li><a href="#human-subjects-judge-validation-study">Human subjects
-(judge-validation study)</a></li><li><a href="#appendix-adversarial-item-vetting-log">Appendix: adversarial
-item-vetting log</a></li></ul></nav></details><article><h1 id="datasheet-for-crest">Dataset datasheet</h1>
-<p>Follows <em>Datasheets for Datasets</em> (Gebru et al., 2021). This
-datasheet describes the artifact <strong>as shipped</strong>, with
-anything unbuilt marked <code>[NOT IMPLEMENTED]</code> rather than
-described in the present tense. It is also a release gate — NeurIPS/ICLR
-Datasets &amp; Benchmarks desk-reject checks (licensing, contamination,
-author-COI, human-subjects) are answered here.</p>
-<p><strong>This file is the SINGLE SOURCE OF TRUTH for dataset
-composition</strong> — field lists, schema version,
-per-category/domain/axis counts, the <code>time_sensitivity</code>
-split, prior-art dating rates and quarantine status. Other docs
-cross-reference §2 instead of restating those numbers. Conversely, every
-figure measured <em>from a scored run</em> (endpoint means,
-correlations, ICC, judge severity) lives in <code>design.md</code> §0
-and is not restated here.</p>
+<main id="document-main" tabindex="-1">
+<p class="archive-back"><a href="../../../../docs/index.html#archive-documents">Historical documents</a></p>
+<h1 id="datasheet-for-crest">Dataset datasheet</h1>
+<p class="archive-summary">Describes CREST’s dataset composition, collection process, intended uses, licensing, maintenance, and limitations that affected release.</p>
+<div class="archive-note"><strong>Historical document.</strong> Preserved for context; use the <a href="../../../../docs/crest-guide.html">research pipeline guide</a> for current experiments.</div>
 <blockquote>
 <p><strong>Release status: NOT RELEASE-READY</strong>, but no longer for
 the reason this note used to give. The mechanical pre-release gate
@@ -111,6 +98,26 @@ superseded run and <strong>cannot be re-derived</strong> against the
 released records, which all carry
 <code>judge_prompt_version: null</code>.</p>
 </blockquote>
+<details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#1-motivation">1. Motivation</a></li><li><a href="#2-composition">2. Composition</a></li><li><a href="#3-collection-process">3. Collection process</a></li><li><a href="#4-preprocessing--frozen-index">4. Preprocessing / frozen
+index</a></li><li><a href="#5-uses">5. Uses</a></li><li><a href="#6-distribution--licensing">6. Distribution &amp; licensing</a></li><li><a href="#7-maintenance">7. Maintenance</a></li><li><a href="#human-subjects-judge-validation-study">Human subjects
+(judge-validation study)</a></li><li><a href="#appendix-adversarial-item-vetting-log">Appendix: adversarial
+item-vetting log</a></li></ul></nav></details>
+<article>
+<p>Follows <em>Datasheets for Datasets</em> (Gebru et al., 2021). This
+datasheet describes the artifact <strong>as shipped</strong>, with
+anything unbuilt marked <code>[NOT IMPLEMENTED]</code> rather than
+described in the present tense. It is also a release gate — NeurIPS/ICLR
+Datasets &amp; Benchmarks desk-reject checks (licensing, contamination,
+author-COI, human-subjects) are answered here.</p>
+<p><strong>This file is the SINGLE SOURCE OF TRUTH for dataset
+composition</strong> — field lists, schema version,
+per-category/domain/axis counts, the <code>time_sensitivity</code>
+split, prior-art dating rates and quarantine status. Other docs
+cross-reference §2 instead of restating those numbers. Conversely, every
+figure measured <em>from a scored run</em> (endpoint means,
+correlations, ICC, judge severity) lives in <code>design.md</code> §0
+and is not restated here.</p>
+
 <h2 id="1-motivation">1. Motivation</h2>
 <ul>
 <li><strong>Purpose.</strong> Measure the <em>creativity</em> (novelty /
@@ -478,5 +485,6 @@ table and rationale, and read its "superseded" header first — the later
 live-web audit (<code>doc/misc/audit_live_*.md</code>) overturned
 several of its grades, most importantly on <code>known_answers</code>
 dating and on <code>C4_engineering_45</code>.</p>
-</article></main></body></html>
+</article>
+</main></body></html>
 

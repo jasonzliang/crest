@@ -72,7 +72,11 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style><link rel="icon" type="image/svg+xml" href="../../../docs/favicon.svg"></head>
 <body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../../docs/crest-guide.html">Research pipeline</a><a href="../../../docs/deep-research-creativity.html">Deep research comparison</a><a href="../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><div class="archive-note"><strong>Archive reference.</strong> Earlier material is kept for context. Use the research pipeline guide for current experiments.</div><article><h1 id="archived-stage-wrappers">Archived stage wrappers</h1>
+<main id="document-main" tabindex="-1">
+<p class="archive-back"><a href="../../../docs/index.html#archive-documents">Historical documents</a></p>
+<h1 id="archived-stage-wrappers">Archived stage wrappers</h1>
+<p class="archive-summary">These notes list the former stage scripts and show the CREST command examples provided when those scripts were replaced.</p>
+<div class="archive-note"><strong>Historical document.</strong> Preserved for context; use the <a href="../../../docs/crest-guide.html">research pipeline guide</a> for current experiments.</div><article>
 <p>The former stage wrappers were <code>stage1_generate.py</code>, <code>stage2_judge.py</code>, and <code>stage3_analyze.py</code>. For current work, use the single CREST command from the repository root:</p>
 <pre><code class="language-bash">python -m crest generate
 python -m crest judge --run crest/results/YYYY-MM-DD/RUN
