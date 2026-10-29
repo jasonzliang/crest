@@ -14,8 +14,8 @@ from urllib.parse import quote, urlsplit
 
 from crest.rubrics import AUT_KIND, NUS_KIND, guidance_names, protocol_rubric_kind
 
-from .navigation import CSS as NAVIGATION_CSS, site_header
-from .protocol import validate_verdict
+from .navigation import CSS as NAVIGATION_CSS, site_favicon, site_header
+from .protocol import LEGACY_PROTOCOL_VERSION, validate_verdict
 
 
 COLORS = ("#0b5967", "#b4652b", "#5e628c", "#526b46", "#8a4665")
@@ -206,10 +206,9 @@ def _sampling_uncertainty(report, ready):
         parts.append(f'<tr><th scope="row">{_text(_label(report, agent))}</th><td>{value}</td></tr>')
     parts.append('</tbody></table></div><details><summary>Statistical method and assumptions</summary>'
                  '<p class="small">The calculation treats the response to every possible paper pair '
-                 'as fixed, with only the sampled pairs changing. Keeping model settings fixed '
-                 'does not guarantee the same reply on another call. These bounds exclude '
-                 'variation between repeated calls, changes in the provider’s model, agreement '
-                 'with human experts, and future papers. The full-pool order remains uncertain. See '
+                 'as fixed, varying only the sampled pairs. Repeated model calls can return different '
+                 'replies. These ranges exclude that variation, changes in the provider’s model, '
+                 'agreement with human experts, and future papers. See '
                  '<a href="https://arxiv.org/abs/1309.4029">Bardenet and Maillard, '
                  'Concentration inequalities for sampling without replacement</a>.</p>')
     if uncertainty.get("method"):
@@ -245,8 +244,13 @@ def _concepts(report):
                      'against domain experts. <a href="aut-inspired-rubric.html">'
                      'AUT-inspired rubric and limits</a></p></div>')
         return ''.join(parts)
+    # Current report metadata does not distinguish the selected NUS prompt text.
     definitions = {
-        "new": "How the judge relates the paper’s least familiar contribution to earlier research. The judge’s memory cannot establish historical novelty.",
+        "new": (
+            "How the judge relates the paper’s least familiar contribution to earlier research. "
+            if report.get('version') == LEGACY_PROTOCOL_VERSION else
+            "What appears original in the paper’s substantive contribution relative to identifiable earlier research. "
+        ) + "The judge’s memory cannot establish historical novelty.",
         "useful": "Whether the paper explains how its approach works and provides evidence for its claimed benefit.",
         "surprising": "How far the paper’s central approach departs from the obvious approach to its question.",
     }
@@ -265,7 +269,8 @@ def _concepts(report):
                  'and More</cite></a>, examines surprise alongside originality and value. '
                  'These support the broad concepts. They do not validate CREST’s specific '
                  'definitions or its model judging method. '
-                 '<a href="overall-creativity-judgment.html">Why one joint judgment?</a></p></div>')
+                 '<a href="judging-method.html">NUS rubric</a>; '
+                 '<a href="overall-creativity-judgment.html">Why one overall judgment</a>.</p></div>')
     return "".join(parts)
 
 
@@ -277,7 +282,7 @@ def _matchups(report, ready):
         if len(pair) == 2:
             comparisons[tuple(pair)] = row
     parts = ['<section id="matchups" aria-labelledby="matchups-heading">'
-             '<h2 id="matchups-heading">Head to head</h2>',
+             '<h2 id="matchups-heading">Head-to-head results</h2>',
              '<p class="small">Read across a row: each cell shows how often the judges chose the row '
              'scientist’s papers over the column scientist’s papers, using completed paper pairs. '
              'Diagonal cells compare no papers.</p>']
@@ -446,12 +451,12 @@ def _progress(report):
     prior_known = costs.get("prior_excluded_known_usd")
     money = f"${known:.2f}" if _number(known) and known >= 0 else "Unavailable"
     parts = ['<section id="progress" aria-labelledby="progress-heading"><h2 id="progress-heading">'
-             'Run progress and cost</h2>'
+             'Run summary and cost</h2>'
              '<div class="run-stats">',
              f'<div><strong>{_count(coverage.get("completed_jobs"))} / {_count(coverage.get("expected_jobs"))}</strong>'
-             '<span>saved judgments / planned</span></div>',
+             '<span>judgments saved / planned</span></div>',
              f'<div><strong>{_count(coverage.get("complete_pairs"))} / {_count(coverage.get("expected_pairs"))}</strong>'
-             '<span>fully judged paper pairs / planned</span></div>',
+             '<span>completed paper pairs / planned</span></div>',
              f'<div><strong>{money}</strong><span>estimated judging cost (USD)</span></div></div>',
              '<p class="small">Cost is estimated from recorded usage at published rates.</p>']
     if costs.get("unknown_jobs"):
@@ -459,8 +464,8 @@ def _progress(report):
     if "prior_excluded_jobs" in costs or "prior_excluded_known_usd" in costs:
         prior_money = f"${prior_known:.2f}" if _number(prior_known) and prior_known >= 0 else "Unavailable"
         parts.append(f'<p class="small">Estimated total includes {_count(costs.get("prior_excluded_jobs"))} '
-                     f'prior discarded requests: {prior_money} in recorded estimated cost. '
-                     'Those requests do not contribute to the comparison.</p>')
+                     f'earlier discarded requests, estimated at {prior_money}. '
+                     'Those requests contribute no votes to this comparison.</p>')
     parts.append('<details id="run-audit"><summary>Judging details</summary>'
                  f'<p class="small">Usable judgments: {_count(coverage.get("usable_jobs"))}. '
                  f'Decisions used: {_count(coverage.get("used_decisions"))} / {_count(coverage.get("expected_decisions"))} planned.</p>'
@@ -653,14 +658,20 @@ def _judgments(report, data_root, destination):
 
 def _method(report):
     guidance = guidance_names(report.get('rubric_kind', NUS_KIND))
+    historical = (report.get('version') == LEGACY_PROTOCOL_VERSION
+                  and report.get('rubric_kind', NUS_KIND) == NUS_KIND)
+    saved_rubric = (
+        '<p class="small">This published comparison uses the frozen historical NUS v1 rubric '
+        'with manuscript-specific instructions and its saved prompts. The current default NUS v2 rubric applies to new plans; '
+        'it was not used to rejudge these papers.</p>' if historical else ''
+    )
     parts = ['<section id="method" aria-labelledby="method-heading"><h2 id="method-heading">'
-             'How the comparison works</h2><p>The lists of eligible released papers are saved '
-             'before sampling. The separately labeled human–AI co-discovery paper is excluded. '
-             'Distinct paper pairs are sampled uniformly within each scientist '
-             f'matchup. Each judge chooses one overall creativity winner, considering {guidance} '
-             'jointly, in both paper orders. Each complete paper pair contributes '
-             'four overall votes. Votes are averaged within the paper pair, then paper pairs '
-             'within a matchup. Each opponent matchup receives equal weight.</p>', _concepts(report),
+             'How the comparison works</h2><p>We froze the eligible released-paper lists and sampled '
+             'distinct paper pairs uniformly within each scientist matchup. Two judges read each pair '
+             f'in both paper orders, choosing one overall winner with {guidance} considered jointly. '
+             'Each completed pair contributes four votes. Votes are averaged within pairs, then within '
+             'matchups; each opponent has equal weight. See <a href="#coverage">paper coverage</a> '
+             'for the archived-paper exclusion.</p>', saved_rubric, _concepts(report),
              '<h3>What this comparison leaves uncertain</h3><ul class="key-limits">'
              '<li>Topics, release dates, underlying AI models, computing resources, and which papers '
              'each team chose to release differ '
@@ -785,20 +796,22 @@ def write_report(report: dict, destination: Path, *, data_root: Path) -> None:
     parts = ['<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width, initial-scale=1">',
              '<meta name="color-scheme" content="light"><title>AI scientist comparison · CREST</title>',
+             site_favicon(data_root.resolve().parent, destination),
              '<meta name="description" content="A reproducible pairwise comparison of released AI scientist papers, with coverage, judgments, and uncertainty.">',
              f'<style>{CSS}\n{NAVIGATION_CSS}</style></head><body>',
+             '<a class="skip-link" href="#main-content">Skip to report</a>',
              site_header(data_root.resolve().parent, destination),
-             '<a class="skip-link" href="#main-content">Skip to report</a><main id="main-content" tabindex="-1">',
+             '<main id="main-content" tabindex="-1">',
              '<h1>AI scientist comparison</h1>',
              f'<p>{introduction}</p>',
              '<nav aria-label="Report contents"><a href="#progress">Run summary</a>'
-             '<a href="#overall">Overall</a>'
-             '<a href="#matchups">Head to head</a><a href="#judges">Judges</a>'
-             '<a href="#coverage">Coverage</a><a href="#method">Method</a>'
-             '<a href="#concepts">Joint judgment</a><a href="#papers">Papers</a>'
+             '<a href="#overall">Ranking</a>'
+             '<a href="#matchups">Head-to-head</a><a href="#coverage">Coverage</a>'
+             '<a href="#judges">Judges</a><a href="#method">Method</a>'
+             '<a href="#papers">Papers</a>'
              '<a href="#reasons">Judgments</a></nav>',
              _progress(report), _small_pool_note(report), _overall(report, ready, colors), _matchups(report, ready),
-             _judges(report), _coverage(report), _method(report), _papers(report, data_root, destination),
+             _coverage(report), _judges(report), _method(report), _papers(report, data_root, destination),
              _judgments(report, data_root, destination),
              f'</main><script>{JUDGMENT_SCRIPT}</script></body></html>\n']
     destination.parent.mkdir(parents=True, exist_ok=True)

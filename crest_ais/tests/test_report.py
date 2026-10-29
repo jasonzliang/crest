@@ -95,10 +95,20 @@ def test_aut_report_labels_criteria_and_limits_instead_of_nus(report, tmp_path):
 
 
 def test_legacy_nus_report_rendering_matches_explicit_family(report, tmp_path):
+    report['version'] = 'crest-ais-overall-v2'
     legacy = render(report, tmp_path)
     report['rubric_kind'] = 'nus'
     assert render(report, tmp_path) == legacy
     assert '<dt>Useful</dt>' in legacy and 'AUT-inspired' not in legacy
+    assert 'frozen historical NUS v1' in legacy
+    assert 'current default NUS v2 rubric applies to new plans' in legacy
+    assert 'least familiar contribution' in legacy
+    report['version'] = 'crest-ais-overall-v3'
+    current = render(report, tmp_path)
+    assert 'frozen historical NUS v1' not in current
+    assert 'substantive contribution' in current
+    assert 'identifiable earlier research' in current
+    assert 'least familiar contribution' not in current
 
 
 @pytest.mark.parametrize('kind', ['unknown', 'mislabeled', 'mixed', 'row_mislabeled', 'missing_protocol', 'unknown_protocol', 'conflicting_protocols', 'bad_reason'])
@@ -340,7 +350,7 @@ def test_total_cost_does_not_double_count_already_included_prior_requests(report
     html = render(report, tmp_path)
     assert "$13.00" in html
     assert "$3.00" in html
-    assert "7 prior discarded requests" in html
+    assert "7 earlier discarded requests" in html
     assert "$16.00" not in html
 
 
@@ -349,15 +359,17 @@ def test_shared_site_navigation_and_current_document_titles_are_retained(report,
     doc = Document(html)
     assert any(tag == "header" and attrs.get("class") == "crest-site-header" for tag, attrs in doc.tags)
     assert "<h1>AI scientist comparison</h1>" in html
+    assert any(tag == "link" and attrs.get("rel") == "icon" and attrs.get("href") == "favicon.svg"
+               for tag, attrs in doc.tags)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
-    assert links[:5] == ["https://github.com/jasonzliang/crest", "crest-guide.html", "deep-research-creativity.html",
-                         "ai-scientist-creativity.html", "index.html"]
+    assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "crest-guide.html",
+                         "deep-research-creativity.html", "ai-scientist-creativity.html", "index.html"]
 
 
 def test_main_reading_order_starts_with_progress_then_evidence_and_method(report, tmp_path):
     doc = Document(render(report, tmp_path))
     sections = [attrs["id"] for tag, attrs in doc.tags if tag == "section"]
-    assert sections == ["progress", "overall", "matchups", "judges", "coverage", "method", "papers", "reasons"]
+    assert sections == ["progress", "overall", "matchups", "coverage", "judges", "method", "papers", "reasons"]
 
 
 def test_observed_zero_has_visible_marker_and_bounds_are_in_collapsed_disclosure(report, tmp_path):
@@ -370,7 +382,7 @@ def test_observed_zero_has_visible_marker_and_bounds_are_in_collapsed_disclosure
     bounds = [(tag, attrs) for tag, attrs in doc.tags if attrs.get("id") == "sampling-uncertainty"]
     assert len(bounds) == 1 and bounds[0][0] == "details" and "open" not in bounds[0][1]
     assert "95% sampling range" in html
-    assert "full-pool order remains uncertain" in html
+    assert "ranking across all eligible paper pairs remains uncertain" in html
     assert not any(attrs.get("class") == "interval-line" for _, attrs in doc.tags)
 
 
@@ -463,6 +475,8 @@ def test_concept_bookmark_and_primary_paper_links_remain_visible(report, tmp_pat
     assert "https://doi.org/10.1080/10400419.2012.650092" in links
     assert "https://doi.org/10.1080/10400419.2017.1302776" in links
     assert "overall-creativity-judgment.html" in links
+    assert 'href="judging-method.html">NUS rubric</a>' in html
+    assert 'href="overall-creativity-judgment.html">Why one overall judgment</a>' in html
     method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
     assert method.index('id="concepts"') < method.index('<details>')
 

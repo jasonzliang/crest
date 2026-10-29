@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>How creativity is judged · CREST</title><style id="crest-site-navigation">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NUS rubric · CREST</title><style id="crest-site-navigation">
 .skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
@@ -70,66 +70,38 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style><style>
-main>section{margin:2.2rem 0}.rubric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin:1.5rem 0}.rubric-grid h3{margin:0 0 .5rem;color:var(--accent)}.rubric-grid p{font-size:.95rem;margin:0}
-.comparison-flow{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin:1.5rem 0;padding:1.3rem;background:var(--wash);border-radius:6px}.comparison-flow li{border-left:2px solid #b9d0d6;padding-left:1rem}.comparison-flow strong{display:block;font-size:1.7rem;line-height:1.3;color:var(--accent)}.comparison-flow span{display:block;font-size:.9rem}.comparison-total{font-size:1.1rem}.formula{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;padding:1.1rem 1.3rem;background:var(--wash);border-radius:6px;margin:1.3rem 0}.formula strong{font-size:1.3rem;color:var(--accent)}.diagnostics{display:grid;grid-template-columns:minmax(170px,.6fr) minmax(0,2fr);gap:.6rem 1.4rem}.diagnostics dt{font-weight:650}.diagnostics dd{margin:0}.references{padding-left:1.3rem}.references li{margin:.7rem 0}main .small{color:var(--muted)}
-@media(max-width:700px){.rubric-grid{grid-template-columns:1fr;gap:1rem}.comparison-flow{grid-template-columns:repeat(2,minmax(0,1fr));padding:1rem;gap:1.2rem}.diagnostics{grid-template-columns:1fr;gap:.2rem}.diagnostics dd{margin-bottom:.7rem}}
-@media print{.skip{display:none}.comparison-flow,.rubric-grid,.formula{break-inside:avoid}}
-</style></head><body>
+main>section{margin:2.2rem 0}.rubric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin:1.5rem 0}.rubric-grid h3{margin:0 0 .5rem;color:var(--accent)}.rubric-grid p{font-size:.95rem;margin:0}.rubric-grid p+p{margin-top:.6rem}
+@media(max-width:700px){.rubric-grid{grid-template-columns:1fr;gap:1rem}}
+@media print{.skip{display:none}.rubric-grid{break-inside:avoid}}
+</style><link rel="icon" type="image/svg+xml" href="favicon.svg"></head><body>
 <a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="deep-research-creativity.html">Deep research comparison</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
 <main id="document-main" tabindex="-1">
-<h1 id="method">How creativity is judged</h1>
-<p>Two AI judges compare answers in pairs. Each chooses one overall winner, guided by New, Useful and Surprising. The ranking is the share of comparisons each system wins.</p>
-<p><a href="deep-research-creativity.html">View the research results</a> · <a href="crest-guide.html">Run the pipeline</a></p>
-<nav class="section-nav" aria-label="On this page"><a href="#rubric">The rubric</a><a href="#design">Comparison design</a><a href="#ranking">Ranking</a><a href="#uncertainty">Error bars</a><a href="#limits">Limits and references</a></nav>
-<section id="rubric"><h2>One overall choice</h2>
+<h1 id="method">NUS rubric</h1>
+<p>NUS means <strong>New, Useful, and Surprising</strong>. These qualities guide a judge toward one overall choice between two answers: which makes the stronger creative contribution? The default <a href="../crest/prompts/nus_pairwise_v2.txt">NUS prompt</a> applies to research answers and scientific papers. The <a href="aut-inspired-rubric.html">AUT-inspired rubric</a> offers an alternative emphasis on ideas, conceptual range, and originality.</p>
+<nav class="section-nav" aria-label="On this page"><a href="#rubric">The three qualities</a><a href="#judgment">The overall choice</a><a href="#limits">Evidence and limits</a><a href="#design">Results and configuration</a></nav>
+<section id="rubric"><h2>What makes an answer creative?</h2>
+<p>Suppose the task is to improve a city's response to extreme heat.</p>
 <div class="rubric-grid">
-<div><h3>New</h3><p>What is original about the central contribution? Originality can lie in a new relationship between familiar ideas. A judge’s failure to recall prior work does not establish novelty.</p></div>
-<div><h3>Useful</h3><p>How well does the contribution serve the task? Assess its reasoning and support against the question’s premises and the level of development requested.</p></div>
-<div><h3>Surprising</h3><p>How does the approach differ from what a competent answer would normally propose? Credit unexpected ideas when they contribute meaningfully to the task.</p></div>
+<div><h3>New</h3><p><strong>What does the central idea add?</strong> Look for an original claim, mechanism, relationship, or combination. Familiar parts can form a meaningful new contribution.</p><p>Example: an answer connects a city's cooling centers to bus routes, explaining how transport access changes who can benefit. Assess that relationship, rather than counting unfamiliar details.</p></div>
+<div><h3>Useful</h3><p><strong>How well does the idea serve the task?</strong> Look for a coherent mechanism, relevant reasoning, and evidence appropriate to the claim and requested development stage.</p><p>Example: a cooling proposal explains who can reach each center and when it opens. An exploratory plan can leave tests for later; a claim that it already reduced illness needs supporting evidence.</p></div>
+<div><h3>Surprising</h3><p><strong>How does the approach depart from the expected answer?</strong> Start with what a competent answer would usually propose, then identify a meaningful departure.</p><p>Example: instead of only adding cooling sites, an answer changes bus schedules to match peak heat. The unexpected move matters if it improves access; an unrelated futuristic gadget adds little.</p></div>
 </div>
-<p>The judge weighs these qualities together, explains both answers and their tradeoffs, then selects A or B. There are no separate criterion winners, numeric ratings or fixed weights. Length, polish and citation count alone do not establish creative quality.</p>
+<p>These examples illustrate the questions to ask; they do not establish that any proposal is historically novel. New and Surprising can overlap: the same relationship may be both original and unexpected.</p>
+</section>
+<section id="judgment"><h2>Make one overall choice</h2>
+<p><a href="overall-creativity-judgment.html">Why one overall judgment</a> reviews the evidence and tradeoffs behind this design.</p>
+<p>The judge explains both answers' strengths, limitations, and tradeoffs, then selects A or B. There are no criterion winners, numeric ratings, fixed weights, or score averages. A surprising proposal with an unexplained mechanism can lose to a more convincing contribution. More detail helps when it supports the idea or fulfills the task; length, polish, repetition, and citation count alone do not establish creative quality.</p>
 <pre aria-label="Judgment format"><code>{"reason": "Comparative explanation of both answers and the overall choice.", "winner": "A"}</code></pre>
-<p>If the judge cannot support a substantive preference, it must say so and choose A by convention. When it does this consistently in both answer orders, each system receives one vote. Identical presented answers are excluded before judging.</p>
-<details id="rubric-selection"><summary>Rubric files and configuration</summary>
-<p>The default is <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a>. The alternative <a href="../crest/prompts/nus_pairwise_v1.txt">nus_pairwise_v1.txt</a> is selectable through the <code>rubric</code> path in the configuration. Changing that path reuses the answers and creates different judgment cache identities. The selected wording uses the current presentation and response checks; saved runs retain their exact prompts. See <a href="crest-guide.html#rubric-selection">configuration examples</a>.</p>
-</details></section>
-<section id="design"><h2>Every pair, in both orders</h2>
-<ol class="comparison-flow" aria-label="Judgment count: 50 questions times 3 system pairs times 2 judges times 2 answer orders">
-<li><strong>50</strong><span>shared questions</span></li>
-<li><strong>3</strong><span>system pairs</span></li>
-<li><strong>2</strong><span>judges per pair</span></li>
-<li><strong>2</strong><span>answer orders</span></li>
-</ol>
-<p class="comparison-total"><strong>600 judgments total.</strong> Each question produces 12 choices. Each system appears in 8 of them, giving <strong>400 comparisons per system</strong> across all 50 questions.</p>
-<p>Judges receive the question and complete answers labeled A and B, without provider labels or web tools. URL destinations are hidden uniformly; meaningful citation labels and prose remain. Bare links and provider-only citation markers receive neutral source labels. Original answers are preserved in the report. Style and content can still reveal a system’s identity.</p>
-<p>Responses must contain a valid A/B choice and a complete comparative explanation. Automated checks reject obvious empty, meta-only or abruptly cut explanations, with bounded retries. These checks cannot verify the explanation’s factual claims.</p>
+<p>There is no tie option. If no substantive preference can be supported, the judge must say so and choose A by fixed convention. That choice is a reporting requirement, not evidence of greater creativity. Applied consistently in both answer orders, it splits the votes evenly.</p>
 </section>
-<section id="ranking"><h2>From votes to a ranking</h2>
-<div class="formula" aria-label="Win rate equals wins divided by comparisons"><strong>Win rate</strong><span>=</span><span>wins ÷ comparisons</span></div>
-<p>Every question, opponent, judge and answer order receives equal weight. Both orderings count even when a judge changes its preferred system after the swap. Exact aggregate ties share a rank. The head-to-head table shows each direct matchup separately, including any preference cycle.</p>
-<p>Only questions with all three answers and every required valid judgment enter the main ranking. Exclusions and their reasons are reported; completing fewer questions can change which tasks the ranking represents.</p>
-<p class="small">This is a normalized Borda-style win count. <a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright (2018)</a> analyze ranking by pairwise wins. Their results provide methodological background, rather than validation of this rubric or these judges.</p>
+<section id="limits"><h2>Evidence and limits</h2>
+<p>The judge uses identifiable prior work from its existing knowledge and does not browse. Failure to recall a precedent is uncertainty, not proof of novelty. Explicit fictional or hypothetical premises are accepted. Invented proposals differ from claims presented as established facts; a false factual claim central to the reasoning weakens the contribution.</p>
+<p>Originality and effectiveness are central to <a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger's definition (2012)</a>. <a href="https://api.pageplace.de/preview/DT0400.9780191639890_A23590668/preview-9780191639890_A23590668.pdf">Boden (2011, Introduction, pp. 1–2)</a> describes novel, surprising, valuable ideas and unfamiliar combinations of familiar ideas. These concepts inform this rubric; neither source validates this particular comparison by AI judges.</p>
+<p>The result records the selected judges' preferences for the supplied answers. No human or domain-expert validation of this rubric or panel has been performed. <a href="https://arxiv.org/abs/2306.05685">Zheng et al. (2023)</a> document position, verbosity, and self-enhancement biases in AI judging. Agreement between judges does not establish accuracy.</p>
 </section>
-<section id="uncertainty"><h2>What the error bars show</h2>
-<p>The 95% intervals describe how the win rates change when the completed questions are resampled. The default analysis draws 1,000 samples of whole questions with replacement, keeping every question’s answers and judgments together. The same draws produce intervals for differences between systems. <a href="https://aclanthology.org/P18-1128/">Dror et al. (2018, §3.2)</a> discuss bootstrap evaluation.</p>
-<p>These intervals hold the saved answers, judges, rubric and calls fixed. They do not include variation from generating new answers, choosing other judges or changing the rubric, and do not establish coverage across all creative tasks.</p>
-<h3>Checks on judge behavior</h3>
-<dl class="diagnostics">
-<dt>A-position preference</dt><dd>How often a judge chooses A, across the balanced presentations.</dd>
-<dt>Swapped inconsistency</dt><dd>How often a judge changes its preferred system when the same answers exchange positions.</dd>
-<dt>Judge disagreement</dt><dd>How often the two judges choose different systems for the same presentation.</dd>
-</dl>
-<p class="small">Swapped inconsistency can reflect order effects, call variability or the fixed convention for indifference. One call per presentation cannot separate these causes. Agreement does not establish accuracy. Detailed bootstrap ordering fractions are resampling frequencies, rather than probabilities that a system is truly superior.</p>
-</section>
-<section id="limits"><h2>Scope and supporting literature</h2>
-<p><strong>The ranking records these judges’ preferences for these answers.</strong> It does not measure absolute creativity, verify historical novelty or establish factual accuracy. No human or domain-expert validation of this rubric or judge panel has been performed. Using two provider families does not make their errors independent.</p>
-<p>The method draws on the following work:</p>
-<ul class="references">
-<li><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger (2012), <cite>The Standard Definition of Creativity</cite></a>: originality and effectiveness as central qualities.</li>
-<li><a href="https://api.pageplace.de/preview/DT0400.9780191639890_A23590668/preview-9780191639890_A23590668.pdf">Boden (2011), <cite>Creativity and Art</cite>, Introduction, pp. 1–2</a>: novel, surprising and valuable ideas, including unfamiliar combinations of familiar ideas.</li>
-<li><a href="https://arxiv.org/abs/2306.05685">Zheng et al. (2023), <cite>Judging LLM-as-a-Judge</cite></a>: position, verbosity and self-enhancement biases in LLM judging. Balanced orders and neutral links do not eliminate every bias.</li>
-</ul>
-<p class="small">These sources motivate the design; they do not validate CREST’s specific operational choices. The <a href="ai-scientist-method.html#crest-consistency">AI scientist paper comparison</a> shares the overall preference principle, with a different sampling design and uncertainty calculation.</p>
+<section id="design"><span id="ranking"></span><span id="uncertainty"></span><h2>Results and configuration</h2>
+<p>See the <a href="crest-guide.html#ranking">research pipeline's comparison design, ranking, and uncertainty</a>, or the <a href="ai-scientist-method.html#comparison-design">paper comparison method</a> for its sampling and weighting. These procedures turn overall choices into reported results.</p>
+<p id="rubric-selection">For file paths and settings, see <a href="crest-guide.html#rubric-selection">rubric selection</a>. Saved runs retain their exact prompts.</p>
 </section>
 </main>
 </body></html>

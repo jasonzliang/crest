@@ -86,34 +86,37 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(max-width:740px){.pipeline,.quick-start,.file-layout,.nus{grid-template-columns:1fr}.pipeline{gap:1.2rem}.pipeline li+li::before{content:"↓";left:auto;right:1.1rem;top:-1.35rem}.quick-start,.file-layout{gap:1.3rem}.nus{gap:.4rem}.guide-nav{gap:.25rem 1rem}.pipeline li{padding:1rem 1.2rem}}
 @media print{.guide-nav,.report-link{display:none}.pipeline{gap:.8rem}.pipeline li{break-inside:avoid}.quick-start,.file-layout{display:block}pre{white-space:pre-wrap}.table-scroll table{min-width:0}}
 </style>
-</head>
+<link rel="icon" type="image/svg+xml" href="favicon.svg"></head>
 <body>
 <a class="skip-link" href="#main-content">Skip to guide</a>
 <header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="crest-guide.html">Research pipeline</a><a href="deep-research-creativity.html">Deep research comparison</a><a href="ai-scientist-creativity.html">AI scientist comparison</a><a href="index.html">All documents</a></nav></header>
 <main id="main-content" tabindex="-1">
 <h1>Research pipeline</h1>
-<p>CREST runs three research systems on the same questions, saves their answers, and compares creative quality with two AI judges.</p>
+<p>CREST runs three research systems on the same questions, then uses two AI judges to compare the saved answers. This guide covers setup, execution, saved results and ranking.</p>
 <a class="report-link" href="deep-research-creativity.html">Read the completed 50-question comparison →</a>
 <nav class="guide-nav" aria-label="Guide contents"><a href="#overview">Pipeline</a><a href="#running">Quick start</a><a href="#models">Systems</a><a href="#operations">Parallelism</a><a href="#files">Results and reuse</a><a href="#judging">Ranking method</a></nav>
 <section id="overview" aria-labelledby="overview-title">
 <h2 id="overview-title">Three stages, one result directory</h2>
 <ol class="pipeline">
 <li><span class="stage-number">01</span><h3>Generate answers</h3><p>Caesar, OpenAI (Sol + web search), and Google Deep Research answer each question independently.</p><span class="output">50 questions → 150 saved answers</span></li>
-<li><span class="stage-number">02</span><h3>Compare each pair</h3><p>Two judges choose one overall A/B winner, guided by New, Useful and Surprising. Every pair appears in both orders.</p><span class="output">150 answers → 600 judgments</span></li>
+<li><span class="stage-number">02</span><h3>Compare each pair</h3><p>Two judges choose one overall A/B winner using the selected rubric. Every pair appears in both orders.</p><span class="output">150 answers → 600 judgments</span></li>
 <li><span class="stage-number">03</span><h3>Analyze preferences</h3><p>Count wins, rank the systems, and report uncertainty, judge agreement and order effects.</p><span class="output">600 judgments → ranking and diagnostics</span></li>
 </ol>
-<p class="small">The bundled <a href="../crest/data/queries_n50.jsonl">dataset</a> preserves Caesar’s 50 question texts and adds their five paper categories, with 10 questions per category. These counts describe a complete run; a one-question pilot produces 3 answers and 12 judgments.</p>
+<p class="small">The bundled <a href="../crest/data/queries_n50.jsonl">dataset</a> preserves Caesar’s 50 question texts and records five categories, with 10 questions per category. These counts assume all work succeeds; a complete one-question pilot has 3 answers and 12 judgments.</p>
 </section>
 <section id="running" aria-labelledby="running-title">
 <h2 id="running-title">Start with one question</h2>
 <p>Run these commands from the repository root. Generation and judging make paid API calls; planning and analysis run locally.</p>
 <details class="guide-details"><summary>Install and set credentials</summary>
-<p>Use Python 3.11–3.13. Caesar also needs the sibling <code>../rome</code> checkout and its dependencies.</p>
-<pre><code>python -m pip install -e '.[test]'
+<p>Use Python 3.11–3.13. Clone Caesar alongside CREST as <code>../rome</code>, then install both projects in a virtual environment:</p>
+<pre><code>git clone https://github.com/jasonzliang/caesar-agent.git ../rome
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[test]'
 python -m pip install -e ../rome
 export OPENAI_API_KEY=...
 export GOOGLE_API_KEY=...</code></pre>
-<p class="small"><code>GEMINI_API_KEY</code> also works. Credentials come from the environment. To use an existing Rome environment, set <code>research.caesar.python_executable</code> in your configuration.</p>
+<p class="small">If <code>../rome</code> already exists, use that checkout. <code>GEMINI_API_KEY</code> also works. Credentials come from the environment; CREST does not load dotenv files. To use an existing Rome environment, set <code>research.caesar.python_executable</code> in your configuration.</p>
 </details>
 <div class="quick-start">
 <div><h3>1. Plan and generate</h3><p class="command-label">Preview missing calls, then create the pilot run.</p>
@@ -124,14 +127,14 @@ python -m crest generate --limit 1</code></pre>
 <pre><code>CREST_RUN=crest/results/YYYY-MM-DD/HH-MM-SS-TZ-ID
 python -m crest judge --run "$CREST_RUN"
 python -m crest analyze --run "$CREST_RUN"</code></pre>
-<p class="small">For all three stages together, use <code>python -m crest run</code>. Add <code>--dry-run</code> to preview work without API calls.</p></div>
+<p class="small">For all three stages of the one-question pilot, use <code>python -m crest run --limit 1</code>. Add <code>--dry-run</code> to preview work without API calls; omit <code>--limit 1</code> for all 50 questions.</p></div>
 </div>
-<p>Commands use <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>. Add <code>--config crest/configs/crest.mbp.yaml</code> for the 64 GB <code>jason-mbp</code> profile. Use the same configuration for each stage.</p>
+<p>Commands use <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>. Add <code>--config crest/configs/crest.mbp.yaml</code> to each command for the 64 GB <code>jason-mbp</code> profile. Configuration paths are relative to the YAML file. Keep the same profile across stages unless intentionally changing the judges, rubric or analysis settings.</p>
 <details class="guide-details"><summary>Resume generation or rerun judging</summary>
 <pre><code>python -m crest generate --run "$CREST_RUN"
 python -m crest judge --run "$CREST_RUN"
 python -m crest analyze --run "$CREST_RUN"</code></pre>
-<p>Completed matching work is reused. To change judges or rubric, edit your configuration and rerun stages 2 and 3 with this directory. Stage 1’s saved answers stay available. Later stages otherwise select the latest generation run; an explicit <code>--run</code> avoids ambiguity.</p>
+<p>Completed matching work is reused. An existing run keeps its original questions, systems and generation settings. To change judges or rubric, edit the configuration and rerun stages 2 and 3 with the same <code>--run</code>. Without <code>--run</code>, judging and analysis select the latest generation run.</p>
 </details>
 </section>
 <section id="models" aria-labelledby="models-title">
@@ -139,11 +142,11 @@ python -m crest analyze --run "$CREST_RUN"</code></pre>
 <div class="table-scroll" role="region" aria-label="Configured research systems" tabindex="0"><table>
 <thead><tr><th scope="col">System</th><th scope="col">Configured workflow</th></tr></thead>
 <tbody>
-<tr><th scope="row">Caesar</th><td><code>gpt-6.1-sol</code> for main reasoning and synthesis; <code>gpt-6-luna</code> at low reasoning for exploration and knowledge-base helpers. Regular exploration allows up to 250 iterations, followed by three drafts and a merge. Synthesis rounds adjust to remaining budget and time.</td></tr>
+<tr><th scope="row">Caesar</th><td><code>gpt-6.1-sol</code> at medium reasoning for main work and synthesis; <code>gpt-6-luna</code> at low reasoning for exploration and knowledge-base helpers. Exploration allows up to 250 iterations, followed by three drafts and a merge. Synthesis rounds adjust to remaining budget and time.</td></tr>
 <tr><th scope="row">OpenAI (Sol + web search)</th><td><code>gpt-6.1-sol</code> with high reasoning and hosted web search through the Responses API.</td></tr>
-<tr><th scope="row">Google Deep Research</th><td>Managed <code>deep-research-preview-04-2026</code> agent. Its backend model is provider-controlled; the configured billing reference is not a model override.</td></tr>
+<tr><th scope="row">Google Deep Research</th><td>Managed <code>deep-research-preview-04-2026</code> agent. Google controls the backend; <code>gemini-3.1-pro-preview</code> is the configured billing reference, not a backend override.</td></tr>
 </tbody></table></div>
-<p><strong>Judges:</strong> GPT-6 Astra high and Gemini 4 Argon high, with no tools. Each receives the same rubric and complete saved answer pair. See <a href="judge-models.html">judge settings</a>.</p>
+<p><strong>Judges:</strong> GPT-6 Astra high and Gemini 4 Argon high, with no tools. Each receives the same selected rubric and complete saved answer pair. See <a href="judge-models.html">judge models, settings and cost assumptions</a>.</p>
 <p class="small">Editable presets describe future runs. Saved configuration records describe the exact settings and source version used for each answer in a completed run.</p>
 </section>
 <section id="operations" aria-labelledby="operations-title">
@@ -158,9 +161,9 @@ python -m crest analyze --run "$CREST_RUN"</code></pre>
 <tr><th scope="row">Research total</th><td>6 → 24</td><td>23 → 30</td></tr>
 <tr><th scope="row">Both judges combined</th><td>8 → 32</td><td>16 → 32</td></tr>
 </tbody></table></div>
-<p class="small">Limits apply to one pipeline process. Other account traffic can still trigger rate limits. Each judge can reach 16 concurrent requests.</p>
+<p class="small">Totals sum the separate provider limits; they are not a shared pool. Limits apply to one pipeline process, and other account traffic can still trigger rate limits. Each judge can reach 16 concurrent requests.</p>
 <div class="note"><p><strong>$5 per answer is a target.</strong> Caesar reserves estimated request costs and writing time; its configured worker timeout is two hours. Neither setting guarantees a complete answer or a final invoice below $5. Hosted research APIs expose no hard dollar cap, and judging costs extra.</p></div>
-<details class="guide-details"><summary>What happens after a failed request?</summary><p>Retries are bounded, with backoff and provider cooldowns. Native job creation is retried only after an explicit rate-limit rejection; uncertain submissions require reconciliation. Existing remote job IDs are retrieved after interruption. Invalid judge responses can receive up to four attempts, with failed attempts retained in cost records.</p></details>
+<details class="guide-details"><summary>What happens after a failed request?</summary><p>Retries use backoff and shared provider cooldowns. Hosted job creation is retried only after an explicit rate-limit rejection; uncertain submissions require reconciliation. After interruption, CREST retrieves saved remote job IDs. Rejected judge responses allow up to four attempts by default, and the cost records retain failed attempts.</p></details>
 </section>
 <section id="files" aria-labelledby="files-title">
 <h2 id="files-title">Find results and reuse work</h2>
@@ -189,30 +192,39 @@ python -m crest analyze --run "$CREST_RUN"</code></pre>
 <li><strong>One run, separate stages.</strong> Each executed stage creates a dated directory inside its run. Analysis reads a precise judgment snapshot.</li>
 <li><strong>Local directory names.</strong> <code>results_timezone: America/Chicago</code> uses local dates and <code>CDT</code>/<code>CST</code>. Recorded event timestamps stay in UTC.</li>
 <li><strong>Answers carry their settings.</strong> Configuration IDs link each answer to frozen models, settings and source provenance. JSONL files are canonical; Markdown files are reading copies.</li>
-<li><strong>Costs and times stay with the work.</strong> Records retain usage, cost estimates, unknown charges and elapsed time. Cache hits preserve the original timing.</li>
+<li><strong>Costs and times stay with the work.</strong> Records retain usage, cost estimates, unknown charges and elapsed time. Cache hits preserve the original timing. Experiment totals include reused work and paid failures; they do not measure spending during the latest command.</li>
 </ul>
 </div>
 <details class="guide-details"><summary>Which changes reuse the cache?</summary>
 <ul><li>Changing judges or rubric reuses saved answers and regenerates only judgments that no longer match.</li><li>Changing research settings needs a new generation run; unaffected answers can come from the shared cache.</li><li>Changing concurrency or retry settings preserves paid cache identities.</li><li>For intentional fresh calls, increment the provider’s <code>revision</code>. Resolve uncertain submissions before doing so.</li></ul>
 </details>
 </section>
-<section id="judging" aria-labelledby="judging-title">
+<section id="judging" aria-labelledby="judging-title"><span id="ranking"></span>
 <h2 id="judging-title">How the ranking works</h2>
-<ul class="nus"><li><strong>New</strong>What is original about the central contribution?</li><li><strong>Useful</strong>How well does it serve this question and support its payoff?</li><li><strong>Surprising</strong>How meaningfully does its approach depart from the expected one?</li></ul>
-<p>These qualities guide <strong>one overall A/B choice</strong>, with a comparative explanation. They are not separate scores or votes. Every pair receives two judges in both answer orders, giving 12 judgments per question.</p>
+<p>The default <a href="judging-method.html">NUS rubric</a> uses New, Useful and Surprising; the optional <a href="aut-inspired-rubric.html">AUT-inspired rubric</a> uses Fluency, Flexibility and Originality. Either guides <strong>one overall A/B choice</strong> with a comparative explanation. Criteria do not receive separate scores or votes.</p>
+<h3>Compare every pair in both orders</h3>
+<p>For each question, each judge sees all three system pairs twice, with A and B swapped: 3 pairs × 2 judges × 2 orders = <strong>12 judgments</strong>. Provider labels and URL destinations are hidden; meaningful citation labels remain. Judges receive the complete answer text without tools, though wording may reveal the authoring system.</p>
+<p>If the judge cannot support a substantive preference, it must explain that indifference and choose A. Consistent indifference in both orders splits the votes evenly. Identical presented answers are skipped without inventing a winner.</p>
+<h3>Rank only complete questions</h3>
+<p>A question contributes only when every system has exactly one completed, nonempty answer and every pair, judge and order has exactly one valid judgment. A missing answer, missing judgment, duplicate completed answer or duplicate valid judgment excludes the whole question from the pooled ranking and each judge’s ranking. Invalid judgments provide no votes.</p>
 <p class="formula"><strong>Win rate = wins ÷ comparisons</strong><br><span class="small">A complete run gives each system 400 comparisons: 50 questions × 2 opponents × 2 judges × 2 orders.</span></p>
-<p>Questions, opponents, judges and orders receive equal weight. If the judge cannot support a substantive preference, the rubric instructs it to choose A; consistent indifference in both orders splits the votes evenly.</p>
-<p>Reported 95% intervals resample whole questions 1,000 times, keeping each question’s comparisons together. They describe sensitivity to the question mix while holding the saved answers and judges fixed. These are observed AI preferences, with no human validation or independent fact-checking.</p>
+<p>Questions, opponents, judges and answer orders receive equal weight. The highest win rate ranks first; equal rates share a rank. Head-to-head tables show preferences for each system pair, while per-judge results use the same complete questions as the pooled result.</p>
+<h3>Read uncertainty and diagnostics together</h3>
+<p>By default, 95% percentile intervals use <strong>1,000 bootstrap samples of whole questions</strong>, drawn with replacement using seed 2026. Each sample keeps a question’s judgments together. The analysis reports intervals for win rates, ranks and differences between systems’ win rates. A pair’s ordering stability is the fraction of samples where either system ranks higher or they tie; it is not a probability that one system is truly better.</p>
+<p>These intervals describe sensitivity to the observed mix of complete, curated questions. They hold the saved answers, selected judges, rubric and observed judgments fixed. They omit variation from generating new answers, choosing other judges or assessing whether the rubric measures creativity well.</p>
+<p>Diagnostics report A-position preference, changes in winner after swapping answer order, judge disagreement and preference cycles. A swap change combines order effects and sampling variability; one judgment per presentation cannot separate them. These are AI preferences, without human or domain-expert validation or independent fact-checking.</p>
 <details id="rubric-selection" class="guide-details"><summary>Choose the rubric file</summary>
-<p>The default <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a> emphasizes substantive contributions, task-relative usefulness and meaningful surprise. It treats unfamiliarity as uncertainty about novelty. The <a href="../crest/prompts/nus_pairwise_v1.txt">v1 wording</a> is also available. Select either file with the configuration’s <code>rubric</code> field:</p>
+<p>Set the configuration’s <code>rubric</code> field to the desired prompt. The default is <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a>; the <a href="../crest/prompts/nus_pairwise_v1.txt">original NUS wording</a> and <a href="../crest/prompts/aut_research_pairwise_v1.txt">AUT-inspired prompt</a> are also available:</p>
 <pre><code># In a configuration under crest/configs/:
 rubric: ../prompts/nus_pairwise_v2.txt
-# Or use the original wording:
-# rubric: ../prompts/nus_pairwise_v1.txt</code></pre>
-<p>Either file uses the same presentation and validation: URL destinations are hidden uniformly, meaningful citation labels remain, and explanations are screened before acceptance. Original answers and the exact judging prompt remain saved.</p>
+# Alternative: original NUS wording
+# rubric: ../prompts/nus_pairwise_v1.txt
+# Alternative: AUT-inspired comparison
+# rubric: ../prompts/aut_research_pairwise_v1.txt</code></pre>
+<p>All use the same answer presentation and response checks. Checks reject obvious noncomparisons and unfinished explanations; they do not verify factual accuracy or whether the explanation supports the winner. Original answers and exact prompts remain saved. Rerun judging and analysis after changing the rubric; different rubric families cannot share one ranking.</p>
 </details>
 <details class="guide-details"><summary>Method and references</summary>
-<p>The complete design, exclusions and diagnostics are in <a href="judging-method.html">Research evaluation</a>. Creativity guidance draws on <a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger (2012)</a>; pairwise win ranking has a basis in <a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright (2018)</a>. <a href="https://aclanthology.org/P18-1128/">Dror et al. (2018)</a> discuss resampling in evaluation, and <a href="https://arxiv.org/abs/2306.05685">Zheng et al. (2023)</a> examine LLM judge biases. These references do not validate this rubric as a general creativity test.</p>
+<p><a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright (2018)</a> study ranking by pairwise wins. <a href="https://aclanthology.org/P18-1128/">Dror et al. (2018)</a> discuss statistical testing and resampling in evaluation, and <a href="https://arxiv.org/abs/2306.05685">Zheng et al. (2023)</a> examine LLM judge biases. These sources inform the design; they do not establish the rubric’s validity or guarantee the reported intervals apply to other tasks.</p>
 <p>The five question categories follow <a href="https://arxiv.org/abs/2604.20855">the Caesar paper</a>, Appendix B.1. The <a href="deep-research-creativity.html">completed report</a> includes all 150 answers and 600 judgment explanations.</p>
 </details>
 </section>

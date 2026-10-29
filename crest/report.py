@@ -31,7 +31,7 @@ from .artifacts import configuration_record
 from .costs import cost_for_row, summarize_costs
 from .judging import parse_verdict, validate_verdict
 from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, NUS_PROTOCOL, protocol_rubric_kind
-from crest_ais.navigation import CSS as SITE_CSS, site_header
+from crest_ais.navigation import CSS as SITE_CSS, site_favicon, site_header
 
 ROOT = Path(__file__).resolve().parents[1]
 AGENTS = ('caesar', 'gemini', 'openai')
@@ -389,9 +389,11 @@ def _ranking(data):
     report = data['ranking']
     heading = 'Observed AUT-inspired preference ranking' if report.get('rubric_kind') == AUT_KIND else 'Observed creativity ranking'
     parts = [f'<section id="overall"><h2>{heading}</h2>',
-             '<p>Ranked by how often each system’s answer was preferred. Each system appears in 400 of the 600 judgments '
-             '(50 questions × 2 opponents × 2 judges × 2 answer orders). '
-             'Win rate is wins ÷ 400. Lines show 95% intervals from resampling the questions.</p>']
+             '<p>Each system’s win rate is its wins divided by 400 judgments across 50 questions, '
+             'two opponents, two judges, and both answer orders. Lines show the middle 95% of win rates '
+             'from resampling the questions. These ranges describe sensitivity to the question mix '
+             'for these saved answers and judges.</p>'
+             '<p class="small">Factual accuracy has not been independently verified.</p>']
     for row in report['ranking']:
         agent, value = row['agent'], row['preference_rate']
         low, high = row['ci95']
@@ -415,9 +417,11 @@ def _ranking(data):
         stability = c['ordering_stability']
         rows.append([_text(f'{LABELS[a]} − {LABELS[b]}'), f'{100 * c["difference"]:+.1f} pp',
                      _text(interval + ' pp'), _pct(stability['first_higher']), _pct(stability['equal'])])
-    parts.append(_table(['Overall-index contrast', 'Difference', 'Paired 95% interval', 'First higher in bootstrap', 'Equal in bootstrap'], rows, 'Paired question-bootstrap contrasts'))
-    parts.append('<p class="small">Contrasts compare overall indices, not only the direct matchup. Bootstrap ordering '
-                 'fractions are not Bayesian probabilities of true superiority.</p></details></section>')
+    parts.append(_table(['Systems compared', 'Overall win-rate difference', 'Paired 95% interval', 'First higher in resamples', 'Equal in resamples'], rows, 'Paired question-bootstrap contrasts'))
+    parts.append('<p class="small">Each difference compares overall win rates across both opponents, rather than '
+                 'the direct matchup alone. Resampling fractions show how often each ordering appeared '
+                 'across the 1,000 question resamples; they are not probabilities that a system is truly '
+                 'superior.</p></details></section>')
     return ''.join(parts)
 
 
@@ -467,7 +471,7 @@ def _judges(data):
                  'This can reflect order effects or variation between calls.</p>')
     parts.append('<details><summary>Frozen judge configurations</summary><pre>'
                  + _text(json.dumps(data['judges'], ensure_ascii=False, indent=2)) + '</pre></details>')
-    parts.extend([_models(data), '</section>'])
+    parts.append('</section>')
     return ''.join(parts)
 
 
@@ -481,11 +485,11 @@ def _resources(data):
         r = generation[agent]
         averages.append([_text(LABELS[agent]), _money(r['mean_known_cost_usd']),
                          _duration(r['mean_duration_seconds']), _duration(r['mean_lifetime_duration_seconds'])])
-    parts.append(_table(['System', 'Average estimated cost', 'Average generation time',
-                         'Average active time, all attempts'], averages, 'Per-question cost and elapsed-time means'))
+    parts.append(_table(['System', 'Mean estimated cost', 'Mean elapsed time, successful job',
+                         'Mean active time, all attempts'], averages, 'Per-question cost and elapsed-time means'))
     parts.append('<p class="small">Google’s estimate uses assumed model rates because its internal billing breakdown is unavailable. '
                  'Unreported charges are excluded. '
-                 'Generation time covers the final successful job; active time includes earlier attempts.</p>')
+                 'Elapsed time covers the final successful job; active time includes earlier attempts.</p>')
     google = generation['gemini']
     if google['estimated_above_target']:
         parts.append(f'<p class="small">{google["estimated_above_target"]} Google answer estimates exceed the $5 target. '
@@ -504,7 +508,7 @@ def _resources(data):
     parts.append('<p class="small">Judging is additional: '
                  + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) for j in JUDGES) + '.</p>')
     scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in JUDGES)
-    parts.append(f'<p><strong>Total for 600 judgments: {_money(scored)}.</strong> Includes retries.</p>')
+    parts.append(f'<p><strong>Total for 600 judgments: {_money(scored)}.</strong> Includes retries for this judging round; excludes earlier superseded judging.</p>')
     parts.append('<p class="small">Pricing references: '
                  '<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">OpenAI Sol</a>, '
                  '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">OpenAI Luna</a>, and '
@@ -519,8 +523,9 @@ def _resources(data):
                      str(r['lifetime_duration_count']) + ' / 50'])
     parts.append(_table(['System', 'Median successful-attempt elapsed', 'Min–max successful-attempt elapsed', 'Timed answers',
                          'Audited median cumulative active execution', 'Active-time audit coverage'], rows, 'Saved answer elapsed times'))
-    parts.append('<p class="small">Elapsed time includes provider queueing, polling and retries. '
-                 'Active time adds earlier attempts and excludes gaps between them. Cache hits retain original durations.</p>')
+    parts.append('<p class="small">Elapsed time includes queueing, polling and retries during the successful job. '
+                 'Active time also adds recorded earlier attempts, excluding gaps between them. '
+                 'Cache hits retain original durations.</p>')
     if data['audit_path']:
         differs = any(_number(generation[a]['audited_known_cost_usd'])
                       and (not _number(generation[a]['known_cost_usd']) or not math.isclose(
@@ -711,18 +716,20 @@ def _method(data):
                       f'Links reveal provenance in {openai_tracking} / 50 {LABELS["openai"]} answers '
                       f'and {google_grounding} / 50 {LABELS["gemini"]} answers. '
                       'These cues do not establish that provider bias caused the ranking.</p>')
+    rubric_links = ('' if aut else '<a href="judging-method.html">NUS rubric</a>; '
+                    '<a href="overall-creativity-judgment.html">Why one overall judgment</a>. ')
     return ('<section id="method"><h2>How the comparison works</h2>'
             '<p>Each question produces 12 decisions: three answer pairs, evaluated by two judges in both orders.</p>'
             + scope + '<dl class="method-summary">'
             '<dt>Choose a winner</dt><dd>' + winner_guidance +
-            'These guide one overall decision, with no separate scores.</dd>'
+            'These guide one overall decision, with no separate scores. ' + rubric_links + '</dd>'
             '<dt>Count the votes</dt><dd>Every decision counts equally. Each system appears in 400 decisions; '
             'wins ÷ 400 gives its win rate.</dd>'
             '<dt>Read the error bars</dt><dd>We resample the 50 questions 1,000 times, keeping each question’s 12 decisions '
             'together. The middle 95% of the resulting win rates forms the interval.</dd></dl>'
-            '<p class="small">The ranking describes these saved answers and judge preferences. The intervals show sensitivity '
-            'to the question mix; they do not cover new answers or different judges. Factual accuracy has not been verified, '
-            'and answer length or style may influence preferences.</p>'
+            '<p class="small">The intervals do not cover new answers or different judges. '
+            'Answer length or style may influence preferences.</p>'
+            + _models(data) +
             '<details><summary>Rubric, presentation and references</summary>' + provenance +
             f'<p>The bootstrap uses seed {_text(bootstrap["seed"])}. All systems use the same sampled questions when '
             'calculating ranking differences.</p>'
@@ -754,15 +761,18 @@ CSS = """
 def _render(data, destination):
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">',
-             '<title>Deep research comparison · CREST</title>', f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
+             '<title>Deep research comparison · CREST</title>', site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
              '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination),
              '<main id="main-content" tabindex="-1"><h1>Deep research comparison</h1>',
+             '<p>This comparison evaluates Caesar, OpenAI’s Sol workflow with web search, and Google Deep Research '
+             'on the same 50 questions. Two model judges compare the 150 saved answers in both answer orders. '
+             '<a href="#systems">Models and research workflows</a>.</p>',
              '<nav aria-label="Report contents"><a href="#overall">Ranking</a><a href="#matchups">Head-to-head</a>'
-             '<a href="#resources">Cost and time</a><a href="#method">Method</a>'
-             '<a href="#judges">Judges</a><a href="#questions">Answers</a></nav>',
+             '<a href="#judges">Judges</a><a href="#resources">Cost and time</a>'
+             '<a href="#method">Method</a><a href="#questions">Answers</a></nav>',
              '<div class="run-stats"><div><strong>50</strong><span>questions</span></div>'
              '<div><strong>150</strong><span>answers</span></div><div><strong>600</strong><span>pairwise judgments</span></div></div>',
-             _ranking(data), _head_to_head(data), _resources(data), _method(data), _judges(data),
+             _ranking(data), _head_to_head(data), _judges(data), _resources(data), _method(data),
              _questions(data),
              '</main></body></html>\n']
     return ''.join(parts)

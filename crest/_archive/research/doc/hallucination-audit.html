@@ -70,9 +70,9 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
-</style></head>
+</style><link rel="icon" type="image/svg+xml" href="../../../../docs/favicon.svg"></head>
 <body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../docs/deep-research-creativity.html">Deep research comparison</a><a href="../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1"><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#crest-hallucination-audit-queries--judge-side-metadata">Hallucination audit</a></li><li><a href="#headline">Headline</a></li><li><a href="#corrections-applied-10-listed">Corrections applied (10
+<main id="document-main" tabindex="-1"><div class="archive-note"><strong>Historical document.</strong> Content and dates are preserved from the original archive. This is not a current operating guide.</div><p class="metadata">Later historical citation reports: <a href="misc/audit-live-c1.html">C1</a>, <a href="misc/audit-live-c2.html">C2</a>, <a href="misc/audit-live-c3.html">C3</a>, <a href="misc/audit-live-c4-c5.html">C4 and C5</a>, <a href="misc/audit-live-c4-remainder.html">C4 remainder</a>, and <a href="misc/audit-live-c5-remainder.html">C5 remainder</a>.</p><details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#headline">Headline</a></li><li><a href="#corrections-applied-10-listed">Corrections applied (10
 listed)</a></li><li><a href="#residual-low-confidence-notes--all-but-two-closed-by-the-live-web-pass">Residual
 low-confidence notes — all but two closed by the live-web
 pass</a></li><li><a href="#standing-recommendation">Standing recommendation</a></li></ul></nav></details><article><blockquote>
@@ -110,27 +110,30 @@ medium/low</strong>. All actionable ones were corrected.</p>
 listed)</h2>
 <p><em>The prose above says 11; the table below has 10 rows. One
 correction was applied but never transcribed here — the count and the
-table disagree, and the table is the auditable record.</em> | Item |
-Field | Fix | Conf | |---|---|---|---| | C4_economics_business_20 |
-known_answers | <em>Radical Markets</em> (2018): "Lanier–Weyl" →
-<strong>Posner &amp; Weyl</strong> | HIGH | | C3_arts_humanities_17 |
-known_answers | "Morphologie du sens" → <strong>"Morphogenèse du
-sens"</strong>; author → Petitot (in Thom's lineage) | HIGH | |
-C2_biology_medicine_06 | known_answers | immunoediting "(Science,
-2002-2011)" → "(Nature Immunology 2002; Science 2011)" | med | |
-C2_arts_humanities_11 | known_answers | point-at-infinity: "Kepler and
-Desargues (c.1639)" → "Kepler (1604) and Desargues (c.1639)" | med | |
-C2_economics_business_08 | known_answers | removed likely-fabricated
-"5–20% of U.S. GDP" stat + unconfirmed "Edward Cox 1855" bookend | med |
-| C4_economics_business_20 | known_answers | "Dawex (founded 2012)" →
-"(founded 2015)" | med | | C1_biology_medicine_00 | known_answers |
-dynobactin "Nature 2022" → "Nature Microbiology 2022" | med | |
-C3_biology_medicine_12 | known_answers | Rashevsky "organismic sets …
-(~1954)" → "(organismic sets ~1967; relational biology ~1954)" | med | |
-C1_engineering_04 | known_answers | Restrepo et al. <em>Extreme
-Mechanics Letters</em> "2016" → "2015" | low-med | |
-C4_biology_medicine_18 | known_answers | ICLAC Register "(2010 onward)"
-→ "(2012 onward)" | low |</p>
+table disagree, and the table is the auditable record.</em></p>
+<div aria-labelledby="corrections-applied-10-listed" class="table-scroll" role="region" tabindex="0"><table>
+<thead><tr><th scope="col">Item</th><th scope="col">Field</th><th scope="col">Fix</th><th scope="col">Conf</th></tr></thead>
+<tbody>
+<tr><th scope="row">C4_economics_business_20</th><td>known_answers</td><td><em>Radical Markets</em> (2018): "Lanier–Weyl" →
+<strong>Posner &amp; Weyl</strong></td><td>HIGH</td></tr>
+<tr><th scope="row">C3_arts_humanities_17</th><td>known_answers</td><td>"Morphologie du sens" → <strong>"Morphogenèse du
+sens"</strong>; author → Petitot (in Thom's lineage)</td><td>HIGH</td></tr>
+<tr><th scope="row">C2_biology_medicine_06</th><td>known_answers</td><td>immunoediting "(Science,
+2002-2011)" → "(Nature Immunology 2002; Science 2011)"</td><td>med</td></tr>
+<tr><th scope="row">C2_arts_humanities_11</th><td>known_answers</td><td>point-at-infinity: "Kepler and
+Desargues (c.1639)" → "Kepler (1604) and Desargues (c.1639)"</td><td>med</td></tr>
+<tr><th scope="row">C2_economics_business_08</th><td>known_answers</td><td>removed likely-fabricated
+"5–20% of U.S. GDP" stat + unconfirmed "Edward Cox 1855" bookend</td><td>med</td></tr>
+<tr><th scope="row">C4_economics_business_20</th><td>known_answers</td><td>"Dawex (founded 2012)" →
+"(founded 2015)"</td><td>med</td></tr>
+<tr><th scope="row">C1_biology_medicine_00</th><td>known_answers</td><td>dynobactin "Nature 2022" → "Nature Microbiology 2022"</td><td>med</td></tr>
+<tr><th scope="row">C3_biology_medicine_12</th><td>known_answers</td><td>Rashevsky "organismic sets …
+(~1954)" → "(organismic sets ~1967; relational biology ~1954)"</td><td>med</td></tr>
+<tr><th scope="row">C1_engineering_04</th><td>known_answers</td><td>Restrepo et al. <em>Extreme
+Mechanics Letters</em> "2016" → "2015"</td><td>low-med</td></tr>
+<tr><th scope="row">C4_biology_medicine_18</th><td>known_answers</td><td>ICLAC Register "(2010 onward)"
+→ "(2012 onward)"</td><td>low</td></tr>
+</tbody></table></div>
 <h2 id="residual-low-confidence-notes--all-but-two-closed-by-the-live-web-pass">Residual
 low-confidence notes — <strong>all but two closed by the live-web
 pass</strong></h2>

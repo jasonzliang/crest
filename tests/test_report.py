@@ -154,6 +154,9 @@ def test_legacy_nus_publication_rendering_matches_explicit_family(run, tmp_path)
     data['ranking']['rubric_kind'] = 'nus'
     assert _render(data, tmp_path / 'nus.html') == legacy
     assert '<strong>Useful</strong>' in legacy and 'AUT-inspired' not in legacy
+    assert 'href="judging-method.html">NUS rubric</a>' in legacy
+    assert 'href="overall-creativity-judgment.html">Why one overall judgment</a>' in legacy
+    assert '<link rel="icon" type="image/svg+xml"' in legacy
 
 
 def test_revised_publication_rejects_meta_only_reason(run):
@@ -171,7 +174,8 @@ def test_revised_publication_rejects_meta_only_reason(run):
 
 def test_revised_method_describes_judge_presentations_not_raw_url_metadata():
     from crest.report import _method
-    data = {'ranking': {'bootstrap': {'seed': 2026}},
+    data = {'ranking': {'bootstrap': {'seed': 2026},
+                        'ranking': [{'agent': agent} for agent in AGENTS]}, 'manifest': {},
             'judgments': [{'protocol_version': 'nus-overall-pairwise-v3',
                            'presentation_version': 'citation-neutral-v1'}],
             'answers': [{'agent': 'openai', 'result': {'text': 'https://example.com?utm_source=openai'}},
@@ -650,9 +654,9 @@ def test_per_question_means_preserve_partial_costs_and_use_observed_times(run, t
     output = tmp_path / 'page.html'
     write_report(run, output, audit=audit)
     html = output.read_text()
-    assert 'Average estimated cost' in html
-    assert 'Average generation time' in html
-    assert 'Average active time, all attempts' in html
+    assert 'Mean estimated cost' in html
+    assert 'Mean elapsed time, successful job' in html
+    assert 'Mean active time, all attempts' in html
     assert '$1.0400' in html and '$1.1200' in html
     assert 'Caesar has unpriced' not in html
     assert 'Google’s estimate uses assumed model rates' in html
@@ -747,7 +751,7 @@ def test_concise_results_keep_limits_visible_and_metadata_expandable(run, tmp_pa
             if tag == 'table' and self.visible():
                 self.visible_tables.append(next(a['aria-label'] for _, a in reversed(self.stack)
                                                 if 'aria-label' in a))
-            if tag not in {'meta', 'br'}:
+            if tag not in {'meta', 'link', 'br'}:
                 self.stack.append((tag, attrs))
 
         def handle_endtag(self, tag):
@@ -765,13 +769,13 @@ def test_concise_results_keep_limits_visible_and_metadata_expandable(run, tmp_pa
     parser.feed(html)
     visible = ' '.join(parser.visible_text)
     assert parser.visible_tables == ['Overall head-to-head preferences',
-                                     'Per-question cost and elapsed-time means',
-                                     'Per-judge overall preferences and order diagnostics']
+                                     'Per-judge overall preferences and order diagnostics',
+                                     'Per-question cost and elapsed-time means']
     assert 'Google’s estimate uses assumed model rates' in visible
     assert 'internal billing breakdown is unavailable' in visible
     assert 'this run was not fully blinded' in html
     assert 'These cues do not establish that provider bias caused the ranking.' in html
-    assert 'Factual accuracy has not been verified' in visible
+    assert 'Factual accuracy has not been independently verified' in visible
     assert 'Chose A' in visible
     for detail in ['Paired 95% interval', 'Historical unknown reservations',
                    'gpt-6-astra', 'configuration_sha256', 'Answer key:', 'Judgment key:']:
@@ -780,7 +784,7 @@ def test_concise_results_keep_limits_visible_and_metadata_expandable(run, tmp_pa
     assert html.count('class="answer-metadata"') == 150
     assert 'class="full-question"' not in html
     assert html.count(questions[0]['text']) == 1
-    sections = ['overall', 'matchups', 'resources', 'method', 'judges', 'systems', 'questions']
+    sections = ['overall', 'matchups', 'judges', 'resources', 'method', 'systems', 'questions']
     assert [html.index(f'id="{name}"') for name in sections] == sorted(html.index(f'id="{name}"') for name in sections)
 
 
@@ -817,7 +821,7 @@ def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchu
                 self.diagonals += 1
             self.question_numbers += 'question-number' in classes
             self.question_titles += 'question-title' in classes
-            if tag not in {'meta', 'br'}:
+            if tag not in {'meta', 'link', 'br'}:
                 self.stack.append((tag, attrs))
 
         def handle_endtag(self, tag):
@@ -952,7 +956,7 @@ def test_superseded_judgments_are_retained_but_excluded_from_published_cost_and_
     output = tmp_path / 'page.html'
     write_report(run, output)
     text = output.read_text()
-    assert 'superseded' not in text
+    assert 'Includes retries for this judging round; excludes earlier superseded judging.' in text
     assert 'Total for 600 judgments: $60.0000' in text
     assert '$60.8000' not in text
     assert text.count('class="judgment"') == 600
@@ -977,7 +981,7 @@ def test_duplicate_prior_jobs_do_not_change_published_current_cost(run):
     assert data['resources']['paid_judging']['cumulative_known_estimate_usd'] == pytest.approx(60.3)
     assert 'Total for 600 judgments: $60.0000' in html
     assert '$60.3000' not in html
-    assert 'superseded' not in html
+    assert 'Includes retries for this judging round; excludes earlier superseded judging.' in html
     assert data['ranking']['coverage']['valid_judgments'] == 600
 
 

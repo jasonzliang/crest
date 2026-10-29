@@ -76,6 +76,14 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 """
 
+def site_favicon(project_root: Path, destination: Path) -> str:
+    """Use the same local icon in documentation and generated reports."""
+    icon = Path(project_root).resolve() / 'docs/favicon.svg'
+    relative = os.path.relpath(icon, Path(destination).resolve().parent)
+    href = escape(quote(relative, safe='/._-'), quote=True)
+    return f'<link rel="icon" type="image/svg+xml" href="{href}">'
+
+
 def site_header(project_root: Path, destination: Path) -> str:
     root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
     def link(path):
