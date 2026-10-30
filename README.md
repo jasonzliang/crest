@@ -82,3 +82,15 @@ python -m pytest
 The master test command runs both packages' tests in parallel across all logical CPU cores. Use `-n 4` to limit workers or `-n 0` for serial debugging.
 
 Licensed under [Apache 2.0](LICENSE).
+
+## Citation
+
+```bibtex
+@misc{liang2026crest,
+  author       = {Liang, Jason},
+  title        = {{CREST}: Creativity of Research Agents},
+  year         = {2026},
+  howpublished = {GitHub repository},
+  url          = {https://github.com/jasonzliang/crest}
+}
+```
