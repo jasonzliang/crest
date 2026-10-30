@@ -1,4 +1,4 @@
-# CREST
+# CREST: Creativity of Research Agents
 
 CREST benchmarks the creativity of deep research agents and AI scientist papers using **pairwise LLM judging**. Judges choose one overall winner, guided by **New, Useful, and Surprising**. Saved answers, judgments, configurations, API costs, and timing make each comparison inspectable.
 
