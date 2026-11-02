@@ -120,10 +120,9 @@ def extract_result(artifact: dict, model: str, usage: dict, *, expected_drafts=3
         raise ValueError("Caesar returned an invalid source map")
     citations = [{"url": url, "title": f"[{index}]"}
                  for url, index in sorted(sources.items(), key=lambda item: int(item[1]))]
-    sections = []
-    if artifact.get("abstract"):
-        sections.append("Abstract\n" + artifact["abstract"])
-    sections.append(artifact["artifact"])
+    # The answer is the main text plus sources. Rome's word target applies to the main text, so the
+    # abstract it also writes is kept only in the raw artifact and never counted or judged.
+    sections = [artifact["artifact"]]
     if citations:
         sections.append("Sources\n" + "\n".join(f"{item['title']} {item['url']}" for item in citations))
     unknown = usage.get("unknown_cost", True) or not usage.get("successful_calls")

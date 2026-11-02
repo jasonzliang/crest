@@ -66,7 +66,8 @@ research_continuation_prompt: |-
 research:
   caesar:
     use_research_prompt: false   # Caesar gets the bare question; Rome owns its prompting.
-    # answer_word_limit: 600     # Inherits the global limit unless set here.
+    # answer_word_limit: 600     # Inherits the global limit unless set here. It becomes Rome's main-text
+                                 # target; the answer CREST judges is that main text plus sources (no abstract).
     rome_path: ../../../rome
     model: gpt-6.1-sol
     reasoning_effort: medium
