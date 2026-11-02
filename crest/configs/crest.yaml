@@ -114,8 +114,8 @@ research:
     adapt_role: true
     synthesis_merge_artifacts: true
     call_timeout_seconds: 600
-    initial_concurrency: 1       # jason-mbp (64 GB): 20
-    concurrency: 4               # jason-mbp (64 GB): 20
+    initial_concurrency: 4       # Each worker uses about 0.4 GB; +1 worker per 2 successes. jason-mbp (64 GB): 20
+    concurrency: 8               # jason-mbp (64 GB): 20
   openai:
     use_research_prompt: true
     model: gpt-6.1-sol
@@ -127,7 +127,7 @@ research:
     max_research_rounds: 6       # Cap on rounds. 2026-11-02 pilots: $3.94 over 4 rounds without the overshoot guard; $3.13 over 5 rounds ($0.23 to $1.00 each, 40 min) with it. Timeout is per round.
     max_output_tokens: 100000    # Per round, includes reasoning tokens; Sol's ceiling is 128,000.
     max_tool_calls: 150          # Per round: every web_search action (search, open page, find in page) counts toward the cap; only searches are billed, $10 per 1,000.
-    initial_concurrency: 3       # jason-mbp: 2
+    initial_concurrency: 6       # Hosted jobs; +1 per 2 successes. jason-mbp: 2
     concurrency: 12              # jason-mbp: 6
   gemini:
     use_research_prompt: true
@@ -139,7 +139,7 @@ research:
     billing_model: gemini-3.1-pro-preview
     budget_usd: 4.0              # Flag-and-warn only: never cancelled for budget (timeouts still cancel). Measured $3.71 at 5,000 words, $1.81 at 600 words (2026-11-02 pilot).
     budget_cap: soft             # The only option: the managed agent exposes no depth control.
-    initial_concurrency: 2       # jason-mbp: 1
+    initial_concurrency: 4       # jason-mbp: 1
     concurrency: 8               # jason-mbp: 4
   anthropic:
     use_research_prompt: true
@@ -161,7 +161,7 @@ research:
     max_continuations: 10        # Resumes after pause_turn before giving up.
     refusal_fallback: false      # Keep the recorded model fixed; a refusal fails the job.
     timeout_seconds: 5400  # Per answer: all rounds, turns and retries.
-    initial_concurrency: 2
+    initial_concurrency: 4
     concurrency: 8
 
 # ---------------------------------------------------------------------------
@@ -171,20 +171,20 @@ judges:
     model: gpt-6-astra
     reasoning_effort: high
     max_output_tokens: 32768
-    initial_concurrency: 4       # jason-mbp: 8
+    initial_concurrency: 8       # jason-mbp: 8
     concurrency: 16
   gemini:
     model: gemini-4-argon
     thinking_level: high
     max_output_tokens: 32768
-    initial_concurrency: 4       # jason-mbp: 8
+    initial_concurrency: 8       # jason-mbp: 8
     concurrency: 16
   anthropic:
     model: claude-fable-5-1
     effort: high
     max_output_tokens: 32768
     refusal_fallback: false
-    initial_concurrency: 4
+    initial_concurrency: 8
     concurrency: 16
 
 analysis:
