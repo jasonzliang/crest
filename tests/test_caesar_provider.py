@@ -74,9 +74,10 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     assert first["AgentMemory"]["enabled"] is False
 
 
-def test_extract_result_preserves_abstract_full_artifact_and_source_map():
+def test_extract_result_keeps_the_abstract_out_of_the_answer_but_in_the_raw_artifact():
     result = completed()["result"]
-    assert "An abstract." in result["text"]
+    assert "An abstract." not in result["text"] and result["raw"]["artifact"]["abstract"] == "An abstract."
+    assert result["text"].startswith("Full finding")  # The main text opens the answer; the abstract is never counted or judged.
     assert "including its last line." in result["text"]
     assert "[1] https://example.test/paper" in result["text"]
     assert result["citations"] == [{"url": "https://example.test/paper", "title": "[1]"}]
