@@ -25,6 +25,13 @@ OPENAI_RATES = {
     "gpt-6-luna": {"input": .1, "cached_input": .01, "cache_write_30m": .125, "output": .5},
     "text-embedding-3-small": {"input": .02, "output": 0},
 }
+ANTHROPIC_SOURCES = ["https://platform.claude.com/docs/en/about-claude/pricing",
+                     "https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool",
+                     "https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-fetch-tool"]
+ANTHROPIC_RATES = {
+    "claude-sonnet-5-5": {"input": 2, "cached_input": .1, "cache_write_5m": 2.5, "output": 10},
+    "claude-fable-5-1": {"input": 10, "cached_input": .25, "cache_write_5m": 12.5, "output": 50},
+}
 
 
 def _money(value):
@@ -147,7 +154,7 @@ def assess_cost(result: dict, *, agent: str | None = None, settings: dict | None
     recorded = _first(result.get("cost_usd"))
     details = {"version": COST_VERSION, "recorded_provider_estimate_usd": recorded,
         "invoice_status": "unverified", "actual_billed_usd": None, "actual_internal_model": model,
-        "cost_basis": "usage_priced_estimate" if model in OPENAI_RATES else "recorded_provider_estimate",
+        "cost_basis": "usage_priced_estimate" if model in OPENAI_RATES or model in ANTHROPIC_RATES else "recorded_provider_estimate",
         "current_attempt_known_estimate_usd": recorded, "prior_attempt_known_estimate_usd": 0,
         "cumulative_known_estimate_usd": recorded,
         "historical_unresolved_reserved_exposure_usd": 0, "current_unresolved_reserved_exposure_usd": 0,
@@ -165,6 +172,12 @@ def assess_cost(result: dict, *, agent: str | None = None, settings: dict | None
         if not caesar:
             details["pricing"]["tool_rates"] = {"web_search_search_action_usd": .01}
             details["assumptions"].append("Only search actions add the web-search tool fee; search content tokens are already included in input usage.")
+    if model in ANTHROPIC_RATES:
+        details["pricing"].update(source_urls=ANTHROPIC_SOURCES[:], rates=copy.deepcopy(ANTHROPIC_RATES),
+                                  tool_rates={"web_search_per_request_usd": .01, "web_fetch_per_request_usd": 0})
+        details["assumptions"] += ["Anthropic standard rates; cache writes assume the default 5-minute TTL (1.25x input) and cache reads use the model's discounted rate.",
+            "Thinking tokens are billed as output tokens; web search costs $10 per 1,000 requests plus token costs, web fetch only tokens.",
+            "An interrupted streamed attempt was billed for an unknown amount and leaves the total unknown; every pause_turn continuation is a billed turn."]
     if caesar:
         details.update(_caesar(result))
         details["cost_basis"] = "sdk_usage_priced_estimate"

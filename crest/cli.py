@@ -14,16 +14,21 @@ def main(argv=None):
     parser.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
     parser.add_argument('--run', type=Path, help='Generation result directory; later stages default to latest run')
     parser.add_argument('--limit', type=int, help='First N questions for a new generation run')
-    parser.add_argument('--agents', nargs='+', choices=['caesar', 'openai', 'gemini'])
-    parser.add_argument('--judges', nargs='+', choices=['openai', 'gemini'])
+    parser.add_argument('--agents', nargs='+', metavar='AGENT',
+                        help='Subset of the configured research agents (default: all in the config)')
+    parser.add_argument('--judges', nargs='+', metavar='JUDGE',
+                        help='Subset of the configured judges (default: all in the config)')
     parser.add_argument('--dry-run', action='store_true', help='Plan only; no API calls or new run directories')
     args = parser.parse_args(argv)
     try:
         config = load_config(args.config)
-        if args.agents:
-            config['research'] = {k: config['research'][k] for k in dict.fromkeys(args.agents)}
-        if args.judges:
-            config['judges'] = {k: config['judges'][k] for k in dict.fromkeys(args.judges)}
+        for option, section in (('agents', 'research'), ('judges', 'judges')):
+            names = getattr(args, option)
+            if names:
+                unknown = [name for name in names if name not in config[section]]
+                if unknown:
+                    raise ValueError(f'Unknown {option}: {", ".join(unknown)}; configured: {", ".join(config[section])}')
+                config[section] = {k: config[section][k] for k in dict.fromkeys(names)}
         run = args.run
         if run and args.agents:
             raise ValueError('An existing run keeps its agent snapshot; use a new generation run to change agents')

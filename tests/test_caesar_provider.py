@@ -60,7 +60,7 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     assert first["ChromaClientManager"]["enable_reranking"] is False
     assert first["LLMHandler"]["model"] == "gpt-6.1-sol"
     assert first["LLMHandler"]["cost_limit"] == 5
-    assert first["LLMHandler"]["max_completion_tokens"] == 25000
+    assert first["LLMHandler"]["max_completion_tokens"] == 10000
     assert first["LLMHandler"]["timeout"] == 600
     assert first["CaesarAgent"]["exploration_llm_config"]["timeout"] == 600
     assert first["LLMHandler"]["max_input_tokens"] == 64000
@@ -612,7 +612,7 @@ def test_exploration_reserve_leaves_budget_for_real_synthesis_and_rejects_no_ins
         with audit.installed(SDK): yield Agent
     monkeypatch.setattr(worker, "_runtime", runtime)
     path = tmp_path / "result.json"
-    settings = {"handler_budget_usd": 4., "synthesis_reserve_usd": reserve, "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 1000000}}}
+    settings = {"budget_usd": 4., "synthesis_reserve_usd": reserve, "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 1000000}}}
     worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path)
     saved = json.loads(path.read_text())
     assert saved["status"] == expected_status
@@ -916,7 +916,7 @@ def test_parallel_quick_exploration_reserves_synthesis_budget_and_ingests_comple
         with audit.installed(SDK): yield Agent
     monkeypatch.setattr(worker, "_runtime", runtime)
     path = tmp_path / "result.json"
-    settings = {"synthesis_reserve_usd": 3., "handler_budget_usd": 5., "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 1000000}}}
+    settings = {"synthesis_reserve_usd": 3., "budget_usd": 5., "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 1000000}}}
     assert worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path) == 0
     result = json.loads(path.read_text())["result"]
     assert calls.count("page") == 2
@@ -965,7 +965,7 @@ def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatc
         def _generate_qa_pairs(self, *args, **kwargs):
             return ArtifactSynthesizer._generate_qa_pairs(self, "iterative (n=15)", "question")
         def _merge_artifacts(self, drafts):
-            pay("merge", 4)
+            pay("merge", 5)
             return artifact(metadata={"synthesis_queries": len(drafts[-1])})
         def synthesize_artifact(self):
             drafts = []
@@ -973,9 +973,9 @@ def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatc
                 self._current_draft = index
                 pairs = self._generate_qa_pairs()
                 assert pairs
-                pay("draft", 4)
+                pay("draft", 3)
                 drafts.append(pairs)
-                if index < 3: pay("refine", 2)
+                if index < 3: pay("refine", 1)
             return self._merge_artifacts(drafts)
     class Agent(FakeAgent):
         starting_query = "question"
@@ -983,11 +983,11 @@ def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatc
             self.synthesizer = Synthesizer()
             self.synthesizer.agent = self
         def chat_completion(self, *args, **kwargs):
-            pay("next_query", 2)
+            pay("next_query", 1)
             return '{"query":"next question"}'
         def parse_json_response(self, value): return json.loads(value)
         def explore(self):
-            pay("exploration", 20)
+            pay("exploration", 100)
             return self.synthesizer.synthesize_artifact()
         def shutdown(self): pass
     @contextmanager
@@ -995,12 +995,16 @@ def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatc
         with audit.installed(SDK): yield Agent
     monkeypatch.setattr(worker, "_runtime", runtime)
     path = tmp_path / "result.json"
-    settings = {"model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 50000}}}
+    # One output token costs $0.01: exploration $1.00, a Q&A round $0.02, a draft $0.03, a refinement $0.01,
+    # the merge $0.05. A $1.60 ceiling leaves $0.60 for synthesis, so every draft is cut short yet all three
+    # drafts and the merge still fit after the held-back write money.
+    settings = {"budget_usd": 1.6, "max_completion_tokens": 5, "query_max_completion_tokens": 1,
+                "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 10000}}}
     assert worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path) == 0
     result = json.loads(path.read_text())["result"]
     assert calls.count("draft") == 3
     assert calls.count("merge") == 1
-    assert result["cost_usd"] <= 5
+    assert result["cost_usd"] <= 1.6
     records = result["raw"]["synthesis_budget"]["drafts"]
     assert len(records) == 3
     assert all(1 <= row["completed_qa_rounds"] <= 15 for row in records)
@@ -1079,7 +1083,7 @@ def test_explicit_recovery_copies_store_and_uses_rome_checkpoint_without_explora
     def runtime(settings, audit): yield Agent
     monkeypatch.setattr(worker, "_runtime", runtime)
     path = tmp_path / "new-job" / "result.json"
-    request = {"prompt": "Q", "settings": {"recovery_from": str(source), "budget_usd": 4.3, "handler_budget_usd": 4.3}, "output_dir": str(path.parent / "output"), "job_key": "new-job"}
+    request = {"prompt": "Q", "settings": {"recovery_from": str(source), "budget_usd": 4.3}, "output_dir": str(path.parent / "output"), "job_key": "new-job"}
     assert worker.run_worker(request, path) == 0
     result = json.loads(path.read_text())["result"]
     assert instances
@@ -1124,3 +1128,66 @@ def test_recovery_cannot_overwrite_its_original_job(tmp_path):
         worker.run_worker({"prompt": "Q", "settings": {"recovery_from": str(source), "budget_usd": 4.3},
             "output_dir": str(source / "caesar-output"), "job_key": "new-job"}, tmp_path / "new-result.json")
     assert original == {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
+
+
+def test_compatibility_sets_and_restores_llamaindex_prompt_helpers():
+    class Handler:
+        MODEL_PRICING, MODEL_CONTEXT_SIZE, REASONING_MODELS, _known_models_registered = {}, {}, set(), True
+    class Utils:
+        O1_MODELS, CHAT_MODELS, ALL_AVAILABLE_MODELS = {}, {}, {}
+    class Litellm:
+        model_cost = {}
+        def register_model(self, entries): pass
+    class Settings:
+        _prompt_helper, _chat_prompt_helper = None, "preset"
+        prompt_helper = property(lambda self: self._prompt_helper, lambda self, v: setattr(self, "_prompt_helper", v))
+        chat_prompt_helper = property(lambda self: self._chat_prompt_helper, lambda self, v: setattr(self, "_chat_prompt_helper", v))
+    settings = Settings()
+    config = {"LLMHandler": {"max_completion_tokens": 25000}}
+    with worker.compatibility(Handler, config, Litellm(), Utils, 2000, llama_settings=settings,
+                              prompt_helpers={"prompt_helper": "big", "chat_prompt_helper": "big-chat"}):
+        assert settings.prompt_helper == "big" and settings.chat_prompt_helper == "big-chat"
+        assert Utils.ALL_AVAILABLE_MODELS[worker.LUNA] == worker.KB_CONTEXT_WINDOW
+    assert settings._prompt_helper is None and settings._chat_prompt_helper == "preset"
+    assert Utils.ALL_AVAILABLE_MODELS == {}
+
+
+def test_runtime_packs_a_knowledge_base_query_into_one_call(tmp_path, monkeypatch):
+    """llama-index-core 0.14.23 would otherwise use a 3,900-token window and split 20 chunks into 5 calls."""
+    monkeypatch.setenv("OPENAI_API_KEY", "offline-test-key")  # construction only; nothing is sent
+    audit = worker.UsageAudit(1, tmp_path / "usage.json")
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+        from llama_index.core import Settings
+        from llama_index.core.prompts import PromptTemplate
+        from llama_index.core.response_synthesizers import get_response_synthesizer
+        from llama_index.llms.openai import OpenAI
+        synthesizer = get_response_synthesizer(response_mode="compact", llm=OpenAI(model=worker.LUNA, max_tokens=2000))
+        helper = synthesizer._prompt_helper
+        assert helper.context_window == worker.KB_CONTEXT_WINDOW and helper.num_output == 2000
+        template = PromptTemplate("Context:\n{context_str}\nQuestion: {query_str}\nAnswer:")
+        assert len(helper.repack(template, ["word " * 700] * 20)) == 1
+    assert Settings._prompt_helper is None and Settings._chat_prompt_helper is None
+
+
+def test_soft_budget_cap_records_but_never_refuses(tmp_path):
+    settings = {"budget_cap": "soft", "budget_usd": 1.0}
+    assert worker.build_config("Q", settings, tmp_path, "w")["LLMHandler"]["cost_limit"] is None
+    assert worker.build_config("Q", {"budget_usd": 1.0}, tmp_path, "w")["LLMHandler"]["cost_limit"] == 1.0
+    audit = worker.UsageAudit(1.0, tmp_path / "usage.json", enforce=False)
+    audit.events.append({"status": "completed", "cost_usd": 5.0, "model": "gpt-6.1-sol"})
+    token = audit.before(SimpleNamespace(json_data={"model": worker.SOL, "messages": [], "max_completion_tokens": 100}))
+    assert token in audit.pending and audit.snapshot()["budget_exceeded"] is True
+    class Agent:
+        use_quick_explore = False
+        def perceive(self): raise AssertionError("perceive must not be wrapped under a soft cap")
+        def explore(self): return {"artifact": "Complete draft"}
+    artifact, stop = worker._explore_with_synthesis_reserve(Agent(), settings, audit)
+    assert artifact == {"artifact": "Complete draft"} and stop is None
+    class Synthesizer:
+        synthesis_drafts, synthesis_iterations, synthesis_merge_artifacts = 3, 20, True
+        def _generate_qa_pairs(self): return [("Q", "A", [])]
+    synthesizer = Synthesizer()
+    with worker.adaptive_synthesis_budget(SimpleNamespace(synthesizer=synthesizer), settings, audit) as records:
+        assert synthesizer._generate_qa_pairs() == [("Q", "A", [])] and audit.request_limit is None
+    row = records["drafts"][0]  # Recorded for the report, never limited.
+    assert records["enforced"] is False and row["budget_limited"] is False and row["qa_allowance_usd"] is None

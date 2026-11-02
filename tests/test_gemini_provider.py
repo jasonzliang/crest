@@ -324,23 +324,23 @@ def test_research_completed_budget_overrun_is_preserved(tmp_path):
     assert any("exceed" in warning.lower() for warning in result["warnings"])
 
 
-def test_running_research_over_budget_attempts_cancellation_and_keeps_usage(tmp_path):
-    raw = completed(status="in_progress")
-    raw["usage"]["total_input_tokens"] = 2_000_000
+def test_running_research_over_budget_is_flagged_but_never_cancelled(tmp_path):
+    running = completed(status="in_progress")
+    running["usage"]["total_input_tokens"] = 2_000_000
+    finished = completed()
+    finished["usage"]["total_input_tokens"] = 2_000_000
     job = FakeJob(tmp_path)
     calls = []
     def handler(request):
         calls.append(request.url.path)
-        if request.url.path.endswith("/cancel"):
-            return httpx.Response(200, json={"id": "research-1", "status": "cancelled"})
-        return httpx.Response(200, json=raw)
-    with pytest.raises(RuntimeError, match="budget"):
-        run(handler, job, settings={"timeout_seconds": .02})
-    assert calls == ["/v1beta/interactions", "/v1beta/interactions/research-1/cancel"]
-    assert job.state["observed_cost_usd"] > 5
+        assert not request.url.path.endswith("/cancel"), "a budget overrun must not cancel the managed job"
+        return httpx.Response(200, json=running if len(calls) < 3 else finished)
+    result = run(handler, job, settings={"poll_interval_seconds": 0})
+    assert result["text"] == "Full research answer"
+    assert result["cost_usd"] > 5 and any("exceed" in w.lower() for w in result["warnings"])
+    assert job.state["budget_exceeded"] is True and job.state["observed_cost_usd"] > 5
     assert job.state["observed_usage"]["input_tokens"] == 2_000_000
-    assert job.state["budget_exceeded"] is True
-    assert job.state["raw"] == raw
+    assert calls.count("/v1beta/interactions/research-1") == 2
 
 
 def test_judge_request_is_structured_json_without_tools(tmp_path):

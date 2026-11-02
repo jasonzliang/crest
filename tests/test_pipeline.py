@@ -53,7 +53,11 @@ def fixture_config(tmp_path, n=2):
     rubric.write_text('Compare New, Useful and Surprising. Choose A or B.')
     p = tmp_path / 'crest.yaml'
     p.write_text(f'questions: {q}\nrubric: {rubric}\ncache_dir: {tmp_path / "cache"}\noutput_dir: {tmp_path / "results"}\n')
-    return load_config(p)
+    config = load_config(p)
+    # Count-based scenarios below assume the original three agents and two judges.
+    config['research'].pop('anthropic')
+    config['judges'].pop('anthropic')
+    return config
 
 
 class FakeProvider:
@@ -330,13 +334,22 @@ def test_generation_failure_does_not_erase_other_paid_answers(tmp_path):
     assert pipeline.cache.job(task['key']).state['remote_id'] == 'still-poll-this'
 
 
-def test_default_dataset_plan_has_fifty_questions_and_150_generations():
+def test_default_dataset_plan_has_fifty_questions_four_agents_and_three_judges():
     config = load_config()
-    providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
+    providers = {name: FakeProvider(name) for name in config['research']}
     pipeline = Pipeline(config, providers=providers)
     assert len(pipeline.questions) == 50
-    assert len(pipeline.generation_jobs()) == 150
-    assert pipeline.plan()['judge_calls_total'] == 600
+    assert list(config['research']) == ['caesar', 'openai', 'gemini', 'anthropic']
+    assert list(config['judges']) == ['openai', 'gemini', 'anthropic']
+    assert len(pipeline.generation_jobs()) == 200
+    plan = pipeline.plan()
+    assert plan['judge_calls_total'] == 50 * 6 * 2 * 3 == 1800
+    assert plan['answer_word_limit'] == 600
+    assert plan['budget_targets_usd'] == {'caesar': 3.5, 'openai': 4.0, 'gemini': 4.0, 'anthropic': 4.0}
+    prompts = {job['agent']: job['prompt'] for job in pipeline.generation_jobs()[:4]}
+    assert prompts['caesar'] == pipeline.questions[0]['text']
+    assert all('### YOUR TASK' in prompts[name] and 'at most 600 words' in prompts[name]
+               for name in ('openai', 'gemini', 'anthropic'))
 
 
 def test_judge_adapter_change_invalidates_only_that_judge(tmp_path):
@@ -476,9 +489,10 @@ def test_standalone_judging_reuses_answers_without_keys_or_original_questions(tm
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
     Path(config['questions']).unlink()
-    env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
+    env = {k: v for k, v in os.environ.items()
+           if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY'}}
     env['PYTHONPATH'] = str(Path(__file__).parents[1])
-    completed = subprocess.run([sys.executable, '-m', 'crest', 'judge',
+    completed = subprocess.run([sys.executable, '-m', 'crest', 'judge', '--judges', 'openai', 'gemini',
                                 '--run', str(pipeline.run_dir), '--config', config['_config_path']],
                                cwd=tmp_path, env=env, capture_output=True, text=True)
     assert completed.returncode == 0, completed.stderr

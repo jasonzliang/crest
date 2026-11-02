@@ -16,7 +16,7 @@ import tomllib
 
 from crest.caesar_worker import PROTOCOL_VERSION, atomic_json, recovery_history
 
-ADAPTER_VERSION = "caesar-subprocess-v1"
+ADAPTER_VERSION = "caesar-subprocess-v2"  # v2: knowledge-base queries pack all chunks into one call again
 # Only public execution settings cross the worker boundary. Credentials are inherited.
 SETTINGS = frozenset({
     "rome_path", "model", "exploration_model", "kb_model", "embedding_model",
@@ -25,12 +25,13 @@ SETTINGS = frozenset({
     "adapt_role", "use_quick_explore", "quick_explore_insights", "quick_explore_workers",
     "synthesis_merge_artifacts", "save_graph_interval",
     "additional_starting_queries", "max_web_searches", "synthesis_drafts",
-    "synthesis_iterations", "retrieval_chunks", "max_completion_tokens",
+    "synthesis_iterations", "max_completion_tokens",
     "exploration_max_completion_tokens", "kb_max_completion_tokens", "max_input_tokens",
     "query_max_completion_tokens", "synthesis_top_k", "synthesis_top_n",
-    "budget_usd", "handler_budget_usd", "handler_cost_limit", "timeout_seconds",
+    "budget_usd", "budget_cap", "timeout_seconds",
     "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts",
     "retry_backoff_base_seconds", "retry_backoff_max_seconds", "recovery_from", "budget_history_from",
+    "answer_word_limit",
 })
 
 
@@ -196,7 +197,9 @@ async def generate(prompt: str, settings: dict, job, *, client=None) -> dict:
                 cwd=str(Path(__file__).resolve().parents[2]),
             )
         job.save(worker_pid=child.pid, submission_unknown=False, remote_status="running")
-    deadline = time.monotonic() + max(0, timeout - (time.time() - started))
+    # The worker arms the same timeout after interpreter startup; a short grace lets its own cutoff
+    # write the failed record (audit, partial artifact, metrics) before the parent terminates it.
+    deadline = time.monotonic() + max(0, timeout + min(300., .05 * timeout) - (time.time() - started))
     try:
         while not result_path.exists():
             if usage_path.exists():

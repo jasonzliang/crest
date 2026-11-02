@@ -118,8 +118,7 @@ def test_real_qa_loop_includes_next_question_and_keeps_write_refine_merge_disjoi
                 if draft < 3: self._refine_query(drafts[-1])
             return self._merge_artifacts(drafts)
     synthesizer = Synthesizer()
-    agent = SimpleNamespace(synthesizer=synthesizer, shutdown_called=False,
-                            _crest_worker_deadline=time.monotonic() + 7200)
+    agent = SimpleNamespace(synthesizer=synthesizer, shutdown_called=False)
     synthesizer.agent = agent
     original_query = synthesizer.kb_manager.query
     with iteration_metrics(agent, audit, tmp_path, utc_now=clock.utc, monotonic=clock.monotonic) as metrics:

@@ -17,6 +17,7 @@ from urllib.parse import quote
 
 import httpx
 
+from crest.providers import DEFAULT_BUDGET_USD, count
 from crest.providers.http import request
 
 if TYPE_CHECKING:
@@ -135,15 +136,14 @@ async def _interact(body, settings, job, client, key, *, research):
                 if status not in ACTIVE_STATUSES:
                     return _terminal_result(raw, settings, job, research=research)
                 if research:
+                    # The managed agent exposes no depth control, so a budget overrun is
+                    # recorded and warned about; the job runs to completion.
                     usage = _usage(raw)
                     cost = _cost(usage, settings.get("billing_model", BILLING_MODEL), research=True)
-                    if cost is not None and cost > settings.get("budget_usd", 5.0):
+                    if cost is not None and cost > settings.get("budget_usd", DEFAULT_BUDGET_USD) and not job.state.get("budget_exceeded"):
                         job.save(observed_usage=usage, observed_cost_usd=cost, budget_exceeded=True)
-                        break
                 await asyncio.sleep(float(settings.get("poll_interval_seconds", 5)))
                 raw = await _request(client, "GET", _url(remote_id), headers, job, settings, deadline=deadline)
-        await _cancel(client, remote_id, headers, job, settings, research=research)
-        raise RuntimeError(f"Gemini research budget target exceeded by conditional reference estimate ${cost:.4f}; cancellation attempted")
     except TimeoutError:
         if remote_id:
             await _cancel(client, remote_id, headers, job, settings, research=research)
@@ -233,13 +233,9 @@ def _answer(raw):
     return answer, citations
 
 
-def _count(value):
-    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
-
-
 def _usage(raw):
     source = raw.get("usage") or {}
-    usage = {name: _count(source.get(field)) for name, field in {
+    usage = {name: count(source.get(field)) for name, field in {
         "input_tokens": "total_input_tokens",
         "cached_input_tokens": "total_cached_tokens",
         "output_tokens": "total_output_tokens",
@@ -252,7 +248,7 @@ def _usage(raw):
     usage["search_queries"] = None
     if isinstance(grounding, list):
         searches = [item.get("count") for item in grounding if item.get("type") == "google_search"]
-        if all(_count(count) is not None for count in searches):
+        if all(count(value) is not None for value in searches):
             usage["search_queries"] = sum(searches)
     return usage
 
@@ -286,7 +282,7 @@ def _cost(usage, model, *, research, pricing_date=None):
         if tools is None or not isinstance(grounding, list):
             return None
         for item in grounding:
-            if item.get("type") not in {"google_search", "google_maps"} or _count(item.get("count")) is None:
+            if item.get("type") not in {"google_search", "google_maps"} or count(item.get("count")) is None:
                 return None
             tool_cost += item["count"] * .014
         # Aggregate loops do not expose each request's context tier. The
@@ -323,7 +319,7 @@ def _receipt(raw, settings, *, research):
             warnings.append("Response creation date unavailable; Argon pricing uses the recorded UTC processing date.")
     cost = _cost(usage, model, research=research, pricing_date=pricing.get("pricing_date"))
     if research:
-        budget = settings.get("budget_usd", 5.0)
+        budget = settings.get("budget_usd", DEFAULT_BUDGET_USD)
         warnings.append(f"Research budget ${budget:g} is a target; the managed agent exposes no dollar cap.")
         if cost is not None:
             warnings.append("Research cost is a conditional high-context reference scenario: tool-use prompts as additional input and undiscounted searches; actual per-loop models, context tiers and billable search eligibility are unavailable. This is not a proven cost bound.")

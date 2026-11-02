@@ -84,6 +84,20 @@ async def _controller_call(controller, name, *args):
         await result
 
 
+def retry_policy(settings):
+    """(attempts, base_seconds, cap_seconds) from the shared transport settings."""
+    return (max(1, int(settings.get("retry_attempts", 4))),
+            max(0.0, float(settings.get("retry_backoff_base_seconds", 1))),
+            max(0.0, float(settings.get("retry_backoff_max_seconds", 30))))
+
+
+def backoff(attempt, base, cap, headers=None):
+    """Jittered exponential delay, never shorter than a server-specified wait."""
+    ceiling = min(cap, base * 2 ** min(attempt - 1, 30))
+    delay = random.uniform(ceiling / 2, ceiling)
+    return max(delay, _header_delay(headers)) if headers is not None else delay
+
+
 def _record(job, *, method, attempt, delay, retrying, response=None, error=None):
     event = {"method": method, "attempt": attempt, "delay_seconds": delay, "retrying": retrying}
     if response is not None:
@@ -104,9 +118,7 @@ async def request(client, method, url, *, job, settings, deadline=None, **kwargs
     """
     method = method.upper()
     idempotent = method == "GET" or (method == "POST" and httpx.URL(url).path.rstrip("/").endswith("/cancel"))
-    attempts = max(1, int(settings.get("retry_attempts", 4)))
-    base = max(0.0, float(settings.get("retry_backoff_base_seconds", 1)))
-    cap = max(0.0, float(settings.get("retry_backoff_max_seconds", 30)))
+    attempts, base, cap = retry_policy(settings)
     controller = getattr(job, "rate_controller", None)
     previous_response = None
     previous_error = None
@@ -155,10 +167,7 @@ async def request(client, method, url, *, job, settings, deadline=None, **kwargs
                 if response.status_code not in (TRANSIENT if idempotent else {429}):
                     return response
 
-            ceiling = min(cap, base * 2 ** min(attempt - 1, 30))
-            delay = random.uniform(ceiling / 2, ceiling)
-            if response is not None:
-                delay = max(delay, _header_delay(response.headers))
+            delay = backoff(attempt, base, cap, response.headers if response is not None else None)
             rate_limited = response is not None and response.status_code == 429
             if rate_limited and controller is not None:
                 await _controller_call(controller, "rate_limited", delay)

@@ -65,7 +65,7 @@ class IterationMetrics:
         if error is not None:
             span['error_type'] = type(error).__name__
             if error.args and isinstance(error.args[0], dict):
-                span['stop_reason'] = error.args[0].get('reason', 'budget_or_time_reserve')
+                span['stop_reason'] = error.args[0].get('reason', 'budget_reserve')
         span['sequence'] = len(self.records) + 1
         with self.path.open('a', encoding='utf-8') as stream:
             stream.write(json.dumps(span, ensure_ascii=False, allow_nan=False) + '\n')

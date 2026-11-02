@@ -3,7 +3,7 @@
 Pricing reference: https://developers.openai.com/api/docs/models/gpt-6.1-sol
                  https://developers.openai.com/api/docs/models/gpt-6-astra
 Web search billing: https://developers.openai.com/api/docs/guides/tools-web-search
-The budget is a soft target: background usage may only arrive at completion.
+The budget is a soft target or, under a hard cap, a cancel ceiling: background usage may only arrive at completion.
 """
 from __future__ import annotations
 
@@ -15,12 +15,14 @@ from urllib.parse import quote
 
 import httpx
 
+from crest.providers import (DEFAULT_BUDGET_USD, budget_is_hard, budget_warnings, continuation_prompt, count,
+                             needs_more_research, sum_usage)
 from crest.providers.http import RequestNotSent, request
 
 if TYPE_CHECKING:
     from crest.cache import Job
 
-ADAPTER_VERSION = "openai-responses-v3"
+ADAPTER_VERSION = "openai-responses-v4"
 API_URL = "https://api.openai.com/v1/responses"
 ACTIVE = {"queued", "in_progress"}
 TERMINAL = {"completed", "failed", "incomplete", "cancelled"}
@@ -38,7 +40,7 @@ async def judge(prompt: str, settings: dict, job: Job, *, client=None) -> dict:
     return await _run(prompt, settings, job, client=client, is_judge=True)
 
 
-def _payload(prompt, settings, is_judge):
+def _payload(prompt, settings, is_judge, previous_response_id=None):
     payload = {
         "model": settings.get("model", "gpt-6.1-sol"), "input": prompt,
         "background": True, "store": True, "service_tier": "default",
@@ -51,9 +53,14 @@ def _payload(prompt, settings, is_judge):
         payload["text"] = {"format": {"type": "json_schema", "name": "crest_verdict",
                                         "strict": True, "schema": SCHEMA}}
     else:
-        payload.update(tools=[{"type": "web_search"}], tool_choice="required",
+        tool = {"type": "web_search"}
+        if settings.get("search_context_size"):
+            tool["search_context_size"] = settings["search_context_size"]
+        payload.update(tools=[tool], tool_choice="required",
                        include=["web_search_call.action.sources"],
                        max_tool_calls=settings.get("max_tool_calls", 25))
+    if previous_response_id:
+        payload["previous_response_id"] = previous_response_id
     return payload
 
 
@@ -62,10 +69,6 @@ def _raw(response):
         return response.json()
     except ValueError:
         return {"http_status": response.status_code, "body": response.text}
-
-
-def _count(value):
-    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
 
 
 def _account(raw):
@@ -80,12 +83,12 @@ def _account(raw):
             searches += action == "search"
             unknown_search |= action not in {"search", "open_page", "find_in_page"}
     usage = {
-        "input_tokens": _count(original.get("input_tokens")),
-        "cached_input_tokens": _count(details.get("cached_tokens", 0)),
-        "cache_write_tokens": _count(details.get("cache_write_tokens", 0)),
-        "output_tokens": _count(original.get("output_tokens")),
-        "reasoning_tokens": _count(out_details.get("reasoning_tokens")),
-        "total_tokens": _count(original.get("total_tokens")),
+        "input_tokens": count(original.get("input_tokens")),
+        "cached_input_tokens": count(details.get("cached_tokens", 0)),
+        "cache_write_tokens": count(details.get("cache_write_tokens", 0)),
+        "output_tokens": count(original.get("output_tokens")),
+        "reasoning_tokens": count(out_details.get("reasoning_tokens")),
+        "total_tokens": count(original.get("total_tokens")),
         "web_search_calls": None if unknown_search else searches,
     }
     required = [usage[k] for k in ("input_tokens", "cached_input_tokens", "cache_write_tokens", "output_tokens", "web_search_calls")]
@@ -103,20 +106,33 @@ def _account(raw):
     return usage, (input_cost + output_cost) / 1_000_000 + searches * .01
 
 
-def _result(raw, settings, is_judge):
-    if raw.get("status") != "completed":
-        raise ProviderError(f"OpenAI response status is {raw.get('status')!r}, expected completed")
-    if raw.get("error") or raw.get("incomplete_details"):
+def _total(rounds):
+    """Usage and cost summed over research rounds; unknown if any round is unknown."""
+    accounts = [_account(raw) for raw in rounds]
+    usage = sum_usage(usage for usage, _ in accounts) | {"rounds": len(rounds)}
+    costs = [cost for _, cost in accounts]
+    return usage, None if any(cost is None for cost in costs) else sum(costs)
+
+
+def _result(rounds, settings, is_judge):
+    """The last completed round is the answer; every round is billed and contributes citations."""
+    answer = next((raw for raw in reversed(rounds) if raw.get("status") == "completed"), None)
+    if answer is None:
+        raise ProviderError(f"OpenAI response status is {rounds[-1].get('status')!r}, expected completed")
+    if answer.get("error") or answer.get("incomplete_details"):
         raise ProviderError("OpenAI completed response contains an error or incomplete details")
     parts, citations, seen = [], [], set()
-    for item in raw.get("output") or []:
-        if item.get("type") != "message":
-            continue
-        if item.get("status") not in (None, "completed"):
-            raise ProviderError("OpenAI completed response contains a message with incomplete status")
-        for content in item.get("content") or []:
-            if content.get("type") == "output_text":
-                parts.append(content.get("text", ""))
+    for raw in rounds:
+        for item in raw.get("output") or []:
+            if item.get("type") != "message":
+                continue
+            if raw is answer and item.get("status") not in (None, "completed"):
+                raise ProviderError("OpenAI completed response contains a message with incomplete status")
+            for content in item.get("content") or []:
+                if content.get("type") != "output_text":
+                    continue
+                if raw is answer:
+                    parts.append(content.get("text", ""))
                 for annotation in content.get("annotations") or []:
                     url = annotation.get("url")
                     if annotation.get("type") == "url_citation" and url and url not in seen:
@@ -125,14 +141,15 @@ def _result(raw, settings, is_judge):
     text = "\n\n".join(parts)
     if not text.strip():
         raise ProviderError("OpenAI completed response contains empty answer text")
-    usage, cost = _account(raw)
-    warnings = [] if is_judge else ["Budget is a soft target; hosted usage may be unavailable until completion, and cancellation can incur charges."]
-    if cost is None:
-        warnings.append("Cost unknown: essential usage, search actions, or applicable model/service-tier pricing is unavailable.")
-    if cost is not None and cost > settings.get("budget_usd", 5.0):
-        warnings.append(f"Observed cost ${cost:.6f} exceeded the ${settings.get('budget_usd', 5.0):.2f} budget target.")
-    return {"text": text, "citations": citations, "model": raw.get("model", settings.get("model", "gpt-6.1-sol")),
-            "usage": usage, "cost_usd": cost, "cost_estimated": cost is not None, "warnings": warnings, "raw": raw}
+    usage, cost = _total(rounds)
+    warnings = [] if is_judge else [("Budget is a ceiling; " if budget_is_hard(settings) else "Budget is a soft target; ") + "hosted usage may be unavailable until completion, and cancellation can incur charges."]
+    warnings += budget_warnings(settings, cost, len(rounds),
+                                unknown_reason="essential usage, search actions, or applicable model/service-tier pricing is unavailable.")
+    if rounds[-1] is not answer:
+        warnings.append(f"The final round ended with status {rounds[-1].get('status')!r}; the previous round's answer is kept.")
+    return {"text": text, "citations": citations, "model": answer.get("model", settings.get("model", "gpt-6.1-sol")),
+            "usage": usage, "cost_usd": cost, "cost_estimated": cost is not None, "warnings": warnings,
+            "raw": answer if len(rounds) == 1 else {**rounds[-1], "previous_rounds": rounds[:-1]}}
 
 
 async def _cancel(client, job, reason, settings):
@@ -154,31 +171,76 @@ async def _cancel(client, job, reason, settings):
         job.save(cancel_error=str(exc), cancel_status="unknown")
 
 
-async def _run(prompt, settings, job, *, client, is_judge):
-    _observe_pre_cancel(job, job.state.get("pre_cancel_raw"))
-    saved = job.state.get("raw")
-    remote_id = job.state.get("remote_id")
+def _saved_terminal(job):
+    """The checkpointed terminal response for the current round, if it is the known remote one."""
+    saved, remote_id = job.state.get("raw"), job.state.get("remote_id")
     if (isinstance(saved, dict) and saved.get("status") in TERMINAL
             and isinstance(saved.get("id"), str) and saved["id"]
             and (saved["id"] == remote_id or not remote_id and job.state.get("submission_unknown"))):
-        job.save(remote_id=saved["id"], remote_status=saved["status"], submission_unknown=False)
-        # Cancellation acknowledgments can omit usage. Keep the known ID and
-        # retrieve a final receipt rather than making that omission permanent.
-        if saved["status"] == "completed" or _account(saved)[1] is not None:
-            return _terminal_result(saved, settings, job, is_judge)
-    if job.state.get("submission_unknown") and not job.state.get("remote_id"):
-        raise ProviderError("OpenAI submission status unknown; refusing an automatic second paid submission")
-    if client is None:
+        return saved
+    return None
+
+
+async def _run(prompt, settings, job, *, client, is_judge):
+    saved = _saved_terminal(job)
+    if client is None and not (saved and (saved["status"] == "completed" or _account(saved)[1] is not None)):
         key = os.environ.get("OPENAI_API_KEY")
         if not key:
             raise ProviderError("OPENAI_API_KEY is required")
         async with httpx.AsyncClient(headers={"Authorization": f"Bearer {key}"}) as owned:
             return await _run(prompt, settings, job, client=owned, is_judge=is_judge)
+    earlier = job.state.get("rounds", [])  # Completed earlier rounds; the flat keys hold the current one.
+    while True:
+        prior = _total(earlier)[1]
+        try:
+            raw = await _response(prompt if not earlier else continuation_prompt(settings, prior),
+                                  earlier[-1]["id"] if earlier else None, prior, settings, job, client, is_judge)
+        except (ProviderError, TimeoutError):
+            if not earlier:
+                raise
+            # A later round failed or was cancelled: keep the paid earlier answer and account for the attempt.
+            failed = job.state.get("raw")
+            return _terminal_result([*earlier, failed] if isinstance(failed, dict) else earlier, settings, job, is_judge)
+        rounds = [*earlier, raw]
+        if (not is_judge and raw.get("status") == "completed"
+                and needs_more_research(settings, len(rounds), _total(rounds)[1], _account(raw)[1])):
+            # One save closes this round and clears the per-response keys for the next one.
+            earlier = [*earlier, _trim(raw)]
+            job.save(rounds=earlier, remote_id=None, raw=None, remote_status=None,
+                     submission_unknown=False, submitted_at=None, pre_cancel_raw=None)
+            continue
+        return _terminal_result(rounds, settings, job, is_judge)
+
+
+def _trim(raw):
+    """An earlier round without its retrieved source lists, which only the live round needs."""
+    output = []
+    for item in raw.get("output") or []:
+        if item.get("type") == "web_search_call" and isinstance(item.get("action"), dict):
+            item = {**item, "action": {k: v for k, v in item["action"].items() if k != "sources"}}
+        output.append(item)
+    return {**raw, "output": output}
+
+
+async def _response(prompt, previous_response_id, prior_cost, settings, job, client, is_judge):
+    """Submit or resume one background response and return its terminal body."""
+    _observe_pre_cancel(job, job.state.get("pre_cancel_raw"))
+    saved = _saved_terminal(job)
+    if saved is not None:
+        job.save(remote_id=saved["id"], remote_status=saved["status"], submission_unknown=False)
+        # Cancellation acknowledgments can omit usage. Keep the known ID and
+        # retrieve a final receipt rather than making that omission permanent.
+        if saved["status"] == "completed" or _account(saved)[1] is not None:
+            return saved
+    if job.state.get("submission_unknown") and not job.state.get("remote_id"):
+        raise ProviderError("OpenAI submission status unknown; refusing an automatic second paid submission")
+    if client is None:  # A key-free resume may only read a saved response, never submit.
+        raise ProviderError("OPENAI_API_KEY is required")
     timeout = float(settings.get("timeout_seconds", 1800))
     interval = max(0, float(settings.get("poll_interval_seconds", 5)))
     raw = None
     if not job.state.get("remote_id"):
-        payload = _payload(prompt, settings, is_judge)
+        payload = _payload(prompt, settings, is_judge, previous_response_id)
         job.save(submission_unknown=True, submitted_at=time.time())
         try:
             response = await request(client, "POST", API_URL, job=job, settings=settings,
@@ -205,12 +267,13 @@ async def _run(prompt, settings, job, *, client, is_judge):
         if raw is not None:
             job.save(raw=raw, remote_status=raw.get("status"))
             if raw.get("status") not in ACTIVE:
-                return _terminal_result(raw, settings, job, is_judge)
+                return raw
             usage, cost = _account(raw)
-            if cost is not None and cost > settings.get("budget_usd", 5.0):
-                job.save(observed_usage=usage, observed_cost_usd=cost)
-                await _cancel(client, job, "budget", settings)
-                raise ProviderError("OpenAI observable usage exceeded budget target; cancellation requested")
+            if cost is not None and prior_cost + cost > settings.get("budget_usd", DEFAULT_BUDGET_USD):
+                job.save(observed_usage=usage, observed_cost_usd=cost, budget_exceeded=True)
+                if budget_is_hard(settings):
+                    await _cancel(client, job, "budget", settings)
+                    raise ProviderError("OpenAI observable usage exceeded budget ceiling; cancellation requested")
         # On resume raw is None: retrieve once before using the submission age
         # to cancel. The paid response may have completed while Crest was stopped.
         if raw is not None and time.time() >= deadline:
@@ -242,15 +305,15 @@ async def _run(prompt, settings, job, *, client, is_judge):
             raise
 
 
-def _terminal_result(raw, settings, job, is_judge):
+def _terminal_result(rounds, settings, job, is_judge):
     """Keep a priced receipt even when the terminal response cannot be an answer."""
     try:
-        return _result(raw, settings, is_judge)
+        return _result(rounds, settings, is_judge)
     except ProviderError:
-        usage, cost = _account(raw)
-        job.save(provider_result={"model": raw.get("model", settings.get("model", "gpt-6.1-sol")),
+        usage, cost = _total(rounds)
+        job.save(provider_result={"model": rounds[-1].get("model", settings.get("model", "gpt-6.1-sol")),
                                   "usage": usage, "cost_usd": cost,
-                                  "cost_estimated": cost is not None, "raw": raw})
+                                  "cost_estimated": cost is not None, "raw": rounds[-1]})
         raise
 
 

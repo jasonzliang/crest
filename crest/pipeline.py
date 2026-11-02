@@ -8,6 +8,7 @@ import fcntl
 import importlib
 import itertools
 import json
+import re
 import math
 import os
 from pathlib import Path
@@ -78,10 +79,20 @@ def _semantic_settings(settings: dict) -> dict:
     return {k: v for k, v in settings.items() if k not in TRANSPORT_SETTINGS}
 
 
+_SOURCES_HEADING = re.compile(r'\n[ \t]*(?:#{1,6}[ \t]*|\*\*)?(?:Sources|References|Citations)\b[^\n]{0,40}\n')
+
+
+def _answer_words(text: str) -> int:
+    """Count words in the answer body, excluding a trailing Sources/References list in any common markup."""
+    matches = list(_SOURCES_HEADING.finditer('\n' + text))
+    body = ('\n' + text)[:matches[-1].start()] if matches else text
+    return len(body.split())
+
+
 class Pipeline:
     def __init__(self, config: dict, *, providers=None, run_dir=None, limit=None):
         self.config = config
-        self.providers = providers or {}
+        self.providers = dict(providers or {})  # Never mutate a caller's mapping.
         self.cache = Cache(config['cache_dir'])
         self.run_dir = Path(run_dir).expanduser().resolve() if run_dir else None
         self.manifest = None
@@ -134,6 +145,8 @@ class Pipeline:
             missing.append('OPENAI_API_KEY')
         if 'gemini' in required and not (os.environ.get('GOOGLE_API_KEY') or os.environ.get('GEMINI_API_KEY')):
             missing.append('GOOGLE_API_KEY (or GEMINI_API_KEY)')
+        if 'anthropic' in required and not os.environ.get('ANTHROPIC_API_KEY'):
+            missing.append('ANTHROPIC_API_KEY')
         if missing:
             raise ValueError('Set ' + ', '.join(missing) + ' before starting uncached API work')
         if 'caesar' in required and stage in {'generate', 'run'}:
@@ -153,13 +166,23 @@ class Pipeline:
                 raise ValueError('Caesar environment is incomplete; install ../rome dependencies or set '
                                  'research.caesar.python_executable. Missing: ' + check.stdout.strip())
 
+    def _prompt_template(self, settings: dict, config: dict | None = None) -> str | None:
+        """The template an agent receives: the shared prompt, or the bare question for an exempt agent."""
+        template = (self.config if config is None else config).get('research_prompt')
+        if template is None:  # Legacy manifests recorded no template.
+            return None
+        return template if settings.get('use_research_prompt', True) else '{question}'
+
     def generation_jobs(self) -> list[dict]:
         if self.manifest:
             return self.manifest['generation_jobs']
         jobs = []
         for question in self.questions:
-            prompt = self.config['research_prompt'].replace('{question}', question['text'])
             for agent, settings in self.config['research'].items():
+                prompt, limit = self._prompt_template(settings), settings.get('answer_word_limit')
+                if limit is not None:
+                    prompt = prompt.replace('{max_words}', str(limit))
+                prompt = prompt.replace('{question}', question['text'])
                 provider = self._provider(agent)
                 identity = {'stage': 'generate-v1', 'agent': agent,
                             'question': question['text'], 'prompt': prompt,
@@ -274,8 +297,11 @@ class Pipeline:
                                                'maximum': settings['concurrency']}
                                            for name, settings in self.config[section].items()}
                                 for section in ('research', 'judges')},
+                'answer_word_limit': self.config.get('answer_word_limit'),
+                'budget_targets_usd': {name: settings.get('budget_usd') for name, settings in self.config['research'].items()},
+                'budget_overrides': self.config.get('budget_overrides', []),
                 'warnings': [
-                    '$5 is a per-answer target. Hosted APIs expose no strict per-task USD cap.',
+                    'budget_usd is a per-answer target. Hosted APIs expose no strict per-task USD cap.',
                     'Gemini managed research controls its own backbone; it cannot use the OpenAI model.',
                     'Judge usage is additional to generation budgets. Plan makes no API calls.',
                 ]}
@@ -306,7 +332,7 @@ class Pipeline:
                         k: v for k, v in self.config['research'][task['agent']].items()
                         if k in TRANSPORT_SETTINGS}
                     already_started = any(job.state.get(k) for k in (
-                        'remote_id', 'worker_pid', 'submission_unknown', 'result_path'))
+                        'remote_id', 'worker_pid', 'submission_unknown', 'result_path', 'rounds'))
                     if not already_started:
                         version = getattr(provider, 'ADAPTER_VERSION', '1')
                         if task.get('adapter_version', version) != version:
@@ -323,13 +349,26 @@ class Pipeline:
                                if isinstance(c, dict) and c.get('url') and c['url'] not in result['text']]
                     if missing:
                         result['text'] += '\n\nSources:\n' + '\n'.join(dict.fromkeys(missing))
+                    limit = task['settings'].get('answer_word_limit')  # Frozen with the job, never today's value.
+                    words = _answer_words(result['text'])
+                    result['word_count'] = words
+                    if limit is not None and words > limit:
+                        result.setdefault('warnings', []).append(
+                            f'Answer has {words} words; the configured limit is {limit}')
+                        result['word_limit_exceeded'] = True
                     budget, cost = task['settings'].get('budget_usd'), result.get('cost_usd')
                     if task['agent'] == 'caesar':
                         recovery = (result.get('raw') or {}).get('recovery') or {}
                         # Recovered answer costs include the earlier attempts.
                         budget = recovery.get('original_budget_usd', budget)
-                    if budget and cost is not None and cost > budget:
-                        result.setdefault('warnings', []).append(f'Estimated cost ${cost:.2f} exceeded ${budget:.2f} target')
+                    audit_flag = bool((result.get('usage') or {}).get('budget_exceeded'))
+                    if budget and ((cost is not None and cost > budget) or audit_flag):
+                        warnings = result.setdefault('warnings', [])
+                        if not any('exceeded' in w and 'budget' in w for w in warnings):
+                            cap = task['settings'].get('budget_cap', 'hard')
+                            shown = f'${cost:.2f}' if cost is not None else 'The estimated cost'
+                            warnings.append(f'{shown} exceeded the ${budget:.2f} budget '
+                                            + ('target (soft cap: nothing was stopped).' if cap == 'soft' else 'ceiling.'))
                         result['budget_exceeded'] = True
                     completed = timestamp()
                     job.save(status='completed', result=result, completed_at=completed, error=None,
@@ -355,11 +394,11 @@ class Pipeline:
         historical_costs = ({row['key']: row for row in _read_jsonl(
             directory / 'prior_judgment_costs.jsonl')} if stage == 'judge' else {})
         question_numbers = {question['id']: i + 1 for i, question in enumerate(self.questions)}
-        prompt_template = self.manifest['config'].get('research_prompt')
+        frozen = self.manifest['config']
         if stage == 'generate':
             registry = {}
             for task in tasks:
-                record = configuration_record(task, prompt_template=prompt_template)
+                record = configuration_record(task, prompt_template=self._prompt_template(task['settings'], frozen))
                 identifier = record['configuration_id']
                 if identifier in registry and registry[identifier] != record:
                     raise ValueError('Configuration identifier collision')
@@ -377,7 +416,7 @@ class Pipeline:
                     row, cached = await self._execute(task, stage, controllers[name])
                     if stage == 'generate':
                         row = (row | answer_metadata(task, question_numbers[task['question_id']],
-                                                     prompt_template=prompt_template)
+                                                     prompt_template=self._prompt_template(task['settings'], frozen))
                                | {'cost_details': assess_cost(row['result'], agent=name, settings=task['settings'])})
                     _append(output, row)
                     if stage == 'generate':
@@ -518,7 +557,7 @@ class Pipeline:
         if registry_path.exists():
             registry = json.loads(registry_path.read_text())
         else:
-            records = [configuration_record(task, prompt_template=self.manifest['config'].get('research_prompt'))
+            records = [configuration_record(task, prompt_template=self._prompt_template(task['settings'], self.manifest['config']))
                        for task in self.manifest['generation_jobs']]
             registry = {record['configuration_id']: record for record in records}
         write_json(directory / 'configurations.json', registry)

@@ -740,3 +740,68 @@ def test_astra_billing_keeps_unsupported_or_missing_price_inputs_unknown(tmp_pat
                     {"model": "gpt-6-astra"}, judge=True)
     assert result["cost_usd"] is None
     assert any("Cost unknown" in warning for warning in result["warnings"])
+
+
+RANGE = {"poll_interval_seconds": 0, "budget_usd": 4.0, "budget_floor_usd": .02, "max_research_rounds": 3,
+         "continuation_prompt": "Spent {spent} of {floor}-{ceiling}; keep to {max_words} words.", "answer_word_limit": 600}
+
+
+def test_research_rounds_continue_until_the_budget_floor(tmp_path):
+    submissions = []
+    def handler(request):
+        if request.method == "POST":
+            body = json.loads(request.content)
+            submissions.append(body)
+            return httpx.Response(200, json=completed(id=f"resp_{len(submissions)}", output=[{"type": "message", "status": "completed",
+                "content": [{"type": "output_text", "text": f"Round {len(submissions)} answer", "annotations": [
+                    {"type": "url_citation", "url": f"https://example.org/{len(submissions)}", "title": "S"}]}]}]))
+        pytest.fail("background polling is unnecessary for a completed submission")
+    job = FakeJob(tmp_path)
+    result = invoke(handler, job, RANGE)
+    # Each round costs (700*2 + 200*.1 + 100*2.5 + 300*10) / 1e6 = $0.00467; the $0.02 floor is never reached, so the round cap ends it.
+    assert len(submissions) == 3 and result["usage"]["rounds"] == 3
+    assert submissions[1]["previous_response_id"] == "resp_1" and submissions[2]["previous_response_id"] == "resp_2"
+    assert submissions[1]["input"].startswith("Spent 0.00 of 0.02-4.00; keep to 600 words.")
+    assert "previous_response_id" not in submissions[0]
+    assert result["text"] == "Round 3 answer"
+    assert [c["url"] for c in result["citations"]] == [f"https://example.org/{i}" for i in (1, 2, 3)]
+    assert result["cost_usd"] == pytest.approx(3 * .00467)
+    assert len(result["raw"]["previous_rounds"]) == 2 and result["raw"]["id"] == "resp_3"
+    assert any("3 research rounds" in w for w in result["warnings"]) and any("below the $0.02 budget floor" in w for w in result["warnings"])
+    assert len(job.state["rounds"]) == 2 and job.state["remote_id"] == "resp_3"
+
+
+def test_research_rounds_stop_once_the_floor_is_reached_and_resume_mid_round(tmp_path):
+    first = completed(id="resp_1")
+    job = FakeJob(tmp_path, {"rounds": [first], "remote_id": "resp_2", "raw": completed(id="resp_2", status="in_progress"),
+                             "submitted_at": time.time()})
+    calls = []
+    def handler(request):
+        calls.append((request.method, request.url.path))
+        return httpx.Response(200, json=completed(id="resp_2", output=[{"type": "message", "status": "completed",
+                                                                        "content": [{"type": "output_text", "text": "Final"}]}]))
+    result = invoke(handler, job, RANGE | {"budget_floor_usd": .009})
+    assert calls == [("GET", "/v1/responses/resp_2")]  # The in-flight second round is retrieved, not resubmitted.
+    assert result["text"] == "Final" and result["usage"]["rounds"] == 2
+    assert result["cost_usd"] == pytest.approx(2 * .00467) and not any("below the" in w for w in result["warnings"])
+
+
+def test_saved_completed_response_is_returned_without_a_key_or_client(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    job = FakeJob(tmp_path, {"remote_id": "resp_123", "raw": completed()})
+    assert asyncio.run(openai.generate("Exact prompt", {}, job))["text"] == "A full answer."
+
+
+def test_soft_cap_flags_an_overrun_without_cancelling(tmp_path):
+    over = {"input_tokens": 1000000, "input_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0}, "output_tokens": 1000000}
+    polls = []
+
+    def handler(request):
+        polls.append(request.url.path)
+        assert not request.url.path.endswith("/cancel")
+        return httpx.Response(200, json=completed(status="in_progress", usage=over) if len(polls) < 3 else completed(usage=over))
+
+    job = FakeJob(tmp_path)
+    result = invoke(handler, job, {"poll_interval_seconds": 0, "budget_cap": "soft"})
+    assert result["text"] and job.state["budget_exceeded"] is True and "cancel_reason" not in job.state
+    assert any("soft cap" in warning for warning in result["warnings"])

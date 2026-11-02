@@ -23,17 +23,15 @@ import time
 from email.utils import parsedate_to_datetime
 from uuid import uuid4
 
+from crest.caesar_budget import DEFAULT_COMPLETION_TOKENS, LUNA, PRICES, SOL, write_hold
+from crest.providers import budget_is_hard
 from crest.caesar_metrics import iteration_metrics
 
 PROTOCOL_VERSION = "caesar-worker-v1"
-SOL = "gpt-6.1-sol"
-LUNA = "gpt-6-luna"
-# Standard prices: https://developers.openai.com/api/docs/models/gpt-6.1-sol
-# Luna: https://developers.openai.com/api/docs/models/gpt-6-luna
-PRICES = {LUNA: {"input": .1, "output": .5, "cache_read": .01, "cache_write": .125}, SOL: {"input": 2., "output": 10., "cache_read": .1, "cache_write": 2.5},
-          "text-embedding-3-small": {"input": .02, "output": 0.},
-          "text-embedding-3-large": {"input": .13, "output": 0.},
-          "text-embedding-ada-002": {"input": .10, "output": 0.}}
+KB_CONTEXT_WINDOW = 1_050_000  # Sol and Luna; also registered with litellm and LlamaIndex below
+
+
+_hard_budget = budget_is_hard  # budget_cap hard or auto enforces budget_usd; soft only records and flags overruns.
 
 
 def atomic_json(path: Path, value: dict) -> None:
@@ -62,8 +60,8 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
         "Logger": {"base_dir": str(output_dir / "logs"), "level": "INFO", "console": False},
         "LLMHandler": {
             "provider": "openai", "model": model, "reasoning_effort": settings.get("reasoning_effort", "medium"),
-            "cost_limit": settings.get("handler_budget_usd", settings.get("handler_cost_limit", 5.)),
-            "max_completion_tokens": settings.get("max_completion_tokens", 25000),
+            "cost_limit": settings.get("budget_usd", 5.) if _hard_budget(settings) else None,
+            "max_completion_tokens": settings.get("max_completion_tokens", DEFAULT_COMPLETION_TOKENS),
             "max_input_tokens": settings.get("max_input_tokens", 64000),
             "timeout": settings.get("call_timeout_seconds", 600), "max_retries": 0,
         },
@@ -88,8 +86,10 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "synthesis_classic_mode": False, "synthesis_drafts": settings.get("synthesis_drafts", 3),
             "synthesis_iterations": settings.get("synthesis_iterations", 15),
             "synthesis_reasoning_effort": settings.get("synthesis_reasoning_effort", "medium"),
-            "synthesis_top_k": settings.get("synthesis_top_k", settings.get("retrieval_chunks", 15)),
-            "synthesis_top_n": settings.get("synthesis_top_n", settings.get("retrieval_chunks", 10)),
+            "synthesis_top_k": settings.get("synthesis_top_k", 15),
+            "synthesis_top_n": settings.get("synthesis_top_n", 10),
+            # CREST's answer_word_limit becomes Rome's word target for each draft and the merge.
+            "synthesis_max_length": settings.get("answer_word_limit"),
             "synthesis_merge_artifacts": settings.get("synthesis_merge_artifacts", True), "synthesis_merge_clarify": False,
             "synthesis_eli5": False, "synthesis_human_eval": False, "synthesis_generate_images": 0,
         },
@@ -98,7 +98,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "collection_name": collection, "enable_reranking": False, "use_shared_server": False,
             "model": settings.get("kb_model", LUNA), "reasoning_effort": settings.get("kb_reasoning_effort", "low"),
             "embedding_model": settings.get("embedding_model", "text-embedding-3-small"),
-            "top_k": settings.get("synthesis_top_k", settings.get("retrieval_chunks", 15)),
+            "top_k": settings.get("synthesis_top_k", 15),
         },
         "ChromaServerManager": {"host": "127.0.0.1", "port": settings.get("chroma_port", 8000),
                                 "persist_path": str(output_dir / "chroma"),
@@ -106,7 +106,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
     }
 
 
-def extract_result(artifact: dict, model: str, usage: dict, *, expected_drafts=3, expected_iterations=15) -> dict:
+def extract_result(artifact: dict, model: str, usage: dict, *, expected_drafts=3, expected_iterations=15, hard=True) -> dict:
     if not isinstance(artifact, dict) or not isinstance(artifact.get("artifact"), str) or not artifact["artifact"].strip():
         raise ValueError("Caesar did not return a nonempty final artifact")
     if artifact.get("num_drafts") != expected_drafts:
@@ -127,7 +127,11 @@ def extract_result(artifact: dict, model: str, usage: dict, *, expected_drafts=3
     if citations:
         sections.append("Sources\n" + "\n".join(f"{item['title']} {item['url']}" for item in citations))
     unknown = usage.get("unknown_cost", True) or not usage.get("successful_calls")
-    warnings = ["Budget is a target: SDK audit estimates successful-call costs; unobserved timeout billing cannot be capped."]
+    warnings = [("Budget is a ceiling" if hard else "Budget is a soft target")
+                + ": SDK audit estimates successful-call costs; unobserved timeout billing cannot be capped."]
+    if usage.get("budget_exceeded"):
+        warnings.append(f"Estimated cost ${usage.get('known_cost_usd', 0):.2f} exceeded the ${usage.get('budget_target_usd', 0):.2f} budget "
+                        + ("ceiling." if hard else "target (soft cap: nothing was stopped)."))
     if completed_rounds < expected_iterations:
         warnings.append(f"Final draft completed {completed_rounds} of up to {expected_iterations} requested Q&A rounds.")
     if unknown:
@@ -138,10 +142,18 @@ def extract_result(artifact: dict, model: str, usage: dict, *, expected_drafts=3
 
 
 @contextmanager
-def compatibility(handler, default_config, litellm_module, llama_utils, kb_limit, *, tokenizer_registry=None):
-    """Scoped registrations; Rome and installed package files remain untouched."""
+def compatibility(handler, default_config, litellm_module, llama_utils, kb_limit, *, tokenizer_registry=None,
+                  llama_settings=None, prompt_helpers=None):
+    """Scoped registrations; Rome and installed package files remain untouched.
+
+    ``prompt_helpers`` maps LlamaIndex ``Settings`` attributes (``prompt_helper``, ``chat_prompt_helper``)
+    to helpers sized for the knowledge-base model. llama-index-core 0.14.23 ignores the query engine's
+    own LLM and uses the global default helper (a 3,900-token window), which splits every knowledge-base
+    query into several small calls; setting the global helper restores one call per query.
+    """
     saved = {name: copy.deepcopy(getattr(handler, name)) for name in
              ("MODEL_PRICING", "MODEL_CONTEXT_SIZE", "REASONING_MODELS", "_known_models_registered")}
+    helpers_saved = {name: getattr(llama_settings, "_" + name, None) for name in (prompt_helpers or {})}
     registries = {name: copy.deepcopy(getattr(llama_utils, name)) for name in
                   ("O1_MODELS", "CHAT_MODELS", "ALL_AVAILABLE_MODELS")}
     tokenizer_saved = dict(tokenizer_registry) if tokenizer_registry is not None else None
@@ -154,20 +166,24 @@ def compatibility(handler, default_config, litellm_module, llama_utils, kb_limit
             if tokenizer_registry is not None:
                 tokenizer_registry[model] = "o200k_base"
             handler.MODEL_PRICING[model] = {"input": rates["input"], "output": rates["output"]}
-            handler.MODEL_CONTEXT_SIZE[model] = 1_050_000
+            handler.MODEL_CONTEXT_SIZE[model] = KB_CONTEXT_WINDOW
             handler.REASONING_MODELS.add(model)
             for name in registries:
-                getattr(llama_utils, name)[model] = 1_050_000
+                getattr(llama_utils, name)[model] = KB_CONTEXT_WINDOW
             entries[model] = {"litellm_provider": "openai", "mode": "chat",
                 "input_cost_per_token": rates["input"] / 1e6, "output_cost_per_token": rates["output"] / 1e6,
-                "max_input_tokens": 1_050_000, "max_tokens": 1_050_000, "supports_reasoning": True,
+                "max_input_tokens": KB_CONTEXT_WINDOW, "max_tokens": KB_CONTEXT_WINDOW, "supports_reasoning": True,
                 "cache_read_input_token_cost": rates["cache_read"] / 1e6,
                 "cache_creation_input_token_cost": rates["cache_write"] / 1e6}
         handler._known_models_registered = False
         default_config["LLMHandler"]["max_completion_tokens"] = kb_limit
         litellm_module.register_model(entries)
+        for name, helper in (prompt_helpers or {}).items():
+            setattr(llama_settings, name, helper)
         yield
     finally:
+        for name, helper in helpers_saved.items():
+            setattr(llama_settings, "_" + name, helper)
         for name, value in saved.items():
             setattr(handler, name, value)
         for name, value in registries.items():
@@ -237,8 +253,9 @@ class UsageAudit:
     SDK-internal retries are disabled so every attempt remains visible.
     """
     def __init__(self, budget: float, path: Path, prices=None, *, retry_attempts=4,
-                 retry_backoff_base_seconds=1, retry_backoff_max_seconds=30):
+                 retry_backoff_base_seconds=1, retry_backoff_max_seconds=30, enforce=True):
         self.budget = float(budget)
+        self.enforce = bool(enforce)  # False: a soft cap; overruns are recorded, never refused.
         self.retry_attempts = max(1, int(retry_attempts))
         self.retry_backoff_base_seconds = max(0., float(retry_backoff_base_seconds))
         self.retry_backoff_max_seconds = max(0., float(retry_backoff_max_seconds))
@@ -297,14 +314,15 @@ class UsageAudit:
             reserved = sum(event["reserved_usd"] for event in self.pending.values())
             reserved += sum(event.get("reserved_usd", 0) for event in self.events if event["status"] == "failed")
             ceiling = self.budget if self.exploration_limit is None else min(self.budget, self.exploration_limit)
-            if self.request_limit is not None:
-                ceiling = min(ceiling, self.request_limit)
-            if rates and bounded and known + reserved + reserve > ceiling:
-                if self.request_limit is not None and known + reserved + reserve > self.request_limit:
-                    self.request_limited = True
-                if self.exploration_limit is not None and known + reserved + reserve > self.exploration_limit:
+            if self.enforce and rates and bounded and known + reserved + reserve > ceiling:
+                if self.exploration_limit is not None:
                     self.exploration_limited = True
-                raise BudgetExceeded("Projected SDK request exceeds the remaining Caesar budget target")
+                raise BudgetExceeded("Projected SDK request exceeds the remaining Caesar budget ceiling")
+            # A draft's Q&A allowance is spent, not projected: the byte-count bound above is several
+            # times a real request, and projecting it would end every draft $0.15-0.25 early.
+            if self.enforce and self.request_limit is not None and known + reserved >= self.request_limit:
+                self.request_limited = True
+                raise BudgetExceeded("This draft's Q&A allowance is spent")
             token = uuid4().hex
             self.pending[token] = {"model": model, "reserved_usd": reserve,
                                    "unknown_cost": not bool(rates and bounded)}
@@ -465,6 +483,8 @@ def _runtime(settings: dict, audit: UsageAudit):
     os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
     import litellm
     import tiktoken.model
+    from llama_index.core import Settings as llama_settings
+    from llama_index.core.indices.prompt_helper import ChatPromptHelper, PromptHelper
     from llama_index.llms.openai import utils as llama_utils
     from rome.config import DEFAULT_CONFIG
     from rome.llm_handler import LLMHandler
@@ -482,7 +502,11 @@ def _runtime(settings: dict, audit: UsageAudit):
     openai.OpenAI.__init__ = init
     openai.AsyncOpenAI.__init__ = async_init
     try:
-        with compatibility(LLMHandler, DEFAULT_CONFIG, litellm, llama_utils, settings.get("kb_max_completion_tokens", 2000), tokenizer_registry=tiktoken.model.MODEL_TO_ENCODING), audit.installed(SyncAPIClient, AsyncAPIClient), chroma_python_cli(ChromaServerManager):
+        kb_limit = settings.get("kb_max_completion_tokens", 2000)
+        helpers = {"prompt_helper": PromptHelper(context_window=KB_CONTEXT_WINDOW, num_output=kb_limit),
+                   "chat_prompt_helper": ChatPromptHelper(context_window=KB_CONTEXT_WINDOW, num_output=kb_limit)}
+        with compatibility(LLMHandler, DEFAULT_CONFIG, litellm, llama_utils, kb_limit, tokenizer_registry=tiktoken.model.MODEL_TO_ENCODING,
+                           llama_settings=llama_settings, prompt_helpers=helpers), audit.installed(SyncAPIClient, AsyncAPIClient), chroma_python_cli(ChromaServerManager):
             from caesar.caesar_agent import CaesarAgent
             yield CaesarAgent
     finally:
@@ -562,7 +586,7 @@ def synthesis_query_completion_limits(agent, settings):
         chat = agent.chat_completion
         handler = getattr(agent, "llm_handler", None)
         previous = getattr(handler, "max_completion_tokens", None)
-        limit = min(int(settings.get("query_max_completion_tokens", 6000)), previous or int(settings.get("max_completion_tokens", 25000)))
+        limit = min(int(settings.get("query_max_completion_tokens", 6000)), previous or int(settings.get("max_completion_tokens", DEFAULT_COMPLETION_TOKENS)))
         def short_chat(*chat_args, **chat_kwargs):
             overrides = dict(chat_kwargs.get("override_config") or {})
             overrides["max_completion_tokens"] = limit
@@ -586,18 +610,16 @@ def synthesis_query_completion_limits(agent, settings):
 
 @contextmanager
 def adaptive_synthesis_budget(agent, settings, audit):
-    """Allocate QA money and elapsed time while retaining later writes and merging."""
+    """Allocate Q&A money per draft while retaining budget for later writes and merging.
+
+    Time is not allocated per phase: the worker's single wall-clock deadline is the only timeout.
+    """
     synthesizer = getattr(agent, "synthesizer", None)
     original_qa = getattr(synthesizer, "_generate_qa_pairs", None)
     original_merge = getattr(synthesizer, "_merge_artifacts", None)
-    timeout = float(settings.get("timeout_seconds", 7200))
-    deadline = getattr(agent, "_crest_worker_deadline", time.monotonic() + timeout)
-    write_seconds = min(300., timeout / 24)
     records = {"requested_qa_rounds_per_draft": settings.get("synthesis_iterations", 15),
                "drafts": [], "merge_requested": settings.get("synthesis_merge_artifacts", True),
-               "merge_completed": False, "write_allowance_per_call_usd": .35,
-               "time_policy": {"timeout_seconds": timeout, "exploration_time_limit_seconds": timeout * .375,
-                    "write_allowance_per_call_seconds": write_seconds, "best_effort": True}}
+               "merge_completed": False, "enforced": _hard_budget(settings)}
     agent._crest_synthesis_budget = records
     if original_qa is None:
         yield records
@@ -605,52 +627,25 @@ def adaptive_synthesis_budget(agent, settings, audit):
     def qa(*args, **kwargs):
         draft = getattr(synthesizer, "_current_draft", 1)
         remaining_drafts = max(1, synthesizer.synthesis_drafts - draft + 1)
-        writes = remaining_drafts + remaining_drafts - 1 + int(synthesizer.synthesis_merge_artifacts)
         committed = _committed_spend(audit)
-        ceiling = min(audit.budget, float(settings.get("handler_budget_usd", 5.)))
-        write_allowance = min(writes * .35, max(0., ceiling - committed) * .7)
+        ceiling = audit.budget
+        write_allowance = min(write_hold(settings, remaining_drafts, bool(synthesizer.synthesis_merge_artifacts)),
+                              max(0., ceiling - committed) * .7)
         allowance = max(0., (ceiling - committed - write_allowance) / remaining_drafts)
         qa_started = time.monotonic()
-        time_allowance = max(0., (deadline - qa_started - writes * write_seconds) / remaining_drafts)
-        qa_deadline = qa_started + time_allowance
-        time_limited = False
-        first_check = True
-        original_shutdown = getattr(synthesizer, "_shutdown_requested", None)
-        original_next = getattr(synthesizer, "_generate_next_query", None)
-        def should_stop():
-            nonlocal time_limited, first_check
-            initial = first_check
-            first_check = False
-            if original_shutdown is not None and original_shutdown():
-                return True
-            now = time.monotonic()
-            if now >= qa_deadline:
-                time_limited = True
-                return not (initial and deadline - now > write_seconds)
-            return False
-        def next_query(*args, **kwargs):
-            return None if should_stop() else original_next(*args, **kwargs)
         previous_limit, previous_limited = audit.request_limit, audit.request_limited
-        audit.request_limit, audit.request_limited = committed + allowance, False
-        synthesizer._shutdown_requested = should_stop
-        if original_next is not None:
-            synthesizer._generate_next_query = next_query
+        if records["enforced"]:
+            audit.request_limit, audit.request_limited = committed + allowance, False
         try:
             pairs = original_qa(*args, **kwargs)
         finally:
-            limited = audit.request_limited
+            limited = audit.request_limited if records["enforced"] else False
             audit.request_limit, audit.request_limited = previous_limit, previous_limited
-            if original_shutdown is None:
-                del synthesizer._shutdown_requested
-            else:
-                synthesizer._shutdown_requested = original_shutdown
-            if original_next is not None:
-                synthesizer._generate_next_query = original_next
         records["drafts"].append({"draft": draft, "requested_qa_rounds": synthesizer.synthesis_iterations,
-            "completed_qa_rounds": len(pairs), "budget_limited": limited, "qa_allowance_usd": allowance,
-            "remaining_write_allowance_usd": write_allowance, "time_limited": time_limited,
-            "qa_time_allowance_seconds": time_allowance, "qa_elapsed_seconds": time.monotonic() - qa_started,
-            "remaining_write_allowance_seconds": writes * write_seconds})
+            "completed_qa_rounds": len(pairs), "budget_limited": limited,
+            "qa_allowance_usd": allowance if records["enforced"] else None,
+            "remaining_write_allowance_usd": write_allowance if records["enforced"] else None,
+            "qa_elapsed_seconds": time.monotonic() - qa_started})
         atomic_json(audit.path.with_name("synthesis-budget.json"), records)
         return pairs
     def merge(*args, **kwargs):
@@ -672,36 +667,26 @@ def adaptive_synthesis_budget(agent, settings, audit):
 def _quick_explore_with_synthesis_reserve(agent, settings, audit):
     """Drain accepted quick tasks and ingest their results before releasing the reserve."""
     reserve = float(settings.get("synthesis_reserve_usd", 3.))
-    ceiling = min(audit.budget, float(settings.get("handler_budget_usd", settings.get("handler_cost_limit", 5.))))
-    limit = max(0., ceiling - reserve)
+    limit = max(0., audit.budget - reserve)
     previous_limit, previous_limited = audit.exploration_limit, audit.exploration_limited
     original_page = agent._quick_perceive_and_think
     original_ingest = agent.kb_manager.add_texts
     original_synthesize = agent.synthesizer.synthesize_artifact
     started = getattr(agent, "_crest_worker_started", time.monotonic())
-    deadline = getattr(agent, "_crest_worker_deadline", started + float(settings.get("timeout_seconds", 7200)))
-    exploration_seconds = (deadline - started) * .375
-    exploration_deadline = started + exploration_seconds
-    time_limited = False
     stop = None
     audit.exploration_limit, audit.exploration_limited = limit, False
     def page(*args, **kwargs):
-        nonlocal time_limited
-        if time.monotonic() >= exploration_deadline:
-            time_limited = True
-            return None
         if audit.exploration_limited or _committed_spend(audit) >= limit:
             audit.exploration_limited = True
             return None
         return original_page(*args, **kwargs)
     def finish_exploration():
         nonlocal stop
-        if (audit.exploration_limited or time_limited) and stop is None:
+        if audit.exploration_limited and stop is None:
             stop = {"mode": "quick", "iterations_completed": len(agent.visited_urls),
                 "max_submission_iteration": agent.current_iteration,
                 "committed_usd": _committed_spend(audit), "synthesis_reserve_usd": reserve,
-                "exploration_limit_usd": limit, "reason": "time_reserve" if time_limited else "budget_reserve",
-                "time_limited": time_limited, "exploration_time_limit_seconds": exploration_seconds,
+                "exploration_limit_usd": limit, "reason": "budget_reserve",
                 "elapsed_seconds": time.monotonic() - started}
             agent._crest_exploration_budget_stop = stop
             atomic_json(audit.path.with_name("exploration-budget-stop.json"), stop)
@@ -727,25 +712,22 @@ def _quick_explore_with_synthesis_reserve(agent, settings, audit):
 
 
 def _explore_with_synthesis_reserve(agent, settings, audit):
+    if not _hard_budget(settings):
+        return agent.explore(), None  # Soft cap: the configured depth runs; overruns are only flagged.
     if getattr(agent, "use_quick_explore", False):
         return _quick_explore_with_synthesis_reserve(agent, settings, audit)
     original_perceive = agent.perceive
     reserve = float(settings.get("synthesis_reserve_usd", 3.))
-    # The handler's separate guard also needs enough room for final writing.
-    ceiling = min(audit.budget, float(settings.get("handler_budget_usd", settings.get("handler_cost_limit", 5.))))
+    ceiling = audit.budget
     started = getattr(agent, "_crest_worker_started", time.monotonic())
-    deadline = getattr(agent, "_crest_worker_deadline", started + float(settings.get("timeout_seconds", 7200)))
-    exploration_seconds = (deadline - started) * .375
     stop = None
     def perceive(*args, **kwargs):
         committed = _committed_spend(audit)
-        time_limited = time.monotonic() >= started + exploration_seconds
-        if time_limited or committed >= max(0., ceiling - reserve):
+        if committed >= max(0., ceiling - reserve):
             raise ExplorationBudgetReserved({"iterations_completed": max(0, agent.current_iteration - 1),
                 "committed_usd": committed, "synthesis_reserve_usd": reserve,
-                "exploration_limit_usd": max(0., ceiling - reserve),
-                "reason": "time_reserve" if time_limited else "budget_reserve", "time_limited": time_limited,
-                "exploration_time_limit_seconds": exploration_seconds, "elapsed_seconds": time.monotonic() - started})
+                "exploration_limit_usd": max(0., ceiling - reserve), "reason": "budget_reserve",
+                "elapsed_seconds": time.monotonic() - started})
         return original_perceive(*args, **kwargs)
     agent.perceive = perceive
     try:
@@ -889,7 +871,8 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     atomic_json(output_dir / "__rome__" / f"agent_{_agent_name(job_key)}.checkpoint.json", checkpoint)
     config["CaesarAgent"].update(max_iterations=0, adapt_role=False, starting_url=checkpoint["config"]["starting_url"])
     config["ChromaClientManager"]["collection_name"] = collection
-    config["LLMHandler"]["cost_limit"] = min(config["LLMHandler"]["cost_limit"], budget)
+    if config["LLMHandler"]["cost_limit"] is not None:
+        config["LLMHandler"]["cost_limit"] = min(config["LLMHandler"]["cost_limit"], budget)
     recovery = {"source_job": str(source), "source_checkpoint_sha256": hashlib.sha256(paths[0].read_bytes()).hexdigest(),
         "collection_name": collection, "iteration": checkpoint["iteration"], "visited_urls": len(checkpoint["visited_urls"]),
         "previous_known_cost_usd": known, "previous_unknown_reserved_usd": reserved,
@@ -924,11 +907,10 @@ def run_worker(request: dict, result_path: Path) -> int:
                           "successful_calls": 0, "failed_calls": 0, "events": [], "in_flight": []}})
             return 1
         attempt_settings.update(budget_usd=budget_history["new_attempt_budget_usd"],
-            handler_budget_usd=min(float(settings.get("handler_budget_usd", 5.)), budget_history["new_attempt_budget_usd"]),
             synthesis_reserve_usd=budget_history["effective_synthesis_reserve_usd"])
         atomic_json(output_dir / "budget-history.json", budget_history)
     audit = UsageAudit(attempt_settings.get("budget_usd", 5.), output_dir / "usage.json", settings.get("model_pricing"),
-                       retry_attempts=settings.get("retry_attempts", 4),
+                       retry_attempts=settings.get("retry_attempts", 4), enforce=_hard_budget(attempt_settings),
                        retry_backoff_base_seconds=settings.get("retry_backoff_base_seconds", 1),
                        retry_backoff_max_seconds=settings.get("retry_backoff_max_seconds", 30))
     agent = None
@@ -947,7 +929,7 @@ def run_worker(request: dict, result_path: Path) -> int:
                     sock.bind(("127.0.0.1", 0))
                     config["ChromaServerManager"]["port"] = sock.getsockname()[1]
             agent = agent_class(name=_agent_name(request["job_key"]), repository=str(output_dir), config=config)
-            agent._crest_worker_started, agent._crest_worker_deadline = worker_started, worker_deadline
+            agent._crest_worker_started = worker_started
             with iteration_metrics(agent, audit, Path(result_path).parent) as metrics, synthesis_query_completion_limits(agent, attempt_settings), adaptive_synthesis_budget(agent, attempt_settings, audit) as synthesis_budget:
                 if recovery is not None:
                     if agent.current_iteration != recovery["iteration"] or not agent.visited_urls or agent.kb_manager.size() < 1:
@@ -959,12 +941,11 @@ def run_worker(request: dict, result_path: Path) -> int:
                 raise RuntimeError("Caesar was interrupted before completing synthesis")
             result = extract_result(artifact, settings.get("model", SOL), audit.snapshot(),
                                     expected_drafts=settings.get("synthesis_drafts", 3),
-                                    expected_iterations=settings.get("synthesis_iterations", 15))
+                                    expected_iterations=settings.get("synthesis_iterations", 15),
+                                    hard=_hard_budget(attempt_settings))
             if exploration_stop is not None:
                 result["raw"]["exploration_budget_stop"] = exploration_stop
-                time_note = (f" at its {exploration_stop['exploration_time_limit_seconds'] / 60:g}-minute new-page limit, preserving time and"
-                             if exploration_stop.get("time_limited") else " to reserve")
-                result["warnings"].append(f"Exploration stopped after {exploration_stop['iterations_completed']} iterations{time_note} ${exploration_stop['synthesis_reserve_usd']:g} for synthesis.")
+                result["warnings"].append(f"Exploration stopped after {exploration_stop['iterations_completed']} iterations to reserve ${exploration_stop['synthesis_reserve_usd']:g} for synthesis.")
             accounting = recovery or budget_history
             if accounting is not None:
                 mode = "recovery" if recovery is not None else "budget_history"

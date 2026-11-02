@@ -13,6 +13,17 @@ from crest.analysis import analyze
 
 AGENTS = ['caesar', 'gemini', 'openai']
 JUDGES = ['gemini', 'openai']
+FOUR_AGENTS = ['caesar', 'gemini', 'openai', 'anthropic']
+THREE_JUDGES = ['gemini', 'openai', 'anthropic']
+MODELS = {'caesar': 'gpt-6.1-sol', 'openai': 'gpt-6.1-sol', 'gemini': 'gemini-3.1-pro-preview',
+          'anthropic': 'claude-sonnet-5-5'}
+RESEARCH = {'caesar': {'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna', 'kb_model': 'gpt-6-luna', 'budget_usd': 5},
+            'openai': {'model': 'gpt-6.1-sol', 'reasoning_effort': 'high', 'budget_usd': 5},
+            'gemini': {'agent': 'deep-research-preview-04-2026', 'billing_model': 'gemini-3.1-pro-preview', 'budget_usd': 5},
+            'anthropic': {'model': 'claude-sonnet-5-5', 'effort': 'max', 'budget_usd': 4}}
+JUDGE_SETTINGS = {'openai': {'model': 'gpt-6-astra', 'reasoning_effort': 'high'},
+                  'gemini': {'model': 'gemini-4-argon', 'thinking_level': 'high'},
+                  'anthropic': {'model': 'claude-fable-5-1', 'effort': 'high'}}
 
 
 def dump(path, value):
@@ -20,23 +31,23 @@ def dump(path, value):
     path.write_text(json.dumps(value), encoding='utf-8')
 
 
-def make_run(root, *, choose=None):
+def make_run(root, *, choose=None, agents=AGENTS, judges=JUDGES):
     choose = choose or (lambda q, pair, judge, order: pair[q % 2])
     questions = [{'id': f'q{i:03}', 'text': f'Invent a useful research proposal for question {i}.'} for i in range(50)]
     answers, judgments = [], []
     for i, q in enumerate(questions):
-        for agent in AGENTS:
+        for agent in agents:
             answers.append({'question_id': q['id'], 'agent': agent, 'key': f'answer-{q["id"]}-{agent}',
                             'result': {'text': f'Complete substantive answer from {agent} for {q["id"]}.',
-                                       'model': 'gpt-6.1-sol' if agent != 'gemini' else 'gemini-3.1-pro-preview',
+                                       'model': MODELS.get(agent, 'unrecorded-model'),
                                        'cost_usd': 1.0, 'cost_estimated': True, 'usage': {},
                                        'raw': {'agent': 'deep-research-preview-04-2026'} if agent == 'gemini' else {}},
                             'timing': {'started_at': '2026-10-27T00:00:00+00:00',
                                        'completed_at': '2026-10-27T00:01:40+00:00', 'duration_seconds': 100,
                                        'source': 'checkpoint:first_started_at/completed_at',
                                        'definition': 'Client elapsed; excludes local scheduling.'}})
-        for pair in combinations(AGENTS, 2):
-            for judge in JUDGES:
+        for pair in combinations(sorted(agents), 2):  # judging.make_judgment_jobs stores sorted pairs
+            for judge in judges:
                 for order in (pair, pair[::-1]):
                     winner = choose(i, pair, judge, order)
                     verdict = {'reason': 'A comparative reason about overall creative quality.',
@@ -48,11 +59,8 @@ def make_run(root, *, choose=None):
                                       'result': {'text': json.dumps(verdict), 'cost_usd': .1, 'raw': {}},
                                       'timing': {'duration_seconds': 10, 'source': 'checkpoint'}})
     generation, judging, analysis = '01-generate-test', '02-judge-test', '03-analysis-test'
-    manifest = {'schema': 'crest-run-v1', 'agents': AGENTS, 'questions': questions,
-                'config': {'research': {
-                    'caesar': {'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna', 'kb_model': 'gpt-6-luna', 'budget_usd': 5},
-                    'openai': {'model': 'gpt-6.1-sol', 'reasoning_effort': 'high', 'budget_usd': 5},
-                    'gemini': {'agent': 'deep-research-preview-04-2026', 'billing_model': 'gemini-3.1-pro-preview', 'budget_usd': 5}}},
+    manifest = {'schema': 'crest-run-v1', 'agents': list(agents), 'questions': questions,
+                'config': {'research': {agent: RESEARCH.get(agent, {'budget_usd': 5}) for agent in agents}},
                 'stages': [{'name': name, 'directory': directory, 'status': 'completed'} for name, directory in
                            [('generate', generation), ('judge', judging), ('analysis', analysis)]]}
     dump(root / 'run.json', manifest)
@@ -61,11 +69,11 @@ def make_run(root, *, choose=None):
     dump(root / analysis / 'manifest.json', {'status': 'completed', 'judgment_directory': judging})
     dump(root / judging / 'questions.json', questions)
     dump(root / judging / 'answers.json', answers)
-    dump(root / judging / 'judges.json', {'openai': {'model': 'gpt-6-astra', 'reasoning_effort': 'high'},
-                                        'gemini': {'model': 'gemini-4-argon', 'thinking_level': 'high'}})
+    dump(root / judging / 'judges.json', {judge: JUDGE_SETTINGS[judge] for judge in JUDGE_SETTINGS if judge in judges})
     (root / judging / 'judgments.jsonl').write_text(''.join(json.dumps(j) + '\n' for j in judgments))
     (root / judging / 'rubric.txt').write_text('New, Useful and Surprising guide one overall A/B winner.')
-    ranking = analyze(questions, answers, judgments, agents=AGENTS, judges=JUDGES, bootstrap_samples=1000, seed=2026)
+    ranking = analyze(questions, answers, judgments, agents=list(agents), judges=list(judges),
+                      bootstrap_samples=1000, seed=2026)
     dump(root / analysis / 'ranking.json', ranking)
     return root
 
@@ -99,7 +107,9 @@ def make_aut_run(run):
         row['result']['text'] = json.dumps(row['verdict'])
     path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
     questions = json.loads((run / '02-judge-test/questions.json').read_text())
-    dump(ranking_path(run), analyze(questions, answers, rows, agents=AGENTS, judges=JUDGES,
+    agents = json.loads((run / 'run.json').read_text())['agents']
+    judges = list(json.loads((run / '02-judge-test/judges.json').read_text()))
+    dump(ranking_path(run), analyze(questions, answers, rows, agents=agents, judges=judges,
                                     bootstrap_samples=1000, seed=2026))
     return rows
 
@@ -176,6 +186,7 @@ def test_revised_method_describes_judge_presentations_not_raw_url_metadata():
     from crest.report import _method
     data = {'ranking': {'bootstrap': {'seed': 2026},
                         'ranking': [{'agent': agent} for agent in AGENTS]}, 'manifest': {},
+            'judges': {judge: JUDGE_SETTINGS[judge] for judge in JUDGES},
             'judgments': [{'protocol_version': 'nus-overall-pairwise-v3',
                            'presentation_version': 'citation-neutral-v1'}],
             'answers': [{'agent': 'openai', 'result': {'text': 'https://example.com?utm_source=openai'}},
@@ -256,7 +267,7 @@ def test_refuses_incomplete_publication_without_overwriting_destination(run, tmp
     assert output.read_text() == 'previous verified report'
 
 
-@pytest.mark.parametrize('kind', ['missing', 'duplicate', 'invalid_winner', 'wrong_answer_key'])
+@pytest.mark.parametrize('kind', ['missing', 'duplicate', 'invalid_winner', 'wrong_answer_key', 'unsorted_pair'])
 def test_refuses_missing_duplicate_or_mismatched_judgment_cells(run, tmp_path, kind):
     from crest.report import write_report
     file = run / '02-judge-test/judgments.jsonl'
@@ -264,6 +275,7 @@ def test_refuses_missing_duplicate_or_mismatched_judgment_cells(run, tmp_path, k
     if kind == 'missing': rows.pop()
     elif kind == 'duplicate': rows[-1] = deepcopy(rows[0])
     elif kind == 'invalid_winner': rows[0]['verdict']['winner'] = 'tie'
+    elif kind == 'unsorted_pair': rows[0]['pair'].reverse()  # analysis scores only canonical sorted pairs
     else: rows[0]['answer_keys'][0] = 'some-other-paid-answer'
     file.write_text(''.join(json.dumps(row) + '\n' for row in rows))
     with pytest.raises(ValueError):
@@ -488,16 +500,17 @@ def test_manifest_stage_paths_cannot_escape_run_directory(run, tmp_path):
 
 def final_audit(run):
     rows = json.loads(answers_path(run).read_text())
+    judgments = sum(1 for line in (run / '02-judge-test/judgments.jsonl').read_text().splitlines() if line.strip())
     return {'audit_version': 'crest-final-audit-v1', 'status': 'complete', 'ready': True,
             'run_dir': str(run), 'errors': [], 'pending': [],
             'warnings': ['Billing remains estimated; no invoice has been verified.'],
-            'generation': {'completed_answers': 150, 'snapshot_answer_rows': 150,
+            'generation': {'completed_answers': len(rows), 'snapshot_answer_rows': len(rows),
                 'answer_details': [{'question_id': row['question_id'], 'agent': row['agent'], 'key': row['key'],
                     'status': 'completed', 'known_usd': 1., 'unknown_attempt_count': 0,
                     'exposure_upper_usd': 1., 'attempt_keys': [row['key']],
                     'active_attempt_seconds': 175., 'active_time_limit_seconds': 7200,
                     'timing_complete': True} for row in rows]},
-            'judging': {'valid_calls': 600, 'complete_questions': 50, 'known_estimated_usd': 60.,
+            'judging': {'valid_calls': judgments, 'complete_questions': 50, 'known_estimated_usd': 60.,
                         'failed_known_usd': .25, 'failed_unknown_cost_count': 1,
                         'failed_partial_observed_usd': .1},
             'ranking': {'matches_independent_calculation': True},
@@ -1021,3 +1034,125 @@ def test_prior_ledger_stays_in_source_records_and_out_of_html(run, tmp_path, led
     assert evidence in html
     assert html.count('class="answer"') == 150 and html.count('class="reason"') == 600
     assert ledger.read_bytes() == original
+
+
+def test_four_agent_three_judge_run_renders_computed_totals_and_anthropic_labels(tmp_path):
+    from crest.report import load_run, write_report
+    run = make_run(tmp_path / 'run', agents=FOUR_AGENTS, judges=THREE_JUDGES)
+    data = load_run(run)
+    assert data['ranking']['agents'] == sorted(FOUR_AGENTS)
+    assert data['ranking']['coverage']['valid_judgments'] == 1800
+    assert set(data['resources']['generation']) == set(FOUR_AGENTS)
+    assert set(data['resources']['judging']) == set(THREE_JUDGES)
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert html.count('class="question"') == 50
+    assert html.count('class="answer"') == 200
+    assert html.count('class="judgment"') == 1800
+    assert '<strong>200</strong><span>answers</span>' in html
+    assert '<strong>1,800</strong><span>pairwise judgments</span>' in html
+    assert 'Three model judges compare the 200 saved answers' in html
+    assert 'Total for 1,800 judgments: $180.0000' in html
+    # 50 questions × 3 opponents × 2 orders × 3 judges = 900 decisions per system.
+    assert 'divided by 900 judgments across 50 questions, three opponents, three judges, and both answer orders' in html
+    assert 'Each system appears in 900 decisions; wins ÷ 900 gives its win rate.' in html
+    assert '/ 900 wins' in html and '/ 400 wins' not in html
+    assert '(300 comparisons per matchup)' in html
+    assert 'Each question produces 36 decisions: six answer pairs, evaluated by three judges in both orders.' in html
+    assert 'all four complete answers and its 36 saved overall judgments' in html
+    assert 'Read all 36 overall judgments' in html
+    assert 'wins in 18 comparisons per system' in html
+    assert 'All three judges evaluated every pair in both orders' in html and 'Both judges' not in html
+    assert ('<a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool">'
+            'Anthropic (Sonnet + web search)</a>') in html
+    assert 'Sonnet + hosted web search through the Messages API; effort: max.' in html
+    assert '<summary>Claude Fable 5.1 · preferred' in html
+    assert '&quot;model&quot;: &quot;claude-fable-5-1&quot;' in html
+    assert 'https://platform.claude.com/docs/en/about-claude/pricing' in html
+    for index in range(1, 51):
+        assert (f'<details class="answer" id="answer-{index}-anthropic">'
+                '<summary>Anthropic (Sonnet + web search)</summary>') in html
+    # A final audit must carry the computed totals (200 answers, 1,800 valid calls), not the old 150/600.
+    audit = final_audit(run)
+    dump(run / '04-audit-test/audit.json', audit)
+    assert load_run(run)['audit_path'] == run / '04-audit-test/audit.json'
+    audit['judging']['valid_calls'] = 600
+    dump(run / '04-audit-test/audit.json', audit)
+    with pytest.raises(ValueError, match='Final audit'):
+        load_run(run)
+    (run / '04-audit-test/audit.json').unlink()
+    outcomes = re.findall(r'class="question-outcome" data-winners="([^"]+)" data-wins="(\d+)"', html)
+    assert len(outcomes) == 50 and all(int(wins) <= 18 for _, wins in outcomes)
+
+
+def test_two_agent_single_judge_run_renders_singular_counts_and_skips_absent_providers(tmp_path):
+    from crest.report import load_run, write_report
+    run = make_run(tmp_path / 'run', agents=['caesar', 'openai'], judges=['openai'])
+    data = load_run(run)
+    assert data['ranking']['coverage']['valid_judgments'] == 100
+    assert data['ranking']['diagnostics']['judge_disagreement']['comparisons'] == 0
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert html.count('class="answer"') == 100 and html.count('class="judgment"') == 100
+    assert '<strong>100</strong><span>answers</span>' in html
+    assert '<strong>100</strong><span>pairwise judgments</span>' in html
+    assert 'evaluates Caesar and OpenAI (Sol + web search) on the same 50 questions' in html
+    assert 'One model judge compares the 100 saved answers' in html
+    assert 'divided by 100 judgments across 50 questions, one opponent, one judge, and both answer orders' in html
+    assert 'Each question produces 2 decisions: one answer pair, evaluated by one judge in both orders.' in html
+    assert '(100 comparisons per matchup)' in html
+    assert 'wins in 2 comparisons per system' in html
+    assert 'The judge evaluated every pair in both orders' in html
+    assert 'Judges disagree' not in html and 'Unavailable' not in html
+    assert 'Total for 100 judgments: $10.0000' in html
+    assert 'Google' not in html and 'Gemini' not in html
+    assert 'Links reveal provenance' not in html
+    assert 'OpenAI Sol' in html and 'Claude pricing' not in html
+
+
+def test_unknown_agent_falls_back_to_identifier_label_default_color_and_no_link(tmp_path):
+    from crest.report import DEFAULT_COLOR, write_report
+    run = make_run(tmp_path / 'run', agents=['caesar', 'openai', 'mystery'], judges=['openai'])
+    output = tmp_path / 'page.html'
+    write_report(run, output)
+    html = output.read_text()
+    assert html.count('class="answer"') == 150 and html.count('class="judgment"') == 300
+    assert '<strong>mystery</strong></div>' in html
+    assert f'fill="{DEFAULT_COLOR}"' in html
+    assert '<td>mystery</td><td>unrecorded-model</td><td>Settings recorded in the frozen configuration.</td>' in html
+    assert '<summary>mystery</summary>' in html
+    assert not re.search(r'<a href="[^"]*">mystery</a>', html)
+
+
+@pytest.mark.parametrize('kind', ['extra_agent', 'missing_agent', 'duplicate', 'single', 'not_a_list', 'bad_identifier'])
+def test_manifest_agents_must_match_saved_answers_and_be_valid_identifiers(run, tmp_path, kind):
+    from crest.report import write_report
+    manifest = json.loads((run / 'run.json').read_text())
+    manifest['agents'] = {'extra_agent': [*AGENTS, 'anthropic'], 'missing_agent': AGENTS[:2],
+                          'duplicate': [*AGENTS[:2], AGENTS[0]], 'single': AGENTS[:1],
+                          'not_a_list': ' '.join(AGENTS), 'bad_identifier': [*AGENTS[:2], 'open ai']}[kind]
+    dump(run / 'run.json', manifest)
+    expected = ('unique complete answers' if kind in ('extra_agent', 'missing_agent')
+                else 'at least two unique research agent identifiers')
+    with pytest.raises(ValueError, match=expected):
+        write_report(run, tmp_path / 'page.html')
+    assert not (tmp_path / 'page.html').exists()
+
+
+@pytest.mark.parametrize('kind', ['extra', 'missing', 'empty', 'not_settings'])
+def test_judges_file_must_match_saved_judgments(run, tmp_path, kind):
+    from crest.report import write_report
+    path = run / '02-judge-test/judges.json'
+    settings = json.loads(path.read_text())
+    if kind == 'extra': settings['anthropic'] = JUDGE_SETTINGS['anthropic']
+    elif kind == 'missing': settings.pop('gemini')
+    elif kind == 'empty': settings = {}
+    else: settings['openai'] = 'gpt-6-astra'
+    dump(path, settings)
+    expected = {'extra': 'valid overall judgments', 'missing': 'invalid judgment cell',
+                'empty': 'judges.json must map', 'not_settings': 'judges.json must map'}[kind]
+    with pytest.raises(ValueError, match=expected):
+        write_report(run, tmp_path / 'page.html')
+    assert not (tmp_path / 'page.html').exists()

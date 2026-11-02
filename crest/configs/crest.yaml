@@ -1,13 +1,72 @@
-# Paths are relative to this file. Credentials come only from the environment.
-questions: ../data/queries_n50.jsonl
+# CREST master configuration: every model, prompt, budget, depth and concurrency
+# setting for the research agents and judges. crest/config.py holds the matching
+# defaults (plus transport details such as retries and timeouts) and validation.
+# Paths are relative to this file. Credentials come only from the environment:
+# OPENAI_API_KEY (OpenAI and Caesar), GOOGLE_API_KEY or GEMINI_API_KEY (Google),
+# ANTHROPIC_API_KEY. Concurrency values are for a 16 GB machine; the 64 GB
+# jason-mbp values are noted beside each setting.
+# v2 was generated on 2026-11-02 by the three judge models in the five categories of
+# queries_n50.jsonl (Caesar's original set, kept for the published 2026-10-26 report).
+questions: ../data/queries_n50_v2.jsonl
 # Revised v2 rubric; select ../prompts/nus_pairwise_v1.txt for the original v1 wording.
 rubric: ../prompts/nus_pairwise_v2.txt
 cache_dir: ../results/.cache/generation
 output_dir: ../results
 results_timezone: America/Chicago  # Local result directory names; event timestamps stay UTC.
 
+# ---------------------------------------------------------------------------
+# Answer length. Every research agent is limited to this many words. Hosted
+# agents receive the limit through {max_words} in research_prompt; Caesar
+# receives it as Rome's synthesis_max_length word target. An agent can set its
+# own answer_word_limit below to override the global value.
+answer_word_limit: 600
+
+# Research prompt for every agent whose use_research_prompt flag is true
+# (OpenAI, Google and Anthropic). Caesar is exempt and receives the bare
+# question. {question} and {max_words} are substituted per agent.
+research_prompt: |-
+  ### QUERY
+
+  {question}
+
+  ### YOUR TASK
+
+  Use deep research to create a novel, exciting, and thought-provoking response that creatively answers the query above. Focus on the following:
+  - Emergent patterns not visible in individual sources
+  - Novel discoveries, connections, or applications
+  - Surprising new directions or perspectives
+  - Interesting tensions, contradictions, or open questions
+
+  IMPORTANT: Avoid excessive jargon, ensure artifact text is well-organized (logical, clear, focused), and convincing to a skeptical reader
+  IMPORTANT: The final response must be at most {max_words} words
+
+# Budget range for hosted single-call agents (OpenAI, Anthropic). When a finished
+# answer cost less than budget_floor_usd, this prompt is sent as the next turn of
+# the same conversation and the agent researches further and rewrites the answer,
+# until the floor is reached or max_research_rounds is spent. Because each round
+# re-reads the whole conversation, a round as costly as the last one starts only if
+# it would not overshoot the floor by more than the current shortfall (and, under a
+# hard or auto cap, still fits under budget_usd). {spent}, {floor}, {ceiling} and
+# {max_words} are substituted at run time.
+research_continuation_prompt: |-
+  Your research so far cost ${spent} of a ${floor} to ${ceiling} research budget. Continue the research: run further web searches on the aspects of the query that are weakest, least evidenced or most conventional, read the most promising sources, and then rewrite the complete response so that it stands alone and incorporates the new findings. Keep every requirement of the original task, including the limit of {max_words} words.
+
+# ---------------------------------------------------------------------------
+# Research agents. budget_usd is the per-answer budget and budget_cap says how it
+# binds: soft (every agent now) flags and warns about an overrun in the answer and
+# the report but stops nothing; hard enforces it (Caesar's SDK audit refuses calls
+# beyond it, OpenAI cancels the hosted job once observed usage passes it, Anthropic
+# starts no further server turn); auto enforces it and overrides the depth settings
+# with values crest/budget.py derives from it (python -m crest.budget 4.0), printing
+# each override when the config loads. Google can only be
+# soft: the managed agent exposes no depth control. The acceptable range is $2-4
+# per answer and every agent aims at about $3; Google sits below it at 600 words.
+# Depth is fixed below (Caesar) or aimed at budget_floor_usd (OpenAI, Anthropic);
+# run a one-question pilot to measure spending before a full run.
 research:
   caesar:
+    use_research_prompt: false   # Caesar gets the bare question; Rome owns its prompting.
+    # answer_word_limit: 600     # Inherits the global limit unless set here.
     rome_path: ../../../rome
     model: gpt-6.1-sol
     reasoning_effort: medium
@@ -16,56 +75,119 @@ research:
     exploration_reasoning_effort: low
     kb_model: gpt-6-luna
     kb_reasoning_effort: low
-    max_completion_tokens: 25000
+    max_completion_tokens: 10000  # 600-word drafts use about 2,000 completion tokens with reasoning; the
+                                  # audit reserves this whole limit before each write, so a small limit
+                                  # leaves more of the budget for Q&A rounds.
     query_max_completion_tokens: 6000
-    budget_usd: 5.0
-    handler_budget_usd: 5.0
-    max_iterations: 250
+    # Cost. budget_usd is the per-answer budget; budget_cap says how it binds.
+    #   soft (current): the depth below always runs; an overrun is flagged in the
+    #     answer's warnings and the report, and nothing is stopped.
+    #   hard: the SDK audit refuses requests beyond budget_usd, exploration stops at
+    #     the synthesis reserve and Q&A rounds are trimmed to the remaining money.
+    #   auto: hard, and crest/budget.py derives max_iterations, synthesis_drafts,
+    #     synthesis_iterations, synthesis_reserve_usd and timeout_seconds from
+    #     budget_usd (85% target, exploration first), overriding the values below;
+    #     every override is printed when the config loads and listed by `crest plan`.
+    # Either way null reserve and timeout keys are derived for the chosen depth from
+    # the 2026-10-26 pace (about $0.004 and 22 s per iteration with one knowledge-base
+    # call per query; Q&A rounds grow with each round) and the 2026-11-02 pilot's
+    # 600-word draft costs. Run
+    #   python -m crest.budget 3.5 --agent caesar
+    # to see the estimate (or the derived values under auto).
+    budget_usd: 3.5              # The chosen depth below is estimated at $3.03 (87%), the middle of the $2-4 range.
+    budget_cap: soft             # Soft: flag and warn only. hard enforces budget_usd; auto also derives the depth.
+    max_iterations: 300          # Chosen; the planner would derive 309 for the 85% target. About 108 minutes of exploration.
     synthesis_drafts: 3
-    synthesis_iterations: 20
+    synthesis_iterations: 20     # Chosen Q&A rounds per draft (each round costs more than the last); the planner would derive 19.
+    synthesis_reserve_usd: null  # Derived for 300 + 3 x 20: $1.76 kept back from exploration for drafting (used under hard and auto caps).
+    timeout_seconds: null        # Derived for 300 + 3 x 20: 12,600 s (3.5 h), one limit for the whole answer, 1.5x the estimated time.
     synthesis_top_k: 20
     synthesis_top_n: 10
+    max_depth: 6                 # Link depth from a starting page.
+    max_web_searches: 5          # Web searches Caesar may run to reseed exploration.
+    exploration_max_completion_tokens: 2000  # Luna output cap per exploration call.
+    kb_max_completion_tokens: 2000           # Luna output cap per knowledge-base answer; also sizes the LlamaIndex prompt helper.
     additional_starting_queries: 11
     use_quick_explore: false
     quick_explore_insights: true
     quick_explore_workers: 2
     adapt_role: true
     synthesis_merge_artifacts: true
-    synthesis_reserve_usd: 3.0
     call_timeout_seconds: 600
-    timeout_seconds: 7200
-    initial_concurrency: 1
-    concurrency: 4
+    initial_concurrency: 1       # jason-mbp (64 GB): 20
+    concurrency: 4               # jason-mbp (64 GB): 20
   openai:
+    use_research_prompt: true
     model: gpt-6.1-sol
-    reasoning_effort: high
-    budget_usd: 5.0
-    max_output_tokens: 40000
-    max_tool_calls: 25
-    initial_concurrency: 3
-    concurrency: 12
+    reasoning_effort: xhigh      # Sol accepts low | medium | high | xhigh | max.
+    search_context_size: high    # More search content per call (low | medium | high).
+    budget_usd: 4.0              # Budget. Under a hard or auto cap the hosted job is cancelled once observed cost passes it.
+    budget_cap: soft             # Soft: flag and warn only; rounds still aim at budget_floor_usd. auto overrides the floor and round cap from budget_usd.
+    budget_floor_usd: 3.0        # Aim: below it, another research round is requested (acceptable range $2-4).
+    max_research_rounds: 6       # Cap on rounds. 2026-11-02 pilots: $3.94 over 4 rounds without the overshoot guard; $3.13 over 5 rounds ($0.23 to $1.00 each, 40 min) with it. Timeout is per round.
+    max_output_tokens: 100000    # Per round, includes reasoning tokens; Sol's ceiling is 128,000.
+    max_tool_calls: 150          # Per round: every web_search action (search, open page, find in page) counts toward the cap; only searches are billed, $10 per 1,000.
+    initial_concurrency: 3       # jason-mbp: 2
+    concurrency: 12              # jason-mbp: 6
   gemini:
+    use_research_prompt: true
+    # agent_config exposes no depth or effort knob; the only depth control is the agent ID.
+    # 2026-11-02 pilots at the 600-word limit: this standard agent $1.81 (582 words, 16 searches);
+    # deep-research-max-preview-04-2026 $7.00 (1,218 words, 78 searches). Neither lands in
+    # the $2-4 range; the standard agent is closer and is kept, with the overrun flag unused.
     agent: deep-research-preview-04-2026
     billing_model: gemini-3.1-pro-preview
-    budget_usd: 5.0
+    budget_usd: 4.0              # Flag-and-warn only: never cancelled for budget (timeouts still cancel). Measured $3.71 at 5,000 words, $1.81 at 600 words (2026-11-02 pilot).
+    budget_cap: soft             # The only option: the managed agent exposes no depth control.
+    initial_concurrency: 2       # jason-mbp: 1
+    concurrency: 8               # jason-mbp: 4
+  anthropic:
+    use_research_prompt: true
+    model: claude-sonnet-5-5
+    effort: high                 # low | medium | high | xhigh | max; thinking is adaptive.
+    budget_usd: 4.0              # Budget. Under a hard or auto cap no further server turn starts once cost passes it.
+    budget_cap: soft             # Soft: flag and warn only; rounds still aim at budget_floor_usd. auto overrides the floor and round cap from budget_usd.
+    budget_floor_usd: 3.0        # Aim: below it, another research round is requested (acceptable range $2-4).
+    max_research_rounds: 14      # 2026-11-02 pilots: rounds cost $0.09-0.39 each (about 10 searches per round whatever the cap); $3.09 after 13 rounds, 16 min.
+    max_output_tokens: 64000     # Per turn, includes thinking tokens.
+    # One server turn re-reads the growing context on every internal search step. Without
+    # a cache breakpoint a 35-search turn at max effort read 5.5M input tokens (about $13,
+    # 2026-11-02 pilot); with the breakpoint the adapter sets, a 10-search turn at high
+    # effort cost $0.16-0.25. Rounds cost $0.09-0.39 each in the
+    # 2026-11-02 pilot, so the $3 floor takes about 13 rounds.
+    max_web_searches: 30         # web_search max_uses per turn ($10 per 1,000 searches).
+    web_fetch: true              # Also allow web_fetch for full-page reads (token cost only).
+    max_web_fetches: 10          # web_fetch max_uses per turn.
+    max_continuations: 10        # Resumes after pause_turn before giving up.
+    refusal_fallback: false      # Keep the recorded model fixed; a refusal fails the job.
+    timeout_seconds: 5400  # Per answer: all rounds, turns and retries.
     initial_concurrency: 2
     concurrency: 8
 
+# ---------------------------------------------------------------------------
+# Judges. Each compares every answer pair in both orders without tools.
 judges:
   openai:
     model: gpt-6-astra
     reasoning_effort: high
     max_output_tokens: 32768
-    initial_concurrency: 4
+    initial_concurrency: 4       # jason-mbp: 8
     concurrency: 16
   gemini:
     model: gemini-4-argon
     thinking_level: high
     max_output_tokens: 32768
+    initial_concurrency: 4       # jason-mbp: 8
+    concurrency: 16
+  anthropic:
+    model: claude-fable-5-1
+    effort: high
+    max_output_tokens: 32768
+    refusal_fallback: false
     initial_concurrency: 4
     concurrency: 16
 
 analysis:
   bootstrap_samples: 1000
   seed: 2026
-  workers: 0  # Automatic CPU parallelism for bootstrap analysis.
+  workers: 0  # Automatic CPU parallelism for bootstrap analysis; jason-mbp used 1.

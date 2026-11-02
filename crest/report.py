@@ -1,8 +1,9 @@
 """Offline HTML publication of a complete, frozen CREST research comparison.
 
 Usage: python -m crest.report RUN --output docs/deep-research-creativity.html
-Only complete 50-question, three-system comparisons can be written. Rendering
-never submits jobs, changes analysis, or reads mutable generation caches.
+Only complete 50-question comparisons of every agent in the frozen run manifest,
+judged by every configured judge, can be written. Rendering never submits jobs,
+changes analysis, or reads mutable generation caches.
 Category headings use saved metadata or the bundled query dataset.
 
 Optional enrichment uses the existing crest-final-audit-v1 artifact produced by
@@ -20,6 +21,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import statistics
 import tempfile
 
@@ -34,14 +36,22 @@ from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, NUS_PROTOCOL, protocol_ru
 from crest_ais.navigation import CSS as SITE_CSS, site_favicon, site_header
 
 ROOT = Path(__file__).resolve().parents[1]
-AGENTS = ('caesar', 'gemini', 'openai')
-JUDGES = ('gemini', 'openai')
-LABELS = {'caesar': 'Caesar', 'openai': 'OpenAI (Sol + web search)', 'gemini': 'Google Deep Research'}
-JUDGE_LABELS = {'gpt-6-astra': 'GPT-6 Astra', 'gemini-4-argon': 'Gemini 4 Argon'}
+# Agents and judges come from each frozen run; these tables only decorate known identifiers.
+IDENTIFIER = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]*')
+LABELS = {'caesar': 'Caesar', 'openai': 'OpenAI (Sol + web search)', 'gemini': 'Google Deep Research',
+          'anthropic': 'Anthropic (Sonnet + web search)'}
+JUDGE_LABELS = {'gpt-6-astra': 'GPT-6 Astra', 'gemini-4-argon': 'Gemini 4 Argon', 'claude-fable-5-1': 'Claude Fable 5.1'}
 SOURCE_URLS = {'caesar': 'https://github.com/jasonzliang/caesar-agent',
                'openai': 'https://developers.openai.com/api/docs/guides/tools-web-search',
-               'gemini': 'https://ai.google.dev/gemini-api/docs/deep-research'}
-COLORS = {'caesar': '#0b5967', 'gemini': '#b4652b', 'openai': '#5e628c'}
+               'gemini': 'https://ai.google.dev/gemini-api/docs/deep-research',
+               'anthropic': 'https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool'}
+COLORS = {'caesar': '#0b5967', 'gemini': '#b4652b', 'openai': '#5e628c', 'anthropic': '#3d7a4a'}
+DEFAULT_COLOR = '#526574'
+PRICING_LINKS = {'openai': ('<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">OpenAI Sol</a>',
+                            '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">OpenAI Luna</a>'),
+                 'gemini': ('<a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini API pricing</a>',),
+                 'anthropic': ('<a href="https://platform.claude.com/docs/en/about-claude/pricing">Claude pricing</a>',)}
+PRICING_PROVIDER = {'caesar': 'openai'}  # Caesar's SDK calls bill at OpenAI rates.
 
 
 def _number(value):
@@ -91,6 +101,50 @@ def _judge_label(data, judge):
     return JUDGE_LABELS.get(model, model)
 
 
+def _label(agent):
+    return LABELS.get(agent, agent)
+
+
+def _word(count):
+    words = ('zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten')
+    return words[count] if 0 <= count < len(words) else f'{count:,}'
+
+
+def _plural(count, noun, plural=None):
+    return f'{_word(count)} {noun if count == 1 else plural or noun + "s"}'
+
+
+def _join(items):
+    items = list(items)
+    return ' and '.join(items) if len(items) < 3 else ', '.join(items[:-1]) + ', and ' + items[-1]
+
+
+def _agents(data):
+    agents = data['manifest'].get('agents')
+    if (not isinstance(agents, list) or len(agents) < 2 or len(set(agents)) != len(agents)
+            or any(not isinstance(a, str) or not IDENTIFIER.fullmatch(a) for a in agents)):
+        raise ValueError('The frozen run manifest must list at least two unique research agent identifiers')
+    return list(agents)
+
+
+def _judge_names(data):
+    judges = data['judges']
+    if (not isinstance(judges, dict) or not judges or any(
+            not isinstance(name, str) or not IDENTIFIER.fullmatch(name) or not isinstance(settings, dict)
+            for name, settings in judges.items())):
+        raise ValueError('judges.json must map at least one judge identifier to its frozen settings')
+    return list(judges)
+
+
+def _expected(agents, judge_names):
+    """Evidence counts for 50 questions, every agent pair, both orders and every judge."""
+    systems, judges, pairs = len(agents), len(judge_names), math.comb(len(agents), 2)
+    return {'systems': systems, 'judges': judges, 'pairs': pairs, 'answers': 50 * systems,
+            'judgments': 50 * pairs * 2 * judges, 'per_system': 50 * (systems - 1) * 2 * judges,
+            'per_matchup': 50 * 2 * judges, 'per_question': pairs * 2 * judges,
+            'per_question_system': (systems - 1) * 2 * judges}
+
+
 def _json(path):
     return json.loads(Path(path).read_text(encoding='utf-8'))
 
@@ -132,26 +186,29 @@ def _validate(data):
             or len({q.get('text') for q in questions}) != 50
             or any(not isinstance(q.get('text'), str) or not q['text'].strip() for q in questions)):
         raise ValueError('Final publication requires 50 unique questions')
-    if data['manifest'].get('questions') != questions or set(data['manifest'].get('agents', [])) != set(AGENTS):
-        raise ValueError('Questions and three agents must match the frozen run manifest')
+    agents, judges = _agents(data), _judge_names(data)
+    counts = _expected(agents, judges)
+    if data['manifest'].get('questions') != questions:
+        raise ValueError('Questions must match the frozen run manifest')
     ids = {q['id'] for q in questions}
-    expected_answers = {(q, a) for q in ids for a in AGENTS}
+    expected_answers = {(q, a) for q in ids for a in agents}
     answer_ids = [(a.get('question_id'), a.get('agent')) for a in answers]
-    if len(answers) != 150 or set(answer_ids) != expected_answers:
-        raise ValueError('Final publication requires 150 unique complete answers')
-    if any(not isinstance(a.get('key'), str) or not a['key'] for a in answers) or len({a['key'] for a in answers}) != 150:
+    if len(answers) != counts['answers'] or set(answer_ids) != expected_answers:
+        raise ValueError(f'Final publication requires {counts["answers"]} unique complete answers, '
+                         'one per research agent in the frozen run manifest')
+    if (any(not isinstance(a.get('key'), str) or not a['key'] for a in answers)
+            or len({a['key'] for a in answers}) != counts['answers']):
         raise ValueError('Every answer must have a unique canonical key')
     if any(not isinstance(a.get('result'), dict) or not isinstance(a['result'].get('text'), str)
            or not a['result']['text'].strip() or a.get('status', 'completed') != 'completed' for a in answers):
         raise ValueError('Every answer must be nonempty and complete')
     for qid in ids:
         texts = [a['result']['text'] for a in answers if a['question_id'] == qid]
-        if len(set(texts)) != 3:
+        if len(set(texts)) != len(agents):
             raise ValueError('Identical answers cannot form a complete scored question')
-    if set(data['judges']) != set(JUDGES):
-        raise ValueError('Both configured judges are required')
-    cells = {(q, pair, order, judge) for q in ids for pair in combinations(AGENTS, 2)
-             for order in (pair, pair[::-1]) for judge in JUDGES}
+    # Judging stores each pair sorted; analysis only scores cells in that canonical form.
+    cells = {(q, pair, order, judge) for q in ids for pair in combinations(sorted(agents), 2)
+             for order in (pair, pair[::-1]) for judge in judges}
     seen, keys = set(), set()
     answer_map = {(a['question_id'], a['agent']): a for a in answers}
     for row in judgments:
@@ -186,22 +243,26 @@ def _validate(data):
     protocols = {j.get('protocol_version') for j in judgments}
     if protocols.intersection((NUS_PROTOCOL, AUT_PROTOCOL)) and len(protocols) != 1:
         raise ValueError('Do not mix judgments from different rubric protocols')
-    if len(judgments) != 600 or seen != cells:
-        raise ValueError('Final publication requires 600 valid overall judgments')
+    if len(judgments) != counts['judgments'] or seen != cells:
+        raise ValueError(f'Final publication requires {counts["judgments"]} valid overall judgments')
     bootstrap = ranking.get('bootstrap', {})
     if bootstrap.get('unit') != 'question' or bootstrap.get('samples') != 1000 or type(bootstrap.get('seed')) is not int:
         raise ValueError('Final publication requires the saved 1000-resample question bootstrap')
-    computed = analyze(questions, answers, judgments, agents=list(AGENTS), judges=list(JUDGES),
+    computed = analyze(questions, answers, judgments, agents=agents, judges=judges,
                        bootstrap_samples=1000, seed=bootstrap['seed'])
+    if (computed['coverage']['complete_questions'] != 50
+            or computed['coverage']['valid_judgments'] != counts['judgments']):
+        raise ValueError('Analysis must score all 50 questions from every saved judgment')
     # Display the saved analysis, checking its arithmetic and uncertainty rather
     # than silently replacing stale values or borrowing the AIS sampling method.
     for key in ('agents', 'judges', 'coverage', 'ranking', 'paired_contrasts', 'per_judge',
                 'pairwise', 'diagnostics', 'bootstrap'):
         if ranking.get(key) != computed[key]:
             raise ValueError(f'Saved ranking does not match frozen evidence: {key}')
+    return agents, judges
 
 
-def _audit_records(run, path, answers):
+def _audit_records(run, path, answers, counts):
     if path is None:
         candidates = sorted(run.glob('04-audit*/audit.json'), key=lambda p: (p.stat().st_mtime_ns, p.name))
         path = candidates[-1] if candidates else None
@@ -213,8 +274,9 @@ def _audit_records(run, path, answers):
     if (doc.get('audit_version') != 'crest-final-audit-v1' or doc.get('status') != 'complete'
             or doc.get('ready') is not True or doc.get('errors') != [] or doc.get('pending') != []
             or Path(doc.get('run_dir', '')).name != run.name
-            or generation.get('completed_answers') != 150 or generation.get('snapshot_answer_rows') != 150
-            or judging.get('valid_calls') != 600 or judging.get('complete_questions') != 50
+            or generation.get('completed_answers') != counts['answers']
+            or generation.get('snapshot_answer_rows') != counts['answers']
+            or judging.get('valid_calls') != counts['judgments'] or judging.get('complete_questions') != 50
             or doc.get('ranking', {}).get('matches_independent_calculation') is not True
             or not isinstance(generation.get('answer_details'), list)):
         raise ValueError('Final audit must be complete, ready, and match the selected run')
@@ -230,7 +292,7 @@ def _audit_records(run, path, answers):
                 raise ValueError('Final audit has an invalid cost or duration')
         records[identity] = row
     if set(records) != set(expected):
-        raise ValueError('Final audit must identify all 150 saved answers')
+        raise ValueError(f'Final audit must identify all {counts["answers"]} saved answers')
     return records, path, doc
 
 
@@ -267,8 +329,7 @@ def _summarize(rows, audit_records):
             'lifetime_duration_count': len(lifetime),
             'mean_lifetime_duration_seconds': statistics.mean(lifetime) if lifetime else None,
             'median_lifetime_duration_seconds': statistics.median(lifetime) if lifetime else None,
-            'estimated_above_target': sum(_number((r.get('result') or {}).get('cost_usd'))
-                                          and r['result']['cost_usd'] > 5 for r in rows)}
+            'estimated_above_target': sum(bool((r.get('result') or {}).get('budget_exceeded')) for r in rows)}
 
 
 def _answer_artifact(generation, row):
@@ -297,7 +358,8 @@ def load_run(run_dir, *, audit=None):
             'generation_dir': generation_dir, 'ranking': _json(analysis_dir / 'ranking.json'),
             'questions': _json(judging_dir / 'questions.json'), 'answers': _json(judging_dir / 'answers.json'),
             'judgments': _jsonl(judging_dir / 'judgments.jsonl'), 'judges': _json(judging_dir / 'judges.json')}
-    _validate(data)
+    agents, judges = _validate(data)
+    counts = _expected(agents, judges)
     registry_path = judging_dir / 'configurations.json'
     if not registry_path.is_file():
         registry_path = generation_dir / 'configurations.json'
@@ -333,7 +395,7 @@ def load_run(run_dir, *, audit=None):
         prior_keys[key] = row
     data['prior_judgments'] = prior
     data['prior_judgments_path'] = prior_path.relative_to(run).as_posix()
-    audit_records, audit_path, audit_doc = _audit_records(run, audit, data['answers'])
+    audit_records, audit_path, audit_doc = _audit_records(run, audit, data['answers'], counts)
     data.update(audit_records=audit_records, audit_path=audit_path, audit_doc=audit_doc)
     if audit_doc is not None:
         hashes = audit_doc.get('input_sha256', {})
@@ -347,8 +409,8 @@ def load_run(run_dir, *, audit=None):
             if expected != {hashlib.sha256(source.read_bytes()).hexdigest()}:
                 raise ValueError('Final audit input hashes do not match the selected snapshot')
     data['resources'] = {
-        'generation': {agent: _summarize([a for a in data['answers'] if a['agent'] == agent], audit_records) for agent in AGENTS},
-        'judging': {judge: _summarize([j for j in data['judgments'] if j['judge'] == judge], {}) for judge in JUDGES},
+        'generation': {agent: _summarize([a for a in data['answers'] if a['agent'] == agent], audit_records) for agent in agents},
+        'judging': {judge: _summarize([j for j in data['judgments'] if j['judge'] == judge], {}) for judge in judges},
         'paid_judging': summarize_costs([*data['judgments'], *prior]),
         'prior_judging': summarize_costs(prior)}
     return data
@@ -385,29 +447,37 @@ def _system_order(data):
     return [row['agent'] for row in data['ranking']['ranking']]
 
 
+def _counts(data):
+    # Validated runs rank exactly the manifest agents, so the saved ranking fixes the counts.
+    return _expected(_system_order(data), data['judges'])
+
+
 def _ranking(data):
-    report = data['ranking']
+    report, counts = data['ranking'], _counts(data)
     heading = 'Observed AUT-inspired preference ranking' if report.get('rubric_kind') == AUT_KIND else 'Observed creativity ranking'
     parts = [f'<section id="overall"><h2>{heading}</h2>',
-             '<p>Each system’s win rate is its wins divided by 400 judgments across 50 questions, '
-             'two opponents, two judges, and both answer orders. Lines show the middle 95% of win rates '
+             f'<p>Each system’s win rate is its wins divided by {counts["per_system"]:,} judgments across 50 questions, '
+             f'{_plural(counts["systems"] - 1, "opponent")}, {_plural(counts["judges"], "judge")}, and both answer orders. '
+             'Lines show the middle 95% of win rates '
              'from resampling the questions. These ranges describe sensitivity to the question mix '
              'for these saved answers and judges.</p>'
              '<p class="small">Factual accuracy has not been independently verified.</p>']
     for row in report['ranking']:
         agent, value = row['agent'], row['preference_rate']
         low, high = row['ci95']
-        description = f'{LABELS[agent]}: {_pct(value)}, 95% question-bootstrap interval {_interval(row["ci95"])}'
+        description = f'{_label(agent)}: {_pct(value)}, 95% question-bootstrap interval {_interval(row["ci95"])}'
+        name = _text(_label(agent))
+        link = f'<a href="{_text(SOURCE_URLS[agent])}">{name}</a>' if agent in SOURCE_URLS else name
         parts.append(f'<div class="ranking-row" data-agent="{agent}" data-rank="{row["rank"]}">'
                      f'<div class="rank-label"><span class="rank">{row["rank"]}</span>'
-                     f'<strong><a href="{SOURCE_URLS[agent]}">{_text(LABELS[agent])}</a></strong></div>'
+                     f'<strong>{link}</strong></div>'
                      f'<svg viewBox="0 0 400 40" role="img" aria-label="{_text(description)}"><title>{_text(description)}</title>'
                      '<rect x="4" y="17" width="392" height="13" fill="#edf2f3"/>'
                      '<path d="M200 5V37" stroke="#91a4ad" stroke-dasharray="3 3"/>'
-                     f'<rect x="4" y="17" width="{value * 392:.3f}" height="13" fill="{COLORS[agent]}"/>'
+                     f'<rect x="4" y="17" width="{value * 392:.3f}" height="13" fill="{COLORS.get(agent, DEFAULT_COLOR)}"/>'
                      f'<path d="M{4 + low * 392:.3f} 11H{4 + high * 392:.3f}M{4 + low * 392:.3f} 6V16M{4 + high * 392:.3f} 6V16" stroke="#172c3e" stroke-width="2"/>'
                      f'<circle cx="{4 + value * 392:.3f}" cy="23.5" r="4" fill="#172c3e" stroke="white"/></svg>'
-                     f'<div class="score"><strong>{_pct(value)}</strong><small>{row["wins"]} / 400 wins<br>{_interval(row["ci95"])}</small></div></div>')
+                     f'<div class="score"><strong>{_pct(value)}</strong><small>{row["wins"]} / {counts["per_system"]:,} wins<br>{_interval(row["ci95"])}</small></div></div>')
     parts.append('<p class="small">Scale: 0% to 100%; dashed midpoint = 50%.</p>')
     parts.append('<details><summary>Paired differences and bootstrap statistics</summary>')
     rows = []
@@ -415,57 +485,63 @@ def _ranking(data):
         a, b = c['pair']
         interval = '–'.join(f'{v * 100:+.1f}' for v in c['ci95'])
         stability = c['ordering_stability']
-        rows.append([_text(f'{LABELS[a]} − {LABELS[b]}'), f'{100 * c["difference"]:+.1f} pp',
+        rows.append([_text(f'{_label(a)} − {_label(b)}'), f'{100 * c["difference"]:+.1f} pp',
                      _text(interval + ' pp'), _pct(stability['first_higher']), _pct(stability['equal'])])
     parts.append(_table(['Systems compared', 'Overall win-rate difference', 'Paired 95% interval', 'First higher in resamples', 'Equal in resamples'], rows, 'Paired question-bootstrap contrasts'))
-    parts.append('<p class="small">Each difference compares overall win rates across both opponents, rather than '
-                 'the direct matchup alone. Resampling fractions show how often each ordering appeared '
+    opponents = ('all opponents, rather than the direct matchup alone' if counts['systems'] > 2
+                 else 'the single matchup')
+    parts.append(f'<p class="small">Each difference compares overall win rates across {opponents}. '
+                 'Resampling fractions show how often each ordering appeared '
                  'across the 1,000 question resamples; they are not probabilities that a system is truly '
                  'superior.</p></details></section>')
     return ''.join(parts)
 
 
 def _head_to_head(data):
-    report = data['ranking']
+    report, counts = data['ranking'], _counts(data)
     agents = _system_order(data)
     rows = []
     for a in agents:
-        cells = [f'<strong>{_text(LABELS[a])}</strong>']
+        cells = [f'<strong>{_text(_label(a))}</strong>']
         for b in agents:
             value = report['pairwise']['overall'][a][b]
             cells.append('<span class="diagonal" role="img" aria-label="Same system; no comparison">—</span>' if a == b
                          else f'<span class="heat-cell" style="--shade:{.06 + value * .28:.3f}">{_pct(value)}</span>')
         rows.append(cells)
     parts = ['<section id="matchups"><h2>Head-to-head results</h2>'
-             '<p>How often the row system was preferred to the column system (200 comparisons per matchup).</p>',
-             _table(['Row / column', *[LABELS[a] for a in agents]], rows,
+             f'<p>How often the row system was preferred to the column system ({counts["per_matchup"]:,} comparisons per matchup).</p>',
+             _table(['Row / column', *[_label(a) for a in agents]], rows,
                     'Overall head-to-head preferences', 'class="matrix"', row_headers=True)]
     cycles = report['diagnostics']['cycles']
     if cycles:
         parts.append('<p class="small">Preference cycle: '
-                     + '; '.join(' → '.join(LABELS[a] for a in cycle) for cycle in cycles) + '.</p>')
+                     + '; '.join(' → '.join(_text(_label(a)) for a in cycle) for cycle in cycles) + '.</p>')
     parts.append('</section>')
     return ''.join(parts)
 
 
 def _judges(data):
-    report = data['ranking']
+    report, counts = data['ranking'], _counts(data)
     agents = _system_order(data)
-    parts = ['<section id="judges"><h2>How the judges compare</h2>'
-             '<p>Both judges evaluated every pair in both orders, without tools.</p>']
+    who = ('The judge' if counts['judges'] == 1 else 'Both judges' if counts['judges'] == 2
+           else f'All {_word(counts["judges"])} judges')
+    parts = [f'<section id="judges"><h2>{"How the judges compare" if counts["judges"] > 1 else "How the judge decided"}</h2>'
+             f'<p>{who} evaluated every pair in both orders, without tools.</p>']
     rows = []
-    for judge in JUDGES:
+    for judge in report['judges']:
         settings = data['judges'][judge]
         by_agent = {r['agent']: r for r in report['per_judge'][judge]}
         diag = report['diagnostics']['by_judge'][judge]
-        effort = settings.get('reasoning_effort') or settings.get('thinking_level')
+        effort = settings.get('reasoning_effort') or settings.get('thinking_level') or settings.get('effort')
         label = _judge_label(data, judge) + (f' · {effort}' if effort else '')
         rows.append([_text(label), *[_pct(by_agent[a]['preference_rate']) for a in agents],
                      _pct(diag['position_a_preference']['rate']), _pct(diag['swapped_inconsistency']['rate'])])
-    parts.append(_table(['Judge', *[LABELS[a] + ' win rate' for a in agents], 'Chose A', 'Changed winner after swap'], rows, 'Per-judge overall preferences and order diagnostics'))
+    parts.append(_table(['Judge', *[_label(a) + ' win rate' for a in agents], 'Chose A', 'Changed winner after swap'], rows, 'Per-judge overall preferences and order diagnostics'))
     diag = report['diagnostics']
-    parts.append(f'<p>Judges disagree on {_pct(diag["judge_disagreement"]["rate"])} of matched presentations '
-                 f'({diag["judge_disagreement"]["disagreements"]} / {diag["judge_disagreement"]["comparisons"]}). '
+    disagreement = (f'Judges disagree on {_pct(diag["judge_disagreement"]["rate"])} of matched presentations '
+                    f'({diag["judge_disagreement"]["disagreements"]} / {diag["judge_disagreement"]["comparisons"]}). '
+                    if counts['judges'] > 1 else '')
+    parts.append(f'<p>{disagreement}'
                  '“Chose A” shows how often the first answer won. “Changed winner after swap” shows how often '
                  'a judge preferred a different system when the answer order was reversed. '
                  'This can reflect order effects or variation between calls.</p>')
@@ -477,47 +553,50 @@ def _judges(data):
 
 def _resources(data):
     generation, judging = data['resources']['generation'], data['resources']['judging']
-    agents = _system_order(data)
+    agents, judges, counts = _system_order(data), data['ranking']['judges'], _counts(data)
     parts = ['<section id="resources"><h2>Cost and elapsed time</h2>'
              '<p>Per-question means across 50 questions. Dollar figures are published-rate estimates, not invoices.</p>']
     averages = []
     for agent in agents:
         r = generation[agent]
-        averages.append([_text(LABELS[agent]), _money(r['mean_known_cost_usd']),
+        averages.append([_text(_label(agent)), _money(r['mean_known_cost_usd']),
                          _duration(r['mean_duration_seconds']), _duration(r['mean_lifetime_duration_seconds'])])
     parts.append(_table(['System', 'Mean estimated cost', 'Mean elapsed time, successful job',
                          'Mean active time, all attempts'], averages, 'Per-question cost and elapsed-time means'))
-    parts.append('<p class="small">Google’s estimate uses assumed model rates because its internal billing breakdown is unavailable. '
-                 'Unreported charges are excluded. '
+    google = generation.get('gemini')
+    parts.append('<p class="small">'
+                 + ('Google’s estimate uses assumed model rates because its internal billing breakdown is unavailable. ' if google else '')
+                 + 'Unreported charges are excluded. '
                  'Elapsed time covers the final successful job; active time includes earlier attempts.</p>')
-    google = generation['gemini']
-    if google['estimated_above_target']:
-        parts.append(f'<p class="small">{google["estimated_above_target"]} Google answer estimates exceed the $5 target. '
-                     'The target is not a provider spending cap; actual bills have not been verified.</p>')
+    exceeded = [f'{counts["estimated_above_target"]} {_label(name)} answer estimate{"s" if counts["estimated_above_target"] != 1 else ""}'
+                for name, counts in generation.items() if counts.get('estimated_above_target')]
+    if exceeded:
+        parts.append(f'<p class="small">{"; ".join(exceeded)} exceed{"" if len(exceeded) > 1 or not exceeded[0].startswith("1 ") else "s"} the configured budget. '
+                     'The budget is a target, not a provider spending cap; actual bills have not been verified.</p>')
     parts.append('<details class="resource-details"><summary>Cost totals and timing</summary>')
     parts.append('<p>Generation totals include recorded recovery attempts.</p>'
-                 '<p>Google’s pricing scenario uses high-context Gemini 3.1 Pro rates, counts tool tokens as additional input, '
-                 'and charges searches at full price. The service does not report the model and pricing tier for each internal step.</p>'
-                 '<p class="small">Cost means divide the recorded totals by all 50 questions. Time means use only answers '
+                 + ('<p>Google’s pricing scenario uses high-context Gemini 3.1 Pro rates, counts tool tokens as additional input, '
+                    'and charges searches at full price. The service does not report the model and pricing tier for each internal step.</p>' if google else '')
+                 + '<p class="small">Cost means divide the recorded totals by all 50 questions. Time means use only answers '
                  'with recorded durations; missing times are excluded.</p>')
     rows = []
     for agent in agents:
         r = generation[agent]
-        rows.append([_text(LABELS[agent]), _money(r['known_cost_usd'])])
+        rows.append([_text(_label(agent)), _money(r['known_cost_usd'])])
     parts.append(_table(['System', 'Total generation estimate'], rows, 'Generation cost totals'))
     parts.append('<p class="small">Judging is additional: '
-                 + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) for j in JUDGES) + '.</p>')
-    scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in JUDGES)
-    parts.append(f'<p><strong>Total for 600 judgments: {_money(scored)}.</strong> Includes retries for this judging round; excludes earlier superseded judging.</p>')
-    parts.append('<p class="small">Pricing references: '
-                 '<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">OpenAI Sol</a>, '
-                 '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">OpenAI Luna</a>, and '
-                 '<a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini API pricing</a>. '
-                 'Each answer’s record retains the assessment date and pricing assumptions.</p>')
+                 + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) for j in judges) + '.</p>')
+    scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in judges)
+    parts.append(f'<p><strong>Total for {counts["judgments"]:,} judgments: {_money(scored)}.</strong> Includes retries for this judging round; excludes earlier superseded judging.</p>')
+    providers = set(judges) | {PRICING_PROVIDER.get(a, a) for a in agents}
+    references = [link for provider, links in PRICING_LINKS.items() if provider in providers for link in links]
+    if references:
+        parts.append('<p class="small">Pricing references: ' + _join(references) + '. '
+                     'Each answer’s record retains the assessment date and pricing assumptions.</p>')
     rows = []
     for agent in agents:
         r = generation[agent]
-        rows.append([_text(LABELS[agent]), _duration(r['median_duration_seconds']),
+        rows.append([_text(_label(agent)), _duration(r['median_duration_seconds']),
                      _duration(r['min_duration_seconds']) + '–' + _duration(r['max_duration_seconds']),
                      str(r['duration_count']) + ' / 50', _duration(r['median_lifetime_duration_seconds']),
                      str(r['lifetime_duration_count']) + ' / 50'])
@@ -532,7 +611,7 @@ def _resources(data):
                           generation[a]['audited_known_cost_usd'], generation[a]['known_cost_usd'])) for a in agents)
         if differs:
             parts.append(_table(['System', 'Audited cumulative attempt estimate'], [
-                [_text(LABELS[a]), _money(generation[a]['audited_known_cost_usd'])] for a in agents],
+                [_text(_label(a)), _money(generation[a]['audited_known_cost_usd'])] for a in agents],
                 'Audited lifetime generation estimates'))
     parts.append('</details></section>')
     return ''.join(parts)
@@ -540,40 +619,47 @@ def _resources(data):
 
 def _models(data):
     research = data['manifest'].get('config', {}).get('research', {})
+    agents = _system_order(data)
     rows = []
-    for agent in _system_order(data):
-        settings = research.get(agent, {})
+    for agent in agents:
+        settings = research.get(agent) or {}
         models = sorted({str(a['result'].get('model', 'Unavailable')) for a in data['answers'] if a['agent'] == agent})
         if agent == 'gemini':
             detail = f'Managed agent: {settings.get("agent", "not recorded")}. Configured billing model: {settings.get("billing_model", "not recorded")}; not an override of the provider-controlled backbone. Per-loop backend models are not reported for this run.'
         elif agent == 'openai':
             detail = f'Sol + hosted web search through Responses API; reasoning effort: {settings.get("reasoning_effort", "not recorded")}. This run evaluates that configured workflow.'
-        else:
+        elif agent == 'anthropic':
+            detail = f'Sonnet + hosted web search through the Messages API; effort: {settings.get("effort", "not recorded")}.'
+        elif agent == 'caesar':
             detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Per-answer configuration records retain helper settings and recovery provenance.'
-        rows.append([_text(LABELS[agent]), _text(', '.join(models)), _text(detail)])
+        else:
+            detail = 'Settings recorded in the frozen configuration.'
+        rows.append([_text(_label(agent)), _text(', '.join(models)), _text(detail)])
     return ('<details id="systems"><summary>Models and research workflows</summary>'
             + _table(['System', 'Recorded result model / billing reference', 'Workflow'], rows, 'Frozen research systems')
-            + '<p class="small">Google introduced its April 2026 Deep Research agents as built with Gemini 3.1 Pro '
-            '(<a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">Google announcement</a>). '
-            'That product description does not identify this run’s per-loop backend models.</p>'
-            '<p class="small">OpenAI’s o3-deep-research and o4-mini-deep-research API models shut down July 23, 2026 '
-            '(<a href="https://developers.openai.com/api/docs/deprecations">deprecation notice</a>; '
-            '<a href="https://developers.openai.com/api/docs/guides/deep-research">deep research guide</a>). '
-            'The OpenAI results here come from the Sol workflow recorded above.</p>'
+            + ('<p class="small">Google introduced its April 2026 Deep Research agents as built with Gemini 3.1 Pro '
+               '(<a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">Google announcement</a>). '
+               'That product description does not identify this run’s per-loop backend models.</p>' if 'gemini' in agents else '')
+            + ('<p class="small">OpenAI’s o3-deep-research and o4-mini-deep-research API models shut down July 23, 2026 '
+               '(<a href="https://developers.openai.com/api/docs/deprecations">deprecation notice</a>; '
+               '<a href="https://developers.openai.com/api/docs/guides/deep-research">deep research guide</a>). '
+               'The OpenAI results here come from the Sol workflow recorded above.</p>' if 'openai' in agents else '')
             + '</details>')
 
 
 def _questions(data):
-    agents = _system_order(data)
+    agents, counts = _system_order(data), _counts(data)
     answers = {(a['question_id'], a['agent']): a for a in data['answers']}
     judgments = defaultdict(list)
     for j in data['judgments']:
         judgments[j['question_id']].append(j)
     parts = ['<section id="questions"><h2>All questions, answers and judgments</h2>',
-             '<p>Every question includes all three complete answers and its 12 saved overall judgments. '
+             f'<p>Every question includes {"both" if counts["systems"] == 2 else "all " + _word(counts["systems"])} complete answers and its '
+             f'{counts["per_question"]:,} saved overall judgments. '
              'The question winner has the most pairwise wins; ties are shown. '
              'Expand an answer or reason to read it.</p>']
-    catalog = _jsonl(ROOT / 'crest/data/queries_n50.jsonl')
+    # Category order follows the question files; snapshots without categories are matched by text.
+    catalog = [row for name in ('queries_n50_v2.jsonl', 'queries_n50.jsonl') for row in _jsonl(ROOT / 'crest/data' / name)]
     categories = {row['query']: row['category'] for row in catalog}
     groups = {row['category']: [] for row in catalog}
     for index, question in enumerate(data['questions'], 1):
@@ -594,11 +680,11 @@ def _questions(data):
                             for row in judgments[qid])
             most_wins = max(votes.values())
             winners = [agent for agent in agents if votes[agent] == most_wins]
-            outcome = ('Winner: ' if len(winners) == 1 else 'Tie: ') + ' / '.join(LABELS[a] for a in winners)
+            outcome = ('Winner: ' if len(winners) == 1 else 'Tie: ') + ' / '.join(_label(a) for a in winners)
             parts.append(f'<details class="question" id="question-{index}"><summary>'
                          f'<span class="question-number">{index:02d}</span><span class="question-title">{_text(question["text"])}</span>'
                          f'<span class="question-outcome" data-winners="{" ".join(winners)}" data-wins="{most_wins}" '
-                         f'title="{most_wins} wins in 8 comparisons per system">{_text(outcome)}</span>'
+                         f'title="{most_wins} {"win" if most_wins == 1 else "wins"} in {counts["per_question_system"]} comparisons per system">{_text(outcome)}</span>'
                          '</summary><div class="question-content">')
             parts.append('<h4 class="evidence-heading">Answers</h4>')
             for agent in agents:
@@ -633,9 +719,9 @@ def _questions(data):
                 if configuration is None:
                     configuration = {'source': 'legacy run manifest; per-answer configuration was not recorded',
                                      'settings': data['manifest'].get('config', {}).get('research', {}).get(agent)}
-                parts.append(f'<details class="answer" id="answer-{index}-{agent}"><summary>{_text(LABELS[agent])}</summary>'
+                parts.append(f'<details class="answer" id="answer-{index}-{agent}"><summary>{_text(_label(agent))}</summary>'
                              f'<div class="answer-text" data-answer-sha256="{hashlib.sha256(row["result"]["text"].encode()).hexdigest()}" '
-                             f'role="region" tabindex="0" aria-label="{_text(LABELS[agent])} answer, question {index}">'
+                             f'role="region" tabindex="0" aria-label="{_text(_label(agent))} answer, question {index}">'
                              f'{_markdown_answer(row["result"]["text"])}</div>'
                              '<details class="answer-metadata"><summary>Answer metadata and source records</summary>'
                              f'<p class="small">Saved cumulative estimate {_money(cost["cumulative_known_estimate_usd"])} · saved job elapsed '
@@ -646,17 +732,17 @@ def _questions(data):
                              f'{event_note}'
                              f'<pre tabindex="0" aria-label="Cost, usage and timing record">{_text(json.dumps(record, ensure_ascii=False, indent=2))}</pre></details>'
                              f'<p class="small">{artifact_note}Answer key: <code>{_text(row["key"])}</code></p></details></details>')
-            parts.append('<details class="judgments"><summary>Read all 12 overall judgments</summary>')
+            parts.append(f'<details class="judgments"><summary>Read all {counts["per_question"]:,} overall judgments</summary>')
             for pair in combinations(agents, 2):
                 parts.append('<section class="judgment-group">'
-                             f'<h4>{_text(LABELS[pair[0]])} vs {_text(LABELS[pair[1]])}</h4>')
+                             f'<h4>{_text(_label(pair[0]))} vs {_text(_label(pair[1]))}</h4>')
                 matched = [j for j in judgments[qid] if frozenset(j['pair']) == frozenset(pair)]
                 for j in sorted(matched, key=lambda r: (r['judge'], r['order'])):
                     order = j['order']
                     winner = order[0 if j['verdict']['winner'] == 'A' else 1]
                     parts.append(f'<details class="judgment"><summary>{_text(_judge_label(data, j["judge"]))} '
-                                 f'· preferred {_text(LABELS[winner])}</summary>'
-                                 f'<p class="presentation">A: {_text(LABELS[order[0]])} · B: {_text(LABELS[order[1]])}</p>'
+                                 f'· preferred {_text(_label(winner))}</summary>'
+                                 f'<p class="presentation">A: {_text(_label(order[0]))} · B: {_text(_label(order[1]))}</p>'
                                  f'<p class="reason">{_evidence_text(j["verdict"]["reason"])}</p>'
                                  '<details class="judgment-metadata"><summary>Judgment source record</summary>'
                                  f'<p class="small">Judgment key: <code>{_text(j["key"])}</code></p></details></details>')
@@ -692,10 +778,10 @@ def _method(data):
         '<ul><li><a href="https://doi.org/10.1080/10400419.2012.650092">Runco and Jaeger, 2012</a>: '
         'originality and effectiveness as core creativity criteria.</li>'
     )
-    openai_tracking = sum(a['agent'] == 'openai' and 'utm_source=openai' in a['result']['text']
-                          for a in data['answers'])
-    google_grounding = sum(a['agent'] == 'gemini' and 'vertexaisearch.cloud.google.com' in a['result']['text']
-                           for a in data['answers'])
+    counts, agents = _counts(data), _system_order(data)
+    cues = {'openai': 'utm_source=openai', 'gemini': 'vertexaisearch.cloud.google.com'}
+    revealed = {agent: sum(a['agent'] == agent and marker in a['result']['text'] for a in data['answers'])
+                for agent, marker in cues.items() if agent in agents}
     provenance = ''
     revised = bool(data.get('judgments')) and all(
         j.get('protocol_version') in (NUS_PROTOCOL, AUT_PROTOCOL)
@@ -711,21 +797,22 @@ def _method(data):
                       'premises; unfamiliarity alone is not evidence of novelty. If a judge cannot support a substantive '
                       'preference, it must say so and choose A. Doing this in both orders gives each system one win.</p>')
                       + '<p>Incomplete or noncomparative explanations trigger retries. These checks do not verify the judges’ claims.</p>')
-    elif openai_tracking or google_grounding:
+    elif any(revealed.values()):
         provenance = ('<p>Provider labels were withheld, but this run was not fully blinded. '
-                      f'Links reveal provenance in {openai_tracking} / 50 {LABELS["openai"]} answers '
-                      f'and {google_grounding} / 50 {LABELS["gemini"]} answers. '
+                      'Links reveal provenance in '
+                      + _join(f'{count} / 50 {_text(_label(agent))} answers' for agent, count in revealed.items()) + '. '
                       'These cues do not establish that provider bias caused the ranking.</p>')
     rubric_links = ('' if aut else '<a href="judging-method.html">NUS rubric</a>; '
                     '<a href="overall-creativity-judgment.html">Why one overall judgment</a>. ')
     return ('<section id="method"><h2>How the comparison works</h2>'
-            '<p>Each question produces 12 decisions: three answer pairs, evaluated by two judges in both orders.</p>'
+            f'<p>Each question produces {counts["per_question"]:,} decisions: {_plural(counts["pairs"], "answer pair")}, '
+            f'evaluated by {_plural(counts["judges"], "judge")} in both orders.</p>'
             + scope + '<dl class="method-summary">'
             '<dt>Choose a winner</dt><dd>' + winner_guidance +
             'These guide one overall decision, with no separate scores. ' + rubric_links + '</dd>'
-            '<dt>Count the votes</dt><dd>Every decision counts equally. Each system appears in 400 decisions; '
-            'wins ÷ 400 gives its win rate.</dd>'
-            '<dt>Read the error bars</dt><dd>We resample the 50 questions 1,000 times, keeping each question’s 12 decisions '
+            f'<dt>Count the votes</dt><dd>Every decision counts equally. Each system appears in {counts["per_system"]:,} decisions; '
+            f'wins ÷ {counts["per_system"]:,} gives its win rate.</dd>'
+            f'<dt>Read the error bars</dt><dd>We resample the 50 questions 1,000 times, keeping each question’s {counts["per_question"]:,} decisions '
             'together. The middle 95% of the resulting win rates forms the interval.</dd></dl>'
             '<p class="small">The intervals do not cover new answers or different judges. '
             'Answer length or style may influence preferences.</p>'
@@ -759,19 +846,22 @@ CSS = """
 
 
 def _render(data, destination):
+    agents, counts = data['manifest']['agents'], _counts(data)
+    judge_phrase = _plural(counts['judges'], 'model judge').capitalize() + (' compares' if counts['judges'] == 1 else ' compare')
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">',
              '<title>Deep research comparison · CREST</title>', site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
              '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination),
              '<main id="main-content" tabindex="-1"><h1>Deep research comparison</h1>',
-             '<p>This comparison evaluates Caesar, OpenAI’s Sol workflow with web search, and Google Deep Research '
-             'on the same 50 questions. Two model judges compare the 150 saved answers in both answer orders. '
+             f'<p>This comparison evaluates {_text(_join(_label(a) for a in agents))} '
+             f'on the same 50 questions. {judge_phrase} the {counts["answers"]:,} saved answers in both answer orders. '
              '<a href="#systems">Models and research workflows</a>.</p>',
              '<nav aria-label="Report contents"><a href="#overall">Ranking</a><a href="#matchups">Head-to-head</a>'
              '<a href="#judges">Judges</a><a href="#resources">Cost and time</a>'
              '<a href="#method">Method</a><a href="#questions">Answers</a></nav>',
              '<div class="run-stats"><div><strong>50</strong><span>questions</span></div>'
-             '<div><strong>150</strong><span>answers</span></div><div><strong>600</strong><span>pairwise judgments</span></div></div>',
+             f'<div><strong>{counts["answers"]:,}</strong><span>answers</span></div>'
+             f'<div><strong>{counts["judgments"]:,}</strong><span>pairwise judgments</span></div></div>',
              _ranking(data), _head_to_head(data), _judges(data), _resources(data), _method(data),
              _questions(data),
              '</main></body></html>\n']
@@ -798,7 +888,9 @@ def write_report(run_dir, destination, *, audit=None):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Render only a complete, frozen 150-answer / 600-judgment CREST report; no API calls.')
+    parser = argparse.ArgumentParser(description='Render only a complete, frozen CREST report: 50 questions, one answer per '
+                                     'agent in the run manifest, and every answer pair judged in both orders by every '
+                                     'configured judge; no API calls.')
     parser.add_argument('run', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--audit', type=Path, help='Optional final lifetime audit; otherwise use latest 04-audit*/audit.json')

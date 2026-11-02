@@ -26,7 +26,7 @@ def test_fresh_restart_keeps_global_budget_and_does_not_restore_knowledge(tmp_pa
             assert config["CaesarAgent"]["max_iterations"] == 250
             assert config["CaesarAgent"].get("starting_url") is None
             assert config["LLMHandler"]["cost_limit"] == pytest.approx(4.3)
-            assert config["LLMHandler"]["max_completion_tokens"] == 25000
+            assert config["LLMHandler"]["max_completion_tokens"] == 10000
             old_collection = "crest_" + hashlib.sha256(source.name.encode()).hexdigest()[:40]
             assert config["ChromaClientManager"]["collection_name"] != old_collection
             assert not (Path(repository) / "chroma").exists()
@@ -44,7 +44,7 @@ def test_fresh_restart_keeps_global_budget_and_does_not_restore_knowledge(tmp_pa
         with audit.installed(SDK): yield Agent
     monkeypatch.setattr(worker, "_runtime", runtime)
     path = tmp_path / "fresh-job" / "result.json"
-    settings = {"budget_history_from": str(source), "budget_usd": 5., "handler_budget_usd": 5., "use_quick_explore": False}
+    settings = {"budget_history_from": str(source), "budget_usd": 5., "use_quick_explore": False}
     assert worker.run_worker({"prompt": "Q", "settings": settings, "job_key": "fresh", "worker_id": "fresh-worker", "output_dir": str(path.parent / "output")}, path) == 0
     result = json.loads(path.read_text())["result"]
     assert called == ["fresh exploration", "paid"]
@@ -156,9 +156,6 @@ def test_new_retrieval_fields_preserve_legacy_fallback(tmp_path):
     assert config["ArtifactSynthesizer"]["synthesis_top_n"] == 10
     assert config["ChromaClientManager"]["top_k"] == 15
     assert config["ChromaClientManager"]["enable_reranking"] is False
-    old = worker.build_config("Q", {"retrieval_chunks": 8}, tmp_path / "old", "old")
-    assert old["ArtifactSynthesizer"]["synthesis_top_k"] == 8
-    assert old["ArtifactSynthesizer"]["synthesis_top_n"] == 8
 
 
 def test_two_dollar_residual_leaves_positive_qa_allowance(tmp_path):
@@ -172,7 +169,7 @@ def test_two_dollar_residual_leaves_positive_qa_allowance(tmp_path):
             assert audit.request_limit > 0
             return [("Q", "A", [])]
     agent = SimpleNamespace(synthesizer=Synthesizer())
-    with worker.adaptive_synthesis_budget(agent, {"budget_usd": 2, "handler_budget_usd": 2}, audit) as report:
+    with worker.adaptive_synthesis_budget(agent, {"budget_usd": 2}, audit) as report:
         assert agent.synthesizer._generate_qa_pairs()
     assert report["drafts"][0]["qa_allowance_usd"] > 0
     assert report["drafts"][0]["remaining_write_allowance_usd"] <= 1.4 + 1e-9

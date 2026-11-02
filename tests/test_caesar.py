@@ -244,7 +244,7 @@ def test_recovery_result_reports_cumulative_cost_and_keeps_new_attempt_audit(tmp
         with audit.installed(SDK): yield Agent
     monkeypatch.setattr(worker, "_runtime", runtime)
     path = tmp_path / "new-job" / "result.json"
-    settings = {"recovery_from": str(source), "budget_usd": 3., "handler_budget_usd": 3.}
+    settings = {"recovery_from": str(source), "budget_usd": 3.}
     assert worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(path.parent / "output"), "job_key": "new"}, path) == 0
     result = json.loads(path.read_text())["result"]
     assert result["usage"]["known_cost_usd"] == pytest.approx(1.2004)

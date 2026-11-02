@@ -14,7 +14,7 @@ from crest.config import ROOT, load_config, load_questions
 def test_default_config_resolves_the_packaged_layout():
     config = load_config()
     assert Path(config['_config_path']) == ROOT / 'crest/configs/crest.yaml'
-    assert Path(config['questions']) == ROOT / 'crest/data/queries_n50.jsonl'
+    assert Path(config['questions']) == ROOT / 'crest/data/queries_n50_v2.jsonl'
     assert len(load_questions(config['questions'])) == 50
     assert Path(config['rubric']) == ROOT / 'crest/prompts/nus_pairwise_v2.txt'
     assert Path(config['output_dir']) == ROOT / 'crest/results'
@@ -22,13 +22,22 @@ def test_default_config_resolves_the_packaged_layout():
     assert Path(config['research']['caesar']['rome_path']) == ROOT.parent / 'rome'
 
 
-def test_mbp_profile_inherits_the_same_data_and_storage_paths():
-    profile = ROOT / 'crest/configs/crest.mbp.yaml'
-    assert profile.is_file()
-    base, mbp = load_config(), load_config(profile)
-    for name in ('questions', 'rubric', 'output_dir', 'cache_dir'):
-        assert mbp[name] == base[name]
-    assert mbp['research']['caesar']['rome_path'] == base['research']['caesar']['rome_path']
+def test_master_config_is_the_only_profile_and_names_every_default_flag():
+    configs = sorted(p.name for p in (ROOT / 'crest/configs').glob('*.yaml'))
+    assert configs == ['crest.yaml']
+    supplied = yaml.safe_load((ROOT / 'crest/configs/crest.yaml').read_text())
+    config = load_config()
+    # Every research agent and judge in the defaults is spelled out in the master file.
+    assert set(supplied['research']) == set(config['research'])
+    assert set(supplied['judges']) == set(config['judges'])
+    assert supplied['answer_word_limit'] == config['answer_word_limit'] == 600
+    assert '{max_words}' in supplied['research_prompt'] and '{question}' in supplied['research_prompt']
+    assert supplied['research']['caesar']['use_research_prompt'] is False
+    assert all(supplied['research'][name]['use_research_prompt'] is True
+               for name in supplied['research'] if name != 'caesar')
+    for name, settings in config['research'].items():
+        assert settings['answer_word_limit'] == 600, name
+        assert 'budget_usd' in supplied['research'][name], name
 
 
 @pytest.fixture

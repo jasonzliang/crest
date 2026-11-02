@@ -34,10 +34,13 @@ def load_config(path: Path | None = None, *, data_root: Path | None = None) -> d
     config["rubric"] = (base / config.get("rubric", DEFAULT_NUS_RUBRIC)).resolve()
     inheritance = (base / config.get("inherit_judges", CREST_DEFAULT_CONFIG)).resolve()
     inherited = yaml.safe_load(inheritance.read_text(encoding="utf-8"))
-    judges = inherited.get("judges", {})
+    # The paper comparison is a frozen two-judge instrument. It takes the OpenAI and
+    # Google judge settings from the master configuration and ignores any other judge there.
+    judges = {name: settings for name, settings in inherited.get("judges", {}).items()
+              if name in {"openai", "gemini"}}
     overrides = config.get("judges", {})
     if set(judges) != {"openai", "gemini"} or set(overrides) - set(judges):
-        raise ValueError("Judges must be exactly openai and gemini")
+        raise ValueError("Judges must include openai and gemini; overrides may name only those two")
     resolved = {}
     for name, settings in sorted(judges.items()):
         from importlib import import_module
