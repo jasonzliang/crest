@@ -103,6 +103,34 @@ def test_budget_range_flags_are_validated(write_master_config, dotted, value, me
         load_config(write_master_config(**{dotted: value}))
 
 
+@pytest.mark.parametrize("cost, exceeded", [(3.75, False), (4.0, False), (4.25, True)])
+def test_all_research_answers_complete_with_warnings_only_above_four_dollars(tmp_path, write_master_config, cost, exceeded):
+    questions = tmp_path / "questions.jsonl"
+    questions.write_text(json.dumps({"query": "Design a new game."}) + "\n")
+    config = load_config(write_master_config(**{
+        "questions": str(questions), "cache_dir": str(tmp_path / "cache"),
+        "output_dir": str(tmp_path / "results"),
+    }))
+    class Provider:
+        ADAPTER_VERSION = "offline-budget-check"
+        async def generate(self, prompt, settings, job):
+            return {"text": "A complete answer.", "model": "offline", "cost_usd": cost,
+                    "citations": [], "usage": {}, "raw": {}, "warnings": []}
+    pipeline = Pipeline(config, providers={name: Provider() for name in config["research"]})
+    summary = asyncio.run(pipeline.generate())
+    assert summary["completed"] == 4
+    answer_path = next((tmp_path / "results").rglob("answers.jsonl"))
+    rows = [json.loads(line) for line in answer_path.read_text().splitlines()]
+    assert {row["agent"] for row in rows} == {"caesar", "openai", "gemini", "anthropic"}
+    for row in rows:
+        result = row["result"]
+        assert result.get("budget_exceeded", False) is exceeded, row["agent"]
+        warnings = [warning for warning in result["warnings"] if "budget" in warning]
+        assert bool(warnings) is exceeded
+        if exceeded:
+            assert "$4.00" in warnings[0] and "soft cap" in warnings[0]
+
+
 def test_budget_range_defaults_apply_only_to_hosted_single_call_agents():
     config = load_config()
     for name in ("openai", "anthropic"):
@@ -139,8 +167,8 @@ def test_soft_cap_rounds_aim_at_the_floor_but_ignore_the_ceiling():
 
 def test_auto_cap_overrides_configured_depth_and_reports_every_override(write_master_config, capsys):
     from crest.budget import plan
-    config = load_config(write_master_config(**{"research.caesar.budget_cap": "auto", "research.openai.budget_cap": "auto",
-                                                "research.openai.budget_usd": 3.5}))
+    config = load_config(write_master_config(**{"research.caesar.budget_cap": "auto", "research.caesar.budget_usd": 3.5,
+                                                "research.openai.budget_cap": "auto", "research.openai.budget_usd": 3.5}))
     caesar, hosted = config["research"]["caesar"], config["research"]["openai"]
     derived = plan("caesar", 3.5, {"max_completion_tokens": 10000})["settings"]
     assert {k: caesar[k] for k in derived} == derived and derived["max_iterations"] != 300  # 300/3/20 overridden

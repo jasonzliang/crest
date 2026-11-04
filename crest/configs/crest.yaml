@@ -8,7 +8,7 @@
 # v2 was generated on 2026-11-02 by the three judge models in the five categories of
 # queries_n50.jsonl (Caesar's original set, kept for the published 2026-10-26 report).
 questions: ../data/queries_n50_v2.jsonl
-# Revised v2 rubric; select ../prompts/nus_pairwise_v1.txt for the original v1 wording.
+# Current v2 rubric; archived v1 is ../prompts/archive/nus_pairwise_v1.txt (legacy path still works).
 rubric: ../prompts/nus_pairwise_v2.txt
 cache_dir: ../results/.cache/generation
 output_dir: ../results
@@ -93,13 +93,13 @@ research:
     # the 2026-10-26 pace (about $0.004 and 22 s per iteration with one knowledge-base
     # call per query; Q&A rounds grow with each round) and the 2026-11-02 pilot's
     # 600-word draft costs. Run
-    #   python -m crest.budget 3.5 --agent caesar
-    # to see the estimate (or the derived values under auto).
-    budget_usd: 3.5              # The chosen depth below is estimated at $3.03 (87%), the middle of the $2-4 range.
+    #   python -m crest.budget 4.0 --agent caesar
+    # to see the derived values under auto; the explicit depth below stays unchanged in soft mode.
+    budget_usd: 4.0              # Warn above $4 per answer, matching every research agent; chosen depth estimates $3.03.
     budget_cap: soft             # Soft: flag and warn only. hard enforces budget_usd; auto also derives the depth.
-    max_iterations: 300          # Chosen; the planner would derive 309 for the 85% target. About 108 minutes of exploration.
+    max_iterations: 300          # Chosen; the planner would derive 342 for the 85% target. About 108 minutes of exploration.
     synthesis_drafts: 3
-    synthesis_iterations: 20     # Chosen Q&A rounds per draft (each round costs more than the last); the planner would derive 19.
+    synthesis_iterations: 20     # Chosen Q&A rounds per draft (each round costs more than the last); auto also derives 20.
     synthesis_reserve_usd: null  # Derived for 300 + 3 x 20: $1.76 kept back from exploration for drafting (used under hard and auto caps).
     timeout_seconds: null        # Derived for 300 + 3 x 20: 12,600 s (3.5 h), one limit for the whole answer, 1.5x the estimated time.
     synthesis_top_k: 20

@@ -57,7 +57,7 @@ DEFAULTS = {
             'rome_path': '../../../rome', 'python_executable': sys.executable,
             'recovery_from': None, 'budget_history_from': None,
             'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna',
-            'kb_model': 'gpt-6-luna', 'budget_usd': 3.5,
+            'kb_model': 'gpt-6-luna', 'budget_usd': 4.0,
             'reasoning_effort': 'medium', 'synthesis_reasoning_effort': 'medium',
             'exploration_reasoning_effort': 'low', 'kb_reasoning_effort': 'low',
             # Chosen depth; with budget_cap auto crest.budget overrides them from budget_usd.

@@ -157,3 +157,21 @@ def test_family_validation_preserves_malformed_job_value_error(tmp_path):
     plan['jobs'][0] = None
     with pytest.raises(ValueError, match='job'):
         analyze_papers(plan, [])
+
+
+def test_archived_nus_v1_preserves_legacy_paths_and_judgment_keys():
+    from crest.config import ROOT
+    from crest.rubrics import DEFAULT_NUS_RUBRIC
+    archive = ROOT / 'crest/prompts/archive/nus_pairwise_v1.txt'
+    assert archive.is_file()
+    original = archive.read_bytes()
+    # Frozen instrument: moving it must not change a byte or silently use the new rubric.
+    assert hashlib.sha256(original).hexdigest() == 'a70eba755b64d489c0872448476e6148c33e4b145506ea79bbe705b62db7d65e'
+    questions, answers = answer_inputs()
+    archived_jobs = judging.make_judgment_jobs(questions, answers, JUDGES, original.decode())
+    for legacy in (ROOT / 'crest/prompts/nus_pairwise_v1.txt', ROOT / 'crest_ais/prompts/rubric_v1.txt'):
+        assert legacy.read_bytes() == original
+        assert judging.make_judgment_jobs(questions, answers, JUDGES, legacy.read_text()) == archived_jobs
+    current_jobs = judging.make_judgment_jobs(questions, answers, JUDGES, DEFAULT_NUS_RUBRIC.read_text())
+    assert {job['key'] for job in archived_jobs}.isdisjoint(job['key'] for job in current_jobs)
+    assert [job['order'] for job in current_jobs] == [['a', 'b'], ['a', 'b'], ['b', 'a'], ['b', 'a']]

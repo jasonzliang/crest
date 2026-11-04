@@ -345,7 +345,8 @@ def test_default_dataset_plan_has_fifty_questions_four_agents_and_three_judges()
     plan = pipeline.plan()
     assert plan['judge_calls_total'] == 50 * 6 * 2 * 3 == 1800
     assert plan['answer_word_limit'] == 600
-    assert plan['budget_targets_usd'] == {'caesar': 3.5, 'openai': 4.0, 'gemini': 4.0, 'anthropic': 4.0}
+    assert plan['budget_targets_usd'] == {'caesar': 4.0, 'openai': 4.0, 'gemini': 4.0, 'anthropic': 4.0}
+    assert plan['generation_budget_targets_usd'] == 800.0
     prompts = {job['agent']: job['prompt'] for job in pipeline.generation_jobs()[:4]}
     assert prompts['caesar'] == pipeline.questions[0]['text']
     assert all('### YOUR TASK' in prompts[name] and 'at most 600 words' in prompts[name]
