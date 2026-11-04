@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
 *.egg-info/
 .venv/
 venv/
@@ -11,9 +12,11 @@ results/
 # Compatibility alias for result paths recorded before the package layout change.
 /results
 .pytest_cache/
+.ruff_cache/
 
 # OS
 .DS_Store
+._*
 
 # Editor / agent scratch
 .claude/

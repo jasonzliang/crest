@@ -78,4 +78,4 @@ def test_python_module_entrypoint_keeps_the_existing_commands(tmp_path, monkeypa
         runpy.run_module("crest_ais", run_name="__main__")
     assert stopped.value.code == 0
     help_text = capsys.readouterr().out
-    assert "prepare,plan,extend,add-agent,judge,report,run" in help_text
+    assert "prepare,plan,extend,add-agent,add-judge,judge,report,run" in help_text

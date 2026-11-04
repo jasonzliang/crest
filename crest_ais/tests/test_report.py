@@ -4,7 +4,10 @@ from copy import deepcopy
 from html.parser import HTMLParser
 from itertools import combinations, product
 import json
+import re
 import pytest
+
+from crest_ais.tests.test_analysis import results_for, three_judge_plan, three_judge_winner
 
 
 class Document(HTMLParser):
@@ -100,15 +103,17 @@ def test_legacy_nus_report_rendering_matches_explicit_family(report, tmp_path):
     report['rubric_kind'] = 'nus'
     assert render(report, tmp_path) == legacy
     assert '<dt>Useful</dt>' in legacy and 'AUT-inspired' not in legacy
-    assert 'frozen historical NUS v1' in legacy
-    assert 'current default NUS v2 rubric applies to new plans' in legacy
-    assert 'least familiar contribution' in legacy
+    assert 'The judges used version 1 of the New, Useful, Surprising (NUS) rubric.' in legacy
+    assert 'CREST now defaults to version 2, which was not used here.' in legacy
+    assert 'least familiar building block' in legacy and 'counts toward Surprising, not New' in legacy
+    # The only rubric link describes v2, so it must say so on the v1 page.
+    assert 'href="judging-method.html">the current NUS rubric (v2, not used here)</a>' in legacy
     report['version'] = 'crest-ais-overall-v3'
     current = render(report, tmp_path)
-    assert 'frozen historical NUS v1' not in current
+    assert 'version 1 of the' not in current and 'not used here' not in current
     assert 'substantive contribution' in current
     assert 'identifiable earlier research' in current
-    assert 'least familiar contribution' not in current
+    assert 'least familiar building block' not in current
 
 
 @pytest.mark.parametrize('kind', ['unknown', 'mislabeled', 'mixed', 'row_mislabeled', 'missing_protocol', 'unknown_protocol', 'conflicting_protocols', 'bad_reason'])
@@ -170,8 +175,7 @@ def test_complete_scores_and_uncertainty_are_visible_without_javascript(report, 
     scores = [attrs["data-score"] for _, attrs in doc.tags if "data-score" in attrs]
     assert "62.5" in scores and "37.5" in scores
     assert "62.5%" in html and "25.0–75.0%" in html
-    assert "equal weight" in html.lower()
-    assert "absolute" in html.lower()
+    assert "each opponent counts equally" in html.lower()
     assert any(tag == "svg" and attrs.get("role") == "img" for tag, attrs in doc.tags)
 
 
@@ -311,10 +315,12 @@ def test_per_judge_table_uses_overall_only_and_preserves_missing_values(report, 
         }}
     html = render(report, tmp_path)
     table = html.split('<table class="judge-comparison">', 1)[1].split('</table>', 1)[0]
-    assert "66.2%" in table
+    assert "66.3%" in table  # half up, as readers round
     assert ">New<" not in table and ">Useful<" not in table and ">Surprising<" not in table
     assert "Unavailable" in table
-    assert "vendor/actual-model-id" in table
+    # An unknown judge keeps its id as its name; model ids appear only in the judge settings line.
+    assert '<th scope="col">judge-a</th>' in table and "vendor/actual-model-id" not in table
+    assert "vendor/actual-model-id" in html.split('id="run-audit"', 1)[1].split("</p>", 1)[0]
     assert "Scientist One" in table and "Agentic Scientist v3" in table
 
 
@@ -340,7 +346,7 @@ def test_nested_legacy_verdict_is_rejected_before_writing_a_misleading_report(re
 def test_decision_coverage_is_reported_once_per_overall_vote(report, tmp_path):
     report["coverage"].update(expected_jobs=144, expected_decisions=144, used_decisions=4)
     html = render(report, tmp_path)
-    assert "Decisions used: 4 / 144 planned" in html
+    assert "0 / 144" in html and "Decisions used" not in html
     assert "432" not in html
 
 
@@ -349,8 +355,7 @@ def test_total_cost_does_not_double_count_already_included_prior_requests(report
                            prior_excluded_jobs=7, prior_excluded_known_usd=3)
     html = render(report, tmp_path)
     assert "$13.00" in html
-    assert "$3.00" in html
-    assert "7 earlier discarded requests" in html
+    assert "The total also includes $3.00 for 7 discarded requests from earlier runs." in html
     assert "$16.00" not in html
 
 
@@ -366,10 +371,12 @@ def test_shared_site_navigation_and_current_document_titles_are_retained(report,
                          "deep-research-creativity.html", "ai-scientist-creativity.html", "index.html"]
 
 
-def test_main_reading_order_starts_with_progress_then_evidence_and_method(report, tmp_path):
+def test_main_reading_order_puts_results_and_method_before_caveats_and_audit(report, tmp_path):
     doc = Document(render(report, tmp_path))
     sections = [attrs["id"] for tag, attrs in doc.tags if tag == "section"]
-    assert sections == ["progress", "overall", "matchups", "coverage", "judges", "method", "papers", "reasons"]
+    assert sections == ["overall", "matchups", "method", "judges", "limits", "coverage", "progress", "papers", "reasons"]
+    nav = [attrs["href"] for tag, attrs in doc.tags if tag == "a" and attrs.get("href", "").startswith("#")][1:]
+    assert nav == ["#" + section for section in sections]
 
 
 def test_observed_zero_has_visible_marker_and_bounds_are_in_collapsed_disclosure(report, tmp_path):
@@ -382,7 +389,7 @@ def test_observed_zero_has_visible_marker_and_bounds_are_in_collapsed_disclosure
     bounds = [(tag, attrs) for tag, attrs in doc.tags if attrs.get("id") == "sampling-uncertainty"]
     assert len(bounds) == 1 and bounds[0][0] == "details" and "open" not in bounds[0][1]
     assert "95% sampling range" in html
-    assert "ranking across all eligible paper pairs remains uncertain" in html
+    assert "Overlapping ranges mean the order between those scientists is uncertain." in html
     assert not any(attrs.get("class") == "interval-line" for _, attrs in doc.tags)
 
 
@@ -424,18 +431,19 @@ def test_judge_columns_and_readable_diagnostic_denominators(report, tmp_path):
                    "judge-b": {"one": {"overall_pct": 25}}})
     html = render(report, tmp_path)
     table = html.split('<table class="judge-comparison">', 1)[1].split('</table>', 1)[0]
-    assert "vendor/actual-model-id" in table and "vendor/second-model" in table
+    assert '<th scope="col">judge-a</th>' in table and '<th scope="col">judge-b</th>' in table
+    assert "vendor/actual-model-id" not in table and "vendor/second-model" not in table
     assert table.index("75.0%") < table.index("25.0%")
-    assert "8 matched judge comparisons" in html
-    assert "8 matched order comparisons" in html
-    assert "16 overall judgments" in html
-    assert "Agreement does not establish correctness" in html
+    assert "Across 8 same-pair, same-order comparisons." in html
+    assert "Across 8 cases where a judge read a pair in both orders." in html
+    assert "Across 16 votes. 50% means no position bias." in html
+    assert "Agreement among judges does not show that they are right." in html
 
 
 def test_coverage_uses_counts_and_selection_shares_instead_of_duplicate_bars(report, tmp_path):
     html = render(report, tmp_path)
     assert "3.4%" in html and "50.0%" in html
-    assert "31 eligible" in html and "35 downloaded" in html
+    assert "We downloaded 35 released papers. We excluded 4, which leaves 31 eligible papers" in html
     assert "1 excluded" in html
     assert not any(attrs.get("class") == "coverage-bar" for _, attrs in Document(html).tags)
 
@@ -451,10 +459,11 @@ def test_coverage_explains_diffusing_blame_exclusion_only_when_catalog_records_i
     report["catalog"] = catalog
     html = render(report, tmp_path)
     coverage = html.split('<section id="coverage"', 1)[1].split('</section>', 1)[0]
-    assert ("Diffusing Blame is retained in the archive" in coverage) is explanation_expected
+    assert ("paper, Diffusing Blame, because" in coverage) is explanation_expected
+    assert ("(see below)" in coverage) is explanation_expected
     if explanation_expected:
         assert 'href="https://pub.sakana.ai/agentic-scientist/"' in coverage
-        assert "substantial human guidance and manuscript revision" in coverage
+        assert "humans substantially guided and revised it" in coverage
 
 
 def test_pair_outcomes_are_visible_and_full_reasons_remain_expandable(report, tmp_path):
@@ -475,10 +484,10 @@ def test_concept_bookmark_and_primary_paper_links_remain_visible(report, tmp_pat
     assert "https://doi.org/10.1080/10400419.2012.650092" in links
     assert "https://doi.org/10.1080/10400419.2017.1302776" in links
     assert "overall-creativity-judgment.html" in links
-    assert 'href="judging-method.html">NUS rubric</a>' in html
-    assert 'href="overall-creativity-judgment.html">Why one overall judgment</a>' in html
+    assert 'href="judging-method.html">the NUS rubric</a>' in html
+    assert 'href="overall-creativity-judgment.html">why we ask for one overall judgment</a>' in html
     method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
-    assert method.index('id="concepts"') < method.index('<details>')
+    assert method.index('id="concepts"') < method.index('ai-scientist-method.html')
 
 
 def test_extended_plan_displays_ten_pairs_and_240_votes_from_report_data(report, tmp_path):
@@ -488,7 +497,7 @@ def test_extended_plan_displays_ten_pairs_and_240_votes_from_report_data(report,
                               used_decisions=240)
     report["status"] = "complete"
     html = render(report, tmp_path)
-    assert "up to 10 distinct paper pairs" in html
+    assert "we drew up to 10 pairs of their papers at random" in html
     assert "60 / 60" in html
     assert "240 / 240" in html
 
@@ -499,10 +508,11 @@ def test_post_result_extension_ranges_are_exploratory_without_false_confidence_c
                              "inference_scope": "exploratory_fixed_size_reference",
                              "sequential_valid": False, "method": "Exploratory reference bounds"}
     html = render(report, tmp_path)
-    assert "Exploratory reference range" in html
+    assert ">Sampling range<" in html
     assert "95% sampling range" not in html
-    assert "after the initial results" in html
-    assert "No confidence guarantee" in html
+    assert "We grew this comparison after seeing earlier results." in html
+    # Without an analysis note, the page still refuses to call the ranges confidence intervals.
+    assert "rough guides, not confidence intervals" in html
 
 
 def test_report_omits_complete_analysis_json_panel_and_embedded_payload(report, tmp_path):
@@ -526,11 +536,10 @@ def test_paper_groups_share_primary_order_and_partial_ignores_stale_ranks(report
     assert groups == ["one", "v3"]
 
 
-def pair_judgments(winners, *, paper_ids=("p1", "p2"), pair_id="pair1"):
+def pair_judgments(winners, *, paper_ids=("p1", "p2"), pair_id="pair1", judges=("judge-a", "judge-b")):
     """Fixtures state physical winning papers independently of their A/B positions."""
     rows = []
-    cells = [("judge-a", paper_ids), ("judge-a", paper_ids[::-1]),
-             ("judge-b", paper_ids), ("judge-b", paper_ids[::-1])]
+    cells = [(judge, order) for judge in judges for order in (paper_ids, paper_ids[::-1])]
     for index, (winner, (judge, order)) in enumerate(zip(winners, cells)):
         rows.append({"key": f"{pair_id}-j{index}", "pair_id": pair_id,
                      "order": list(order), "judge": judge, "model": f"model/{judge}",
@@ -554,13 +563,13 @@ def test_pair_winner_counts_remap_each_actual_order_before_aggregation(report, t
     assert (row["data-votes-left"], row["data-votes-right"]) == ("1", "3")
     assert "Agentic Scientist v3 preferred" in html and "1–3 votes" in html
     assert not any(attrs.get("class") == "paper-winner" for _, attrs in Document(html).tags)
-    assert "These columns are not the judge’s A/B labels." in html
+    assert "In each reason, A and B mean the order that judge saw" in html
     table = html.split('id="judgment-pair-table"', 1)[1].split('</table>', 1)[0]
     links = [attrs["href"] for tag, attrs in Document(table).tags if tag == "a"]
     assert "../crest_ais/data/one/first%20paper.pdf" in links
     assert "../crest_ais/data/v3/second.pdf" in links
-    assert "two judges" in html and "both paper orders" in html
-    assert "3–1 pair contributes 75%" in html
+    assert "Each judge read every pair twice, once in each order" in html and "4 votes per pair" in html
+    assert "3–1 pair counts as 75% for the winner" in html
 
 
 def test_four_forced_a_choices_can_produce_an_aggregate_pair_tie(report, tmp_path):
@@ -611,12 +620,14 @@ def test_matchup_filter_labels_and_pair_order_follow_primary_rank(report, tmp_pa
 def test_intro_combines_status_and_sample_counts_without_a_metadata_badge(report, tmp_path):
     complete(report)
     html = render(report, tmp_path)
-    assert "This completed comparison uses 2 papers selected from 31 eligible papers in a 35-paper archive." in html
+    assert ("One AI judge (judge-a) read pairs of papers released by two AI scientist systems and picked "
+            "the more creative paper in each pair. The comparison uses 2 papers sampled from the 31 eligible "
+            "papers these systems released.") in html
     assert not any(attrs.get("class") in {"meta", "status"} for _, attrs in Document(html).tags)
     report["status"] = "partial"
     html = render(report, tmp_path)
-    assert "This comparison is in progress" in html
-    assert "This completed comparison uses" not in html
+    assert "This comparison is in progress." in html
+    assert "The comparison uses" not in html and "The plan uses 2 papers" in html
 
 
 @pytest.fixture
@@ -686,7 +697,7 @@ def test_five_agent_tables_and_filter_cover_ten_unequal_matchups(five_report, tm
     for classname in ("heatmap", "judge-comparison"):
         table = html.split(f'<table class="{classname}">', 1)[1].split('</table>', 1)[0]
         assert [attrs["data-agent"] for tag, attrs in Document(table).tags if tag == "tr" and "data-agent" in attrs] == expected
-    assert "6 pairs · all possible pairs" in html
+    assert "6 pairs (all possible)" in html
 
 
 def test_unequal_matchup_renderer_preserves_supplied_macro_score(five_report, tmp_path):
@@ -697,7 +708,7 @@ def test_unequal_matchup_renderer_preserves_supplied_macro_score(five_report, tm
     assert row["data-score"] == "18.75"
     overall = html.split('<section id="overall"', 1)[1].split('</section>', 1)[0]
     assert "18.8%" in overall and "12.5%" not in overall
-    assert "sampled pair counts differ" in overall
+    assert "even where fewer pairs were possible" in overall
     assert five_report == original
 
 
@@ -750,3 +761,193 @@ def test_hidden_pair_label_is_positioned_inside_its_scroll_container(report, tmp
     assert containing_block is not None, "Hidden pair labels must not use the viewport as their containing block"
     assert "judgment-table-scroll" in containing_block.classes
     assert computed(containing_block)["overflow"] == "auto"
+
+
+JUDGE_ADDITION = {"version": "crest-ais-judge-extension-v1", "kind": "judge_addition", "stage": "post_initial_results",
+                  "added_judges": ["anthropic"], "previous_judges": ["gemini", "openai"],
+                  "current_judges": ["anthropic", "gemini", "openai"], "original_pairs": 2, "additional_pairs": 0,
+                  "imported_jobs": 8, "additional_jobs": 4, "target_pairs_per_matchup": 2, "parent_extension": None}
+
+
+def test_three_judge_report_shows_every_judge_and_each_judge_pair(tmp_path):
+    from crest_ais.analysis import analyze
+    plan = three_judge_plan()
+    plan["selection"]["pairs_per_matchup"] = 2
+    plan["extension"] = deepcopy(JUDGE_ADDITION)
+    html = render(analyze(plan, results_for(plan, three_judge_winner)), tmp_path)
+    assert 'style="--judge-min-width:570px"' in html
+    table = html.split('<table class="judge-comparison">', 1)[1].split('</table>', 1)[0]
+    headers = [attrs for tag, attrs in Document(table).tags if tag == "th" and attrs.get("scope") == "col"]
+    assert len(headers) == 4
+    for name, model in (("Claude Fable 5.1", "claude-fable-5-1"), ("Gemini 4 Argon", "gemini-4-argon"),
+                        ("GPT-6 Astra", "gpt-6-astra")):
+        assert f'<th scope="col">{name}</th>' in table and model not in table
+    rows = {agent: re.findall(r"<strong>([^<]+)</strong>", table.split(f'data-agent="{agent}"', 1)[1].split("</tr>", 1)[0])
+            for agent in ("a", "b")}
+    assert rows == {"a": ["75.0%", "50.0%", "0.0%"], "b": ["25.0%", "50.0%", "100.0%"]}
+    pairs = html.split('<table class="judge-pairs">', 1)[1].split('</table>', 1)[0]
+    pair_rows_html = [(key, re.sub(r"<[^>]+>", "", label), pct, count) for key, label, pct, count in re.findall(
+        r'<tr data-judges="([^"]+)"><th scope="row">(.*?)</th><td><strong>([^<]+)</strong></td><td>([^<]+)</td>', pairs)]
+    assert '<span class="judge-name">Claude Fable 5.1</span> vs. <span class="judge-name">Gemini 4 Argon</span>' in pairs
+    assert pair_rows_html == [("anthropic|gemini", "Claude Fable 5.1 vs. Gemini 4 Argon", "25.0%", "4"),
+                              ("anthropic|openai", "Claude Fable 5.1 vs. GPT-6 Astra", "75.0%", "4"),
+                              ("gemini|openai", "Gemini 4 Argon vs. GPT-6 Astra", "50.0%", "4")]
+    judges = html.split('<section id="judges"', 1)[1].split('</section>', 1)[0]
+    assert "Across 12 same-pair, same-order comparisons." in judges
+    assert "The 50.0% above combines all three pairs of judges." in judges
+    assert "This table repeats the ranking using one judge’s votes at a time." in judges
+    assert "Three AI judges (Claude Fable 5.1, Gemini 4 Argon and GPT-6 Astra) read pairs of papers" in html
+    assert "Each judge read every pair twice, once in each order" in html and "That gives 6 votes per pair." in html
+    assert "a 3–3 split is a tie" in html and "a 5–1 pair counts as 83% for the winner" in html
+    assert "4 votes per pair" not in html and "two judges, each" not in html and "2–2" not in html
+    assert [(row["data-outcome"], row["data-votes-left"], row["data-votes-right"]) for row in pair_rows(html)] == [
+        ("winner", "2", "4"), ("winner", "5", "1")]
+    method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
+    limits = html.split('<section id="limits"', 1)[1].split('</section>', 1)[0]
+    assert "added after" not in limits and "added after" not in method
+    assert "2 to 3 judges" not in html and "judge_addition" not in html
+    assert "We added a judge" not in html
+    # The heatmap diagonal placeholder predates this report text and is not prose.
+    assert "\N{EM DASH}" not in html.replace('aria-label="Same scientist">\N{EM DASH}<', "")
+
+
+def test_partial_three_judge_pair_needs_six_judgments(report, tmp_path):
+    judges = ("anthropic", "judge-a", "judge-b")
+    report["judges"] = {"anthropic": {"model": "claude-fable-5-1"}, "judge-a": {"model": "vendor/actual-model-id"},
+                        "judge-b": {"model": "vendor/second-model"}}
+    report["judgments"] = pair_judgments(["p1", "p1", "p1", "p2"], judges=judges[1:])
+    html = render(report, tmp_path)
+    assert pair_rows(html)[0]["data-outcome"] == "partial"
+    assert "Partial: 4 / 6 judgments" in html
+    report["judgments"] = pair_judgments(["p2", "p2", "p1", "p1", "p1", "p2"], judges=judges)
+    html = render(report, tmp_path)
+    row = pair_rows(html)[0]
+    assert (row["data-outcome"], row["data-votes-left"], row["data-votes-right"]) == ("tie", "3", "3")
+    assert "Tie" in html and "3–3 votes" in html
+    assert "claude-fable-5-1" in html
+
+
+SAMPLE_STEP = {"stage": "post_initial_results", "target_pairs_per_matchup": 10, "original_pairs": 36,
+               "strata": [{"original_pairs": 6, "final_pairs": 10}] * 6, "parent_extension": None}
+COHORT_STEP = {"stage": "post_initial_results", "kind": "cohort_addition", "previous_agent_count": 4,
+               "current_agent_count": 5, "original_pairs": 60, "parent_extension": None}
+
+
+@pytest.mark.parametrize(("parent", "explanation"), [
+    (None, "We grew this comparison after seeing earlier results."),
+    (COHORT_STEP, "We grew this comparison after seeing earlier results: from 4 to 5 scientists. "
+                  "Earlier votes were kept unchanged."),
+    ({**COHORT_STEP, "parent_extension": SAMPLE_STEP},
+     "We grew this comparison after seeing earlier results: first from 6 to 10 pairs per matchup, "
+     "then from 4 to 5 scientists. Earlier votes were kept unchanged."),
+])
+def test_judge_addition_explains_post_hoc_ranges_and_two_judge_runs_hide_pair_table(report, tmp_path, parent, explanation):
+    complete(report)
+    report["judges"]["judge-b"] = {"model": "vendor/second-model"}
+    report["diagnostics"]["judge_pair_disagreement"] = {
+        "judge-a|judge-b": {"judges": ["judge-a", "judge-b"], "disagreement_pct": 25.0, "count": 2, "denominator": 8}}
+    html = render(report, tmp_path)
+    assert 'class="judge-pairs"' not in html and "pairs of judges" not in html
+    assert "That gives 4 votes per pair." in html
+    report["uncertainty"] = {"confidence": None, "inference_scope": "exploratory_fixed_size_reference"}
+    report["extension"] = {**JUDGE_ADDITION, "parent_extension": parent}
+    report["judges"]["anthropic"] = {"model": "claude-fable-5-1"}
+    html = render(report, tmp_path)
+    assert explanation in html
+    # The sampling history skips the judge-addition link: the page never says a judge joined later.
+    assert "added after" not in html and "We added a judge" not in html and "judges." not in explanation
+    assert "to 3 judges" not in html and "previous_judges" not in html
+
+
+def test_plural_helper_and_singular_counts_on_the_page(report, tmp_path):
+    from crest_ais.report import plural
+    assert plural(1, "pair") == "1 pair" and plural(2, "pair") == "2 pairs" and plural(0, "pair") == "0 pairs"
+    assert plural(1, "analysis", "analyses") == "1 analysis" and plural(3, "analysis", "analyses") == "3 analyses"
+    assert plural(1200, "vote") == "1,200 votes"
+    complete(report)
+    report["judgments"] = [judgment()]
+    html = render(report, tmp_path)
+    assert "<small>1 pair</small>" in html and "1 pairs" not in html
+    assert "· 1 selected paper<" in html and "1 selected papers" not in html
+    assert "Read 1 saved judgment<" in html and "1 saved judgments" not in html
+    assert "1 matchup." in html
+
+
+def test_judges_use_display_names_and_model_ids_only_in_the_settings_line(tmp_path):
+    from crest_ais.analysis import analyze
+    from crest_ais.report import JUDGE_NAMES, _judge_label
+    assert JUDGE_NAMES == {"anthropic": "Claude Fable 5.1", "gemini": "Gemini 4 Argon", "openai": "GPT-6 Astra"}
+    assert _judge_label("mistral") == "mistral"
+    plan = three_judge_plan()
+    plan["judges"]["anthropic"].update(effort="high")
+    html = render(analyze(plan, results_for(plan, three_judge_winner)), tmp_path)
+    settings = html.split('id="run-audit">', 1)[1].split("</p>", 1)[0]
+    assert settings.startswith("Judges: Claude Fable 5.1 (<code>claude-fable-5-1</code>, effort high), "
+                               "Gemini 4 Argon (<code>gemini-4-argon</code>")
+    assert "GPT-6 Astra (<code>gpt-6-astra</code>" in settings
+    for hidden in ("concurrency", "timeout", "worker", "poll"):
+        assert hidden not in settings
+    # Outside that line, model ids live only in data attributes, never in visible text.
+    visible = "".join(Document(html.replace(settings, "")).text)
+    for model in ("claude-fable-5-1", "gemini-4-argon", "gpt-6-astra"):
+        assert model not in visible
+    assert "<h3>Claude Fable 5.1</h3>" in html and "<h3>anthropic" not in html
+    assert ">anthropic<" not in html and "anthropic vs." not in html
+
+
+def test_refusals_get_one_full_statement_and_short_references_elsewhere(tmp_path):
+    from crest_ais.analysis import analyze
+    plan = three_judge_plan()
+    refused = [job["key"] for job in plan["jobs"]
+               if job["judge"] == "anthropic" and job["pair_id"] == plan["jobs"][0]["pair_id"]]
+    results = [row for row in results_for(plan, three_judge_winner) if row["key"] not in refused]
+    declined = {key: {"kind": "refusal", "category": "bio", "cost_usd": 0.625} for key in refused}
+    html = render(analyze(plan, results, declined=declined), tmp_path)
+    progress = html.split('<section id="progress"', 1)[1].split("</section>", 1)[0]
+    assert ("Claude Fable 5.1 refused, on safety grounds, to judge 1 paper pair. That pair is scored on the other "
+            "two judges’ 4 votes, and nothing is filled in for the missing votes. Every request for the 2 refused "
+            "judgments was billed: $1.25, included in the total.") in progress
+    assert html.count("refused, on safety grounds") == 1 and html.count("nothing is filled in") == 1
+    assert "That gives 6 votes per pair (4 for the pair Claude Fable 5.1 refused)." in html
+    assert "Rows marked “Claude Fable 5.1 refused” have 4 votes instead of 6." in html
+    assert html.count("Claude Fable 5.1 refused this pair") == 1
+    visible = "".join(Document(html).text)
+    assert "declin" not in visible and "anthropic" not in visible
+
+
+def test_paper_records_and_judgment_identifiers_are_not_dumped(report, tmp_path):
+    report["papers"][0].update(blinding_audit={"geometry": [[1, 2, 3, 4]]}, sha256="ab" * 32,
+                               full_text_path="results/prepared/text/abc/full.txt")
+    report["judgments"] = [judgment()]
+    html = render(report, tmp_path)
+    doc = Document(html)
+    assert not any(tag in {"pre", "details"} and attrs.get("class") in {"paper-record", "judgment-record"}
+                   for tag, attrs in doc.tags)
+    assert "<pre" not in html and "Paper record" not in html and "Record identifiers" not in html
+    assert "blinding_audit" not in html and "ab" * 32 not in html and "results/prepared" not in html
+    # The judgment key stays available to auditors as an attribute, not as visible text.
+    assert any(tag == "article" and attrs.get("data-key") == "j1" for tag, attrs in doc.tags)
+    assert "Judgment: j1" not in html
+
+
+def test_paper_notes_render_only_for_fields_the_record_carries(report, tmp_path):
+    first, second = report["papers"]
+    first.update(observed_artifact_issues=[{"type": "released_manuscript_template_placeholder", "text": "RESULTS HERE"}],
+                 seed=2)
+    second.update(human_setup_notes="Humans picked the workshop theme", seed=None,
+                  observed_artifact_issues=[{"type": "other_issue", "text": "ignored"}])
+    html = render(report, tmp_path)
+    assert "The released PDF contains unfilled template text, such as “RESULTS HERE”." in html
+    assert "Human setup: Humans picked the workshop theme." in html
+    assert "Learning · run 2<small>" in html and "Optimization<small>" in html
+    assert html.count('class="paper-note"') == 2 and "ignored" not in html
+
+
+def test_wide_tables_have_a_scroll_cue_and_positioned_scroll_boxes(report, tmp_path):
+    complete(report)
+    html = render(report, tmp_path)
+    assert html.count('class="scroll-hint"') == html.count('class="table-scroll')
+    css = html.split("<style>", 1)[1].split("</style>", 1)[0]
+    assert ".table-scroll{position:relative;" in css
+    assert "position:sticky;left:0" in css
+    assert "overscroll-behavior:contain" not in css.split("@media(hover:hover)")[0]

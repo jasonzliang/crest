@@ -1,7 +1,7 @@
 """Design-based analysis of uniformly sampled, released-paper comparisons.
 
-A paper pair is the sampling unit. Its four overall judge/order verdicts are
-averaged before taking equally weighted opponent means. Individual votes
+A paper pair is the sampling unit. Its overall verdicts, one per judge and
+answer order, are averaged before taking equally weighted opponent means. Individual votes
 and papers shared by multiple sampled pairs are never treated as independent
 replicates. No network access or stochastic resampling is used here.
 """
@@ -15,6 +15,15 @@ from statistics import fmean, variance
 
 from crest_ais.protocol import PROTOCOL_VERSION, plan_rubric_kind, requires_reason_quality, validate_plan_fingerprint, validate_verdict
 from crest.rubrics import AUT_KIND, protocol_rubric_kind
+
+
+NUMBER_WORDS = ("zero", "one", "two", "three", "four", "five", "six",
+                "seven", "eight", "nine", "ten", "eleven", "twelve")
+
+
+def number_word(value):
+    """Spell small counts so generated sentences read like the original two-judge text."""
+    return NUMBER_WORDS[value] if 0 <= value < len(NUMBER_WORDS) else str(value)
 
 
 def _identity(value, name):
@@ -37,8 +46,8 @@ def _validate_plan(plan):
     agents, judges = plan.get("agents"), plan.get("judges")
     if not isinstance(agents, dict) or len(agents) < 2:
         raise ValueError("plan must contain at least two agents")
-    if not isinstance(judges, dict) or len(judges) != 2:
-        raise ValueError("plan must contain exactly two judges")
+    if not isinstance(judges, dict) or len(judges) < 2:
+        raise ValueError("plan must contain at least two judges")
     for identity in list(agents) + list(judges):
         _identity(identity, "agent/judge id")
     requested_sample = _count(plan.get("pairs_per_matchup"), "pairs_per_matchup")
@@ -133,11 +142,21 @@ def _validate_plan(plan):
         expected_cells = {(judge, order) for judge in judges
                           for order in (block["papers"], block["papers"][::-1])}
         if set(block["jobs"]) != expected_cells:
-            raise ValueError("each pair must schedule both judges in both orders")
+            raise ValueError("each pair must schedule every judge in both orders")
         stratum_blocks[block["agents"]].append(block)
     for pair, stratum in strata.items():
         if len(stratum_blocks[pair]) != stratum["sampled_pairs"]:
             raise ValueError("stratum sample count disagrees with scheduled pairs")
+    extension = plan.get("extension")
+    if isinstance(extension, dict) and extension.get("kind") == "judge_addition":
+        added = extension.get("added_judges")
+        if not isinstance(added, list) or not added or not set(added) < set(judges):
+            raise ValueError("judge addition must name added judges from the plan")
+        # Reports state that added judges read the earlier judges' exact prompts.
+        for block in blocks.values():
+            for order in (block["papers"], block["papers"][::-1]):
+                if len({jobs[block["jobs"][judge, order]].get("prompt") for judge in judges}) != 1:
+                    raise ValueError("added judges must read the frozen prompt for each pair and order")
     return agents, judges, catalogs, selected, strata, jobs, blocks
 
 
@@ -243,28 +262,36 @@ def _sensitivity_diagnostics(agents, judges, catalog, selected, blocks, complete
         for kind, groups, destination in (("judge", judges, judge_scores),
                                           ("order", ("canonical", "reversed"), order_scores)):
             for group in groups:
-                matching = [key for key in block["jobs"].values()
-                            if (jobs[key]["judge"] == group if kind == "judge" else
-                                (jobs[key]["order"] == list(block["papers"])) == (group == "canonical"))]
+                matching = [key for key in block["jobs"].values() if key in results
+                            and (jobs[key]["judge"] == group if kind == "judge" else
+                                 (jobs[key]["order"] == list(block["papers"])) == (group == "canonical"))]
+                if not matching:  # This judge declined the pair; its votes are absent, not replaced.
+                    continue
                 score = fmean(_winner_paper(jobs[key], results[key]) == block["papers"][0] for key in matching)
                 destination[group][a][b].append(score)
                 destination[group][b][a].append(1 - score)
     return {"per_judge": {judge: {agent: _observed_summary(agent, judge_scores[judge][agent], agents, 2)
                                   for agent in agents} for judge in judges},
-            "per_order": {order: {agent: _observed_summary(agent, order_scores[order][agent], agents, 2)
+            "per_order": {order: {agent: _observed_summary(agent, order_scores[order][agent], agents, len(judges))
                                   for agent in agents} for order in ("canonical", "reversed")},
             "paper_appearances": appearances, "pool_sizes": pool_sizes,
             "per_paper": {identity: {"agent": paper["agent"],
-                                     **_observed_summary(paper["agent"], paper_scores[identity], agents, 4)}
+                                     **_observed_summary(paper["agent"], paper_scores[identity], agents, 2 * len(judges))}
                           for identity, paper in selected.items()},
-            "sensitivity_note": "Judge/order rates use complete blocks and equal opponent means. Per-paper rates condition on that observed manuscript and its sampled matches; missing opponent cells stay unavailable. Appearance counts are actual pair reuse, not independent paper samples or equal realized paper influence. Two-paper pools cannot support inference about unseen system outputs."}
+            "sensitivity_note": "Judge/order rates use complete blocks and equal opponent means; a judge that declined a pair has no rate for it. Per-paper rates condition on that observed manuscript and its sampled matches; missing opponent cells stay unavailable. Appearance counts are actual pair reuse, not independent paper samples or equal realized paper influence. Two-paper pools cannot support inference about unseen system outputs."}
 
 
-def _diagnostics(blocks, results, jobs):
-    """Available judgments diagnose position; matched cells diagnose disagreement."""
+def _diagnostics(judges, blocks, results, jobs):
+    """Available judgments diagnose position; matched cells diagnose disagreement.
+
+    Judge disagreement pools every unordered judge pair in both answer orders;
+    the per-pair counts show which judges agree with each other.
+    """
     numerators = {"position_a": 0, "swapped_inconsistency": 0, "judge_disagreement": 0}
     denominators = dict.fromkeys(numerators, 0)
     by_judge = defaultdict(lambda: {"position_a_count": 0, "decisions": 0})
+    judge_pairs = list(combinations(sorted(judges), 2))
+    pair_counts = {pair: {"count": 0, "denominator": 0} for pair in judge_pairs}
 
     def add(kind, condition):
         numerators[kind] += int(condition)
@@ -281,49 +308,92 @@ def _diagnostics(blocks, results, jobs):
         for (judge, order), key in block["jobs"].items():
             if key in results:
                 winners[judge, order] = _winner_paper(jobs[key], results[key])
-        judges = sorted({cell[0] for cell in block["jobs"]})
         orders = (block["papers"], block["papers"][::-1])
-        for judge in judges:
+        for judge in sorted(judges):
             cells = [(judge, order) for order in orders]
             if all(cell in winners for cell in cells):
                 add("swapped_inconsistency", winners[cells[0]] != winners[cells[1]])
         for order in orders:
-            cells = [(judge, order) for judge in judges]
-            if all(cell in winners for cell in cells):
-                add("judge_disagreement", winners[cells[0]] != winners[cells[1]])
+            for pair in judge_pairs:
+                cells = [(judge, order) for judge in pair]
+                if all(cell in winners for cell in cells):
+                    disagree = winners[cells[0]] != winners[cells[1]]
+                    add("judge_disagreement", disagree)
+                    pair_counts[pair]["count"] += int(disagree)
+                    pair_counts[pair]["denominator"] += 1
     return {"position_a_pct": _percentage(numerators["position_a"], denominators["position_a"]),
             "swapped_inconsistency_pct": _percentage(numerators["swapped_inconsistency"], denominators["swapped_inconsistency"]),
             "judge_disagreement_pct": _percentage(numerators["judge_disagreement"], denominators["judge_disagreement"]),
             "denominators": denominators, "counts": numerators,
+            "judge_pair_disagreement": {"|".join(pair): {"judges": list(pair),
+                                                         "disagreement_pct": _percentage(counts["count"], counts["denominator"]),
+                                                         **counts}
+                                        for pair, counts in pair_counts.items()},
             "by_judge": {judge: {**counts, "position_a_pct": _percentage(counts["position_a_count"], counts["decisions"])}
                          for judge, counts in sorted(by_judge.items())},
-            "scope": "All available validated judgments; disagreements require both matched cells. Scores use complete four-judgment blocks only."}
+            "scope": ("All available validated judgments; disagreements require both matched cells. "
+                      + ("Judge disagreement pools every judge pair. " if len(judges) > 2 else "")
+                      + f"Scores use complete {number_word(2 * len(judges))}-judgment blocks only.")}
 
 
-def analyze(plan: dict, results: list[dict]) -> dict:
-    """Validate frozen inputs and return a JSON-serializable contract report."""
+def _validate_declined(declined, jobs, blocks, results):
+    """A judge may decline a whole pair (both orders); its votes are then absent, never invented."""
+    declined = dict(declined or {})
+    for key in declined:
+        if key not in jobs or key in results:
+            raise ValueError("declined judgments must be planned jobs without a verdict")
+    for block in blocks.values():
+        keys = block["jobs"]
+        for judge in {judge for judge, _ in keys}:
+            cells = [key for (cell_judge, _), key in keys.items() if cell_judge == judge]
+            refused = sum(key in declined for key in cells)
+            if refused not in (0, len(cells)):
+                raise ValueError("a judge must decline both orders of a pair or neither")
+        if all(key in declined for key in keys.values()):
+            raise ValueError("every judge declined a pair; it cannot contribute a score")
+    return declined
+
+
+def analyze(plan: dict, results: list[dict], *, declined: dict | None = None) -> dict:
+    """Validate frozen inputs and return a JSON-serializable contract report.
+
+    ``declined`` maps job keys to the reason a judge refused to judge that pair.
+    Such judgments are absent: the pair averages the votes it has, and nothing is
+    filled in for the declining judge.
+    """
     if isinstance(plan, dict) and "fingerprint" in plan:
         validate_plan_fingerprint(plan)
     agents, judges, catalog, selected, strata, jobs, blocks = _validate_plan(plan)
     family = plan_rubric_kind(plan)
     results_by_key = _validate_results(results, jobs, require_reason_quality=requires_reason_quality(plan))
+    declined = _validate_declined(declined, jobs, blocks, results_by_key)
     extension = plan.get("extension")
     posthoc = isinstance(extension, dict) and extension.get("stage") == "post_initial_results"
+    if posthoc and extension.get("kind") == "judge_addition":
+        # Adding a judge leaves the sample unchanged; only an earlier sample or cohort change is post hoc.
+        origin = extension
+        while isinstance(origin, dict) and origin.get("kind") == "judge_addition":
+            origin = origin.get("parent_extension")
+        posthoc = isinstance(origin, dict) and origin.get("stage") == "post_initial_results"
+    # Every judge sees both answer orders; each complete pair averages all of these votes.
+    votes_per_pair = 2 * len(judges)
+    vote_word = number_word(votes_per_pair)
     complete_blocks = {}
     values = defaultdict(list)
     ties = {"overall": 0}
     for pair_id, block in blocks.items():
-        if not all(key in results_by_key for key in block["jobs"].values()):
+        if not all(key in results_by_key or key in declined for key in block["jobs"].values()):
             continue
-        score = fmean(_winner_paper(jobs[key], results_by_key[key]) == block["papers"][0]
-                      for key in block["jobs"].values())
-        complete_blocks[pair_id] = {**block, "score": score}
+        recorded = [key for key in block["jobs"].values() if key in results_by_key]
+        score = fmean(_winner_paper(jobs[key], results_by_key[key]) == block["papers"][0] for key in recorded)
+        complete_blocks[pair_id] = {**block, "score": score, "votes": len(recorded)}
         values[block["agents"]].append(score)
         ties["overall"] += int(math.isclose(score, 0.5, abs_tol=1e-12))
 
     completed = len(results_by_key)
-    full_plan = bool(jobs) and completed == len(jobs)
-    status = "complete" if full_plan else "partial" if completed else "not_judged"
+    full_plan = bool(jobs) and completed + len(declined) == len(jobs)
+    used_votes = sum(block["votes"] for block in complete_blocks.values())
+    status ="complete" if full_plan else "partial" if completed else "not_judged"
     comparisons = []
     family_size = len(strata)
     for pair, stratum in strata.items():
@@ -336,7 +406,8 @@ def analyze(plan: dict, results: list[dict]) -> dict:
             sampling["overall"]["variance_valid_for_design"] = False
         comparisons.append({"agents": list(pair), "overall_pct_a": 100 * fmean(observed) if n else None,
                             "complete_pairs": n, "sampled_pairs": stratum["sampled_pairs"],
-                            "population_pairs": stratum["population_pairs"], "decision_count": n * 4,
+                            "population_pairs": stratum["population_pairs"],
+                            "decision_count": sum(block["votes"] for block in complete_blocks.values() if block["agents"] == pair),
                             "sampling": sampling})
 
     rankings = []
@@ -382,7 +453,11 @@ def analyze(plan: dict, results: list[dict]) -> dict:
     per_agent = {a: {"downloaded": sum(p["agent"] == a and bool(p.get("pdf_path")) for p in catalog.values()),
                      "eligible": sum(p["agent"] == a and p.get("eligible_primary") is True for p in catalog.values()),
                      "selected": sum(p["agent"] == a for p in selected.values())} for a in agents}
-    diagnostics = _diagnostics(blocks, results_by_key, jobs)
+    diagnostics = _diagnostics(judges, blocks, results_by_key, jobs)
+    if declined:
+        diagnostics["scope"] = diagnostics["scope"].replace(
+            f"Scores use complete {vote_word}-judgment blocks only.",
+            f"Scores use complete blocks of up to {vote_word} judgments; declined judgments are absent, not replaced.")
     diagnostics.update(_sensitivity_diagnostics(agents, judges, catalog, selected, blocks,
                                                 complete_blocks, results_by_key, jobs))
     diagnostics["ties"] = {"pair_blocks": ties,
@@ -399,13 +474,16 @@ def analyze(plan: dict, results: list[dict]) -> dict:
                               "papers": deepcopy(job["papers"]), "order": deepcopy(job["order"]),
                               "judge": job["judge"], "model": result.get("model"),
                               "cost_usd": result.get("cost_usd"), "used_in_scores": job["pair_id"] in complete_blocks})
+    serfling_method = ("The ranges use Serfling’s bound for sampling without replacement"
+                       + (f", widened so all {family_size} matchups are covered at once." if family_size > 1 else "."))
     report = {"version": plan.get("version", PROTOCOL_VERSION), "rubric_kind": family,
             "generated_at": datetime.now(timezone.utc).isoformat(), "status": status,
             "agents": deepcopy(agents), "judges": deepcopy(judges), "selection": deepcopy(plan.get("selection", {})),
             "coverage": {"expected_jobs": len(jobs), "completed_jobs": completed,
-                         "usable_jobs": len(complete_blocks) * 4, "expected_pairs": len(blocks),
+                         "declined_jobs": len(declined),
+                         "usable_jobs": used_votes, "expected_pairs": len(blocks),
                          "complete_pairs": len(complete_blocks), "expected_decisions": len(jobs),
-                         "used_decisions": len(complete_blocks) * 4,
+                         "used_decisions": used_votes,
                          "downloaded_papers": sum(c["downloaded"] for c in per_agent.values()),
                          "eligible_papers": sum(c["eligible"] for c in per_agent.values()),
                          "selected_papers": len(selected), "per_agent": per_agent},
@@ -414,7 +492,11 @@ def analyze(plan: dict, results: list[dict]) -> dict:
                       "unknown_jobs": sum(r.get("cost_usd") is None for r in results_by_key.values()),
                       "completed_jobs": completed},
             "papers": deepcopy(list(selected.values())), "catalog": deepcopy(list(catalog.values())), "judgments": judgments,
-            "uncertainty": {"method": "Simultaneous Serfling finite-population bounds with Bonferroni correction, intersected with deterministic unsampled-mass bounds.",
+            "declined": [{"key": key, "judge": jobs[key]["judge"], "pair_id": jobs[key]["pair_id"],
+                          "papers": deepcopy(jobs[key]["papers"]), "order": deepcopy(jobs[key]["order"]),
+                          "agents": deepcopy(jobs[key]["agents"]), "reason": reason}
+                         for key, reason in declined.items()],
+            "uncertainty": {"method": serfling_method,
                             "confidence": 0.95, "coverage_guarantee": "at least 95% under the stated fixed-design assumptions",
                             "nominal_fixed_size_level": 0.95, "inference_scope": "fixed_design_sampling",
                             "sequential_valid": False,
@@ -425,50 +507,48 @@ def analyze(plan: dict, results: list[dict]) -> dict:
                             "bound_formula": "sqrt((1-(n-1)/N)*log(2*K/alpha)/(2*n)); alpha=.05, K=number of declared matchups. A census has zero selection uncertainty.",
                             "references": [{"title": "Bardenet and Maillard, Concentration inequalities for sampling without replacement",
                                             "url": "https://arxiv.org/html/1309.4029v2",
-                                            "location": "Proposition 2.2 and the preceding classical Serfling inequality"}],
-                            "note": "Conditional on frozen eligible released-paper pools and the fixed judge/order instrument. Uniform sampling without replacement is within matchup; paper-pair blocks are the units, each averaging four overall creativity votes. Bounds cover all matchup means jointly and propagate through equal opponent averages. Census strata have zero sampling uncertainty. These are not confidence intervals for future systems, judge reliability, or future papers. Primary intervals require a complete plan; partial-data variances are descriptive only. Variances use scores in [0,1] and standard errors use percentage points. Agent design variances assume independent matchup selection. Shared papers do not invalidate finite-pool pair-selection variance; paper-generation uncertainty is outside this estimand."},
+                                            "location": "Proposition 2.2 (Serfling’s bound) and the second inequality of Theorem 2.4"}],
+                            "note": ("The sample size was fixed before judging, so the ranges hold with at least 95% confidence"
+                                     + (f", jointly across all {family_size} matchups" if family_size > 1 else "")
+                                     + ". A matchup where every possible pair was judged has no sampling uncertainty.")},
+            # Reader-facing caveats: the report shows this list as "What this comparison leaves uncertain".
             "limitations": [
-                "This compares fixed released public-paper pools, not future-system capability or a controlled benchmark.",
-                "Topic, date, model backbone, compute, and publication-selection differences confound causal interpretation.",
-                "PDF text extraction excludes visual plot inspection and may omit equations, tables, or other content.",
-                "Only two judges and two answer orders define the fixed instrument; their errors and rubric validity are not quantified by sampling bands.",
-                "Only complete four-judgment paper-pair blocks contribute scores. Partial completion may be selective; primary ranks require the entire plan.",
-                ("Opponent matchups receive equal weight, regardless of released collection sizes or sampled pair counts. Each verdict is one overall creativity choice guided jointly by Fluency, Flexibility, and Originality. These papers address different research tasks, so expressed idea counts confer no fluency advantage. This AUT-inspired research-product comparison is not a standardized AUT score or a measure of divergent-thinking capacity."
-                 if family == AUT_KIND else
-                 "Opponent matchups receive equal weight, regardless of released collection sizes or sampled pair counts. Each verdict is one overall creativity choice guided jointly by New, Useful, and Surprising."),
-                "Small eligible pools, including Agentic v3's two autonomous papers when present, sharply limit representativeness.",
-                "Costs are usage-based estimates rather than provider invoices; missing usage is unknown, not free, and can leave charges unrecorded.",
+                "These scientists differ in topics, release dates, underlying AI models and which papers their teams chose to release. Score gaps can reflect any of these differences.",
+                "Judges read text extracted from each PDF. They did not see figure images, extraction can drop equations or tables, and nobody checked the experiments.",
+                "The sampling ranges cover only which pairs were drawn. They do not cover judge error, rerun noise, model updates, or whether the rubric captures creativity.",
+                *([] if full_plan else
+                  ["Only paper pairs with all their votes recorded count toward scores, and the ranking waits until every planned judgment is recorded or refused."]),
+                *(["These papers address different research tasks, so expressed idea counts confer no fluency advantage. This AUT-inspired comparison is not a standardized AUT score or a measure of divergent-thinking capacity."]
+                  if family == AUT_KIND else []),
+                "The results describe these released papers only. Future papers from the same systems could rank differently.",
             ]}
     if isinstance(extension, dict):
         report["extension"] = deepcopy(extension)
     if posthoc:
-        if extension.get("kind") == "cohort_addition":
-            previous_count = extension["previous_agent_count"]
+        # A judge addition keeps its parent's sample, so the parent explains any cohort or sample-size change.
+        # The report renders the sample-growth history from the extension chain; the note says what it means.
+        basis = extension
+        if extension.get("kind") == "judge_addition":
+            while isinstance(basis, dict) and basis.get("kind") == "judge_addition":
+                basis = basis.get("parent_extension")
+            if not isinstance(basis, dict) or basis.get("stage") != "post_initial_results":
+                basis = None
+        if basis is None:
+            sampling_assumption = "Predeclared SRS without replacement in each matchup; no adaptive sample-size choice or optional stopping."
+        elif basis.get("kind") == "cohort_addition":
+            previous_count = basis["previous_agent_count"]
             current_count = len(agents)
             report["cohort_comparability"] = {
                 "previous_agent_count": previous_count, "current_agent_count": current_count,
                 "previous_opponents": previous_count - 1, "current_opponents": current_count - 1,
                 "directly_comparable": False}
-            decision_note = (f"The cohort expanded from {previous_count} to {current_count} scientists after earlier results were observed. "
-                             f"Each current score averages {current_count - 1} opponents equally; the previous cohort averaged {previous_count - 1}. "
-                             "These percentages summarize different opponent sets and are not directly comparable. "
-                             "Each opponent mean receives equal weight even when matchups contain different numbers of paper pairs.")
             sampling_assumption = ("Existing scientist matchups and their recorded verdicts retained. New scientist matchups sampled uniformly "
                                    "without replacement from frozen paper pools after earlier cohort results were observed.")
         else:
-            initial_pairs = extension.get("original_pairs")
-            initial_per_matchup = (initial_pairs // len(strata)
-                                   if isinstance(initial_pairs, int) and initial_pairs % len(strata) == 0 else None)
-            initial_description = (f"the initial {initial_per_matchup}-pair-per-matchup results"
-                                   if initial_per_matchup is not None else "the initial results")
-            target = extension.get("target_pairs_per_matchup", plan["pairs_per_matchup"])
-            decision_note = f"The target of {target} paper pairs per matchup was chosen after observing {initial_description}."
             sampling_assumption = ("Original sampled pairs retained; additional pairs drawn uniformly without replacement from unused pairs "
                                    "within matchup. The final target was chosen after initial results were observed.")
-        adaptive_note = (decision_note + " The displayed ranges use the nominal 95% fixed-size calculation as an exploratory reference. "
-                         "They have no 95% coverage guarantee for this post hoc extension and are not sequentially valid.")
         report["uncertainty"].update(
-            method="Exploratory fixed-size Serfling reference ranges with Bonferroni correction, intersected with deterministic unsampled-mass bounds.",
+            method=serfling_method,
             confidence=None, coverage_guarantee="No coverage guarantee for the post hoc extension; these are exploratory reference ranges.",
             inference_scope="exploratory_fixed_size_reference",
             assumptions=[
@@ -476,9 +556,5 @@ def analyze(plan: dict, results: list[dict]) -> dict:
                 sampling_assumption,
                 "Reference ranges exclude judge stochasticity, model drift, publication selection, and unseen outputs.",
             ],
-            note=(adaptive_note + " Calculations condition on the frozen released-paper pools and fixed judge/order instrument. "
-                  "Each pair averages four overall creativity votes; agent summaries weight opponents equally. "
-                  "Variance estimates and standard errors are fixed-size descriptive references for this extension. "
-                  "These ranges do not quantify uncertainty about future systems, future papers, or judge reliability."))
-        report["limitations"].append(adaptive_note)
+            note="The range formula assumes a sample size fixed in advance, so treat these ranges as rough guides, not 95% confidence intervals.")
     return report

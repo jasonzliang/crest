@@ -476,3 +476,65 @@ def add_agent_plan(parent: dict, new_catalog: list[dict], new_agents: dict, data
                          "note": "The cohort was expanded after initial results. Existing matchup inputs and verdicts are retained unchanged; only added scientist matchups are sampled and judged. Overall percentages now average over the expanded opponent set."}
     plan["fingerprint"] = plan_fingerprint(plan)
     return plan
+
+
+JUDGE_EXTENSION_VERSION = "crest-ais-judge-extension-v1"
+
+
+def add_judge_plan(parent: dict, new_judges: dict, data_root: Path, *,
+                   parent_run_dir: str | None = None) -> dict:
+    """Add judges to every frozen paper pair without changing any existing job.
+
+    Each added job reuses the exact prompt string of the existing jobs for the
+    same pair and order, so the new judge reads byte-identical input under the
+    same rubric, presentation, and verdict schema. Only the judge id and its
+    settings differ, which gives every added job its own content-addressed key.
+    """
+    if not new_judges or set(new_judges) & set(parent["judges"]):
+        raise ValueError("Added judge ids must be nonempty and disjoint from existing judges")
+    for name, settings in new_judges.items():
+        if not isinstance(name, str) or not name or not isinstance(settings, dict) or not settings.get("model"):
+            raise ValueError("Each added judge needs an id and settings with a model")
+    # Validate every parent identity, prompt, and text/PDF hash with a no-addition draw.
+    extend_plan(parent, data_root, pairs_per_matchup=parent["pairs_per_matchup"],
+                extension_seed=0, parent_run_dir=parent_run_dir)
+    root = Path(data_root).resolve()
+    records = {paper["id"]: paper for paper in parent["catalog"]}
+    question = json.loads(parent["jobs"][0]["prompt"].split("UNTRUSTED INPUT DATA (JSON):\n", 1)[1])["question"]
+    blocks, prompts = {}, {}
+    for job in parent["jobs"]:
+        blocks.setdefault(tuple(job["papers"]), []).append(job)
+        prompt = prompts.setdefault((job["pair_id"], tuple(job["order"])), job["prompt"])
+        if prompt != job["prompt"]:
+            raise ValueError("Parent judges received different prompts for the same pair and order")
+    texts = {}
+    for pair in blocks:
+        for identity in pair:
+            if identity not in texts:
+                paper = records[identity]
+                texts[identity] = within_root(root, paper["blind_text_path"], label="Frozen blinded text").read_text(encoding="utf-8")
+    settings = {name: deepcopy(value) for name, value in sorted(new_judges.items())}
+    additions = []
+    for pair in sorted(blocks):
+        jobs = _frozen_pair_jobs([records[identity] for identity in pair], texts, settings, parent["rubric"], question,
+                                 protocol_version=parent["version"])
+        for job in jobs:
+            if job["prompt"] != prompts.get((job["pair_id"], tuple(job["order"]))):
+                raise ValueError(f"Added judge prompt differs from the frozen prompt: {pair}")
+        additions.extend(jobs)
+    judges = dict(sorted((parent["judges"] | settings).items()))
+    plan = deepcopy(parent)
+    plan.pop("fingerprint", None)
+    plan.update(created_at=datetime.now(timezone.utc).isoformat(), judges=judges,
+                jobs=deepcopy(parent["jobs"]) + additions)
+    plan["selection"].update(judges_per_pair=len(judges))
+    plan["extension"] = {"version": JUDGE_EXTENSION_VERSION, "kind": "judge_addition", "stage": "post_initial_results",
+                         "parent_fingerprint": parent["fingerprint"], "parent_run_dir": parent_run_dir,
+                         "target_pairs_per_matchup": parent["pairs_per_matchup"],
+                         "added_judges": sorted(settings), "previous_judges": sorted(parent["judges"]),
+                         "current_judges": sorted(judges), "original_pairs": len(blocks), "additional_pairs": 0,
+                         "imported_jobs": len(parent["jobs"]), "additional_jobs": len(additions),
+                         "parent_extension": deepcopy(parent.get("extension")),
+                         "note": "Judges were added after the earlier results were observed. Every added judge read the same frozen paper pairs in both orders with byte-identical prompts; earlier verdicts are retained unchanged."}
+    plan["fingerprint"] = plan_fingerprint(plan)
+    return plan

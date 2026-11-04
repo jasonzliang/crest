@@ -10,7 +10,7 @@ from crest_ais.analysis import analyze
 from crest_ais.protocol import make_plan
 
 
-def plan_for(counts=None, sample_size=4):
+def plan_for(counts=None, sample_size=4, judges=("j1", "j2")):
     counts = counts or {"a": 1, "b": 1}
     papers = [
         {"id": f"{agent}{i}", "agent": agent, "title": f"Paper {agent}{i}",
@@ -18,7 +18,7 @@ def plan_for(counts=None, sample_size=4):
         for agent, count in counts.items() for i in range(count)
     ]
     plan = {"version": "crest-ais-overall-v2", "agents": {a: a.upper() for a in counts},
-            "judges": {"j1": {}, "j2": {}}, "papers": papers,
+            "judges": {judge: {} for judge in judges}, "papers": papers,
             "catalog": deepcopy(papers), "selection": {"method": "uniform_without_replacement"},
             "seed": 2026, "pairs_per_matchup": sample_size, "strata": [], "jobs": []}
     for a, b in combinations(counts, 2):
@@ -456,3 +456,158 @@ def test_malformed_plan_cannot_make_an_incomplete_schedule_look_complete(mutatio
         plan["jobs"] = plan["jobs"][4:]
     with pytest.raises(ValueError):
         analyze(plan, [])
+
+
+THREE_JUDGES = ("anthropic", "gemini", "openai")
+# Physical winners by (A-side paper, judge) in (canonical order, reversed order).
+# Pair a0:b0 scores 4/6 for A and pair a1:b0 scores 1/6, so A's macro score is 5/12.
+THREE_JUDGE_CHOICES = {("a0", "anthropic"): ("a", "a"), ("a0", "gemini"): ("a", "a"), ("a0", "openai"): ("b", "b"),
+                       ("a1", "anthropic"): ("a", "b"), ("a1", "gemini"): ("b", "b"), ("a1", "openai"): ("b", "b")}
+
+
+def three_judge_plan():
+    plan = plan_for({"a": 2, "b": 1}, sample_size=2, judges=THREE_JUDGES)
+    plan["judges"] = {"anthropic": {"model": "claude-fable-5-1"}, "gemini": {"model": "gemini-4-argon"},
+                      "openai": {"model": "gpt-6-astra"}}
+    return plan
+
+
+def three_judge_winner(job):
+    canonical, reversed_order = THREE_JUDGE_CHOICES[job["papers"][0], job["judge"]]
+    return canonical if job["order"] == job["papers"] else reversed_order
+
+
+def test_three_judges_average_six_votes_and_report_every_judge_pair():
+    plan = three_judge_plan()
+    report = analyze(plan, results_for(plan, three_judge_winner))
+    assert report["status"] == "complete"
+    assert report["coverage"]["expected_jobs"] == report["coverage"]["usable_jobs"] == 12
+    assert report["coverage"]["used_decisions"] == 12 and report["coverage"]["complete_pairs"] == 2
+    comparison = report["comparisons"][0]
+    assert comparison["overall_pct_a"] == pytest.approx(500 / 12)
+    assert comparison["decision_count"] == 12
+    assert ranking(report, "a")["overall_pct"] == pytest.approx(500 / 12)
+    assert ranking(report, "b")["overall_pct"] == pytest.approx(700 / 12)
+    assert [row["agent"] for row in report["rankings"]] == ["b", "a"]
+    assert ranking(report, "a")["decision_count"] == 12
+    diagnostics = report["diagnostics"]
+    # Each A paper appears in one pair, so its per-paper rate is that pair's six-vote average.
+    assert diagnostics["per_paper"]["a0"]["overall_pct"] == pytest.approx(400 / 6)
+    assert diagnostics["per_paper"]["a1"]["overall_pct"] == pytest.approx(100 / 6)
+    assert diagnostics["per_paper"]["b0"]["overall_pct"] == pytest.approx(700 / 12)
+    assert diagnostics["per_paper"]["a0"]["decision_count"] == 6
+    assert diagnostics["per_paper"]["b0"]["decision_count"] == 12
+    assert diagnostics["ties"]["pair_blocks"]["overall"] == 0
+    # Per judge: (1 + 1/2)/2, (1 + 0)/2, and (0 + 0)/2; their equal mean is the primary score.
+    per_judge = {judge: diagnostics["per_judge"][judge]["a"]["overall_pct"] for judge in THREE_JUDGES}
+    assert per_judge == {"anthropic": 75.0, "gemini": 50.0, "openai": 0.0}
+    assert sum(per_judge.values()) / 3 == pytest.approx(ranking(report, "a")["overall_pct"])
+    assert diagnostics["per_judge"]["openai"]["b"]["overall_pct"] == 100.0
+    assert all(diagnostics["per_judge"][judge]["a"]["decision_count"] == 4 for judge in THREE_JUDGES)
+    assert diagnostics["per_order"]["canonical"]["a"]["overall_pct"] == pytest.approx(50.0)
+    assert diagnostics["per_order"]["reversed"]["a"]["overall_pct"] == pytest.approx(100 / 3)
+    assert diagnostics["per_order"]["canonical"]["a"]["decision_count"] == 6
+    assert diagnostics["position_a_pct"] == pytest.approx(700 / 12)
+    assert diagnostics["swapped_inconsistency_pct"] == pytest.approx(100 / 6)
+    assert diagnostics["judge_disagreement_pct"] == 50.0
+    assert diagnostics["denominators"] == {"position_a": 12, "swapped_inconsistency": 6, "judge_disagreement": 12}
+    assert diagnostics["counts"] == {"position_a": 7, "swapped_inconsistency": 1, "judge_disagreement": 6}
+    assert diagnostics["judge_pair_disagreement"] == {
+        "anthropic|gemini": {"judges": ["anthropic", "gemini"], "disagreement_pct": 25.0, "count": 1, "denominator": 4},
+        "anthropic|openai": {"judges": ["anthropic", "openai"], "disagreement_pct": 75.0, "count": 3, "denominator": 4},
+        "gemini|openai": {"judges": ["gemini", "openai"], "disagreement_pct": 50.0, "count": 2, "denominator": 4}}
+    assert set(diagnostics["by_judge"]) == set(THREE_JUDGES)
+    limitations = " ".join(report["limitations"])
+    assert "The sampling ranges cover only which pairs were drawn." in limitations
+    # A complete plan carries no incomplete-pair caveat.
+    assert "all their votes recorded" not in limitations
+    assert "at least 95% confidence" in report["uncertainty"]["note"]
+    assert "complete six-judgment blocks" in diagnostics["scope"]
+    assert "four" not in json.dumps([report["limitations"], report["uncertainty"]["note"], diagnostics["scope"]])
+    json.dumps(report, allow_nan=False)
+
+
+def test_two_judge_votes_wait_for_the_added_judge_before_scoring():
+    plan = three_judge_plan()
+    results = [r for r, job in zip(results_for(plan, three_judge_winner), plan["jobs"]) if job["judge"] != "openai"]
+    report = analyze(plan, results)
+    assert report["status"] == "partial"
+    assert report["coverage"]["complete_pairs"] == 0 and report["coverage"]["used_decisions"] == 0
+    assert all(row["overall_pct"] is None and row["rank"] is None for row in report["rankings"])
+    assert any("all their votes recorded" in line for line in report["limitations"])
+    pairs = report["diagnostics"]["judge_pair_disagreement"]
+    assert pairs["anthropic|gemini"]["denominator"] == 4 and pairs["anthropic|gemini"]["disagreement_pct"] == 25.0
+    assert pairs["gemini|openai"] == {"judges": ["gemini", "openai"], "disagreement_pct": None, "count": 0, "denominator": 0}
+    assert set(report["diagnostics"]["per_judge"]) == set(THREE_JUDGES)
+
+
+@pytest.mark.parametrize("mutation", ["one_judge", "missing_added_cell", "changed_added_prompt", "unknown_added_judge"])
+def test_three_judge_plan_rejects_missing_cells_and_unmatched_added_judges(mutation):
+    plan = three_judge_plan()
+    plan["extension"] = {"kind": "judge_addition", "stage": "post_initial_results", "added_judges": ["anthropic"]}
+    if mutation == "one_judge":
+        plan = plan_for(judges=("j1",))
+    elif mutation == "missing_added_cell":
+        plan["jobs"] = [job for job in plan["jobs"] if job["key"] != plan["jobs"][0]["key"]]
+    elif mutation == "changed_added_prompt":
+        next(job for job in plan["jobs"] if job["judge"] == "anthropic")["prompt"] += " Changed."
+    else:
+        plan["extension"]["added_judges"] = ["mistral"]
+    with pytest.raises(ValueError, match="judge"):
+        analyze(plan, [])
+
+
+COHORT_PARENT = {"stage": "post_initial_results", "kind": "cohort_addition", "added_agents": ["b"],
+                 "previous_agent_count": 4, "current_agent_count": 5, "original_pairs": 60, "additional_pairs": 36,
+                 "target_pairs_per_matchup": 10,
+                 "parent_extension": {"stage": "post_initial_results", "original_pairs": 36}}
+SAMPLE_PARENT = {"stage": "post_initial_results", "original_pairs": 36, "additional_pairs": 24,
+                 "target_pairs_per_matchup": 10}
+JUDGE_NOTE = ("Judge anthropic (claude-fable-5-1) was added after the two-judge results were observed, making three judges. "
+              "It judged the same frozen paper pairs, in both orders, with byte-identical prompts; earlier verdicts are unchanged.")
+
+
+@pytest.mark.parametrize("parent", ["cohort", "sample_size", "none"])
+def test_judge_addition_keeps_parent_sampling_notes_without_naming_an_added_judge(parent):
+    counts = {"a": 2, "b": 3, "c": 5, "d": 5, "e": 5} if parent == "cohort" else {"a": 4, "b": 4, "c": 4, "d": 4}
+    plan = plan_for(counts, sample_size=10, judges=THREE_JUDGES)
+    plan["judges"]["anthropic"] = {"model": "claude-fable-5-1"}
+    pairs = len({job["pair_id"] for job in plan["jobs"]})
+    plan["extension"] = {
+        "version": "crest-ais-judge-extension-v1", "kind": "judge_addition", "stage": "post_initial_results",
+        "added_judges": ["anthropic"], "previous_judges": ["gemini", "openai"], "current_judges": list(THREE_JUDGES),
+        "original_pairs": pairs, "additional_pairs": 0, "imported_jobs": 4 * pairs, "additional_jobs": 2 * pairs,
+        "target_pairs_per_matchup": 10,
+        "parent_extension": {"cohort": COHORT_PARENT, "sample_size": SAMPLE_PARENT, "none": None}[parent],
+        "note": "Judges were added after the earlier results were observed."}
+    report = analyze(plan, results_for(plan))
+    assert report["coverage"]["used_decisions"] == 6 * pairs
+    assert report["extension"] == plan["extension"]
+    text = json.dumps([report["limitations"], report["uncertainty"]], ensure_ascii=False)
+    assert "added after" not in text and JUDGE_NOTE not in text
+    assert "The sampling ranges cover only which pairs were drawn." in " ".join(report["limitations"])
+    # The report renders the sampling history from the extension chain; analysis text never repeats it.
+    assert "expanded" not in text and "chosen after observing" not in text
+    sampling_assumption = report["uncertainty"]["assumptions"][1]
+    if parent == "none":
+        # A judge addition alone keeps the predeclared fixed design.
+        assert report["uncertainty"]["confidence"] == 0.95
+        assert report["uncertainty"]["inference_scope"] == "fixed_design_sampling"
+        assert "cohort_comparability" not in report
+        assert sampling_assumption.startswith("Predeclared SRS without replacement")
+    else:
+        assert report["uncertainty"]["confidence"] is None
+        assert report["uncertainty"]["inference_scope"] == "exploratory_fixed_size_reference"
+        assert all(not r["design_sampling"]["overall"]["variance_valid_for_design"] for r in report["rankings"])
+        assert report["uncertainty"]["note"] == ("The range formula assumes a sample size fixed in advance, "
+                                                 "so treat these ranges as rough guides, not 95% confidence intervals.")
+        assert not any("rough guides" in line for line in report["limitations"])
+        if parent == "cohort":
+            assert report["cohort_comparability"] == {
+                "previous_agent_count": 4, "current_agent_count": 5,
+                "previous_opponents": 3, "current_opponents": 4, "directly_comparable": False}
+            assert sampling_assumption.startswith("Existing scientist matchups and their recorded verdicts retained.")
+        else:
+            assert "cohort_comparability" not in report
+            assert sampling_assumption.startswith("Original sampled pairs retained;")
+    assert "\N{EM DASH}" not in json.dumps([report["limitations"], report["uncertainty"]], ensure_ascii=False)

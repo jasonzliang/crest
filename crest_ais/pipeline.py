@@ -13,9 +13,10 @@ from pathlib import Path
 import sys
 
 from crest.cache import Cache, digest, write_json
-from .protocol import PROTOCOL_VERSION, add_agent_plan, extend_plan, parse_verdict, requires_reason_quality, validate_verdict, validate_plan_fingerprint
+from .protocol import LEGACY_PROTOCOL_VERSION, PROTOCOL_VERSION, add_agent_plan, add_judge_plan, extend_plan, parse_verdict, requires_reason_quality, validate_verdict, validate_plan_fingerprint
 
 TERMINAL_FAILURES = {"invalid_verdict", "failed", "submission_unknown"}
+PROVIDERS = {"openai", "gemini", "anthropic"}
 
 
 def save_plan(plan: dict, run_dir: Path) -> None:
@@ -39,7 +40,7 @@ def _money(value):
 
 def _safe_error(error: Exception) -> str:
     message = str(error)
-    for name in ("OPENAI_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY"):
+    for name in ("OPENAI_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"):
         secret = os.environ.get(name)
         if secret:
             message = message.replace(secret, "[credential redacted]")
@@ -56,6 +57,16 @@ def _account(state: dict, judge: str, settings: dict) -> dict:
     candidates = [{"cost_usd": _money(state.get("observed_cost_usd")),
                    "usage": state.get("observed_usage") or {},
                    "model": settings.get("model"), "warnings": []}]
+    if judge == "anthropic":
+        from .providers.anthropic import account_state
+        try:
+            observed = account_state(state)
+        except (ValueError, TypeError, KeyError):
+            observed = None
+        if observed is not None:
+            usage, cost = observed
+            candidates.append({"usage": usage, "cost_usd": _money(cost),
+                               "model": settings.get("model"), "warnings": []})
     for field in ("pre_cancel_raw", "raw", "cancellation"):
         raw = state.get(field)
         if not isinstance(raw, dict):
@@ -128,6 +139,12 @@ def create_cohort_extension(source_run: Path, run_dir: Path, data_root: Path, *,
     return _prepare_extension(source_run, run_dir, data_root,
         plan_builder=lambda parent, root, source: add_agent_plan(parent, new_catalog, new_agents, root,
             pairs_per_matchup=pairs_per_matchup, addition_seed=addition_seed, parent_run_dir=source))
+
+
+def create_judge_extension(source_run: Path, run_dir: Path, data_root: Path, *, new_judges: dict) -> dict:
+    """Add judges to every frozen pair with the parent's exact prompts; import all paid votes."""
+    return _prepare_extension(source_run, run_dir, data_root,
+        plan_builder=lambda parent, root, source: add_judge_plan(parent, new_judges, root, parent_run_dir=source))
 
 
 def _prepare_extension(source_run: Path, run_dir: Path, data_root: Path, *, plan_builder) -> dict:
@@ -255,6 +272,8 @@ def _preflight(tasks: list[dict], cache: Cache, provided: dict) -> None:
         missing.append("OPENAI_API_KEY")
     if "gemini" in required and not (os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")):
         missing.append("GOOGLE_API_KEY or GEMINI_API_KEY")
+    if "anthropic" in required and not os.environ.get("ANTHROPIC_API_KEY"):
+        missing.append("ANTHROPIC_API_KEY")
     if missing:
         raise ValueError("Set " + ", ".join(missing) + " before uncached judging")
 
@@ -266,6 +285,20 @@ def _reject_superseded(run_dir: Path) -> None:
         replacement = (marker.get("replacement_run_dir") or marker.get("corrected_run_dir")
                        or marker.get("replacement_run") or "the corrected run recorded in superseded.json")
         raise ValueError(f"This run is superseded and cannot dispatch judging jobs. Use {replacement}. Reason: {marker.get('reason', 'input extraction was corrected')}")
+
+
+def _legacy_added_judges(plan: dict) -> set | None:
+    """Added judges of a legacy-protocol judge addition, or None for any other plan."""
+    extension = plan.get("extension")
+    if (plan.get("version") == LEGACY_PROTOCOL_VERSION and isinstance(extension, dict)
+            and extension.get("kind") == "judge_addition" and extension.get("added_judges")):
+        return set(extension["added_judges"])
+    return None
+
+
+def imported_job_count(extension: dict) -> int:
+    """Parent jobs an extension imports; older extensions always had four per pair."""
+    return extension.get("imported_jobs", extension["original_pairs"] * 4)
 
 
 def _check_extension_ready(plan: dict, run_dir: Path) -> None:
@@ -286,7 +319,7 @@ def _check_extension_ready(plan: dict, run_dir: Path) -> None:
         imports = json.loads((run_dir / "imported_results.json").read_text(encoding="utf-8"))
         results = {row["key"]: row for row in load_results(run_dir)}
         summary = json.loads((run_dir / "judging.json").read_text(encoding="utf-8"))
-        if (metadata != extension or len(imports) != extension["original_pairs"] * 4
+        if (metadata != extension or len(imports) != imported_job_count(extension)
                 or summary.get("expected_jobs") != len(plan["jobs"])
                 or summary.get("completed_jobs", 0) < len(imports)
                 or any(results.get(row["key"]) != row for row in imports)):
@@ -296,7 +329,7 @@ def _check_extension_ready(plan: dict, run_dir: Path) -> None:
         if not imports_path.is_file():
             raise ValueError("Extension preparation is not ready; imported results are missing")
         imports = json.loads(imports_path.read_text(encoding="utf-8"))
-        if len(imports) != extension["original_pairs"] * 4:
+        if len(imports) != imported_job_count(extension):
             raise ValueError("Extension preparation is not ready; imported-result count differs")
         source = extension.get("parent_run_dir")
         if source:
@@ -352,7 +385,10 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
         raise ValueError("Duplicate planned job keys")
     run_dir = Path(run_dir).expanduser().resolve()
     _reject_superseded(run_dir)
-    if plan.get("version") != PROTOCOL_VERSION:
+    # A judge added to a legacy run must read that run's exact frozen prompts, so
+    # only the added judges' jobs of a legacy judge addition may be dispatched.
+    legacy_added = _legacy_added_judges(plan)
+    if plan.get("version") != PROTOCOL_VERSION and legacy_added is None:
         raise ValueError(f"Plan protocol version must be {PROTOCOL_VERSION}; create a new overall-judgment plan before judging")
     save_plan(plan, run_dir)
     cache = Cache(run_dir / ".cache" / "judgments")
@@ -445,8 +481,10 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
                     return
                 _reject_superseded(run_dir)
                 name = task["judge"]
+                if legacy_added is not None and name not in legacy_added:
+                    raise ValueError("A legacy judge addition dispatches only its added judges; existing verdicts must be imported")
                 if name not in resolved_providers:
-                    if name not in {"openai", "gemini"}:
+                    if name not in PROVIDERS:
                         raise ValueError(f"Unknown provider: {name}")
                     resolved_providers[name] = importlib.import_module("crest_ais.providers." + name)
                 provider = resolved_providers[name]

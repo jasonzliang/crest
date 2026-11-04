@@ -16,7 +16,7 @@ from crest.cache import write_json
 from crest.config import DEFAULT_CONFIG as CREST_DEFAULT_CONFIG
 from crest.rubrics import DEFAULT_NUS_RUBRIC
 from .catalog import DEFAULT_AGENTS, prepare_catalog
-from .pipeline import create_cohort_extension, create_extension, load_results, run_judging, save_plan
+from .pipeline import create_cohort_extension, create_extension, create_judge_extension, imported_job_count, load_results, run_judging, save_plan
 from .protocol import make_plan
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
@@ -41,18 +41,39 @@ def load_config(path: Path | None = None, *, data_root: Path | None = None) -> d
     overrides = config.get("judges", {})
     if set(judges) != {"openai", "gemini"} or set(overrides) - set(judges):
         raise ValueError("Judges must include openai and gemini; overrides may name only those two")
-    resolved = {}
-    for name, settings in sorted(judges.items()):
-        from importlib import import_module
-        adapter = import_module("crest_ais.providers." + name)
-        merged = {**settings, **overrides.get(name, {})}
-        merged.update(concurrency=min(2, max(1, int(merged.get("concurrency", 2)))),
-                      initial_concurrency=min(2, max(1, int(merged.get("initial_concurrency", 2)))),
-                      timeout_seconds=900, poll_interval_seconds=5,
-                      _adapter_version=adapter.ADAPTER_VERSION)
-        resolved[name] = merged
-    config["judges"] = resolved
+    config["judges"] = {name: frozen_judge_settings(name, {**settings, **overrides.get(name, {})})
+                        for name, settings in sorted(judges.items())}
     return config
+
+
+def frozen_judge_settings(name: str, settings: dict) -> dict:
+    """Normalize judge settings into the frozen paper-comparison instrument.
+
+    Every judge gets the same request limits: at most two planned workers,
+    a 900-second timeout, a 5-second poll interval and its adapter version.
+    """
+    from importlib import import_module
+    adapter = import_module("crest_ais.providers." + name)
+    merged = dict(settings)
+    merged.update(concurrency=min(2, max(1, int(merged.get("concurrency", 2)))),
+                  initial_concurrency=min(2, max(1, int(merged.get("initial_concurrency", 2)))),
+                  timeout_seconds=900, poll_interval_seconds=5,
+                  _adapter_version=adapter.ADAPTER_VERSION)
+    return merged
+
+
+ADDABLE_JUDGES = {"anthropic"}
+
+
+def _added_judge_settings(name: str, config_path: Path, storage: dict) -> dict:
+    """Read an added judge's model settings from the master CREST configuration."""
+    if name not in ADDABLE_JUDGES:
+        raise ValueError("add-judge supports --judge " + ", ".join(sorted(ADDABLE_JUDGES)))
+    inheritance = (config_path.parent / storage.get("inherit_judges", CREST_DEFAULT_CONFIG)).resolve()
+    inherited = yaml.safe_load(inheritance.read_text(encoding="utf-8")).get("judges", {})
+    if name not in inherited:
+        raise ValueError(f"The master configuration has no {name} judge settings")
+    return frozen_judge_settings(name, inherited[name])
 
 
 def _new_plan(config, args):
@@ -84,9 +105,45 @@ def _run_path(config, args, *, create=False):
 
 
 def _report(plan, run_dir, root, destination):
-    from .analysis import analyze
     from .report import write_report
-    report = analyze(plan, load_results(run_dir))
+    report = _build_report(plan, run_dir)
+    write_json(run_dir / "analysis.json", report)
+    write_report(report, destination, data_root=root)
+    return report
+
+
+def _declined(run_dir):
+    """Judgments a judge refused to give; the analysis leaves them absent rather than failed."""
+    path = run_dir / "failures.json"
+    failures = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    declined = {}
+    for failure in failures:
+        error = failure.get("error", "")
+        if failure.get("status") != "failed" or "stop_reason refusal" not in error:
+            continue
+        category = error.split('"category": "', 1)[1].split('"', 1)[0] if '"category": "' in error else None
+        declined[failure["key"]] = {"kind": "refusal", "category": category, "cost_usd": failure.get("cost_usd")}
+    return declined
+
+
+PROFILES_PATH = PACKAGE_ROOT / "data" / "creativity_profiles.json"
+
+
+def _creativity_profiles(plan, path=None):
+    """Summaries of the judges' reasons, used only for the exact frozen plan they were written from."""
+    path = Path(path or PROFILES_PATH)
+    if not path.is_file():
+        return None
+    profiles = json.loads(path.read_text(encoding="utf-8"))
+    return profiles if profiles.get("plan_fingerprint") == plan.get("fingerprint") else None
+
+
+def _build_report(plan, run_dir):
+    from .analysis import analyze
+    report = analyze(plan, load_results(run_dir), declined=_declined(run_dir))
+    profiles = _creativity_profiles(plan)
+    if profiles:
+        report["creativity_profiles"] = profiles
     # Analysis operates on successful verdicts only. Include every observed paid
     # failure when presenting run-level accounting, without fabricating votes.
     accounting_path = run_dir / "judging.json"
@@ -97,14 +154,20 @@ def _report(plan, run_dir, root, destination):
         failures_path = run_dir / "failures.json"
         failures = json.loads(failures_path.read_text(encoding="utf-8")) if failures_path.exists() else []
         failed_known = sum(failure["cost_usd"] for failure in failures if failure.get("cost_usd") is not None)
+        declined_keys = {row["key"] for row in report.get("declined", [])}
         report["costs"].update(successful_known_usd=successful_known, successful_unknown_jobs=successful_unknown,
                               failed_known_usd=failed_known,
                               failed_unknown_jobs=sum(failure.get("cost_usd") is None for failure in failures),
                               accounting_note="Run-wide estimates use recorded provider usage, including failed paid outputs; unknown usage remains unavailable.")
         report["costs"]["known_usd"] = accounting["known_usd"]
         report["costs"]["unknown_jobs"] = accounting["unknown_cost_jobs"]
-        if accounting["failed_jobs"]:
-            report["limitations"].append(f"{accounting['failed_jobs']} judging jobs failed; paid failures are retained in the run audit and included in observed cost accounting (${failed_known:.6f} known failed-output cost).")
+        # Refused judgments are described once, in the report's run summary; only other failures are a caveat.
+        other_failures = [failure for failure in failures if failure["key"] not in declined_keys]
+        if other_failures:
+            from .report import plural
+            other_known = sum(failure["cost_usd"] for failure in other_failures if failure.get("cost_usd") is not None)
+            report["limitations"].append(f"{plural(len(other_failures), 'judging request')} failed without a usable vote. "
+                                         f"The recorded cost of failed requests (${other_known:.2f}) is included in the total.")
     prior_path = run_dir / "prior_costs.json"
     if prior_path.exists():
         from .pipeline import _money
@@ -122,15 +185,13 @@ def _report(plan, run_dir, root, destination):
         costs["unknown_jobs"] += prior_unknown
         costs["accounting_note"] = "Total estimates include current-run usage and prior excluded judging attempts; excluded attempts contribute no ranking decisions."
         costs["prior_exclusion_reason"] = prior.get("reason", "")
-        report["limitations"].append(f"{prior_jobs} prior judging attempts were excluded from rankings; their known cost ${prior_known:.6f} and {prior_unknown} unknown-cost attempts remain included in total accounting.")
+        # The run summary states these discarded requests and their cost; they are not a caveat on the scores.
     imports_path = run_dir / "imported_results.json"
-    if plan.get("extension") and imports_path.exists():
+    if plan.get("extension") and plan["extension"].get("kind") != "judge_addition" and imports_path.exists():
         imported_keys = {row["key"] for row in json.loads(imports_path.read_text(encoding="utf-8"))}
         retained = sum(row["key"] in imported_keys for row in report["judgments"])
         saved = report["coverage"]["completed_jobs"]
         report["limitations"].append(f"The {saved} saved overall judgments include {retained} retained from the previous run and {saved - retained} additional judgments. All use the same overall-judgment protocol.")
-    write_json(run_dir / "analysis.json", report)
-    write_report(report, destination, data_root=root)
     return report
 
 
@@ -141,6 +202,7 @@ def _add_options(parser, *, suppressed=False):
     parser.add_argument("--run-dir", "--run", dest="run_dir", type=Path, default=default)
     parser.add_argument("--source-run", type=Path, default=default, help="completed frozen parent run for extend/add-agent")
     parser.add_argument("--agent", type=str, default=default, help="new collection id for add-agent")
+    parser.add_argument("--judge", type=str, default=default, help="judge id to add with add-judge (anthropic)")
     parser.add_argument("--pairs-per-matchup", type=int, default=default)
     parser.add_argument("--seed", type=int, default=default)
     parser.add_argument("--max-spend-usd", type=float, default=default)
@@ -154,14 +216,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     _add_options(parser)
     subparsers = parser.add_subparsers(dest="command", required=True)
-    for name in ("prepare", "plan", "extend", "add-agent", "judge", "report", "run"):
+    for name in ("prepare", "plan", "extend", "add-agent", "add-judge", "judge", "report", "run"):
         sub = subparsers.add_parser(name)
         _add_options(sub, suppressed=True)
     args = parser.parse_args(argv)
     try:
-        if args.command in {"extend", "add-agent"}:
+        if args.command in {"extend", "add-agent", "add-judge"}:
             if args.source_run is None:
-                raise ValueError("extend/add-agent requires --source-run pointing to a completed frozen overall run")
+                raise ValueError("extend/add-agent/add-judge requires --source-run pointing to a completed frozen overall run")
             # Storage paths come from config; sampling, content, rubric, and
             # judge settings come entirely from the frozen parent snapshot.
             config_path = args.config.expanduser().resolve() if args.config else DEFAULT_CONFIG
@@ -170,7 +232,15 @@ def main(argv=None):
             output = (root / storage.get("output_dir", "results")).resolve()
             run_dir = _run_path({"output_dir": output}, args, create=True)
             source = args.source_run.expanduser().resolve()
-            if args.command == "add-agent":
+            if args.command == "add-judge":
+                if args.judge is None:
+                    raise ValueError("add-judge requires --judge")
+                parent = json.loads((source / "plan.json").read_text(encoding="utf-8"))
+                if args.judge in parent["judges"]:
+                    raise ValueError("Added judge already exists in the frozen parent run")
+                plan = create_judge_extension(source, run_dir, root,
+                    new_judges={args.judge: _added_judge_settings(args.judge, config_path, storage)})
+            elif args.command == "add-agent":
                 if args.agent is None or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", args.agent):
                     raise ValueError("add-agent requires --agent with a collection id")
                 parent = json.loads((source / "plan.json").read_text(encoding="utf-8"))
@@ -191,8 +261,8 @@ def main(argv=None):
             write_json(output / "latest.json", {"run_dir": str(run_dir), "created_at": plan["created_at"]})
             print(json.dumps({"run_dir": str(run_dir), "expected_jobs": len(plan["jobs"]),
                               "sampled_pairs": plan["selection"]["sampled_pairs"], "selected_papers": len(plan["papers"]),
-                              "imported_jobs": plan["extension"]["original_pairs"] * 4,
-                              "additional_jobs": plan["extension"]["additional_pairs"] * 4}, indent=2))
+                              "imported_jobs": imported_job_count(plan["extension"]),
+                              "additional_jobs": len(plan["jobs"]) - imported_job_count(plan["extension"])}, indent=2))
             return 0
         config = load_config(args.config, data_root=args.data_root)
         root = config["data_root"]

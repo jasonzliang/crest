@@ -596,7 +596,10 @@ def test_report_includes_prior_excluded_spend_without_counting_prior_judgments(t
     assert report["coverage"]["completed_jobs"] == len(plan["jobs"])
     assert report["costs"]["completed_jobs"] == len(plan["jobs"])
     assert len(report["judgments"]) == len(plan["jobs"])
-    assert any("12" in note and "excluded" in note for note in report["limitations"])
+    # The discarded requests are stated once, in the run summary, rather than as a caveat on the scores.
+    assert not any("prior" in note.lower() for note in report["limitations"])
+    progress = (run_dir / "report.html").read_text().split('<section id="progress"', 1)[1].split("</section>", 1)[0]
+    assert "The total also includes $2.38 for 12 discarded requests from earlier runs." in progress
     # Regenerating a report never adds the same prior ledger twice.
     repeated = _report(plan, run_dir, tmp_path, run_dir / "report.html")
     assert repeated["costs"] == report["costs"]

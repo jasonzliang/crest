@@ -78,23 +78,23 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <ol>
 <li>Freeze eligible paper lists and hashes. Keep outputs explicitly labeled as human–AI co-discovery outside the primary pool.</li>
 <li>For each of ten scientist matchups, sample up to ten distinct paper pairs uniformly without replacement. Use every pair if fewer than ten exist. Each paper has the same selection probability as other papers in its collection.</li>
-<li>Use two judges and both A/B orders: four judgments per pair. Each response contains one comparative reason and one overall winner.</li>
-<li>Average the four overall votes for each paper pair, then the pairs within each matchup. A scientist’s score is the mean of its four matchup win rates.</li>
+<li>The published comparison uses three judges and both A/B orders: six judgments per pair. Each response contains one comparative reason and one overall winner.</li>
+<li>Average each paper pair’s overall votes (six, or four where a judge refused the pair), then the pairs within each matchup. A scientist’s score is the mean of its four matchup win rates.</li>
 </ol>
 <p><strong>Each opponent contributes 25% of a scientist’s score</strong>, regardless of collection size or sampled pair count. Matchup win rates of 40%, 60%, 60% and 80%, for example, give a 60% overall score. The pair cap controls cost.</p>
-<p>The published five-system schedule has 96 paper pairs and 384 overall judgments. Nine matchups use ten pairs; v2 versus v3 uses all six possible pairs from their three and two eligible papers. Distinct-paper counts are reported separately from pair and judgment counts. Repeated appearances do not add independent papers.</p>
+<p>The published five-system schedule has 96 paper pairs and 576 planned overall judgments, of which 572 were recorded: one judge refused both orders of 2 pairs on safety grounds. Nine matchups use ten pairs; v2 versus v3 uses all six possible pairs from their three and two eligible papers. Distinct-paper counts are reported separately from pair and judgment counts. Repeated appearances do not add independent papers.</p>
 <p>New plans use the <a href="judging-method.html">NUS rubric</a> by default, with the <a href="aut-inspired-rubric.html">AUT-inspired rubric</a> available as an option. Both request one overall preference. See <a href="overall-creativity-judgment.html">why one overall judgment</a> for the rationale. The <a href="ai-scientist-creativity.html">published comparison</a> uses its recorded rubric and judgments; selecting another rubric creates a new experiment and does not rejudge saved results.</p>
 <h2 id="crest-consistency">How this matches CREST</h2>
 <div class="table-scroll" role="region" aria-label="CREST and AI scientist comparison methods" tabindex="0"><table><thead><tr><th scope="col">Part</th><th scope="col">CREST</th><th scope="col">AI scientist comparison</th></tr></thead><tbody>
 <tr><th scope="row">Judgment</th><td colspan="2">One overall winner and a reason under the selected rubric; no separate criterion scores.</td></tr>
-<tr><th scope="row">Overall score</th><td colspan="2">Both judges and both paper or answer orders count. Opponents receive equal weight. A 3–1 vote split contributes 75%, not a winner-take-all 100%. Aggregate ties share a rank.</td></tr>
+<tr><th scope="row">Overall score</th><td colspan="2">Every judge and both paper or answer orders count. Opponents receive equal weight. A 5–1 vote split contributes 83%, not a winner-take-all 100%. Aggregate ties share a rank.</td></tr>
 <tr><th scope="row">What is compared</th><td>Different systems answer the same questions.</td><td>Different scientists' released papers form sampled pairs.</td></tr>
-<tr><th scope="row">Incomplete results</th><td>Ranks use questions with every required answer and judgment.</td><td>Primary ranks wait until the full planned set of judgments is complete.</td></tr>
+<tr><th scope="row">Incomplete results</th><td>Ranks use questions with every required answer and judgment.</td><td>Primary ranks wait until every planned judgment is recorded or refused by its judge.</td></tr>
 <tr><th scope="row">Uncertainty</th><td>Resamples whole questions to show sensitivity to the question mix.</td><td>Uses ranges for sampled paper pairs. The sample and five-system comparison were expanded after seeing earlier results, so the ranges are exploratory.</td></tr>
 </tbody></table></div>
 <p>The percentages describe different tasks and output collections; they are not interchangeable measures of general creativity.</p>
 <h2 id="run-the-pipeline">Run the pipeline</h2>
-<p>Run these commands from the repository root. Planning and reporting are local; judging makes paid provider calls using credentials already in the environment. The worker and spend overrides below match the expanded comparison.</p>
+<p>Run these commands from the repository root. Planning and reporting are local; judging makes paid provider calls using credentials already in the environment. The worker and spend overrides below are examples.</p>
 <pre><code>python3 -m pip install -e '.[ais,test]'
 python3 -m crest_ais plan
 python3 -m crest_ais judge --workers-per-judge 16 --max-spend-usd 150
@@ -104,11 +104,11 @@ python3 -m crest_ais report --report-path crest_ais/results/local-report.html</c
 <p>Defaults come from <a href="../crest_ais/configs/config.json">crest_ais/configs/config.json</a>, with judge settings inherited from <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>. Pass <code>--config</code> to select another configuration. Each plan freezes its inputs, prompts and model settings; later configuration changes do not alter saved judgments.</p>
 <div class="table-scroll" role="region" aria-label="AI scientist pipeline configuration" tabindex="0"><table><thead><tr><th scope="col">Setting</th><th scope="col">Default and published comparison</th></tr></thead><tbody>
 <tr><th scope="row">Sample size</th><td>Up to 10 distinct pairs per matchup. The published five-system comparison has 96 pairs across ten matchups.</td></tr>
-<tr><th scope="row">Judges</th><td>gemini-4-argon, gpt-6-astra, both using high reasoning.</td></tr>
-<tr><th scope="row">Paper order</th><td>Both orders for each judge: four judgments per pair, 384 total.</td></tr>
-<tr><th scope="row">Concurrency</th><td>Two workers per provider by default. The published comparison uses <code>--workers-per-judge 16</code>: 32 workers total.</td></tr>
+<tr><th scope="row">Judges</th><td>The published comparison uses claude-fable-5-1, gemini-4-argon and gpt-6-astra, all at high reasoning effort.</td></tr>
+<tr><th scope="row">Paper order</th><td>Both orders for each judge. The published comparison plans six judgments per pair, 576 in total.</td></tr>
+<tr><th scope="row">Concurrency</th><td>Two workers per provider by default. Raise this with <code>--workers-per-judge</code>.</td></tr>
 <tr><th scope="row">Random seed</th><td>2026</td></tr>
-<tr><th scope="row">Spend guard</th><td>US$100 by default. The expanded comparison uses a US$150 runtime guard, including reused judgments.</td></tr>
+<tr><th scope="row">Spend guard</th><td>US$100 by default. Change it with <code>--max-spend-usd</code>.</td></tr>
 </tbody></table></div>
 <p>The worker override changes concurrency without changing frozen requests. The spend guard stops new submissions once observed current-run costs reach its target; in-flight calls can still add charges. In-flight and unknown charges are recorded separately.</p>
 <h3 id="rubric-selection">Choose the rubric file</h3>
