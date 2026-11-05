@@ -82,6 +82,13 @@ def _account(raw):
             action = (item.get("action") or {}).get("type")
             searches += action == "search"
             unknown_search |= action not in {"search", "open_page", "find_in_page"}
+    # Responses can omit individual action details while reporting an aggregate search count.
+    tool_usage = raw.get("tool_usage") or {}
+    reported = tool_usage.get("web_search") if isinstance(tool_usage, dict) else None
+    if isinstance(reported, dict) and "num_requests" in reported:
+        searches = count(reported["num_requests"])
+    elif unknown_search or reported is not None and not isinstance(reported, dict):
+        searches = None
     usage = {
         "input_tokens": count(original.get("input_tokens")),
         "cached_input_tokens": count(details.get("cached_tokens", 0)),
@@ -89,7 +96,7 @@ def _account(raw):
         "output_tokens": count(original.get("output_tokens")),
         "reasoning_tokens": count(out_details.get("reasoning_tokens")),
         "total_tokens": count(original.get("total_tokens")),
-        "web_search_calls": None if unknown_search else searches,
+        "web_search_calls": searches,
     }
     required = [usage[k] for k in ("input_tokens", "cached_input_tokens", "cache_write_tokens", "output_tokens", "web_search_calls")]
     # Standard USD per million tokens; cache writes use the default 30m TTL.

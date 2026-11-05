@@ -1172,7 +1172,7 @@ def test_runtime_packs_a_knowledge_base_query_into_one_call(tmp_path, monkeypatc
 
 def test_soft_budget_cap_records_but_never_refuses(tmp_path):
     settings = {"budget_cap": "soft", "budget_usd": 1.0}
-    assert worker.build_config("Q", settings, tmp_path, "w")["LLMHandler"]["cost_limit"] is None
+    assert worker.build_config("Q", settings, tmp_path, "w")["LLMHandler"]["cost_limit"] == 0.0
     assert worker.build_config("Q", {"budget_usd": 1.0}, tmp_path, "w")["LLMHandler"]["cost_limit"] == 1.0
     audit = worker.UsageAudit(1.0, tmp_path / "usage.json", enforce=False)
     audit.events.append({"status": "completed", "cost_usd": 5.0, "model": "gpt-6.1-sol"})
@@ -1192,3 +1192,18 @@ def test_soft_budget_cap_records_but_never_refuses(tmp_path):
         assert synthesizer._generate_qa_pairs() == [("Q", "A", [])] and audit.request_limit is None
     row = records["drafts"][0]  # Recorded for the report, never limited.
     assert records["enforced"] is False and row["budget_limited"] is False and row["qa_allowance_usd"] is None
+
+
+def test_soft_budget_passes_real_rome_config_validation_and_disables_cost_checks(tmp_path, monkeypatch):
+    from crest.config import load_config
+    monkeypatch.setenv("OPENAI_API_KEY", "offline-soft-budget-test")
+    settings = load_config()["research"]["caesar"]
+    audit = worker.UsageAudit(settings["budget_usd"], tmp_path / "usage.json", enforce=False)
+    with worker._runtime(settings, audit):
+        from rome.config import merge_with_default_config
+        from rome.llm_handler import LLMHandler
+        merged = merge_with_default_config(worker.build_config("Design a new game.", settings, tmp_path, "offline"))
+        handler = SimpleNamespace(cost_limit=merged["LLMHandler"]["cost_limit"], accumulated_cost=1000.)
+        # A disabled limit returns before token counting or cost estimation, even after a large spend.
+        LLMHandler._check_and_log_cost(handler, [], 10000, worker.SOL)
+    assert not audit.events and not audit.pending

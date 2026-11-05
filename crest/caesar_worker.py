@@ -60,7 +60,8 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
         "Logger": {"base_dir": str(output_dir / "logs"), "level": "INFO", "console": False},
         "LLMHandler": {
             "provider": "openai", "model": model, "reasoning_effort": settings.get("reasoning_effort", "medium"),
-            "cost_limit": settings.get("budget_usd", 5.) if _hard_budget(settings) else None,
+            # Rome requires a numeric value here; zero disables its cost check.
+            "cost_limit": settings.get("budget_usd", 5.) if _hard_budget(settings) else 0.0,
             "max_completion_tokens": settings.get("max_completion_tokens", DEFAULT_COMPLETION_TOKENS),
             "max_input_tokens": settings.get("max_input_tokens", 64000),
             "timeout": settings.get("call_timeout_seconds", 600), "max_retries": 0,

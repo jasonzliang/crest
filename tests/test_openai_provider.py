@@ -55,6 +55,21 @@ def test_resume_uses_saved_terminal_response_without_another_request(tmp_path, r
     assert job.state["submission_unknown"] is False
 
 
+def test_reported_web_search_usage_prices_calls_with_missing_action():
+    raw = completed(tool_usage={"web_search": {"num_requests": 5}})
+    raw["output"].append({"type": "web_search_call", "status": "completed"})
+    usage, cost = openai._account(raw)
+    assert usage["web_search_calls"] == 5
+    assert cost == pytest.approx(.05467)
+
+
+@pytest.mark.parametrize("requests", [None, -1, True, "5"])
+def test_invalid_reported_web_search_usage_keeps_cost_unknown(requests):
+    raw = completed(tool_usage={"web_search": {"num_requests": requests}})
+    usage, cost = openai._account(raw)
+    assert usage["web_search_calls"] is None and cost is None
+
+
 def test_resume_does_not_accept_saved_response_for_another_remote_id(tmp_path):
     job = FakeJob(tmp_path, {"remote_id": "resp_current", "raw": completed()})
     raw = completed(id="resp_current", output=[{"type": "message", "status": "completed",
