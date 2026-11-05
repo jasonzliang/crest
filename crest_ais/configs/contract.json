@@ -44,7 +44,7 @@
     "default": "nus",
     "canonical_directory": "crest/prompts/",
     "nus": "nus_pairwise_v2.txt",
-    "aut-inspired": "aut_research_pairwise_v1.txt",
+    "aut-inspired": "aut_pairwise_v1.txt",
     "policy": "Both pipelines share canonical rubric sources. Old AIS prompt paths are compatibility aliases. AUT is explicitly marked and uses separate protocol/job identities; mixed families are rejected."
   }
 }

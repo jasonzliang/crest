@@ -112,6 +112,18 @@ def test_aut_paper_context_frozen_metadata_and_extension_remain_in_family(tmp_pa
         extend_plan(mislabeled, tmp_path, pairs_per_matchup=3)
 
 
+def test_aut_rubric_short_name_preserves_instrument():
+    from crest.config import ROOT
+    from crest.rubrics import AUT_RUBRIC
+    renamed = ROOT / 'crest/prompts/aut_pairwise_v1.txt'
+    old_path = ROOT / 'crest/prompts/aut_research_pairwise_v1.txt'
+    assert AUT_RUBRIC == renamed
+    assert not old_path.exists() and not old_path.is_symlink()
+    assert hashlib.sha256(renamed.read_bytes()).hexdigest() == '45689c21aceff7c5dfee0ce4ee2b145e11f893eb4170bf30771a849a94fc4ea7'
+    contract = json.loads((ROOT / 'crest_ais/configs/contract.json').read_text())
+    assert contract['rubric_selection']['aut-inspired'] == renamed.name
+
+
 def test_default_ais_rubric_uses_canonical_resource_and_keeps_explicit_paths(tmp_path):
     from crest.config import load_config as load_crest_config
     from crest_ais.cli import load_config
@@ -159,19 +171,22 @@ def test_family_validation_preserves_malformed_job_value_error(tmp_path):
         analyze_papers(plan, [])
 
 
-def test_archived_nus_v1_preserves_legacy_paths_and_judgment_keys():
+def test_archived_nus_v1_preserves_ais_alias_and_judgment_keys():
     from crest.config import ROOT
     from crest.rubrics import DEFAULT_NUS_RUBRIC
     archive = ROOT / 'crest/prompts/archive/nus_pairwise_v1.txt'
     assert archive.is_file()
     original = archive.read_bytes()
-    # Frozen instrument: moving it must not change a byte or silently use the new rubric.
+    # Frozen instrument: removing a shortcut must not change its archived text or judgment keys.
     assert hashlib.sha256(original).hexdigest() == 'a70eba755b64d489c0872448476e6148c33e4b145506ea79bbe705b62db7d65e'
+    shortcut = ROOT / 'crest/prompts/nus_pairwise_v1.txt'
+    assert not shortcut.exists() and not shortcut.is_symlink()
     questions, answers = answer_inputs()
     archived_jobs = judging.make_judgment_jobs(questions, answers, JUDGES, original.decode())
-    for legacy in (ROOT / 'crest/prompts/nus_pairwise_v1.txt', ROOT / 'crest_ais/prompts/rubric_v1.txt'):
-        assert legacy.read_bytes() == original
-        assert judging.make_judgment_jobs(questions, answers, JUDGES, legacy.read_text()) == archived_jobs
+    legacy = ROOT / 'crest_ais/prompts/rubric_v1.txt'
+    assert legacy.resolve() == archive.resolve()
+    assert legacy.read_bytes() == original
+    assert judging.make_judgment_jobs(questions, answers, JUDGES, legacy.read_text()) == archived_jobs
     current_jobs = judging.make_judgment_jobs(questions, answers, JUDGES, DEFAULT_NUS_RUBRIC.read_text())
     assert {job['key'] for job in archived_jobs}.isdisjoint(job['key'] for job in current_jobs)
     assert [job['order'] for job in current_jobs] == [['a', 'b'], ['a', 'b'], ['b', 'a'], ['b', 'a']]

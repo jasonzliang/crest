@@ -5,7 +5,7 @@ from pathlib import Path
 NUS_KIND = 'nus'
 AUT_KIND = 'aut-inspired'
 DEFAULT_NUS_RUBRIC = Path(__file__).resolve().parent / 'prompts' / 'nus_pairwise_v2.txt'
-AUT_RUBRIC = DEFAULT_NUS_RUBRIC.with_name('aut_research_pairwise_v1.txt')
+AUT_RUBRIC = DEFAULT_NUS_RUBRIC.with_name('aut_pairwise_v1.txt')
 AUT_MARKER = 'RUBRIC ID: aut-inspired-pairwise-v1'
 NUS_PROTOCOL = 'nus-overall-pairwise-v3'
 AUT_PROTOCOL = 'aut-inspired-overall-pairwise-v1'

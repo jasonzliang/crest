@@ -8,7 +8,7 @@
 # v2 was generated on 2026-11-02 by the three judge models in the five categories of
 # queries_n50.jsonl (Caesar's original set, kept for the published 2026-10-26 report).
 questions: ../data/queries_n50_v2.jsonl
-# Current v2 rubric; archived v1 is ../prompts/archive/nus_pairwise_v1.txt (legacy path still works).
+# Current v2 rubric; select ../prompts/archive/nus_pairwise_v1.txt explicitly for v1.
 rubric: ../prompts/nus_pairwise_v2.txt
 cache_dir: ../results/.cache/generation
 output_dir: ../results

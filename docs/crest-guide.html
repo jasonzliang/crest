@@ -228,14 +228,14 @@ python -m crest analyze --run "$CREST_RUN"</code></pre>
 <p>These intervals describe sensitivity to the observed mix of complete, curated questions. They hold the saved answers, selected judges, rubric and observed judgments fixed. They omit variation from generating new answers, choosing other judges or assessing whether the rubric measures creativity well.</p>
 <p>Diagnostics report A-position preference, changes in winner after swapping answer order, judge disagreement and preference cycles. A swap change combines order effects and sampling variability; one judgment per presentation cannot separate them. These are AI preferences, without human or domain-expert validation or independent fact-checking.</p>
 <details id="rubric-selection" class="guide-details"><summary>Choose the rubric file</summary>
-<p>Set the configuration’s <code>rubric</code> field to the desired prompt. The default is <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a>; the <a href="../crest/prompts/archive/nus_pairwise_v1.txt">archived NUS v1 wording</a> is preserved unchanged for reproducibility. The <a href="../crest/prompts/aut_research_pairwise_v1.txt">AUT-inspired prompt</a> remains an alternative:</p>
+<p>Set the configuration’s <code>rubric</code> field to the desired prompt. The default is <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a>; the <a href="../crest/prompts/archive/nus_pairwise_v1.txt">archived NUS v1 wording</a> is preserved unchanged for reproducibility. The <a href="../crest/prompts/aut_pairwise_v1.txt">AUT-inspired prompt</a> remains an alternative:</p>
 <pre><code># In a configuration under crest/configs/:
 rubric: ../prompts/nus_pairwise_v2.txt
 # Historical comparisons only: original NUS wording
 # rubric: ../prompts/archive/nus_pairwise_v1.txt
 # Alternative: AUT-inspired comparison
-# rubric: ../prompts/aut_research_pairwise_v1.txt</code></pre>
-<p>The old v1 paths remain compatibility links. V2 credits substantive combinations rather than the least recognizable component, treats missing prior-art knowledge as uncertainty, and evaluates usefulness within the task’s premises. These are design improvements, not measured gains in agreement with human judges. Neither rubric was changed during archival.</p>
+# rubric: ../prompts/aut_pairwise_v1.txt</code></pre>
+<p>The old AIS v1 path remains a compatibility link to the archive. V2 credits substantive combinations rather than the least recognizable component, treats missing prior-art knowledge as uncertainty, and evaluates usefulness within the task’s premises. These are design improvements, not measured gains in agreement with human judges. Neither rubric was changed during archival.</p>
 <p>All use the same answer presentation and response checks. Checks reject obvious noncomparisons and unfinished explanations; they do not verify factual accuracy or whether the explanation supports the winner. Original answers and exact prompts remain saved. Rerun judging and analysis after changing the rubric; different rubric families cannot share one ranking.</p>
 </details>
 <details class="guide-details"><summary>Method and references</summary>

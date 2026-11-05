@@ -1,1 +1,1 @@
-../../crest/prompts/nus_pairwise_v1.txt
+../../crest/prompts/archive/nus_pairwise_v1.txt
