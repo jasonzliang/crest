@@ -1025,7 +1025,7 @@ def test_latest_luna_usage_uses_verified_cache_and_long_context_prices(tmp_path,
     assert audit.snapshot()["cost_usd"] == pytest.approx(expected)
 
 
-def recovery_source(tmp_path):
+def recovery_source(tmp_path, *, worker_id="original-worker", known_cost=.45898205, unknown_reserved=.2114525, budget=5):
     import networkx as nx
     source = tmp_path / "old-job"
     output = source / "caesar-output"
@@ -1041,9 +1041,9 @@ def recovery_source(tmp_path):
         "config": {"starting_query": "Q", "starting_url": "https://seed.test", "allowed_domains": ["*"]},
         "cost": {"accumulated_cost": .44, "call_count": 19, "sessions": []}}
     worker.atomic_json(output / "__rome__" / "agent_old.checkpoint.json", checkpoint)
-    worker.atomic_json(source / "caesar-request.json", {"prompt": "Q", "worker_id": "original-worker", "job_key": "original-job", "settings": {"budget_usd": 5}})
-    worker.atomic_json(source / "caesar-result.json", {"status": "failed", "error": "ambiguous timeout", "usage": {"known_cost_usd": .45898205, "unknown_cost": True, "budget_target_usd": 5,
-        "events": [{"status": "failed", "unknown_cost": True, "reserved_usd": .2114525}], "in_flight": []}})
+    worker.atomic_json(source / "caesar-request.json", {"prompt": "Q", "worker_id": worker_id, "job_key": "original-job", "settings": {"budget_usd": budget}})
+    worker.atomic_json(source / "caesar-result.json", {"status": "failed", "error": "ambiguous timeout", "usage": {"known_cost_usd": known_cost, "unknown_cost": True, "budget_target_usd": budget,
+        "events": [{"status": "failed", "unknown_cost": True, "reserved_usd": unknown_reserved}], "in_flight": []}})
     return source
 
 
@@ -1101,6 +1101,85 @@ def test_recovery_rejects_wrong_question_or_excess_new_budget(tmp_path, prompt, 
     config = worker.build_config(prompt, {}, tmp_path / "new-output", "new-id")
     with pytest.raises(ValueError):
         worker.prepare_synthesis_recovery(prompt, {"recovery_from": str(source), "budget_usd": budget}, tmp_path / "new-output", "new-key", config)
+
+
+@pytest.mark.parametrize("configured_budget,expected_budget", [(None, 5.), (4., 4.), (6., 6.)])
+def test_soft_recovery_preserves_over_target_history_and_accepts_positive_budget(tmp_path, configured_budget, expected_budget):
+    source = recovery_source(tmp_path, known_cost=4.2, unknown_reserved=.3, budget=4.)
+    original = {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
+    settings = {"recovery_from": str(source), "budget_cap": "soft"}
+    if configured_budget is not None:
+        settings["budget_usd"] = configured_budget
+    output = tmp_path / "new-output"
+    config = worker.build_config("Q", settings, output, "new-worker")
+
+    recovery = worker.prepare_synthesis_recovery("Q", settings, output, "new-key", config)
+
+    assert recovery["original_budget_usd"] == 4.
+    assert recovery["previous_known_cost_usd"] == 4.2
+    assert recovery["previous_unknown_reserved_usd"] == .3
+    assert recovery["previous_cost_unknown"] is True
+    assert recovery["new_attempt_budget_usd"] == expected_budget
+    assert recovery["budgeted_total_exposure_usd"] == pytest.approx(4.5 + expected_budget)
+    assert config["LLMHandler"]["cost_limit"] == 0.
+    assert json.loads((output / "recovery.json").read_text()) == recovery
+    assert original == {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
+
+
+@pytest.mark.parametrize("cap", ["soft", "hard"])
+@pytest.mark.parametrize("budget", [0., -1., float("nan"), float("inf"), -float("inf")])
+def test_recovery_requires_positive_finite_budget(tmp_path, cap, budget):
+    source = recovery_source(tmp_path)
+    settings = {"recovery_from": str(source), "budget_cap": cap, "budget_usd": budget}
+    output = tmp_path / "new-output"
+    config = worker.build_config("Q", settings, output, "new-worker")
+    with pytest.raises(ValueError):
+        worker.prepare_synthesis_recovery("Q", settings, output, "new-key", config)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("cap", ["hard", "auto"])
+@pytest.mark.parametrize("original_budget,known,reserved,budget", [
+    (10., .5, .25, 4.4),  # Within the residual, but above the recovery ceiling.
+    (4., 3.5, .25, .3),  # Below the ceiling, but above the residual.
+    (4., 4.2, .3, .1),   # No residual remains.
+])
+def test_hard_recovery_enforces_ceiling_and_residual(tmp_path, cap, original_budget, known, reserved, budget):
+    source = recovery_source(tmp_path, known_cost=known, unknown_reserved=reserved, budget=original_budget)
+    settings = {"recovery_from": str(source), "budget_cap": cap, "budget_usd": budget}
+    output = tmp_path / "new-output"
+    config = worker.build_config("Q", settings, output, "new-worker")
+    with pytest.raises(ValueError):
+        worker.prepare_synthesis_recovery("Q", settings, output, "new-key", config)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("prior_collection", [None, "inherited-collection"])
+def test_recovery_uses_fresh_source_collection_unless_prior_recovery_names_one(tmp_path, prior_collection):
+    ancestor = recovery_source(tmp_path / "ancestor")
+    source = recovery_source(tmp_path / "fresh", worker_id="fresh-worker")
+    request = json.loads((source / "caesar-request.json").read_text())
+    mode = "recovery" if prior_collection else "budget_history"
+    request["settings"][mode + "_from"] = str(ancestor)
+    worker.atomic_json(source / "caesar-request.json", request)
+    record = json.loads((source / "caesar-result.json").read_text())
+    record["raw"] = {mode: {"source_job": str(ancestor)}}
+    if prior_collection:
+        record["raw"][mode]["collection_name"] = prior_collection
+    worker.atomic_json(source / "caesar-result.json", record)
+    settings = {"recovery_from": str(source), "budget_usd": 1.}
+    output = tmp_path / "new-output"
+    config = worker.build_config("Q", settings, output, "new-worker")
+
+    recovery = worker.prepare_synthesis_recovery("Q", settings, output, "new-key", config)
+
+    expected = prior_collection or "crest_2855a11d3596c48623a62d636f6b524fb7c0f71f"
+    assert recovery["collection_name"] == expected
+    assert config["ChromaClientManager"]["collection_name"] == expected
+    assert len(recovery["ancestry"]) == 2
+    assert recovery["previous_known_cost_usd"] == pytest.approx(.9179641)
+    assert recovery["previous_unknown_reserved_usd"] == pytest.approx(.422905)
+    assert (output / "chroma" / "chroma.sqlite3-wal").read_bytes() == b"preserved WAL"
 
 
 @pytest.mark.parametrize("timeout", [600, 37])

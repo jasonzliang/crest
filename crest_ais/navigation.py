@@ -84,14 +84,16 @@ def site_favicon(project_root: Path, destination: Path) -> str:
     return f'<link rel="icon" type="image/svg+xml" href="{href}">'
 
 
-def site_header(project_root: Path, destination: Path) -> str:
+def site_header(project_root: Path, destination: Path, *, research_report: Path | None = None) -> str:
     root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
     def link(path):
         return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
+    comparison = research_report if research_report is not None else root / 'docs/deep-research-creativity.html'
+    current = ' aria-current="page"' if research_report is not None else ''
     return ('<header class="crest-site-header"><nav aria-label="Documentation">'
             '<a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a>'
             f'<a href="{link(root / "docs/crest-guide.html")}">Research pipeline</a>'
-            f'<a href="{link(root / "docs/deep-research-creativity.html")}">Deep research comparison</a>'
+            f'<a href="{link(comparison)}"{current}>Deep research comparison</a>'
             f'<a href="{link(root / "docs/ai-scientist-creativity.html")}">AI scientist comparison</a>'
             f'<a href="{link(root / "docs/index.html")}">All documents</a>'
             '</nav></header>')

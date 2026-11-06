@@ -535,7 +535,7 @@ def test_final_audit_enriches_timing_without_repeating_audit_notes(run, tmp_path
     assert data['audit_doc']['warnings'] == ['Billing remains estimated; no invoice has been verified.']
     assert 'Billing remains estimated; no invoice has been verified.' not in html
     assert 'model-based reserved exposure' not in html.lower()
-    assert 'Audited cumulative attempt estimate' not in html
+    assert 'Audited lifetime generation estimates' not in html
 
 
 def test_cost_history_notes_are_omitted_without_mutating_audit(run, tmp_path):
@@ -607,7 +607,8 @@ def test_lifetime_audit_costs_are_separate_from_saved_attempt_assessment(run, tm
     assert caesar['audited_known_cost_usd'] == 51.5
     output = tmp_path / 'page.html'
     write_report(run, output, audit=path)
-    assert 'Audited cumulative attempt estimate' in output.read_text()
+    assert 'Audited lifetime generation estimates' in output.read_text()
+    assert '$50.0000' in output.read_text() and '$51.5000' in output.read_text()
 
 
 def test_all_unpriced_answers_and_incomplete_lifetime_times_remain_unknown(run, tmp_path):
@@ -669,7 +670,7 @@ def test_per_question_means_preserve_partial_costs_and_use_observed_times(run, t
     html = output.read_text()
     assert 'Mean estimated cost' in html
     assert 'Mean elapsed time, successful job' in html
-    assert 'Mean active time, all attempts' in html
+    assert 'Mean total recorded time' in html
     assert '$1.0400' in html and '$1.1200' in html
     assert 'Caesar has unpriced' not in html
     assert 'Google’s estimate uses assumed model rates' in html
@@ -1156,3 +1157,81 @@ def test_judges_file_must_match_saved_judgments(run, tmp_path, kind):
     with pytest.raises(ValueError, match=expected):
         write_report(run, tmp_path / 'page.html')
     assert not (tmp_path / 'page.html').exists()
+
+
+def test_audited_cost_drives_headline_without_changing_frozen_records(run, tmp_path):
+    from crest.report import load_run, _resources
+    doc = final_audit(run)
+    next(r for r in doc['generation']['answer_details'] if r['agent'] == 'caesar')['known_usd'] = 6.
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    before_answers, before_audit = answers_path(run).read_bytes(), audit.read_bytes()
+    data = load_run(run, audit=audit)
+    html = _resources(data)
+    headline = html.split('<details', 1)[0]
+    assert '$1.1000' in headline  # (49 original dollars + 6 checked dollars) / 50
+    assert '1 Caesar answer estimate' in headline  # $6 exceeds this fixture's $5 target.
+    assert data['resources']['generation']['caesar']['known_cost_usd'] == 50.
+    assert answers_path(run).read_bytes() == before_answers
+    assert audit.read_bytes() == before_audit
+
+
+def test_incomplete_audit_cost_does_not_mix_partial_totals_into_headline(run, tmp_path):
+    from crest.report import load_run, _resources
+    doc = final_audit(run)
+    caesar = [r for r in doc['generation']['answer_details'] if r['agent'] == 'caesar']
+    caesar[0]['known_usd'] = 6.
+    caesar[1]['known_usd'] = None
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    data = load_run(run, audit=audit)
+    assert data['resources']['generation']['caesar']['audited_known_cost_usd'] is None
+    headline = _resources(data).split('<details', 1)[0]
+    assert '$1.0000' in headline
+    assert '$1.1000' not in headline
+
+
+def test_partial_active_timing_coverage_is_visible_without_expanding_details(run, tmp_path):
+    from crest.report import load_run, _resources
+    doc = final_audit(run)
+    rows = [r for r in doc['generation']['answer_details'] if r['agent'] == 'openai']
+    for row in rows[:20]: row.update(timing_complete=False, active_attempt_seconds=None)
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    headline = _resources(load_run(run, audit=audit)).split('<details', 1)[0]
+    assert '30 / 50' in headline
+
+
+@pytest.mark.parametrize('url,encoded', [
+    ('https://example.test/search?keywords=Science and Engineering',
+     'https://example.test/search?keywords=Science%20and%20Engineering'),
+    ('http://example.test/import?paper=abc&description=The Value of Experiments',
+     'http://example.test/import?paper=abc&description=The%20Value%20of%20Experiments'),
+])
+def test_known_citation_url_with_spaces_keeps_full_link_and_original_text(run, tmp_path, url, encoded):
+    from html import escape
+    from crest.report import write_report
+    rows = json.loads(answers_path(run).read_text())
+    row = next(r for r in rows if r['agent'] == 'caesar')
+    source = f'A supported proposal [1].\n\n## Sources\n[1] {url}\n\n`{url}`\n'
+    row['result']['text'] = source
+    row['result']['raw'] = {'artifact': {'sources': {url: 1}}}
+    dump(answers_path(run), rows)
+    original = answers_path(run).read_bytes()
+    output = tmp_path / 'page.html'; write_report(run, output)
+    html = output.read_text()
+    class Links(HTMLParser):
+        def __init__(self): super().__init__(); self.hrefs = []
+        def handle_starttag(self, tag, attrs):
+            if tag == 'a': self.hrefs.append(dict(attrs).get('href'))
+    parser = Links(); parser.feed(html)
+    assert encoded in parser.hrefs
+    assert f'<code>{escape(url, quote=False)}</code>' in html
+    assert escape(url, quote=False) in html
+    assert hashlib.sha256(source.encode()).hexdigest() in html
+    assert answers_path(run).read_bytes() == original
+
+
+def test_report_navigation_returns_to_the_generated_report_not_an_older_version(run, tmp_path):
+    from crest.report import write_report
+    output = tmp_path / 'deep-research-creativity-v2.html'; write_report(run, output)
+    header = output.read_text().split('</header>', 1)[0]
+    assert 'href="deep-research-creativity-v2.html"' in header
+    assert 'href="deep-research-creativity.html"' not in header

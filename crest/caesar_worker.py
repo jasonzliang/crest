@@ -856,7 +856,9 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     known = sum(item["known_cost_usd"] for item in ancestry)
     reserved = sum(item["unknown_reserved_usd"] for item in ancestry)
     budget = float(settings.get("budget_usd", 5))
-    if not 0 < budget <= min(4.3, original_budget - known - reserved):
+    if not math.isfinite(budget) or budget <= 0:
+        raise ValueError("Recovery budget must be positive and finite")
+    if _hard_budget(settings) and budget > min(4.3, original_budget - known - reserved):
         raise ValueError("Recovery needs an explicit budget at most $4.30 and within the prior residual")
     source_output = source / "caesar-output"
     paths = list((source_output / "__rome__").glob("*.checkpoint.json"))
@@ -865,7 +867,7 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     checkpoint = json.loads(paths[0].read_text())
     if checkpoint.get("config", {}).get("starting_query") != prompt or not checkpoint.get("visited_urls"):
         raise ValueError("Recovery checkpoint has no matching explored knowledge")
-    collection = prior.get("collection_name") or ancestry[0]["collection_name"]
+    collection = prior.get("collection_name") or ancestry[-1]["collection_name"]
     shutil.copytree(source_output / "chroma", output_dir / "chroma")
     checkpoint["cost"] = {"accumulated_cost": 0., "call_count": 0, "sessions": []}
     atomic_json(output_dir / "__rome__" / f"agent_{_agent_name(job_key)}.checkpoint.json", checkpoint)

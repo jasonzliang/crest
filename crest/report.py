@@ -27,6 +27,7 @@ import tempfile
 
 from markdown_it import MarkdownIt
 from markdown_it.renderer import RendererHTML
+from markdown_it.token import Token
 
 from .analysis import analyze
 from .artifacts import configuration_record
@@ -84,9 +85,68 @@ class _AnswerMarkdownRenderer(RendererHTML):
         return '</table></div>\n'
 
 
-def _markdown_answer(text):
+def _link_known_source_urls(state):
+    """Link complete recorded URLs before generic linkification splits spaces."""
+    urls = state.env.get('source_urls', ())
+    urls = sorted({u for u in urls if isinstance(u, str) and ' ' in u
+                   and not any(c in u for c in '\r\n\t')
+                   and u.lower().startswith(('https://', 'http://'))
+                   and state.md.validateLink(u)}, key=len, reverse=True)
+    if not urls:
+        return
+    pattern = re.compile('|'.join(re.escape(u) for u in urls))
+    for block in state.tokens:
+        if block.type != 'inline' or not block.children:
+            continue
+        # Inline parsing can already link the prefix before the first space.
+        # Extend only its auto-generated link, never an explicit author link.
+        for i in range(len(block.children) - 3):
+            opening, label, closing, tail = block.children[i:i + 4]
+            if (opening.type != 'link_open' or opening.markup != 'linkify'
+                    or label.type != 'text' or closing.type != 'link_close'
+                    or tail.type != 'text'):
+                continue
+            for url in urls:
+                if (len(url) > len(label.content) and url.startswith(label.content)
+                        and tail.content.startswith(url[len(label.content):])):
+                    remainder = url[len(label.content):]
+                    opening.attrSet('href', state.md.normalizeLink(url))
+                    label.content = url
+                    tail.content = tail.content[len(remainder):]
+                    break
+        children, link_depth = [], 0
+        for token in block.children:
+            if token.type == 'link_open':
+                link_depth += 1
+            elif token.type == 'link_close':
+                link_depth -= 1
+            if token.type != 'text' or link_depth:
+                children.append(token)
+                continue
+            position = 0
+            for match in pattern.finditer(token.content):
+                if match.start() > position:
+                    prefix = Token('text', '', 0)
+                    prefix.content = token.content[position:match.start()]
+                    children.append(prefix)
+                url = match.group(0)
+                opening = Token('link_open', 'a', 1)
+                opening.attrSet('href', state.md.normalizeLink(url))
+                label = Token('text', '', 0)
+                label.content = url
+                children.extend((opening, label, Token('link_close', 'a', -1)))
+                position = match.end()
+            if position < len(token.content):
+                suffix = Token('text', '', 0)
+                suffix.content = token.content[position:]
+                children.append(suffix)
+        block.children = children
+
+
+def _markdown_answer(text, source_urls=()):
     parser = MarkdownIt('js-default', {'breaks': True, 'linkify': True}, renderer_cls=_AnswerMarkdownRenderer)
-    env = {}
+    parser.core.ruler.before('linkify', 'known_source_urls', _link_known_source_urls)
+    env = {'source_urls': source_urls}
     tokens = parser.parse(text, env)
     for token in tokens:
         if token.type in {'heading_open', 'heading_close'}:
@@ -545,7 +605,7 @@ def _judges(data):
                  '“Chose A” shows how often the first answer won. “Changed winner after swap” shows how often '
                  'a judge preferred a different system when the answer order was reversed. '
                  'This can reflect order effects or variation between calls.</p>')
-    parts.append('<details><summary>Frozen judge configurations</summary><pre>'
+    parts.append('<details><summary>Saved judge settings</summary><pre>'
                  + _text(json.dumps(data['judges'], ensure_ascii=False, indent=2)) + '</pre></details>')
     parts.append('</section>')
     return ''.join(parts)
@@ -554,36 +614,55 @@ def _judges(data):
 def _resources(data):
     generation, judging = data['resources']['generation'], data['resources']['judging']
     agents, judges, counts = _system_order(data), data['ranking']['judges'], _counts(data)
+    totals = {a: (generation[a]['audited_known_cost_usd']
+                  if _number(generation[a]['audited_known_cost_usd'])
+                  else generation[a]['known_cost_usd']) for a in agents}
     parts = ['<section id="resources"><h2>Cost and elapsed time</h2>'
-             '<p>Per-question means across 50 questions. Dollar figures are published-rate estimates, not invoices.</p>']
+             '<p>Costs use the final audit when it covers every answer for a system, including earlier attempts. '
+             'Otherwise they use the original records. Dollar figures are estimates, not invoices.</p>']
     averages = []
     for agent in agents:
         r = generation[agent]
-        averages.append([_text(_label(agent)), _money(r['mean_known_cost_usd']),
-                         _duration(r['mean_duration_seconds']), _duration(r['mean_lifetime_duration_seconds'])])
+        mean = totals[agent] / r['answers'] if _number(totals[agent]) and r['answers'] else None
+        averages.append([_text(_label(agent)), _money(mean),
+                         _duration(r['mean_duration_seconds'])
+                         + f'<br><small>{r["duration_count"]} / {r["answers"]} answers timed</small>',
+                         _duration(r['mean_lifetime_duration_seconds'])
+                         + f'<br><small>{r["lifetime_duration_count"]} / {r["answers"]} answers timed</small>'])
     parts.append(_table(['System', 'Mean estimated cost', 'Mean elapsed time, successful job',
-                         'Mean active time, all attempts'], averages, 'Per-question cost and elapsed-time means'))
+                         'Mean total recorded time'], averages, 'Per-question cost and elapsed-time means'))
     google = generation.get('gemini')
     parts.append('<p class="small">'
                  + ('Google’s estimate uses assumed model rates because its internal billing breakdown is unavailable. ' if google else '')
-                 + 'Unreported charges are excluded. '
-                 'Elapsed time covers the final successful job; active time includes earlier attempts.</p>')
-    exceeded = [f'{counts["estimated_above_target"]} {_label(name)} answer estimate{"s" if counts["estimated_above_target"] != 1 else ""}'
-                for name, counts in generation.items() if counts.get('estimated_above_target')]
+                 + 'Unreported charges are excluded. Times include queueing and polling. '
+                 'Total recorded time adds earlier attempts and excludes known gaps between them. '
+                 'Each time average uses only the answers with complete records shown above.</p>')
+    exceeded = Counter()
+    for row in data['answers']:
+        agent = row['agent']
+        audited = data['audit_records'].get((row['question_id'], agent), {})
+        amount = audited.get('known_usd')
+        if not _number(amount):
+            amount = cost_for_row(row).get('cumulative_known_estimate_usd')
+        config = data['configurations'].get(row.get('configuration_id'), {})
+        settings = config.get('settings') or data['manifest'].get('config', {}).get('research', {}).get(agent, {})
+        target = settings.get('budget_usd')
+        if _number(amount) and _number(target) and target > 0 and amount > target:
+            exceeded[agent] += 1
     if exceeded:
-        parts.append(f'<p class="small">{"; ".join(exceeded)} exceed{"" if len(exceeded) > 1 or not exceeded[0].startswith("1 ") else "s"} the configured budget. '
-                     'The budget is a target, not a provider spending cap; actual bills have not been verified.</p>')
+        items = [f'{exceeded[a]} {_text(_label(a))} answer estimate{"s" if exceeded[a] != 1 else ""}'
+                 for a in agents if exceeded[a]]
+        parts.append('<p class="small">Estimates above their per-answer cost target: ' + _join(items)
+                     + '. Earlier attempts are included when recorded. '
+                     'Targets are not provider spending caps; actual bills have not been verified.</p>')
     parts.append('<details class="resource-details"><summary>Cost totals and timing</summary>')
-    parts.append('<p>Generation totals include recorded recovery attempts.</p>'
-                 + ('<p>Google’s pricing scenario uses high-context Gemini 3.1 Pro rates, counts tool tokens as additional input, '
-                    'and charges searches at full price. The service does not report the model and pricing tier for each internal step.</p>' if google else '')
-                 + '<p class="small">Cost means divide the recorded totals by all 50 questions. Time means use only answers '
-                 'with recorded durations; missing times are excluded.</p>')
-    rows = []
-    for agent in agents:
-        r = generation[agent]
-        rows.append([_text(_label(agent)), _money(r['known_cost_usd'])])
-    parts.append(_table(['System', 'Total generation estimate'], rows, 'Generation cost totals'))
+    if google:
+        parts.append('<p>Google’s pricing scenario uses high-context Gemini 3.1 Pro rates, counts tool tokens as additional input, '
+                     'and charges searches at full price. The service does not report the model and pricing tier for each internal step.</p>')
+    parts.append('<p class="small">Cost means divide each displayed total by all answers for that system. '
+                 'Original records are retained even when the final audit supplies a corrected total.</p>')
+    parts.append(_table(['System', 'Total generation estimate'], [
+        [_text(_label(a)), _money(totals[a])] for a in agents], 'Generation cost totals'))
     parts.append('<p class="small">Judging is additional: '
                  + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) for j in judges) + '.</p>')
     scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in judges)
@@ -598,21 +677,22 @@ def _resources(data):
         r = generation[agent]
         rows.append([_text(_label(agent)), _duration(r['median_duration_seconds']),
                      _duration(r['min_duration_seconds']) + '–' + _duration(r['max_duration_seconds']),
-                     str(r['duration_count']) + ' / 50', _duration(r['median_lifetime_duration_seconds']),
-                     str(r['lifetime_duration_count']) + ' / 50'])
-    parts.append(_table(['System', 'Median successful-attempt elapsed', 'Min–max successful-attempt elapsed', 'Timed answers',
-                         'Audited median cumulative active execution', 'Active-time audit coverage'], rows, 'Saved answer elapsed times'))
-    parts.append('<p class="small">Elapsed time includes queueing, polling and retries during the successful job. '
-                 'Active time also adds recorded earlier attempts, excluding gaps between them. '
-                 'Cache hits retain original durations.</p>')
-    if data['audit_path']:
-        differs = any(_number(generation[a]['audited_known_cost_usd'])
-                      and (not _number(generation[a]['known_cost_usd']) or not math.isclose(
-                          generation[a]['audited_known_cost_usd'], generation[a]['known_cost_usd'])) for a in agents)
-        if differs:
-            parts.append(_table(['System', 'Audited cumulative attempt estimate'], [
-                [_text(_label(a)), _money(generation[a]['audited_known_cost_usd'])] for a in agents],
-                'Audited lifetime generation estimates'))
+                     str(r['duration_count']) + ' / ' + str(r['answers']),
+                     _duration(r['median_lifetime_duration_seconds']),
+                     str(r['lifetime_duration_count']) + ' / ' + str(r['answers'])])
+    parts.append(_table(['System', 'Median successful-job elapsed', 'Shortest–longest successful-job elapsed', 'Timed answers',
+                         'Median total recorded time', 'Answers with complete total time'], rows, 'Saved answer elapsed times'))
+    parts.append('<p class="small">Saved job time includes queueing, polling and retries during the successful job. '
+                 'Total recorded time also includes recorded earlier attempts, excluding known gaps between them. '
+                 'Cache hits retain the original times.</p>')
+    differs = any(_number(generation[a]['audited_known_cost_usd'])
+                  and (not _number(generation[a]['known_cost_usd']) or not math.isclose(
+                      generation[a]['audited_known_cost_usd'], generation[a]['known_cost_usd'])) for a in agents)
+    if differs:
+        parts.append(_table(['System', 'Original recorded estimate', 'Checked estimate, all attempts'], [
+            [_text(_label(a)), _money(generation[a]['known_cost_usd']),
+             _money(generation[a]['audited_known_cost_usd'])] for a in agents],
+            'Audited lifetime generation estimates'))
     parts.append('</details></section>')
     return ''.join(parts)
 
@@ -631,12 +711,12 @@ def _models(data):
         elif agent == 'anthropic':
             detail = f'Sonnet + hosted web search through the Messages API; effort: {settings.get("effort", "not recorded")}.'
         elif agent == 'caesar':
-            detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Per-answer configuration records retain helper settings and recovery provenance.'
+            detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Each answer’s saved settings identify helper models and any recovery steps.'
         else:
             detail = 'Settings recorded in the frozen configuration.'
         rows.append([_text(_label(agent)), _text(', '.join(models)), _text(detail)])
     return ('<details id="systems"><summary>Models and research workflows</summary>'
-            + _table(['System', 'Recorded result model / billing reference', 'Workflow'], rows, 'Frozen research systems')
+            + _table(['System', 'Model or pricing assumption', 'Workflow'], rows, 'Frozen research systems')
             + ('<p class="small">Google introduced its April 2026 Deep Research agents as built with Gemini 3.1 Pro '
                '(<a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">Google announcement</a>). '
                'That product description does not identify this run’s per-loop backend models.</p>' if 'gemini' in agents else '')
@@ -707,8 +787,8 @@ def _questions(data):
                 if audited:
                     record['final_audit'] = audited
                     active = audited.get('active_attempt_seconds') if audited.get('timing_complete') is True else None
-                    audit_note = (' · audited cumulative attempt estimate ' + _money(audited.get('known_usd'))
-                                  + ' · audited cumulative active execution ' + _duration(active))
+                    audit_note = (' · checked total estimate ' + _money(audited.get('known_usd'))
+                                  + ' · total recorded time ' + _duration(active))
                 artifact = data['answer_artifacts'][row['key']]
                 artifact_note = ''
                 if artifact:
@@ -719,15 +799,20 @@ def _questions(data):
                 if configuration is None:
                     configuration = {'source': 'legacy run manifest; per-answer configuration was not recorded',
                                      'settings': data['manifest'].get('config', {}).get('research', {}).get(agent)}
+                raw = row['result'].get('raw') or {}
+                native = raw.get('artifact') if isinstance(raw, dict) else None
+                source_urls = native.get('sources', {}) if isinstance(native, dict) else ()
+                if not isinstance(source_urls, dict):
+                    source_urls = ()
                 parts.append(f'<details class="answer" id="answer-{index}-{agent}"><summary>{_text(_label(agent))}</summary>'
                              f'<div class="answer-text" data-answer-sha256="{hashlib.sha256(row["result"]["text"].encode()).hexdigest()}" '
                              f'role="region" tabindex="0" aria-label="{_text(_label(agent))} answer, question {index}">'
-                             f'{_markdown_answer(row["result"]["text"])}</div>'
+                             f'{_markdown_answer(row["result"]["text"], source_urls)}</div>'
                              '<details class="answer-metadata"><summary>Answer metadata and source records</summary>'
-                             f'<p class="small">Saved cumulative estimate {_money(cost["cumulative_known_estimate_usd"])} · saved job elapsed '
+                             f'<p class="small">Original recorded estimate {_money(cost["cumulative_known_estimate_usd"])} · saved job elapsed '
                              f'{_duration((row.get("timing") or {}).get("duration_seconds"))}{audit_note}</p>'
-                             '<details class="configuration"><summary>Research configuration</summary>'
-                             f'<pre tabindex="0" aria-label="Frozen configuration">{_text(json.dumps(configuration, ensure_ascii=False, indent=2))}</pre></details>'
+                             '<details class="configuration"><summary>Saved research settings</summary>'
+                             f'<pre tabindex="0" aria-label="Saved research settings">{_text(json.dumps(configuration, ensure_ascii=False, indent=2))}</pre></details>'
                              f'<details class="cost-record"><summary>Cost, usage and timing record</summary>'
                              f'{event_note}'
                              f'<pre tabindex="0" aria-label="Cost, usage and timing record">{_text(json.dumps(record, ensure_ascii=False, indent=2))}</pre></details>'
@@ -851,7 +936,7 @@ def _render(data, destination):
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">',
              '<title>Deep research comparison · CREST</title>', site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
-             '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination),
+             '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination, research_report=destination),
              '<main id="main-content" tabindex="-1"><h1>Deep research comparison</h1>',
              f'<p>This comparison evaluates {_text(_join(_label(a) for a in agents))} '
              f'on the same 50 questions. {judge_phrase} the {counts["answers"]:,} saved answers in both answer orders. '

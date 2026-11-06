@@ -93,7 +93,8 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <main id="main-content" tabindex="-1">
 <h1>Research pipeline</h1>
 <p>CREST runs four research systems on the same questions, then uses three AI judges to compare the saved answers. This guide covers setup, execution, saved results and ranking.</p>
-<a class="report-link" href="deep-research-creativity.html">Read the completed 50-question comparison →</a>
+<a class="report-link" href="deep-research-creativity-v2.html">Read the latest completed comparison, v2</a>
+<p class="small">The latest study uses three research systems and two judges. The <a href="deep-research-creativity.html">previous comparison, v1</a> is preserved with its original questions and settings.</p>
 <nav class="guide-nav" aria-label="Guide contents"><a href="#overview">Pipeline</a><a href="#running">Quick start</a><a href="#models">Systems</a><a href="#operations">Parallelism</a><a href="#files">Results and reuse</a><a href="#judging">Ranking method</a></nav>
 <section id="overview" aria-labelledby="overview-title">
 <h2 id="overview-title">Three stages, one result directory</h2>
@@ -228,11 +229,11 @@ python -m crest analyze --run "$CREST_RUN"</code></pre>
 <p>These intervals describe sensitivity to the observed mix of complete, curated questions. They hold the saved answers, selected judges, rubric and observed judgments fixed. They omit variation from generating new answers, choosing other judges or assessing whether the rubric measures creativity well.</p>
 <p>Diagnostics report A-position preference, changes in winner after swapping answer order, judge disagreement and preference cycles. A swap change combines order effects and sampling variability; one judgment per presentation cannot separate them. These are AI preferences, without human or domain-expert validation or independent fact-checking.</p>
 <details id="rubric-selection" class="guide-details"><summary>Choose the rubric file</summary>
-<p>Set the configuration’s <code>rubric</code> field to the desired prompt. The default is <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a>; the <a href="../crest/prompts/archive/nus_pairwise_v1.txt">archived NUS v1 wording</a> is preserved unchanged for reproducibility. The <a href="../crest/prompts/aut_pairwise_v1.txt">AUT-inspired prompt</a> remains an alternative:</p>
+<p>Set the configuration’s <code>rubric</code> field to the desired prompt. The default is <a href="../crest/prompts/nus_pairwise_v2.txt">nus_pairwise_v2.txt</a>; the <a href="../crest/_archive/reference/nus_pairwise_v1.txt">archived NUS v1 wording</a> is preserved unchanged for reproducibility. The <a href="../crest/prompts/aut_pairwise_v1.txt">AUT-inspired prompt</a> remains an alternative:</p>
 <pre><code># In a configuration under crest/configs/:
 rubric: ../prompts/nus_pairwise_v2.txt
 # Historical comparisons only: original NUS wording
-# rubric: ../prompts/archive/nus_pairwise_v1.txt
+# rubric: ../_archive/reference/nus_pairwise_v1.txt
 # Alternative: AUT-inspired comparison
 # rubric: ../prompts/aut_pairwise_v1.txt</code></pre>
 <p>The old AIS v1 path remains a compatibility link to the archive. V2 credits substantive combinations rather than the least recognizable component, treats missing prior-art knowledge as uncertainty, and evaluates usefulness within the task’s premises. These are design improvements, not measured gains in agreement with human judges. Neither rubric was changed during archival.</p>
@@ -240,7 +241,7 @@ rubric: ../prompts/nus_pairwise_v2.txt
 </details>
 <details class="guide-details"><summary>Method and references</summary>
 <p><a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright (2018)</a> study ranking by pairwise wins. <a href="https://aclanthology.org/P18-1128/">Dror et al. (2018)</a> discuss statistical testing and resampling in evaluation, and <a href="https://arxiv.org/abs/2306.05685">Zheng et al. (2023)</a> examine LLM judge biases. These sources inform the design; they do not establish the rubric’s validity or guarantee the reported intervals apply to other tasks.</p>
-<p>The five question categories follow <a href="https://arxiv.org/abs/2604.20855">the Caesar paper</a>, Appendix B.1. The <a href="deep-research-creativity.html">completed report</a>, from the earlier three-system, two-judge run, includes all 150 answers and 600 judgment explanations.</p>
+<p>The five question categories follow <a href="https://arxiv.org/abs/2604.20855">the Caesar paper</a>, Appendix B.1. The <a href="deep-research-creativity-v2.html">latest completed report</a> includes all 150 answers and 600 judgment explanations. The <a href="deep-research-creativity.html">previous report</a> remains available separately.</p>
 </details>
 </section>
 </main>

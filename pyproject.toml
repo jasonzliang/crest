@@ -39,7 +39,7 @@ include = ["crest", "crest.providers", "crest_ais", "crest_ais.providers"]
 namespaces = false
 
 [tool.setuptools.package-data]
-crest = ["prompts/*.txt", "prompts/archive/*.txt", "data/*.jsonl", "configs/*.yaml"]
+crest = ["prompts/*.txt", "_archive/reference/nus_pairwise_v1.txt", "data/*.jsonl", "configs/*.yaml"]
 crest_ais = ["configs/*.json", "prompts/*.txt"]
 
 [tool.pytest.ini_options]
