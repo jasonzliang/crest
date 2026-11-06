@@ -53,7 +53,7 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     assert first["CaesarAgent"]["max_web_searches"] == 5
     assert first["ArtifactSynthesizer"]["synthesis_drafts"] == 3
     assert first["ArtifactSynthesizer"]["synthesis_iterations"] == 15
-    assert first["ArtifactSynthesizer"]["synthesis_top_k"] == 15
+    assert first["ArtifactSynthesizer"]["synthesis_top_k"] == 50
     assert first["ArtifactSynthesizer"]["synthesis_generate_images"] == 0
     assert first["ArtifactSynthesizer"]["synthesis_merge_clarify"] is False
     assert first["BraveSearch"]["use_ddgs"] is True

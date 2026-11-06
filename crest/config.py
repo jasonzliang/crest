@@ -62,7 +62,7 @@ DEFAULTS = {
             'exploration_reasoning_effort': 'low', 'kb_reasoning_effort': 'low',
             # Chosen depth; with budget_cap auto crest.budget overrides them from budget_usd.
             'max_iterations': 300, 'synthesis_drafts': 3, 'synthesis_iterations': 20,
-            'synthesis_top_k': 20, 'synthesis_top_n': 10, 'max_depth': 6, 'max_web_searches': 5,
+            'synthesis_top_k': 50, 'synthesis_top_n': 10, 'max_depth': 6, 'max_web_searches': 5,
             'additional_starting_queries': 11, 'use_quick_explore': False,
             'quick_explore_insights': True, 'quick_explore_workers': 2,
             'adapt_role': True, 'synthesis_merge_artifacts': True,

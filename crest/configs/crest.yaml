@@ -102,8 +102,8 @@ research:
     synthesis_iterations: 20     # Chosen Q&A rounds per draft (each round costs more than the last); auto also derives 20.
     synthesis_reserve_usd: null  # Derived for 300 + 3 x 20: $1.76 kept back from exploration for drafting (used under hard and auto caps).
     timeout_seconds: null        # Derived for 300 + 3 x 20: 12,600 s (3.5 h), one limit for the whole answer, 1.5x the estimated time.
-    synthesis_top_k: 20
-    synthesis_top_n: 10
+    synthesis_top_k: 50
+    synthesis_top_n: 10          # Used only with reranking; CREST currently leaves reranking disabled.
     max_depth: 6                 # Link depth from a starting page.
     max_web_searches: 5          # Web searches Caesar may run to reseed exploration.
     exploration_max_completion_tokens: 2000  # Luna output cap per exploration call.

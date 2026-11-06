@@ -87,7 +87,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "synthesis_classic_mode": False, "synthesis_drafts": settings.get("synthesis_drafts", 3),
             "synthesis_iterations": settings.get("synthesis_iterations", 15),
             "synthesis_reasoning_effort": settings.get("synthesis_reasoning_effort", "medium"),
-            "synthesis_top_k": settings.get("synthesis_top_k", 15),
+            "synthesis_top_k": settings.get("synthesis_top_k", 50),
             "synthesis_top_n": settings.get("synthesis_top_n", 10),
             # CREST's answer_word_limit becomes Rome's word target for each draft and the merge.
             "synthesis_max_length": settings.get("answer_word_limit"),
@@ -99,7 +99,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "collection_name": collection, "enable_reranking": False, "use_shared_server": False,
             "model": settings.get("kb_model", LUNA), "reasoning_effort": settings.get("kb_reasoning_effort", "low"),
             "embedding_model": settings.get("embedding_model", "text-embedding-3-small"),
-            "top_k": settings.get("synthesis_top_k", 15),
+            "top_k": settings.get("synthesis_top_k", 50),
         },
         "ChromaServerManager": {"host": "127.0.0.1", "port": settings.get("chroma_port", 8000),
                                 "persist_path": str(output_dir / "chroma"),
