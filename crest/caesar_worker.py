@@ -130,7 +130,7 @@ def extract_result(artifact: dict, model: str, usage: dict, *, expected_drafts=3
     warnings = [("Budget is a ceiling" if hard else "Budget is a soft target")
                 + ": SDK audit estimates successful-call costs; unobserved timeout billing cannot be capped."]
     if usage.get("budget_exceeded"):
-        warnings.append(f"Estimated cost ${usage.get('known_cost_usd', 0):.2f} exceeded the ${usage.get('budget_target_usd', 0):.2f} budget "
+        warnings.append(f"Known estimated cost ${usage.get('known_cost_usd', 0):.2f} exceeded the ${usage.get('budget_target_usd', 0):.2f} budget "
                         + ("ceiling." if hard else "target (soft cap: nothing was stopped)."))
     if completed_rounds < expected_iterations:
         warnings.append(f"Final draft completed {completed_rounds} of up to {expected_iterations} requested Q&A rounds.")
@@ -823,23 +823,33 @@ def recovery_history(source, prompt):
 
 
 
+def _positive_finite_amount(value, name):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+        raise ValueError(f"{name} must be positive and finite")
+    return float(value)
+
+
 def prepare_budget_history(prompt, settings):
-    """Reserve lifetime spend while starting completely fresh research state."""
+    """Inherit lifetime spend; only hard/auto caps constrain the fresh attempt."""
+    budget = _positive_finite_amount(settings.get("budget_usd", 5.), "Restart budget")
+    configured_reserve = _positive_finite_amount(settings.get("synthesis_reserve_usd", 3.), "Synthesis reserve")
     source = Path(settings["budget_history_from"]).resolve()
     ancestry, original_budget = recovery_history(source, prompt)
-    original_budget = min(original_budget, float(settings.get("budget_usd", 5.)))
     known = sum(item["known_cost_usd"] for item in ancestry)
     reserved = sum(item["unknown_reserved_usd"] for item in ancestry)
-    remaining = original_budget - known - reserved
-    if not math.isfinite(remaining) or remaining <= 0:
-        raise ValueError("No budget remains after prior known charges and unknown reservations")
-    configured_reserve = float(settings.get("synthesis_reserve_usd", 3.))
+    attempt_budget, effective_reserve = budget, configured_reserve
+    if _hard_budget(settings):
+        original_budget = min(original_budget, budget)
+        attempt_budget = original_budget - known - reserved
+        if not math.isfinite(attempt_budget) or attempt_budget <= 0:
+            raise ValueError("No budget remains after prior known charges and unknown reservations")
+        effective_reserve *= attempt_budget / original_budget
     return {"mode": "fresh_restart", "source_job": str(source), "ancestry": ancestry,
         "original_budget_usd": original_budget, "previous_known_cost_usd": known,
         "previous_unknown_reserved_usd": reserved, "previous_cost_unknown": any(item["cost_unknown"] for item in ancestry),
-        "new_attempt_budget_usd": remaining, "budgeted_total_exposure_usd": known + reserved + remaining,
+        "new_attempt_budget_usd": attempt_budget, "budgeted_total_exposure_usd": known + reserved + attempt_budget,
         "configured_synthesis_reserve_usd": configured_reserve,
-        "effective_synthesis_reserve_usd": configured_reserve * remaining / original_budget}
+        "effective_synthesis_reserve_usd": effective_reserve}
 
 
 def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
@@ -855,9 +865,7 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
     ancestry, original_budget = recovery_history(source, prompt)
     known = sum(item["known_cost_usd"] for item in ancestry)
     reserved = sum(item["unknown_reserved_usd"] for item in ancestry)
-    budget = float(settings.get("budget_usd", 5))
-    if not math.isfinite(budget) or budget <= 0:
-        raise ValueError("Recovery budget must be positive and finite")
+    budget = _positive_finite_amount(settings.get("budget_usd", 5.), "Recovery budget")
     if _hard_budget(settings) and budget > min(4.3, original_budget - known - reserved):
         raise ValueError("Recovery needs an explicit budget at most $4.30 and within the prior residual")
     source_output = source / "caesar-output"
@@ -941,30 +949,36 @@ def run_worker(request: dict, result_path: Path) -> int:
                     artifact, exploration_stop = _explore_with_synthesis_reserve(agent, attempt_settings, audit)
             if getattr(agent, "shutdown_called", False):
                 raise RuntimeError("Caesar was interrupted before completing synthesis")
-            result = extract_result(artifact, settings.get("model", SOL), audit.snapshot(),
+            attempt_usage = audit.snapshot()
+            usage = attempt_usage
+            accounting = recovery or budget_history
+            if accounting is not None:
+                # Aggregate before extracting the result so flags and warnings refer to the
+                # same lifetime target. Keep the per-attempt audit intact for later ancestry.
+                mode = "recovery" if recovery is not None else "budget_history"
+                usage = copy.deepcopy(attempt_usage)
+                usage["new_attempt_cost_usd"] = (None if usage["unknown_cost"] or not usage["successful_calls"]
+                                                 else usage["cost_usd"])
+                usage["new_attempt_budget_target_usd"] = audit.budget
+                usage["new_attempt_budget_exceeded"] = usage["budget_exceeded"]
+                usage["budget_target_usd"] = accounting["original_budget_usd"]
+                usage[mode + "_previous_known_cost_usd"] = accounting["previous_known_cost_usd"]
+                usage[mode + "_previous_unknown_reserved_usd"] = accounting["previous_unknown_reserved_usd"]
+                known = accounting["previous_known_cost_usd"] + usage["known_cost_usd"]
+                usage["known_cost_usd"] = usage["cumulative_known_cost_usd"] = known
+                usage["budget_exceeded"] = known > usage["budget_target_usd"]
+                usage["unknown_cost"] = accounting["previous_cost_unknown"] or usage["unknown_cost"]
+                usage["cost_usd"] = None if usage["unknown_cost"] else known
+            result = extract_result(artifact, settings.get("model", SOL), usage,
                                     expected_drafts=settings.get("synthesis_drafts", 3),
                                     expected_iterations=settings.get("synthesis_iterations", 15),
                                     hard=_hard_budget(attempt_settings))
             if exploration_stop is not None:
                 result["raw"]["exploration_budget_stop"] = exploration_stop
                 result["warnings"].append(f"Exploration stopped after {exploration_stop['iterations_completed']} iterations to reserve ${exploration_stop['synthesis_reserve_usd']:g} for synthesis.")
-            accounting = recovery or budget_history
             if accounting is not None:
-                mode = "recovery" if recovery is not None else "budget_history"
                 result["raw"][mode] = accounting
-                result["raw"]["new_attempt_usage_audit"] = copy.deepcopy(result["usage"])
-                result["usage"]["new_attempt_cost_usd"] = result["cost_usd"]
-                result["usage"]["new_attempt_budget_target_usd"] = audit.budget
-                result["usage"]["budget_target_usd"] = accounting["original_budget_usd"]
-                result["usage"][mode + "_previous_known_cost_usd"] = accounting["previous_known_cost_usd"]
-                result["usage"][mode + "_previous_unknown_reserved_usd"] = accounting["previous_unknown_reserved_usd"]
-                cumulative_known = accounting["previous_known_cost_usd"] + result["usage"]["known_cost_usd"]
-                result["usage"]["known_cost_usd"] = result["usage"]["cumulative_known_cost_usd"] = cumulative_known
-                if accounting["previous_cost_unknown"] or result["usage"]["unknown_cost"]:
-                    result["cost_usd"] = result["usage"]["cost_usd"] = None
-                    result["usage"]["unknown_cost"] = True
-                else:
-                    result["cost_usd"] = result["usage"]["cost_usd"] = cumulative_known
+                result["raw"]["new_attempt_usage_audit"] = attempt_usage
                 result["warnings"].append("Explicit synthesis-only recovery reused copied knowledge; prior attempt billing remains separately recorded." if recovery is not None else "Fresh research inherited prior charges and unknown reservations without reusing old knowledge.")
             result["raw"]["synthesis_budget"] = synthesis_budget
             result["raw"]["iteration_metrics"] = {"records": metrics.records, "summary": metrics.summary(), "trace_path": str(metrics.path)}

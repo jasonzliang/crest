@@ -163,8 +163,9 @@ def test_timeout_failure_keeps_precancel_estimate_separate_from_final_cost(tmp_p
     assert error['cost_details']['cumulative_known_estimate_usd'] is None
 
 
+@pytest.mark.parametrize('mode', ['recovery', 'budget_history'])
 @pytest.mark.parametrize('total, exceeded', [(4.6, False), (5.1, True)])
-def test_recovery_cumulative_cost_uses_original_answer_budget(tmp_path, total, exceeded):
+def test_recovery_cumulative_cost_uses_original_answer_budget(tmp_path, total, exceeded, mode):
     config = fixture_config(tmp_path, n=1)
     config['research'] = {'caesar': config['research']['caesar']}
     config['research']['caesar']['budget_usd'] = 4.25
@@ -172,7 +173,7 @@ def test_recovery_cumulative_cost_uses_original_answer_budget(tmp_path, total, e
     async def recovered(prompt, settings, job):
         return {'text': 'Recovered answer', 'cost_usd': total,
                 'usage': {'new_attempt_cost_usd': total - .5}, 'warnings': [],
-                'raw': {'recovery': {'original_budget_usd': 5.0}}}
+                'raw': {mode: {'original_budget_usd': 5.0}}}
     provider.generate = recovered
     pipeline = Pipeline(config, providers={'caesar': provider})
     asyncio.run(pipeline.generate())
@@ -1166,3 +1167,23 @@ def test_prior_tasks_recover_paid_cache_receipts_missing_from_stage_rows(tmp_pat
     assert sum(row['cost_usd'] for row in ledger) == pytest.approx(.04)
     assert all(row['attempts'] for row in ledger)
     assert pipeline.analyze()['report']['costs']['total']['known_usd'] == pytest.approx(.48)
+
+
+@pytest.mark.parametrize('mode', ['recovery', 'budget_history'])
+def test_uncertain_cumulative_overrun_warning_uses_original_target(tmp_path, mode):
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {'caesar': config['research']['caesar']}
+    config['research']['caesar'].update(budget_usd=6., budget_cap='soft')
+    provider = FakeProvider('caesar')
+    async def recovered(prompt, settings, job):
+        return {'text': 'Recovered answer', 'cost_usd': None,
+                'usage': {'known_cost_usd': 5.3, 'unknown_cost': True, 'budget_exceeded': True,
+                          'budget_target_usd': 5.0, 'new_attempt_cost_usd': .5},
+                'warnings': [], 'raw': {mode: {'original_budget_usd': 5.0}}}
+    provider.generate = recovered
+    pipeline = Pipeline(config, providers={'caesar': provider})
+    asyncio.run(pipeline.generate())
+    result = pipeline.answers()[0]['result']
+    assert result['budget_exceeded'] is True and result['cost_usd'] is None
+    warnings = [w for w in result['warnings'] if 'exceeded' in w and 'budget' in w]
+    assert len(warnings) == 1 and '$5.00' in warnings[0] and '$6.00' not in warnings[0]

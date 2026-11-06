@@ -88,7 +88,7 @@ def site_header(project_root: Path, destination: Path, *, research_report: Path 
     root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
     def link(path):
         return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
-    comparison = research_report if research_report is not None else root / 'docs/deep-research-creativity.html'
+    comparison = research_report if research_report is not None else root / 'docs/deep-research-creativity-v2.html'
     current = ' aria-current="page"' if research_report is not None else ''
     return ('<header class="crest-site-header"><nav aria-label="Documentation">'
             '<a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a>'

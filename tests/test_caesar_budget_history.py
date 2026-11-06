@@ -233,3 +233,120 @@ def test_recycled_pid_for_unrelated_process_does_not_block_final_history(tmp_pat
     monkeypatch.setattr(psutil, "Process", lambda pid: process)
     value = worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
     assert value["new_attempt_budget_usd"] == pytest.approx(4.3)
+
+
+@pytest.mark.parametrize("mode", ["recovery", "budget_history"])
+@pytest.mark.parametrize("prior_unknown", [False, True])
+@pytest.mark.parametrize("prior_known,new_target,total,over_target,attempt_over", [
+    (4.8, 4., 5.3, True, False),
+    (.2, .3, .7, False, True),
+    (5.2, 6., 5.7, True, False),
+])
+def test_soft_history_result_recalculates_cumulative_warning_and_keeps_attempt_audit(
+        tmp_path, monkeypatch, mode, prior_unknown, prior_known, new_target, total, over_target, attempt_over):
+    source = _source(tmp_path / "source", prior_known, .2)
+    if not prior_unknown:
+        record = json.loads((source / "caesar-result.json").read_text())
+        record["usage"].update(unknown_cost=False, events=[])
+        worker.atomic_json(source / "caesar-result.json", record)
+    original = {path: path.read_bytes() for path in source.rglob("*") if path.is_file()}
+
+    class SDK:
+        def request(self, *args, **kwargs):
+            return SimpleNamespace(usage={"prompt_tokens": 200000, "completion_tokens": 10000})
+
+    class Agent:
+        def __init__(self, name, repository, config):
+            assert config["LLMHandler"]["cost_limit"] == 0.
+            assert config["CaesarAgent"]["max_iterations"] == (0 if mode == "recovery" else 250)
+            self.current_iteration = 163
+            self.visited_urls = {"https://example.test": 1}
+            self.kb_manager = SimpleNamespace(size=lambda: 1)
+            self.synthesizer = SimpleNamespace(synthesize_artifact=self.synthesize)
+        def synthesize(self):
+            SDK().request(object, _options())
+            return {"artifact": "completed answer", "sources": {}, "num_drafts": 3,
+                    "metadata": {"synthesis_queries": 15}}
+        def explore(self):
+            assert mode == "budget_history"
+            return self.synthesize()
+        def shutdown(self): pass
+
+    @contextmanager
+    def runtime(settings, audit):
+        assert audit.budget == new_target and audit.enforce is False
+        with audit.installed(SDK):
+            yield Agent
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    job = tmp_path / "new-job"
+    settings = {mode + "_from": str(source), "budget_usd": new_target, "budget_cap": "soft"}
+    request = {"prompt": "Q", "settings": settings, "job_key": "new",
+               "output_dir": str(job / "caesar-output")}
+    worker.atomic_json(job / "caesar-request.json", request)
+    result_path = job / "caesar-result.json"
+    assert worker.run_worker(request, result_path) == 0
+    result = json.loads(result_path.read_text())["result"]
+    usage, attempt = result["usage"], result["raw"]["new_attempt_usage_audit"]
+    assert usage["known_cost_usd"] == pytest.approx(total)
+    assert usage["budget_target_usd"] == 5.
+    assert usage["budget_exceeded"] is over_target
+    assert usage["new_attempt_budget_exceeded"] is attempt_over
+    assert usage["new_attempt_cost_usd"] == pytest.approx(.5)
+    assert usage["new_attempt_budget_target_usd"] == new_target
+    assert attempt["known_cost_usd"] == pytest.approx(.5)
+    assert attempt["budget_target_usd"] == new_target
+    assert attempt["budget_exceeded"] is attempt_over
+    assert attempt["successful_calls"] == 1 and attempt["unknown_cost"] is False
+    assert usage[mode + "_previous_unknown_reserved_usd"] == (.2 if prior_unknown else 0.)
+    if prior_unknown:
+        assert result["cost_usd"] is None and usage["unknown_cost"] is True
+        assert any("total cost is unknown" in warning for warning in result["warnings"])
+    else:
+        assert result["cost_usd"] == pytest.approx(total) and usage["unknown_cost"] is False
+    warnings = [warning for warning in result["warnings"] if "exceeded" in warning and "budget" in warning]
+    assert len(warnings) == int(over_target)
+    if over_target:
+        assert f"${total:.2f}" in warnings[0] and "$5.00" in warnings[0]
+        assert "known estimated cost" in warnings[0].lower() and "soft cap" in warnings[0]
+    history, target = worker.recovery_history(job, "Q")
+    assert target == 5. and len(history) == 2
+    assert sum(item["known_cost_usd"] for item in history) == pytest.approx(total)
+    assert sum(item["unknown_reserved_usd"] for item in history) == (.2 if prior_unknown else 0.)
+    assert original == {path: path.read_bytes() for path in source.rglob("*") if path.is_file()}
+
+
+@pytest.mark.parametrize("target", [3., 6.])
+def test_soft_fresh_history_keeps_original_target_without_enforcing_spent_residual(tmp_path, target):
+    source = _source(tmp_path / "spent", 5.2, .3)
+    value = worker.prepare_budget_history("Q", {"budget_history_from": str(source),
+        "budget_cap": "soft", "budget_usd": target, "synthesis_reserve_usd": 1.5})
+    assert value["original_budget_usd"] == 5.
+    assert value["new_attempt_budget_usd"] == target
+    assert value["previous_known_cost_usd"] == 5.2
+    assert value["previous_unknown_reserved_usd"] == .3
+    assert value["budgeted_total_exposure_usd"] == pytest.approx(5.5 + target)
+    assert value["effective_synthesis_reserve_usd"] == 1.5
+
+
+@pytest.mark.parametrize("cap", ["hard", "auto"])
+@pytest.mark.parametrize("target,original,residual", [(3., 3., 2.3), (7., 5., 4.3)])
+def test_fresh_history_hard_and_auto_keep_effective_ceiling(tmp_path, cap, target, original, residual):
+    source = _source(tmp_path / "source", .5, .2)
+    settings = {"budget_history_from": str(source), "budget_cap": cap, "budget_usd": target}
+    value = worker.prepare_budget_history("Q", settings)
+    assert value["original_budget_usd"] == original
+    assert value["new_attempt_budget_usd"] == pytest.approx(residual)
+    spent = _source(tmp_path / "spent", 5.2, .3)
+    with pytest.raises(ValueError, match="No budget remains"):
+        worker.prepare_budget_history("Q", dict(settings, budget_history_from=str(spent)))
+
+
+@pytest.mark.parametrize("cap", ["soft", "hard", "auto"])
+@pytest.mark.parametrize("field", ["budget_usd", "synthesis_reserve_usd"])
+@pytest.mark.parametrize("invalid", [0., -1., float("nan"), float("inf"), True, "4", None])
+def test_fresh_history_rejects_invalid_targets_and_reserves(tmp_path, cap, field, invalid):
+    source = _source(tmp_path / "source", .5, .2)
+    settings = {"budget_history_from": str(source), "budget_cap": cap,
+                "budget_usd": 5., "synthesis_reserve_usd": 3., field: invalid}
+    with pytest.raises(ValueError, match="positive and finite"):
+        worker.prepare_budget_history("Q", settings)

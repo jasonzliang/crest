@@ -368,7 +368,7 @@ def test_shared_site_navigation_and_current_document_titles_are_retained(report,
                for tag, attrs in doc.tags)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
     assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "crest-guide.html",
-                         "deep-research-creativity.html", "ai-scientist-creativity.html", "index.html"]
+                         "deep-research-creativity-v2.html", "ai-scientist-creativity.html", "index.html"]
 
 
 def test_main_reading_order_puts_results_and_method_before_caveats_and_audit(report, tmp_path):

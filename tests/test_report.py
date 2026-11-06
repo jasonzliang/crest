@@ -1202,6 +1202,8 @@ def test_partial_active_timing_coverage_is_visible_without_expanding_details(run
 @pytest.mark.parametrize('url,encoded', [
     ('https://example.test/search?keywords=Science and Engineering',
      'https://example.test/search?keywords=Science%20and%20Engineering'),
+    ('https://example.test/search?keywords=Science _and_ Engineering',
+     'https://example.test/search?keywords=Science%20_and_%20Engineering'),
     ('http://example.test/import?paper=abc&description=The Value of Experiments',
      'http://example.test/import?paper=abc&description=The%20Value%20of%20Experiments'),
 ])
@@ -1235,3 +1237,95 @@ def test_report_navigation_returns_to_the_generated_report_not_an_older_version(
     header = output.read_text().split('</header>', 1)[0]
     assert 'href="deep-research-creativity-v2.html"' in header
     assert 'href="deep-research-creativity.html"' not in header
+
+
+@pytest.mark.parametrize('url,encoded', [
+    ('https://example.test/search?keywords=Science _and_ Engineering',
+     'https://example.test/search?keywords=Science%20_and_%20Engineering'),
+    ('https://example.test/search?description=The *Value* of Experiments',
+     'https://example.test/search?description=The%20*Value*%20of%20Experiments'),
+    ('https://example.test/search?description=The `Value` of Experiments',
+     'https://example.test/search?description=The%20%60Value%60%20of%20Experiments'),
+    ('https://example.test/search?description=The [Value](test) of Experiments&x=1',
+     'https://example.test/search?description=The%20%5BValue%5D(test)%20of%20Experiments&x=1'),
+])
+def test_known_source_urls_are_atomic_before_inline_markdown(url, encoded):
+    from html import escape
+    from crest.report import _markdown_answer
+    assert _markdown_answer(f'Source: {url}.', {url: 1}) == (
+        f'<p>Source: <a href="{escape(encoded, quote=True)}">{escape(url)}</a>.</p>\n')
+
+
+@pytest.mark.parametrize('source', [
+    '`{url}`', '```text\n{url}\n```',
+    '[{url}](https://author.example/destination)',
+    '[{url}][ref]\n\n[ref]: https://author.example/destination',
+    '[![{url}](https://author.example/image)](https://author.example/destination)',
+])
+def test_known_source_urls_preserve_explicit_links_and_code(source):
+    from crest.report import _markdown_answer
+    url = 'https://example.test/search?keywords=Science _and_ Engineering'
+    source = source.format(url=url)
+    # Source metadata must not change author-controlled links or code rendering.
+    assert _markdown_answer(source, {url: 1}) == _markdown_answer(source)
+
+
+def test_known_source_urls_use_longest_match_without_inventing_sources():
+    from crest.report import _markdown_answer
+    from lxml import html
+    short = 'https://example.test/search?q=Science _and_ Engineering'
+    long = short + ' Practices'
+    absent = 'https://example.test/search?q=Absent source'
+    sources = {short: 1, long: 2, absent: 3}
+    before = dict(sources)
+    source = f'**Sources**: {long}; {short}. Ordinary _emphasis_ remains.'
+    rendered = html.fragment_fromstring(_markdown_answer(source, sources), create_parent=True)
+    assert rendered.xpath('.//a/@href') == [
+        'https://example.test/search?q=Science%20_and_%20Engineering%20Practices',
+        'https://example.test/search?q=Science%20_and_%20Engineering']
+    assert rendered.xpath('.//a/text()') == [long, short]
+    assert rendered.xpath('.//strong/text()') == ['Sources']
+    assert rendered.xpath('.//em/text()') == ['emphasis']
+    assert sources == before
+
+
+def test_known_source_urls_keep_untrusted_markup_inert():
+    from crest.report import _markdown_answer
+    from lxml import html
+    safe = 'https://example.test/search?q=<script>alert(1)</script> _and_ "quotes"'
+    unsafe = 'javascript:alert(1) dangerous source'
+    source = f'{safe}\n\n{unsafe}'
+    rendered = html.fragment_fromstring(_markdown_answer(source, {safe: 1, unsafe: 2}), create_parent=True)
+    assert not rendered.xpath('.//script|.//img|.//iframe|.//*[@onerror]|.//*[@onclick]')
+    assert rendered.xpath('.//a/@href') == [
+        'https://example.test/search?q=%3Cscript%3Ealert(1)%3C/script%3E%20_and_%20%22quotes%22']
+    assert rendered.xpath('.//a/text()') == [safe]
+    assert unsafe in rendered.text_content()
+
+
+def test_current_static_document_headers_link_to_latest_research_report():
+    from pathlib import Path
+    from lxml import html
+    docs = Path(__file__).resolve().parents[1] / 'docs'
+    # V1 is immutable historical evidence; v2 is rebuilt separately from saved data.
+    for path in sorted(docs.glob('*.html')):
+        if path.name in {'deep-research-creativity.html', 'deep-research-creativity-v2.html'}:
+            continue
+        page = html.fromstring(path.read_bytes())
+        links = page.xpath('//header[@class="crest-site-header"]//a[text()="Deep research comparison"]/@href')
+        if links:
+            assert links == ['deep-research-creativity-v2.html'], path.name
+    for name in ('index.html', 'crest-guide.html'):
+        page = html.fromstring((docs / name).read_bytes())
+        links = page.xpath('//a[@href="deep-research-creativity.html"]')
+        assert any('previous' in a.text_content().lower() for a in links), name
+
+
+def test_historical_v1_report_retains_original_bytes_and_navigation():
+    from pathlib import Path
+    from lxml import html
+    path = Path(__file__).resolve().parents[1] / 'docs/deep-research-creativity.html'
+    source = path.read_bytes()
+    assert hashlib.sha256(source).hexdigest() == 'f48189abcf2ed638baef443d8448e6640ff7becb41634c93dc0b8e688e4765db'
+    page = html.fromstring(source)
+    assert page.xpath('//header//a[text()="Deep research comparison"]/@href') == ['deep-research-creativity.html']

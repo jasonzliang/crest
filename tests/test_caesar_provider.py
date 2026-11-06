@@ -1126,8 +1126,8 @@ def test_soft_recovery_preserves_over_target_history_and_accepts_positive_budget
     assert original == {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
 
 
-@pytest.mark.parametrize("cap", ["soft", "hard"])
-@pytest.mark.parametrize("budget", [0., -1., float("nan"), float("inf"), -float("inf")])
+@pytest.mark.parametrize("cap", ["soft", "hard", "auto"])
+@pytest.mark.parametrize("budget", [0., -1., float("nan"), float("inf"), -float("inf"), True, "4", None])
 def test_recovery_requires_positive_finite_budget(tmp_path, cap, budget):
     source = recovery_source(tmp_path)
     settings = {"recovery_from": str(source), "budget_cap": cap, "budget_usd": budget}

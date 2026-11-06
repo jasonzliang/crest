@@ -27,7 +27,6 @@ import tempfile
 
 from markdown_it import MarkdownIt
 from markdown_it.renderer import RendererHTML
-from markdown_it.token import Token
 
 from .analysis import analyze
 from .artifacts import configuration_record
@@ -85,68 +84,37 @@ class _AnswerMarkdownRenderer(RendererHTML):
         return '</table></div>\n'
 
 
-def _link_known_source_urls(state):
-    """Link complete recorded URLs before generic linkification splits spaces."""
-    urls = state.env.get('source_urls', ())
-    urls = sorted({u for u in urls if isinstance(u, str) and ' ' in u
-                   and not any(c in u for c in '\r\n\t')
-                   and u.lower().startswith(('https://', 'http://'))
-                   and state.md.validateLink(u)}, key=len, reverse=True)
-    if not urls:
-        return
-    pattern = re.compile('|'.join(re.escape(u) for u in urls))
-    for block in state.tokens:
-        if block.type != 'inline' or not block.children:
-            continue
-        # Inline parsing can already link the prefix before the first space.
-        # Extend only its auto-generated link, never an explicit author link.
-        for i in range(len(block.children) - 3):
-            opening, label, closing, tail = block.children[i:i + 4]
-            if (opening.type != 'link_open' or opening.markup != 'linkify'
-                    or label.type != 'text' or closing.type != 'link_close'
-                    or tail.type != 'text'):
-                continue
-            for url in urls:
-                if (len(url) > len(label.content) and url.startswith(label.content)
-                        and tail.content.startswith(url[len(label.content):])):
-                    remainder = url[len(label.content):]
-                    opening.attrSet('href', state.md.normalizeLink(url))
-                    label.content = url
-                    tail.content = tail.content[len(remainder):]
-                    break
-        children, link_depth = [], 0
-        for token in block.children:
-            if token.type == 'link_open':
-                link_depth += 1
-            elif token.type == 'link_close':
-                link_depth -= 1
-            if token.type != 'text' or link_depth:
-                children.append(token)
-                continue
-            position = 0
-            for match in pattern.finditer(token.content):
-                if match.start() > position:
-                    prefix = Token('text', '', 0)
-                    prefix.content = token.content[position:match.start()]
-                    children.append(prefix)
-                url = match.group(0)
-                opening = Token('link_open', 'a', 1)
-                opening.attrSet('href', state.md.normalizeLink(url))
-                label = Token('text', '', 0)
-                label.content = url
-                children.extend((opening, label, Token('link_close', 'a', -1)))
-                position = match.end()
-            if position < len(token.content):
-                suffix = Token('text', '', 0)
-                suffix.content = token.content[position:]
-                children.append(suffix)
-        block.children = children
+def _link_known_source_urls(state, silent):
+    """Consume a recorded URL before its spaces or punctuation become Markdown."""
+    if silent or state.linkLevel or state.src[state.pos] != ':':
+        return False
+    # Like the native inline linkifier, recognize the scheme at its colon.
+    # Match raw source, not already-parsed tokens; never change link-label lookahead.
+    match = re.search(r'(?:^|[^a-z0-9.+-])(https?)$', state.pending, re.IGNORECASE)
+    if not match:
+        return False
+    scheme = match.group(1)
+    start = state.pos - len(scheme)
+    url = next((u for u in state.env['source_urls']
+                if state.src.startswith(u, start, state.posMax)), None)
+    if url is None:
+        return False
+    state.pending = state.pending[:-len(scheme)]
+    opening = state.push('link_open', 'a', 1)
+    opening.attrSet('href', state.md.normalizeLink(url))
+    state.push('text', '', 0).content = url
+    state.push('link_close', 'a', -1)
+    state.pos = start + len(url)
+    return True
 
 
 def _markdown_answer(text, source_urls=()):
     parser = MarkdownIt('js-default', {'breaks': True, 'linkify': True}, renderer_cls=_AnswerMarkdownRenderer)
-    parser.core.ruler.before('linkify', 'known_source_urls', _link_known_source_urls)
-    env = {'source_urls': source_urls}
+    parser.inline.ruler.before('linkify', 'known_source_urls', _link_known_source_urls)
+    env = {'source_urls': sorted({u for u in source_urls if isinstance(u, str) and ' ' in u
+                                and not any(c in u for c in '\r\n\t')
+                                and u.lower().startswith(('https://', 'http://'))
+                                and parser.validateLink(u)}, key=len, reverse=True)}
     tokens = parser.parse(text, env)
     for token in tokens:
         if token.type in {'heading_open', 'heading_close'}:

@@ -358,9 +358,10 @@ class Pipeline:
                         result['word_limit_exceeded'] = True
                     budget, cost = task['settings'].get('budget_usd'), result.get('cost_usd')
                     if task['agent'] == 'caesar':
-                        recovery = (result.get('raw') or {}).get('recovery') or {}
-                        # Recovered answer costs include the earlier attempts.
-                        budget = recovery.get('original_budget_usd', budget)
+                        raw = result.get('raw') or {}
+                        history = raw.get('recovery') or raw.get('budget_history') or {}
+                        # Both recovery modes include the earlier attempts in answer costs.
+                        budget = history.get('original_budget_usd', budget)
                     audit_flag = bool((result.get('usage') or {}).get('budget_exceeded'))
                     if budget and ((cost is not None and cost > budget) or audit_flag):
                         warnings = result.setdefault('warnings', [])
