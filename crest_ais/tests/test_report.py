@@ -55,10 +55,12 @@ def report():
 
 
 def render(report, tmp_path):
-    from crest_ais.report import write_report
+    import crest_ais.report as renderer
     root = tmp_path / "crest_ais"
     destination = tmp_path / "docs" / "comparison.html"
-    write_report(report, destination, data_root=root)
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(renderer, "ROOT", tmp_path)
+        renderer.write_report(report, destination, data_root=root)
     return destination.read_text(encoding="utf-8")
 
 
@@ -107,7 +109,7 @@ def test_legacy_nus_report_rendering_matches_explicit_family(report, tmp_path):
     assert 'CREST now defaults to version 2, which was not used here.' in legacy
     assert 'least familiar building block' in legacy and 'counts toward Surprising, not New' in legacy
     # The only rubric link describes v2, so it must say so on the v1 page.
-    assert 'href="judging-method.html">the current NUS rubric (v2, not used here)</a>' in legacy
+    assert 'href="nus-rubric.html">the current NUS rubric (v2, not used here)</a>' in legacy
     report['version'] = 'crest-ais-overall-v3'
     current = render(report, tmp_path)
     assert 'version 1 of the' not in current and 'not used here' not in current
@@ -330,7 +332,7 @@ def test_cost_is_identified_as_estimated_from_usage_and_method_is_linked(report,
     assert "$1.23" in html
     assert "estimated" in html.lower() and "recorded usage" in html.lower()
     links = [attrs["href"] for tag, attrs in Document(html).tags if tag == "a"]
-    assert "ai-scientist-method.html" in links
+    assert "ai-scientist-comparison-method.html" in links
 
 
 def test_nested_legacy_verdict_is_rejected_before_writing_a_misleading_report(report, tmp_path):
@@ -367,8 +369,8 @@ def test_shared_site_navigation_and_current_document_titles_are_retained(report,
     assert any(tag == "link" and attrs.get("rel") == "icon" and attrs.get("href") == "favicon.svg"
                for tag, attrs in doc.tags)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
-    assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "crest-guide.html",
-                         "deep-research-creativity-v2.html", "ai-scientist-creativity.html", "index.html"]
+    assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "research-pipeline.html",
+                         "deep-research-comparison-v2.html", "ai-scientist-comparison-v1.html", "index.html"]
 
 
 def test_main_reading_order_puts_results_and_method_before_caveats_and_audit(report, tmp_path):
@@ -483,11 +485,11 @@ def test_concept_bookmark_and_primary_paper_links_remain_visible(report, tmp_pat
     links = [attrs.get("href") for tag, attrs in doc.tags if tag == "a"]
     assert "https://doi.org/10.1080/10400419.2012.650092" in links
     assert "https://doi.org/10.1080/10400419.2017.1302776" in links
-    assert "overall-creativity-judgment.html" in links
-    assert 'href="judging-method.html">the NUS rubric</a>' in html
-    assert 'href="overall-creativity-judgment.html">why we ask for one overall judgment</a>' in html
+    assert "why-one-overall-judgment.html" in links
+    assert 'href="nus-rubric.html">the NUS rubric</a>' in html
+    assert 'href="why-one-overall-judgment.html">why we ask for one overall judgment</a>' in html
     method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
-    assert method.index('id="concepts"') < method.index('ai-scientist-method.html')
+    assert method.index('id="concepts"') < method.index('ai-scientist-comparison-method.html')
 
 
 def test_extended_plan_displays_ten_pairs_and_240_votes_from_report_data(report, tmp_path):
@@ -951,3 +953,100 @@ def test_wide_tables_have_a_scroll_cue_and_positioned_scroll_boxes(report, tmp_p
     assert ".table-scroll{position:relative;" in css
     assert "position:sticky;left:0" in css
     assert "overscroll-behavior:contain" not in css.split("@media(hover:hover)")[0]
+
+
+def test_canonical_scientist_report_title_date_and_unchanged_metadata(report, tmp_path):
+    from lxml import html
+    from crest_ais.report import write_report
+    before = deepcopy(report)
+    output = tmp_path / 'docs/ai-scientist-comparison-v1.html'
+    write_report(report, output, data_root=tmp_path / 'crest_ais', updated='2026-11-05')
+    page = html.fromstring(output.read_bytes())
+    assert page.findtext('.//title') == 'AI scientist comparison v1'
+    assert page.xpath('//h1/text()') == ['AI scientist comparison v1']
+    assert page.xpath('//header//time/@datetime') == ['2026-11-05']
+    assert report == before
+    assert report['generated_at'] == '2026-10-27T00:00:00Z'
+
+
+def test_scientist_publication_keeps_index_date_in_sync(report, tmp_path, monkeypatch):
+    from lxml import html
+    import crest_ais.report as renderer
+    from crest_ais.report import write_report
+    monkeypatch.setattr(renderer, "ROOT", tmp_path)
+    docs = tmp_path / 'docs'; docs.mkdir()
+    index = docs / 'index.html'
+    index.write_text('<main><li><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+                     '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li></main>')
+    write_report(report, docs / 'ai-scientist-comparison-v1.html', data_root=tmp_path / 'crest_ais', updated='2026-11-06')
+    assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
+    assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
+
+
+def test_scientist_generator_does_not_overwrite_compatibility_redirect(report, tmp_path):
+    from crest_ais.report import write_report
+    output = tmp_path / 'ai-scientist-creativity.html'
+    output.write_text('Original compatibility redirect')
+    with pytest.raises(ValueError, match='ai-scientist-comparison-v1.html'):
+        write_report(report, output, data_root=tmp_path / 'crest_ais')
+    assert output.read_text() == 'Original compatibility redirect'
+
+
+def test_external_data_root_does_not_authorize_an_unrelated_site_index(report, tmp_path, monkeypatch):
+    from lxml import html
+    import crest_ais.report as renderer
+    project = tmp_path / 'source-project'
+    monkeypatch.setattr(renderer, 'ROOT', project)
+    unrelated = tmp_path / 'unrelated'; docs = unrelated / 'docs'; docs.mkdir(parents=True)
+    index = docs / 'index.html'
+    original = ('<main><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+                '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></main>')
+    index.write_text(original)
+    destination = docs / 'ai-scientist-comparison-v1.html'
+    renderer.write_report(report, destination, data_root=unrelated / 'arbitrary-data', updated='2026-11-06')
+    assert index.read_text() == original
+    page = html.fromstring(destination.read_bytes())
+    pipeline = page.xpath('//header//a[text()="Research pipeline"]/@href')[0]
+    favicon = page.xpath('//link[@rel="icon"]/@href')[0]
+    assert (destination.parent / pipeline).resolve() == project / 'docs/research-pipeline.html'
+    assert (destination.parent / favicon).resolve() == project / 'docs/favicon.svg'
+
+
+def test_relocated_data_root_keeps_publication_and_pdf_authorities_separate(report, tmp_path, monkeypatch):
+    from lxml import html
+    from urllib.parse import unquote
+    import crest_ais.report as renderer
+    project = tmp_path / 'source-project'; docs = project / 'docs'; docs.mkdir(parents=True)
+    monkeypatch.setattr(renderer, 'ROOT', project)
+    index = docs / 'index.html'
+    index.write_text('<main><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+                     '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></main>')
+    data_root = tmp_path / 'relocated' / 'paper-data'
+    pdf = data_root / 'data/one/first paper.pdf'; pdf.parent.mkdir(parents=True)
+    pdf.write_bytes(b'Local test PDF; report rendering only checks its existence.')
+    destination = docs / 'ai-scientist-comparison-v1.html'
+    renderer.write_report(report, destination, data_root=data_root, updated='2026-11-06')
+    assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
+    page = html.fromstring(destination.read_bytes())
+    assert page.xpath('//header//a[text()="Research pipeline"]/@href') == ['research-pipeline.html']
+    assert page.xpath('//link[@rel="icon"]/@href') == ['favicon.svg']
+    pdf_links = [unquote(href) for href in page.xpath('//a/@href') if href.endswith('.pdf')]
+    assert any((destination.parent / href).resolve() == pdf for href in pdf_links)
+
+
+@pytest.mark.parametrize("dated_entries", [0, 2])
+def test_scientist_invalid_index_wrapper_preserves_existing_report(report, tmp_path, monkeypatch, dated_entries):
+    import crest_ais.report as renderer
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    docs = tmp_path / 'docs'; docs.mkdir()
+    index = docs / 'index.html'
+    entry = '<a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+    stamp = '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>'
+    original_index = '<main>' + ((entry + stamp) * dated_entries if dated_entries else entry) + '</main>'
+    index.write_text(original_index)
+    output = docs / 'ai-scientist-comparison-v1.html'
+    output.write_text('Previously published report')
+    with pytest.raises(ValueError, match='Expected one dated index entry'):
+        renderer.write_report(report, output, data_root=tmp_path / 'crest_ais', updated='2026-11-06')
+    assert output.read_text() == 'Previously published report'
+    assert index.read_text() == original_index

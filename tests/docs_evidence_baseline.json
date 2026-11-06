@@ -1,0 +1,227 @@
+{
+  "docs/nus-rubric.html": {
+    "body": "75e72d38dcc162709e8dcfb5ed80d2951b0e966a330b3e591b17a199c7b23113",
+    "protected_count": 3,
+    "protected": "52d8877025facd849f91aedc0afa619557d0aa7aee0b6b682e319b9b87159b55"
+  },
+  "docs/aut-inspired-rubric.html": {
+    "body": "98f04c094fbbe6bef3d54c26037a1c5f45e6d528e6154157d623610213642120",
+    "protected_count": 3,
+    "protected": "837cabfafe1122225d966031fd9008f734da7a334ea6097f33eeedcea02b0608"
+  },
+  "docs/why-one-overall-judgment.html": {
+    "body": "7a17d3c8a66b401895f49e6ba2974f36e883cf42173454b7649329c6d95b78d9",
+    "protected_count": 3,
+    "protected": "bf8b241cfbca442996ccea4af6e2d6cafa53cb86f72dc1e70797167be38614e1"
+  },
+  "docs/judge-models.html": {
+    "body": "69fb0f5e20ecfce774e5cd369a9109f6016826095073cb035d4d409ac77e2210",
+    "protected_count": 4,
+    "protected": "290be83fa1c72a8814e1a9ab9792b74b2204be53fc531a9fd4906ef7cd857459"
+  },
+  "docs/research-pipeline.html": {
+    "body": "e8342e2c4b784b5b40c62b7633e1433515be25b0bbe7d2225e7fb170ef564e9b",
+    "protected_count": 13,
+    "protected": "6a62fdd3513661fd2f5b707eaad9e33a572bc5e458255e12c447143cc91de0b5"
+  },
+  "docs/deep-research-comparison-v2.html": {
+    "body": "ba08783552b488745bd12ba499f852a640864adf5abc56b5eb16384eee040cf1",
+    "protected_count": 1779,
+    "protected": "eb67c3e0eec2f79400aa23ac2b67d18b96399d6c1773b38b8e1c50d6eda03e4c"
+  },
+  "docs/deep-research-comparison-v1.html": {
+    "body": "7075691295d2bf05fe5bf6702334f88231f5b2f79afe505050ac39056cf92213",
+    "protected_count": 2041,
+    "protected": "c695ec24a9f4324c50f48656a1a4fe5bea24764e0f42ff2b08ed58f7e61af15f"
+  },
+  "docs/open-source-research-agents.html": {
+    "body": "c39fbc269aa55182df885bb41de148c5f9b0afef8ad08b757aa49bdb1a931da5",
+    "protected_count": 13,
+    "protected": "a8828b024476f683366727e0b54995b765d12e41cbe18a66d8833825e3baac1e"
+  },
+  "docs/ai-scientist-comparison-method.html": {
+    "body": "563726fb0f9f7335eb8b42183dfab6bcae17aafe73a52da0dcca31e7e7f8c851",
+    "protected_count": 7,
+    "protected": "a459dcf0de72ebc01fdd327e6f9ed8aebf7124e02774e9cfce54850bb2cc1060"
+  },
+  "docs/ai-scientist-comparison-v1.html": {
+    "body": "ff8f6eb22446f42d47e8925342440176f9011d8df7e85c9595ad1a4aff9d385a",
+    "protected_count": 593,
+    "protected": "1e57fae4fab46f33f910f78a827159be0a4562b17070742647308503a5f424ff"
+  },
+  "crest/_archive/index.html": {
+    "body": "df15b24e0867341aaf7556faad8bada9463f0822bad68d164fd8c0cb160df65c",
+    "protected_count": 3,
+    "protected": "70569b1358a83497ec3d84d34045a4c0526c1a33f429e641c94949c2aa42009d"
+  },
+  "crest/_archive/reference/original-project-overview.html": {
+    "body": "54dd229a7646a9304f6509b7c1c56379c19538cb7e7c1c899e565bd899d4f9ee",
+    "protected_count": 7,
+    "protected": "314aaf0210662e682bdb9c7451e3549e76a5c45aa675ba92c5a2718b898cd569"
+  },
+  "crest/_archive/reference/historical-runtime-notes.html": {
+    "body": "bc6a636ced348902efc82e95eee683cc272d4593f69c285bd041165ec3dcc708",
+    "protected_count": 2,
+    "protected": "18e982d8e8466744d7ae04bd3d91bd9131accfd40e77d742724468f9b5e6e422"
+  },
+  "crest/_archive/research/doc/related-work.html": {
+    "body": "e68f4fe7a2c35dcd3060e094ae7b7f6bce5ab0976ea42af0cbd8ed0dcb3ac010",
+    "protected_count": 5,
+    "protected": "9e9ecf6c791b1497f3d55f1dc9cf6670a8c91df3ace269862bad39ad70e29370"
+  },
+  "crest/_archive/research/doc/benchmark-design-p2.html": {
+    "body": "fde07eaa23c313b964d8dd8ae33c45bb092903eb3da7d400890c8f7ac421a7c5",
+    "protected_count": 3,
+    "protected": "e6a17f1aecbd1d0f195275ccc44cefac7afd266a964e9261806763161c80edb1"
+  },
+  "crest/_archive/research/doc/benchmark-construction.html": {
+    "body": "16ee3e1a43293da59eea2a4c036c248f5feb988d379cfcace57a1197a62b80b9",
+    "protected_count": 3,
+    "protected": "2f3c3d6acea219fbf1cd24213a06c2908123ab509812e272b2e031235889453d"
+  },
+  "crest/_archive/research/doc/misc/category-coverage.html": {
+    "body": "bc0138a887d7d357fb4a43994b23906bff719e10f46d9cfe2d6126756a8acdb7",
+    "protected_count": 3,
+    "protected": "2c6886511dfb9398003c09835092ef49507e979a6dd0a7ab987b5bd60d2e7154"
+  },
+  "crest/_archive/research/doc/misc/field-justification.html": {
+    "body": "bf8f9d056afb9d116cc4d073d82510c9c63706d0148c545020b83202f24f0de1",
+    "protected_count": 6,
+    "protected": "254d044f70c5640cf53b769f81d29addbce86f1e7664e6d6c6097445609ecfb8"
+  },
+  "crest/_archive/research/doc/dataset-datasheet.html": {
+    "body": "3a1da035b58ec33fadd4470290dc7dbda8e17d7a7b3ef8489a9114cda26eb15c",
+    "protected_count": 3,
+    "protected": "583edd46ce622553e1bb5070c84d5ba38af9d100f5616ecc1a4600038d9db832"
+  },
+  "crest/_archive/research/doc/misc/ai-ml-dataset-build.html": {
+    "body": "407e60475b2e8e6f53a73b50ff64a631e7aa78aafeb3ae713c5b60f04d3bc8d5",
+    "protected_count": 14,
+    "protected": "b33d11d7e31ebecf129b0054e82c0a4284472a8bc68c20549f01e8bbfbca657b"
+  },
+  "crest/_archive/research/doc/misc/caesar-question-comparison.html": {
+    "body": "2eac048224237f651b1652ee48004ceceb95abb0edd25f1832e0cc0861445138",
+    "protected_count": 4,
+    "protected": "ce37c3c839d290bb9d7cfa35b723fd4ced6dbf9476c1db09ed463a8be931176a"
+  },
+  "crest/_archive/research/doc/item-vetting.html": {
+    "body": "c80ab279b2cc141d5ce67f5b80b6e8769451fe861ae12e9a6ab67044a0373518",
+    "protected_count": 3,
+    "protected": "8c85ccf744247b5a348dd79a7c018be13c8044134e2170aabe323f4864b3c186"
+  },
+  "crest/_archive/research/doc/hallucination-audit.html": {
+    "body": "f94f02a3ba0e172e8907d2b530a6549cd901c7ab2f07995ad2e46e65ed71792b",
+    "protected_count": 3,
+    "protected": "19a43619cea259c452435f33f73dabc57e9ab3a695890e4f11b1b532ff19d3b9"
+  },
+  "crest/_archive/research/doc/misc/citation-audit-c1.html": {
+    "body": "f3d845556353802e3471434fa613fe5a8c90764fbc0389c6fdfb1ba65eaa760e",
+    "protected_count": 26,
+    "protected": "9f2e603bd32790be56c00c64084bcf1371dd4bad4493eccda57c983552684855"
+  },
+  "crest/_archive/research/doc/misc/citation-audit-c2.html": {
+    "body": "1f6742ce34e2207d7ecc553c3a05b803a69f499103a33cb70931cee0e37f9559",
+    "protected_count": 16,
+    "protected": "987b4a07c9fb89687bcc30ba93bb57a4652b7848f2ee385d5f5ab86def7b93b7"
+  },
+  "crest/_archive/research/doc/misc/citation-audit-c3.html": {
+    "body": "b66153d03b15d6a8dd3979c3800739d4b0bf1a3c10ae4f02baed28c6169de44e",
+    "protected_count": 16,
+    "protected": "b02447175bf00d2fede993a9fbca7ff49369f27022b4e83639aad2f229a68e23"
+  },
+  "crest/_archive/research/doc/misc/citation-audit-c4-and-c5.html": {
+    "body": "0763368308d46c9f82b2ae497201aa259ba3fb003d6a5d6d983ab68621b05ba0",
+    "protected_count": 8,
+    "protected": "7c309b98becdb83b4674ea0563e2cfe907f3b9fb23268545304dea8159008c85"
+  },
+  "crest/_archive/research/doc/misc/citation-audit-c4-remainder.html": {
+    "body": "ebb3b5bd67beb1fa5142a652f2f597258a51f88b997b14799b107ec42e5e3d6c",
+    "protected_count": 16,
+    "protected": "79b609021a6d50531e7a11f146bf9d8e37938a33cbeba7ae29fa7e3c9227c216"
+  },
+  "crest/_archive/research/doc/misc/citation-audit-c5-remainder.html": {
+    "body": "b0b8cdb87d553a2eeb214bce90d8a2b4b64effcdccab7ba97d7e468a19209121",
+    "protected_count": 31,
+    "protected": "634e376e8f3f71f2675c75320c3eb9fbaedeed10b40554d581900c8db4eb0eb2"
+  },
+  "crest/_archive/research/paper/p2_benchmark_only/iclr-2027-paper-outline-p2.html": {
+    "body": "cf5667a795eeceda20666e73159bb9b0413c79d7ccb5f81c0b0a385d7d741755",
+    "protected_count": 2,
+    "protected": "18e982d8e8466744d7ae04bd3d91bd9131accfd40e77d742724468f9b5e6e422"
+  },
+  "crest/_archive/research/doc/misc/paper-comparison-p2-and-p3.html": {
+    "body": "8e21821c765d6738e5ac122c58907ced6533b5a4069426d1f5093e6d209aa964",
+    "protected_count": 4,
+    "protected": "9a6819d9f775512a7ce9f7bbe882b1cbe96af94b1a9d6a031cc17d88c78651cf"
+  },
+  "crest/_archive/research/paper/p2_benchmark_only/reviewer-objections.html": {
+    "body": "5f7eb31351f15e833aa9e5ba54f40e09458b602d6fff55464110b4ca5d5c8d27",
+    "protected_count": 3,
+    "protected": "6b2a707657df37682f006399a7517a24a3d6a52d7b0dfe259c4e6e23faa22a42"
+  },
+  "crest/_archive/research/doc/misc/iclr-meta-review.html": {
+    "body": "1b829e200669ff372c7a7a225ded34de473b28585c5f9f0fb51d29efd0883a63",
+    "protected_count": 8,
+    "protected": "6682991d8ab340c4c404ee099acf09647dcb0ee0b0fc050f7ef126655e0fc117"
+  },
+  "crest/_archive/research/doc/runs/run-outputs.html": {
+    "body": "8b8cbeddc32c3955721c447b285efd03d5cedeebffda9bcf9674c0f69aa56573",
+    "protected_count": 3,
+    "protected": "75fb30ad962379d2fd9fdac5216a1caaa87de8ee457639f412ef503f054d2623"
+  },
+  "crest/_archive/research/doc/runs/run-2026-08-01-03-17-utc.html": {
+    "body": "aae1d2125fa57af38588c5aa322771f77d918a84536ea9711a715f3dc529f383",
+    "protected_count": 4,
+    "protected": "0a23f12a5a0d713a93855011f37662e315ed875a33e1db50a1bd34fc24c75bd7"
+  },
+  "crest/_archive/research/doc/runs/run-2026-08-01-01-54-utc.html": {
+    "body": "5db9234ac33a02c03ef27bb6b344f645612d57ba48125cd2f4446316598a6574",
+    "protected_count": 4,
+    "protected": "0a23f12a5a0d713a93855011f37662e315ed875a33e1db50a1bd34fc24c75bd7"
+  },
+  "crest/_archive/research/doc/runs/run-2026-07-31-19-38-utc.html": {
+    "body": "bf69f802e47ed52935e335d7fc7fe18023ff6572cf2a3b7aeb2941860f4ebfdc",
+    "protected_count": 4,
+    "protected": "0a23f12a5a0d713a93855011f37662e315ed875a33e1db50a1bd34fc24c75bd7"
+  },
+  "crest/_archive/research/doc/runs/run-2026-07-31-04-06-utc.html": {
+    "body": "e7d7aacbcd3f8c7f8fa97b407f90232be862c2b81747dc22621fb7e8b96a74cc",
+    "protected_count": 4,
+    "protected": "8153c91e4cf9125bccb0e70168fff733203036aad72e47747eee26dadb561149"
+  },
+  "crest/_archive/research/doc/runs/aborted-runs.html": {
+    "body": "6518bfdab4cbe9b212beb7961c97275c95374a7974adecc1365bcb5537446612",
+    "protected_count": 3,
+    "protected": "ffe4df061076f98f5c855aafedb68ea202f7cd8e74908867f46e6790f17a6414"
+  },
+  "crest/_archive/runtime/index.html": {
+    "body": "c3423995dfc6575499e841768f6395ed2b9d904c0da27d11b1d85e47d9bcd828",
+    "protected_count": 5,
+    "protected": "fa8a1602c28ca447004c546ef428af34ec5f15354c2199a9fdbddf8469dfded9"
+  },
+  "crest/_archive/runtime/judge/judge-rubric.html": {
+    "body": "9591e84d22a20e5297ffa926aab359c3d5bb27b1b2bcb1b2695c41814f97a342",
+    "protected_count": 2,
+    "protected": "18e982d8e8466744d7ae04bd3d91bd9131accfd40e77d742724468f9b5e6e422"
+  },
+  "crest/_archive/research/doc/judge-protocol-intent.html": {
+    "body": "9df633a0a1ee17682e13abd24e39092f0a5e9711e716b89d33e54e6a78386f89",
+    "protected_count": 3,
+    "protected": "96e1bcc82b5087ab3533e768ba9223eb9ad8907cdbfadb9db0d6af94978a7285"
+  },
+  "crest/_archive/runtime/eval/index.html": {
+    "body": "fa460671e936a4c3dd5e62b875da43ec566abf114c8e4fd0403d2dcc926cc143",
+    "protected_count": 4,
+    "protected": "de9e55361367ef5d25de23a4642900c0971355a3c86eeb020839cbc5c8f047cd"
+  },
+  "crest/_archive/research/doc/misc/deep-research-apis.html": {
+    "body": "a335bf8af2690070fdd68fdd3ef95bbc74cc3426ea27dbe4333050c2b03f18b0",
+    "protected_count": 5,
+    "protected": "c2407a27e6e55f4ca47d29b968b2fa6d4878e3c96b6068cff46f52406c1eae29"
+  },
+  "crest/_archive/entrypoints/index.html": {
+    "body": "545a34c86fb4945a6076a78a774d8ceb9cdbb28000c1bb46e75cd10cfcdf00c6",
+    "protected_count": 3,
+    "protected": "9fd044e3c6561406fcea16a6f1082d284482c8da34bc73e3831bbc42736d2686"
+  }
+}

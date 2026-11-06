@@ -4,6 +4,16 @@ import os
 from pathlib import Path
 from urllib.parse import quote
 
+from .site import page_path, page_title, page_updated
+
+DATE_CSS = (
+    ".crest-page-updated,.page-link-date{font-size:.75rem;color:#637380;white-space:nowrap;font-variant-numeric:tabular-nums}"
+    ".crest-page-updated{margin-left:auto;text-align:right}"
+    ".index-group .page-link-date{display:inline-block;margin-left:.65rem}"
+)
+
+INDEX_CSS = '.index-group li{display:grid;grid-template-columns:minmax(0,1fr) max-content;column-gap:.65rem;align-items:start}.index-group li>a{min-width:0}.index-group .page-link-date{grid-column:2;margin-left:0;text-align:right}.index-group .description{grid-column:1/-1}'
+
 CSS = """
 .skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -75,6 +85,8 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 """
+CSS += DATE_CSS + INDEX_CSS
+
 
 def site_favicon(project_root: Path, destination: Path) -> str:
     """Use the same local icon in documentation and generated reports."""
@@ -84,16 +96,20 @@ def site_favicon(project_root: Path, destination: Path) -> str:
     return f'<link rel="icon" type="image/svg+xml" href="{href}">'
 
 
-def site_header(project_root: Path, destination: Path, *, research_report: Path | None = None) -> str:
+def site_header(project_root: Path, destination: Path, *, research_report: Path | None = None,
+                updated: str | None = None) -> str:
     root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
     def link(path):
         return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
-    comparison = research_report if research_report is not None else root / 'docs/deep-research-creativity-v2.html'
+    comparison = research_report if research_report is not None else root / page_path('Deep research comparison v2')
+    label = page_title(comparison, 'Deep research comparison')
     current = ' aria-current="page"' if research_report is not None else ''
+    stamp = page_updated(updated)
     return ('<header class="crest-site-header"><nav aria-label="Documentation">'
             '<a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a>'
-            f'<a href="{link(root / "docs/crest-guide.html")}">Research pipeline</a>'
-            f'<a href="{link(comparison)}"{current}>Deep research comparison</a>'
-            f'<a href="{link(root / "docs/ai-scientist-creativity.html")}">AI scientist comparison</a>'
+            f'<a href="{link(root / page_path("Research pipeline"))}">Research pipeline</a>'
+            f'<a href="{link(comparison)}"{current}>{escape(label)}</a>'
+            f'<a href="{link(root / page_path("AI scientist comparison v1"))}">AI scientist comparison v1</a>'
             f'<a href="{link(root / "docs/index.html")}">All documents</a>'
+            f'<time class="crest-page-updated" datetime="{stamp}">Updated {stamp}</time>'
             '</nav></header>')

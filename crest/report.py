@@ -1,6 +1,6 @@
 """Offline HTML publication of a complete, frozen CREST research comparison.
 
-Usage: python -m crest.report RUN --output docs/deep-research-creativity.html
+Usage: python -m crest.report RUN --output docs/deep-research-comparison-v2.html
 Only complete 50-question comparisons of every agent in the frozen run manifest,
 judged by every configured judge, can be written. Rendering never submits jobs,
 changes analysis, or reads mutable generation caches.
@@ -34,6 +34,7 @@ from .costs import cost_for_row, summarize_costs
 from .judging import parse_verdict, validate_verdict
 from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, NUS_PROTOCOL, protocol_rubric_kind
 from crest_ais.navigation import CSS as SITE_CSS, site_favicon, site_header
+from crest_ais.site import page_path, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
 
 ROOT = Path(__file__).resolve().parents[1]
 # Agents and judges come from each frozen run; these tables only decorate known identifiers.
@@ -855,8 +856,8 @@ def _method(data):
                       'Links reveal provenance in '
                       + _join(f'{count} / 50 {_text(_label(agent))} answers' for agent, count in revealed.items()) + '. '
                       'These cues do not establish that provider bias caused the ranking.</p>')
-    rubric_links = ('' if aut else '<a href="judging-method.html">NUS rubric</a>; '
-                    '<a href="overall-creativity-judgment.html">Why one overall judgment</a>. ')
+    rubric_links = ('' if aut else f'<a href="{page_path("NUS rubric").name}">NUS rubric</a>; '
+                    f'<a href="{page_path("Why one overall judgment").name}">Why one overall judgment</a>. ')
     return ('<section id="method"><h2>How the comparison works</h2>'
             f'<p>Each question produces {counts["per_question"]:,} decisions: {_plural(counts["pairs"], "answer pair")}, '
             f'evaluated by {_plural(counts["judges"], "judge")} in both orders.</p>'
@@ -898,14 +899,15 @@ CSS = """
 """
 
 
-def _render(data, destination):
+def _render(data, destination, *, updated=None):
+    title = _text(page_title(destination, "Deep research comparison"))
     agents, counts = data['manifest']['agents'], _counts(data)
     judge_phrase = _plural(counts['judges'], 'model judge').capitalize() + (' compares' if counts['judges'] == 1 else ' compare')
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">',
-             '<title>Deep research comparison · CREST</title>', site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
-             '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination, research_report=destination),
-             '<main id="main-content" tabindex="-1"><h1>Deep research comparison</h1>',
+             f'<title>{title}</title>', site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
+             '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination, research_report=destination, updated=updated),
+             f'<main id="main-content" tabindex="-1"><h1>{title}</h1>',
              f'<p>This comparison evaluates {_text(_join(_label(a) for a in agents))} '
              f'on the same 50 questions. {judge_phrase} the {counts["answers"]:,} saved answers in both answer orders. '
              '<a href="#systems">Models and research workflows</a>.</p>',
@@ -921,11 +923,14 @@ def _render(data, destination):
     return ''.join(parts)
 
 
-def write_report(run_dir, destination, *, audit=None):
+def write_report(run_dir, destination, *, audit=None, updated=None):
     """Write a validated final report atomically; errors leave old outputs intact."""
+    require_canonical_output(destination)
+    updated = page_updated(updated)
     data = load_run(run_dir, audit=audit)
     destination = Path(destination).expanduser().resolve()
-    html = _render(data, destination)
+    html = _render(data, destination, updated=updated)
+    index_update = prepare_index_date(ROOT, destination, updated)
     destination.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix='.' + destination.name, dir=destination.parent)
     try:
@@ -937,6 +942,7 @@ def write_report(run_dir, destination, *, audit=None):
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
+    write_index_date(index_update)
     return destination
 
 
@@ -947,9 +953,10 @@ def main(argv=None):
     parser.add_argument('run', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--audit', type=Path, help='Optional final lifetime audit; otherwise use latest 04-audit*/audit.json')
+    parser.add_argument('--updated', help='Page-update date YYYY-MM-DD; defaults to CREST_PAGE_UPDATED, SOURCE_DATE_EPOCH, or UTC today')
     args = parser.parse_args(argv)
     try:
-        result = write_report(args.run, args.output, audit=args.audit)
+        result = write_report(args.run, args.output, audit=args.audit, updated=args.updated)
     except (ValueError, OSError, KeyError, TypeError) as exc:
         parser.exit(2, f'crest.report: {exc}\n')
     print(result)

@@ -15,6 +15,7 @@ import yaml
 from crest.cache import write_json
 from crest.config import DEFAULT_CONFIG as CREST_DEFAULT_CONFIG
 from crest.rubrics import DEFAULT_NUS_RUBRIC
+from .site import page_path
 from .catalog import DEFAULT_AGENTS, prepare_catalog
 from .pipeline import create_cohort_extension, create_extension, create_judge_extension, imported_job_count, load_results, run_judging, save_plan
 from .protocol import make_plan
@@ -287,7 +288,7 @@ def main(argv=None):
         summary = {"run_dir": str(run_dir), "expected_jobs": len(plan["jobs"]),
                    "sampled_pairs": plan["selection"]["sampled_pairs"], "selected_papers": len(plan["papers"])}
         if args.command in {"report", "run"}:
-            destination = args.report_path.expanduser().resolve() if args.report_path else PACKAGE_ROOT.parent / "docs" / "ai-scientist-creativity.html"
+            destination = args.report_path.expanduser().resolve() if args.report_path else PACKAGE_ROOT.parent / page_path("AI scientist comparison v1")
             report = _report(plan, run_dir, root, destination)
             summary.update(report=str(destination), status=report["status"], completed_jobs=report["coverage"]["completed_jobs"])
         print(json.dumps(summary, indent=2))

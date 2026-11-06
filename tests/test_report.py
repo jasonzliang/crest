@@ -164,8 +164,8 @@ def test_legacy_nus_publication_rendering_matches_explicit_family(run, tmp_path)
     data['ranking']['rubric_kind'] = 'nus'
     assert _render(data, tmp_path / 'nus.html') == legacy
     assert '<strong>Useful</strong>' in legacy and 'AUT-inspired' not in legacy
-    assert 'href="judging-method.html">NUS rubric</a>' in legacy
-    assert 'href="overall-creativity-judgment.html">Why one overall judgment</a>' in legacy
+    assert 'href="nus-rubric.html">NUS rubric</a>' in legacy
+    assert 'href="why-one-overall-judgment.html">Why one overall judgment</a>' in legacy
     assert '<link rel="icon" type="image/svg+xml"' in legacy
 
 
@@ -259,7 +259,7 @@ def test_refuses_incomplete_publication_without_overwriting_destination(run, tmp
     from crest.report import write_report
     answers = json.loads(answers_path(run).read_text())
     dump(answers_path(run), answers[:-1])
-    output = tmp_path / 'docs/deep-research-creativity.html'
+    output = tmp_path / 'docs/deep-research-comparison-v1.html'
     output.parent.mkdir()
     output.write_text('previous verified report')
     with pytest.raises(ValueError, match='150|answer'):
@@ -1233,10 +1233,10 @@ def test_known_citation_url_with_spaces_keeps_full_link_and_original_text(run, t
 
 def test_report_navigation_returns_to_the_generated_report_not_an_older_version(run, tmp_path):
     from crest.report import write_report
-    output = tmp_path / 'deep-research-creativity-v2.html'; write_report(run, output)
+    output = tmp_path / 'deep-research-comparison-v2.html'; write_report(run, output)
     header = output.read_text().split('</header>', 1)[0]
-    assert 'href="deep-research-creativity-v2.html"' in header
-    assert 'href="deep-research-creativity.html"' not in header
+    assert 'href="deep-research-comparison-v2.html"' in header
+    assert 'href="deep-research-comparison-v1.html"' not in header
 
 
 @pytest.mark.parametrize('url,encoded', [
@@ -1307,25 +1307,86 @@ def test_current_static_document_headers_link_to_latest_research_report():
     from pathlib import Path
     from lxml import html
     docs = Path(__file__).resolve().parents[1] / 'docs'
-    # V1 is immutable historical evidence; v2 is rebuilt separately from saved data.
+    # Evidence remains frozen; publication wrappers use canonical versioned names.
     for path in sorted(docs.glob('*.html')):
-        if path.name in {'deep-research-creativity.html', 'deep-research-creativity-v2.html'}:
+        if path.name in {'deep-research-comparison-v1.html', 'deep-research-comparison-v2.html'}:
             continue
         page = html.fromstring(path.read_bytes())
-        links = page.xpath('//header[@class="crest-site-header"]//a[text()="Deep research comparison"]/@href')
+        links = page.xpath('//header[@class="crest-site-header"]//a[starts-with(text(), "Deep research comparison")]/@href')
         if links:
-            assert links == ['deep-research-creativity-v2.html'], path.name
-    for name in ('index.html', 'crest-guide.html'):
+            assert links == ['deep-research-comparison-v2.html'], path.name
+    for name in ('index.html', 'research-pipeline.html'):
         page = html.fromstring((docs / name).read_bytes())
-        links = page.xpath('//a[@href="deep-research-creativity.html"]')
-        assert any('previous' in a.text_content().lower() for a in links), name
+        links = page.xpath('//a[@href="deep-research-comparison-v1.html"]')
+        assert links, name
+        assert any('v1' in a.text_content().lower() or 'previous' in a.text_content().lower() for a in links), name
 
 
-def test_historical_v1_report_retains_original_bytes_and_navigation():
+def test_historical_v1_report_uses_versioned_publication_wrapper():
     from pathlib import Path
     from lxml import html
-    path = Path(__file__).resolve().parents[1] / 'docs/deep-research-creativity.html'
+    path = Path(__file__).resolve().parents[1] / 'docs/deep-research-comparison-v1.html'
     source = path.read_bytes()
-    assert hashlib.sha256(source).hexdigest() == 'f48189abcf2ed638baef443d8448e6640ff7becb41634c93dc0b8e688e4765db'
     page = html.fromstring(source)
-    assert page.xpath('//header//a[text()="Deep research comparison"]/@href') == ['deep-research-creativity.html']
+    assert page.xpath('//h1/text()') == ['Deep research comparison v1']
+    assert page.xpath('//header//time/@datetime') == ['2026-11-05']
+    assert page.xpath('//header//a[starts-with(text(), "Deep research comparison")]/@href') == ['deep-research-comparison-v1.html']
+
+
+def test_canonical_research_report_title_date_and_unchanged_run(run, tmp_path):
+    from lxml import html
+    from crest.report import write_report
+    before = {str(p.relative_to(run)): hashlib.sha256(p.read_bytes()).hexdigest()
+              for p in run.rglob('*') if p.is_file()}
+    output = tmp_path / 'deep-research-comparison-v2.html'
+    write_report(run, output, updated='2026-11-05')
+    page = html.fromstring(output.read_bytes())
+    assert page.findtext('.//title') == 'Deep research comparison v2'
+    assert page.xpath('//h1/text()') == ['Deep research comparison v2']
+    assert page.xpath('//header//time/@datetime') == ['2026-11-05']
+    assert before == {str(p.relative_to(run)): hashlib.sha256(p.read_bytes()).hexdigest()
+                      for p in run.rglob('*') if p.is_file()}
+
+
+def test_research_publication_keeps_index_date_in_sync(run, tmp_path, monkeypatch):
+    from lxml import html
+    import crest.report as renderer
+    import shutil
+    shutil.copytree(renderer.ROOT / 'crest/data', tmp_path / 'crest/data')
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    docs = tmp_path / 'docs'; docs.mkdir()
+    index = docs / 'index.html'
+    index.write_text('<main><li><a href="deep-research-comparison-v2.html">Deep research comparison v2</a>'
+                     '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li></main>')
+    renderer.write_report(run, docs / 'deep-research-comparison-v2.html', updated='2026-11-06')
+    assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
+    assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
+
+
+def test_research_generator_does_not_overwrite_compatibility_redirect(run, tmp_path):
+    from crest.report import write_report
+    output = tmp_path / 'deep-research-creativity.html'
+    output.write_text('Original compatibility redirect')
+    with pytest.raises(ValueError, match='deep-research-comparison-v1.html'):
+        write_report(run, output)
+    assert output.read_text() == 'Original compatibility redirect'
+
+
+@pytest.mark.parametrize("dated_entries", [0, 2])
+def test_research_invalid_index_wrapper_preserves_existing_report(run, tmp_path, monkeypatch, dated_entries):
+    import shutil
+    import crest.report as renderer
+    shutil.copytree(renderer.ROOT / 'crest/data', tmp_path / 'crest/data')
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    docs = tmp_path / 'docs'; docs.mkdir()
+    index = docs / 'index.html'
+    entry = '<a href="deep-research-comparison-v2.html">Deep research comparison v2</a>'
+    stamp = '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>'
+    original_index = '<main>' + ((entry + stamp) * dated_entries if dated_entries else entry) + '</main>'
+    index.write_text(original_index)
+    output = docs / 'deep-research-comparison-v2.html'
+    output.write_text('Previously published report')
+    with pytest.raises(ValueError, match='Expected one dated index entry'):
+        renderer.write_report(run, output, updated='2026-11-06')
+    assert output.read_text() == 'Previously published report'
+    assert index.read_text() == original_index

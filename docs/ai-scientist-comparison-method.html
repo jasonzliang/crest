@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>AI scientist comparison method</title><style>aside{border-left:4px solid var(--accent);padding:.5rem 1.2rem;background:#eef6f6}</style><style id="crest-site-navigation">
+.skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
+.crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
+.crest-site-header a{display:inline-flex;align-items:center;min-height:40px;margin:0;padding:.35rem 0;border:0;border-radius:0;background:transparent;color:#0b5967;font:inherit;text-decoration:none;text-underline-offset:3px}
+.crest-site-header a:hover{background:transparent;text-decoration:underline}
+.crest-site-header a:focus-visible{outline:3px solid #b4652b;outline-offset:4px}
+.crest-site-header .crest-brand{font-weight:800;letter-spacing:.13em;font-size:1rem}
+@media print{.crest-site-header{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+.crest-site-header~main,body>main{max-width:1120px;margin:0 auto;padding:2.4rem 1.5rem 4rem}
+html{color-scheme:light;scroll-padding-top:1.5rem}
+body{margin:0;background:#fff;color:#172c3e;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--ink:#172c3e;--muted:#526574;--accent:#0b5967;--line:#d7e1e6;--wash:#f5f8f9}
+main{min-width:0}
+main h1{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.16;letter-spacing:-.035em;font-weight:750;margin:.8rem 0 1.3rem;max-width:29ch;overflow-wrap:anywhere}
+main h2{font-size:1.55rem;line-height:1.3;letter-spacing:-.025em;font-weight:700;margin:2.4rem 0 1rem;padding:0;border:0}
+main h3,main .judgment h3{font-size:1.1rem;line-height:1.4;font-weight:700;margin:1.6rem 0 .7rem}
+main h4,main h5,main h6{font-size:1rem;line-height:1.4;font-weight:650;margin:1.4rem 0 .5rem}
+main .section-heading h2{margin:0}
+main>section:not(.index-group)>h2:first-child{margin-top:0}
+main>section{border-top:0}
+#main-content>section{margin:2.2rem 0 0;padding-top:1.5rem}
+#main-content>section~section{border-top:1px solid var(--line);padding-top:2rem}
+#main-content>nav[aria-label="Report contents"]{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin:1.5rem 0;padding:1rem 0;border-bottom:1px solid var(--line)}
+main>header,main .hero{border-bottom:0}
+main .stats,main .judgment{border:0}
+main p{margin:.65rem 0 1rem;line-height:1.7}
+main ul,main ol{padding-left:1.5rem}main li{margin:.35rem 0}
+main blockquote{margin:1rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent);background:var(--wash)}
+main hr{margin:1.5rem 0;border:0;border-top:1px solid var(--line)}
+main img,main video{max-width:100%;height:auto}main svg{max-width:100%}
+main .archive-note{margin:1rem 0;padding:.8rem 1rem;border-left:3px solid #997024;background:#fbf6e9;color:var(--ink);font-size:.9rem;line-height:1.7}
+main a{color:#0b5967;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+main nav a{text-decoration:none}
+main nav a:hover{text-decoration:underline}
+main>nav{font-size:.9rem;line-height:1.6}
+main .subtitle{font-size:1.06rem;line-height:1.65;color:#526574}
+main .metadata,main .meta{font-size:.8rem;line-height:1.6;color:#526574}
+main .small,main .chart-note,main .unit,main .notice,main .notice.compact,main .concept-definitions dd,main .overall-reason,main .answer-map,main .key-limits,main .canonical-names,main .history-label,main .archive-note,main .dated-note,main .sidebar-note,main .model-list>li,main .index-group .description{font-size:.9rem;line-height:1.7;font-weight:400}
+main .legend,main .chart-legend,main .heatmap-legend,main .stats span,main .run-stats span,main .diagnostics{font-size:.9rem;line-height:1.6}
+main small,main .score small,main .diagnostics small,main .paper-id,main .model-id,main .judge-comparison .model-id,main .file-path,main .judgment-pair .muted{font-size:.8rem;line-height:1.5;font-weight:400}
+main code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86em;overflow-wrap:anywhere;background:#eef3f5;padding:.1rem .25rem;border-radius:3px}
+main pre{font-size:.86rem;line-height:1.6;background:#eef3f5;border:0;border-radius:5px;padding:1rem 1.15rem;overflow:auto}
+main pre code{font-size:1em;overflow-wrap:normal;background:transparent;padding:0;border-radius:0}
+main .table-scroll{overflow:auto;border:0;border-radius:0;margin:1.2rem 0}
+main table{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.6;text-align:left}
+main th,main td{padding:.75rem .9rem;border:0;text-align:left;vertical-align:top}
+main caption{font-size:.9rem;line-height:1.6;font-weight:400;text-align:left;padding:0 0 .75rem}
+main .heatmap th,main .no-cell,main .unavailable{font-size:.9rem;line-height:1.6}
+main th{background:#eaf1f3;color:#183d49;font-weight:650}
+main tbody th{background:transparent}
+main thead th{border-bottom:1px solid #d7e1e6}
+main details{border:0;border-radius:0;padding:0;margin:1.2rem 0;background:transparent}
+main details+details{border:0;margin-top:1.2rem}
+main summary,main .paper-record summary{padding:.9rem 0;color:#0b5967;font-weight:650;font-size:.9rem;line-height:1.5;cursor:pointer}
+main details[open]{padding-bottom:.3rem}
+main details[open]>summary{border:0;margin-bottom:.5rem}
+main .contents{background:#f5f8f9;border:0;border-radius:5px;padding:0 1rem}
+main .contents .sidebar-note{display:block}
+main .contents nav{display:block;columns:auto;padding:0 0 .5rem}
+main .contents nav ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+main .contents nav a{display:block;margin:0;padding:.25rem 0;background:transparent;font-size:.9rem;line-height:1.6}
+main .section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .75rem;padding:0 0 1.4rem;margin:0 0 1.4rem;border:0;font-size:.9rem;line-height:1.6}
+main .section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:.45rem .7rem;border:0;border-radius:4px;background:#f5f8f9;color:#0b5967;text-decoration:none;white-space:nowrap}
+main .section-nav a:hover{background:#e7eff1;text-decoration:underline}
+main footer{margin-top:2.5rem;padding-top:1rem;border:0;font-size:.8rem;color:#526574}
+main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
+@media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
+</style><link rel="icon" type="image/svg+xml" href="favicon.svg"><style id="crest-page-dates">.crest-page-updated,.page-link-date{font-size:.75rem;color:#637380;white-space:nowrap;font-variant-numeric:tabular-nums}.crest-page-updated{margin-left:auto;text-align:right}.index-group .page-link-date{display:inline-block;margin-left:.65rem}</style></head><body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="research-pipeline.html">Research pipeline</a><a href="deep-research-comparison-v2.html">Deep research comparison v2</a><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a><a href="index.html">All documents</a><time class="crest-page-updated" datetime="2026-11-05">Updated 2026-11-05</time></nav></header><main id="document-main" tabindex="-1">
+<h1>AI scientist comparison method</h1>
+<p>This pipeline compares released papers from ScientistOne, ScientistTwo, Sakana AI Scientist (v1), Sakana AI Scientist (v2), and Sakana Agentic Scientist (v3). It samples paper pairs, collects overall creativity preferences, and gives each opponent equal weight.</p>
+<aside><p><strong>The target is the released collection.</strong> Results describe the papers the judges preferred, rather than performance on identical tasks or a prediction of future work. Topics, publication dates, underlying models, computing resources, and release choices differ across collections.</p></aside>
+<h2 id="comparison-design">Comparison design</h2>
+<ol>
+<li>Freeze eligible paper lists and hashes. Keep outputs explicitly labeled as human–AI co-discovery outside the primary pool.</li>
+<li>For each of ten scientist matchups, sample up to ten distinct paper pairs uniformly without replacement. Use every pair if fewer than ten exist. Each paper has the same selection probability as other papers in its collection.</li>
+<li>The published comparison uses three judges and both A/B orders: six judgments per pair. Each response contains one comparative reason and one overall winner.</li>
+<li>Average each paper pair’s overall votes (six, or four where a judge refused the pair), then the pairs within each matchup. A scientist’s score is the mean of its four matchup win rates.</li>
+</ol>
+<p><strong>Each opponent contributes 25% of a scientist’s score</strong>, regardless of collection size or sampled pair count. Matchup win rates of 40%, 60%, 60% and 80%, for example, give a 60% overall score. The pair cap controls cost.</p>
+<p>The published five-system schedule has 96 paper pairs and 576 planned overall judgments, of which 572 were recorded: one judge refused both orders of 2 pairs on safety grounds. Nine matchups use ten pairs; v2 versus v3 uses all six possible pairs from their three and two eligible papers. Distinct-paper counts are reported separately from pair and judgment counts. Repeated appearances do not add independent papers.</p>
+<p>New plans use the <a href="nus-rubric.html">NUS rubric</a> by default, with the <a href="aut-inspired-rubric.html">AUT-inspired rubric</a> available as an option. Both request one overall preference. See <a href="why-one-overall-judgment.html">why one overall judgment</a> for the rationale. The <a href="ai-scientist-comparison-v1.html">published comparison</a> uses its recorded rubric and judgments; selecting another rubric creates a new experiment and does not rejudge saved results.</p>
+<h2 id="crest-consistency">How this matches CREST</h2>
+<div class="table-scroll" role="region" aria-label="CREST and AI scientist comparison methods" tabindex="0"><table><thead><tr><th scope="col">Part</th><th scope="col">CREST</th><th scope="col">AI scientist comparison</th></tr></thead><tbody>
+<tr><th scope="row">Judgment</th><td colspan="2">One overall winner and a reason under the selected rubric; no separate criterion scores.</td></tr>
+<tr><th scope="row">Overall score</th><td colspan="2">Every judge and both paper or answer orders count. Opponents receive equal weight. A 5–1 vote split contributes 83%, not a winner-take-all 100%. Aggregate ties share a rank.</td></tr>
+<tr><th scope="row">What is compared</th><td>Different systems answer the same questions.</td><td>Different scientists' released papers form sampled pairs.</td></tr>
+<tr><th scope="row">Incomplete results</th><td>Ranks use questions with every required answer and judgment.</td><td>Primary ranks wait until every planned judgment is recorded or refused by its judge.</td></tr>
+<tr><th scope="row">Uncertainty</th><td>Resamples whole questions to show sensitivity to the question mix.</td><td>Uses ranges for sampled paper pairs. The sample and five-system comparison were expanded after seeing earlier results, so the ranges are exploratory.</td></tr>
+</tbody></table></div>
+<p>The percentages describe different tasks and output collections; they are not interchangeable measures of general creativity.</p>
+<h2 id="run-the-pipeline">Run the pipeline</h2>
+<p>Run these commands from the repository root. Planning and reporting are local; judging makes paid provider calls using credentials already in the environment. The worker and spend overrides below are examples.</p>
+<pre><code>python3 -m pip install -e '.[ais,test]'
+python3 -m crest_ais plan
+python3 -m crest_ais judge --workers-per-judge 16 --max-spend-usd 150
+python3 -m crest_ais report --report-path crest_ais/results/local-report.html</code></pre>
+<p>Planning creates a new experiment. Judging and reporting use the latest planned run unless you pass <code>--run-dir</code> with a specific result directory. Use that option to resume an experiment or inspect a saved run. The report path above writes a separate local report.</p>
+<h2 id="configuration">Configuration</h2>
+<p>Defaults come from <a href="../crest_ais/configs/config.json">crest_ais/configs/config.json</a>, with judge settings inherited from <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>. Pass <code>--config</code> to select another configuration. Each plan freezes its inputs, prompts and model settings; later configuration changes do not alter saved judgments.</p>
+<div class="table-scroll" role="region" aria-label="AI scientist pipeline configuration" tabindex="0"><table><thead><tr><th scope="col">Setting</th><th scope="col">Default and published comparison</th></tr></thead><tbody>
+<tr><th scope="row">Sample size</th><td>Up to 10 distinct pairs per matchup. The published five-system comparison has 96 pairs across ten matchups.</td></tr>
+<tr><th scope="row">Judges</th><td>The published comparison uses claude-fable-5-1, gemini-4-argon and gpt-6-astra, all at high reasoning effort.</td></tr>
+<tr><th scope="row">Paper order</th><td>Both orders for each judge. The published comparison plans six judgments per pair, 576 in total.</td></tr>
+<tr><th scope="row">Concurrency</th><td>Two workers per provider by default. Raise this with <code>--workers-per-judge</code>.</td></tr>
+<tr><th scope="row">Random seed</th><td>2026</td></tr>
+<tr><th scope="row">Spend guard</th><td>US$100 by default. Change it with <code>--max-spend-usd</code>.</td></tr>
+</tbody></table></div>
+<p>The worker override changes concurrency without changing frozen requests. The spend guard stops new submissions once observed current-run costs reach its target; in-flight calls can still add charges. In-flight and unknown charges are recorded separately.</p>
+<h3 id="rubric-selection">Choose the rubric file</h3>
+<p>The JSON <code>rubric</code> field resolves relative to the configuration file. In a configuration under <code>crest_ais/configs/</code>, select the default <a href="nus-rubric.html">NUS rubric</a> with:</p>
+<pre><code>"rubric": "../../crest/prompts/nus_pairwise_v2.txt"</code></pre>
+<p>To select the optional <a href="aut-inspired-rubric.html">AUT-inspired rubric</a>, use:</p>
+<pre><code>"rubric": "../../crest/prompts/aut_pairwise_v1.txt"</code></pre>
+<p>The earlier <a href="../crest/_archive/reference/nus_pairwise_v1.txt">NUS v1 wording</a> is archived at <code>../../crest/_archive/reference/nus_pairwise_v1.txt</code>. The old AIS paths <code>../prompts/rubric_v2.txt</code> and <code>../prompts/rubric_v1.txt</code> remain compatibility aliases for the current and archived NUS files, respectively. Both pipelines use the canonical prompts in <code>crest/prompts/</code> for new configurations.</p>
+<p>Create a new plan when changing the rubric. Prepared paper text can be reused, but a changed prompt creates distinct judgment identities. Keep each ranking within its recorded rubric; do not mix NUS and AUT-inspired votes.</p>
+<h2 id="uncertainty">What the intervals cover</h2>
+<p>The ranges describe sensitivity to which eligible paper pairs were sampled, holding the papers, judges, prompts and orders fixed. Small samples produce wide ranges.</p>
+<p>The sample size and five-system cohort were chosen after observing earlier results. The ranges therefore serve as exploratory references, without a 95% coverage guarantee. Four-system and five-system scores average different opponents and are not directly comparable.</p>
+<p>Paper pairs are the sampling units; a paper can appear in multiple pairs. The calculation holds each possible pair’s judge responses fixed. It excludes variation from repeated calls, model changes, human agreement and future papers. Reusing Sakana Agentic Scientist (v3)’s two papers does not add independent papers.</p>
+<p>The calculation combines <a href="https://arxiv.org/abs/1309.4029">Serfling sampling-without-replacement bounds</a>, a Bonferroni correction across matchups, and the possible win rates of unsampled pairs. Sampling all pairs removes pair-selection uncertainty, while the other limits remain.</p>
+<h2 id="evidence">Collection and evidence limits</h2>
+<p>One v2 run used a manually downloaded and reduced pest-detection dataset. This setup assistance is disclosed; the generated manuscript remains included because the authors report no human edits to its scientific content. See the <a href="https://arxiv.org/html/2504.08066v1#A3.SS3.SSS1">v2 setup description</a> and <a href="https://arxiv.org/html/2504.08066v1#S4.SS2">manuscript-generation account</a>.</p>
+<ul>
+<li>Original PDFs, sources, checksums, duplicate records, and access limits are saved under <code>crest_ais/data/</code>.</li>
+<li>Extracted text has page markers. Identifiable provenance headers are masked, while full text and an audit remain available. Plot images are not visually judged, and extraction can lose equations or reading order. Content can still reveal provenance.</li>
+<li>Judges read the supplied text without replicating experiments or establishing historical novelty. No human or domain-expert validation of this panel has been performed.</li>
+<li>Missing judgments become neither losses nor zeroes. Charts come from saved results. Verbatim judge reasons are assessments to check against the linked papers.</li>
+</ul>
+<h2 id="verification">Code and verification</h2>
+<p>Code and run records live in <code>crest_ais/</code>. Runs retain exact inputs, rubric, seed, settings, judgments, usage, and errors. Paper text is data, never an instruction to the judge. Reporting uses the saved prompts, presentations and settings.</p>
+<p>Provider adapters preserve remote job IDs, raw responses, and safe resume behavior. Credentials come from the environment.</p>
+<p>Tests cover label reversal, unequal-count normalization, incomplete blocks, duplicate/invalid results, finite-pool sampling, content-sensitive caches, safe resume, PDF integrity, path checks, and HTML escaping.</p>
+</main></body></html>

@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Run 2026-07-31 04:06 UTC · CREST</title><style id="crest-site-navigation">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Run 2026-07-31 04:06 UTC</title><link rel="icon" type="image/svg+xml" href="../../../../../docs/favicon.svg"><link rel="canonical" href="run-2026-07-31-04-06-utc.html"><style>
 .skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
@@ -70,80 +68,6 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
-</style><link rel="icon" type="image/svg+xml" href="../../../../../docs/favicon.svg"></head>
-<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/deep-research-creativity.html">Deep research comparison</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1">
-<p class="archive-back"><a href="../../../../../docs/index.html#archive-documents">Historical documents</a></p>
-<h1 id="run-2026-07-31t040653z__crest__full50__gitb0cdbe7__431cc3">Run 2026-07-31 04:06 UTC</h1>
-<p class="archive-summary">Explains the output files and results from a five-agent evaluation with 250 scored records, including how to join answers and scores.</p>
-<div class="archive-note"><strong>Historical document.</strong> Preserved for context; use the <a href="../../../../../docs/crest-guide.html">research pipeline guide</a> for current experiments.</div>
-<p class="archive-note"><strong>Archive storage.</strong> This note was moved from <code>crest/_archive/research/result/runs/2026-07-31T040653Z__crest__full50__gitb0cdbe7__431cc3/</code>. Result data remain there locally and are excluded from Git. Any tracking instructions below describe the earlier layout.</p>
-<details class="contents"><summary>On this page</summary><nav aria-label="Page contents"><ul><li><a href="#which-file-is-which">Which file is which</a></li><li><a href="#reading-the-scores">Reading the scores</a></li></ul></nav></details>
-<article>
-<p>2026-07-31T04:06:53.660170+00:00 · 250 records · agents:
-claude_shallow, openai_shallow, gemini_shallow, openai_deepresearch,
-gemini_deepresearch_max judges: judge_anthropic, judge_openai,
-judge_google · protocol: full-panel (same-family as covariate); blind;
-median aggregation</p>
-<h2 id="which-file-is-which">Which file is which</h2>
-<div aria-label="Which file is which table" class="table-scroll" role="region" tabindex="0"><table>
-<thead>
-<tr>
-<th scope="col">file</th>
-<th scope="col">produced by</th>
-<th scope="col">contains</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>transcripts.jsonl</code></td>
-<td><strong>the AGENTS</strong></td>
-<td>what each agent actually wrote: <code>output_text</code> +
-<code>citations</code></td>
-</tr>
-<tr>
-<td><code>records.jsonl</code></td>
-<td><strong>the JUDGES</strong></td>
-<td>the scores: per-axis New/Useful/Surprising, per-judge rows,
-grounding verdict, <code>scoring_status</code></td>
-</tr>
-<tr>
-<td><code>errors.jsonl</code></td>
-<td>the harness</td>
-<td>tasks that produced no record at all</td>
-</tr>
-<tr>
-<td><code>summary.json</code></td>
-<td>the harness</td>
-<td>per-agent and per-agent-x-category aggregates</td>
-</tr>
-<tr>
-<td><code>run_manifest.json</code></td>
-<td>the harness</td>
-<td>provenance; written last, so it marks completion</td>
-</tr>
-</tbody>
-</table></div>
-<p>The names are historical: "records" is the judge output and
-"transcripts" is the agent output, which is the reverse of what most
-readers assume. <strong>Join them on
-<code>record_id</code>.</strong></p>
-<pre class="python" tabindex="0"><code>import json
-scores = {r["record_id"]: r for r in map(json.loads, open("records.jsonl"))}
-answers = {t["record_id"]: t for t in map(json.loads, open("transcripts.jsonl"))}
-rid = next(iter(scores))
-print(scores[rid]["agent"], scores[rid]["creativity"]["new"], answers[rid]["output_text"][:200])</code></pre>
-<h2 id="reading-the-scores">Reading the scores</h2>
-<p><code>creativity</code> is null unless
-<code>scoring_status == "scored"</code>. Other statuses:
-<code>judge_degraded</code> (fewer judges than <code>min_judges</code>
-survived), <code>empty_answer</code> (the agent returned nothing -- an
-ADAPTER failure, not a grounding failure), <code>grounding_fail</code>,
-<code>judge_error</code>. Per-axis values are the MEDIAN across the
-judges in <code>creativity.judges</code>; each judge row carries
-<code>same_family</code>, so the leave-one-family-out subset is
-recoverable by filtering those rows out.</p>
-<p>Totals: {"n_records": 250, "n_scored": 250, "n_judge_error": 0,
-"n_judge_degraded": 0, "n_grounding_fail": 0, "n_task_errors": 0}</p>
-</article></main></body></html>
-
+.crest-page-updated,.page-link-date{font-size:.75rem;color:#637380;white-space:nowrap;font-variant-numeric:tabular-nums}.crest-page-updated{margin-left:auto;text-align:right}.index-group .page-link-date{display:inline-block;margin-left:.65rem}</style></head><body><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../../../../docs/research-pipeline.html">Research pipeline</a><a href="../../../../../docs/deep-research-comparison-v2.html">Deep research comparison v2</a><a href="../../../../../docs/ai-scientist-comparison-v1.html">AI scientist comparison v1</a><a href="../../../../../docs/index.html">All documents</a><time class="crest-page-updated" datetime="2026-11-05">Updated 2026-11-05</time></nav></header><main><h1>Run 2026-07-31 04:06 UTC</h1><p>This page has moved. Continue to <a id="canonical-link" href="run-2026-07-31-04-06-utc.html">Run 2026-07-31 04:06 UTC</a>.</p><p>Old links continue to work. With JavaScript enabled, the query string and section fragment are preserved automatically.</p></main><script>const target = "run-2026-07-31-04-06-utc.html" + window.location.search + window.location.hash;
+document.getElementById("canonical-link").href = target;
+window.location.replace(target);</script></body></html>

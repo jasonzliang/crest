@@ -15,8 +15,11 @@ from crest.rubrics import AUT_KIND, NUS_KIND, protocol_rubric_kind
 
 from .analysis import number_word
 from .navigation import CSS as NAVIGATION_CSS, site_favicon, site_header
+from .site import page_path, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
 from .protocol import LEGACY_PROTOCOL_VERSION, validate_verdict
 
+
+ROOT = Path(__file__).resolve().parents[1]
 
 COLORS = ("#0b5967", "#b4652b", "#5e628c", "#526b46", "#8a4665")
 SHORT_NAMES = {
@@ -399,9 +402,9 @@ def _concepts(report):
                  'Acar, Burnett, and Cabra (2017), <cite>Ingredients of Creativity: Originality '
                  'and More</cite></a>, examines surprise alongside originality and value. '
                  'These works motivate the three ideas; they do not test CREST’s rubric. More detail: '
-                 + ('<a href="judging-method.html">the current NUS rubric (v2, not used here)</a>'
-                    if historical else '<a href="judging-method.html">the NUS rubric</a>')
-                 + ' and <a href="overall-creativity-judgment.html">why we ask for one overall judgment</a>.</p></div>')
+                 + (f'<a href="{page_path("NUS rubric").name}">the current NUS rubric (v2, not used here)</a>'
+                    if historical else f'<a href="{page_path("NUS rubric").name}">the NUS rubric</a>')
+                 + f' and <a href="{page_path("Why one overall judgment").name}">why we ask for one overall judgment</a>.</p></div>')
     return "".join(parts)
 
 
@@ -990,7 +993,7 @@ def _method(report):
              'score is the share of votes its paper won. A matchup averages its pairs, and a scientist’s score '
              f'averages its {plural(opponents, "matchup")}.</p>',
              _sampling_plan(report), saved_rubric, _concepts(report),
-             '<p class="small">Full method: <a href="ai-scientist-method.html">Paper comparison method</a>.</p>'
+             f'<p class="small">Full method: <a href="{page_path("AI scientist comparison method").name}">AI scientist comparison method</a>.</p>'
              '</section>']
     return "".join(parts)
 
@@ -1112,8 +1115,10 @@ JUDGMENT_SCRIPT = """
 """
 
 
-def write_report(report: dict, destination: Path, *, data_root: Path) -> None:
+def write_report(report: dict, destination: Path, *, data_root: Path, updated: str | None = None) -> None:
     """Write a self-contained report; links are relative to its final location."""
+    require_canonical_output(destination)
+    updated = page_updated(updated)
     family = report.get('rubric_kind', NUS_KIND)
     if family not in (NUS_KIND, AUT_KIND):
         raise ValueError('Unsupported report rubric kind')
@@ -1126,6 +1131,7 @@ def write_report(report: dict, destination: Path, *, data_root: Path) -> None:
                 raise ValueError('Judgment protocol differs from the report rubric')
         validate_verdict(judgment.get("verdict"), require_reason_quality=family == AUT_KIND)
     destination, data_root = Path(destination), Path(data_root)
+    title = _text(page_title(destination, "AI scientist comparison"))
     coverage = report.get("coverage", {})
     ready = _ready(report)
     colors = {agent: COLORS[index % len(COLORS)] for index, agent in enumerate(report.get("agents", {}))}
@@ -1148,14 +1154,14 @@ def write_report(report: dict, destination: Path, *, data_root: Path) -> None:
                          'contributions, not a standardized AUT administration or a measure of author ability.')
     parts = ['<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width, initial-scale=1">',
-             '<meta name="color-scheme" content="light"><title>AI scientist comparison · CREST</title>',
-             site_favicon(data_root.resolve().parent, destination),
+             f'<meta name="color-scheme" content="light"><title>{title}</title>',
+             site_favicon(ROOT, destination),
              '<meta name="description" content="An auditable pairwise comparison of released AI scientist papers, with frozen prompts, saved judgments, coverage, and uncertainty.">',
              f'<style>{CSS}\n{NAVIGATION_CSS}</style></head><body>',
              '<a class="skip-link" href="#main-content">Skip to report</a>',
-             site_header(data_root.resolve().parent, destination),
+             site_header(ROOT, destination, updated=updated),
              '<main id="main-content" tabindex="-1">',
-             '<h1>AI scientist comparison</h1>',
+             f'<h1>{title}</h1>',
              f'<p>{introduction}</p>',
              '<nav aria-label="Report contents"><a href="#overall">Ranking</a>'
              '<a href="#matchups">Head-to-head</a>'
@@ -1168,5 +1174,8 @@ def write_report(report: dict, destination: Path, *, data_root: Path) -> None:
              _limits(report), _coverage(report), _progress(report), _papers(report, data_root, destination),
              _judgments(report, data_root, destination),
              f'</main><script>{JUDGMENT_SCRIPT}</script></body></html>\n']
+    document = "".join(parts)
+    index_update = prepare_index_date(ROOT, destination, updated)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text("".join(parts), encoding="utf-8")
+    destination.write_text(document, encoding="utf-8")
+    write_index_date(index_update)

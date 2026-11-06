@@ -1177,3 +1177,27 @@ def test_v2_dataset_setup_disclosure_does_not_exclude_unedited_manuscript(tmp_pa
     assert row["human_setup_notes"]==source["human_setup_notes"]
     assert "Comment:" in (tmp_path/row["full_text_path"]).read_text()
     assert "Comment:" not in (tmp_path/row["blind_text_path"]).read_text()
+
+
+def test_cli_default_report_uses_canonical_versioned_output(tmp_path, monkeypatch):
+    """The offline report command must not replace a compatibility redirect."""
+    from lxml import html
+    from crest_ais import cli
+    root = tmp_path / 'crest_ais'; root.mkdir()
+    plan = _plan(root, (1, 1, 1, 1))
+    run_dir = root / 'run'
+    save_plan(plan, run_dir)
+    frozen = (run_dir / 'plan.json').read_bytes()
+    monkeypatch.setattr(cli, 'PACKAGE_ROOT', root)
+    import crest_ais.report as renderer
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    monkeypatch.setattr(cli, 'load_config', lambda path, *, data_root: {
+        'data_root': root, 'output_dir': root / 'results'})
+    monkeypatch.setenv('CREST_PAGE_UPDATED', '2026-11-05')
+    assert cli.main(['report', '--run-dir', str(run_dir)]) == 0
+    destination = tmp_path / 'docs/ai-scientist-comparison-v1.html'
+    page = html.fromstring(destination.read_bytes())
+    assert page.xpath('//h1/text()') == ['AI scientist comparison v1']
+    assert page.xpath('//header//time/@datetime') == ['2026-11-05']
+    assert not (tmp_path / 'docs/ai-scientist-creativity.html').exists()
+    assert (run_dir / 'plan.json').read_bytes() == frozen

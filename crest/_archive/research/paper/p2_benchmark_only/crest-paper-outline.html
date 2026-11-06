@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>ICLR 2027 paper outline (P2) · CREST</title><style id="crest-site-navigation">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ICLR 2027 paper outline P2</title><link rel="icon" type="image/svg+xml" href="../../../../../docs/favicon.svg"><link rel="canonical" href="iclr-2027-paper-outline-p2.html"><style>
 .skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .crest-site-header nav{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:.35rem 1.5rem;max-width:1120px;margin:0 auto;padding:.65rem 1.5rem;font-size:.9rem;line-height:1.5}
@@ -70,73 +68,6 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(max-width:650px){.crest-site-header nav{gap:.25rem 1rem;padding:.65rem 1.1rem}.crest-site-header~main,body>main{padding:1.7rem 1.1rem 3rem}main h2{font-size:1.35rem}main .contents nav ul{grid-template-columns:1fr}main .section-nav{gap:.5rem}main .section-nav a{font-size:.9rem;padding:.4rem .6rem}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
-</style><link rel="icon" type="image/svg+xml" href="../../../../../docs/favicon.svg"></head>
-<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../../../../docs/crest-guide.html">Research pipeline</a><a href="../../../../../docs/deep-research-creativity.html">Deep research comparison</a><a href="../../../../../docs/ai-scientist-creativity.html">AI scientist comparison</a><a href="../../../../../docs/index.html">All documents</a></nav></header>
-<main id="document-main" tabindex="-1">
-<p class="archive-back"><a href="../../../../../docs/index.html#archive-documents">Historical documents</a></p>
-<h1 id="crest--iclr-2027-paper-outline-p2-benchmark-hero">ICLR 2027 paper outline (P2)</h1>
-<p class="archive-summary">This paper outline describes the proposed benchmark contribution, planned sections, evidence needed to validate the judge, and submission criteria.</p>
-<div class="archive-note"><strong>Historical document.</strong> Preserved for context; use the <a href="../../../../../docs/crest-guide.html">research pipeline guide</a> for current experiments.</div><article>
-<p><strong>Title (working):</strong> <em>When Does Web Search Make a
-Research Agent Creative? The CREST Benchmark.</em>
-<strong>Thesis:</strong> creativity of deep-research web agents is
-measurable, axis/task-dependent, and holds across the frontier — and it
-is the value-bearing axis no existing benchmark scores.
-<strong>Framing:</strong> P2 — the released benchmark + the cross-agent
-finding are the contribution; Caesar is one <em>cited</em> entrant
-(arXiv:2604.20855). The Caesar mechanism ablation is an OPTIONAL,
-IP-gated §7 (P3 upgrade), included only if all five decision triggers
-are green.</p>
-<p>Each section lists the reviewer objections it must close (see
-<code>reviewer_objections.md</code>).</p>
-<ul>
-<li><strong>00 Abstract</strong> — gap, CREST, the cross-agent
-axis-dependence finding, the grounding gate, release. <em>(closes O10
-framing)</em></li>
-<li><strong>01 Introduction</strong> — everyone scores
-accuracy/coverage/faithfulness; nobody scores creativity of a
-<em>web-grounded</em> agent. Preview the finding. <strong>Explicit
-delta-vs-prior-work paragraph.</strong> <em>(O1, O10, O17)</em></li>
-<li><strong>02 Related Work</strong> — differentiation table vs
-deep-research eval (accuracy/coverage/faithfulness) and vs
-creativity/ideation eval (ungrounded); the empty intersection. <em>(O1,
-O2 positioning, O17)</em></li>
-<li><strong>03 Benchmark Design</strong> — construct grounding
-(Runco&amp;Jaeger + Boden + Amabile CAT); 5 categories × ≥6 domains;
-per-item dated known-answers + hard rules + expert baseline; frozen
-snapshot + shared index; pre/post-cutoff. <em>(O2 construct, O9
-contamination)</em></li>
-<li><strong>04 The Judge and Its Validation (LOAD-BEARING)</strong> —
-LOFO multi-vendor + open-weight panel; blind + order-randomized;
-human-expert CAT validation; per-category α/ICC; discriminant vs
-accuracy/verbosity; "novelty mirage" as the threat model. <em>(O2, O3,
-O4, O7)</em></li>
-<li><strong>05 Experiments — the cross-agent finding</strong> —
-pre-registered per-category predictions; validity-stratified results
-(human scoring on C1/C5); <strong>crossover/rank-reversal interaction
-test</strong>; per-item mixed-effects + TOST + CIs; length as covariate;
-budget parity; diversity signal. <em>(O3, O5, O6, O8, O11,
-O15)</em></li>
-<li><strong>06 Grounding side-check (cross-agent)</strong> — FACT
-citation-faithfulness gate (fail ⇒ creativity 0) on all agents' outputs;
-hurdle model for zero-inflation; "creative AND grounded." <em>(O16,
-O2-usefulness-gate)</em></li>
-<li><strong>07 [OPTIONAL/IP-gated] Mechanism case study</strong> —
-compact, caveated Caesar ablation (cite preprint); Caesar not top-1;
-excisable. <em>(P3 upgrade only)</em></li>
-<li><strong>08 Limitations</strong> — the irreducible residual risks
-(power-vs-multiplicity at N≈30; closed-agent non-reproducibility;
-frozen-index realism tradeoff; correlated judge errors;
-length-as-mediator; N/U/S under-identification; COI). <em>(honesty;
-O5,O6,O7,O8)</em></li>
-<li><strong>09 Conclusion</strong> — creativity is the next axis; CREST
-+ finding + release.</li>
-<li><strong>Ethics / Reproducibility / Datasheet</strong> appendices —
-COI statement; IRB/consent/pay; Croissant+RAI; pinned judge snapshots;
-anonymized harness + DOI. <em>(O6, O12, O13, O14)</em></li>
-</ul>
-<p><strong>Venue rule:</strong> ICLR main only if §5 delivers a robust
-theory-predicted crossover; else NeurIPS Datasets &amp; Benchmarks. (See
-<code>reviewer_objections.md</code> venue implication.)</p>
-</article></main></body></html>
-
+.crest-page-updated,.page-link-date{font-size:.75rem;color:#637380;white-space:nowrap;font-variant-numeric:tabular-nums}.crest-page-updated{margin-left:auto;text-align:right}.index-group .page-link-date{display:inline-block;margin-left:.65rem}</style></head><body><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../../../../docs/research-pipeline.html">Research pipeline</a><a href="../../../../../docs/deep-research-comparison-v2.html">Deep research comparison v2</a><a href="../../../../../docs/ai-scientist-comparison-v1.html">AI scientist comparison v1</a><a href="../../../../../docs/index.html">All documents</a><time class="crest-page-updated" datetime="2026-11-05">Updated 2026-11-05</time></nav></header><main><h1>ICLR 2027 paper outline P2</h1><p>This page has moved. Continue to <a id="canonical-link" href="iclr-2027-paper-outline-p2.html">ICLR 2027 paper outline P2</a>.</p><p>Old links continue to work. With JavaScript enabled, the query string and section fragment are preserved automatically.</p></main><script>const target = "iclr-2027-paper-outline-p2.html" + window.location.search + window.location.hash;
+document.getElementById("canonical-link").href = target;
+window.location.replace(target);</script></body></html>
