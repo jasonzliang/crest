@@ -54,6 +54,9 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
     output_dir = Path(output_dir).resolve()
     model = settings.get("model", SOL)
     collection = "crest_" + hashlib.sha256(worker_id.encode()).hexdigest()[:40]
+    enable_reranking = settings.get("enable_reranking", True)
+    if not isinstance(enable_reranking, bool):
+        raise ValueError("enable_reranking must be a boolean")
     return {
         "Agent": {"repository": str(output_dir), "agent_api": False, "draw_fsm": False},
         "AgentMemory": {"enabled": False},
@@ -96,10 +99,12 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
         },
         "BraveSearch": {"use_ddgs": True},
         "ChromaClientManager": {
-            "collection_name": collection, "enable_reranking": False, "use_shared_server": False,
+            "collection_name": collection, "enable_reranking": enable_reranking, "use_shared_server": False,
             "model": settings.get("kb_model", LUNA), "reasoning_effort": settings.get("kb_reasoning_effort", "low"),
             "embedding_model": settings.get("embedding_model", "text-embedding-3-small"),
             "top_k": settings.get("synthesis_top_k", 50),
+            "rerank_top_k": settings.get("synthesis_top_k", 50),
+            "rerank_top_n": settings.get("synthesis_top_n", 10),
         },
         "ChromaServerManager": {"host": "127.0.0.1", "port": settings.get("chroma_port", 8000),
                                 "persist_path": str(output_dir / "chroma"),

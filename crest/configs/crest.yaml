@@ -103,11 +103,12 @@ research:
     synthesis_reserve_usd: null  # Derived for 300 + 3 x 20: $1.76 kept back from exploration for drafting (used under hard and auto caps).
     timeout_seconds: null        # Derived for 300 + 3 x 20: 12,600 s (3.5 h), one limit for the whole answer, 1.5x the estimated time.
     synthesis_top_k: 50
-    synthesis_top_n: 10          # Used only with reranking; CREST currently leaves reranking disabled.
+    synthesis_top_n: 10          # Retain up to ten notes after reranking.
+    enable_reranking: true       # Native LLM reranking uses the configured KB model.
     max_depth: 6                 # Link depth from a starting page.
     max_web_searches: 5          # Web searches Caesar may run to reseed exploration.
     exploration_max_completion_tokens: 2000  # Luna output cap per exploration call.
-    kb_max_completion_tokens: 2000           # Luna output cap per knowledge-base answer; also sizes the LlamaIndex prompt helper.
+    kb_max_completion_tokens: 2000           # Luna output cap per KB answer/ranking call; also sizes the prompt helper.
     additional_starting_queries: 11
     use_quick_explore: false
     quick_explore_insights: true

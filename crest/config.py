@@ -62,7 +62,8 @@ DEFAULTS = {
             'exploration_reasoning_effort': 'low', 'kb_reasoning_effort': 'low',
             # Chosen depth; with budget_cap auto crest.budget overrides them from budget_usd.
             'max_iterations': 300, 'synthesis_drafts': 3, 'synthesis_iterations': 20,
-            'synthesis_top_k': 50, 'synthesis_top_n': 10, 'max_depth': 6, 'max_web_searches': 5,
+            'synthesis_top_k': 50, 'synthesis_top_n': 10, 'enable_reranking': True,
+            'max_depth': 6, 'max_web_searches': 5,
             'additional_starting_queries': 11, 'use_quick_explore': False,
             'quick_explore_insights': True, 'quick_explore_workers': 2,
             'adapt_role': True, 'synthesis_merge_artifacts': True,
@@ -257,7 +258,7 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
                     settings['additional_starting_queries'] < 0):
                 raise ValueError(f'{section}.{name}.additional_starting_queries must be a nonnegative integer')
             for key in ('use_quick_explore', 'quick_explore_insights', 'adapt_role',
-                        'synthesis_merge_artifacts'):
+                        'synthesis_merge_artifacts', 'enable_reranking'):
                 if key in settings and not isinstance(settings[key], bool):
                     raise ValueError(f'{section}.{name}.{key} must be a boolean')
             if settings['initial_concurrency'] > settings['concurrency']:

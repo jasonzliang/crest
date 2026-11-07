@@ -57,7 +57,7 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     assert first["ArtifactSynthesizer"]["synthesis_generate_images"] == 0
     assert first["ArtifactSynthesizer"]["synthesis_merge_clarify"] is False
     assert first["BraveSearch"]["use_ddgs"] is True
-    assert first["ChromaClientManager"]["enable_reranking"] is False
+    assert first["ChromaClientManager"]["enable_reranking"] is True
     assert first["LLMHandler"]["model"] == "gpt-6.1-sol"
     assert first["LLMHandler"]["cost_limit"] == 5
     assert first["LLMHandler"]["max_completion_tokens"] == 10000

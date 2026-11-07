@@ -151,7 +151,7 @@ def test_short_synthesis_calls_use_6000_with_reasoning_and_restore_25000():
 
 
 def test_new_retrieval_fields_preserve_legacy_fallback(tmp_path):
-    config = worker.build_config("Q", {"synthesis_top_k": 15, "synthesis_top_n": 10}, tmp_path / "new", "new")
+    config = worker.build_config("Q", {"synthesis_top_k": 15, "synthesis_top_n": 10, "enable_reranking": False}, tmp_path / "new", "new")
     assert config["ArtifactSynthesizer"]["synthesis_top_k"] == 15
     assert config["ArtifactSynthesizer"]["synthesis_top_n"] == 10
     assert config["ChromaClientManager"]["top_k"] == 15
