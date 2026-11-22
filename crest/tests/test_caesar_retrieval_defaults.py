@@ -4,11 +4,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from crest.caesar_worker import build_config, extract_result
+from crest.providers.caesar_worker import build_config, extract_result
 from crest.config import load_config
 from crest.pipeline import _answer_words
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def assert_retrieval(config, top_k, top_n, *, reranking=True):

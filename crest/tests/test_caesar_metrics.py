@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from crest import caesar_worker as worker
-from crest.caesar_metrics import iteration_metrics
+from crest.providers import caesar_worker as worker
+from crest.providers.caesar_metrics import iteration_metrics
 
 
 class Clock:

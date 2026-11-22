@@ -14,7 +14,7 @@ import sys
 import time
 import tomllib
 
-from crest.caesar_worker import PROTOCOL_VERSION, atomic_json, recovery_history
+from crest.providers.caesar_worker import PROTOCOL_VERSION, atomic_json, recovery_history
 
 ADAPTER_VERSION = "caesar-subprocess-v2"  # v2: knowledge-base queries pack all chunks into one call again
 # Only public execution settings cross the worker boundary. Credentials are inherited.
@@ -27,7 +27,7 @@ SETTINGS = frozenset({
     "additional_starting_queries", "max_web_searches", "synthesis_drafts",
     "synthesis_iterations", "max_completion_tokens",
     "exploration_max_completion_tokens", "kb_max_completion_tokens", "max_input_tokens",
-    "query_max_completion_tokens", "synthesis_top_k", "synthesis_top_n",
+    "query_max_completion_tokens", "synthesis_top_k", "synthesis_top_n", "enable_reranking",
     "budget_usd", "budget_cap", "timeout_seconds",
     "call_timeout_seconds", "model_pricing", "chroma_port", "synthesis_reserve_usd", "retry_attempts",
     "retry_backoff_base_seconds", "retry_backoff_max_seconds", "recovery_from", "budget_history_from",
@@ -45,9 +45,10 @@ def identity_metadata(settings: dict) -> dict:
         digest.update(b"\0")
         digest.update(path.read_bytes())
         digest.update(b"\0")
-    # Adapter/worker edits invalidate even when the manually maintained version is unchanged.
-    own_digest = hashlib.sha256(Path(__file__).read_bytes() + Path(__file__).parents[1].joinpath("caesar_worker.py").read_bytes()
-                                + Path(__file__).parents[1].joinpath("caesar_metrics.py").read_bytes()).hexdigest()
+    # Adapter and local helper edits invalidate even when the manually maintained version is unchanged.
+    own_digest = hashlib.sha256(Path(__file__).read_bytes() + Path(__file__).with_name("caesar_worker.py").read_bytes()
+                                + Path(__file__).with_name("caesar_metrics.py").read_bytes()
+                                + Path(__file__).with_name("caesar_budget.py").read_bytes()).hexdigest()
     project = root / "pyproject.toml"
     source_version = tomllib.loads(project.read_text()).get("project", {}).get("version") if project.is_file() else None
     try:
@@ -115,7 +116,8 @@ def _worker_alive(state: dict) -> bool:
             return False
         result = str(state.get("result_path", ""))
         command = process.cmdline()
-        return bool(result and "crest.caesar_worker" in command and result in command)
+        return bool(result and result in command
+                    and any(module in command for module in ("crest.providers.caesar_worker", "crest.caesar_worker")))
     except (psutil.NoSuchProcess, psutil.AccessDenied, KeyError, ValueError):
         return False
 
@@ -191,7 +193,7 @@ async def generate(prompt: str, settings: dict, job, *, client=None) -> dict:
         # remains unknown rather than silently launching another paid run.
         with (directory / "caesar-worker.log").open("ab") as log:
             child = await asyncio.create_subprocess_exec(
-                settings.get("python_executable", sys.executable), "-m", "crest.caesar_worker",
+                settings.get("python_executable", sys.executable), "-m", "crest.providers.caesar_worker",
                 "--request", str(request_path), "--result", str(result_path),
                 stdout=log, stderr=log, start_new_session=True,
                 cwd=str(Path(__file__).resolve().parents[2]),

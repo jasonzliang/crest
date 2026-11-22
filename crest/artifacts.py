@@ -65,10 +65,29 @@ def run_date_directory_name(created_at: datetime | str, *,
 
 
 def run_directory_name(created_at: datetime | str, nonce: str, *,
-                       results_timezone: str = DEFAULT_RESULTS_TIMEZONE) -> str:
+                       results_timezone: str = DEFAULT_RESULTS_TIMEZONE,
+                       agents: list[str] | tuple[str, ...] | None = None,
+                       question_count: int | None = None) -> str:
+    """Add bounded research context for new runs; omitted context keeps legacy names."""
     if not isinstance(nonce, str) or not re.fullmatch(r'[0-9a-f]{8}', nonce):
         raise ValueError('Run nonce must contain eight lowercase hexadecimal characters')
-    return _local(created_at, results_timezone).strftime('%H-%M-%S-%Z') + '-' + nonce
+    context = ''
+    if agents is not None or question_count is not None:
+        if not isinstance(agents, (list, tuple)) or not agents or any(
+                not isinstance(agent, str) or not re.fullmatch(r'[a-z][a-z0-9_-]*', agent)
+                for agent in agents):
+            raise ValueError('Agents must be a nonempty sequence of simple identifiers')
+        if type(question_count) is not int or question_count < 1:
+            raise ValueError('Question count must be a positive integer')
+        names = sorted(set(agents))
+        slug = '-'.join(name.replace('_', '-') for name in names)
+        if len(slug) > 40:
+            slug = f'{len(names)}-research-agents'
+        context = f'-{slug}-q{question_count}'
+    name = _local(created_at, results_timezone).strftime('%H-%M-%S-%Z') + context + '-' + nonce
+    if len(name) > 96:  # Leave ample room for reserve_directory's collision suffix.
+        raise ValueError('Run directory name is too long')
+    return name
 
 
 def stage_directory_name(number: int, name: str, created_at: datetime | str, *,

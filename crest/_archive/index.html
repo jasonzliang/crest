@@ -71,7 +71,7 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 @media print{.crest-site-header~main,body>main{padding:0;max-width:none}body{font-size:10pt}main h1{font-size:25pt}main h2{font-size:16pt}main .section-nav{display:none}main .table-scroll{overflow:visible;border:0}main table{font-size:8.5pt}main pre{white-space:pre-wrap}}
 </style><link rel="icon" type="image/svg+xml" href="../../docs/favicon.svg"><style id="crest-page-dates">.crest-page-updated,.page-link-date{font-size:.75rem;color:#637380;white-space:nowrap;font-variant-numeric:tabular-nums}.crest-page-updated{margin-left:auto;text-align:right}.index-group .page-link-date{display:inline-block;margin-left:.65rem}</style></head>
-<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../docs/research-pipeline.html">Research pipeline</a><a href="../../docs/deep-research-comparison-v2.html">Deep research comparison v2</a><a href="../../docs/ai-scientist-comparison-v1.html">AI scientist comparison v1</a><a href="../../docs/index.html">All documents</a><time class="crest-page-updated" datetime="2026-11-05">Updated 2026-11-05</time></nav></header>
+<body><a class="skip" href="#document-main">Skip to document</a><header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="../../docs/research-pipeline.html">Research pipeline</a><a href="../../docs/deep-research-comparison-v2.html">Deep research comparison v2</a><a href="../../docs/ai-scientist-comparison-v1.html">AI scientist comparison v1</a><a href="../../docs/index.html">All documents</a><time class="crest-page-updated" datetime="2026-11-21">Updated 2026-11-21</time></nav></header>
 <main id="document-main" tabindex="-1"><article>
 <p class="archive-back"><a href="../../docs/index.html#archive-documents">Historical documents</a></p>
 <h1 id="historical-crest-material">Historical material</h1>
@@ -93,12 +93,12 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <li><a href="reference/original-project-overview.html">Original project overview</a> — Introduces the original benchmark, systems compared, scoring approach, and early limitations.</li>
 <li><a href="reference/historical-runtime-notes.html">Historical runtime notes</a> — Explains the earlier runtime and how its results differ from later pairwise experiments.</li>
 <li><a href="reference/nus-rubric-4point.txt">Original four-point NUS rubric</a> — Preserves the earlier four-point definitions and scoring instructions for New, Useful, and Surprising.</li>
-<li><a href="reference/nus_pairwise_v1.txt">Archived pairwise NUS v1 rubric</a>. Preserves the original instrument, with <a href="reference/nus_pairwise_v1.md">archival notes</a>.</li>
+<li><a href="../prompts/nus_pairwise_v1.txt">Archived pairwise NUS v1 rubric</a>. Preserves the original instrument, with <a href="reference/nus_pairwise_v1.md">archival notes</a>.</li>
 <li><a href="reference/original-gitignore.txt">Original ignore rules</a> — Records the original exclusions for run outputs, dataset working copies, and build artifacts.</li>
 <li><a href="reference/original-requirements.txt">Original dependencies</a> — Lists the original validation, provider SDK, and statistical analysis dependencies.</li>
 </ul>
 <h2 id="run-records">Historical runs</h2>
-<p>These notes remain in Git; their underlying data in <code>research/result/</code> stay on disk, so a fresh clone does not include them. Both <code>result/</code> and <code>results/</code> directories are ignored throughout this repository.</p>
+<p>These notes remain in Git; their underlying data in <code>research/result/</code> stay on disk, so a fresh clone does not include them. Generated data in <code>result/</code> and <code>results/</code> stay ignored; <code>crest/results/readme.md</code> is the versioned directory guide.</p>
 <ul>
 <li><a href="research/doc/runs/run-outputs.html">Run outputs</a> — Explains saved run files, generation caching, score interpretation, and limitations in the recorded evidence.</li>
 <li><a href="research/doc/runs/aborted-runs.html">Aborted runs</a> — Explains why partial runs stopped and why archived outputs are excluded from the generation cache.</li>

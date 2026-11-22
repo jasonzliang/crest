@@ -9,9 +9,9 @@ from crest.pipeline import Pipeline
 
 
 @pytest.mark.parametrize('zone, date, run_name, stage_name', [
-    (None, '2026-10-26', '23-17-53-CDT-8bbde248', '01-generate-2026-10-26_23-17-53-CDT'),
-    ('UTC', '2026-10-27', '04-17-53-UTC-8bbde248', '01-generate-2026-10-27_04-17-53-UTC'),
-    ('Asia/Kathmandu', '2026-10-27', '10-02-53-+0545-8bbde248', '01-generate-2026-10-27_10-02-53-+0545'),
+    (None, '2026-10-26', '23-17-53-CDT-openai-q1-8bbde248', '01-generate-2026-10-26_23-17-53-CDT'),
+    ('UTC', '2026-10-27', '04-17-53-UTC-openai-q1-8bbde248', '01-generate-2026-10-27_04-17-53-UTC'),
+    ('Asia/Kathmandu', '2026-10-27', '10-02-53-+0545-openai-q1-8bbde248', '01-generate-2026-10-27_10-02-53-+0545'),
 ])
 def test_production_run_uses_local_date_and_keeps_utc_manifest_timestamps(
         tmp_path, monkeypatch, zone, date, run_name, stage_name):

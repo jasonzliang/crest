@@ -7,12 +7,13 @@ come from the 2026-11-02 pilot. That pilot's exploration pace is not used: it
 ran under llama-index-core 0.14.23, which split every knowledge-base query into
 several calls (see caesar_worker.compatibility), doubling cost and time. The plan favors exploration: half of
 the target goes to setup plus exploration iterations and the rest to three
-drafts and a merge, keeping a margin below the audit ceiling so the final merge
-is never refused for lack of budget. Q&A rounds per draft are also capped so
-the worker's per-draft allowance covers them after the write reserves. One timeout covers setup, exploration and
-synthesis with a margin; no phase has its own time limit.
+drafts and a merge, keeping a planning margin below the audit ceiling. These
+medium/600-word cost and time estimates are not calibrated for xhigh synthesis.
+Q&A rounds per draft are also capped so the worker's per-draft allowance covers
+them after the write reserves. One timeout covers setup, exploration and synthesis
+with a margin; no phase has its own time limit.
 
-    python -m crest.caesar_budget 3.5
+    python -m crest.providers.caesar_budget 3.5
 """
 from __future__ import annotations
 
@@ -46,12 +47,12 @@ PRICES = {LUNA: {"input": .1, "output": .5, "cache_read": .01, "cache_write": .1
           "text-embedding-3-small": {"input": .02, "output": 0.},
           "text-embedding-3-large": {"input": .13, "output": 0.},
           "text-embedding-ada-002": {"input": .10, "output": 0.}}
-# The audit reserves each request's bound (bytes as tokens at the cache-write rate plus the full
-# completion limit) before sending it. Before each draft's Q&A the worker therefore holds one such
-# bound for the final write (the merge, or the last draft) plus twice the measured cost of every
-# other remaining write and refinement.
+# The SDK audit reserves actual serialized input bytes plus the full completion limit per call.
+# These planning holds instead assume WRITE_INPUT_BYTES; it is not an enforced input bound.
+# Legacy holds cover one planned write plus twice the historical cost of later work. Explicit
+# xhigh synthesis holds the configured output allowance for every remaining write/refinement.
 DEFAULT_COMPLETION_TOKENS = 10000
-WRITE_INPUT_BYTES = 30_000  # Q&A pairs or drafts that a write or merge prompt carries
+WRITE_INPUT_BYTES = 30_000  # Historical input-size heuristic, not an enforced prompt limit.
 # The single worker timeout is the estimated total time times this margin. October's slowest answer
 # took 1.17 times the mean; the margin also covers Chroma startup and shutdown.
 TIME_MARGIN = 1.5
@@ -60,7 +61,10 @@ DRAFTS = 3
 
 
 def write_bound(settings: dict | None = None) -> float:
-    """What the audit reserves for one draft write or merge under the configured limits and prices."""
+    """Planned request allowance using a historical input-size heuristic and the full output cap.
+
+    The SDK audit uses actual request bytes; this is not a guaranteed admission bound.
+    """
     settings = settings or {}
     prices = {**PRICES, **(settings.get("model_pricing") or {})}
     rates = prices.get(settings.get("model", SOL), PRICES[SOL])
@@ -69,7 +73,19 @@ def write_bound(settings: dict | None = None) -> float:
 
 
 def write_hold(settings: dict | None, remaining_drafts: int, merge: bool = True) -> float:
-    """USD to keep out of a draft's Q&A allowance so every later write and the merge can still be sent."""
+    """Planned USD held out of Q&A for remaining writes and inter-draft refinements.
+
+    Explicit xhigh synthesis reserves each call's configured output cap rather than
+    historical medium write costs. Input still uses the unenforced 30 KB heuristic;
+    this hold alone cannot guarantee admission of longer prompts or completion.
+    """
+    settings = settings or {}
+    if settings.get("synthesis_reasoning_effort") == "xhigh":
+        query_limit = min(settings.get("query_max_completion_tokens", 6000),
+                          settings.get("max_completion_tokens", DEFAULT_COMPLETION_TOKENS))
+        refinement = write_bound({**settings, "max_completion_tokens": query_limit})
+        writes = remaining_drafts + int(merge)
+        return writes * write_bound(settings) + max(0, remaining_drafts - 1) * refinement
     other_writes = remaining_drafts if merge else max(0, remaining_drafts - 1)
     later = other_writes * DRAFT_WRITE_USD + max(0, remaining_drafts - 1) * DRAFT_REFINE_USD
     return write_bound(settings) + 2 * later
@@ -128,6 +144,11 @@ def plan(budget_usd: float, *, margin: float = .85, exploration_share: float = .
     synthesis_usd = fixed + drafts * qa_rounds_cost(rounds)
     total_usd = SETUP_USD + exploration_usd + synthesis_usd
     warnings = []
+    if settings.get("synthesis_reasoning_effort") == "xhigh":
+        warnings.append("xhigh synthesis cost and time are uncalibrated: estimates and derived reserve/timeout "
+                        "retain historical medium reasoning and 600-word write assumptions. "
+                        "Write holds use a 30,000-byte input heuristic, not enforced; "
+                        "larger prompts can require more reservation and completion is not guaranteed.")
     soft = settings.get("budget_cap") == "soft"
     if total_usd > budget_usd:
         warnings.append(f"{iterations} iterations and {drafts} x {rounds} Q&A rounds are estimated at ${total_usd:.2f}, above budget_usd {budget_usd}; "

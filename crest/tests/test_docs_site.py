@@ -11,7 +11,7 @@ from urllib.parse import unquote, urlsplit
 from lxml import etree, html
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name('docs_evidence_baseline.json')
 PROTECTED = ('//table | //svg | //pre | //script | //meta | '
              '//*[contains(concat(" ", normalize-space(@class), " "), " answer-text ") or '
@@ -55,7 +55,6 @@ def index_entries():
 
 def test_index_names_match_canonical_titles_headings_filenames_and_dates():
     page, entries = index_entries()
-    assert len(entries) == 46
     local = [a for a in entries if not urlsplit(a.get('href')).scheme]
     assert len(local) == 45
     assert 'page-update dates, not study dates' in page.text_content()
@@ -76,8 +75,19 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
         assert date.get('datetime') == stamp[0].get('datetime')
         assert date.text == stamp[0].text
     external = [a for a in entries if urlsplit(a.get('href')).scheme]
-    assert [a.text_content() for a in external] == ['Project README']
-    assert not external[0].getparent().xpath('.//time')
+    assert [(a.get('href'), a.text_content()) for a in external] == [
+        ('https://github.com/jasonzliang/crest#readme', 'Project README'),
+        ('https://llm-keys.evolution.ml/guide#claude-code', 'LiteLLM gateway setup'),
+    ]
+    assert len(entries) == 47
+    assert page.xpath('//section[@id="current"]//li/a') == external
+    for a in external:
+        assert not a.getparent().xpath('.//time')
+        assert a.getparent().xpath('./span[@class="description"]/text()')[0].strip()
+    stamp = page.xpath('//header[@class="crest-site-header"]/nav/time[@class="crest-page-updated"]')
+    assert len(stamp) == 1
+    assert stamp[0].get('datetime') == '2026-11-22'
+    assert stamp[0].text == 'Updated 2026-11-22'
 
 
 def test_all_site_pages_have_one_right_aligned_date():
@@ -269,3 +279,18 @@ def test_index_dates_remain_to_the_right_of_wrapping_titles_in_browser(width):
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
         finally:
             browser.close()
+
+
+def test_current_guides_link_to_existing_packaged_datasets_and_prompts():
+    guides = ['README.md', 'docs/research-pipeline.html', 'docs/ai-scientist-comparison-method.html',
+              'crest/_archive/index.html', 'crest/_archive/reference/nus_pairwise_v1.md']
+    for name in guides:
+        path = ROOT / name
+        text = path.read_text()
+        links = (html.fromstring(text).xpath('//a/@href') if path.suffix == '.html'
+                 else re.findall(r'\[[^\]]*\]\(([^)]+)\)', text))
+        for link in links:
+            url = urlsplit(link)
+            if url.scheme or url.netloc or not url.path.endswith(('.txt', '.jsonl')):
+                continue
+            assert (path.parent / unquote(url.path)).is_file(), (name, link)

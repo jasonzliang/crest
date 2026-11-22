@@ -35,13 +35,14 @@ include-package-data = false
 dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.packages.find]
+exclude = ["crest.tests", "crest.tests.*"]
 include = ["crest", "crest.providers", "crest_ais", "crest_ais.providers"]
 namespaces = false
 
 [tool.setuptools.package-data]
-crest = ["prompts/*.txt", "_archive/reference/nus_pairwise_v1.txt", "data/*.jsonl", "configs/*.yaml"]
+crest = ["prompts/*.txt", "data/*.jsonl", "configs/*.yaml"]
 crest_ais = ["configs/*.json", "prompts/*.txt"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "crest_ais/tests"]
+testpaths = ["crest/tests", "crest_ais/tests"]
 addopts = "-n logical"

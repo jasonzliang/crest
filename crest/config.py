@@ -4,27 +4,37 @@ from __future__ import annotations
 import copy
 import json
 import math
+import os
 from pathlib import Path
 import re
 import sys
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from urllib.parse import urlsplit
 
 import yaml
 
 from .cache import digest
 from .artifacts import DEFAULT_RESULTS_TIMEZONE
 from .budget import HOSTED as HOSTED_AGENTS, plan as budget_plan
-from .caesar_budget import DERIVED as CAESAR_DERIVED
+from .providers.caesar_budget import DERIVED as CAESAR_DERIVED
+from .providers.gpt_researcher_worker import DEFAULTS as GPT_RESEARCHER_DEFAULTS
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ROOT / 'crest/configs/crest.yaml'
+# Gateway /model/info verified 2026-11-21; USD per million tokens (search per call).
+ANTHROPIC_GATEWAY_PRICING = {'claude-opus-5-5': {
+    'input': 4.4, 'cached_input': .22, 'cache_write_5m': 5.5, 'output': 22., 'web_search': .01,
+}}
+SONNET_GATEWAY_PRICING = {'claude-sonnet-5-5': {
+    'input': 2.2, 'cached_input': .11, 'cache_write_5m': 2.75, 'output': 11., 'web_search': 0.,
+}}
 DEFAULTS = {
     'questions': '../data/queries_n50_v2.jsonl',
     'rubric': '../prompts/nus_pairwise_v2.txt',
     'cache_dir': '../results/.cache/generation', 'output_dir': '../results',
     'results_timezone': DEFAULT_RESULTS_TIMEZONE,
     # Rendered for every research agent whose use_research_prompt flag is true.
-    # {question} is the exact question text; {max_words} is the agent's answer_word_limit.
+    # {question} is the exact question text; custom capped templates also require {max_words}.
     'research_prompt': (
         '### QUERY\n\n{question}\n\n'
         '### YOUR TASK\n\n'
@@ -35,30 +45,28 @@ DEFAULTS = {
         '- Surprising new directions or perspectives\n'
         '- Interesting tensions, contradictions, or open questions\n\n'
         'IMPORTANT: Avoid excessive jargon, ensure artifact text is well-organized (logical, clear, focused), '
-        'and convincing to a skeptical reader\n'
-        'IMPORTANT: The final response must be at most {max_words} words'
+        'and convincing to a skeptical reader'
     ),
-    # Global answer length limit in words; each research agent inherits it unless it sets its own.
-    'answer_word_limit': 600,
+    # No answer length cap by default; agents inherit it unless they set a numeric limit.
+    'answer_word_limit': None,
     # Sent to a hosted single-call agent (OpenAI, Anthropic) whose finished answer cost less than its
     # budget_floor_usd: the agent researches further and rewrites the answer, up to max_research_rounds.
     'research_continuation_prompt': (
         'Your research so far cost ${spent} of a ${floor} to ${ceiling} research budget. Continue the research: '
         'run further web searches on the aspects of the query that are weakest, least evidenced or most '
         'conventional, read the most promising sources, and then rewrite the complete response so that it '
-        'stands alone and incorporates the new findings. Keep every requirement of the original task, '
-        'including the limit of {max_words} words.'
+        'stands alone and incorporates the new findings. Keep every requirement of the original task.'
     ),
     'research': {
         'caesar': {
-            'budget_cap': 'soft',  # hard: budget_usd is enforced; auto: enforced and depth is overridden from it; soft: overruns are only flagged.
+            'budget_cap': 'soft',  # Dollar threshold is advisory; explicit hard/auto modes remain available.
             # Caesar receives the bare question: Rome owns its own research prompting.
             'use_research_prompt': False, 'answer_word_limit': None,
             'rome_path': '../../../rome', 'python_executable': sys.executable,
             'recovery_from': None, 'budget_history_from': None,
             'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna',
             'kb_model': 'gpt-6-luna', 'budget_usd': 4.0,
-            'reasoning_effort': 'medium', 'synthesis_reasoning_effort': 'medium',
+            'reasoning_effort': 'medium', 'synthesis_reasoning_effort': 'xhigh',
             'exploration_reasoning_effort': 'low', 'kb_reasoning_effort': 'low',
             # Chosen depth; with budget_cap auto crest.budget overrides them from budget_usd.
             'max_iterations': 300, 'synthesis_drafts': 3, 'synthesis_iterations': 20,
@@ -67,14 +75,14 @@ DEFAULTS = {
             'additional_starting_queries': 11, 'use_quick_explore': False,
             'quick_explore_insights': True, 'quick_explore_workers': 2,
             'adapt_role': True, 'synthesis_merge_artifacts': True,
-            'max_completion_tokens': 10000, 'query_max_completion_tokens': 6000,
+            'max_completion_tokens': 32768, 'query_max_completion_tokens': 6000,
             'exploration_max_completion_tokens': 2000, 'kb_max_completion_tokens': 2000,
-            'synthesis_reserve_usd': None,
-            'call_timeout_seconds': 600,
-            'timeout_seconds': None, 'initial_concurrency': 1, 'concurrency': 4, 'revision': 1,
+            'synthesis_reserve_usd': 2.6,
+            'call_timeout_seconds': 1200,
+            'timeout_seconds': 21600, 'initial_concurrency': 1, 'concurrency': 4, 'revision': 1,
         },
         'openai': {
-            'budget_cap': 'soft',  # hard: budget_usd is enforced; auto: enforced and depth is overridden from it; soft: overruns are only flagged.
+            'budget_cap': 'soft',  # Dollar threshold is advisory; explicit hard/auto modes remain available.
             'use_research_prompt': True, 'answer_word_limit': None,
             'model': 'gpt-6.1-sol', 'reasoning_effort': 'xhigh', 'search_context_size': 'high',
             'max_output_tokens': 100000, 'max_tool_calls': 150,
@@ -83,7 +91,7 @@ DEFAULTS = {
             'initial_concurrency': 3, 'concurrency': 12, 'revision': 1,
         },
         'gemini': {
-            'budget_cap': 'soft',  # hard: budget_usd is enforced; auto: enforced and depth is overridden from it; soft: overruns are only flagged.
+            'budget_cap': 'soft',  # The managed agent supports warning-only dollar thresholds.
             'use_research_prompt': True, 'answer_word_limit': None,
             'agent': 'deep-research-preview-04-2026',
             'billing_model': 'gemini-3.1-pro-preview', 'budget_usd': 4.0,
@@ -91,24 +99,36 @@ DEFAULTS = {
             'initial_concurrency': 2, 'concurrency': 8, 'revision': 1,
         },
         'anthropic': {
-            'budget_cap': 'soft',  # hard: budget_usd is enforced; auto: enforced and depth is overridden from it; soft: overruns are only flagged.
+            'budget_cap': 'soft',  # Dollar threshold is advisory; explicit hard/auto modes remain available.
             'use_research_prompt': True, 'answer_word_limit': None,
-            'model': 'claude-sonnet-5-5', 'effort': 'high',
+            'model': 'claude-sonnet-5-5', 'effort': 'xhigh',
+            'api_base': 'https://litellm.evolution.ml', 'api_key_env': 'LITELLM_API_KEY',
+            'model_pricing': copy.deepcopy(SONNET_GATEWAY_PRICING), 'tool_mode': 'client',
             'max_output_tokens': 64000, 'max_web_searches': 30, 'max_web_fetches': 10,
-            'web_fetch': True, 'max_continuations': 10, 'refusal_fallback': False,
-            'budget_usd': 4.0, 'budget_floor_usd': 3.0, 'max_research_rounds': 14, 'continuation_prompt': None,
+            'web_fetch': True, 'max_continuations': 50, 'refusal_fallback': False,
+            'budget_usd': 4.5, 'budget_floor_usd': 3.0, 'max_research_rounds': 14, 'continuation_prompt': None,
             'timeout_seconds': 5400,
             'initial_concurrency': 2, 'concurrency': 8, 'revision': 1,
         },
+        'gpt_researcher': {
+            **copy.deepcopy(GPT_RESEARCHER_DEFAULTS),
+            'budget_cap': 'soft',  # App policy; bare legacy worker settings retain their hard default.
+            'gpt_researcher_path': '../../../gpt-researcher',
+            'python_executable': '../../../gpt-researcher/.venv/bin/python',
+            'use_research_prompt': True, 'answer_word_limit': None,
+            'initial_concurrency': 4, 'concurrency': 8, 'revision': 1,
+        },
     },
     'judges': {
-        'openai': {'model': 'gpt-6-astra', 'reasoning_effort': 'high',
+        'openai': {'model': 'gpt-6.1-sol', 'reasoning_effort': 'high',
                    'max_output_tokens': 32768, 'timeout_seconds': 900,
                    'poll_interval_seconds': 3, 'initial_concurrency': 4, 'concurrency': 16, 'revision': 1},
         'gemini': {'model': 'gemini-4-argon', 'thinking_level': 'high',
                    'max_output_tokens': 32768, 'timeout_seconds': 900,
                    'poll_interval_seconds': 3, 'initial_concurrency': 4, 'concurrency': 16, 'revision': 1},
-        'anthropic': {'model': 'claude-fable-5-1', 'effort': 'high',
+        'anthropic': {'model': 'claude-opus-5-5', 'effort': 'high',
+                      'api_base': 'https://litellm.evolution.ml', 'api_key_env': 'LITELLM_API_KEY',
+                      'model_pricing': copy.deepcopy(ANTHROPIC_GATEWAY_PRICING),
                       'max_output_tokens': 32768, 'refusal_fallback': False, 'timeout_seconds': 900,
                       'initial_concurrency': 4, 'concurrency': 16, 'revision': 1},
     },
@@ -116,15 +136,18 @@ DEFAULTS = {
 }
 for _section in ('research', 'judges'):
     for _settings in DEFAULTS[_section].values():
-        _settings.update(retry_attempts=4, retry_backoff_base_seconds=1,
-                         retry_backoff_max_seconds=30)
+        for _key, _value in {'retry_attempts': 4, 'retry_backoff_base_seconds': 1,
+                             'retry_backoff_max_seconds': 30}.items():
+            _settings.setdefault(_key, _value)
 
 
 def _merge(base, updates):
     for key, value in updates.items():
         if key not in base:
             raise ValueError(f'Unknown configuration field: {key}')
-        if isinstance(base[key], dict):
+        if key == 'model_pricing':
+            base[key] = copy.deepcopy(value)
+        elif isinstance(base[key], dict):
             if not isinstance(value, dict):
                 raise ValueError(f'{key} must be a mapping')
             _merge(base[key], value)
@@ -177,6 +200,12 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
         config[key] = str((path.parent / p).resolve())
     p = Path(config['research']['caesar']['rome_path']).expanduser()
     config['research']['caesar']['rome_path'] = str((path.parent / p).resolve())
+    gpt = config['research']['gpt_researcher']
+    for key in ('gpt_researcher_path', 'python_executable'):
+        if not isinstance(gpt[key], str) or not gpt[key].strip():
+            raise ValueError(f'research.gpt_researcher.{key} must be a nonempty path')
+        # Do not resolve the venv Python symlink: its lexical path selects the environment.
+        gpt[key] = os.path.abspath(path.parent / Path(gpt[key]).expanduser())
     overrides = []  # budget_cap auto: what the calculator overrode, printed and kept for `crest plan`.
     caesar = config['research']['caesar']
     for field in ('recovery_from', 'budget_history_from'):
@@ -216,6 +245,17 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
             raise ValueError(f'research.{name}.use_research_prompt must be a boolean')
         if _budget_cap(name, settings) == 'auto' and name in HOSTED_AGENTS and _is_number(settings.get('budget_usd')):
             _apply_auto_budget(name, settings, ('budget_floor_usd', 'max_research_rounds'), settings, overrides)
+        if name == 'gpt_researcher':
+            if settings['budget_cap'] == 'auto' and _is_number(settings.get('budget_usd')):
+                _apply_auto_budget(name, settings, ('budget_target_usd',), settings, overrides)
+            target, ceiling, reserve = (settings[k] for k in ('budget_target_usd', 'budget_usd', 'synthesis_reserve_usd'))
+            if (any(not _is_number(v) or not math.isfinite(v) for v in (target, ceiling, reserve))
+                    or not (0 < reserve < target and ceiling > 0)):
+                raise ValueError('research.gpt_researcher requires positive finite budgets and synthesis_reserve_usd < budget_target_usd')
+            if settings['budget_cap'] != 'soft' and not target <= ceiling <= 4:
+                raise ValueError('research.gpt_researcher requires synthesis_reserve_usd < budget_target_usd <= budget_usd <= 4 in hard/auto mode')
+            if settings['model'] != 'gpt-6.1-sol' or settings['reasoning_effort'] not in ('high', 'xhigh'):
+                raise ValueError('research.gpt_researcher requires gpt-6.1-sol at high or xhigh reasoning')
         own = settings.get('answer_word_limit')
         if own is not None and (type(own) is not int or own < 1):
             raise ValueError(f'research.{name}.answer_word_limit must be a positive integer or null')
@@ -238,6 +278,36 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
                                  'and {max_words} exactly when an answer_word_limit applies')
     for section in ('research', 'judges'):
         for name, settings in config[section].items():
+            if name == 'anthropic':
+                base = settings.get('api_base')
+                try:
+                    parsed = urlsplit(base) if isinstance(base, str) else None
+                    valid = (parsed and parsed.hostname and not parsed.username and not parsed.password
+                             and not parsed.query and not parsed.fragment
+                             and parsed.path.rstrip('/') in ('', '/v1')
+                             and (parsed.scheme == 'https' or parsed.scheme == 'http'
+                                  and parsed.hostname in ('localhost', '127.0.0.1', '::1')))
+                    if parsed:
+                        parsed.port  # Validate malformed port syntax without leaking the URL.
+                except ValueError:
+                    valid = False
+                if not valid:
+                    raise ValueError(f'{section}.anthropic.api_base must be an HTTPS base URL without credentials, query or fragment')
+                if not isinstance(settings.get('api_key_env'), str) or not re.fullmatch(r'[A-Z_][A-Z0-9_]*', settings['api_key_env']):
+                    raise ValueError(f'{section}.anthropic.api_key_env must name an environment variable')
+                pricing = settings.get('model_pricing')
+                if pricing is not None:
+                    fields = {'input', 'cached_input', 'cache_write_5m', 'output', 'web_search'}
+                    if (not isinstance(pricing, dict) or not pricing
+                            or any(not isinstance(model, str) or not model or not isinstance(rates, dict)
+                                   or set(rates) != fields
+                                   or any(not _is_number(v) or not math.isfinite(v) or v < 0 for v in rates.values())
+                                   for model, rates in pricing.items())):
+                        raise ValueError(f'{section}.anthropic.model_pricing must contain nonnegative finite input/cache/output/search rates')
+                if parsed.hostname != 'api.anthropic.com' and (not pricing or settings['model'] not in pricing):
+                    raise ValueError(f'{section}.anthropic.model_pricing must price the selected gateway model; native tariffs are not a proxy fallback')
+                if 'tool_mode' in settings and settings['tool_mode'] not in ('server', 'client'):
+                    raise ValueError(f'{section}.anthropic.tool_mode must be server or client')
             if 'effort' in settings and settings['effort'] not in ('low', 'medium', 'high', 'xhigh', 'max'):
                 raise ValueError(f'{section}.{name}.effort must be low, medium, high, xhigh or max')
             if 'search_context_size' in settings and settings['search_context_size'] not in ('low', 'medium', 'high'):
@@ -249,7 +319,9 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
                         'synthesis_drafts', 'synthesis_iterations', 'max_completion_tokens',
                         'query_max_completion_tokens', 'synthesis_top_k', 'synthesis_top_n',
                         'exploration_max_completion_tokens', 'kb_max_completion_tokens', 'quick_explore_workers',
-                        'max_web_searches', 'max_web_fetches', 'max_continuations', 'max_research_rounds'):
+                        'max_web_searches', 'max_web_fetches', 'max_continuations', 'max_research_rounds',
+                        'deep_research_breadth', 'deep_research_depth', 'deep_research_concurrency',
+                        'max_search_results_per_query', 'max_input_tokens', 'synthesis_max_completion_tokens'):
                 if key in settings and (isinstance(settings[key], bool) or
                                         not isinstance(settings[key], int) or settings[key] < 1):
                     raise ValueError(f'{section}.{name}.{key} must be a positive integer')

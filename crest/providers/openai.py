@@ -44,7 +44,7 @@ def _payload(prompt, settings, is_judge, previous_response_id=None):
     payload = {
         "model": settings.get("model", "gpt-6.1-sol"), "input": prompt,
         "background": True, "store": True, "service_tier": "default",
-        "reasoning": {"effort": settings.get("reasoning_effort", "medium" if is_judge else "high")},
+        "reasoning": {"effort": settings.get("reasoning_effort", "high")},
         "max_output_tokens": settings.get("max_output_tokens", 12000 if is_judge else 40000),
         "truncation": "disabled",
     }

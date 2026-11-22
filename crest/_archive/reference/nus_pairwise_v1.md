@@ -1,8 +1,8 @@
 # Archived judging rubrics
 
-`nus_pairwise_v1.txt` is the original New, Useful, and Surprising rubric. Its text is retained byte-for-byte for reproducing earlier judgments. The active default remains `../../prompts/nus_pairwise_v2.txt`.
+[nus_pairwise_v1.txt](../../prompts/nus_pairwise_v1.txt) is the original New, Useful, and Surprising rubric, now stored with the versioned prompts. Its text is retained byte-for-byte for reproducing earlier judgments. The active default remains [NUS v2](../../prompts/nus_pairwise_v2.txt).
 
-The AIS path `../../../crest_ais/prompts/rubric_v1.txt` remains a compatibility link directly to this archived file. The former `../../prompts/nus_pairwise_v1.txt` shortcut has been removed. Archiving did not change the prompt content, judgment keys, or saved results. Select the archived file explicitly when recreating a v1 comparison. Do not substitute v2 into an earlier run's saved prompts or pool its judgments into that run's ranking.
+The [AIS v1 alias](../../../crest_ais/prompts/rubric_v1.txt) points to the canonical v1 prompt; the old `reference/nus_pairwise_v1.txt` copy is no longer present. Relocation did not change the prompt content, judgment keys, or saved results. Select the v1 prompt explicitly when recreating a v1 comparison. Do not substitute v2 into an earlier run's saved prompts or pool its judgments into that run's ranking.
 
 ## Why v2 is the default
 

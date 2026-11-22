@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from crest import caesar_worker as worker
+from crest.providers import caesar_worker as worker
 from crest.providers import caesar
 from test_caesar import _source, _options
 
@@ -26,7 +26,7 @@ def test_fresh_restart_keeps_global_budget_and_does_not_restore_knowledge(tmp_pa
             assert config["CaesarAgent"]["max_iterations"] == 250
             assert config["CaesarAgent"].get("starting_url") is None
             assert config["LLMHandler"]["cost_limit"] == pytest.approx(4.3)
-            assert config["LLMHandler"]["max_completion_tokens"] == 10000
+            assert config["LLMHandler"]["max_completion_tokens"] == 32768
             old_collection = "crest_" + hashlib.sha256(source.name.encode()).hexdigest()[:40]
             assert config["ChromaClientManager"]["collection_name"] != old_collection
             assert not (Path(repository) / "chroma").exists()
@@ -158,7 +158,8 @@ def test_new_retrieval_fields_preserve_legacy_fallback(tmp_path):
     assert config["ChromaClientManager"]["enable_reranking"] is False
 
 
-def test_two_dollar_residual_leaves_positive_qa_allowance(tmp_path):
+@pytest.mark.parametrize("effort,completion_limit,hold", [("medium", 10000, .515), ("xhigh", 32768, 1.88072)])
+def test_two_dollar_residual_holds_writes_without_clamping_xhigh(tmp_path, effort, completion_limit, hold):
     audit = worker.UsageAudit(2, tmp_path / "usage.json")
     class Synthesizer:
         _current_draft = 1
@@ -169,10 +170,12 @@ def test_two_dollar_residual_leaves_positive_qa_allowance(tmp_path):
             assert audit.request_limit > 0
             return [("Q", "A", [])]
     agent = SimpleNamespace(synthesizer=Synthesizer())
-    with worker.adaptive_synthesis_budget(agent, {"budget_usd": 2}, audit) as report:
+    settings = {"budget_usd": 2, "synthesis_reasoning_effort": effort, "max_completion_tokens": completion_limit}
+    with worker.adaptive_synthesis_budget(agent, settings, audit) as report:
         assert agent.synthesizer._generate_qa_pairs()
     assert report["drafts"][0]["qa_allowance_usd"] > 0
-    assert report["drafts"][0]["remaining_write_allowance_usd"] <= 1.4 + 1e-9
+    assert report["drafts"][0]["remaining_write_allowance_usd"] == pytest.approx(hold)
+    assert report["drafts"][0]["qa_allowance_usd"] == pytest.approx((2 - hold) / 3)
 
 
 def test_unknown_summary_without_bounded_entries_cannot_fund_restart(tmp_path):
@@ -214,12 +217,13 @@ def test_ancestral_final_usage_changes_history_identity(tmp_path):
     assert old != caesar.identity_metadata(settings)
 
 
-def test_live_owned_worker_prevents_history_admission(tmp_path, monkeypatch):
+@pytest.mark.parametrize("module", ["crest.caesar_worker", "crest.providers.caesar_worker"])
+def test_live_owned_worker_prevents_history_admission(tmp_path, monkeypatch, module):
     import psutil
     source = _source(tmp_path / "old", .5, .2)
     worker.atomic_json(source / "state.json", {"worker_pid": 43210})
     process = SimpleNamespace(status=lambda: psutil.STATUS_RUNNING,
-        cmdline=lambda: ["python", "-m", "crest.caesar_worker", "--result", str(source / "caesar-result.json")])
+        cmdline=lambda: ["python", "-m", module, "--result", str(source / "caesar-result.json")])
     monkeypatch.setattr(psutil, "Process", lambda pid: process)
     with pytest.raises(ValueError, match="running|alive"):
         worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})

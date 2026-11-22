@@ -174,15 +174,15 @@ def test_family_validation_preserves_malformed_job_value_error(tmp_path):
 def test_archived_nus_v1_preserves_ais_alias_and_judgment_keys():
     from crest.config import ROOT
     from crest.rubrics import DEFAULT_NUS_RUBRIC
-    archive = ROOT / 'crest/_archive/reference/nus_pairwise_v1.txt'
+    archive = ROOT / 'crest/prompts/nus_pairwise_v1.txt'
     assert archive.is_file()
     old_archive = ROOT / 'crest/prompts/archive/nus_pairwise_v1.txt'
     assert not old_archive.exists() and not old_archive.is_symlink()
     original = archive.read_bytes()
-    # Frozen instrument: removing a shortcut must not change its archived text or judgment keys.
+    # Frozen instrument: relocating it must not change its historical bytes or judgment keys.
     assert hashlib.sha256(original).hexdigest() == 'a70eba755b64d489c0872448476e6148c33e4b145506ea79bbe705b62db7d65e'
-    shortcut = ROOT / 'crest/prompts/nus_pairwise_v1.txt'
-    assert not shortcut.exists() and not shortcut.is_symlink()
+    removed_archive = ROOT / 'crest/_archive/reference/nus_pairwise_v1.txt'
+    assert not removed_archive.exists() and not removed_archive.is_symlink()
     questions, answers = answer_inputs()
     archived_jobs = judging.make_judgment_jobs(questions, answers, JUDGES, original.decode())
     legacy = ROOT / 'crest_ais/prompts/rubric_v1.txt'

@@ -117,6 +117,61 @@ def test_directory_names_show_local_seconds_without_changing_event_timestamps():
     assert event == '20261027T090203.987654Z'
 
 
+@pytest.mark.parametrize('event,results_timezone,prefix', [
+    ('2026-11-21T22:30:36Z', 'America/Chicago', '16-30-36-CST'),
+    ('2026-11-01T06:30:00Z', 'America/Chicago', '01-30-00-CDT'),
+    ('2026-11-01T07:30:00Z', 'America/Chicago', '01-30-00-CST'),
+    ('2026-11-21T22:30:36Z', 'UTC', '22-30-36-UTC'),
+])
+def test_run_directory_name_adds_stable_selected_agent_slug(event, results_timezone, prefix):
+    agents = ['gpt_researcher', 'anthropic', 'anthropic']
+    name = artifacts().run_directory_name(event, '58cee12d', agents=agents,
+                                         question_count=1, results_timezone=results_timezone)
+    assert name == prefix + '-anthropic-gpt-researcher-q1-58cee12d'
+    assert agents == ['gpt_researcher', 'anthropic', 'anthropic']
+    assert artifacts().run_directory_name(event, '58cee12d', agents=list(reversed(agents)),
+                                         question_count=1, results_timezone=results_timezone) == name
+
+
+@pytest.mark.parametrize('agents,label', [
+    (['caesar', 'openai', 'gemini', 'anthropic', 'gpt_researcher'], '5-research-agents'),
+    (['a' * 300], '1-research-agents'),
+    ([f'agent{i}' for i in range(100)], '100-research-agents'),
+])
+def test_run_directory_name_summarizes_long_agent_lists_without_truncating_count_or_nonce(agents, label):
+    name = artifacts().run_directory_name('2026-11-21T22:30:36Z', '58cee12d',
+                                         agents=agents, question_count=50)
+    assert name == f'16-30-36-CST-{label}-q50-58cee12d'
+    assert len(name.encode('ascii')) <= 96
+    assert re.fullmatch(r'[a-zA-Z0-9-]+', name)
+
+
+@pytest.mark.parametrize('agents', [[], 'openai', ['../secret'], ['/private/key'],
+                                  ['user prompt'], ['agent/other'], ['Ünicode'], [None], [42]])
+def test_run_directory_name_rejects_nonidentifier_agent_context(agents):
+    with pytest.raises(ValueError, match='[Aa]gent'):
+        artifacts().run_directory_name('2026-11-21T22:30:36Z', '58cee12d',
+                                       agents=agents, question_count=1)
+
+
+@pytest.mark.parametrize('count', [None, 0, -1, True, 1.5, '1'])
+def test_run_directory_name_requires_positive_question_count_with_agents(count):
+    with pytest.raises(ValueError, match='[Qq]uestion'):
+        artifacts().run_directory_name('2026-11-21T22:30:36Z', '58cee12d',
+                                       agents=['openai'], question_count=count)
+
+
+def test_run_directory_name_requires_agents_with_question_count():
+    with pytest.raises(ValueError, match='[Aa]gent'):
+        artifacts().run_directory_name('2026-11-21T22:30:36Z', '58cee12d', question_count=1)
+
+
+def test_run_directory_name_rejects_context_exceeding_component_bound():
+    with pytest.raises(ValueError, match='too long'):
+        artifacts().run_directory_name('2026-11-21T22:30:36Z', '58cee12d',
+                                       agents=['openai'], question_count=10 ** 100)
+
+
 def test_run_date_bucket_and_name_use_the_same_local_day():
     module = artifacts()
     event = '2026-10-27T04:17:53Z'
@@ -151,10 +206,12 @@ def test_directory_timestamps_must_be_timezone_aware(event):
         module.run_directory_name(event, 'abcd1234')
 
 
-def test_directory_reservation_is_atomic_under_concurrency_and_preserves_existing_files(tmp_path):
+@pytest.mark.parametrize('name', ['01-generate-2026-10-27_09-02-03Z',
+                                  '16-30-36-CST-anthropic-gpt-researcher-q1-58cee12d'])
+def test_directory_reservation_is_atomic_under_concurrency_and_preserves_existing_files(tmp_path, name):
     module = artifacts()
     parent = tmp_path / 'new' / 'day'
-    first = module.reserve_directory(parent, '01-generate-2026-10-27_09-02-03Z')
+    first = module.reserve_directory(parent, name)
     (first / 'answer.md').write_text('Already persisted')
     with ThreadPoolExecutor(max_workers=8) as workers:
         paths = list(workers.map(lambda _: module.reserve_directory(parent, first.name), range(12)))

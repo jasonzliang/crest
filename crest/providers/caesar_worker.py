@@ -23,12 +23,20 @@ import time
 from email.utils import parsedate_to_datetime
 from uuid import uuid4
 
-from crest.caesar_budget import DEFAULT_COMPLETION_TOKENS, LUNA, PRICES, SOL, write_hold
+# Direct script execution must also resolve the uninstalled Crest package.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from crest.providers.caesar_budget import LUNA, PRICES, SOL, write_hold
 from crest.providers import budget_is_hard
-from crest.caesar_metrics import iteration_metrics
+from crest.providers.caesar_metrics import iteration_metrics
 
 PROTOCOL_VERSION = "caesar-worker-v1"
 KB_CONTEXT_WINDOW = 1_050_000  # Sol and Luna; also registered with litellm and LlamaIndex below
+# Current worker defaults; the budget planner retains its historical defaults.
+DEFAULT_COMPLETION_TOKENS = 32768
+DEFAULT_CALL_TIMEOUT_SECONDS = 1200
+DEFAULT_TIMEOUT_SECONDS = 21600
 
 
 _hard_budget = budget_is_hard  # budget_cap hard or auto enforces budget_usd; soft only records and flags overruns.
@@ -67,7 +75,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
             "cost_limit": settings.get("budget_usd", 5.) if _hard_budget(settings) else 0.0,
             "max_completion_tokens": settings.get("max_completion_tokens", DEFAULT_COMPLETION_TOKENS),
             "max_input_tokens": settings.get("max_input_tokens", 64000),
-            "timeout": settings.get("call_timeout_seconds", 600), "max_retries": 0,
+            "timeout": settings.get("call_timeout_seconds", DEFAULT_CALL_TIMEOUT_SECONDS), "max_retries": 0,
         },
         "CaesarAgent": {
             "mode": "web", "starting_query": prompt, "allowed_domains": ["*"],
@@ -83,13 +91,13 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
                 "model": settings.get("exploration_model", LUNA),
                 "reasoning_effort": settings.get("exploration_reasoning_effort", "low"),
                 "max_completion_tokens": settings.get("exploration_max_completion_tokens", 2000),
-                "timeout": settings.get("call_timeout_seconds", 600),
+                "timeout": settings.get("call_timeout_seconds", DEFAULT_CALL_TIMEOUT_SECONDS),
             },
         },
         "ArtifactSynthesizer": {
             "synthesis_classic_mode": False, "synthesis_drafts": settings.get("synthesis_drafts", 3),
             "synthesis_iterations": settings.get("synthesis_iterations", 15),
-            "synthesis_reasoning_effort": settings.get("synthesis_reasoning_effort", "medium"),
+            "synthesis_reasoning_effort": settings.get("synthesis_reasoning_effort", "xhigh"),
             "synthesis_top_k": settings.get("synthesis_top_k", 50),
             "synthesis_top_n": settings.get("synthesis_top_n", 10),
             # CREST's answer_word_limit becomes Rome's word target for each draft and the merge.
@@ -180,6 +188,8 @@ def compatibility(handler, default_config, litellm_module, llama_utils, kb_limit
                 "max_input_tokens": KB_CONTEXT_WINDOW, "max_tokens": KB_CONTEXT_WINDOW, "supports_reasoning": True,
                 "cache_read_input_token_cost": rates["cache_read"] / 1e6,
                 "cache_creation_input_token_cost": rates["cache_write"] / 1e6}
+        # LiteLLM otherwise silently drops the configured Sol synthesis effort.
+        entries[SOL]["supports_xhigh_reasoning_effort"] = True
         handler._known_models_registered = False
         default_config["LLMHandler"]["max_completion_tokens"] = kb_limit
         litellm_module.register_model(entries)
@@ -300,6 +310,10 @@ class UsageAudit:
         atomic_json(self.path, self.snapshot())
 
     def before(self, options) -> str:
+        # The SDK merges extra_json only after this boundary, overriding the
+        # audited model/input/limits. Hard budgets accept only the audited body.
+        if self.enforce and getattr(options, "extra_json", None):
+            raise BudgetExceeded("Hard Caesar budgets do not support SDK extra_json overrides")
         data = getattr(options, "json_data", {}) or {}
         if not isinstance(data, dict):
             data = {}
@@ -309,7 +323,12 @@ class UsageAudit:
         content = data.get("messages", data.get("input", ""))
         input_bound = len(json.dumps(content, ensure_ascii=False).encode("utf-8")) + 128
         output_bound = data.get("max_completion_tokens", data.get("max_tokens", 0))
-        bounded = model.startswith("text-embedding-") or isinstance(output_bound, int) and output_bound > 0
+        bounded = model.startswith("text-embedding-") or type(output_bound) is int and output_bound > 0
+        priced = isinstance(rates, dict) and all(
+            type(value) in (int, float) and math.isfinite(value) and value >= 0
+            for value in (rates.get("input"), rates.get("output"), rates.get("cache_read", 0), rates.get("cache_write", 0)))
+        if self.enforce and (not priced or not bounded):
+            raise BudgetExceeded("Hard Caesar budgets require known finite prices and bounded output")
         input_multiplier = 2 if model in (SOL, LUNA) and input_bound > 272_000 else 1
         output_multiplier = 1.5 if input_multiplier == 2 else 1
         input_rate = max(rates.get("input", 0), rates.get("cache_write", 0)) if rates else 0
@@ -317,17 +336,17 @@ class UsageAudit:
         with self.lock:
             known = sum(event.get("cost_usd") or 0 for event in self.events)
             reserved = sum(event["reserved_usd"] for event in self.pending.values())
-            reserved += sum(event.get("reserved_usd", 0) for event in self.events if event["status"] == "failed")
+            reserved += sum(event.get("reserved_usd", 0) for event in self.events
+                            if event["status"] == "failed" or event.get("unknown_cost"))
             ceiling = self.budget if self.exploration_limit is None else min(self.budget, self.exploration_limit)
             if self.enforce and rates and bounded and known + reserved + reserve > ceiling:
                 if self.exploration_limit is not None:
                     self.exploration_limited = True
                 raise BudgetExceeded("Projected SDK request exceeds the remaining Caesar budget ceiling")
-            # A draft's Q&A allowance is spent, not projected: the byte-count bound above is several
-            # times a real request, and projecting it would end every draft $0.15-0.25 early.
-            if self.enforce and self.request_limit is not None and known + reserved >= self.request_limit:
+            # Q&A must not borrow its next request's reservation from the write hold.
+            if self.enforce and self.request_limit is not None and known + reserved + reserve > self.request_limit:
                 self.request_limited = True
-                raise BudgetExceeded("This draft's Q&A allowance is spent")
+                raise BudgetExceeded("Projected SDK request exceeds this draft's Q&A allowance")
             token = uuid4().hex
             self.pending[token] = {"model": model, "reserved_usd": reserve,
                                    "unknown_cost": not bool(rates and bounded)}
@@ -336,7 +355,7 @@ class UsageAudit:
 
     def after(self, token, response=None, error=None):
         with self.lock:
-            event = self.pending[token]
+            event = dict(self.pending[token])
             if error is not None:
                 status = getattr(error, "status_code", None)
                 rejected = status in (401, 403, 429)
@@ -381,8 +400,11 @@ class UsageAudit:
                 event.update(status="completed", input_tokens=inputs, output_tokens=outputs,
                              raw_usage=raw_usage, response_model=getattr(response, "model", None),
                              cost_usd=cost, unknown_cost=cost is None)
-            self.pending.pop(token)
+            # Publish before releasing the reservation: a deadline/signal may
+            # interrupt either operation. Temporary double exposure is safer than
+            # erasing a paid attempt from the worker's final failure snapshot.
             self.events.append(event)
+            self.pending.pop(token)
             self.persist()
             if error is None:
                 choices = getattr(response, "choices", [])
@@ -479,7 +501,7 @@ def chroma_python_cli(manager_class):
 @contextmanager
 def _runtime(settings: dict, audit: UsageAudit):
     """Import and patch only inside the dedicated worker, without any dotenv loader."""
-    root = Path(settings.get("rome_path", Path(__file__).resolve().parents[2] / "rome")).resolve()
+    root = Path(settings.get("rome_path", Path(__file__).resolve().parents[3] / "rome")).resolve()
     sys.path.insert(0, str(root))
     # All SDK clients (including Chroma and LlamaIndex clients) must expose retries
     # as separate calls to this audit rather than silently repeat timed-out charges.
@@ -498,11 +520,11 @@ def _runtime(settings: dict, audit: UsageAudit):
     original_async_init = openai.AsyncOpenAI.__init__
     def init(instance, *args, **kwargs):
         kwargs["max_retries"] = 0
-        kwargs["timeout"] = settings.get("call_timeout_seconds", 600)
+        kwargs["timeout"] = settings.get("call_timeout_seconds", DEFAULT_CALL_TIMEOUT_SECONDS)
         original_init(instance, *args, **kwargs)
     def async_init(instance, *args, **kwargs):
         kwargs["max_retries"] = 0
-        kwargs["timeout"] = settings.get("call_timeout_seconds", 600)
+        kwargs["timeout"] = settings.get("call_timeout_seconds", DEFAULT_CALL_TIMEOUT_SECONDS)
         original_async_init(instance, *args, **kwargs)
     openai.OpenAI.__init__ = init
     openai.AsyncOpenAI.__init__ = async_init
@@ -572,7 +594,8 @@ class ExplorationBudgetReserved(BaseException):
 def _committed_spend(audit):
     usage = audit.snapshot()
     return (usage["known_cost_usd"] + sum(item["reserved_usd"] for item in usage["in_flight"])
-            + sum(item.get("reserved_usd", 0) for item in usage["events"] if item["status"] == "failed"))
+            + sum(item.get("reserved_usd", 0) for item in usage["events"]
+                  if item["status"] == "failed" or item.get("unknown_cost")))
 
 
 
@@ -622,6 +645,11 @@ def adaptive_synthesis_budget(agent, settings, audit):
     synthesizer = getattr(agent, "synthesizer", None)
     original_qa = getattr(synthesizer, "_generate_qa_pairs", None)
     original_merge = getattr(synthesizer, "_merge_artifacts", None)
+    # Match build_config's effective worker defaults without changing the planner's
+    # historical empty-settings behavior or mutating the caller's frozen settings.
+    hold_settings = {"synthesis_reasoning_effort": "xhigh",
+                     "max_completion_tokens": DEFAULT_COMPLETION_TOKENS, **settings}
+    xhigh = hold_settings["synthesis_reasoning_effort"] == "xhigh"
     records = {"requested_qa_rounds_per_draft": settings.get("synthesis_iterations", 15),
                "drafts": [], "merge_requested": settings.get("synthesis_merge_artifacts", True),
                "merge_completed": False, "enforced": _hard_budget(settings)}
@@ -633,16 +661,21 @@ def adaptive_synthesis_budget(agent, settings, audit):
         draft = getattr(synthesizer, "_current_draft", 1)
         remaining_drafts = max(1, synthesizer.synthesis_drafts - draft + 1)
         committed = _committed_spend(audit)
-        ceiling = audit.budget
-        write_allowance = min(write_hold(settings, remaining_drafts, bool(synthesizer.synthesis_merge_artifacts)),
-                              max(0., ceiling - committed) * .7)
-        allowance = max(0., (ceiling - committed - write_allowance) / remaining_drafts)
+        remaining = max(0., audit.budget - committed)
+        write_allowance = write_hold(hold_settings, remaining_drafts, bool(synthesizer.synthesis_merge_artifacts))
+        if not xhigh:
+            write_allowance = min(write_allowance, remaining * .7)
+        allowance = max(0., remaining - write_allowance) / remaining_drafts
         qa_started = time.monotonic()
         previous_limit, previous_limited = audit.request_limit, audit.request_limited
         if records["enforced"]:
             audit.request_limit, audit.request_limited = committed + allowance, False
         try:
-            pairs = original_qa(*args, **kwargs)
+            if records["enforced"] and xhigh and remaining <= write_allowance:
+                audit.request_limited = True
+                pairs = []
+            else:
+                pairs = original_qa(*args, **kwargs)
         finally:
             limited = audit.request_limited if records["enforced"] else False
             audit.request_limit, audit.request_limited = previous_limit, previous_limited
@@ -769,7 +802,8 @@ def _assert_history_worker_stopped(source):
                 if process.status() == psutil.STATUS_ZOMBIE:
                     continue
                 command = process.cmdline()
-                if "crest.caesar_worker" in command and any(str(source) in str(arg) for arg in command):
+                if (any(module in command for module in ("crest.providers.caesar_worker", "crest.caesar_worker"))
+                        and any(str(source) in str(arg) for arg in command)):
                     raise ValueError("Source worker is still running; final usage is not stable")
             except psutil.NoSuchProcess:
                 continue
@@ -901,7 +935,7 @@ def prepare_synthesis_recovery(prompt, settings, output_dir, job_key, config):
 def run_worker(request: dict, result_path: Path) -> int:
     worker_started = time.monotonic()
     settings = request.get("settings", {})
-    worker_deadline = worker_started + float(settings.get("timeout_seconds", 7200))
+    worker_deadline = worker_started + float(settings.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS))
     output_dir = Path(request["output_dir"])
     if settings.get("recovery_from") and settings.get("budget_history_from"):
         raise ValueError("Recovery and fresh budget-history modes are mutually exclusive")

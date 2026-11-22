@@ -20,3 +20,19 @@ results/
 
 # Editor / agent scratch
 .claude/
+
+# Keep the result-directory guide, but never track generated runs or caches.
+!/crest/results/
+/crest/results/*
+!/crest/results/readme.md
+
+# Local credentials; examples are safe to version after reviewing their contents.
+.env
+.env.*
+!.env.example
+!.env.sample
+credentials.json
+service-account.json
+crest-keys.sh
+id_rsa
+id_ed25519

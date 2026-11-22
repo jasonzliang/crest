@@ -287,7 +287,7 @@ def test_judge_uses_strict_binary_schema_and_no_tools(tmp_path):
     def handler(request):
         payload = json.loads(request.content)
         assert payload["text"]["format"] == {"type": "json_schema", "name": "crest_verdict", "strict": True, "schema": SCHEMA}
-        assert payload["reasoning"] == {"effort": "medium"}
+        assert payload["reasoning"] == {"effort": "high"}
         assert payload["max_output_tokens"] == 12000
         assert not payload.get("tools")
         assert "tool_choice" not in payload and "include" not in payload

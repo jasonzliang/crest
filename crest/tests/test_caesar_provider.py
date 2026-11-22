@@ -9,7 +9,7 @@ import time
 import pytest
 
 from crest.providers import caesar
-from crest import caesar_worker as worker
+from crest.providers import caesar_worker as worker
 
 
 class FakeAgent:
@@ -60,9 +60,9 @@ def test_preset_uses_requested_models_and_isolates_chroma_and_output(tmp_path):
     assert first["ChromaClientManager"]["enable_reranking"] is True
     assert first["LLMHandler"]["model"] == "gpt-6.1-sol"
     assert first["LLMHandler"]["cost_limit"] == 5
-    assert first["LLMHandler"]["max_completion_tokens"] == 10000
-    assert first["LLMHandler"]["timeout"] == 600
-    assert first["CaesarAgent"]["exploration_llm_config"]["timeout"] == 600
+    assert first["LLMHandler"]["max_completion_tokens"] == 32768
+    assert first["LLMHandler"]["timeout"] == 1200
+    assert first["CaesarAgent"]["exploration_llm_config"]["timeout"] == 1200
     assert first["LLMHandler"]["max_input_tokens"] == 64000
     assert first["CaesarAgent"]["exploration_llm_config"]["max_completion_tokens"] == 2000
     assert first["CaesarAgent"]["exploration_llm_config"]["model"] == "gpt-6-luna"
@@ -119,13 +119,21 @@ def test_completed_local_worker_is_replayed_without_subprocess(tmp_path, monkeyp
     assert asyncio.run(caesar.generate("Q", {}, job))["text"] == completed()["result"]["text"]
 
 
-def test_launch_persists_pid_and_result_without_serializing_secrets(tmp_path, monkeypatch):
+@pytest.mark.parametrize("reranking", [{}, {"enable_reranking": True}, {"enable_reranking": False}],
+                         ids=["default", "enabled", "disabled"])
+def test_launch_persists_pid_and_result_without_serializing_secrets(tmp_path, monkeypatch, reranking):
     job = Job(tmp_path)
     async def launch(*args, **kwargs):
+        assert args[1:3] == ("-m", "crest.providers.caesar_worker")
         assert kwargs["start_new_session"] is True
         assert job.state["submission_unknown"] is True
         request = json.loads(Path(args[args.index("--request") + 1]).read_text())
         assert "api_key" not in json.dumps(request)
+        assert "do-not-write-this" not in json.dumps(request)
+        assert request["settings"] == reranking
+        config = worker.build_config(request["prompt"], request["settings"],
+                                     Path(request["output_dir"]), request["worker_id"])
+        assert config["ChromaClientManager"]["enable_reranking"] is reranking.get("enable_reranking", True)
         Path(args[args.index("--result") + 1]).write_text(json.dumps(completed()))
         class Child:
             pid = 876
@@ -133,7 +141,7 @@ def test_launch_persists_pid_and_result_without_serializing_secrets(tmp_path, mo
             async def wait(self): return 0
         return Child()
     monkeypatch.setattr(asyncio, "create_subprocess_exec", launch)
-    result = asyncio.run(caesar.generate("Q", {"api_key": "do-not-write-this"}, job))
+    result = asyncio.run(caesar.generate("Q", {"api_key": "do-not-write-this", **reranking}, job))
     assert result["text"]
     assert job.state["worker_pid"] == 876
     assert job.state["submission_unknown"] is False
@@ -430,7 +438,7 @@ def test_sdk_audit_preserves_full_reported_usage_and_unknown_helper_prices(tmp_p
         def request(self, cast_to, options, **kwargs):
             usage = {"prompt_tokens": 100, "completion_tokens": 20, "prompt_tokens_details": {"cached_tokens": 40}, "completion_tokens_details": {"reasoning_tokens": 12}}
             return SimpleNamespace(usage=usage, model="custom-helper")
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    audit = worker.UsageAudit(5, tmp_path / "usage.json", enforce=False)  # Soft mode permits unpriced helpers.
     with audit.installed(SDK):
         SDK().request(object, SimpleNamespace(json_data={"model": "custom-helper", "messages": [], "max_completion_tokens": 100}))
     saved = audit.snapshot()
@@ -467,7 +475,10 @@ def test_real_rome_handler_and_llama_kb_offline_validation(tmp_path, monkeypatch
     monkeypatch.setenv("LITELLM_LOCAL_MODEL_COST_MAP", "True")
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
     sent = []
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+    import copy
+    import litellm
+    original_sol = copy.deepcopy(litellm.model_cost.get(worker.SOL))
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
         with monkeypatch.context() as local:
             import openai
             from rome.llm_handler import LLMHandler
@@ -491,19 +502,23 @@ def test_real_rome_handler_and_llama_kb_offline_validation(tmp_path, monkeypatch
             handler = LLMHandler(config=config["LLMHandler"])
             assert handler.top_p == 1.0  # The installed LiteLLM drop_params path filters this.
             assert handler.chat_completion("Q", response_format={"type": "json_object"}) == '{"artifact":"complete"}'
+            assert handler.chat_completion("Q", override_config={"reasoning_effort": "xhigh"}) == '{"artifact":"complete"}'
             assert handler.chat_completion("Q", override_config={"model": "gpt-6-luna", "reasoning_effort": "low"}) == '{"artifact":"complete"}'
             llama = LlamaOpenAI(model="gpt-6-luna", api_key="offline-regression-test", max_tokens=2000, additional_kwargs={"reasoning_effort": "low"})
             assert llama.chat([ChatMessage(role="user", content="Q")]).message.content == '{"artifact":"complete"}'
-    assert len(sent) == 3
+    assert len(sent) == 4
+    assert sent[0]["model"] == sent[1]["model"] == worker.SOL
     assert sent[0]["reasoning_effort"] == "medium"
-    assert sent[1]["reasoning_effort"] == "low"
-    assert sent[2]["reasoning_effort"] == "low"
-    assert audit.snapshot()["successful_calls"] == 3
+    assert sent[1]["reasoning_effort"] == "xhigh"
+    assert sent[2]["model"] == sent[3]["model"] == worker.LUNA
+    assert sent[2]["reasoning_effort"] == sent[3]["reasoning_effort"] == "low"
+    assert audit.snapshot()["successful_calls"] == 4
+    assert litellm.model_cost.get(worker.SOL) == original_sol
 
 
 def test_fatal_deadline_passes_actual_rome_synthesis_catch_and_cleans_up(tmp_path, monkeypatch):
     audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
         from caesar.artifact_synthesis import ArtifactSynthesizer
     calls = []
     class Agent(FakeAgent):
@@ -720,7 +735,7 @@ def test_unparseable_paid_response_retains_unknown_cost_reservation(tmp_path):
 
 def test_bad_accepted_response_cannot_reenter_actual_rome_paid_retry_loop(tmp_path):
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
         from caesar.artifact_synthesis import ArtifactSynthesizer
     paid = []
     class BadResponse:
@@ -811,7 +826,7 @@ def test_chroma_start_uses_worker_interpreter_without_chroma_on_path(tmp_path, m
     import socket
     import sys
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
         from rome.kb_server import ChromaServerManager
     package = tmp_path / "fake-modules" / "chromadb"
     (package / "cli").mkdir(parents=True)
@@ -861,7 +876,7 @@ def test_parallel_quick_exploration_reserves_synthesis_budget_and_ingests_comple
     import threading
     import networkx as nx
     audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
         from caesar.caesar_agent import CaesarAgent
     barrier = threading.Barrier(2)
     lock = threading.Lock()
@@ -894,15 +909,21 @@ def test_parallel_quick_exploration_reserves_synthesis_budget_and_ingests_comple
             self.visited_urls, self.failed_urls = {}, set()
             self.starting_url = "https://seed.test"
             self.graph = nx.DiGraph()
-            self.logger = SimpleNamespace(info=lambda *args: None, error=lambda *args: None)
+            self.logger = SimpleNamespace(info=lambda *args: None, error=lambda *args: None,
+                                          warning=lambda *args: None)
             self.checkpoint_manager = SimpleNamespace(save=lambda *args, **kwargs: None)
-            self.kb_manager = SimpleNamespace(add_texts=self.ingest)
+            self.kb_manager = SimpleNamespace(
+                add_texts=self.ingest,
+                collection=SimpleNamespace(get=lambda *, ids, include: {
+                    "ids": [], "documents": [], "metadatas": []}),
+            )
             self.synthesizer = SimpleNamespace(synthesize_artifact=self.synthesize)
         def perceive(self):
             return "seed", [(f"https://page.test/{i}", "page") for i in range(250)]
         def _quick_perceive_and_think(self, url, iteration):
             pay("page")
-            return {"url": url, "insights": "insight", "iteration": iteration}
+            # Rome deduplicates notes by content, so these two pages need distinct insights.
+            return {"url": url, "insights": f"insight from {url}", "iteration": iteration}
         def explore(self): return CaesarAgent.quick_explore(self)
         def ingest(self, texts):
             assert observed["active"] == 0
@@ -939,7 +960,7 @@ def test_reduced_qa_rounds_preserve_complete_artifact_and_actual_metadata():
 
 def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatch):
     setup_audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, setup_audit):
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, setup_audit):
         from caesar.artifact_synthesis import ArtifactSynthesizer
     calls = []
     class SDK:
@@ -1000,6 +1021,7 @@ def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatc
     # the merge $0.05. A $1.60 ceiling leaves $0.60 for synthesis, so every draft is cut short yet all three
     # drafts and the merge still fit after the held-back write money.
     settings = {"budget_usd": 1.6, "max_completion_tokens": 5, "query_max_completion_tokens": 1,
+                "synthesis_reasoning_effort": "medium",
                 "model_pricing": {"gpt-6.1-sol": {"input": 0, "output": 10000}}}
     assert worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path) == 0
     result = json.loads(path.read_text())["result"]
@@ -1049,7 +1071,7 @@ def recovery_source(tmp_path, *, worker_id="original-worker", known_cost=.458982
 
 def test_explicit_recovery_copies_store_and_uses_rome_checkpoint_without_exploration(tmp_path, monkeypatch):
     audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
         from caesar.checkpoint import CheckpointManager
     import networkx as nx
     source = recovery_source(tmp_path)
@@ -1182,14 +1204,22 @@ def test_recovery_uses_fresh_source_collection_unless_prior_recovery_names_one(t
     assert (output / "chroma" / "chroma.sqlite3-wal").read_bytes() == b"preserved WAL"
 
 
-@pytest.mark.parametrize("timeout", [600, 37])
-def test_runtime_timeout_reaches_sdk_even_when_library_supplies_shorter_value(tmp_path, timeout):
+@pytest.mark.parametrize("timeout,expected", [(None, 1200), (600, 600), (37, 37)])
+def test_runtime_timeout_reaches_sdk_even_when_library_supplies_shorter_value(tmp_path, timeout, expected):
     import openai
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome"), "call_timeout_seconds": timeout}, audit):
+    settings = {"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}
+    if timeout is not None:
+        settings["call_timeout_seconds"] = timeout
+    with worker._runtime(settings, audit):
         with openai.OpenAI(api_key="offline", timeout=1) as client:
-            assert client.timeout == timeout
-            assert client.with_options(timeout=1).timeout == timeout
+            assert client.timeout == expected
+            assert client.with_options(timeout=1).timeout == expected
+        async def check_async():
+            async with openai.AsyncOpenAI(api_key="offline", timeout=1) as client:
+                assert client.timeout == expected
+                assert client.with_options(timeout=1).timeout == expected
+        asyncio.run(check_async())
     assert audit.snapshot()["successful_calls"] == 0
 
 
@@ -1236,7 +1266,7 @@ def test_runtime_packs_a_knowledge_base_query_into_one_call(tmp_path, monkeypatc
     """llama-index-core 0.14.23 would otherwise use a 3,900-token window and split 20 chunks into 5 calls."""
     monkeypatch.setenv("OPENAI_API_KEY", "offline-test-key")  # construction only; nothing is sent
     audit = worker.UsageAudit(1, tmp_path / "usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[2] / "rome")}, audit):
+    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
         from llama_index.core import Settings
         from llama_index.core.prompts import PromptTemplate
         from llama_index.core.response_synthesizers import get_response_synthesizer
@@ -1277,6 +1307,7 @@ def test_soft_budget_passes_real_rome_config_validation_and_disables_cost_checks
     from crest.config import load_config
     monkeypatch.setenv("OPENAI_API_KEY", "offline-soft-budget-test")
     settings = load_config()["research"]["caesar"]
+    settings["budget_cap"] = "soft"
     audit = worker.UsageAudit(settings["budget_usd"], tmp_path / "usage.json", enforce=False)
     with worker._runtime(settings, audit):
         from rome.config import merge_with_default_config
@@ -1286,3 +1317,388 @@ def test_soft_budget_passes_real_rome_config_validation_and_disables_cost_checks
         # A disabled limit returns before token counting or cost estimation, even after a large spend.
         LLMHandler._check_and_log_cost(handler, [], 10000, worker.SOL)
     assert not audit.events and not audit.pending
+
+
+@pytest.mark.parametrize('component', ['caesar_worker', 'caesar_metrics', 'caesar_budget'])
+def test_identity_fingerprints_relocated_sibling_modules(tmp_path, monkeypatch, component):
+    package = tmp_path / 'crest/providers'
+    package.mkdir(parents=True)
+    for name in ('caesar', 'caesar_worker', 'caesar_metrics', 'caesar_budget'):
+        (package / f'{name}.py').write_text('version = 1\n')
+    monkeypatch.setattr(caesar, '__file__', str(package / 'caesar.py'))
+    settings = {'rome_path': str(tmp_path / 'rome')}
+    before = caesar.identity_metadata(settings)
+    assert caesar.identity_metadata(settings) == before
+    (package / f'{component}.py').write_text('version = 2\n')
+    assert caesar.identity_metadata(settings)['adapter_source_sha256'] != before['adapter_source_sha256']
+
+
+@pytest.mark.parametrize('module', ['crest.caesar_worker', 'crest.providers.caesar_worker'])
+def test_worker_identity_recognizes_legacy_and_relocated_commands(tmp_path, monkeypatch, module):
+    import psutil
+    result = str(tmp_path / 'caesar-result.json')
+    command = ['python', '-m', module, '--result', result]
+    process = SimpleNamespace(status=lambda: psutil.STATUS_RUNNING, cmdline=lambda: command)
+    monkeypatch.setattr(psutil, 'Process', lambda pid: process)
+    assert caesar._worker_alive({'worker_pid': 43210, 'result_path': result})
+    assert not caesar._worker_alive({'worker_pid': 43210, 'result_path': str(tmp_path / 'unrelated.json')})
+    command[2] = 'unrelated.worker'
+    assert not caesar._worker_alive({'worker_pid': 43210, 'result_path': result})
+
+
+def test_runtime_default_rome_path_stays_sibling_of_checkout(monkeypatch):
+    import builtins
+    original_import, paths = builtins.__import__, []
+    def intercept(name, *args, **kwargs):
+        if name == 'openai':
+            paths.append(Path(worker.sys.path[0]))
+            raise ImportError('stop before importing the external runtime')
+        return original_import(name, *args, **kwargs)
+    monkeypatch.setattr(worker.sys, 'path', worker.sys.path[:])
+    monkeypatch.setattr(builtins, '__import__', intercept)
+    with pytest.raises(ImportError, match='stop before importing'):
+        with worker._runtime({}, None):
+            pytest.fail('external runtime must not execute')
+    assert paths == [Path(__file__).resolve().parents[3] / 'rome']
+
+
+
+def _real_sdk_chat(audit, transport, asynchronous, **changes):
+    """Exercise the installed SDK request boundary; only the HTTP transport is fake."""
+    import httpx
+    from openai import OpenAI, AsyncOpenAI
+    from openai._base_client import SyncAPIClient, AsyncAPIClient
+    params = {"model": worker.SOL, "messages": [], "max_completion_tokens": 100, **changes}
+    with audit.installed(SyncAPIClient, AsyncAPIClient):
+        if asynchronous:
+            async def call():
+                async with AsyncOpenAI(api_key="offline-fixture", max_retries=0,
+                        http_client=httpx.AsyncClient(transport=httpx.MockTransport(transport))) as client:
+                    return await client.chat.completions.create(**params)
+            return asyncio.run(call())
+        with OpenAI(api_key="offline-fixture", max_retries=0,
+                http_client=httpx.Client(transport=httpx.MockTransport(transport))) as client:
+            return client.chat.completions.create(**params)
+
+
+def _sdk_chat_reply(*, usage=True, model=worker.SOL):
+    import httpx
+    data = {"id": "offline", "object": "chat.completion", "created": 0, "model": model,
+            "choices": [{"index": 0, "finish_reason": "stop",
+                         "message": {"role": "assistant", "content": "answer"}}]}
+    if usage:
+        data["usage"] = {"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120}
+    return httpx.Response(200, json=data)
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("extra_body", [
+    {"max_completion_tokens": 1_000_000}, {"max_tokens": 1_000_000},
+    {"model": "unpriced-helper"}, {"messages": [{"role": "user", "content": "x" * 10000}]},
+], ids=["completion-limit", "legacy-limit", "model", "input"])
+def test_hard_sdk_audit_rejects_late_json_overrides_before_dispatch(tmp_path, asynchronous, extra_body):
+    sent = []
+    def transport(request):
+        sent.append(json.loads(request.content))
+        return _sdk_chat_reply()
+    audit = worker.UsageAudit(.01, tmp_path / "usage.json")
+    with pytest.raises(worker.BudgetExceeded):
+        _real_sdk_chat(audit, transport, asynchronous, extra_body=extra_body)
+    assert not sent and not audit.events and not audit.pending
+    assert json.loads(audit.path.read_text())["in_flight"] == []
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("changes", [
+    {"model": "unpriced-helper"}, {"max_completion_tokens": None},
+    {"max_completion_tokens": 0}, {"max_completion_tokens": True},
+], ids=["unknown-price", "missing-limit", "zero-limit", "boolean-limit"])
+def test_hard_sdk_audit_rejects_unpriced_or_unbounded_dispatch(tmp_path, asynchronous, changes):
+    sent = []
+    def transport(request):
+        sent.append(1)
+        return _sdk_chat_reply()
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    with pytest.raises(worker.BudgetExceeded):
+        _real_sdk_chat(audit, transport, asynchronous, **changes)
+    assert not sent and not audit.pending and not audit.events
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("output_rate", [-1., float("nan"), True])
+def test_hard_sdk_audit_rejects_invalid_prices_before_dispatch(tmp_path, asynchronous, output_rate):
+    sent = []
+    def transport(request):
+        sent.append(1)
+        return _sdk_chat_reply()
+    audit = worker.UsageAudit(5, tmp_path / "usage.json", {worker.SOL: {"input": 2., "output": output_rate}})
+    with pytest.raises(worker.BudgetExceeded):
+        _real_sdk_chat(audit, transport, asynchronous)
+    assert not sent and not audit.pending
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("model,cost", [(worker.SOL, .0004), (worker.LUNA, .00002)])
+def test_hard_sdk_audit_allows_empty_extra_body_and_keeps_exact_usage(tmp_path, asynchronous, model, cost):
+    sent = []
+    def transport(request):
+        sent.append(json.loads(request.content))
+        assert audit.snapshot()["in_flight"][0]["reserved_usd"] > 0
+        return _sdk_chat_reply(model=model)
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    _real_sdk_chat(audit, transport, asynchronous, model=model, extra_body={})
+    assert len(sent) == 1 and sent[0]["max_completion_tokens"] == 100
+    assert audit.snapshot()["cost_usd"] == pytest.approx(cost)
+    assert not audit.pending
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("changes", [
+    {"extra_body": {"max_completion_tokens": 1_000_000}},
+    {"model": "unpriced-helper"}, {"max_completion_tokens": None},
+], ids=["late-override", "unknown-price", "missing-limit"])
+def test_soft_sdk_audit_keeps_legacy_admission(tmp_path, asynchronous, changes):
+    sent = []
+    def transport(request):
+        sent.append(json.loads(request.content))
+        return _sdk_chat_reply()
+    audit = worker.UsageAudit(.00001, tmp_path / "usage.json", enforce=False)
+    _real_sdk_chat(audit, transport, asynchronous, **changes)
+    assert len(sent) == 1 and audit.snapshot()["successful_calls"] == 1
+    if "extra_body" in changes:
+        assert sent[0]["max_completion_tokens"] == 1_000_000
+    if changes.get("model") == "unpriced-helper":
+        assert audit.snapshot()["unknown_cost"] is True and audit.snapshot()["cost_usd"] is None
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("boundary", ["before-append", "after-pop"])
+@pytest.mark.parametrize("status", [200, 500])
+def test_sdk_settlement_signal_never_loses_paid_exposure(tmp_path, asynchronous, boundary, status):
+    import httpx
+    import signal
+    audit = worker.UsageAudit(1, tmp_path / "usage.json", retry_attempts=1)
+    _real_sdk_chat(audit, lambda request: _sdk_chat_reply(), asynchronous)
+    prior = audit.snapshot()["known_cost_usd"]
+    reserved = []
+    def transport(request):
+        reserved.append(audit.snapshot()["in_flight"][0]["reserved_usd"])
+        return _sdk_chat_reply() if status == 200 else httpx.Response(500, json={"error": {"message": "offline failure"}})
+    class InterruptedEvents(list):
+        def append(self, event):
+            if self is audit.events:  # Snapshot deepcopy must not trigger the settlement fault.
+                signal.raise_signal(signal.SIGALRM)
+            super().append(event)
+    class InterruptedPending(dict):
+        def pop(self, token, *args):
+            value = super().pop(token, *args)
+            signal.raise_signal(signal.SIGALRM)
+            return value
+    def stop(signum, frame):
+        raise worker.WorkerDeadlineExceeded("offline settlement interruption")
+    if boundary == "before-append":
+        audit.events = InterruptedEvents(audit.events)
+    else:
+        audit.pending = InterruptedPending(audit.pending)
+    previous = signal.signal(signal.SIGALRM, stop)
+    try:
+        with pytest.raises(worker.WorkerDeadlineExceeded):
+            _real_sdk_chat(audit, transport, asynchronous)
+    finally:
+        signal.signal(signal.SIGALRM, previous)
+    assert len(reserved) == 1
+    audit.persist()  # A later failure snapshot must not overwrite away the paid exposure.
+    saved = json.loads(audit.path.read_text())
+    unresolved = saved["in_flight"] + [event for event in saved["events"] if event.get("unknown_cost")]
+    exposure = saved["known_cost_usd"] + sum(event["reserved_usd"] for event in unresolved)
+    assert exposure >= prior + (.0004 if status == 200 else reserved[0])
+    assert len(saved["events"]) + len(saved["in_flight"]) >= 2
+    if status == 500 or saved["in_flight"]:
+        assert saved["unknown_cost"] is True and saved["cost_usd"] is None
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+def test_hard_sdk_audit_retains_unpriced_accepted_response_reservation(tmp_path, asynchronous):
+    audit = worker.UsageAudit(.002, tmp_path / "usage.json")
+    sent = []
+    def transport(request):
+        sent.append(1)
+        return _sdk_chat_reply(usage=False)
+    _real_sdk_chat(audit, transport, asynchronous)
+    saved = audit.snapshot()
+    assert saved["events"][0]["unknown_cost"] is True
+    assert worker._committed_spend(audit) == saved["events"][0]["reserved_usd"]
+    with pytest.raises(worker.BudgetExceeded):
+        _real_sdk_chat(audit, transport, asynchronous)
+    assert len(sent) == 1
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("model,cost", [("text-embedding-3-small", .000001),
+    ("text-embedding-3-large", .0000065), ("text-embedding-ada-002", .000005)])
+def test_hard_sdk_audit_preserves_supported_embedding_requests(tmp_path, asynchronous, model, cost):
+    import httpx
+    from openai import OpenAI, AsyncOpenAI
+    from openai._base_client import SyncAPIClient, AsyncAPIClient
+    audit = worker.UsageAudit(1, tmp_path / "usage.json")
+    sent = []
+    def transport(request):
+        sent.append(json.loads(request.content))
+        assert audit.snapshot()["in_flight"][0]["reserved_usd"] > 0
+        return httpx.Response(200, json={"object": "list", "model": model,
+            "data": [{"object": "embedding", "index": 0, "embedding": [.1, .2]}],
+            "usage": {"prompt_tokens": 50, "total_tokens": 50}})
+    with audit.installed(SyncAPIClient, AsyncAPIClient):
+        if asynchronous:
+            async def call():
+                async with AsyncOpenAI(api_key="offline-fixture", max_retries=0,
+                        http_client=httpx.AsyncClient(transport=httpx.MockTransport(transport))) as client:
+                    await client.embeddings.create(model=model, input=["source"], encoding_format="float")
+            asyncio.run(call())
+        else:
+            with OpenAI(api_key="offline-fixture", max_retries=0,
+                    http_client=httpx.Client(transport=httpx.MockTransport(transport))) as client:
+                client.embeddings.create(model=model, input=["source"], encoding_format="float")
+    assert len(sent) == 1 and sent[0]["model"] == model
+    assert audit.snapshot()["cost_usd"] == pytest.approx(cost)
+    assert audit.snapshot()["successful_calls"] == 1 and not audit.pending
+
+
+
+def test_worker_explicit_legacy_completion_timeout_and_effort_are_preserved(tmp_path):
+    settings = {"max_completion_tokens": 10000, "call_timeout_seconds": 600,
+                "synthesis_reasoning_effort": "medium"}
+    config = worker.build_config("Q", settings, tmp_path, "explicit-legacy")
+    assert config["LLMHandler"]["max_completion_tokens"] == 10000
+    assert config["LLMHandler"]["timeout"] == 600
+    assert config["ArtifactSynthesizer"]["synthesis_reasoning_effort"] == "medium"
+
+
+@pytest.mark.parametrize("settings,expected", [({}, 21600), ({"timeout_seconds": 37}, 37)])
+def test_worker_overall_timeout_has_generous_default_and_preserves_override(tmp_path, monkeypatch, settings, expected):
+    limits = []
+    @contextmanager
+    def deadline(seconds):
+        limits.append(seconds)
+        yield
+    class Agent(FakeAgent):
+        def __init__(self, **kwargs): pass
+        def explore(self): return artifact()
+        def shutdown(self): pass
+    @contextmanager
+    def runtime(settings, audit): yield Agent
+    monkeypatch.setattr(worker, "time", SimpleNamespace(monotonic=lambda: 100., time=lambda: 100.))
+    monkeypatch.setattr(worker, "_deadline", deadline)
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    assert worker.run_worker({"prompt": "Q", "settings": settings,
+        "output_dir": str(tmp_path / "output"), "job_key": "offline"}, tmp_path / "result.json") == 0
+    assert limits == [expected]
+
+
+@pytest.mark.parametrize("effort,expected_hold,expected_allowance", [
+    (None, 2.4, .2), ("xhigh", 2.4, .2), ("medium", 2.1, .3), ("high", 2.1, .3)])
+def test_xhigh_synthesis_hold_is_unclamped_and_legacy_hold_stays_clamped(
+        tmp_path, monkeypatch, effort, expected_hold, expected_allowance):
+    audit = worker.UsageAudit(4, tmp_path / "usage.json")
+    audit.events.append({"status": "completed", "model": worker.SOL, "cost_usd": 1.})
+    settings = {} if effort is None else {"synthesis_reasoning_effort": effort}
+    supplied = dict(settings)
+    held = []
+    def write_hold(effective, remaining, merge):
+        held.append((dict(effective), remaining, merge))
+        return 2.4
+    monkeypatch.setattr(worker, "write_hold", write_hold)
+    class Synthesizer:
+        synthesis_drafts, synthesis_iterations, synthesis_merge_artifacts = 3, 20, True
+        def _generate_qa_pairs(self):
+            assert audit.request_limit == pytest.approx(1 + expected_allowance)
+            return [("Q", "A", [])]
+    synth = Synthesizer()
+    original = synth._generate_qa_pairs
+    with worker.adaptive_synthesis_budget(SimpleNamespace(synthesizer=synth), settings, audit) as report:
+        assert synth._generate_qa_pairs() == [("Q", "A", [])]
+    row = report["drafts"][0]
+    assert row["remaining_write_allowance_usd"] == pytest.approx(expected_hold)
+    assert row["qa_allowance_usd"] == pytest.approx(expected_allowance)
+    assert held[0][0]["synthesis_reasoning_effort"] == (effort or "xhigh")
+    assert held[0][0]["max_completion_tokens"] == 32768
+    assert held[0][1:] == (3, True)
+    assert settings == supplied
+    assert audit.request_limit is None and audit.request_limited is False
+    assert synth._generate_qa_pairs == original
+
+
+@pytest.mark.parametrize("hold", [2., 2.5])
+def test_xhigh_synthesis_skips_qa_when_only_write_headroom_remains(tmp_path, monkeypatch, hold):
+    audit = worker.UsageAudit(4, tmp_path / "usage.json")
+    audit.events.append({"status": "completed", "model": worker.SOL, "cost_usd": 2.})
+    monkeypatch.setattr(worker, "write_hold", lambda *args: hold)
+    class Synthesizer:
+        synthesis_drafts, synthesis_iterations, synthesis_merge_artifacts = 3, 20, True
+        def _generate_qa_pairs(self): pytest.fail("Q&A must not run without funds outside the write hold")
+    synth = Synthesizer()
+    with worker.adaptive_synthesis_budget(SimpleNamespace(synthesizer=synth), {}, audit) as report:
+        assert synth._generate_qa_pairs() == []
+    row = report["drafts"][0]
+    assert row["qa_allowance_usd"] == 0 and row["remaining_write_allowance_usd"] == hold
+    assert row["completed_qa_rounds"] == 0 and row["budget_limited"] is True
+    assert audit.request_limit is None and audit.request_limited is False
+    # A retained heuristic hold is not permission to send an unaffordable actual write.
+    with pytest.raises(worker.BudgetExceeded):
+        _real_sdk_chat(audit, lambda request: pytest.fail("Unaffordable write dispatched"),
+                       False, max_completion_tokens=1_000_000)
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("prior", ["none", "known", "pending", "unknown-completed"])
+def test_qa_projected_reservation_must_fit_allowance_before_sdk_dispatch(tmp_path, asynchronous, prior):
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    limit = .001
+    if prior == "known":
+        audit.events.append({"status": "completed", "model": worker.SOL, "cost_usd": .0004})
+        limit = .0015
+    elif prior == "pending":
+        audit.before(SimpleNamespace(json_data={"model": worker.SOL, "messages": [], "max_completion_tokens": 100}))
+        limit = .002
+    elif prior == "unknown-completed":
+        _real_sdk_chat(audit, lambda request: _sdk_chat_reply(usage=False), asynchronous)
+        limit = .002
+    initial = audit.snapshot()
+    audit.request_limit = limit
+    sent = []
+    def transport(request):
+        sent.append(1)
+        return _sdk_chat_reply()
+    with pytest.raises(worker.BudgetExceeded):
+        _real_sdk_chat(audit, transport, asynchronous)
+    assert not sent and audit.request_limited is True
+    assert audit.snapshot() == initial
+
+
+@pytest.mark.parametrize("enforce,limit", [(True, .002), (False, .0001)])
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+def test_qa_admission_allows_fitting_reservation_and_explicit_soft_mode(tmp_path, asynchronous, enforce, limit):
+    audit = worker.UsageAudit(5, tmp_path / "usage.json", enforce=enforce)
+    audit.request_limit = limit
+    sent = []
+    def transport(request):
+        sent.append(1)
+        return _sdk_chat_reply()
+    _real_sdk_chat(audit, transport, asynchronous)
+    assert len(sent) == 1 and not audit.request_limited
+    assert audit.snapshot()["cost_usd"] == pytest.approx(.0004)
+
+
+def test_worker_implicit_xhigh_uses_full_hold_from_budget_helper(tmp_path):
+    audit = worker.UsageAudit(4, tmp_path / "usage.json")
+    audit.events.append({"status": "completed", "model": worker.SOL, "cost_usd": 1.4})
+    class Synthesizer:
+        synthesis_drafts, synthesis_iterations, synthesis_merge_artifacts = 3, 20, True
+        def _generate_qa_pairs(self): return [("Q", "A", [])]
+    synth = Synthesizer()
+    with worker.adaptive_synthesis_budget(SimpleNamespace(synthesizer=synth), {}, audit) as report:
+        synth._generate_qa_pairs()
+    # Four writes at $0.40268 and two capped refinements at $0.135 each.
+    row = report["drafts"][0]
+    assert row["remaining_write_allowance_usd"] == pytest.approx(1.88072)
+    assert row["qa_allowance_usd"] == pytest.approx((2.6 - 1.88072) / 3)

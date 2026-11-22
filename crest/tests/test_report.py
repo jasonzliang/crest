@@ -866,7 +866,7 @@ def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchu
 
 def test_questions_group_by_dataset_category_without_changing_snapshot_order_or_ids(run, tmp_path):
     from crest.report import ROOT, write_report
-    source = [json.loads(line) for line in (ROOT / 'crest/data/queries_n50.jsonl').read_text().splitlines()]
+    source = [json.loads(line) for line in (ROOT / 'crest/data/queries_n50_v1.jsonl').read_text().splitlines()]
     path = run / '02-judge-test/questions.json'
     questions = json.loads(path.read_text())
     for question, row in zip(questions, reversed(source)):
@@ -1066,14 +1066,14 @@ def test_four_agent_three_judge_run_renders_computed_totals_and_anthropic_labels
     assert 'wins in 18 comparisons per system' in html
     assert 'All three judges evaluated every pair in both orders' in html and 'Both judges' not in html
     assert ('<a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool">'
-            'Anthropic (Sonnet + web search)</a>') in html
+            'Anthropic (Claude + web search)</a>') in html
     assert 'Sonnet + hosted web search through the Messages API; effort: max.' in html
     assert '<summary>Claude Fable 5.1 · preferred' in html
     assert '&quot;model&quot;: &quot;claude-fable-5-1&quot;' in html
     assert 'https://platform.claude.com/docs/en/about-claude/pricing' in html
     for index in range(1, 51):
         assert (f'<details class="answer" id="answer-{index}-anthropic">'
-                '<summary>Anthropic (Sonnet + web search)</summary>') in html
+                '<summary>Anthropic (Claude + web search)</summary>') in html
     # A final audit must carry the computed totals (200 answers, 1,800 valid calls), not the old 150/600.
     audit = final_audit(run)
     dump(run / '04-audit-test/audit.json', audit)
@@ -1306,7 +1306,7 @@ def test_known_source_urls_keep_untrusted_markup_inert():
 def test_current_static_document_headers_link_to_latest_research_report():
     from pathlib import Path
     from lxml import html
-    docs = Path(__file__).resolve().parents[1] / 'docs'
+    docs = Path(__file__).resolve().parents[2] / 'docs'
     # Evidence remains frozen; publication wrappers use canonical versioned names.
     for path in sorted(docs.glob('*.html')):
         if path.name in {'deep-research-comparison-v1.html', 'deep-research-comparison-v2.html'}:
@@ -1325,7 +1325,7 @@ def test_current_static_document_headers_link_to_latest_research_report():
 def test_historical_v1_report_uses_versioned_publication_wrapper():
     from pathlib import Path
     from lxml import html
-    path = Path(__file__).resolve().parents[1] / 'docs/deep-research-comparison-v1.html'
+    path = Path(__file__).resolve().parents[2] / 'docs/deep-research-comparison-v1.html'
     source = path.read_bytes()
     page = html.fromstring(source)
     assert page.xpath('//h1/text()') == ['Deep research comparison v1']

@@ -40,19 +40,19 @@ ROOT = Path(__file__).resolve().parents[1]
 # Agents and judges come from each frozen run; these tables only decorate known identifiers.
 IDENTIFIER = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]*')
 LABELS = {'caesar': 'Caesar', 'openai': 'OpenAI (Sol + web search)', 'gemini': 'Google Deep Research',
-          'anthropic': 'Anthropic (Sonnet + web search)'}
-JUDGE_LABELS = {'gpt-6-astra': 'GPT-6 Astra', 'gemini-4-argon': 'Gemini 4 Argon', 'claude-fable-5-1': 'Claude Fable 5.1'}
-SOURCE_URLS = {'caesar': 'https://github.com/jasonzliang/caesar-agent',
+          'anthropic': 'Anthropic (Claude + web search)', 'gpt_researcher': 'GPT Researcher'}
+JUDGE_LABELS = {'gpt-6.1-sol': 'GPT-6.1 Sol', 'claude-opus-5-5': 'Claude Opus 5.5', 'gpt-6-astra': 'GPT-6 Astra', 'gemini-4-argon': 'Gemini 4 Argon', 'claude-fable-5-1': 'Claude Fable 5.1'}
+SOURCE_URLS = {'gpt_researcher': 'https://github.com/assafelovic/gpt-researcher', 'caesar': 'https://github.com/jasonzliang/caesar-agent',
                'openai': 'https://developers.openai.com/api/docs/guides/tools-web-search',
                'gemini': 'https://ai.google.dev/gemini-api/docs/deep-research',
                'anthropic': 'https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool'}
-COLORS = {'caesar': '#0b5967', 'gemini': '#b4652b', 'openai': '#5e628c', 'anthropic': '#3d7a4a'}
+COLORS = {'gpt_researcher': '#8a4d69', 'caesar': '#0b5967', 'gemini': '#b4652b', 'openai': '#5e628c', 'anthropic': '#3d7a4a'}
 DEFAULT_COLOR = '#526574'
 PRICING_LINKS = {'openai': ('<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">OpenAI Sol</a>',
                             '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">OpenAI Luna</a>'),
                  'gemini': ('<a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini API pricing</a>',),
                  'anthropic': ('<a href="https://platform.claude.com/docs/en/about-claude/pricing">Claude pricing</a>',)}
-PRICING_PROVIDER = {'caesar': 'openai'}  # Caesar's SDK calls bill at OpenAI rates.
+PRICING_PROVIDER = {'caesar': 'openai', 'gpt_researcher': 'openai'}  # Caesar's SDK calls bill at OpenAI rates.
 
 
 def _number(value):
@@ -678,7 +678,13 @@ def _models(data):
         elif agent == 'openai':
             detail = f'Sol + hosted web search through Responses API; reasoning effort: {settings.get("reasoning_effort", "not recorded")}. This run evaluates that configured workflow.'
         elif agent == 'anthropic':
-            detail = f'Sonnet + hosted web search through the Messages API; effort: {settings.get("effort", "not recorded")}.'
+            model = 'Sonnet' if str(settings.get('model', '')).startswith('claude-sonnet') else settings.get('model', 'Claude')
+            tools = 'client-side search/fetch' if settings.get('tool_mode') == 'client' else 'hosted web search'
+            detail = f'{model} + {tools} through the Messages API; effort: {settings.get("effort", "not recorded")}.'
+        elif agent == 'gpt_researcher':
+            detail = (f'GPT Researcher deep mode; all model roles: {settings.get("model", "not recorded")}; '
+                      f'reasoning: {settings.get("reasoning_effort", "not recorded")}. '
+                      'DDGS public web search, local keyword filtering, and an SDK-boundary budget ledger with a final-writing reserve.')
         elif agent == 'caesar':
             detail = f'Exploration: {settings.get("exploration_model", "not recorded")}; knowledge base: {settings.get("kb_model", "not recorded")}. Each answer’s saved settings identify helper models and any recovery steps.'
         else:
@@ -708,7 +714,7 @@ def _questions(data):
              'The question winner has the most pairwise wins; ties are shown. '
              'Expand an answer or reason to read it.</p>']
     # Category order follows the question files; snapshots without categories are matched by text.
-    catalog = [row for name in ('queries_n50_v2.jsonl', 'queries_n50.jsonl') for row in _jsonl(ROOT / 'crest/data' / name)]
+    catalog = [row for name in ('queries_n50_v2.jsonl', 'queries_n50_v1.jsonl') for row in _jsonl(ROOT / 'crest/data' / name)]
     categories = {row['query']: row['category'] for row in catalog}
     groups = {row['category']: [] for row in catalog}
     for index, question in enumerate(data['questions'], 1):

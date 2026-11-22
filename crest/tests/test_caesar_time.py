@@ -5,7 +5,7 @@ import json
 from types import SimpleNamespace
 import threading
 
-from crest import caesar_worker as worker
+from crest.providers import caesar_worker as worker
 
 
 class Clock:
@@ -130,6 +130,6 @@ def test_worker_initialization_uses_one_monotonic_overall_deadline(tmp_path, mon
     assert worker.run_worker({'prompt': 'Q', 'settings': {}, 'output_dir': str(tmp_path / 'output'),
                               'job_key': 'a' * 64}, path) == 0
     assert seen['start'] == 100
-    assert seen['deadline_allowance'] == 7200  # The whole default timeout, armed once before the agent starts.
+    assert seen['deadline_allowance'] == 21600  # The whole default timeout, armed once before the agent starts.
     result = json.loads(path.read_text())['result']
     assert 'exploration_budget_stop' not in result['raw']

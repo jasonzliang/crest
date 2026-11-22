@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from crest import caesar_worker as worker
+from crest.providers import caesar_worker as worker
 from crest.providers import caesar
 
 
@@ -179,19 +179,26 @@ def test_four_520_attempts_hold_four_reservations_and_never_enter_outer_retry(tm
     assert all(event["unknown_cost"] for event in value["events"])
 
 
-def test_520_with_unknown_model_price_cannot_retry_without_a_reservation(tmp_path, monkeypatch):
+@pytest.mark.parametrize("enforce", [True, False])
+def test_unpriced_model_is_refused_in_hard_mode_and_never_retried_in_soft_mode(tmp_path, monkeypatch, enforce):
     sent = []
     class SDK:
         def request(self, *args, **kwargs):
             sent.append(1)
             raise Transient()
     monkeypatch.setattr(worker.time, "sleep", lambda _: pytest.fail("unbounded retry"))
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    audit = worker.UsageAudit(5, tmp_path / "usage.json", enforce=enforce)
     options = _options()
     options.json_data["model"] = "unpriced-helper"
-    with audit.installed(SDK), pytest.raises(worker.SDKRequestFailed):
+    expected = worker.BudgetExceeded if enforce else worker.SDKRequestFailed
+    with audit.installed(SDK), pytest.raises(expected):
         SDK().request(object, options)
-    assert len(sent) == 1
+    assert len(sent) == (0 if enforce else 1)
+    assert not audit.pending
+    assert len(audit.events) == (0 if enforce else 1)
+    if not enforce:
+        assert audit.events[0]["unknown_cost"] is True
+        assert audit.events[0]["cost_usd"] is None
 
 
 def test_recovery_ancestry_cycle_is_rejected_before_copying(tmp_path):

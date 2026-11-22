@@ -15,14 +15,14 @@
     "protected": "bf8b241cfbca442996ccea4af6e2d6cafa53cb86f72dc1e70797167be38614e1"
   },
   "docs/judge-models.html": {
-    "body": "69fb0f5e20ecfce774e5cd369a9109f6016826095073cb035d4d409ac77e2210",
+    "body": "b24809d1f71a13d74160daac7de60460fa3af94923dedf8a426b3e171573b8f3",
     "protected_count": 4,
-    "protected": "290be83fa1c72a8814e1a9ab9792b74b2204be53fc531a9fd4906ef7cd857459"
+    "protected": "3d1a102f99b0aab68ecf2ad03fa213b4603248ff7fd12d4a2c9b15c959062e81"
   },
   "docs/research-pipeline.html": {
-    "body": "f4345dd9afa99b9674fccebb72b91ae16cb8806e445a74a4754febb077ce6a6c",
-    "protected_count": 13,
-    "protected": "6a62fdd3513661fd2f5b707eaad9e33a572bc5e458255e12c447143cc91de0b5"
+    "body": "de58801bc1a00dcec824b1fbf4d99e294991e07f69ade781ec6bfcbc48c47604",
+    "protected_count": 16,
+    "protected": "a3db18013c8d4ca77f18e0ee08f29ec1907a9dec3e2fe39e25ab713629dbd60c"
   },
   "docs/deep-research-comparison-v2.html": {
     "body": "ba08783552b488745bd12ba499f852a640864adf5abc56b5eb16384eee040cf1",
@@ -40,7 +40,7 @@
     "protected": "a8828b024476f683366727e0b54995b765d12e41cbe18a66d8833825e3baac1e"
   },
   "docs/ai-scientist-comparison-method.html": {
-    "body": "563726fb0f9f7335eb8b42183dfab6bcae17aafe73a52da0dcca31e7e7f8c851",
+    "body": "2d7e94aa89f79568b9f70c5a23080bd54b5ccd09ebc67a4f1af7f3804ac191ff",
     "protected_count": 7,
     "protected": "a459dcf0de72ebc01fdd327e6f9ed8aebf7124e02774e9cfce54850bb2cc1060"
   },
@@ -50,7 +50,7 @@
     "protected": "1e57fae4fab46f33f910f78a827159be0a4562b17070742647308503a5f424ff"
   },
   "crest/_archive/index.html": {
-    "body": "df15b24e0867341aaf7556faad8bada9463f0822bad68d164fd8c0cb160df65c",
+    "body": "355f52db5419166b451c8478a8f8c7ae13e8dc3f02acd19b07d0d2434287aa99",
     "protected_count": 3,
     "protected": "70569b1358a83497ec3d84d34045a4c0526c1a33f429e641c94949c2aa42009d"
   },

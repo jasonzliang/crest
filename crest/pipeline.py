@@ -121,9 +121,13 @@ class Pipeline:
     def preflight(self, stage: str) -> None:
         """Check all required credentials/dependencies before starting paid work."""
         required = set()
+        anthropic_keys = set()
         if stage in {'generate', 'run'}:
-            required.update(t['agent'] for t in self.generation_jobs()
-                            if self.cache.job(t['key']).state.get('status') != 'completed')
+            pending = [t for t in self.generation_jobs()
+                       if self.cache.job(t['key']).state.get('status') != 'completed']
+            required.update(t['agent'] for t in pending)
+            anthropic_keys.update(t['settings'].get('api_key_env', 'ANTHROPIC_API_KEY')
+                                  for t in pending if t['agent'] == 'anthropic')
         if stage in {'judge', 'run'}:
             from .judging import make_judgment_jobs
             rubric = Path(self.config['rubric']).read_text()
@@ -137,18 +141,25 @@ class Pipeline:
             jobs = make_judgment_jobs(self.questions, self.answers(), self._judge_settings(), rubric)
             if stage == 'run' and (required or not self.run_dir):
                 required.update(self.config['judges'])
+                if 'anthropic' in self.config['judges']:
+                    anthropic_keys.add(self.config['judges']['anthropic'].get('api_key_env', 'ANTHROPIC_API_KEY'))
             else:
-                required.update(t['judge'] for t in jobs if not t.get('skip_reason')
-                                and self._stage_cache('judge').job(t['key']).state.get('status') != 'completed')
+                pending = [t for t in jobs if not t.get('skip_reason')
+                           and self._stage_cache('judge').job(t['key']).state.get('status') != 'completed']
+                required.update(t['judge'] for t in pending)
+                anthropic_keys.update(t['settings'].get('api_key_env', 'ANTHROPIC_API_KEY')
+                                      for t in pending if t['judge'] == 'anthropic')
         missing = []
-        if required & {'openai', 'caesar'} and not os.environ.get('OPENAI_API_KEY'):
+        if required & {'openai', 'caesar', 'gpt_researcher'} and not os.environ.get('OPENAI_API_KEY'):
             missing.append('OPENAI_API_KEY')
         if 'gemini' in required and not (os.environ.get('GOOGLE_API_KEY') or os.environ.get('GEMINI_API_KEY')):
             missing.append('GOOGLE_API_KEY (or GEMINI_API_KEY)')
-        if 'anthropic' in required and not os.environ.get('ANTHROPIC_API_KEY'):
-            missing.append('ANTHROPIC_API_KEY')
+        missing.extend(name for name in sorted(anthropic_keys) if not os.environ.get(name))
         if missing:
             raise ValueError('Set ' + ', '.join(missing) + ' before starting uncached API work')
+        if 'gpt_researcher' in required and stage in {'generate', 'run'}:
+            settings = next(t['settings'] for t in self.generation_jobs() if t['agent'] == 'gpt_researcher')
+            self._provider('gpt_researcher').preflight(settings)
         if 'caesar' in required and stage in {'generate', 'run'}:
             # An attached run executes its original generation settings.
             settings = next(t['settings'] for t in self.generation_jobs() if t['agent'] == 'caesar')
@@ -204,7 +215,8 @@ class Pipeline:
         results_timezone = self.config.get('results_timezone', DEFAULT_RESULTS_TIMEZONE)
         date = run_date_directory_name(stamp, results_timezone=results_timezone)
         jobs = self.generation_jobs()
-        name = run_directory_name(stamp, uuid.uuid4().hex[:8], results_timezone=results_timezone)
+        name = run_directory_name(stamp, uuid.uuid4().hex[:8], results_timezone=results_timezone,
+                                  agents=list(self.config['research']), question_count=len(self.questions))
         self.run_dir = reserve_directory(root / date, name)
         self.manifest = {'schema': 'crest-run-v1', 'created_at': stamp,
                          'questions': self.questions, 'agents': list(self.config['research']),
@@ -339,7 +351,7 @@ class Pipeline:
                             raise ValueError('Generation adapter changed; start a new stage-1 run to apply it')
                         expected = task.get('source_identity')
                         if expected and provider.identity_metadata(runtime_settings) != expected:
-                            raise ValueError('Caesar source changed; start a new stage-1 run to apply it')
+                            raise ValueError(f"{task['agent']} source changed; start a new stage-1 run to apply it")
                     result = await provider.generate(task['prompt'], runtime_settings, job)
                     # Preserve charged usage even when the returned text fails validation.
                     job.save(provider_result=result)

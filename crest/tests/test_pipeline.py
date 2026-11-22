@@ -55,7 +55,7 @@ def fixture_config(tmp_path, n=2):
     p.write_text(f'questions: {q}\nrubric: {rubric}\ncache_dir: {tmp_path / "cache"}\noutput_dir: {tmp_path / "results"}\n')
     config = load_config(p)
     # Count-based scenarios below assume the original three agents and two judges.
-    config['research'].pop('anthropic')
+    config['research'] = {name: config['research'][name] for name in ('caesar', 'openai', 'gemini')}
     config['judges'].pop('anthropic')
     return config
 
@@ -299,7 +299,7 @@ def test_analysis_cli_accepts_run_dir_and_does_not_need_api_keys(tmp_path):
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    env['PYTHONPATH'] = str(Path(__file__).parents[1])
+    env['PYTHONPATH'] = str(Path(__file__).parents[2])
     result = subprocess.run([sys.executable, '-m', 'crest', 'analyze',
                              '--run', str(pipeline.run_dir), '--config', config['_config_path']],
                             cwd=tmp_path, env=env, text=True, capture_output=True)
@@ -335,23 +335,115 @@ def test_generation_failure_does_not_erase_other_paid_answers(tmp_path):
     assert pipeline.cache.job(task['key']).state['remote_id'] == 'still-poll-this'
 
 
-def test_default_dataset_plan_has_fifty_questions_four_agents_and_three_judges():
+def test_default_dataset_plan_has_fifty_questions_five_agents_and_three_judges():
     config = load_config()
     providers = {name: FakeProvider(name) for name in config['research']}
     pipeline = Pipeline(config, providers=providers)
     assert len(pipeline.questions) == 50
-    assert list(config['research']) == ['caesar', 'openai', 'gemini', 'anthropic']
+    assert list(config['research']) == ['caesar', 'openai', 'gemini', 'anthropic', 'gpt_researcher']
     assert list(config['judges']) == ['openai', 'gemini', 'anthropic']
-    assert len(pipeline.generation_jobs()) == 200
+    assert len(pipeline.generation_jobs()) == 250
     plan = pipeline.plan()
-    assert plan['judge_calls_total'] == 50 * 6 * 2 * 3 == 1800
-    assert plan['answer_word_limit'] == 600
-    assert plan['budget_targets_usd'] == {'caesar': 4.0, 'openai': 4.0, 'gemini': 4.0, 'anthropic': 4.0}
-    assert plan['generation_budget_targets_usd'] == 800.0
-    prompts = {job['agent']: job['prompt'] for job in pipeline.generation_jobs()[:4]}
+    assert plan['judge_calls_total'] == 50 * 10 * 2 * 3 == 3000
+    assert plan['answer_word_limit'] is None
+    assert plan['budget_targets_usd'] == {
+        name: (4.5 if name == 'anthropic' else 4.0) for name in config['research']}
+    assert plan['generation_budget_targets_usd'] == 1025.0
+    prompts = {job['agent']: job['prompt'] for job in pipeline.generation_jobs()[:5]}
     assert prompts['caesar'] == pipeline.questions[0]['text']
-    assert all('### YOUR TASK' in prompts[name] and 'at most 600 words' in prompts[name]
-               for name in ('openai', 'gemini', 'anthropic'))
+    assert all('### YOUR TASK' in prompts[name]
+               for name in ('openai', 'gemini', 'anthropic', 'gpt_researcher'))
+    assert all('at most 600 words' not in prompt and '{max_words}' not in prompt
+               for prompt in prompts.values())
+    assert all(job['settings']['answer_word_limit'] is None for job in pipeline.generation_jobs())
+
+
+def test_all_five_agents_generate_concurrently_on_exact_v2_inputs(tmp_path):
+    """Offline orchestration only: fake costs prove concurrency, not live spending."""
+    from copy import deepcopy
+
+    config = load_config()
+    root = Path(__file__).resolve().parents[2]
+    assert Path(config['_config_path']) == root / 'crest/configs/crest.yaml'
+    assert Path(config['questions']) == root / 'crest/data/queries_n50_v2.jsonl'
+    assert Path(config['rubric']) == root / 'crest/prompts/nus_pairwise_v2.txt'
+    questions = load_questions(config['questions'])
+    assert len(questions) == 50  # limit=1 below must not replace the full input set.
+    names = {'caesar', 'openai', 'gemini', 'anthropic', 'gpt_researcher'}
+    assert set(config['research']) == names
+    expected_settings = deepcopy(config['research'])
+    assert config['answer_word_limit'] is None
+    for name, settings in expected_settings.items():
+        assert settings['answer_word_limit'] is None
+        assert settings['budget_usd'] == (4.5 if name == 'anthropic' else 4.0)
+    assert all(s['budget_cap'] == 'soft' for s in expected_settings.values())  # Warnings, not invoice caps.
+    config.update(cache_dir=str(tmp_path / 'cache'), output_dir=str(tmp_path / 'results'))
+    entered, controllers = set(), {}
+    all_entered = asyncio.Event()
+    sources = {name: f'https://example.invalid/{name}' for name in names}
+
+    class BarrierProvider(FakeProvider):
+        def identity_metadata(self, settings):
+            return {'fixture_source': self.name}
+
+        async def generate(self, prompt, settings, job):
+            assert self.name not in entered
+            assert settings == expected_settings[self.name]
+            entered.add(self.name)
+            controllers[self.name] = job.rate_controller
+            if entered == names:
+                assert len({id(controller) for controller in controllers.values()}) == 5
+                assert all(controller.snapshot()['active'] == 1 for controller in controllers.values())
+                all_entered.set()
+            # Serial scheduling must fail within a bound, not hang or pass by luck.
+            await asyncio.wait_for(all_entered.wait(), timeout=5)
+            assert entered == names
+            result = await super().generate(prompt, settings, job)
+            result['citations'] = [{'url': sources[self.name]}]
+            return result
+
+    providers = {name: BarrierProvider(name) for name in config['research']}
+    pipeline = Pipeline(config, providers=providers, limit=1)
+    assert pipeline.questions == questions[:1]
+    plan = pipeline.plan()  # Also load the real v2 rubric without judging.
+    assert plan['questions'] == 1 and plan['generation_calls_total'] == 5
+    assert plan['judge_calls_total'] == 60
+
+    async def run():
+        return await asyncio.wait_for(pipeline.generate(), timeout=10)
+
+    summary = asyncio.run(run())
+    assert summary['planned'] == summary['completed'] == 5
+    assert summary['failed'] == summary['cached'] == summary['skipped'] == 0
+    assert entered == names
+    rows = pipeline.answers()
+    assert len(rows) == len({row['agent'] for row in rows}) == 5
+    assert len({row['key'] for row in rows}) == 5
+    assert len({row['result']['text'] for row in rows}) == 5
+    assert len({row['cache_record'] for row in rows}) == 5
+    assert len({row['answer_file'] for row in rows}) == 5
+    stage = Path(summary['directory'])
+    tasks = {task['agent']: task for task in json.loads((stage / 'tasks.json').read_text())}
+    assert set(tasks) == names
+    for row in rows:
+        name = row['agent']
+        assert row['question_id'] == questions[0]['id']
+        assert row['key'] == tasks[name]['key']
+        assert tasks[name]['source_identity'] == {'fixture_source': name}
+        assert tasks[name]['settings'] == expected_settings[name]
+        assert row['result']['citations'] == [{'url': sources[name]}]
+        assert sources[name] in row['result']['text']
+        assert all(url not in row['result']['text'] for other, url in sources.items() if other != name)
+        assert (stage / row['answer_file']).read_text() == row['result']['text']
+        checkpoint = Path(row['cache_record'])
+        assert checkpoint.is_relative_to(tmp_path / 'cache')
+        assert json.loads(checkpoint.read_text())['result'] == row['result']
+        parallelism = summary['parallelism'][name]
+        assert parallelism['peak_slots'] == 1 and parallelism['active'] == 0
+        assert parallelism['current'] == expected_settings[name]['initial_concurrency']
+        assert parallelism['maximum'] == expected_settings[name]['concurrency']
+        assert len(providers[name].generations) == 1 and not providers[name].judgments
+    assert config['research'] == expected_settings
 
 
 def test_judge_adapter_change_invalidates_only_that_judge(tmp_path):
@@ -407,7 +499,7 @@ def test_missing_credentials_stop_before_creating_a_paid_run(tmp_path):
     import sys
     config = fixture_config(tmp_path, n=1)
     env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    env['PYTHONPATH'] = str(Path(__file__).parents[1])
+    env['PYTHONPATH'] = str(Path(__file__).parents[2])
     result = subprocess.run([sys.executable, '-m', 'crest', 'generate',
                              '--config', config['_config_path'], '--agents', 'openai'],
                             cwd=tmp_path, env=env, text=True, capture_output=True)
@@ -433,7 +525,7 @@ asyncio.run(run())
 '''
     marker = tmp_path / 'requests.txt'
     children = [subprocess.Popen([sys.executable, '-c', script, str(tmp_path / 'cache'), str(marker)],
-                                 cwd=Path(__file__).parents[1], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 cwd=Path(__file__).parents[2], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 for _ in range(2)]
     for child in children:
         _, error = child.communicate(timeout=10)
@@ -493,7 +585,7 @@ def test_standalone_judging_reuses_answers_without_keys_or_original_questions(tm
     Path(config['questions']).unlink()
     env = {k: v for k, v in os.environ.items()
            if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY'}}
-    env['PYTHONPATH'] = str(Path(__file__).parents[1])
+    env['PYTHONPATH'] = str(Path(__file__).parents[2])
     completed = subprocess.run([sys.executable, '-m', 'crest', 'judge', '--judges', 'openai', 'gemini',
                                 '--run', str(pipeline.run_dir), '--config', config['_config_path']],
                                cwd=tmp_path, env=env, capture_output=True, text=True)
@@ -545,7 +637,7 @@ def test_changed_source_blocks_fresh_work_but_recovers_checkpointed_result(tmp_p
     pipeline._ensure_run()
     task = pipeline.generation_jobs()[0]
     source['revision'] = 'updated'
-    with pytest.raises(ValueError, match='Caesar source changed'):
+    with pytest.raises(ValueError, match='caesar source changed'):
         asyncio.run(pipeline._execute(task, 'generate'))
     assert provider.generations == []
 
@@ -673,6 +765,74 @@ def test_generation_cost_details_cover_cache_only_overrides_without_mutating_cac
     assert provider.generations == []
 
 
+@pytest.mark.parametrize('limit,count', [(1, 1), (50, 3)])
+@pytest.mark.parametrize('zone,date,clock', [
+    ('America/Chicago', '2026-11-21', '23-30-36-CST'),
+    ('UTC', '2026-11-22', '05-30-36-UTC'),
+])
+def test_run_naming_uses_selected_research_and_actual_question_count(tmp_path, monkeypatch, limit, count,
+                                                                   zone, date, clock):
+    from uuid import UUID
+    config = fixture_config(tmp_path, n=3)
+    research = load_config(config['_config_path'])['research']
+    config['research'] = {name: research[name] for name in ('gpt_researcher', 'anthropic')}
+    config['research_prompt'] = 'PRIVATE PROMPT /private/secret/key: {question}'
+    config['results_timezone'] = zone
+    providers = {name: FakeProvider(name) for name in config['research']}
+    monkeypatch.setattr('crest.pipeline.timestamp', lambda: '2026-11-22T05:30:36Z')
+    monkeypatch.setattr('crest.pipeline.uuid.uuid4', lambda: UUID('58cee12d' + '0' * 24))
+    pipeline = Pipeline(config, providers=providers, limit=limit)
+    keys = [job['key'] for job in pipeline.generation_jobs()]
+    pipeline._ensure_run()
+    run = pipeline.run_dir
+    assert run == Path(config['output_dir']) / date / f'{clock}-anthropic-gpt-researcher-q{count}-58cee12d'
+    assert [job['key'] for job in pipeline.generation_jobs()] == keys
+    assert len(pipeline.manifest['questions']) == count
+    original = (run / 'run.json').read_bytes()
+    second = Pipeline(config, providers=providers, limit=limit)
+    second._ensure_run()
+    assert second.run_dir.name == run.name + '-2'
+    assert (run / 'run.json').read_bytes() == original
+    latest = json.loads((Path(config['output_dir']) / '.cache' / 'latest.json').read_text())
+    assert latest == {'run_dir': str(second.run_dir), 'created_at': '2026-11-22T05:30:36Z'}
+
+
+@pytest.mark.parametrize('name', ['16-30-36-CST-58cee12d',
+                                  '16-30-36-CST-gemini-openai-q1-58cee12d'])
+def test_run_naming_keeps_saved_paths_and_latest_stage_discovery(tmp_path, name, capsys):
+    from crest.cli import main
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {agent: config['research'][agent] for agent in ('openai', 'gemini')}
+    providers = {agent: FakeProvider(agent) for agent in config['research']}
+    seed = Pipeline(config, providers=providers)
+    run = Path(config['output_dir']) / '2026-11-21' / name
+    run.mkdir(parents=True)
+    manifest = {'schema': 'crest-run-v1', 'created_at': '2026-11-21T22:30:36Z',
+                'questions': seed.questions, 'agents': list(config['research']),
+                'generation_jobs': seed.generation_jobs(), 'config': config, 'stages': []}
+    (run / 'run.json').write_text(json.dumps(manifest))
+    latest = Path(config['output_dir']) / '.cache' / 'latest.json'
+    latest.parent.mkdir()
+    latest.write_text(json.dumps({'run_dir': str(run), 'created_at': manifest['created_at']}))
+    original = (run / 'run.json').read_bytes()
+    current = dict(config, research={'caesar': config['research']['openai'], **config['research']},
+                   research_prompt='Changed prompt: {question}')
+    resumed = Pipeline(current, providers=providers, run_dir=run)
+    resumed._ensure_run()
+    assert (run / 'run.json').read_bytes() == original
+    assert asyncio.run(resumed.run())['failed'] == 0
+    assert resumed.run_dir == run
+    assert len(list(run.glob('01-generate-*'))) == 1
+    assert len(list(run.glob('02-judge-*'))) == 1
+    capsys.readouterr()
+    assert main(['analyze', '--config', config['_config_path']]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result['run_dir'] == str(run)
+    assert result['cache_hit'] is True
+    assert len(list(run.glob('03-analysis-*'))) == 2
+    assert list(run.parent.iterdir()) == [run]
+
+
 def test_flat_answer_files_link_configuration_registry_without_changing_paid_keys(tmp_path):
     import re
     config = fixture_config(tmp_path, n=2)
@@ -694,7 +854,7 @@ def test_flat_answer_files_link_configuration_registry_without_changing_paid_key
         assert len(row['configuration_sha256']) == 64
         assert record['settings']['model'] == config['research']['openai']['model']
     assert all(path.is_file() for path in (stage / 'answers').iterdir())
-    assert re.fullmatch(r'\d{2}-\d{2}-\d{2}-(?:CDT|CST)-[a-f0-9]{8}', pipeline.run_dir.name)
+    assert re.fullmatch(r'\d{2}-\d{2}-\d{2}-(?:CDT|CST)-openai-q2-[a-f0-9]{8}', pipeline.run_dir.name)
     assert re.fullmatch(r'01-generate-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-(?:CDT|CST)', stage.name)
     assert [task['key'] for task in pipeline.generation_jobs()] == keys
 

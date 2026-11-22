@@ -3,3 +3,5 @@ httpx>=0.28,<1
 markdown-it-py[linkify]>=4,<5
 psutil>=5.9
 PyYAML>=6,<7
+# Free client-side web search for Anthropic through the LiteLLM Bedrock route.
+ddgs>=9.14.4,<10

@@ -3,7 +3,7 @@
 Under ``budget_cap: auto`` the derived values override the configured ones and each
 override is printed when the config loads; under hard and soft caps the config still
 calls it to cost Caesar's chosen depth and derive its reserve and timeout. Caesar's plan comes from
-:mod:`crest.caesar_budget`; the hosted agents that loop over research rounds
+:mod:`crest.providers.caesar_budget`; the hosted agents that loop over research rounds
 (OpenAI, Anthropic) get a budget floor and a round cap from their measured
 per-round costs; Google's managed agent exposes no depth control, so it only
 gets an expectation.
@@ -17,17 +17,18 @@ import argparse
 import json
 import math
 
-from .caesar_budget import plan as caesar_plan
+from .providers.caesar_budget import plan as caesar_plan
 
 # Round r of a hosted agent costs ROUND_USD[0] + ROUND_USD[1] * (r - 1): every round re-reads the
 # earlier rounds' research, so rounds grow. Measured in the 2026-11-02 one-question pilots.
 HOSTED = {
     "openai": {"round_usd": (.23, .26), "measured_run": "2026-11-02 pilot: rounds $0.23, $0.41, $0.67, $1.00, then a $0.81 landing round; $3.13 total"},
-    "anthropic": {"round_usd": (.12, .02), "measured_run": "2026-11-02 pilot: 13 rounds of $0.09-0.39; $3.09 total"},
+    "anthropic": {"round_usd": (.12, .02), "measured_run": "Legacy Sonnet-only 2026-11-02 pilot (not Opus/LiteLLM calibration): 13 rounds of $0.09-0.39; $3.09 total"},
 }
 GEMINI_EXPECTED_USD = 1.81  # 2026-11-02 pilot at 600 words; $3.71 at 5,000 words in the 2026-10-26 run
 FLOOR_SHARE = .75  # Aim at three quarters of the ceiling: $3 inside $4, the middle of the $2-4 range.
-AGENTS = ("caesar", "openai", "gemini", "anthropic")
+GPT_RESEARCH_TARGET_SHARE = .80  # Admission target includes a separately reserved final write; not measured spend.
+AGENTS = ("caesar", "openai", "gemini", "anthropic", "gpt_researcher")
 
 
 def rounds_cost(agent: str, rounds: int) -> float:
@@ -42,6 +43,12 @@ def plan(agent: str, budget_usd: float, settings: dict | None = None) -> dict:
         raise ValueError("budget_usd must be positive and finite")
     if agent == "caesar":
         return caesar_plan(float(budget_usd), settings=settings)
+    if agent == "gpt_researcher":
+        if budget_usd > 4:
+            raise ValueError("GPT Researcher budget_usd must not exceed 4")
+        return {"settings": {"budget_target_usd": round(budget_usd * GPT_RESEARCH_TARGET_SHARE, 2)},
+                "estimate": {"budget_usd": budget_usd, "expected_usd": None,
+                             "note": "Request reservations enforce the configured ceiling; run a pilot to measure spend. No measured depth-price curve is assumed."}}
     if agent in HOSTED:
         floor = round(budget_usd * FLOOR_SHARE, 2)
         rounds = 1
@@ -62,7 +69,7 @@ def plan(agent: str, budget_usd: float, settings: dict | None = None) -> dict:
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Print the settings that keep each research agent under a per-answer budget.")
     parser.add_argument("budget_usd", type=float)
-    parser.add_argument("--agent", choices=AGENTS, help="One agent instead of all four")
+    parser.add_argument("--agent", choices=AGENTS, help="One agent instead of all configured agents")
     args = parser.parse_args(argv)
     agents = [args.agent] if args.agent else list(AGENTS)
     print(json.dumps({agent: plan(agent, args.budget_usd) for agent in agents}, indent=2))

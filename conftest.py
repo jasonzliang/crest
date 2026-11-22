@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-CREDENTIALS = ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY")
+CREDENTIALS = ("LITELLM_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY")
 ROOT = Path(__file__).resolve().parent
 
 
@@ -24,6 +24,8 @@ def write_master_config(tmp_path):
         for key in ("questions", "rubric", "cache_dir", "output_dir"):
             source[key] = str(ROOT / "crest/configs" / source[key])
         source["research"]["caesar"]["rome_path"] = str(ROOT / "crest/configs" / source["research"]["caesar"]["rome_path"])
+        for key in ('gpt_researcher_path', 'python_executable'):
+            source['research']['gpt_researcher'][key] = str(ROOT / 'crest/configs' / source['research']['gpt_researcher'][key])
         for dotted, value in overrides.items():
             target = source
             *parents, last = dotted.split(".")
