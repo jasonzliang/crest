@@ -66,7 +66,7 @@ DEFAULTS = {
             'recovery_from': None, 'budget_history_from': None,
             'model': 'gpt-6.1-sol', 'exploration_model': 'gpt-6-luna',
             'kb_model': 'gpt-6-luna', 'budget_usd': 4.0,
-            'reasoning_effort': 'medium', 'synthesis_reasoning_effort': 'xhigh',
+            'reasoning_effort': 'medium', 'synthesis_reasoning_effort': 'high',
             'exploration_reasoning_effort': 'low', 'kb_reasoning_effort': 'low',
             # Chosen depth; with budget_cap auto crest.budget overrides them from budget_usd.
             'max_iterations': 300, 'synthesis_drafts': 3, 'synthesis_iterations': 20,
@@ -84,7 +84,7 @@ DEFAULTS = {
         'openai': {
             'budget_cap': 'soft',  # Dollar threshold is advisory; explicit hard/auto modes remain available.
             'use_research_prompt': True, 'answer_word_limit': None,
-            'model': 'gpt-6.1-sol', 'reasoning_effort': 'xhigh', 'search_context_size': 'high',
+            'model': 'gpt-6.1-sol', 'reasoning_effort': 'high', 'search_context_size': 'high',
             'max_output_tokens': 100000, 'max_tool_calls': 150,
             'budget_usd': 4.0, 'budget_floor_usd': 3.0, 'max_research_rounds': 6, 'continuation_prompt': None,
             'timeout_seconds': 3600, 'poll_interval_seconds': 5,
@@ -101,7 +101,7 @@ DEFAULTS = {
         'anthropic': {
             'budget_cap': 'soft',  # Dollar threshold is advisory; explicit hard/auto modes remain available.
             'use_research_prompt': True, 'answer_word_limit': None,
-            'model': 'claude-sonnet-5-5', 'effort': 'xhigh',
+            'model': 'claude-sonnet-5-5', 'effort': 'high',
             'api_base': 'https://litellm.evolution.ml', 'api_key_env': 'LITELLM_API_KEY',
             'model_pricing': copy.deepcopy(SONNET_GATEWAY_PRICING), 'tool_mode': 'client',
             'max_output_tokens': 64000, 'max_web_searches': 30, 'max_web_fetches': 10,

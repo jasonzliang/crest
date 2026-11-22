@@ -32,7 +32,7 @@ PROTOCOL_VERSION = 'gpt-researcher-worker-v1'
 PINNED_COMMIT = 'ddd4db36208d9c8e49f3b2436efda97baecb5433'
 MODEL = 'gpt-6.1-sol'
 DEFAULTS = {
-    'model': MODEL, 'reasoning_effort': 'xhigh', 'answer_word_limit': None,
+    'model': MODEL, 'reasoning_effort': 'high', 'answer_word_limit': None,
     'budget_usd': 4., 'budget_target_usd': 3.4, 'budget_cap': 'hard',
     'synthesis_reserve_usd': .5, 'deep_research_breadth': 4,
     'deep_research_depth': 3, 'deep_research_concurrency': 2,

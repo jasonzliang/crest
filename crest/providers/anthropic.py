@@ -111,7 +111,7 @@ def _payload(messages, settings, is_judge):
         "model": settings.get("model", JUDGE_MODEL if is_judge else RESEARCH_MODEL),
         "max_tokens": settings.get("max_output_tokens", 32768 if is_judge else 64000),
         "messages": messages, "stream": True,
-        "output_config": {"effort": settings.get("effort", "high" if is_judge else "xhigh")},
+        "output_config": {"effort": settings.get("effort", "high")},
     }
     if is_judge:
         payload["output_config"]["format"] = {"type": "json_schema", "schema": JUDGE_SCHEMA}

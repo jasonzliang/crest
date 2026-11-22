@@ -60,13 +60,13 @@ research:
     rome_path: ../../../rome
     model: gpt-6.1-sol
     reasoning_effort: medium
-    synthesis_reasoning_effort: xhigh  # Draft/merge reasoning only; main research remains medium.
+    synthesis_reasoning_effort: high  # Draft/merge reasoning only; main research remains medium.
     exploration_model: gpt-6-luna
     exploration_reasoning_effort: low
     kb_model: gpt-6-luna
     kb_reasoning_effort: low
     # Per-request output limits, independent of answer word count.
-    max_completion_tokens: 32768  # Per synthesis request, including xhigh reasoning.
+    max_completion_tokens: 32768  # Per synthesis request, including reasoning.
     query_max_completion_tokens: 6000  # Output cap for synthesis Q&A requests.
     # Budget enforcement and exploration/synthesis depth.
     budget_usd: 4.0
@@ -91,14 +91,14 @@ research:
     adapt_role: true
     synthesis_merge_artifacts: true
     # Call timeout and adaptive concurrency.
-    call_timeout_seconds: 1200  # Twenty minutes for an xhigh synthesis request.
+    call_timeout_seconds: 1200  # Twenty minutes for a synthesis request.
     initial_concurrency: 4
     concurrency: 8
   # Hosted research rounds; usage may only become available after completion.
   openai:
     use_research_prompt: true
     model: gpt-6.1-sol
-    reasoning_effort: xhigh
+    reasoning_effort: high
     search_context_size: high  # Search context requested per call.
     budget_usd: 4.0  # Warning threshold; soft does not cancel hosted work at this amount.
     budget_cap: soft
@@ -127,7 +127,7 @@ research:
     # USD per million tokens; web_search is per call and is zeroed in client mode.
     model_pricing:
       claude-sonnet-5-5: {input: 2.2, cached_input: 0.11, cache_write_5m: 2.75, output: 11.0, web_search: 0.0}
-    effort: xhigh
+    effort: high
     budget_usd: 4.5  # Warning threshold, not an enforced dollar ceiling.
     budget_cap: soft  # No dollar-based refusal or token shrinking; usage is still recorded.
     budget_floor_usd: 3.0  # Continuation target, not a minimum spend.
@@ -148,7 +148,7 @@ research:
     gpt_researcher_path: ../../../gpt-researcher
     python_executable: ../../../gpt-researcher/.venv/bin/python  # Keep the venv executable path for environment isolation.
     model: gpt-6.1-sol  # Shared FAST, SMART, and STRATEGIC model.
-    reasoning_effort: xhigh
+    reasoning_effort: high
     budget_cap: soft  # Meter requests/retries; dollar overruns warn rather than block synthesis.
     budget_usd: 4.0
     budget_target_usd: 3.4  # Handoff target; minus the $0.50 allowance leaves ~$2.90 for research, not guaranteed spend.

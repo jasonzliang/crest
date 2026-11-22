@@ -43,11 +43,11 @@ Review the single master [configuration](crest/configs/crest.yaml) before runnin
 
 | Research provider | Model / effort | Research tools |
 | --- | --- | --- |
-| `caesar` | Sol (`gpt-6.1-sol`), **medium** main research, **xhigh** synthesis; Luna exploration and KB helpers, low (unchanged) | Caesar/Rome exploration and synthesis |
-| `openai` | Sol (`gpt-6.1-sol`), **xhigh** (unchanged) | OpenAI hosted web search |
+| `caesar` | Sol (`gpt-6.1-sol`), **medium** main research, **high** synthesis; Luna exploration and KB helpers, low (unchanged) | Caesar/Rome exploration and synthesis |
+| `openai` | Sol (`gpt-6.1-sol`), **high** | OpenAI hosted web search |
 | `gemini` | Standard managed `deep-research-preview-04-2026` (unchanged) | Google-managed research; no exposed effort/depth control |
-| `anthropic` | Sonnet 5.5 (`claude-sonnet-5-5`), **xhigh**, through LiteLLM | Free source bootstrap, then client-side DDGS public web search and HTTP fetch |
-| `gpt_researcher` | Sol (`gpt-6.1-sol`), **xhigh** for every role: fast, smart, and strategic | DDGS public web search and HTTP fetch in an isolated worker |
+| `anthropic` | Sonnet 5.5 (`claude-sonnet-5-5`), **high**, through LiteLLM | Free source bootstrap, then client-side DDGS public web search and HTTP fetch |
+| `gpt_researcher` | Sol (`gpt-6.1-sol`), **high** for every role: fast, smart, and strategic | DDGS public web search and HTTP fetch in an isolated worker |
 
 All three judges use **high** reasoning/thinking/effort: **Opus 5.5** through the gateway, **Sol** through direct OpenAI, and **Gemini 4 Argon**. Judges do not use tools. See [Judge models](docs/judge-models.html) for request settings and prices.
 
@@ -66,9 +66,9 @@ python3.12 -m venv ../gpt-researcher/.venv
 ../gpt-researcher/.venv/bin/python -m pip freeze > ../gpt-researcher/.venv/requirements.lock
 ```
 
-The canonical CREST worker, [crest/providers/gpt_researcher_worker.py](crest/providers/gpt_researcher_worker.py), uses that checkout and isolated interpreter; no GPT Researcher web server is needed. Fast, smart, and strategic roles are configured for Sol/xhigh, with **no final-answer word cap** or hidden `TOTAL_WORDS` target. Keep CREST’s model, tool, and accounting settings rather than upstream defaults. The corrected input-fit profile passed full offline and independent review.
+The canonical CREST worker, [crest/providers/gpt_researcher_worker.py](crest/providers/gpt_researcher_worker.py), uses that checkout and isolated interpreter; no GPT Researcher web server is needed. Fast, smart, and strategic roles are configured for Sol/high, with **no final-answer word cap** or hidden `TOTAL_WORDS` target. Keep CREST’s model, tool, and accounting settings rather than upstream defaults. The corrected input-fit profile passed full offline and independent review.
 
-**GPT Researcher:** Sol/xhigh for all roles; 32,000 research and writer completion tokens; $3.40 planning target, $0.50 synthesis allowance and soft $4 warning. Answer concurrency starts at **4** and can grow to **8**, like Caesar; inner research concurrency stays **2** (breadth 4, depth 3). Call/total timeouts are 600/5,400 seconds. The 64,000 conservative input bound counts UTF-8 JSON bytes plus framing, not tokenizer usage; fitting applies only to branch learning evidence. No answer word cap or guaranteed spend.
+**GPT Researcher:** Sol/high for all roles; 32,000 research and writer completion tokens; $3.40 planning target, $0.50 synthesis allowance and soft $4 warning. Answer concurrency starts at **4** and can grow to **8**, like Caesar; inner research concurrency stays **2** (breadth 4, depth 3). Call/total timeouts are 600/5,400 seconds. The 64,000 conservative input bound counts UTF-8 JSON bytes plus framing, not tokenizer usage; fitting applies only to branch learning evidence. No answer word cap or guaranteed spend.
 
 ### All five providers in parallel
 
@@ -93,7 +93,7 @@ python -m crest run --config crest/configs/crest.yaml \
 Start with one provider and one question. Planning is local; generation makes paid model calls and live web requests. These are example commands; recorded pilot outcomes are listed below:
 
 ```bash
-# Sonnet/xhigh gateway/client-tool pilot.
+# Sonnet/high gateway/client-tool pilot.
 python -m crest plan --agents anthropic --limit 1
 python -m crest generate --agents anthropic --limit 1
 
@@ -116,7 +116,7 @@ Inspect each run’s saved answer, sources, word count, usage, request ledger wh
 
 GPT v3 returned an answer at $0.377987 and used 16,848 writer output tokens, demonstrating the larger output allowance. Its first research round stopped at the input-size request_bound guard, not the dollar threshold; it was not full-depth or near-$3 calibration.
 
-These are single-question usage-priced observations, not invoices or current-profile averages. Citation records are collected URLs, not independently fact-checked support. Soft thresholds do not prevent overruns or guarantee spending near $3; judging costs extra. Caesar’s recovery used a separate soft $2.70 advisory for new synthesis work and retained the original unresolved exposure.
+These are single-question usage-priced observations, not invoices or current-profile averages. The historical xhigh pilot costs do not calibrate current high-effort research. Citation records are collected URLs, not independently fact-checked support. Soft thresholds do not prevent overruns or guarantee spending near $3; judging costs extra. Caesar’s recovery used a separate soft $2.70 advisory for new synthesis work and retained the original unresolved exposure.
 
 Earlier failures and hard-policy pilots remain [historical context](docs/research-pipeline.html#pilot-history); saved comparison pages and receipts are unchanged.
 
@@ -147,7 +147,7 @@ Judging makes additional paid calls; analysis is local. Omit `--limit 1` for all
 | Anthropic Sonnet 5.5 | Soft $4.50 warning; $3 continuation floor | At most 14 research rounds and 50 client-tool continuations; configured 64,000-token request limit remains independent of the USD threshold |
 | GPT Researcher | Soft $4 warning; $3.40 planning target, $0.50 synthesis planning allowance | Target-driven research/writer handoff; ledger tracks charges and unresolved exposure, not a hard USD admission ceiling |
 
-**Caesar limits:** Sol/medium research, Sol/xhigh synthesis and Luna/low exploration/KB. Up to 300 exploration iterations; synthesis allows 32,768 tokens, with 1,200-second calls and 21,600 seconds overall. The $2.60 reserve is inactive in soft mode; hard-only pricing/admission checks do not apply. Unknown exposure is still recorded.
+**Caesar limits:** Sol/medium research, Sol/high synthesis and Luna/low exploration/KB. Up to 300 exploration iterations; synthesis allows 32,768 tokens, with 1,200-second calls and 21,600 seconds overall. The $2.60 reserve is inactive in soft mode; hard-only pricing/admission checks do not apply. Unknown exposure is still recorded.
 
 Soft budgets warn rather than stop spending. Provider-specific validation, finite work/token/time limits and accounting still apply. OpenAI/Anthropic use $3 continuation floors; GPT uses its planning target and allowance. None forces minimum spending or guarantees a final cost.
 
@@ -163,7 +163,7 @@ The verified active-route assumptions are USD per million tokens:
 
 These are route-specific estimates, not account invoices; use the gateway tariff rather than Anthropic's direct tariff for gateway requests. Cached reads and writes replace ordinary input tokens, and reasoning/thinking is billed once. Long-context pricing and hosted-tool charges may change a request's total; [Judge models](docs/judge-models.html#cost) records the estimator assumptions. Client DDGS/HTTP tools add no API fee, but their content consumes billed model tokens.
 
-For historical context, the published **2026-10-26** run measured **$1.60 (Caesar), $0.10 (OpenAI), and $3.71 (Google)** per answer. The older **2026-11-02** standard Google pilot at 600 words was below the $2–4 range. Neither those measurements nor earlier pilots establish spending for the current Sonnet/xhigh or GPT Researcher/xhigh profiles.
+For historical context, the published **2026-10-26** run measured **$1.60 (Caesar), $0.10 (OpenAI), and $3.71 (Google)** per answer. The older **2026-11-02** standard Google pilot at 600 words was below the $2–4 range. Neither those measurements nor earlier pilots establish spending for the current Sonnet/high or GPT Researcher/high profiles.
 
 **Google pricing assumptions / sensitivity:** Both Google figures use the same conditional estimator: high-context rates, tool-use tokens counted as extra input, and full-price searches. The historical 600-word v2 profile totals $146.0447 across 50 answers, or $2.9209 per answer. Applied to the new uncapped q1, that pricing scenario gives $6.9990348. Neither is a verified bill; the q1 figure is not a confirmed overrun or current mean. See the [historical v2 comparison](docs/deep-research-comparison-v2.html#resources).
 

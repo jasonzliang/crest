@@ -411,7 +411,7 @@ PROXY_RATES = {"input": 4.4, "cached_input": .22, "cache_write_5m": 5.5, "output
 
 
 @pytest.mark.parametrize("judge", [False, True])
-def test_default_native_research_is_sonnet_xhigh_and_judge_stays_opus_high(tmp_path, judge):
+def test_default_native_research_is_sonnet_high_and_judge_stays_opus_high(tmp_path, judge):
     seen = []
     def handler(request):
         assert str(request.url) == "https://api.anthropic.com/v1/messages"
@@ -419,7 +419,7 @@ def test_default_native_research_is_sonnet_xhigh_and_judge_stays_opus_high(tmp_p
         return stream_response(turn(model=OPUS if judge else SONNET, searches=0 if judge else 2, tool=not judge))
     result = invoke(handler, FakeJob(tmp_path), judge=judge)
     assert seen[0]["model"] == (OPUS if judge else SONNET)
-    assert seen[0]["output_config"]["effort"] == ("high" if judge else "xhigh")
+    assert seen[0]["output_config"]["effort"] == "high"
     assert "thinking" not in seen[0]
     assert ("tools" in seen[0]) is not judge
     assert result["cost_usd"] == pytest.approx(.0111 if judge else .02555)
@@ -932,7 +932,7 @@ def test_bootstrap_precedes_first_paid_post_and_supplies_real_evidence(tmp_path,
         assert "Source says: inspect the alphabet" in evidence
         assert all(message["role"] == "user" for message in payload["messages"])
         assert "tool_choice" not in payload and "thinking" not in payload and "system" not in payload
-        assert payload["output_config"]["effort"] == "xhigh" and payload["max_tokens"] == 64000
+        assert payload["output_config"]["effort"] == "high" and payload["max_tokens"] == 64000
         assert job.state["client_tool_results"][0]["origin"] == "bootstrap"
         assert "tool_use_id" not in job.state["client_tool_results"][0]
         return stream_response(turn("Evidence-grounded answer", model=SONNET, searches=0, tool=False, citation=False))
@@ -1312,7 +1312,7 @@ def test_sonnet_xhigh_client_budget_signed_history_and_replay(tmp_path, monkeypa
         if len(requests) == 2:
             assert payload["messages"][1]["content"][0] == {"type": "thinking", "thinking": "Find supporting evidence", "signature": "signed-block"}
         return stream_response(client_turn(model=SONNET) if len(requests) == 1 else turn("Sonnet answer", model=SONNET, searches=0, tool=False, citation=False))
-    settings = {"tool_mode": "client", "budget_cap": "hard", "budget_usd": 4}
+    settings = {"tool_mode": "client", "budget_cap": "hard", "budget_usd": 4, "effort": "xhigh"}
     if gateway:
         settings.update(api_base="https://proxy.example", model_pricing={SONNET: SONNET_PROXY_RATES})
     result = invoke(handler, job, settings)

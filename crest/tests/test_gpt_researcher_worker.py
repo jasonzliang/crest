@@ -40,11 +40,11 @@ def audit(tmp_path, **settings):
     return worker().UsageAudit(tmp_path / 'usage.json', settings)
 
 
-def test_all_model_roles_xhigh_and_free_tools_are_explicit():
+def test_all_model_roles_high_and_free_tools_are_explicit():
     w = worker()
     config = w.build_config({})
     assert all(config[k] == 'openai:gpt-6.1-sol' for k in ('FAST_LLM', 'SMART_LLM', 'STRATEGIC_LLM'))
-    assert config['REASONING_EFFORT'] == config['LLM_KWARGS']['reasoning_effort'] == 'xhigh'
+    assert config['REASONING_EFFORT'] == config['LLM_KWARGS']['reasoning_effort'] == 'high'
     assert config['RETRIEVER'] == 'duckduckgo'
     assert config['CONTEXT_FILTER'] == 'keyword'
     assert 'TOTAL_WORDS' not in config
@@ -232,7 +232,7 @@ def test_actual_sdk_and_langchain_stream_override_use_complete_usage(tmp_path):
         sent.append(body)
         assert request.url.path == '/v1/chat/completions'
         assert body['model'] == w.MODEL
-        assert body['reasoning_effort'] == 'xhigh'
+        assert body['reasoning_effort'] == 'high'
         assert not body.get('stream')
         return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
             'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
@@ -1240,7 +1240,7 @@ def test_writer_manifest_and_visible_evidence_select_same_captures(tmp_path, mod
     assert result['citations'][0]['url'] == sources[98 if mode == 'newest-url-too-large' else 99]['url']
 
 
-@pytest.mark.parametrize(('settings', 'effort'), [({}, 'xhigh'), ({'reasoning_effort': 'high'}, 'high'),
+@pytest.mark.parametrize(('settings', 'effort'), [({}, 'high'), ({'reasoning_effort': 'high'}, 'high'),
                                                    ({'reasoning_effort': 'xhigh'}, 'xhigh')])
 def test_selected_effort_controls_all_roles_and_audit_not_upstream_default(tmp_path, settings, effort):
     w, a = worker(), audit(tmp_path, **settings)
@@ -1399,7 +1399,7 @@ def test_real_writer_slow_response_and_thinking_only_fail_closed(tmp_path, monke
     async def handler(request):
         data = json.loads(request.content)
         sent.append(data)
-        assert data['reasoning_effort'] == 'xhigh' and data['max_completion_tokens'] == 16000
+        assert data['reasoning_effort'] == 'high' and data['max_completion_tokens'] == 16000
         await asyncio.sleep(.22)  # Scaled beyond the old .18 deadline, inside .6.
         thinking_only = outcome == 'thinking-only'
         outputs = 16000 if thinking_only else 1000
@@ -1616,7 +1616,7 @@ def test_real_soft_upstream_overrun_preserves_settlement_and_terminal_circuit(tm
     monkeypatch.setattr(asyncio, 'sleep', no_sleep)
     def handler(request):
         data = json.loads(request.content)
-        assert data['reasoning_effort'] == 'xhigh'
+        assert data['reasoning_effort'] == 'high'
         sent.append(data)
         if outcome == 'timeout': raise httpx.ReadTimeout('offline timeout', request=request)
         return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
@@ -1759,7 +1759,7 @@ def test_real_pinned_learning_prompt_fits_only_evidence_and_preserves_sources(tm
     def handler(request):
         data = json.loads(request.content)
         sent.append(data)
-        assert data['model'] == w.MODEL and data['reasoning_effort'] == 'xhigh'
+        assert data['model'] == w.MODEL and data['reasoning_effort'] == 'high'
         assert data['max_completion_tokens'] == 32000
         assert data['messages'][0] == pinned[0]
         assert data['messages'][1]['content'].startswith(pinned[1]['content'])
@@ -1859,7 +1859,7 @@ def test_real_deep_recursion_and_outer_followups_survive_large_branch_context(tm
         data = json.loads(request.content)
         sent.append(data)
         assert w._input_bound(data['messages']) <= 64000
-        assert data['max_completion_tokens'] == 32000 and data['reasoning_effort'] == 'xhigh'
+        assert data['max_completion_tokens'] == 32000 and data['reasoning_effort'] == 'high'
         system = data['messages'][0]['content']
         user = data['messages'][-1]['content']
         if 'analyze the original query and search results' in system:

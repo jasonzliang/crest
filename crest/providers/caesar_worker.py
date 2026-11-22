@@ -97,7 +97,7 @@ def build_config(prompt: str, settings: dict, output_dir: Path, worker_id: str) 
         "ArtifactSynthesizer": {
             "synthesis_classic_mode": False, "synthesis_drafts": settings.get("synthesis_drafts", 3),
             "synthesis_iterations": settings.get("synthesis_iterations", 15),
-            "synthesis_reasoning_effort": settings.get("synthesis_reasoning_effort", "xhigh"),
+            "synthesis_reasoning_effort": settings.get("synthesis_reasoning_effort", "high"),
             "synthesis_top_k": settings.get("synthesis_top_k", 50),
             "synthesis_top_n": settings.get("synthesis_top_n", 10),
             # CREST's answer_word_limit becomes Rome's word target for each draft and the merge.
@@ -647,7 +647,7 @@ def adaptive_synthesis_budget(agent, settings, audit):
     original_merge = getattr(synthesizer, "_merge_artifacts", None)
     # Match build_config's effective worker defaults without changing the planner's
     # historical empty-settings behavior or mutating the caller's frozen settings.
-    hold_settings = {"synthesis_reasoning_effort": "xhigh",
+    hold_settings = {"synthesis_reasoning_effort": "high",
                      "max_completion_tokens": DEFAULT_COMPLETION_TOKENS, **settings}
     xhigh = hold_settings["synthesis_reasoning_effort"] == "xhigh"
     records = {"requested_qa_rounds_per_draft": settings.get("synthesis_iterations", 15),

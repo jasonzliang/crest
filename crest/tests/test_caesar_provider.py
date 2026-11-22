@@ -1596,7 +1596,7 @@ def test_worker_overall_timeout_has_generous_default_and_preserves_override(tmp_
 
 
 @pytest.mark.parametrize("effort,expected_hold,expected_allowance", [
-    (None, 2.4, .2), ("xhigh", 2.4, .2), ("medium", 2.1, .3), ("high", 2.1, .3)])
+    (None, 2.1, .3), ("xhigh", 2.4, .2), ("medium", 2.1, .3), ("high", 2.1, .3)])
 def test_xhigh_synthesis_hold_is_unclamped_and_legacy_hold_stays_clamped(
         tmp_path, monkeypatch, effort, expected_hold, expected_allowance):
     audit = worker.UsageAudit(4, tmp_path / "usage.json")
@@ -1620,7 +1620,7 @@ def test_xhigh_synthesis_hold_is_unclamped_and_legacy_hold_stays_clamped(
     row = report["drafts"][0]
     assert row["remaining_write_allowance_usd"] == pytest.approx(expected_hold)
     assert row["qa_allowance_usd"] == pytest.approx(expected_allowance)
-    assert held[0][0]["synthesis_reasoning_effort"] == (effort or "xhigh")
+    assert held[0][0]["synthesis_reasoning_effort"] == (effort or "high")
     assert held[0][0]["max_completion_tokens"] == 32768
     assert held[0][1:] == (3, True)
     assert settings == supplied
@@ -1637,7 +1637,7 @@ def test_xhigh_synthesis_skips_qa_when_only_write_headroom_remains(tmp_path, mon
         synthesis_drafts, synthesis_iterations, synthesis_merge_artifacts = 3, 20, True
         def _generate_qa_pairs(self): pytest.fail("Q&A must not run without funds outside the write hold")
     synth = Synthesizer()
-    with worker.adaptive_synthesis_budget(SimpleNamespace(synthesizer=synth), {}, audit) as report:
+    with worker.adaptive_synthesis_budget(SimpleNamespace(synthesizer=synth), {"synthesis_reasoning_effort": "xhigh"}, audit) as report:
         assert synth._generate_qa_pairs() == []
     row = report["drafts"][0]
     assert row["qa_allowance_usd"] == 0 and row["remaining_write_allowance_usd"] == hold
@@ -1689,7 +1689,7 @@ def test_qa_admission_allows_fitting_reservation_and_explicit_soft_mode(tmp_path
     assert audit.snapshot()["cost_usd"] == pytest.approx(.0004)
 
 
-def test_worker_implicit_xhigh_uses_full_hold_from_budget_helper(tmp_path):
+def test_worker_implicit_high_uses_non_xhigh_hold_from_budget_helper(tmp_path):
     audit = worker.UsageAudit(4, tmp_path / "usage.json")
     audit.events.append({"status": "completed", "model": worker.SOL, "cost_usd": 1.4})
     class Synthesizer:
@@ -1698,7 +1698,7 @@ def test_worker_implicit_xhigh_uses_full_hold_from_budget_helper(tmp_path):
     synth = Synthesizer()
     with worker.adaptive_synthesis_budget(SimpleNamespace(synthesizer=synth), {}, audit) as report:
         synth._generate_qa_pairs()
-    # Four writes at $0.40268 and two capped refinements at $0.135 each.
+    # High uses the existing non-xhigh write/refinement allowance, not the xhigh policy.
     row = report["drafts"][0]
-    assert row["remaining_write_allowance_usd"] == pytest.approx(1.88072)
-    assert row["qa_allowance_usd"] == pytest.approx((2.6 - 1.88072) / 3)
+    assert row["remaining_write_allowance_usd"] == pytest.approx(.74268)
+    assert row["qa_allowance_usd"] == pytest.approx((2.6 - .74268) / 3)
