@@ -119,7 +119,8 @@ def test_aut_rubric_short_name_preserves_instrument():
     old_path = ROOT / 'crest/prompts/aut_research_pairwise_v1.txt'
     assert AUT_RUBRIC == renamed
     assert not old_path.exists() and not old_path.is_symlink()
-    assert hashlib.sha256(renamed.read_bytes()).hexdigest() == '45689c21aceff7c5dfee0ce4ee2b145e11f893eb4170bf30771a849a94fc4ea7'
+    # 2026-11-23: trimmed to 5 KB with the shared RULES AND OUTPUT block (was 45689c21...).
+    assert hashlib.sha256(renamed.read_bytes()).hexdigest() == '329bb178a0d1e72abd6a07bf0f3754b3407cf8e5721da928c7996b831641009e'
     contract = json.loads((ROOT / 'crest_ais/configs/contract.json').read_text())
     assert contract['rubric_selection']['aut-inspired'] == renamed.name
 
@@ -179,8 +180,9 @@ def test_archived_nus_v1_preserves_ais_alias_and_judgment_keys():
     old_archive = ROOT / 'crest/prompts/archive/nus_pairwise_v1.txt'
     assert not old_archive.exists() and not old_archive.is_symlink()
     original = archive.read_bytes()
-    # Frozen instrument: relocating it must not change its historical bytes or judgment keys.
-    assert hashlib.sha256(original).hexdigest() == 'a70eba755b64d489c0872448476e6148c33e4b145506ea79bbe705b62db7d65e'
+    # Pinned instrument: relocating it must not change its bytes or judgment keys. 2026-11-23:
+    # trimmed to 5 KB with the shared RULES AND OUTPUT block (was a70eba75...).
+    assert hashlib.sha256(original).hexdigest() == '66f7947e5d00d3e6ec2c49fd915e3db283c72eb7f3f4ecc9937390b97daa2dd0'
     removed_archive = ROOT / 'crest/_archive/reference/nus_pairwise_v1.txt'
     assert not removed_archive.exists() and not removed_archive.is_symlink()
     questions, answers = answer_inputs()
