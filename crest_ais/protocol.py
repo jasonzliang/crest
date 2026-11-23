@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime, timezone
+from functools import lru_cache
 import hashlib
 import json
 from itertools import combinations
@@ -14,6 +15,10 @@ from crest import judging as shared_judging
 from crest.presentation import PRESENTATION_VERSION, present_answer
 from crest.rubrics import AUT_KIND, judging_protocol, protocol_rubric_kind, rubric_kind
 from .catalog import within_root
+
+# present_answer is a pure function of the text; each manuscript appears in many
+# pairs and both orders, so plans reuse one presentation per distinct text.
+_present_answer = lru_cache(maxsize=256)(present_answer)
 
 PROTOCOL_VERSION = "crest-ais-overall-v3"
 JUDGING_VERSION = "nus-overall-pairwise-v3"
@@ -250,7 +255,7 @@ def _frozen_pair_jobs(papers, texts, judges, rubric, question, *, protocol_versi
             raise ValueError('Legacy manuscript protocol cannot use an AUT-inspired rubric')
         if not legacy and protocol_version != PROTOCOL_VERSION:
             raise ValueError("Unsupported frozen manuscript protocol")
-        presented = answers if legacy else [present_answer(answer) for answer in answers]
+        presented = answers if legacy else [_present_answer(answer) for answer in answers]
         if not legacy and presented[0] == presented[1]:
             raise ValueError(f"Identical judge presentations cannot be judged: {paper_ids}")
         prompt = (_legacy_build_prompt(question, *answers, rubric) if legacy else

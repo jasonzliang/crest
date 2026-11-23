@@ -281,8 +281,9 @@ class Pipeline:
         answers = []
         for task in self.generation_jobs():
             state = self.cache.job(task['key']).state
-            result = state.get('result', {})
-            if state.get('status') == 'completed' and isinstance(result.get('text'), str) and result['text'].strip():
+            result = state.get('result')
+            if (state.get('status') == 'completed' and isinstance(result, dict)
+                    and isinstance(result.get('text'), str) and result['text'].strip()):
                 answers.append({k: task[k] for k in ('key', 'question_id', 'agent')} |
                                {'result': result, 'timing': _job_timing(state)})
         return answers

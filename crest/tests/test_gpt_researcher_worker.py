@@ -3,10 +3,27 @@ import asyncio
 import importlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
+import time
 from types import SimpleNamespace
 
+import httpx
 import pytest
+
+# Tests marked @gpt_runtime drive the pinned upstream package, which is installed
+# only in the worker venv. The main interpreter skips them and runs them all at
+# once through test_runtime_tests_pass_under_worker_venv (end of this file).
+RUNTIME_AVAILABLE = all(importlib.util.find_spec(name) for name in ('gpt_researcher', 'langchain_openai'))
+RUNTIME_TESTS = []
+
+
+def gpt_runtime(test):
+    RUNTIME_TESTS.append(test.__name__)
+    return pytest.mark.skipif(not RUNTIME_AVAILABLE, reason='needs gpt_researcher and langchain_openai '
+                              '(run under the worker venv by the bridge test)')(test)
 
 
 @pytest.fixture(autouse=True)
@@ -19,9 +36,99 @@ def _worker_tests_no_network(monkeypatch):
     monkeypatch.setattr(socket, 'getaddrinfo', denied)
 
 
+@pytest.fixture(autouse=True)
+def _no_fsync(monkeypatch):
+    # Durability is not under test; atomic_json's per-write fsyncs dominated the
+    # runtime tests (each ledger update persists). Write/replace order is unchanged.
+    monkeypatch.setattr(os, 'fsync', lambda fd: None)
+
+
+@pytest.fixture(autouse=True)
+def _cached_entry_points(monkeypatch):
+    # Every upstream Config scans installed plugin metadata (~40 ms); it cannot change inside one test.
+    import functools
+    import importlib.metadata
+    monkeypatch.setattr(importlib.metadata, 'entry_points', functools.cache(importlib.metadata.entry_points))
+
+
+@pytest.fixture
+def isolated_process_state(monkeypatch):
+    """worker.run() is a one-shot process entry: it prepends the GPT Researcher checkout to sys.path and
+    rewrites os.environ. Restore both so later tests in this xdist worker see the original interpreter."""
+    monkeypatch.setattr(sys, 'path', list(sys.path))
+    saved = dict(os.environ)
+    yield
+    os.environ.clear()
+    os.environ.update(saved)
+
+
+@pytest.fixture
+def instant_backoff(monkeypatch):
+    """Record the worker's fixed 1 s rate-limit backoff instead of waiting for it."""
+    delays, real_sleep = [], asyncio.sleep
+    async def sleep(delay, *args, **kwargs):
+        if delay == 1.:
+            delays.append(delay)
+            delay = 0
+        return await real_sleep(delay, *args, **kwargs)
+    monkeypatch.setattr(asyncio, 'sleep', sleep)
+    monkeypatch.setattr(time, 'sleep', delays.append)
+    return delays
+
+
 def worker():
     assert importlib.util.find_spec('crest.providers.gpt_researcher_worker'), 'worker not implemented'
     return importlib.import_module('crest.providers.gpt_researcher_worker')
+
+
+MODEL = 'gpt-6.1-sol'
+EVIDENCE_URL = 'https://example.test/evidence'
+
+
+def evidence():
+    return [{'context': f'Evidence {EVIDENCE_URL}', 'sources': [{'url': EVIDENCE_URL}]}]
+
+
+def chat_response(content, *, completion_tokens=20, finish_reason='stop', reasoning_tokens=None,
+                  missing_usage=False):
+    """An in-memory OpenAI chat completion; 100 prompt tokens unless usage is missing."""
+    usage = {'prompt_tokens': 100, 'completion_tokens': completion_tokens, 'total_tokens': 100 + completion_tokens}
+    if reasoning_tokens is not None:
+        usage['completion_tokens_details'] = {'reasoning_tokens': reasoning_tokens}
+    return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion', 'created': 1, 'model': MODEL,
+        'choices': [{'index': 0, 'finish_reason': finish_reason, 'message': {'role': 'assistant', 'content': content}}],
+        'usage': None if missing_usage else usage})
+
+
+def offline_kwargs(client, **extra):
+    return {'api_key': 'offline-test-placeholder', 'http_async_client': client, 'use_responses_api': False, **extra}
+
+
+async def chat(client, content, max_tokens=8000):
+    """One real upstream create_chat_completion call through the in-memory client."""
+    from gpt_researcher.utils.llm import create_chat_completion
+    return await create_chat_completion(messages=[{'role': 'user', 'content': content}], model=MODEL,
+        llm_provider='openai', max_tokens=max_tokens, llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
+
+
+def route_providers(monkeypatch, client):
+    """Send every upstream GenericLLMProvider through the in-memory client."""
+    from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
+    original = GenericLLMProvider.from_provider.__func__
+    def factory(cls, *args, **kwargs):
+        kwargs.update(api_key='offline-test-placeholder', http_async_client=client)
+        return original(cls, *args, **kwargs)
+    monkeypatch.setattr(GenericLLMProvider, 'from_provider', classmethod(factory))
+
+
+def learning_skill(client):
+    """A pinned DeepResearchSkill whose STRATEGIC calls use the in-memory client."""
+    import gpt_researcher.skills.deep_research as deep
+    skill = object.__new__(deep.DeepResearchSkill)
+    skill.researcher = SimpleNamespace(cfg=SimpleNamespace(strategic_llm_provider='openai',
+        strategic_llm_model=MODEL, strategic_token_limit=32000, llm_kwargs=offline_kwargs(client)),
+        add_costs=lambda value: None)
+    return skill
 
 
 def options(**changes):
@@ -38,19 +145,6 @@ def response(**changes):
 
 def audit(tmp_path, **settings):
     return worker().UsageAudit(tmp_path / 'usage.json', settings)
-
-
-def test_all_model_roles_high_and_free_tools_are_explicit():
-    w = worker()
-    config = w.build_config({})
-    assert all(config[k] == 'openai:gpt-6.1-sol' for k in ('FAST_LLM', 'SMART_LLM', 'STRATEGIC_LLM'))
-    assert config['REASONING_EFFORT'] == config['LLM_KWARGS']['reasoning_effort'] == 'high'
-    assert config['RETRIEVER'] == 'duckduckgo'
-    assert config['CONTEXT_FILTER'] == 'keyword'
-    assert 'TOTAL_WORDS' not in config
-    assert config['LLM_KWARGS']['max_retries'] == 0
-    assert config['IMAGE_GENERATION_ENABLED'] is False
-    assert config['MCP_STRATEGY'] == 'disabled'
 
 
 @pytest.mark.parametrize('settings', [
@@ -117,7 +211,8 @@ def test_confirmed_rejection_releases_reservation(tmp_path):
 
 
 @pytest.mark.parametrize('usage', [None, {}, {'prompt_tokens': 100, 'completion_tokens': -1},
-    {'prompt_tokens': 100, 'completion_tokens': 2, 'prompt_tokens_details': {'cached_tokens': 101}}])
+    {'prompt_tokens': 100, 'completion_tokens': 2, 'prompt_tokens_details': {'cached_tokens': 101}},
+    {'prompt_tokens': 'invalid', 'completion_tokens': 20}])
 def test_missing_or_invalid_usage_never_becomes_zero(tmp_path, usage):
     a = audit(tmp_path)
     token = a.before(options())
@@ -126,6 +221,7 @@ def test_missing_or_invalid_usage_never_becomes_zero(tmp_path, usage):
     with pytest.raises(worker().SDKStopped):
         a.after(token, response=result)
     assert a.snapshot()['cost_usd'] is None
+    assert a.snapshot()['unknown_cost'] is True
     assert a.snapshot()['reserved_usd'] > 0
 
 
@@ -176,8 +272,7 @@ def test_sdk_hook_covers_sync_async_disables_internal_retries_and_stops_fallback
     assert a.snapshot()['cost_usd'] is None
 
 
-def test_one_explicit_retry_is_individually_metered(tmp_path):
-    w = worker()
+def test_one_explicit_retry_is_individually_metered(tmp_path, instant_backoff):
     a = audit(tmp_path, retry_attempts=1)
     class RateLimit(Exception):
         status_code = 429
@@ -193,14 +288,15 @@ def test_one_explicit_retry_is_individually_metered(tmp_path):
     with a.installed(SDK):
         client.request(object, options())
     assert client.calls == 2
+    assert instant_backoff == [1.]
     assert len(a.snapshot()['events']) == 2
     assert a.snapshot()['retry_calls'] == 1
 
 
-def test_result_requires_evidence_and_preserves_word_limit(tmp_path):
+def test_result_requires_text_and_sources_and_keeps_unknown_cost():
     w = worker()
-    for text, sources in [('answer', []), ('', [{'url': 'https://example.test'}]),
-                          ('word ' * 601, [{'url': 'https://example.test'}])]:
+    # Word limits and missing citations have their own tests below.
+    for text, sources in [('answer', []), ('', [{'url': 'https://example.test'}])]:
         with pytest.raises(ValueError):
             w.extract_result(text, sources, {}, {}, {})
     result = w.extract_result('Finding [evidence](https://example.test).', [{'url': 'https://example.test', 'title': 'Evidence'}],
@@ -220,10 +316,9 @@ def test_atomic_json_roundtrip_and_nonfinite_rejection(tmp_path):
     assert list(tmp_path.glob('*.tmp')) == []
 
 
+@gpt_runtime
 def test_actual_sdk_and_langchain_stream_override_use_complete_usage(tmp_path):
     """Real installed clients, but an in-memory transport: no network/inference."""
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     w = worker()
     a = audit(tmp_path)
     sent = []
@@ -234,10 +329,7 @@ def test_actual_sdk_and_langchain_stream_override_use_complete_usage(tmp_path):
         assert body['model'] == w.MODEL
         assert body['reasoning_effort'] == 'high'
         assert not body.get('stream')
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': 'Offline answer.'}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response('Offline answer.')
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             with w._runtime({}, a, []):
@@ -331,15 +423,6 @@ def test_worker_duplicate_claim_refuses_to_overwrite_existing_usage(tmp_path):
     assert json.loads((output / 'usage.json').read_text())['known_cost_usd'] == 2.5
 
 
-def test_invalid_usage_strings_remain_unknown_not_accounting_crash(tmp_path):
-    a = audit(tmp_path)
-    token = a.before(options())
-    with pytest.raises(worker().SDKStopped):
-        a.after(token, response=response(prompt_tokens='invalid'))
-    assert a.snapshot()['unknown_cost'] is True
-    assert a.snapshot()['reserved_usd'] > 0
-
-
 def test_accounting_write_failure_retains_reservation_and_stops_retry(tmp_path, monkeypatch):
     w = worker()
     a = audit(tmp_path)
@@ -353,11 +436,10 @@ def test_accounting_write_failure_retains_reservation_and_stops_retry(tmp_path, 
     assert a.snapshot()['cost_usd'] is None
 
 
+@gpt_runtime
 @pytest.mark.parametrize('outcome', ['length', 'empty', 'timeout', 'missing_usage'])
 def test_real_upstream_completion_terminal_failure_sends_at_most_one_request(tmp_path, monkeypatch, outcome):
     """Exercise SDK -> LangChain -> GenericLLMProvider -> upstream retry loop."""
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.utils.llm import create_chat_completion
     w = worker()
     a = audit(tmp_path, max_completion_tokens=8000)
@@ -368,13 +450,8 @@ def test_real_upstream_completion_terminal_failure_sends_at_most_one_request(tmp
         sent.append(json.loads(request.content))
         if outcome == 'timeout':
             raise httpx.ReadTimeout('offline timeout', request=request)
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0,
-                'finish_reason': 'length' if outcome == 'length' else 'stop',
-                'message': {'role': 'assistant', 'content': '' if outcome in ('length', 'empty') else 'Answer'}}],
-            'usage': None if outcome == 'missing_usage' else
-                {'prompt_tokens': 100, 'completion_tokens': 8000, 'total_tokens': 8100,
-                 'completion_tokens_details': {'reasoning_tokens': 8000}}})
+        return chat_response('' if outcome in ('length', 'empty') else 'Answer', completion_tokens=8000, reasoning_tokens=8000,
+            finish_reason='length' if outcome == 'length' else 'stop', missing_usage=outcome == 'missing_usage')
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             with w._runtime({}, a, []):
@@ -382,8 +459,7 @@ def test_real_upstream_completion_terminal_failure_sends_at_most_one_request(tmp
                     with pytest.raises(w.SDKStopped):
                         await create_chat_completion(messages=[{'role': 'user', 'content': 'Q'}],
                             model=w.MODEL, llm_provider='openai', max_tokens=8000,
-                            llm_kwargs={'api_key': 'offline-test-placeholder', 'http_async_client': client,
-                                        'use_responses_api': False, 'reasoning_effort': 'high'})
+                            llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
     asyncio.run(go())
     assert len(sent) == 1, 'terminal outcome must permanently prevent any further dispatch'
     assert a.snapshot()['terminal_failure']
@@ -394,9 +470,8 @@ def test_real_upstream_completion_terminal_failure_sends_at_most_one_request(tmp
         assert a.snapshot()['cost_usd'] == pytest.approx(.0802)
 
 
+@gpt_runtime
 def test_real_upstream_budget_stop_reaches_synthesis_with_retained_evidence(tmp_path, monkeypatch):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.utils.llm import create_chat_completion
     w = worker()
     a = audit(tmp_path)
@@ -411,17 +486,13 @@ def test_real_upstream_budget_stop_reaches_synthesis_with_retained_evidence(tmp_
     def handler(request):
         sent.append(json.loads(request.content))
         assert a.phase == 'synthesis', 'no research request fits the remaining research allowance'
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': 'Finding [source](https://example.test/real-source).'}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response('Finding [source](https://example.test/real-source).')
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             async def completion(text, tokens):
                 return await create_chat_completion(messages=[{'role': 'user', 'content': text}],
                     model=w.MODEL, llm_provider='openai', max_tokens=tokens,
-                    llm_kwargs={'api_key': 'offline-test-placeholder', 'http_async_client': client,
-                                'use_responses_api': False, 'reasoning_effort': 'high'})
+                    llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
             class Researcher:
                 def __init__(self, **kwargs): self.cfg = SimpleNamespace(llm_kwargs={}, smart_token_limit=8000)
                 async def conduct_research(self): return await completion('Research', 8000)
@@ -462,17 +533,48 @@ def test_synthesis_fits_fully_serialized_messages_not_raw_context_bytes(tmp_path
     assert result['text'] == 'Finding [data](https://example.test/data).'
 
 
-@pytest.mark.parametrize('text', [
-    'Unsupported answer with no citations.',
-    'Unsupported answer [1].',
-    'Claim [proof](https://fabricated.invalid/article).',
-    'Claim [proof](https://example.test/not-the-retrieved-page).',
-    'One [real](https://example.test/real-source), one [invented](https://fabricated.invalid/article).',
+REAL = 'https://example.test/real-source'
+A = 'https://example.test/a'
+
+
+@pytest.mark.parametrize(('text', 'retrieved', 'match'), [
+    # Missing or fabricated provenance.
+    *[(text, REAL, 'citat|retrieved|source') for text in (
+        'Unsupported answer with no citations.',
+        'Unsupported answer [1].',
+        'Claim [proof](https://fabricated.invalid/article).',
+        'Claim [proof](https://example.test/not-the-retrieved-page).',
+        'One [real](https://example.test/real-source), one [invented](https://fabricated.invalid/article).',
+    )],
+    # Markdown tokenization never hides fabricated neighbors.
+    *[(text, retrieved, 'not a retrieved source') for text, retrieved in (
+        ('Claim [A](https://example.test/a),[bad](https://fabricated.invalid/a).', A),
+        ('Claim **[A](https://example.test/a)**,https://fabricated.invalid/a', A),
+        ('Claim [A](https://example.test/a)[bad](https://example.test/invented).', A),
+        ('Claim [A](https://example.test/a)[bad](https://example.test/a?invented=1).', A),
+        ('Claim **[bad](https://fabricated.invalid/a)**[A](https://example.test/a).', A),
+        # Delimited terminal punctuation is part of the URL, so it cannot alias the shorter retrieved resource.
+        ('Claim [source](https://example.test/a!).', A),
+        ('Claim [source](https://example.test/a.).', A),
+        ('Claim [source](https://example.test/a?q=Wow!).', 'https://example.test/a?q=Wow'),
+    )],
+    # Rendered destinations, not labels or code, own citation provenance.
+    *[(text, A, None) for text in (
+        '[good](https://example.test/a) [bad](HTTPS://fabricated.invalid/b)',
+        '[good](https://example.test/a) [bad](https&#58;//fabricated.invalid/b)',
+        '[https://example.test/a](//fabricated.invalid/b)',
+        'Claim [source][s].\n\n[s]: https://example.test/a!',
+        '```markdown\n[source](https://example.test/a)\n```',
+        '`https://example.test/a`',
+        '[https://example.test/a](#section)',
+        '[https://example.test/a](javascript:alert(1))',
+        '<a href="https://fabricated.invalid/b">https://example.test/a</a>',
+        '![https://example.test/a](//fabricated.invalid/b)',
+    )],
 ])
-def test_result_rejects_missing_or_fabricated_citation_provenance(text):
-    with pytest.raises(ValueError, match='citat|retrieved|source'):
-        worker().extract_result(text, [{'url': 'https://example.test/real-source'}],
-            {'cost_usd': .2, 'unknown_cost': False}, {}, {})
+def test_result_rejects_missing_fabricated_or_unrendered_citation_provenance(text, retrieved, match):
+    with pytest.raises(ValueError, match=match):
+        worker().extract_result(text, [{'url': retrieved}], {'cost_usd': .2, 'unknown_cost': False}, {}, {})
 
 
 def test_result_citations_include_only_actually_cited_retrieved_sources():
@@ -483,14 +585,6 @@ def test_result_citations_include_only_actually_cited_retrieved_sources():
         {'cost_usd': .2, 'unknown_cost': False}, {}, {})
     assert result['citations'] == [{'url': 'https://example.test/real-source', 'title': 'Evidence'}]
     assert len(result['raw']['retrieved_sources']) == 2
-
-
-def test_balanced_parentheses_and_html_query_entities_in_citations():
-    result = worker().extract_result(
-        'Claim [evidence](https://example.test/paper_(a)?x=1&amp;y=2).',
-        [{'url': 'https://example.test/paper_(a)?x=1&y=2'}],
-        {'cost_usd': .2, 'unknown_cost': False}, {}, {})
-    assert result['citations'][0]['url'] == 'https://example.test/paper_(a)?x=1&y=2'
 
 
 def test_default_answers_have_no_word_limit_but_explicit_limit_is_preserved():
@@ -507,11 +601,9 @@ def test_default_answers_have_no_word_limit_but_explicit_limit_is_preserved():
         w.extract_result(*args, {'answer_word_limit': 600})
 
 
+@gpt_runtime
 def test_real_upstream_writer_has_no_hidden_word_target_in_uncapped_mode(tmp_path, monkeypatch):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher import GPTResearcher
-    from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
     w = worker()
     a = audit(tmp_path, max_research_rounds=1, answer_word_limit=None)
     captures, sent = [], []
@@ -520,7 +612,6 @@ def test_real_upstream_writer_has_no_hidden_word_target_in_uncapped_mode(tmp_pat
         self.research_sources = [{'url': 'https://example.test/evidence'}]
         return 'Evidence at https://example.test/evidence'
     monkeypatch.setattr(GPTResearcher, 'conduct_research', offline_conduct)
-    original_factory = GenericLLMProvider.from_provider.__func__
     def handler(request):
         data = json.loads(request.content)
         sent.append(data)
@@ -529,16 +620,10 @@ def test_real_upstream_writer_has_no_hidden_word_target_in_uncapped_mode(tmp_pat
         assert '600 words' not in prompt
         assert '1200 words' not in prompt
         assert 'at most' not in prompt
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': answer}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 1000, 'total_tokens': 1100}})
+        return chat_response(answer, completion_tokens=1000)
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            def factory(cls, *args, **kwargs):
-                kwargs.update(api_key='offline-test-placeholder', http_async_client=client)
-                return original_factory(cls, *args, **kwargs)
-            monkeypatch.setattr(GenericLLMProvider, 'from_provider', classmethod(factory))
+            route_providers(monkeypatch, client)
             with w._runtime({}, a, captures) as cls:
                 return await w.research({'prompt': 'Original task', 'source_identity': {}}, a, cls, captures)
     result = asyncio.run(go())
@@ -547,21 +632,14 @@ def test_real_upstream_writer_has_no_hidden_word_target_in_uncapped_mode(tmp_pat
     assert a.snapshot()['unknown_cost'] is False
 
 
-@pytest.mark.parametrize('url', ["https://en.wikipedia.org/wiki/McDonald's", "https://en.wikipedia.org/wiki/O'Reilly_Media"])
-def test_exact_retrieved_markdown_urls_may_contain_apostrophes(url):
-    result = worker().extract_result(f'Finding [source]({url}).', [{'url': url}],
-                                     {'cost_usd': .2, 'unknown_cost': False}, {}, {})
-    assert result['citations'][0]['url'] == url
-
-
+@gpt_runtime
 @pytest.mark.parametrize('outcome', ['success', 'timeout', 'hung'])
 def test_real_langchain_drains_admitted_request_before_synthesis(tmp_path, outcome):
     """A sibling hits the ceiling while the first real SDK call is still accepted."""
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.utils.llm import create_chat_completion
     w = worker()
-    a = audit(tmp_path, call_timeout_seconds=.1, timeout_seconds=2)
+    # Settled replies take .05 s; the .5 s call timeout leaves room for scheduler stalls under load.
+    a = audit(tmp_path, call_timeout_seconds=.5, timeout_seconds=3)
     spent = a.settings['budget_target_usd'] - a.settings['synthesis_reserve_usd'] - .16
     a.events.append({'status': 'completed', 'cost_usd': spent, 'input_tokens': 0,
                      'output_tokens': 0, 'unknown_cost': False, 'reserved_usd': 0.})
@@ -577,7 +655,7 @@ def test_real_langchain_drains_admitted_request_before_synthesis(tmp_path, outco
             if name == 'accepted':
                 accepted.set()
                 try:
-                    await asyncio.sleep(1 if outcome == 'hung' else .05)
+                    await asyncio.sleep(2 if outcome == 'hung' else .05)
                 except asyncio.CancelledError:
                     cancelled.append(name)
                     raise
@@ -588,16 +666,12 @@ def test_real_langchain_drains_admitted_request_before_synthesis(tmp_path, outco
                 snapshot = a.snapshot()
                 assert all(e['phase'] == 'synthesis' for e in snapshot['in_flight'])
                 assert not any(e.get('unknown_cost') for e in snapshot['events'])
-            return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-                'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                    'message': {'role': 'assistant', 'content': 'Finding [source](https://example.test/evidence).'}}],
-                'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+            return chat_response('Finding [source](https://example.test/evidence).')
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             async def completion(name):
                 result = await create_chat_completion(messages=[{'role': 'user', 'content': name}],
                     model=w.MODEL, llm_provider='openai', max_tokens=8000,
-                    llm_kwargs={'api_key': 'offline-test-placeholder', 'http_async_client': client,
-                                'use_responses_api': False, 'reasoning_effort': 'high'})
+                    llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
                 received.append(name)
                 return result
             class Researcher:
@@ -627,18 +701,17 @@ def test_real_langchain_drains_admitted_request_before_synthesis(tmp_path, outco
         if outcome == 'timeout':
             assert cancelled == [], 'genuine SDK failure should settle, not be preemptively cancelled'
         else:
-            assert time.monotonic() - started >= .08, 'do not cancel before the bounded request timeout'
-    assert time.monotonic() - started < 2
+            assert time.monotonic() - started >= .45, 'do not cancel before the bounded request timeout'
+    assert time.monotonic() - started < 3
 
 
+@gpt_runtime
 def test_research_time_cutoff_drains_late_admitted_call_with_synthesis_headroom(tmp_path):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.utils.llm import create_chat_completion
     import time
     w = worker()
-    a = audit(tmp_path, call_timeout_seconds=.25, timeout_seconds=2)
-    a.research_deadline = time.monotonic() + .08
+    a = audit(tmp_path, call_timeout_seconds=1, timeout_seconds=4)
+    a.research_deadline = time.monotonic() + .3
     captures = [{'context': 'Evidence https://example.test/evidence',
                  'sources': [{'url': 'https://example.test/evidence'}]}]
     sent, cancelled = [], []
@@ -648,21 +721,18 @@ def test_research_time_cutoff_drains_late_admitted_call_with_synthesis_headroom(
             sent.append(name)
             if name == 'accepted':
                 try:
-                    await asyncio.sleep(.12)
+                    # Stay in flight until just past the research cutoff, however late admission ran.
+                    await asyncio.sleep(max(0., a.research_deadline - time.monotonic()) + .05)
                 except asyncio.CancelledError:
                     cancelled.append(name)
                     raise
             assert time.monotonic() < a.deadline
-            return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-                'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                    'message': {'role': 'assistant', 'content': 'Finding [source](https://example.test/evidence).'}}],
-                'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+            return chat_response('Finding [source](https://example.test/evidence).')
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             async def completion(name):
                 return await create_chat_completion(messages=[{'role': 'user', 'content': name}],
                     model=w.MODEL, llm_provider='openai', max_tokens=8000,
-                    llm_kwargs={'api_key': 'offline-test-placeholder', 'http_async_client': client,
-                                'use_responses_api': False, 'reasoning_effort': 'high'})
+                    llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
             class Researcher:
                 def __init__(self, **kwargs): self.cfg = SimpleNamespace(llm_kwargs={}, smart_token_limit=8000)
                 async def conduct_research(self):
@@ -679,21 +749,11 @@ def test_research_time_cutoff_drains_late_admitted_call_with_synthesis_headroom(
     assert a.snapshot()['research_stopped'] and not a.snapshot()['unknown_cost']
 
 
-def test_admission_refuses_new_research_after_time_headroom_cutoff(tmp_path):
-    import time
-    a = audit(tmp_path)
-    a.research_deadline = time.monotonic() - 1
-    with pytest.raises(worker().BudgetStop): a.before(options())
-    assert a.snapshot()['in_flight'] == []
-    assert a.snapshot()['events'] == []
-
-
+@gpt_runtime
 def test_shielded_sdk_settles_even_when_langchain_caller_is_cancelled(tmp_path):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.utils.llm import create_chat_completion
     w = worker()
-    a = audit(tmp_path, call_timeout_seconds=.2, timeout_seconds=2)
+    a = audit(tmp_path, call_timeout_seconds=.6, timeout_seconds=2)
     sent, cancelled = [], []
     async def go():
         accepted = asyncio.Event()
@@ -706,16 +766,12 @@ def test_shielded_sdk_settles_even_when_langchain_caller_is_cancelled(tmp_path):
             except asyncio.CancelledError:
                 cancelled.append(1)
                 raise
-            return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-                'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                    'message': {'role': 'assistant', 'content': 'Settled answer.'}}],
-                'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+            return chat_response('Settled answer.')
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             with w._runtime({}, a, []):
                 caller = asyncio.create_task(create_chat_completion(
                     messages=[{'role': 'user', 'content': 'Q'}], model=w.MODEL, llm_provider='openai', max_tokens=8000,
-                    llm_kwargs={'api_key': 'offline-test-placeholder', 'http_async_client': client,
-                                'use_responses_api': False, 'reasoning_effort': 'high'}))
+                    llm_kwargs=offline_kwargs(client, reasoning_effort='high')))
                 await accepted.wait()
                 caller.cancel()
                 try:
@@ -762,12 +818,11 @@ def test_nonbillable_tail_must_finish_before_global_phase_switch(tmp_path):
     assert a.snapshot()['terminal_failure']
 
 
+@gpt_runtime
 def test_confirmed_429_backoff_is_nonbillable_cleanup_not_unknown_failure(tmp_path):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.utils.llm import create_chat_completion
     w = worker()
-    a = audit(tmp_path, call_timeout_seconds=.1, timeout_seconds=2)
+    a = audit(tmp_path, call_timeout_seconds=.5, timeout_seconds=2)
     spent = a.settings['budget_target_usd'] - a.settings['synthesis_reserve_usd'] - .16
     a.events.append({'status': 'completed', 'cost_usd': spent, 'input_tokens': 0,
                      'output_tokens': 0, 'unknown_cost': False, 'reserved_usd': 0.})
@@ -783,16 +838,12 @@ def test_confirmed_429_backoff_is_nonbillable_cleanup_not_unknown_failure(tmp_pa
                 rejected.set()
                 return httpx.Response(429, json={'error': {'type': 'rate_limit_error', 'message': 'offline rejection'}})
             assert name == 'synthesis'
-            return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-                'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                    'message': {'role': 'assistant', 'content': 'Finding [source](https://example.test/evidence).'}}],
-                'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+            return chat_response('Finding [source](https://example.test/evidence).')
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             async def completion(name):
                 return await create_chat_completion(messages=[{'role': 'user', 'content': name}],
                     model=w.MODEL, llm_provider='openai', max_tokens=8000,
-                    llm_kwargs={'api_key': 'offline-test-placeholder', 'http_async_client': client,
-                                'use_responses_api': False, 'reasoning_effort': 'high'})
+                    llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
             class Researcher:
                 def __init__(self, **kwargs): self.cfg = SimpleNamespace(llm_kwargs={}, smart_token_limit=8000)
                 async def conduct_research(self):
@@ -810,10 +861,9 @@ def test_confirmed_429_backoff_is_nonbillable_cleanup_not_unknown_failure(tmp_pa
     assert not a.snapshot()['unknown_cost'] and not a.snapshot()['terminal_failure']
 
 
+@gpt_runtime
 def test_unsafe_tail_cannot_make_unaudited_call_after_runtime_teardown(tmp_path, monkeypatch):
-    httpx = pytest.importorskip('httpx')
-    openai = pytest.importorskip('openai')
-    pytest.importorskip('langchain_openai')
+    import openai
     from gpt_researcher import GPTResearcher
     from gpt_researcher.skills.deep_research import DeepResearchSkill
     from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
@@ -834,12 +884,10 @@ def test_unsafe_tail_cannot_make_unaudited_call_after_runtime_teardown(tmp_path,
                  'sources': [{'url': 'https://example.test/evidence'}]}]
     sent, attempted, denied = [], [], []
     async def go():
+        finished = asyncio.Event()
         def handler(request):
             sent.append(1)
-            return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-                'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                    'message': {'role': 'assistant', 'content': 'Unaudited answer.'}}],
-                'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+            return chat_response('Unaudited answer.')
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             class Researcher:
                 def __init__(self, **kwargs): self.cfg = SimpleNamespace(llm_kwargs={}, smart_token_limit=8000)
@@ -855,10 +903,11 @@ def test_unsafe_tail_cannot_make_unaudited_call_after_runtime_teardown(tmp_path,
                         try:
                             await create_chat_completion(messages=[{'role': 'user', 'content': 'late'}],
                                 model=w.MODEL, llm_provider='openai', max_tokens=8000,
-                                llm_kwargs={'api_key': 'offline-test-placeholder', 'http_async_client': client,
-                                            'use_responses_api': False, 'reasoning_effort': 'high'})
+                                llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
                         except w.SDKStopped:
                             denied.append(1)
+                        finally:
+                            finished.set()
                     asyncio.create_task(survivor())
                     await started.wait()
                     raise w.BudgetStop('Research allowance closed')
@@ -867,13 +916,14 @@ def test_unsafe_tail_cannot_make_unaudited_call_after_runtime_teardown(tmp_path,
                 with pytest.raises(w.SDKStopped):
                     await w.research({'prompt': 'Q', 'source_identity': {}}, a, Researcher, captures)
             # Deliberately let the late task run AFTER the runtime context exits.
-            await asyncio.sleep(.1)
+            await asyncio.wait_for(finished.wait(), 5)
     asyncio.run(go())
     assert attempted == [1] and denied == [1]
     assert sent == [], 'no original/unpatched SDK dispatch is allowed after unsafe cleanup'
     assert a.snapshot()['quarantined']
 
 
+@gpt_runtime
 @pytest.mark.parametrize(('answer', 'reason'), [
     ('word ' * 701 + '[source](https://example.test/retrieved)', None),
     ('Claim [proof](https://fabricated.invalid/article).', 'unretrieved_citation'),
@@ -882,10 +932,7 @@ def test_unsafe_tail_cannot_make_unaudited_call_after_runtime_teardown(tmp_path,
 def test_real_writer_preserves_paid_answer_before_validation_and_lists_allowed_sources(tmp_path, monkeypatch, answer, reason):
     """Actual upstream writer/LangChain/mock HTTP; no paid requests or URL repair."""
     import hashlib
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher import GPTResearcher
-    from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
     w = worker()
     a = audit(tmp_path, max_research_rounds=1)
     captures, sent = [], []
@@ -898,7 +945,6 @@ def test_real_writer_preserves_paid_answer_before_validation_and_lists_allowed_s
         # retrieved URL is absent from the summary, as upstream can produce.
         return 'Summary quotes a bibliography: https://doi.org/10.1234/unretrieved'
     monkeypatch.setattr(GPTResearcher, 'conduct_research', offline_conduct)
-    original_factory = GenericLLMProvider.from_provider.__func__
     def handler(http_request):
         data = json.loads(http_request.content)
         sent.append(data)
@@ -910,10 +956,7 @@ def test_real_writer_preserves_paid_answer_before_validation_and_lists_allowed_s
         assert 'quoted or bibliographic URLs not in the manifest are unverified' in prompt
         assert 'None words' not in prompt and '600 words' not in prompt and '1200 words' not in prompt
         assert w._input_bound(data['messages']) <= a.settings['max_input_tokens']
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': answer}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 1000, 'total_tokens': 1100}})
+        return chat_response(answer, completion_tokens=1000)
     original_extract = w.extract_result
     def checked_extract(*args, **kwargs):
         receipt = json.loads((tmp_path / 'final-answer.json').read_text())
@@ -926,10 +969,7 @@ def test_real_writer_preserves_paid_answer_before_validation_and_lists_allowed_s
     monkeypatch.setattr(w, 'extract_result', checked_extract)
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            def factory(cls, *args, **kwargs):
-                kwargs.update(api_key='offline-test-placeholder', http_async_client=client)
-                return original_factory(cls, *args, **kwargs)
-            monkeypatch.setattr(GenericLLMProvider, 'from_provider', classmethod(factory))
+            route_providers(monkeypatch, client)
             with w._runtime({}, a, captures) as cls:
                 return await w.research(request, a, cls, captures)
     if reason:
@@ -980,7 +1020,7 @@ def test_large_source_manifest_keeps_whole_urls_and_bounded_evidence(tmp_path):
     assert len(result['raw']['retrieved_sources']) == len(sources)
 
 
-def test_worker_validation_failure_is_diagnostic_preserved_and_terminal(tmp_path, monkeypatch):
+def test_worker_validation_failure_is_diagnostic_preserved_and_terminal(tmp_path, monkeypatch, isolated_process_state):
     from contextlib import contextmanager
     from crest.providers import gpt_researcher as p
     w = worker()
@@ -1033,18 +1073,6 @@ def test_markdown_destination_boundaries_do_not_swallow_valid_citations(text):
     assert [s['url'] for s in result['citations']] == [s['url'] for s in expected]
 
 
-@pytest.mark.parametrize('text', [
-    'Claim [A](https://example.test/a),[bad](https://fabricated.invalid/a).',
-    'Claim **[A](https://example.test/a)**,https://fabricated.invalid/a',
-    'Claim [A](https://example.test/a)[bad](https://example.test/invented).',
-    'Claim [A](https://example.test/a)[bad](https://example.test/a?invented=1).',
-    'Claim **[bad](https://fabricated.invalid/a)**[A](https://example.test/a).',
-])
-def test_markdown_tokenization_never_hides_fabricated_neighbors(text):
-    with pytest.raises(ValueError, match='not a retrieved source'):
-        worker().extract_result(text, [{'url': 'https://example.test/a'}], {'cost_usd': .1}, {}, {})
-
-
 @pytest.mark.parametrize('url', [
     'https://en.wikipedia.org/wiki/Jeopardy!',
     'https://example.test/article.',
@@ -1060,19 +1088,7 @@ def test_delimited_citation_keeps_real_terminal_url_punctuation(url, render):
             worker().extract_result(text + f'[bad]({neighbor})', [{'url': url}], {'cost_usd': .1}, {}, {})
 
 
-@pytest.mark.parametrize('url', ['https://example.test/a!', 'https://example.test/a.',
-                                 'https://example.test/a?q=Wow!'])
-def test_delimited_punctuation_cannot_alias_another_retrieved_resource(url):
-    with pytest.raises(ValueError, match='not a retrieved source'):
-        worker().extract_result(f'Claim [source]({url}).', [{'url': url[:-1]}], {'cost_usd': .1}, {}, {})
-
-
-def test_bare_url_still_trims_only_prose_punctuation():
-    url = 'https://example.test/evidence'
-    result = worker().extract_result(f'Claim: {url}.', [{'url': url}], {'cost_usd': .1}, {}, {})
-    assert result['citations'][0]['url'] == url
-
-
+@gpt_runtime
 @pytest.mark.parametrize('asynchronous', [False, True], ids=['sync', 'async'])
 @pytest.mark.parametrize('override', [
     {'model': 'unpriced-model'},
@@ -1083,16 +1099,11 @@ def test_bare_url_still_trims_only_prose_punctuation():
     {'tools': [{'type': 'function', 'function': {'name': 'unpriced'}}]},
 ], ids=['model', 'messages', 'tokens', 'effort', 'tier', 'tools'])
 def test_sdk_extra_body_cannot_override_audited_request(tmp_path, asynchronous, override):
-    httpx = pytest.importorskip('httpx')
-    openai = pytest.importorskip('openai')
-    pytest.importorskip('gpt_researcher')
+    import openai
     w, a, sent = worker(), audit(tmp_path), []
     def handler(request):
         sent.append(json.loads(request.content))
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': 'Offline.'}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response('Offline.')
     params = dict(model=w.MODEL, messages=[{'role': 'user', 'content': 'Q'}],
                   max_completion_tokens=100, extra_body=override)
     async def go():
@@ -1121,9 +1132,7 @@ def test_sdk_extra_body_cannot_override_audited_request(tmp_path, asynchronous, 
 ], ids=['record-charge', 'release-reservation', 'persist-charge', 'restore-reservation', 'remove-rolled-back-charge'])
 def test_sigterm_during_settlement_never_erases_paid_exposure(tmp_path, monkeypatch, boundary, disk_failure):
     import inspect
-    import os
     import signal
-    import sys
     w, a = worker(), audit(tmp_path)
     token = a.before(options())
     original_reserved = a.snapshot()['reserved_usd']
@@ -1165,28 +1174,15 @@ def test_sigterm_during_settlement_never_erases_paid_exposure(tmp_path, monkeypa
     with pytest.raises(w.SDKStopped): a.before(options())
 
 
-@pytest.mark.parametrize('text', [
-    '[good](https://example.test/a) [bad](HTTPS://fabricated.invalid/b)',
-    '[good](https://example.test/a) [bad](https&#58;//fabricated.invalid/b)',
-    '[https://example.test/a](//fabricated.invalid/b)',
-    'Claim [source][s].\n\n[s]: https://example.test/a!',
-    '```markdown\n[source](https://example.test/a)\n```',
-    '`https://example.test/a`',
-    '[https://example.test/a](#section)',
-    '[https://example.test/a](javascript:alert(1))',
-    '<a href="https://fabricated.invalid/b">https://example.test/a</a>',
-    '![https://example.test/a](//fabricated.invalid/b)',
-])
-def test_rendered_destinations_not_labels_or_code_own_citation_provenance(text):
-    with pytest.raises(ValueError):
-        worker().extract_result(text, [{'url': 'https://example.test/a'}], {'cost_usd': .1}, {}, {})
-
-
 @pytest.mark.parametrize(('text', 'url'), [
     ('Claim [source][s].\n\n[s]: https://example.test/a!', 'https://example.test/a!'),
     (r'Claim [source](https://example.test/paper_\(a\)).', 'https://example.test/paper_(a)'),
     ('Claim [source](HTTPS://EXAMPLE.TEST/a).', 'https://example.test/a'),
     ('Claim [source](https&#58;//example.test/a).', 'https://example.test/a'),
+    ('Claim [evidence](https://example.test/paper_(a)?x=1&amp;y=2).', 'https://example.test/paper_(a)?x=1&y=2'),
+    ("Finding [source](https://en.wikipedia.org/wiki/McDonald's).", "https://en.wikipedia.org/wiki/McDonald's"),
+    ("Finding [source](https://en.wikipedia.org/wiki/O'Reilly_Media).", "https://en.wikipedia.org/wiki/O'Reilly_Media"),
+    ('Claim: https://example.test/evidence.', 'https://example.test/evidence'),  # bare URL trims prose period
 ])
 def test_commonmark_destinations_match_exact_retrieved_resources(text, url):
     assert worker().extract_result(text, [{'url': url}], {'cost_usd': .1}, {}, {})['citations'][0]['url'] == url
@@ -1242,11 +1238,17 @@ def test_writer_manifest_and_visible_evidence_select_same_captures(tmp_path, mod
 
 @pytest.mark.parametrize(('settings', 'effort'), [({}, 'high'), ({'reasoning_effort': 'high'}, 'high'),
                                                    ({'reasoning_effort': 'xhigh'}, 'xhigh')])
-def test_selected_effort_controls_all_roles_and_audit_not_upstream_default(tmp_path, settings, effort):
+def test_selected_effort_controls_all_roles_and_audit_with_explicit_free_tools(tmp_path, settings, effort):
     w, a = worker(), audit(tmp_path, **settings)
     config = w.build_config(settings)
     assert config['REASONING_EFFORT'] == config['LLM_KWARGS']['reasoning_effort'] == effort
     assert all(config[k] == 'openai:gpt-6.1-sol' for k in ('FAST_LLM', 'SMART_LLM', 'STRATEGIC_LLM'))
+    assert config['RETRIEVER'] == 'duckduckgo'
+    assert config['CONTEXT_FILTER'] == 'keyword'
+    assert 'TOTAL_WORDS' not in config
+    assert config['LLM_KWARGS']['max_retries'] == 0
+    assert config['IMAGE_GENERATION_ENABLED'] is False
+    assert config['MCP_STRATEGY'] == 'disabled'
     opt = options(reasoning_effort='high')
     token = a.before(opt)
     assert opt.json_data['reasoning_effort'] == effort
@@ -1256,11 +1258,11 @@ def test_selected_effort_controls_all_roles_and_audit_not_upstream_default(tmp_p
     assert a.snapshot()['reasoning_effort'] == effort
 
 
+@gpt_runtime
 @pytest.mark.parametrize('outcome', ['normal', 'exception', 'baseexception', 'quarantine'])
 def test_xhigh_parser_extension_restores_exact_staticmethod_descriptor(tmp_path, monkeypatch, outcome):
     import inspect
-    openai = pytest.importorskip('openai')
-    pytest.importorskip('gpt_researcher')
+    import openai
     from gpt_researcher import GPTResearcher
     from gpt_researcher.skills.deep_research import DeepResearchSkill
     from gpt_researcher.config.config import Config
@@ -1299,16 +1301,14 @@ def test_xhigh_parser_extension_restores_exact_staticmethod_descriptor(tmp_path,
         with pytest.raises(ValueError): object.__new__(Config).parse_reasoning_effort('xhigh')
 
 
+@gpt_runtime
 @pytest.mark.parametrize('effort', ['xhigh', 'high'])
 @pytest.mark.parametrize('outputs,reasoning', [(20, 0), (13000, 12000)], ids=['short', 'reasoning-over-8k'])
 def test_real_upstream_roles_nested_followup_and_writer_send_selected_effort(
-        tmp_path, monkeypatch, effort, outputs, reasoning):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
+        tmp_path, monkeypatch, instant_backoff, effort, outputs, reasoning):
     from gpt_researcher import GPTResearcher
     from gpt_researcher.actions.agent_creator import choose_agent
     from gpt_researcher.utils.llm import create_chat_completion
-    from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
     w = worker()
     a = audit(tmp_path, reasoning_effort=effort, max_research_rounds=2)
     captures, sent, rounds = [], [], []
@@ -1330,28 +1330,21 @@ def test_real_upstream_roles_nested_followup_and_writer_send_selected_effort(
         assert (await self.deep_researcher.generate_search_queries('STRATEGIC plan', 1))[0]['query'] == 'offline nested question'
         return 'Evidence-backed finding for this capture.'
     monkeypatch.setattr(GPTResearcher, 'conduct_research', offline_conduct)
-    original_factory = GenericLLMProvider.from_provider.__func__
     def handler(request):
         data = json.loads(request.content)
         sent.append(data)
         assert data['model'] == 'gpt-6.1-sol' and data['reasoning_effort'] == effort
         if len(sent) == 1:
             return httpx.Response(429, json={'error': {'message': 'offline rate limit', 'type': 'rate_limit'}})
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': answers.pop(0)}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': outputs, 'total_tokens': outputs + 100,
-                      'completion_tokens_details': {'reasoning_tokens': reasoning}}})
+        return chat_response(answers.pop(0), completion_tokens=outputs, reasoning_tokens=reasoning)
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            def factory(cls, *args, **kwargs):
-                kwargs.update(api_key='offline-test-placeholder', http_async_client=client)
-                return original_factory(cls, *args, **kwargs)
-            monkeypatch.setattr(GenericLLMProvider, 'from_provider', classmethod(factory))
+            route_providers(monkeypatch, client)
             with w._runtime({}, a, captures) as cls:
                 return await w.research({'prompt': 'Original task', 'source_identity': {}}, a, cls, captures)
     result = asyncio.run(go())
     assert not answers and len(sent) == 9 and len(rounds) == 2
+    assert instant_backoff == [1.]  # the one 429 waits the worker's fixed backoff
     assert result['raw']['research_rounds'] == 2 and result['citations'][0]['url'].endswith('/round/2')
     assert a.snapshot()['successful_calls'] == 8 and a.snapshot()['retry_calls'] == 1
     assert all(e['reasoning_effort'] == effort for e in a.snapshot()['events'])
@@ -1364,8 +1357,8 @@ def test_real_upstream_roles_nested_followup_and_writer_send_selected_effort(
     assert {e['phase'] for e in a.snapshot()['events']} == {'research', 'synthesis'}
 
 
+@gpt_runtime
 def test_default_writer_timeout_preserves_longer_research_and_drain_headroom(tmp_path, monkeypatch):
-    pytest.importorskip('gpt_researcher')
     from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
     w, a = worker(), audit(tmp_path)
     config = w.build_config({})
@@ -1380,12 +1373,10 @@ def test_default_writer_timeout_preserves_longer_research_and_drain_headroom(tmp
     assert a.settings['budget_usd'] == 4 and a.settings['synthesis_reserve_usd'] == .5
 
 
-@pytest.mark.parametrize(('call_timeout', 'outcome'), [(.18, 'timeout'), (.6, 'success'), (.6, 'thinking-only')])
+@gpt_runtime
+@pytest.mark.parametrize(('call_timeout', 'outcome'), [(.18, 'timeout'), (1.2, 'success'), (1.2, 'thinking-only')])
 def test_real_writer_slow_response_and_thinking_only_fail_closed(tmp_path, monkeypatch, call_timeout, outcome):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher import GPTResearcher
-    from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
     w = worker()
     a = audit(tmp_path, call_timeout_seconds=call_timeout, timeout_seconds=5.4, max_research_rounds=1,
               synthesis_max_completion_tokens=16000)  # Preserve the historical writer-limit regression.
@@ -1395,27 +1386,19 @@ def test_real_writer_slow_response_and_thinking_only_fail_closed(tmp_path, monke
         self.research_sources = [{'url': 'https://example.test/evidence'}]
         return 'Evidence-backed content.'
     monkeypatch.setattr(GPTResearcher, 'conduct_research', offline_conduct)
-    original_factory = GenericLLMProvider.from_provider.__func__
     async def handler(request):
         data = json.loads(request.content)
         sent.append(data)
         assert data['reasoning_effort'] == 'high' and data['max_completion_tokens'] == 16000
-        await asyncio.sleep(.22)  # Scaled beyond the old .18 deadline, inside .6.
+        await asyncio.sleep(.22)  # Scaled beyond the old .18 deadline, well inside 1.2.
         thinking_only = outcome == 'thinking-only'
         outputs = 16000 if thinking_only else 1000
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0,
-                'finish_reason': 'length' if thinking_only else 'stop',
-                'message': {'role': 'assistant', 'content': '' if thinking_only else
-                            'Finding [source](https://example.test/evidence).'}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': outputs, 'total_tokens': outputs + 100,
-                      'completion_tokens_details': {'reasoning_tokens': 16000 if thinking_only else 500}}})
+        return chat_response('' if thinking_only else 'Finding [source](https://example.test/evidence).',
+            completion_tokens=outputs, finish_reason='length' if thinking_only else 'stop',
+            reasoning_tokens=16000 if thinking_only else 500)
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            def factory(cls, *args, **kwargs):
-                kwargs.update(api_key='offline-test-placeholder', http_async_client=client)
-                return original_factory(cls, *args, **kwargs)
-            monkeypatch.setattr(GenericLLMProvider, 'from_provider', classmethod(factory))
+            route_providers(monkeypatch, client)
             return await w.research({'prompt': 'Q', 'source_identity': {}}, a, cls, captures)
     # Match production: runtime guards surround asyncio.run and its shutdown of
     # any shielded settlement task, not just the parent coroutine's lifetime.
@@ -1452,9 +1435,7 @@ def test_settlement_uses_same_price_constants_as_reservations(tmp_path, monkeypa
 def test_interrupted_rollback_redelivery_reconciles_one_charge_and_other_admitted_calls(
         tmp_path, monkeypatch, boundary, interruption):
     import inspect
-    import os
     import signal
-    import sys
     w, a = worker(), audit(tmp_path)
     token, other = a.before(options()), a.before(options())
     receipt = response()
@@ -1593,21 +1574,24 @@ def test_hard_and_auto_still_refuse_projected_overrun(tmp_path, cap):
     with pytest.raises(ValueError): worker().normalize_settings({'budget_cap': cap, 'budget_usd': 4.1})
 
 
-@pytest.mark.parametrize('guard', ['time', 'input', 'model'])
-def test_soft_budget_does_not_bypass_non_dollar_admission_guards(tmp_path, guard):
-    w, a = worker(), audit(tmp_path, budget_cap='soft')
+@pytest.mark.parametrize('cap,guard', [('default', 'time'), ('soft', 'time'), ('soft', 'input'), ('soft', 'model')])
+def test_admission_refuses_after_time_cutoff_and_soft_budget_keeps_non_dollar_guards(tmp_path, cap, guard):
+    import time
+    w = worker()
+    a = audit(tmp_path) if cap == 'default' else audit(tmp_path, budget_cap=cap)
     opts = options()
-    if guard == 'time': a.research_deadline = 0
+    if guard == 'time': a.research_deadline = time.monotonic() - 1 if cap == 'default' else 0
     if guard == 'input': opts.json_data['messages'][0]['content'] = 'x' * 64000
     if guard == 'model': opts.json_data['model'] = 'unpriced-model'
-    with pytest.raises((w.BudgetStop, w.SDKStopped)): a.before(opts)
-    assert not a.snapshot()['in_flight']
+    with pytest.raises(w.BudgetStop if cap == 'default' else (w.BudgetStop, w.SDKStopped)): a.before(opts)
+    assert a.snapshot()['in_flight'] == []
+    if cap == 'default':
+        assert a.snapshot()['events'] == []
 
 
+@gpt_runtime
 @pytest.mark.parametrize('outcome', ['success', 'empty', 'missing_usage', 'timeout'])
 def test_real_soft_upstream_overrun_preserves_settlement_and_terminal_circuit(tmp_path, monkeypatch, outcome):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.utils.llm import create_chat_completion
     w, a = worker(), audit(tmp_path, budget_cap='soft')
     a.events.append({'status': 'completed', 'cost_usd': 4.25, 'input_tokens': 0, 'output_tokens': 0})
@@ -1619,11 +1603,7 @@ def test_real_soft_upstream_overrun_preserves_settlement_and_terminal_circuit(tm
         assert data['reasoning_effort'] == 'high'
         sent.append(data)
         if outcome == 'timeout': raise httpx.ReadTimeout('offline timeout', request=request)
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': '' if outcome == 'empty' else 'Answer'}}],
-            'usage': None if outcome == 'missing_usage' else
-                {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response('' if outcome == 'empty' else 'Answer', missing_usage=outcome == 'missing_usage')
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             with w._runtime({}, a, []):
@@ -1632,8 +1612,7 @@ def test_real_soft_upstream_overrun_preserves_settlement_and_terminal_circuit(tm
                     async def call():
                         return await create_chat_completion(messages=[{'role': 'user', 'content': 'Q'}],
                             model=w.MODEL, llm_provider='openai', max_tokens=8000,
-                            reasoning_effort='xhigh', llm_kwargs={'api_key': 'offline-test-placeholder',
-                            'http_async_client': client, 'use_responses_api': False})
+                            reasoning_effort='xhigh', llm_kwargs=offline_kwargs(client))
                     if outcome == 'success': assert await call() == 'Answer'
                     else:
                         with pytest.raises(w.SDKStopped): await call()
@@ -1649,6 +1628,7 @@ def test_real_soft_upstream_overrun_preserves_settlement_and_terminal_circuit(tm
         assert bool(s['terminal_failure']) == (outcome == 'empty')
 
 
+@gpt_runtime
 @pytest.mark.parametrize('settings,spent,writer_tokens,expected_cost', [
     pytest.param({}, 4.25, 20, 4.2508, id='standard-reserve'),
     pytest.param({'budget_usd': .10, 'budget_target_usd': .10, 'synthesis_reserve_usd': .05},
@@ -1656,10 +1636,7 @@ def test_real_soft_upstream_overrun_preserves_settlement_and_terminal_circuit(tm
 ])
 def test_real_soft_writer_overrun_keeps_target_round_handoff_and_source_validation(
         tmp_path, monkeypatch, settings, spent, writer_tokens, expected_cost):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher import GPTResearcher
-    from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
     from gpt_researcher.utils.llm import create_chat_completion
     w, a = worker(), audit(tmp_path, budget_cap='soft', **settings)
     a.events.append({'status': 'completed', 'cost_usd': spent, 'input_tokens': 0, 'output_tokens': 0})
@@ -1671,23 +1648,16 @@ def test_real_soft_writer_overrun_keeps_target_round_handoff_and_source_validati
         self.research_sources = [{'url': 'https://example.test/evidence'}]
         return 'A source-backed finding.'
     monkeypatch.setattr(GPTResearcher, 'conduct_research', conduct)
-    original = GenericLLMProvider.from_provider.__func__
     def handler(request):
         sent.append(json.loads(request.content))
         outputs = writer_tokens if a.phase == 'synthesis' else 20
         if a.phase == 'synthesis':
             assert a.snapshot()['reserved_usd'] >= .32
             assert a.snapshot()['projected_budget_overrun_usd'] > 0
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': 'Finding [source](https://example.test/evidence).'}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': outputs, 'total_tokens': outputs + 100}})
+        return chat_response('Finding [source](https://example.test/evidence).', completion_tokens=outputs)
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            def factory(cls, *args, **kwargs):
-                kwargs.update(api_key='offline-test-placeholder', http_async_client=client)
-                return original(cls, *args, **kwargs)
-            monkeypatch.setattr(GenericLLMProvider, 'from_provider', classmethod(factory))
+            route_providers(monkeypatch, client)
             with w._runtime({}, a, captures) as cls:
                 return await w.research({'prompt': 'Q', 'source_identity': {}}, a, cls, captures)
     out = asyncio.run(go())
@@ -1733,11 +1703,10 @@ def test_default_headroom_keeps_legacy_hard_and_reserves_bounded_32k_writer(tmp_
     assert a.snapshot()['upper_bound_usd'] == pytest.approx(3.3704)
 
 
+@gpt_runtime
 @pytest.mark.parametrize('shape', ['short', 'text', 'list', 'cut-source-header', 'cut-learning-citation'])
 def test_real_pinned_learning_prompt_fits_only_evidence_and_preserves_sources(tmp_path, monkeypatch, shape):
     import copy
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     import gpt_researcher.skills.deep_research as deep
     w, a = worker(), audit(tmp_path, budget_cap='soft')
     source = 'https://example.test/source'
@@ -1769,17 +1738,13 @@ def test_real_pinned_learning_prompt_fits_only_evidence_and_preserves_sources(tm
         if shape == 'short': assert retained == first
         else: assert len(retained) < len(str(context))
         if shape == 'cut-learning-citation': assert 'long finding' not in retained
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': json.dumps({'learnings': [
-                    {'insight': 'Supported finding.', 'sourceUrl': source}], 'followUpQuestions': ['Check contrast?']})}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response(json.dumps({'learnings': [{'insight': 'Supported finding.', 'sourceUrl': source}],
+                                   'followUpQuestions': ['Check contrast?']}))
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             skill = object.__new__(deep.DeepResearchSkill)
             skill.researcher = SimpleNamespace(cfg=SimpleNamespace(strategic_llm_provider='openai',
-                strategic_llm_model=w.MODEL, strategic_token_limit=32000, llm_kwargs={
-                    'api_key':'offline-test-placeholder','http_async_client':client,'use_responses_api':False}),
+                strategic_llm_model=w.MODEL, strategic_token_limit=32000, llm_kwargs=offline_kwargs(client)),
                 add_costs=lambda value: None)
             with monkeypatch.context() as recording:
                 recording.setattr(deep, 'create_chat_completion', record_prompt)
@@ -1794,10 +1759,9 @@ def test_real_pinned_learning_prompt_fits_only_evidence_and_preserves_sources(tm
     assert a.snapshot()['known_cost_usd'] == pytest.approx(.0004)
 
 
+@gpt_runtime
 @pytest.mark.parametrize('operation', ['fixed-learning-query', 'unrelated-sdk-call'])
 def test_learning_fit_does_not_shorten_fixed_prompts_or_unrelated_calls(tmp_path, operation):
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher.skills.deep_research import DeepResearchSkill
     from gpt_researcher.utils.llm import create_chat_completion
     w, a = worker(), audit(tmp_path, budget_cap='soft')
@@ -1807,7 +1771,7 @@ def test_learning_fit_does_not_shorten_fixed_prompts_or_unrelated_calls(tmp_path
         pytest.fail('Oversized fixed instructions must never dispatch')
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            kwargs={'api_key':'offline-test-placeholder','http_async_client':client,'use_responses_api':False}
+            kwargs=offline_kwargs(client)
             skill=object.__new__(DeepResearchSkill)
             skill.researcher=SimpleNamespace(cfg=SimpleNamespace(strategic_llm_provider='openai',
                 strategic_llm_model=w.MODEL,strategic_token_limit=32000,llm_kwargs=kwargs),add_costs=lambda value:None)
@@ -1823,20 +1787,17 @@ def test_learning_fit_does_not_shorten_fixed_prompts_or_unrelated_calls(tmp_path
     assert a.snapshot()['phase_stops']['research'] == 'request_bound'
 
 
+@gpt_runtime
 @pytest.mark.parametrize('mode', ['continue', 'no-followups', 'same-sources', 'zero-queries'])
 def test_real_deep_recursion_and_outer_followups_survive_large_branch_context(tmp_path, monkeypatch, mode):
     import re
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from gpt_researcher import GPTResearcher
     import gpt_researcher.skills.deep_research as deep
-    from gpt_researcher.llm_provider.generic.base import GenericLLMProvider
     w, a = worker(), audit(tmp_path, budget_cap='soft')
     captures, rounds, depths, leaves, extractions, outer_extractions, sent = [], [], [], [], [], [], []
     query_sets = []
     original_conduct = GPTResearcher.conduct_research
     original_deep = deep.DeepResearchSkill.deep_research
-    original_factory = GenericLLMProvider.from_provider.__func__
     async def local_search(*args, **kwargs): return []
     monkeypatch.setattr(deep, 'get_search_results', local_search)
     async def leaf_or_real(self, *args, **kwargs):
@@ -1884,16 +1845,10 @@ def test_real_deep_recursion_and_outer_followups_survive_large_branch_context(tm
             assert system == 'You are a research writer. Cite only the supplied source-backed evidence.'
             n = 1 if mode == 'same-sources' else len(leaves)
             answer = f'Finding [source](https://example.test/source/{n}).'
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': answer if isinstance(answer, str) else json.dumps(answer)}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response(answer if isinstance(answer, str) else json.dumps(answer))
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            def factory(cls, *args, **kwargs):
-                kwargs.update(api_key='offline-test-placeholder', http_async_client=client)
-                return original_factory(cls, *args, **kwargs)
-            monkeypatch.setattr(GenericLLMProvider, 'from_provider', classmethod(factory))
+            route_providers(monkeypatch, client)
             with w._runtime({}, a, captures) as cls:
                 return await w.research({'prompt': 'Original task', 'source_identity': {}}, a, cls, captures)
     if mode == 'zero-queries':
@@ -1916,14 +1871,13 @@ def test_real_deep_recursion_and_outer_followups_survive_large_branch_context(tm
     assert state['reserved_usd'] == 0 and state['failed_calls'] == 0
 
 
+@gpt_runtime
 @pytest.mark.parametrize('previous_source', [False, True], ids=['sole-source', 'last-source'])
 @pytest.mark.parametrize('boundary', ['header-end', 'citation-line', 'first-word',
                                       'multiline-title-url', 'multiline-title', 'content-marker'])
 def test_learning_fit_drops_newly_partial_or_empty_source_blocks(
         tmp_path, monkeypatch, previous_source, boundary):
     import copy
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     from langchain_core.documents import Document
     from gpt_researcher.prompts import PromptFamily
     import gpt_researcher.skills.deep_research as deep
@@ -1950,16 +1904,12 @@ def test_learning_fit_drops_newly_partial_or_empty_source_blocks(
     def handler(request):
         data = json.loads(request.content)
         sent.append(data)
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': '{"learnings":[],"followUpQuestions":[]}'}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response('{"learnings":[],"followUpQuestions":[]}')
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             skill = object.__new__(deep.DeepResearchSkill)
             skill.researcher = SimpleNamespace(cfg=SimpleNamespace(strategic_llm_provider='openai',
-                strategic_llm_model=w.MODEL, strategic_token_limit=32000, llm_kwargs={
-                    'api_key': 'offline-test-placeholder', 'http_async_client': client, 'use_responses_api': False}),
+                strategic_llm_model=w.MODEL, strategic_token_limit=32000, llm_kwargs=offline_kwargs(client)),
                 add_costs=lambda value: None)
             original = deep.DeepResearchSkill.process_research_results
             with monkeypatch.context() as recording:
@@ -2003,13 +1953,12 @@ def test_learning_fit_keeps_already_complete_short_source_identity(as_list):
     assert w._research_context('Q', context, 64000) is context
 
 
+@gpt_runtime
 @pytest.mark.parametrize('previous_line', [False, True], ids=['sole-line', 'last-line'])
 @pytest.mark.parametrize('boundary', ['line-end', 'after-newline', 'inside-citation'])
 def test_learning_fit_keeps_complete_citation_line_but_drops_cut_citation(
         tmp_path, monkeypatch, previous_line, boundary):
     import copy
-    httpx = pytest.importorskip('httpx')
-    pytest.importorskip('langchain_openai')
     import gpt_researcher.skills.deep_research as deep
     w = worker()
     previous = 'Earlier finding. [Source: https://example.test/earlier]\n' if previous_line else ''
@@ -2024,16 +1973,12 @@ def test_learning_fit_keeps_complete_citation_line_but_drops_cut_citation(
         return '{}'
     def handler(request):
         sent.append(json.loads(request.content))
-        return httpx.Response(200, json={'id': 'offline-id', 'object': 'chat.completion',
-            'created': 1, 'model': w.MODEL, 'choices': [{'index': 0, 'finish_reason': 'stop',
-                'message': {'role': 'assistant', 'content': '{"learnings":[],"followUpQuestions":[]}'}}],
-            'usage': {'prompt_tokens': 100, 'completion_tokens': 20, 'total_tokens': 120}})
+        return chat_response('{"learnings":[],"followUpQuestions":[]}')
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             skill = object.__new__(deep.DeepResearchSkill)
             skill.researcher = SimpleNamespace(cfg=SimpleNamespace(strategic_llm_provider='openai',
-                strategic_llm_model=w.MODEL, strategic_token_limit=32000, llm_kwargs={
-                    'api_key': 'offline-test-placeholder', 'http_async_client': client, 'use_responses_api': False}),
+                strategic_llm_model=w.MODEL, strategic_token_limit=32000, llm_kwargs=offline_kwargs(client)),
                 add_costs=lambda value: None)
             original = deep.DeepResearchSkill.process_research_results
             with monkeypatch.context() as recording:
@@ -2067,3 +2012,31 @@ def test_learning_fit_keeps_complete_citation_line_but_drops_cut_citation(
     assert state['known_cost_usd'] == pytest.approx(.0004 if expected else 0)
     assert state['reserved_usd'] == 0 and not state['unknown_cost'] and not state['in_flight']
     assert not state['terminal_failure'] and not state['phase_stops']
+
+
+@pytest.mark.skipif(RUNTIME_AVAILABLE, reason='runtime tests already run in this interpreter')
+def test_runtime_tests_pass_under_worker_venv():
+    """Bridge: the main interpreter lacks GPT Researcher, so run exactly the @gpt_runtime tests under the
+    configured worker venv. They must all pass; a skip there means the venv itself is broken."""
+    from crest.config import load_config
+    python = Path(load_config()['research']['gpt_researcher']['python_executable'])
+    if not python.is_file():
+        pytest.skip(f'GPT Researcher worker venv missing: {python} (research.gpt_researcher.python_executable)')
+    test_file = Path(__file__).resolve()
+    assert len(RUNTIME_TESTS) == len(set(RUNTIME_TESTS)) and RUNTIME_TESTS
+    env = {key: value for key, value in os.environ.items()
+           if not key.startswith(('PYTEST_', 'COV_CORE_')) and not key.endswith(('_API_KEY', '_AUTH_TOKEN'))}
+    try:
+        proc = subprocess.run(
+            [str(python), '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-o', 'addopts=', '-rfEs',
+             *[f'{test_file}::{name}' for name in RUNTIME_TESTS]],
+            cwd=test_file.parents[2], env=env, capture_output=True, text=True, timeout=180)
+    except subprocess.TimeoutExpired as exc:
+        pytest.fail(f'worker-venv runtime tests exceeded 180 s:\n{(exc.stdout or "")[-4000:]}')
+    lines = (proc.stdout + proc.stderr).splitlines()
+    tail = '\n'.join(lines[-40:])
+    summary = next((line for line in reversed(lines) if ' in ' in line and ('passed' in line or 'failed' in line
+                    or 'error' in line)), '')
+    assert proc.returncode == 0, f'worker-venv runtime tests failed (exit {proc.returncode}):\n{tail}'
+    assert 'passed' in summary and not any(word in summary for word in ('skipped', 'failed', 'error', 'deselected')), (
+        f'worker-venv runtime tests must all run and pass:\n{tail}')

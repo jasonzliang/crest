@@ -1,20 +1,32 @@
 """The single Caesar budget derives its depth settings and stays under the ceiling."""
+import json
+
 import pytest
 
 from crest.providers.caesar_budget import (DERIVED, DRAFT_WRITE_USD, PRICES, SETUP_SECONDS, SOL, TIME_MARGIN, exploration,
-                                 plan, qa_rounds_cost, qa_rounds_seconds, write_bound, write_hold)
+                                 main, plan, qa_rounds_cost, qa_rounds_seconds, write_bound, write_hold)
 from crest.config import load_config
 
 
-@pytest.mark.parametrize("budget", [1.5, 3.0, 4.0, 6.0])
-def test_plan_fits_the_margin_and_grows_with_the_budget(budget):
+@pytest.mark.parametrize("budget", [1.5, 3.0, 3.5, 4.0, 6.0])
+def test_plan_fits_the_margin_grows_with_the_budget_and_times_every_phase(budget):
     result = plan(budget)
-    assert result["estimate"]["total_usd"] <= budget * .85 + 1e-9
-    assert set(result["settings"]) == set(DERIVED)
-    assert result["settings"]["synthesis_reserve_usd"] >= result["estimate"]["synthesis_usd"]
+    settings, estimate = result["settings"], result["estimate"]
+    assert estimate["total_usd"] <= budget * .85 + 1e-9
+    assert set(settings) == set(DERIVED)
+    assert settings["synthesis_reserve_usd"] >= estimate["synthesis_usd"]
     larger = plan(budget + 1)["settings"]
-    assert larger["max_iterations"] > result["settings"]["max_iterations"]
-    assert larger["timeout_seconds"] >= result["settings"]["timeout_seconds"]
+    assert larger["max_iterations"] > settings["max_iterations"]
+    assert larger["timeout_seconds"] >= settings["timeout_seconds"]
+    # Planned rounds fit the first-draft allowance left after the write hold.
+    assert estimate["qa_usd_per_draft"] <= estimate["first_draft_allowance_usd"] + 1e-9
+    assert estimate["qa_usd_per_draft"] == pytest.approx(qa_rounds_cost(settings["synthesis_iterations"]), abs=1e-4)
+    # One timeout covers setup, exploration and synthesis with the margin.
+    _, exploration_seconds = exploration(settings["max_iterations"])
+    total = SETUP_SECONDS + exploration_seconds + estimate["synthesis_minutes"] * 60
+    assert estimate["exploration_minutes"] == pytest.approx(exploration_seconds / 60, abs=.1)
+    assert total * TIME_MARGIN <= settings["timeout_seconds"] < total * TIME_MARGIN + 300
+    assert settings["timeout_seconds"] % 300 == 0
 
 
 @pytest.mark.parametrize("budget", [0, 0.5])
@@ -28,23 +40,6 @@ def test_exploration_and_qa_models_reproduce_the_october_run():
     assert usd == pytest.approx(.414, rel=.05) and seconds / 60 == pytest.approx(40.3, rel=.05)
     assert 3 * qa_rounds_cost(15) == pytest.approx(.79, rel=.10)  # 3 drafts x 15 rounds cost $0.79
     assert 3 * qa_rounds_seconds(15) / 60 == pytest.approx(19.1, rel=.05)
-
-
-def test_one_timeout_covers_setup_exploration_and_synthesis_with_the_margin():
-    result = plan(3.5)
-    settings, estimate = result["settings"], result["estimate"]
-    _, exploration_seconds = exploration(settings["max_iterations"])
-    total = SETUP_SECONDS + exploration_seconds + estimate["synthesis_minutes"] * 60
-    assert estimate["exploration_minutes"] == pytest.approx(exploration_seconds / 60, abs=.1)
-    assert total * TIME_MARGIN <= settings["timeout_seconds"] < total * TIME_MARGIN + 300
-    assert settings["timeout_seconds"] % 300 == 0
-
-
-@pytest.mark.parametrize("budget", [1.5, 3.0, 3.5, 4.0])
-def test_planned_rounds_fit_the_first_draft_allowance_after_the_write_hold(budget):
-    estimate = plan(budget)["estimate"]
-    assert estimate["qa_usd_per_draft"] <= estimate["first_draft_allowance_usd"] + 1e-9
-    assert estimate["qa_usd_per_draft"] == pytest.approx(qa_rounds_cost(plan(budget)["settings"]["synthesis_iterations"]), abs=1e-4)
 
 
 def test_write_bound_follows_the_completion_limit_and_prices():
@@ -184,3 +179,9 @@ def test_explicit_depth_is_kept_and_costed():
     assert estimate["warnings"] == [] or all("target" in w or "allowance" in w for w in estimate["warnings"])
     too_deep = plan(2.0, settings={**chosen, "max_iterations": 600})["estimate"]
     assert too_deep["total_usd"] > 2.0 and any("above budget_usd" in warning for warning in too_deep["warnings"])
+
+
+def test_cli_prints_the_plan_for_the_given_budget_and_depth(capsys):
+    assert main(["3.5", "--max-iterations", "300"]) == 0
+    expected = plan(3.5, settings={"max_completion_tokens": 10000, "max_iterations": 300})
+    assert json.loads(capsys.readouterr().out) == expected

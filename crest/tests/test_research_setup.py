@@ -15,9 +15,21 @@ SONNET_GATEWAY_RATES = {'input': 2.2, 'cached_input': .11, 'cache_write_5m': 2.7
                         'output': 11., 'web_search': 0.}
 
 
-def test_sonnet_high_research_preserves_opus_sol_argon_high_judges():
+def test_sonnet_high_client_research_with_headroom_preserves_opus_sol_argon_high_judges():
     config = load_config()
     for values in (DEFAULTS, config):
+        research = values['research']['anthropic']
+        # The live high-effort pilot exhausted its old 16k allowance before answering;
+        # the judge limit is separate and unchanged.
+        assert research['max_output_tokens'] == 64000
+        assert values['judges']['anthropic']['max_output_tokens'] == 32768
+        assert research['budget_cap'] == 'soft'
+        assert research['budget_usd'] == 4.5
+        # The live 10-turn profile returned an earlier $1.15 answer during deepening.
+        assert research['tool_mode'] == 'client'
+        assert research['max_continuations'] == 50
+        assert research['max_web_searches'] == 30
+        assert research['max_web_fetches'] == 10
         assert values['judges']['openai']['model'] == 'gpt-6.1-sol'
         assert values['judges']['openai']['reasoning_effort'] == 'high'
         assert values['judges']['gemini']['model'] == 'gemini-4-argon'
@@ -32,7 +44,6 @@ def test_sonnet_high_research_preserves_opus_sol_argon_high_judges():
             assert anthropic['api_key_env'] == 'LITELLM_API_KEY'
             assert anthropic['model_pricing'] == {model: rates}
     assert config['research']['anthropic']['budget_floor_usd'] == 3
-    assert config['research']['anthropic']['budget_usd'] == 4.5
 
 
 @pytest.mark.parametrize('section', ['research', 'judges'])
@@ -77,20 +88,30 @@ def test_gateway_cost_assessment_uses_configured_rates_not_native_list_prices():
     assert settings == original
 
 
-def test_gpt_researcher_is_a_fifth_budgeted_sol_provider():
+def test_gpt_researcher_is_a_fifth_budgeted_sol_provider_with_a_bounded_final_write():
+    """Candidate deeper profile; only a completed pilot can establish its spend."""
     config = load_config()
-    settings = config['research']['gpt_researcher']
-    assert settings['model'] == 'gpt-6.1-sol'
-    assert settings['reasoning_effort'] == 'high'
-    assert settings['budget_cap'] == 'soft'
-    assert settings['budget_usd'] == 4
-    assert settings['budget_target_usd'] == 3.4
-    assert settings['synthesis_reserve_usd'] == .5
-    assert settings['answer_word_limit'] is None
     for values in (DEFAULTS, config):
-        parallel = values['research']['gpt_researcher']
-        assert (parallel['initial_concurrency'], parallel['concurrency']) == (4, 8)
-        assert parallel['deep_research_concurrency'] == 2
+        settings = values['research']['gpt_researcher']
+        assert settings['model'] == 'gpt-6.1-sol'
+        assert settings['reasoning_effort'] == 'high'
+        assert settings['budget_cap'] == 'soft'
+        assert settings['budget_usd'] == 4
+        assert settings['budget_target_usd'] == 3.4
+        assert settings['synthesis_reserve_usd'] == .5
+        assert settings['answer_word_limit'] is None
+        assert (settings['initial_concurrency'], settings['concurrency']) == (4, 8)
+        assert settings['deep_research_breadth'] == 4
+        assert settings['deep_research_depth'] == 3
+        assert settings['deep_research_concurrency'] == 2
+        assert settings['max_iterations'] == 3
+        assert settings['max_research_rounds'] == 3
+        assert settings['timeout_seconds'] == 5400
+        assert settings['call_timeout_seconds'] == 600
+        assert settings['synthesis_reserve_usd'] >= (
+            settings['max_input_tokens'] * 2.5 +
+            settings['synthesis_max_completion_tokens'] * 10) / 1_000_000
+    settings = config['research']['gpt_researcher']
     assert Path(settings['gpt_researcher_path']) == ROOT.parent / 'gpt-researcher'
     assert settings['python_executable'].endswith('/gpt-researcher/.venv/bin/python')
 
@@ -123,11 +144,6 @@ def test_report_names_current_models_without_relabeling_opus_as_sonnet():
     assert JUDGE_LABELS['gpt-6.1-sol'] == 'GPT-6.1 Sol'
 
 
-def test_openai_judge_fallback_is_high_reasoning():
-    from crest.providers.openai import _payload
-    assert _payload('compare', {}, True)['reasoning'] == {'effort': 'high'}
-
-
 @pytest.mark.parametrize('pricing', [None, {'different-model': GATEWAY_RATES}])
 def test_gateway_configuration_requires_tariff_for_selected_model(write_master_config, pricing):
     with pytest.raises(ValueError, match='model_pricing'):
@@ -144,90 +160,17 @@ def test_native_anthropic_configuration_can_use_native_rates(write_master_config
     assert config['research']['anthropic']['model_pricing'] is None
 
 
-def test_sonnet_research_allows_reasoning_room_without_changing_judge_limit():
-    """The live high-effort pilot exhausted its old 16k allowance before answering."""
-    for config in (DEFAULTS, load_config()):
-        research = config['research']['anthropic']
-        assert research['max_output_tokens'] == 64000
-        assert research['budget_cap'] == 'soft'
-        assert research['budget_usd'] == 4.5
-        assert research['effort'] == 'high'
-        assert config['judges']['anthropic']['max_output_tokens'] == 32768
-
-
-def test_client_research_can_deepen_beyond_first_round_tool_turns():
-    """The live 10-turn profile returned an earlier $1.15 answer during deepening."""
-    for config in (DEFAULTS, load_config()):
-        research = config['research']['anthropic']
-        assert research['tool_mode'] == 'client'
-        assert research['max_continuations'] == 50
-        assert research['max_web_searches'] == 30
-        assert research['max_web_fetches'] == 10
-        assert research['budget_usd'] == 4.5
-
-
-def test_gpt_researcher_depth_profile_preserves_a_bounded_final_write():
-    """Candidate deeper profile; only a completed pilot can establish its spend."""
-    for config in (DEFAULTS, load_config()):
-        settings = config['research']['gpt_researcher']
-        assert settings['deep_research_breadth'] == 4
-        assert settings['deep_research_depth'] == 3
-        assert settings['deep_research_concurrency'] == 2
-        assert settings['max_iterations'] == 3
-        assert settings['max_research_rounds'] == 3
-        assert settings['timeout_seconds'] == 5400
-        assert settings['call_timeout_seconds'] == 600
-        assert settings['budget_target_usd'] == 3.4
-        assert settings['synthesis_reserve_usd'] == .5
-        assert settings['budget_usd'] == 4
-        assert settings['synthesis_reserve_usd'] >= (
-            settings['max_input_tokens'] * 2.5 +
-            settings['synthesis_max_completion_tokens'] * 10) / 1_000_000
-
-
-@pytest.mark.parametrize('effort', ['high', 'xhigh'])
-def test_gpt_researcher_accepts_explicit_prior_and_requested_effort(write_master_config, effort):
-    config = load_config(write_master_config(**{
-        'research.gpt_researcher.reasoning_effort': effort,
-    }))
-    assert config['research']['gpt_researcher']['reasoning_effort'] == effort
-
-
-def test_all_research_agents_use_soft_budget_thresholds():
-    for config in (DEFAULTS, load_config()):
-        assert set(config['research']) == {'caesar', 'openai', 'gemini', 'anthropic', 'gpt_researcher'}
-        for name, settings in config['research'].items():
-            assert settings['budget_usd'] == (4.5 if name == 'anthropic' else 4)
-            assert settings['budget_cap'] == 'soft'
-            assert settings['answer_word_limit'] is None
-
-
-@pytest.mark.parametrize('source', ['master', 'defaults', 'direct-worker'])
-def test_caesar_uses_medium_research_and_high_synthesis(source, tmp_path):
+@pytest.mark.parametrize('source', ['master', 'defaults', 'direct-worker', 'explicit-prior'])
+def test_caesar_build_config_splits_research_and_synthesis_effort_with_headroom(source, tmp_path):
+    """Generous request limits do not increase the per-answer budget; explicit prior limits survive."""
     from crest.providers.caesar_worker import build_config
 
-    settings = (load_config()['research']['caesar'] if source == 'master' else
-                DEFAULTS['research']['caesar'] if source == 'defaults' else {})
-    runtime = build_config('Question', settings, tmp_path, 'effort-split')
-    assert runtime['LLMHandler']['reasoning_effort'] == 'medium'
-    assert runtime['ArtifactSynthesizer']['synthesis_reasoning_effort'] == 'high'
-    assert runtime['CaesarAgent']['exploration_llm_config']['reasoning_effort'] == 'low'
-    assert runtime['ChromaClientManager']['reasoning_effort'] == 'low'
-
-
-def test_caesar_preserves_explicit_prior_synthesis_effort(tmp_path):
-    from crest.providers.caesar_worker import build_config
-
-    runtime = build_config('Question', {'synthesis_reasoning_effort': 'medium'}, tmp_path, 'prior-profile')
-    assert runtime['LLMHandler']['reasoning_effort'] == 'medium'
-    assert runtime['ArtifactSynthesizer']['synthesis_reasoning_effort'] == 'medium'
-
-
-def test_caesar_high_profile_preserves_write_and_wall_clock_headroom():
-    """Generous request limits do not increase the per-answer budget."""
-    from crest.providers.caesar_worker import build_config
-    for config in (DEFAULTS, load_config()):
-        settings = config['research']['caesar']
+    settings = {'master': lambda: load_config()['research']['caesar'],
+                'defaults': lambda: DEFAULTS['research']['caesar'],
+                'direct-worker': dict,
+                'explicit-prior': lambda: {'max_completion_tokens': 10000, 'call_timeout_seconds': 600,
+                                           'synthesis_reasoning_effort': 'medium'}}[source]()
+    if source in ('master', 'defaults'):
         assert settings['max_completion_tokens'] == 32768
         assert settings['call_timeout_seconds'] == 1200
         assert settings['timeout_seconds'] == 21600
@@ -236,24 +179,29 @@ def test_caesar_high_profile_preserves_write_and_wall_clock_headroom():
         assert settings['query_max_completion_tokens'] == 6000
         assert settings['max_iterations'] == 300
         assert settings['exploration_model'] == settings['kb_model'] == 'gpt-6-luna'
-        runtime = build_config('Question', settings, ROOT / 'crest/results', 'headroom-test')
-        assert runtime['LLMHandler']['max_completion_tokens'] == 32768
-        assert runtime['LLMHandler']['timeout'] == 1200
+    prior = source == 'explicit-prior'
+    runtime = build_config('Question', settings, tmp_path, 'effort-split')
+    assert runtime['LLMHandler']['reasoning_effort'] == 'medium'
+    assert runtime['ArtifactSynthesizer']['synthesis_reasoning_effort'] == ('medium' if prior else 'high')
+    assert runtime['CaesarAgent']['exploration_llm_config']['reasoning_effort'] == 'low'
+    assert runtime['ChromaClientManager']['reasoning_effort'] == 'low'
+    assert runtime['LLMHandler']['max_completion_tokens'] == (10000 if prior else 32768)
+    assert runtime['LLMHandler']['timeout'] == (600 if prior else 1200)
 
 
-def test_caesar_explicit_prior_headroom_is_preserved(write_master_config):
+@pytest.mark.parametrize('agent,overrides,unchanged', [
+    ('gpt_researcher', {'reasoning_effort': 'high'}, {}),
+    ('gpt_researcher', {'reasoning_effort': 'xhigh'}, {}),
+    ('gpt_researcher', {'initial_concurrency': 1, 'concurrency': 1}, {'deep_research_concurrency': 2}),
+    ('caesar', {'synthesis_reasoning_effort': 'medium', 'max_completion_tokens': 10000, 'call_timeout_seconds': 600,
+                'timeout_seconds': 12600, 'synthesis_reserve_usd': 1.76}, {}),
+], ids=['gpt-high-effort', 'gpt-xhigh-effort', 'gpt-serial-answers', 'caesar-prior-headroom'])
+def test_explicit_prior_profile_values_remain_loadable(write_master_config, agent, overrides, unchanged):
+    """New defaults must not reinterpret saved explicit values."""
     settings = load_config(write_master_config(**{
-        'research.caesar.synthesis_reasoning_effort': 'medium',
-        'research.caesar.max_completion_tokens': 10000,
-        'research.caesar.call_timeout_seconds': 600,
-        'research.caesar.timeout_seconds': 12600,
-        'research.caesar.synthesis_reserve_usd': 1.76,
-    }))['research']['caesar']
-    assert settings['synthesis_reasoning_effort'] == 'medium'
-    assert settings['max_completion_tokens'] == 10000
-    assert settings['call_timeout_seconds'] == 600
-    assert settings['timeout_seconds'] == 12600
-    assert settings['synthesis_reserve_usd'] == 1.76
+        f'research.{agent}.{field}': value for field, value in overrides.items()}))['research'][agent]
+    for field, value in {**overrides, **unchanged}.items():
+        assert settings[field] == value, field
 
 
 @pytest.mark.parametrize("agent", ["caesar", "openai", "anthropic", "gpt_researcher"])
@@ -309,16 +257,6 @@ def test_explicit_previous_gpt_token_profile_remains_loadable(write_master_confi
     assert public['budget_target_usd'] == 3.2
     assert public['synthesis_reserve_usd'] == .35
     assert public['budget_cap'] == 'hard'
-
-
-def test_explicit_previous_gpt_answer_parallelism_remains_loadable(write_master_config):
-    config = load_config(write_master_config(**{
-        'research.gpt_researcher.initial_concurrency': 1,
-        'research.gpt_researcher.concurrency': 1,
-    }))
-    settings = config['research']['gpt_researcher']
-    assert (settings['initial_concurrency'], settings['concurrency']) == (1, 1)
-    assert settings['deep_research_concurrency'] == 2
 
 
 def test_gpt_answer_parallelism_uses_real_pipeline_limiter_without_collisions(tmp_path):
@@ -397,7 +335,7 @@ def test_gpt_answer_parallelism_uses_real_pipeline_limiter_without_collisions(tm
 
 
 @pytest.mark.parametrize('source', ['defaults', 'master', 'generation-jobs'])
-def test_all_research_profiles_use_high_instead_of_xhigh_without_word_caps(source, tmp_path):
+def test_all_research_profiles_use_high_soft_budgets_without_xhigh_or_word_caps(source, tmp_path):
     config = copy.deepcopy(DEFAULTS) if source == 'defaults' else load_config()
     settings = config['research']
     if source == 'generation-jobs':
@@ -406,6 +344,8 @@ def test_all_research_profiles_use_high_instead_of_xhigh_without_word_caps(sourc
     assert set(settings) == {'caesar', 'openai', 'gemini', 'anthropic', 'gpt_researcher'}
     for name, values in settings.items():
         assert values['answer_word_limit'] is None, name
+        assert values['budget_usd'] == (4.5 if name == 'anthropic' else 4), name
+        assert values['budget_cap'] == 'soft', name
         assert not any(value == 'xhigh' for key, value in values.items()
                        if key.endswith(('effort', 'thinking_level'))), name
     assert settings['caesar']['reasoning_effort'] == 'medium'
@@ -417,11 +357,12 @@ def test_all_research_profiles_use_high_instead_of_xhigh_without_word_caps(sourc
     assert settings['gpt_researcher']['reasoning_effort'] == 'high'
 
 
-def test_direct_research_fallbacks_use_high_reasoning(tmp_path):
-    from crest.providers import anthropic, caesar_worker, gpt_researcher_worker, openai
+def test_direct_research_and_judge_fallbacks_use_high_reasoning():
+    # Caesar's direct-worker fallback is covered by test_caesar_build_config_splits_research_and_synthesis_effort_with_headroom.
+    from crest.providers import anthropic, gpt_researcher_worker, openai
 
     assert openai._payload('Question', {}, False)['reasoning']['effort'] == 'high'
+    assert openai._payload('compare', {}, True)['reasoning'] == {'effort': 'high'}
     assert anthropic._payload([{'role': 'user', 'content': 'Question'}], {}, False)['output_config']['effort'] == 'high'
-    assert caesar_worker.build_config('Question', {}, tmp_path, 'high-default')['ArtifactSynthesizer']['synthesis_reasoning_effort'] == 'high'
     upstream = gpt_researcher_worker.build_config({})
     assert upstream['REASONING_EFFORT'] == upstream['LLM_KWARGS']['reasoning_effort'] == 'high'

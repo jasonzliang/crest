@@ -44,16 +44,6 @@ def write_receipts(job, req, record):
     (job.directory / 'gpt-researcher-result.json').write_text(json.dumps(record))
 
 
-def test_completed_result_replays_without_launch(tmp_path, monkeypatch):
-    p = provider()
-    job = Job(tmp_path)
-    req = request(job)
-    write_receipts(job, req, result(req))
-    async def forbidden(*args, **kwargs): pytest.fail('must not submit twice')
-    monkeypatch.setattr(asyncio, 'create_subprocess_exec', forbidden)
-    assert asyncio.run(p.generate('Q', {}, job))['text'] == 'Evidence [1].'
-
-
 @pytest.fixture
 def forbid_existing_request_dispatch(monkeypatch):
     def forbidden_preflight(*args, **kwargs):
@@ -62,6 +52,15 @@ def forbid_existing_request_dispatch(monkeypatch):
         pytest.fail('an existing request must not launch another worker')
     monkeypatch.setattr(provider(), 'preflight', forbidden_preflight)
     monkeypatch.setattr(asyncio, 'create_subprocess_exec', forbidden_launch)
+
+
+def test_completed_result_replays_without_launch(tmp_path, forbid_existing_request_dispatch):
+    p = provider()
+    job = Job(tmp_path)
+    req = request(job)
+    write_receipts(job, req, result(req))
+    assert asyncio.run(p.generate('Q', {}, job))['text'] == 'Evidence [1].'
+    assert job.state['remote_status'] == 'completed'
 
 
 @pytest.mark.parametrize('cap', ['hard', 'soft'])
@@ -143,12 +142,16 @@ def test_poll_change_still_rejects_semantic_request_mismatch(
         asyncio.run(p.generate('Q', settings | {'poll_interval_seconds': 1.}, job))
 
 
-@pytest.mark.parametrize('mutation', ['source_identity', 'request_sha256', 'saved_poll'])
-def test_poll_change_still_validates_original_request_digest_and_source(
-        tmp_path, forbid_existing_request_dispatch, mutation):
+@pytest.mark.parametrize('mutation,poll_change', [
+    *[(field, False) for field in ('job_key', 'worker_id', 'protocol_version', 'request_sha256', 'source_identity')],
+    *[(field, True) for field in ('source_identity', 'request_sha256', 'saved_poll')],
+])
+def test_result_identity_mismatch_never_replays_even_after_a_poll_change(
+        tmp_path, forbid_existing_request_dispatch, mutation, poll_change):
+    """A poll-interval change is ignored for identity but still validates the original digest and source."""
     p = provider()
     job = Job(tmp_path)
-    settings = {'poll_interval_seconds': .5, 'reasoning_effort': 'high'}
+    settings = {'poll_interval_seconds': .5, 'reasoning_effort': 'high'} if poll_change else {}
     req = request(job, settings)
     record = result(req)
     if mutation == 'saved_poll':
@@ -157,53 +160,50 @@ def test_poll_change_still_validates_original_request_digest_and_source(
         record[mutation] = 'wrong'
     write_receipts(job, req, record)
     with pytest.raises(RuntimeError, match='receipt identity/protocol mismatch'):
-        asyncio.run(p.generate('Q', settings | {'poll_interval_seconds': 1.}, job))
+        asyncio.run(p.generate('Q', settings | {'poll_interval_seconds': 1.} if poll_change else {}, job))
 
 
-@pytest.mark.parametrize('mutation', ['job_key', 'worker_id', 'protocol_version', 'request_sha256', 'source_identity'])
-def test_result_identity_mismatch_never_replays(tmp_path, mutation):
-    p = provider()
-    job = Job(tmp_path)
-    req = request(job)
-    record = result(req)
-    record[mutation] = 'wrong'
-    write_receipts(job, req, record)
-    with pytest.raises(RuntimeError, match='identity|protocol|receipt'):
-        asyncio.run(p.generate('Q', {}, job))
-
-
-def test_prompt_or_settings_mismatch_is_refused(tmp_path):
+def test_prompt_or_settings_mismatch_is_refused(tmp_path, forbid_existing_request_dispatch):
     p = provider()
     job = Job(tmp_path)
     settings = {'deep_research_depth': 1}
     req = request(job, settings)
     write_receipts(job, req, result(req))
-    with pytest.raises(RuntimeError): asyncio.run(p.generate('different', settings, job))
-    with pytest.raises(RuntimeError): asyncio.run(p.generate('Q', {'deep_research_depth': 2}, job))
+    for prompt, changed in (('different', settings), ('Q', {'deep_research_depth': 2})):
+        with pytest.raises(RuntimeError, match='request identity does not match'):
+            asyncio.run(p.generate(prompt, changed, job))
 
 
-@pytest.mark.parametrize('state', [
-    {'submission_unknown': True}, {'remote_status': 'failed'}, {'remote_status': 'timed_out'},
-    {'worker_pid': 99999999},
+@pytest.mark.parametrize('state,error', [
+    ({'submission_unknown': True}, 'terminal or unknown'), ({'remote_status': 'failed'}, 'terminal or unknown'),
+    ({'remote_status': 'timed_out'}, 'terminal or unknown'), ({'worker_pid': 99999999}, 'disappeared'),
 ])
-def test_ambiguous_or_terminal_jobs_are_not_resubmitted(tmp_path, monkeypatch, state):
+def test_ambiguous_or_terminal_jobs_are_not_resubmitted(
+        tmp_path, monkeypatch, forbid_existing_request_dispatch, state, error):
     p = provider()
-    async def forbidden(*args, **kwargs): pytest.fail('must not submit twice')
-    monkeypatch.setattr(asyncio, 'create_subprocess_exec', forbidden)
     monkeypatch.setattr(p, '_worker_alive', lambda state: False)
-    with pytest.raises(RuntimeError): asyncio.run(p.generate('Q', {}, Job(tmp_path, state)))
+    with pytest.raises(RuntimeError, match=error): asyncio.run(p.generate('Q', {}, Job(tmp_path, state)))
 
 
-def test_orphan_request_prevents_duplicate_paid_submission(tmp_path):
+def test_orphan_request_prevents_duplicate_paid_submission(tmp_path, forbid_existing_request_dispatch):
     p = provider()
     job = Job(tmp_path)
     (tmp_path / 'gpt-researcher-request.json').write_text(json.dumps(request(job)))
-    with pytest.raises(RuntimeError): asyncio.run(p.generate('Q', {}, job))
+    with pytest.raises(RuntimeError, match='Orphan'): asyncio.run(p.generate('Q', {}, job))
 
 
-def test_launch_records_unknown_before_spawn_and_strips_credentials(tmp_path, monkeypatch):
+@pytest.mark.parametrize('create_time', ['known', 'exited', 'denied'])
+def test_launch_records_unknown_before_spawn_and_strips_credentials(tmp_path, monkeypatch, create_time):
+    import psutil
     p = provider()
     job = Job(tmp_path)
+    # A paid worker is already running here, so a create_time lookup failure must not abort the launch record.
+    def lookup(pid):
+        assert pid == 876
+        if create_time == 'exited': raise psutil.NoSuchProcess(pid)
+        if create_time == 'denied': raise psutil.AccessDenied(pid)
+        return SimpleNamespace(create_time=lambda: 123.)
+    monkeypatch.setattr(psutil, 'Process', lookup)
     monkeypatch.setattr(p, 'preflight', lambda settings: {'source_commit': 'pinned'})
     async def launch(*args, **kwargs):
         assert args[1:3] == ('-m', 'crest.providers.gpt_researcher_worker')
@@ -222,6 +222,17 @@ def test_launch_records_unknown_before_spawn_and_strips_credentials(tmp_path, mo
     out = asyncio.run(p.generate('Q', {'api_key': 'never-serialize'}, job))
     assert out['cost_usd'] == .1
     assert job.state['worker_pid'] == 876
+    assert job.state['remote_status'] == 'completed' and job.state['submission_unknown'] is False
+    assert job.state['worker_create_time'] == (123. if create_time == 'known' else None)
+
+
+def test_missing_psutil_fails_before_any_paid_launch(tmp_path, monkeypatch, forbid_existing_request_dispatch):
+    import sys
+    monkeypatch.setitem(sys.modules, 'psutil', None)  # import psutil -> ImportError
+    job = Job(tmp_path)
+    with pytest.raises(ImportError):
+        asyncio.run(provider().generate('Q', {}, job))
+    assert job.state == {} and not (tmp_path / 'gpt-researcher-launch.claim').exists()
 
 
 @pytest.mark.parametrize('parser_available', [False, True])
@@ -349,16 +360,6 @@ def budget_record(req, cost=4.25):
     return record
 
 
-def test_soft_known_overrun_receipt_replays_without_submission(tmp_path, forbid_existing_request_dispatch):
-    p, job = provider(), Job(tmp_path)
-    req = request(job, {'budget_cap': 'soft'})
-    write_receipts(job, req, budget_record(req))
-    before = (tmp_path / 'gpt-researcher-result.json').read_bytes()
-    out = asyncio.run(p.generate('Q', {'budget_cap': 'soft'}, job))
-    assert out['cost_usd'] == 4.25 and out['usage']['budget_cap'] == 'soft'
-    assert (tmp_path / 'gpt-researcher-result.json').read_bytes() == before
-
-
 @pytest.mark.parametrize('mutation', ['missing_mode', 'hard_mode', 'reference', 'result_cost',
     'usage_cost', 'upper_bound', 'unknown', 'pending', 'accounting_copy', 'audit_copy'])
 def test_soft_receipt_overrun_does_not_allow_accounting_or_mode_tampering(
@@ -424,7 +425,7 @@ def test_config_and_provider_agree_on_explicit_budget_policy(tmp_path, cap, refe
         with pytest.raises(ValueError): provider().public_settings(settings)
 
 
-def test_low_writer_reserve_soft_app_provider_and_overrun_receipt_agree(
+def test_low_writer_reserve_soft_app_provider_and_overrun_receipt_agree_and_replay_unchanged(
         tmp_path, forbid_existing_request_dispatch):
     from crest.config import load_config
     settings = {'budget_cap': 'soft', 'budget_usd': .10, 'budget_target_usd': .10,
@@ -438,5 +439,7 @@ def test_low_writer_reserve_soft_app_provider_and_overrun_receipt_agree(
     job = Job(tmp_path / 'job')
     req = request(job, loaded)
     write_receipts(job, req, budget_record(req, .1806))
+    before = (job.directory / 'gpt-researcher-result.json').read_bytes()
     out = asyncio.run(p.generate('Q', loaded, job))
     assert out['cost_usd'] == .1806 and out['usage']['budget_cap'] == 'soft'
+    assert (job.directory / 'gpt-researcher-result.json').read_bytes() == before

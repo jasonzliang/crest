@@ -15,7 +15,6 @@ from .presentation import PRESENTATION_VERSION, present_answer
 from .rubrics import AUT_KIND, AUT_PROTOCOL, rubric_kind
 
 
-CRITERIA = ("new", "useful", "surprising")  # Guidance dimensions, not verdict fields.
 PROTOCOL_VERSION = "nus-overall-pairwise-v3"
 SCHEMA = {
     "type": "object",

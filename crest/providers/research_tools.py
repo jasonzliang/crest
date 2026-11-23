@@ -189,6 +189,8 @@ async def _search(query, count):
 class _PageText(HTMLParser):
     """Small text extractor: no scripts, styles, hidden templates, or subrequests."""
     _HIDDEN = {"script", "style", "noscript", "template", "svg"}
+    # HTML lets pages omit </head>; any other start tag implicitly opens the body.
+    _HEAD = {"head", "title", "meta", "link", "base", "style", "script", "noscript", "template"}
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -203,6 +205,8 @@ class _PageText(HTMLParser):
             self.in_title = True
         if tag == "head":
             self.in_head = True
+        elif tag not in self._HEAD:
+            self.in_head = False
 
     def handle_endtag(self, tag):
         if self.hidden and tag == self.hidden[-1]:

@@ -33,10 +33,3 @@ def protocol_rubric_kind(protocol: str | None) -> str:
         return AUT_KIND
     raise ValueError(f'Unsupported judging protocol: {protocol}')
 
-
-def guidance_names(kind: str) -> str:
-    if kind == NUS_KIND:
-        return 'New, Useful, and Surprising'
-    if kind == AUT_KIND:
-        return 'Fluency, Flexibility, and Originality'
-    raise ValueError(f'Unsupported rubric kind: {kind}')

@@ -208,21 +208,24 @@ async def _cancel(client, remote_id, headers, job, settings, *, research):
 
 
 def _answer(raw):
+    # Optional lists may arrive as null; a malformed part must not make a paid answer unrecoverable.
     if "steps" in raw:
-        content = [part for step in raw["steps"] if step.get("type") == "model_output"
-                   for part in step.get("content", [])]
+        content = [part for step in raw["steps"] or [] if isinstance(step, dict) and step.get("type") == "model_output"
+                   for part in step.get("content") or []]
     else:
         # Older Interactions revisions emitted outputs instead of steps.
-        content = raw.get("outputs", [])
+        content = raw.get("outputs") or []
     text = []
     citations = []
     seen = set()
     for part in content:
-        if part.get("type") != "text" or part.get("thought"):
+        if not isinstance(part, dict) or part.get("type") != "text" or part.get("thought"):
             continue
         if isinstance(part.get("text"), str):
             text.append(part["text"])
-        for annotation in part.get("annotations", []):
+        for annotation in part.get("annotations") or []:
+            if not isinstance(annotation, dict):
+                continue
             url = annotation.get("url")
             if annotation.get("type") == "url_citation" and url and url not in seen:
                 citations.append({"url": url, "title": annotation.get("title", "")})
@@ -247,7 +250,8 @@ def _usage(raw):
     usage["grounding_tool_count"] = grounding
     usage["search_queries"] = None
     if isinstance(grounding, list):
-        searches = [item.get("count") for item in grounding if item.get("type") == "google_search"]
+        searches = [item.get("count") if isinstance(item, dict) else None for item in grounding
+                    if not isinstance(item, dict) or item.get("type") == "google_search"]
         if all(count(value) is not None for value in searches):
             usage["search_queries"] = sum(searches)
     return usage
@@ -282,7 +286,8 @@ def _cost(usage, model, *, research, pricing_date=None):
         if tools is None or not isinstance(grounding, list):
             return None
         for item in grounding:
-            if item.get("type") not in {"google_search", "google_maps"} or count(item.get("count")) is None:
+            if (not isinstance(item, dict) or item.get("type") not in {"google_search", "google_maps"}
+                    or count(item.get("count")) is None):
                 return None
             tool_cost += item["count"] * .014
         # Aggregate loops do not expose each request's context tier. The
@@ -290,7 +295,8 @@ def _cost(usage, model, *, research, pricing_date=None):
         # additional input; account-level free searches are not deducted. The
         # aggregate receipt does not establish this scenario as a cost bound.
         inputs += tools
-    elif tools not in (None, 0) or any(item.get("count") != 0 for item in (grounding or [])):
+    elif (tools not in (None, 0) or grounding is not None and not isinstance(grounding, list)
+          or any(not isinstance(item, dict) or item.get("count") != 0 for item in grounding or [])):
         return None
     if model == ARGON_MODEL:
         if pricing_date is None:

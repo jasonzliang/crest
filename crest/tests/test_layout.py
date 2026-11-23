@@ -12,7 +12,7 @@ import yaml
 from crest.config import ROOT, load_config, load_questions
 
 
-def test_default_config_resolves_the_packaged_layout():
+def test_master_config_is_the_only_profile_resolves_the_packaged_layout_and_names_every_default_flag():
     config = load_config()
     assert Path(config['_config_path']) == ROOT / 'crest/configs/crest.yaml'
     assert Path(config['questions']) == ROOT / 'crest/data/queries_n50_v2.jsonl'
@@ -21,13 +21,9 @@ def test_default_config_resolves_the_packaged_layout():
     assert Path(config['output_dir']) == ROOT / 'crest/results'
     assert Path(config['cache_dir']) == ROOT / 'crest/results/.cache/generation'
     assert Path(config['research']['caesar']['rome_path']) == ROOT.parent / 'rome'
-
-
-def test_master_config_is_the_only_profile_and_names_every_default_flag():
     configs = sorted(p.name for p in (ROOT / 'crest/configs').glob('*.yaml'))
     assert configs == ['crest.yaml']
     supplied = yaml.safe_load((ROOT / 'crest/configs/crest.yaml').read_text())
-    config = load_config()
     # Every research agent and judge in the defaults is spelled out in the master file.
     assert set(supplied['research']) == set(config['research'])
     assert set(supplied['judges']) == set(config['judges'])
@@ -43,8 +39,13 @@ def test_master_config_is_the_only_profile_and_names_every_default_flag():
         assert 'budget_usd' in supplied['research'][name], name
 
 
-@pytest.fixture
-def isolated_checkout(tmp_path):
+# Every child runs with PYTHONDONTWRITEBYTECODE, so this read-only copy can be shared per module.
+NO_SITE = {'PYTHONNOUSERSITE': '1', 'PYTHONDONTWRITEBYTECODE': '1'}
+
+
+@pytest.fixture(scope='module')
+def isolated_checkout(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp('uninstalled')
     checkout = tmp_path / 'checkout'
     package = checkout / 'crest'
     package.mkdir(parents=True)
@@ -59,22 +60,16 @@ def isolated_checkout(tmp_path):
     return checkout, dependencies
 
 
-@pytest.mark.parametrize('stage', ['generate', 'judge', 'analyze'])
-def test_module_cli_imports_from_an_uninstalled_checkout(isolated_checkout, stage):
+def test_module_cli_imports_from_an_uninstalled_checkout(isolated_checkout):
+    # One parser serves every stage, so a single --help covers the module entry point.
     checkout, dependencies = isolated_checkout
-    env = os.environ | {'PYTHONPATH': str(dependencies), 'PYTHONNOUSERSITE': '1'}
-    result = subprocess.run([sys.executable, '-S', '-m', 'crest', stage, '--help'],
+    env = os.environ | {'PYTHONPATH': str(dependencies)} | NO_SITE
+    result = subprocess.run([sys.executable, '-S', '-m', 'crest', 'judge', '--help'],
                             cwd=checkout, env=env, text=True,
                             capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr
     assert '--config' in result.stdout
     assert '--run' in result.stdout
-
-
-def test_redundant_stage_wrappers_are_preserved_only_in_the_archive():
-    for filename in ('stage1_generate.py', 'stage2_judge.py', 'stage3_analyze.py'):
-        assert not (ROOT / 'crest' / filename).exists()
-        assert (ROOT / 'crest/_archive/entrypoints' / filename).is_file()
 
 
 @pytest.mark.parametrize('worker', ['caesar_worker', 'gpt_researcher_worker'])
@@ -85,8 +80,7 @@ def test_worker_entrypoint_from_uninstalled_checkout(isolated_checkout, tmp_path
                  else ['-m', f'crest.providers.{worker}'])
     result = subprocess.run([sys.executable, '-S', *arguments, '--help'],
                             cwd=tmp_path if direct_script else checkout,
-                            env={'PYTHONNOUSERSITE': '1', 'PYTHONDONTWRITEBYTECODE': '1'},
-                            text=True, capture_output=True, timeout=15)
+                            env=NO_SITE, text=True, capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr
     assert '--request' in result.stdout and '--result' in result.stdout
 
@@ -94,8 +88,7 @@ def test_worker_entrypoint_from_uninstalled_checkout(isolated_checkout, tmp_path
 def test_caesar_budget_cli_from_uninstalled_checkout(isolated_checkout):
     checkout, dependencies = isolated_checkout
     result = subprocess.run([sys.executable, '-S', '-m', 'crest.providers.caesar_budget', '3.5'],
-                            cwd=checkout, env={'PYTHONNOUSERSITE': '1', 'PYTHONDONTWRITEBYTECODE': '1'},
-                            text=True, capture_output=True, timeout=15)
+                            cwd=checkout, env=NO_SITE, text=True, capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr
     plan = json.loads(result.stdout)
     assert 0 < plan['estimate']['total_usd'] <= 3.5
@@ -113,8 +106,7 @@ def test_provider_config_import_order_without_upstream(isolated_checkout, module
     code = (f'import importlib, sys; [importlib.import_module(name) for name in {modules!r}]; '
             "assert not any(name in sys.modules for name in ('rome', 'caesar', 'openai', 'litellm', 'gpt_researcher'))")
     result = subprocess.run([sys.executable, '-S', '-c', code], cwd=checkout,
-                            env={'PYTHONPATH': str(dependencies), 'PYTHONNOUSERSITE': '1',
-                                 'PYTHONDONTWRITEBYTECODE': '1'},
+                            env={'PYTHONPATH': str(dependencies)} | NO_SITE,
                             text=True, capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr
 
@@ -127,12 +119,11 @@ def test_direct_worker_script_resolves_late_provider_import(isolated_checkout, t
     code = (f"import runpy, importlib; runpy.run_path({str(target)!r}, run_name='entrypoint_probe'); "
             f"importlib.import_module('crest.providers.{adapter}')")
     result = subprocess.run([sys.executable, '-S', '-c', code], cwd=tmp_path,
-                            env={'PYTHONNOUSERSITE': '1', 'PYTHONDONTWRITEBYTECODE': '1'},
-                            text=True, capture_output=True, timeout=15)
+                            env=NO_SITE, text=True, capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr
 
 
-@pytest.mark.parametrize('directory', ['_archive', 'configs', 'data', 'prompts', 'providers', 'results'])
+@pytest.mark.parametrize('directory', ['configs', 'data', 'prompts', 'providers', 'results'])
 def test_package_directory_guide_exists_and_local_links_resolve(directory):
     import re
     from urllib.parse import unquote, urlsplit
@@ -154,6 +145,6 @@ def test_gitignore_protects_credentials_without_hiding_templates():
     examples = {'.env.example', '.env.sample', 'crest/.env.example', 'credentials.example.json'}
     result = subprocess.run(['git', 'check-ignore', '--no-index', '--stdin'], cwd=ROOT,
                             input='\n'.join(sorted(private | examples)) + '\n',
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, timeout=15)
     assert result.returncode in (0, 1), result.stderr
     assert set(result.stdout.splitlines()) == private

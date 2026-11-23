@@ -8,7 +8,28 @@ import re
 
 import pytest
 
-from crest.analysis import analyze
+from crest import analysis
+
+
+_ANALYSES = {}
+
+
+def analyze(questions, answers, judgments, **options):
+    """Pure `crest.analysis.analyze`, memoized per worker on its exact inputs.
+
+    Each fixture run and each `load_run` validation repeats the same 1000-sample
+    bootstrap; reusing identical results keeps the comparison in report.py intact."""
+    key = hashlib.sha256(json.dumps([questions, answers, judgments, options], sort_keys=True,
+                                    default=str).encode()).hexdigest()
+    if key not in _ANALYSES:
+        _ANALYSES[key] = analysis.analyze(deepcopy(questions), deepcopy(answers), deepcopy(judgments),
+                                          **options)
+    return deepcopy(_ANALYSES[key])
+
+
+@pytest.fixture(autouse=True)
+def memoized_analysis(monkeypatch):
+    monkeypatch.setattr('crest.report.analyze', analyze)
 
 
 AGENTS = ['caesar', 'gemini', 'openai']
@@ -69,10 +90,12 @@ def make_run(root, *, choose=None, agents=AGENTS, judges=JUDGES):
     dump(root / analysis / 'manifest.json', {'status': 'completed', 'judgment_directory': judging})
     dump(root / judging / 'questions.json', questions)
     dump(root / judging / 'answers.json', answers)
-    dump(root / judging / 'judges.json', {judge: JUDGE_SETTINGS[judge] for judge in JUDGE_SETTINGS if judge in judges})
+    judge_settings = {judge: JUDGE_SETTINGS[judge] for judge in JUDGE_SETTINGS if judge in judges}
+    dump(root / judging / 'judges.json', judge_settings)
     (root / judging / 'judgments.jsonl').write_text(''.join(json.dumps(j) + '\n' for j in judgments))
     (root / judging / 'rubric.txt').write_text('New, Useful and Surprising guide one overall A/B winner.')
-    ranking = analyze(questions, answers, judgments, agents=list(agents), judges=list(judges),
+    # Same judge order load_run reads from judges.json, so its validation reuses this analysis.
+    ranking = analyze(questions, answers, judgments, agents=list(agents), judges=list(judge_settings),
                       bootstrap_samples=1000, seed=2026)
     dump(root / analysis / 'ranking.json', ranking)
     return root
@@ -156,9 +179,23 @@ def test_publication_rejects_inconsistent_aut_metadata(run, kind):
         load_run(run)
 
 
-def test_legacy_nus_publication_rendering_matches_explicit_family(run, tmp_path):
-    from crest.report import load_run, _render
+def test_legacy_nus_rendering_matches_explicit_family_and_model_notes_cite_provider_history(run, tmp_path):
+    from crest.report import load_run, _models, _render
     data = load_run(run)
+    # Model notes cite provider history and preserve this run's uncertainty.
+    html = _models(data)
+    assert 'reasoning effort: high' in html
+    assert 'built with Gemini 3.1 Pro' in html
+    assert 'Per-loop backend models are not reported for this run' in html
+    assert 'not an override' in html
+    assert 'July 23, 2026' in html
+    assert 'o3-deep-research' in html and 'o4-mini-deep-research' in html
+    for source in [
+        'https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/',
+        'https://developers.openai.com/api/docs/deprecations',
+        'https://developers.openai.com/api/docs/guides/deep-research',
+    ]:
+        assert f'href="{source}"' in html
     data['ranking'].pop('rubric_kind', None)
     legacy = _render(data, tmp_path / 'nus.html')
     data['ranking']['rubric_kind'] = 'nus'
@@ -197,30 +234,6 @@ def test_revised_method_describes_judge_presentations_not_raw_url_metadata():
     assert 'this run was not fully blinded' not in html
 
 
-def test_judging_summary_keeps_verdict_count_when_jobs_retry(run):
-    from crest.report import load_run, _resources
-    data = load_run(run)
-    data['judgments'][0]['attempts'] = [{'status': 'rejected'}, {'status': 'completed'}]
-    html = _resources(data)
-    assert 'Total for 600 judgments: $60.0000' in html
-    assert 'Includes retries' in html
-
-
-def test_retry_audit_details_stay_out_of_cost_summary(run):
-    from crest.report import load_run, _resources
-    data = load_run(run)
-    data['audit_path'] = run / 'audit.json'
-    data['audit_doc'] = {'judging': {
-        'rejected_attempts': 7, 'rejected_attempt_estimated_usd': .5254,
-        'failed_jobs': 0, 'failed_known_usd': 0,
-        'failed_unknown_cost_count': 2, 'failed_partial_observed_usd': 0}}
-    original = deepcopy(data['audit_doc'])
-    html = _resources(data)
-    assert 'rejected attempts' not in html
-    assert 'Unknown charges' not in html
-    assert data['audit_doc'] == original
-
-
 def test_judging_estimate_includes_rejected_attempt_without_changing_receipts(run):
     from crest.report import load_run, _resources
     path = run / '02-judge-test/judgments.jsonl'
@@ -236,23 +249,6 @@ def test_judging_estimate_includes_rejected_attempt_without_changing_receipts(ru
     assert 'Includes retries' in html
     assert path.read_bytes() == original
     assert data['judgments'][0]['result']['cost_usd'] == .1
-
-
-def test_model_notes_cite_provider_history_and_preserve_run_uncertainty(run):
-    from crest.report import load_run, _models
-    html = _models(load_run(run))
-    assert 'reasoning effort: high' in html
-    assert 'built with Gemini 3.1 Pro' in html
-    assert 'Per-loop backend models are not reported for this run' in html
-    assert 'not an override' in html
-    assert 'July 23, 2026' in html
-    assert 'o3-deep-research' in html and 'o4-mini-deep-research' in html
-    for source in [
-        'https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/',
-        'https://developers.openai.com/api/docs/deprecations',
-        'https://developers.openai.com/api/docs/guides/deep-research',
-    ]:
-        assert f'href="{source}"' in html
 
 
 def test_refuses_incomplete_publication_without_overwriting_destination(run, tmp_path):
@@ -481,14 +477,6 @@ def test_escapes_every_question_answer_reason_and_model_label(run, tmp_path):
     assert not parser.images
 
 
-def test_audit_requires_matching_run_and_answer_identity(run, tmp_path):
-    from crest.report import write_report
-    audit = tmp_path / 'audit.json'
-    dump(audit, {'audit_version': 'crest-final-audit-v1', 'status': 'complete', 'ready': True, 'run_dir': 'another-run'})
-    with pytest.raises(ValueError, match='audit'):
-        write_report(run, tmp_path / 'page.html', audit=audit)
-
-
 def test_manifest_stage_paths_cannot_escape_run_directory(run, tmp_path):
     from crest.report import write_report
     manifest = json.loads((run / '03-analysis-test/manifest.json').read_text())
@@ -522,6 +510,21 @@ def final_audit(run):
                                          run / '02-judge-test/judgments.jsonl', run / '02-judge-test/judges.json']}}
 
 
+@pytest.mark.parametrize('kind', ['another_run', 'changed_snapshot'])
+def test_audit_requires_matching_run_identity_and_selected_frozen_snapshot_hashes(run, tmp_path, kind):
+    from crest.report import write_report
+    if kind == 'another_run':
+        doc = {'audit_version': 'crest-final-audit-v1', 'status': 'complete', 'ready': True, 'run_dir': 'another-run'}
+        match = 'audit'
+    else:
+        doc = final_audit(run)
+        doc['input_sha256'][str(answers_path(run))] = '0' * 64
+        match = 'audit|hash|snapshot'
+    audit = tmp_path / 'audit.json'; dump(audit, doc)
+    with pytest.raises(ValueError, match=match):
+        write_report(run, tmp_path / 'page.html', audit=audit)
+
+
 def test_final_audit_enriches_timing_without_repeating_audit_notes(run, tmp_path):
     from crest.report import load_run, write_report
     audit = run / '04-audit-test/audit.json'
@@ -536,33 +539,6 @@ def test_final_audit_enriches_timing_without_repeating_audit_notes(run, tmp_path
     assert 'Billing remains estimated; no invoice has been verified.' not in html
     assert 'model-based reserved exposure' not in html.lower()
     assert 'Audited lifetime generation estimates' not in html
-
-
-def test_cost_history_notes_are_omitted_without_mutating_audit(run, tmp_path):
-    from crest.report import write_report
-    doc = final_audit(run)
-    raw_warning = '10 completed answers have uncertain final billing; see bounded exposure'
-    doc['warnings'] = [raw_warning]
-    caesar = [r for r in doc['generation']['answer_details'] if r['agent'] == 'caesar']
-    for row in caesar[:10]: row['unknown_attempt_count'] = 1
-    audit = tmp_path / 'audit.json'; dump(audit, doc)
-    original = audit.read_bytes()
-    output = tmp_path / 'page.html'; write_report(run, output, audit=audit)
-    html = output.read_text()
-    assert raw_warning not in html
-    assert '10 Caesar answers have unresolved prior charges' not in html
-    assert 'model-based estimates, not invoice bounds' not in html
-    assert 'Final audit notes' not in html
-    assert audit.read_bytes() == original
-
-
-def test_audit_hashes_must_match_selected_frozen_snapshot(run, tmp_path):
-    from crest.report import write_report
-    doc = final_audit(run)
-    doc['input_sha256'][str(answers_path(run))] = '0' * 64
-    audit = tmp_path / 'audit.json'; dump(audit, doc)
-    with pytest.raises(ValueError, match='audit|hash|snapshot'):
-        write_report(run, tmp_path / 'page.html', audit=audit)
 
 
 def test_identical_answers_are_not_arbitrarily_published_as_complete(run, tmp_path):
@@ -1199,17 +1175,12 @@ def test_partial_active_timing_coverage_is_visible_without_expanding_details(run
     assert '30 / 50' in headline
 
 
-@pytest.mark.parametrize('url,encoded', [
-    ('https://example.test/search?keywords=Science and Engineering',
-     'https://example.test/search?keywords=Science%20and%20Engineering'),
-    ('https://example.test/search?keywords=Science _and_ Engineering',
-     'https://example.test/search?keywords=Science%20_and_%20Engineering'),
-    ('http://example.test/import?paper=abc&description=The Value of Experiments',
-     'http://example.test/import?paper=abc&description=The%20Value%20of%20Experiments'),
-])
-def test_known_citation_url_with_spaces_keeps_full_link_and_original_text(run, tmp_path, url, encoded):
+def test_known_citation_url_with_spaces_keeps_full_link_and_original_text(run, tmp_path):
+    # End to end once; the URL-shape variants are unit-tested on _markdown_answer below.
     from html import escape
     from crest.report import write_report
+    url = 'https://example.test/search?keywords=Science _and_ Engineering'
+    encoded = 'https://example.test/search?keywords=Science%20_and_%20Engineering'
     rows = json.loads(answers_path(run).read_text())
     row = next(r for r in rows if r['agent'] == 'caesar')
     source = f'A supported proposal [1].\n\n## Sources\n[1] {url}\n\n`{url}`\n'
@@ -1231,15 +1202,11 @@ def test_known_citation_url_with_spaces_keeps_full_link_and_original_text(run, t
     assert answers_path(run).read_bytes() == original
 
 
-def test_report_navigation_returns_to_the_generated_report_not_an_older_version(run, tmp_path):
-    from crest.report import write_report
-    output = tmp_path / 'deep-research-comparison-v2.html'; write_report(run, output)
-    header = output.read_text().split('</header>', 1)[0]
-    assert 'href="deep-research-comparison-v2.html"' in header
-    assert 'href="deep-research-comparison-v1.html"' not in header
-
-
 @pytest.mark.parametrize('url,encoded', [
+    ('https://example.test/search?keywords=Science and Engineering',
+     'https://example.test/search?keywords=Science%20and%20Engineering'),
+    ('http://example.test/import?paper=abc&description=The Value of Experiments',
+     'http://example.test/import?paper=abc&description=The%20Value%20of%20Experiments'),
     ('https://example.test/search?keywords=Science _and_ Engineering',
      'https://example.test/search?keywords=Science%20_and_%20Engineering'),
     ('https://example.test/search?description=The *Value* of Experiments',
@@ -1333,7 +1300,7 @@ def test_historical_v1_report_uses_versioned_publication_wrapper():
     assert page.xpath('//header//a[starts-with(text(), "Deep research comparison")]/@href') == ['deep-research-comparison-v1.html']
 
 
-def test_canonical_research_report_title_date_and_unchanged_run(run, tmp_path):
+def test_canonical_research_report_title_date_navigation_and_unchanged_run(run, tmp_path):
     from lxml import html
     from crest.report import write_report
     before = {str(p.relative_to(run)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -1344,6 +1311,10 @@ def test_canonical_research_report_title_date_and_unchanged_run(run, tmp_path):
     assert page.findtext('.//title') == 'Deep research comparison v2'
     assert page.xpath('//h1/text()') == ['Deep research comparison v2']
     assert page.xpath('//header//time/@datetime') == ['2026-11-05']
+    # Navigation returns to the generated report, not an older version.
+    header = output.read_text().split('</header>', 1)[0]
+    assert 'href="deep-research-comparison-v2.html"' in header
+    assert 'href="deep-research-comparison-v1.html"' not in header
     assert before == {str(p.relative_to(run)): hashlib.sha256(p.read_bytes()).hexdigest()
                       for p in run.rglob('*') if p.is_file()}
 

@@ -30,8 +30,6 @@ def main(argv=None):
                     raise ValueError(f'Unknown {option}: {", ".join(unknown)}; configured: {", ".join(config[section])}')
                 config[section] = {k: config[section][k] for k in dict.fromkeys(names)}
         run = args.run
-        if run and args.agents:
-            raise ValueError('An existing run keeps its agent snapshot; use a new generation run to change agents')
         if not run and args.stage in {'judge', 'analyze'}:
             root = Path(config['output_dir'])
             latest = root / '.cache' / 'latest.json'
@@ -40,6 +38,9 @@ def main(argv=None):
             if not latest.exists():
                 raise ValueError('No generation run yet. Run python -m crest generate first or pass --run PATH')
             run = Path(json.loads(latest.read_text())['run_dir'])
+        # Checked after resolving the latest run: judge/analyze always attach to an existing run.
+        if run and args.agents:
+            raise ValueError('An existing run keeps its agent snapshot; use a new generation run to change agents')
         if args.limit is not None and run:
             raise ValueError('--limit applies only to a new generation run; existing runs keep their question snapshot')
         pipeline = Pipeline(config, run_dir=run, limit=args.limit)

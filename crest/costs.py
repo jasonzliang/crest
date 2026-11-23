@@ -322,6 +322,8 @@ def cost_for_row(row: dict) -> dict:
                                'known_estimate_usd': amount, 'unresolved_reserved_exposure_usd': 0,
                                'cost_unknown': receipt['estimate_incomplete']}
                               for attempt, amount, receipt in zip(attempts[:-1], known[:-1], receipts[:-1])])
+        if details['cumulative_known_estimate_usd'] is None:
+            details['cost_basis'] = 'unpriced'  # Same rule as a single receipt in assess_cost.
         details['assumptions'].append(
             'Judgment costs include retained rejected attempts; displayed response usage belongs only to the selected attempt.')
         return details

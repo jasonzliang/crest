@@ -17,6 +17,19 @@ class Job:
         self.state.update(changes)
 
 
+class Controller:
+    """Shared rate-controller stub with no-op async callbacks; tests override what they observe."""
+
+    async def wait_ready(self):
+        pass
+
+    async def observe_headers(self, headers):
+        pass
+
+    async def rate_limited(self, delay):
+        pass
+
+
 def exercise(handler, *, method="GET", url="https://provider.example/jobs/one",
              settings=None, job=None, deadline=None, **kwargs):
     async def run():
@@ -85,16 +98,19 @@ def test_provider_reset_headers_set_minimum_retry_wait(clock, headers, expected)
 
 @pytest.mark.parametrize("status", [408, 429, 500, 502, 503, 504])
 @pytest.mark.parametrize("method, path", [("GET", "/jobs/one"), ("POST", "/jobs/one/cancel")])
-def test_idempotent_requests_recover_from_transient_http_failure(clock, status, method, path):
+def test_idempotent_requests_recover_from_transient_http_failure_and_append_retry_events(clock, status, method, path):
+    # A prior poll call's event must survive: events accumulate across request() calls.
+    job = Job({"retry_events": [{"method": "POST", "attempt": 1, "status_code": 429}]})
     calls = []
 
     def handler(request):
         calls.append(request)
         return httpx.Response(status if len(calls) == 1 else 200)
 
-    assert exercise(handler, method=method, url="https://provider.example" + path).status_code == 200
+    assert exercise(handler, method=method, url="https://provider.example" + path, job=job).status_code == 200
     assert len(calls) == 2
     assert clock[1] == [1]
+    assert [event["status_code"] for event in job.state["retry_events"]] == [429, status]
 
 
 @pytest.mark.parametrize("status", [400, 401, 403, 408, 500, 502, 503, 504])
@@ -168,7 +184,7 @@ def test_shared_rate_controller_handles_429_wait_without_local_double_sleep(cloc
     calls = []
     actions = []
 
-    class Controller:
+    class Recording:
         async def wait_ready(self):
             actions.append("ready")
 
@@ -179,7 +195,7 @@ def test_shared_rate_controller_handles_429_wait_without_local_double_sleep(cloc
             actions.append(("limited", delay))
 
     job = Job()
-    job.rate_controller = Controller()
+    job.rate_controller = Recording()
 
     def handler(request):
         calls.append(request)
@@ -193,7 +209,7 @@ def test_shared_rate_controller_handles_429_wait_without_local_double_sleep(cloc
 def test_shared_rate_controller_receives_final_rate_limit_for_other_jobs(clock):
     actions = []
 
-    class Controller:
+    class SyncCallbacks:  # observe_headers and rate_limited may be plain functions.
         async def wait_ready(self):
             actions.append("ready")
 
@@ -204,7 +220,7 @@ def test_shared_rate_controller_receives_final_rate_limit_for_other_jobs(clock):
             actions.append(delay)
 
     job = Job()
-    job.rate_controller = Controller()
+    job.rate_controller = SyncCallbacks()
     assert exercise(lambda r: httpx.Response(429, headers={"Retry-After": "3"}), job=job,
                     settings={"retry_attempts": 1}).status_code == 429
     assert actions == ["ready", 3]
@@ -213,7 +229,7 @@ def test_shared_rate_controller_receives_final_rate_limit_for_other_jobs(clock):
 def test_shared_gate_deadline_after_rejected_create_does_not_send_another_post(clock):
     calls = []
 
-    class Controller:
+    class SecondWaitBlocks(Controller):
         ready_count = 0
 
         async def wait_ready(self):
@@ -221,14 +237,8 @@ def test_shared_gate_deadline_after_rejected_create_does_not_send_another_post(c
             if self.ready_count > 1:
                 await asyncio.sleep(10)
 
-        async def observe_headers(self, headers):
-            pass
-
-        async def rate_limited(self, delay):
-            pass
-
     job = Job()
-    job.rate_controller = Controller()
+    job.rate_controller = SecondWaitBlocks()
 
     def handler(request):
         calls.append(request.method)
@@ -242,18 +252,12 @@ def test_shared_gate_deadline_after_rejected_create_does_not_send_another_post(c
 def test_server_error_still_uses_local_backoff_with_shared_controller(clock):
     calls = []
 
-    class Controller:
-        async def wait_ready(self):
-            pass
-
-        async def observe_headers(self, headers):
-            pass
-
+    class NotRateLimited(Controller):
         async def rate_limited(self, delay):
             pytest.fail("503 is not a rate-limit rejection")
 
     job = Job()
-    job.rate_controller = Controller()
+    job.rate_controller = NotRateLimited()
 
     def handler(request):
         calls.append(request.method)
@@ -261,18 +265,6 @@ def test_server_error_still_uses_local_backoff_with_shared_controller(clock):
 
     assert exercise(handler, job=job).status_code == 200
     assert clock[1] == [1]
-
-
-def test_retry_events_accumulate_across_poll_calls(clock):
-    job = Job({"retry_events": [{"method": "POST", "attempt": 1, "status_code": 429}]})
-    calls = []
-
-    def handler(request):
-        calls.append(request.method)
-        return httpx.Response(503 if len(calls) == 1 else 200)
-
-    assert exercise(handler, job=job).status_code == 200
-    assert [event["status_code"] for event in job.state["retry_events"]] == [429, 503]
 
 
 def test_checkpoint_time_cannot_make_retry_sleep_exceed_deadline(clock):
@@ -311,18 +303,12 @@ def test_non_exhausted_token_reset_does_not_delay_a_request_rate_limit(clock):
 def test_shared_gate_that_returns_after_deadline_cannot_send_a_request(clock):
     calls = []
 
-    class Controller:
+    class LateGate(Controller):
         async def wait_ready(self):
             clock[0][0] += 10
 
-        async def observe_headers(self, headers):
-            pass
-
-        async def rate_limited(self, delay):
-            pass
-
     job = Job()
-    job.rate_controller = Controller()
+    job.rate_controller = LateGate()
 
     def handler(request):
         calls.append(request.method)

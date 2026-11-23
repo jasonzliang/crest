@@ -13,15 +13,6 @@ import pytest
 from crest.providers import research_tools
 
 
-def test_unknown_tool_is_an_explicit_error_without_sources():
-    result = asyncio.run(research_tools.execute_tool("shell", {"command": "whoami"}))
-    assert result["is_error"] is True
-    assert "unknown tool" in result["text"].lower()
-    assert result["content"] == result["text"]
-    assert result["citations"] == []
-    assert result["error"]
-
-
 @pytest.mark.parametrize("name, arguments", [
     ("web_search", None), ("web_search", []), ("web_search", {}),
     ("web_search", {"query": " "}), ("web_search", {"query": 123}),
@@ -88,6 +79,11 @@ def assert_error(result, phrase):
     assert result["citations"] == []
 
 
+@pytest.mark.parametrize("name", ["shell", "unknown"])
+def test_unknown_tool_is_an_explicit_error_without_sources(name):
+    assert_error(asyncio.run(research_tools.execute_tool(name, {"command": "whoami"})), "unknown tool")
+
+
 def test_search_uses_explicit_auto_backend_is_capped_and_runs_off_the_event_loop(monkeypatch):
     def rows():
         for index in range(5):
@@ -128,7 +124,11 @@ def test_search_filters_invalid_and_duplicate_sources(monkeypatch):
     assert "Fake" not in result["text"] and "Duplicate" not in result["text"]
 
 
-@pytest.mark.parametrize("rows", [[], [None, {}, {"title": "No URL"}, {"href": "file:///etc/passwd"}]])
+@pytest.mark.parametrize("rows", [
+    [], [None, {}, {"title": "No URL"}, {"href": "file:///etc/passwd"}],
+    [{"href": "https://example.test/" + "é" * 600, "title": "Oversized"}],  # Normalized URL exceeds the limit.
+    [{"link": "http://127.0.0.1/secrets", "description": "Not public evidence"}],  # Alias cannot bypass validation.
+], ids=["empty", "invalid-rows", "oversized-normalized-url", "private-link-alias"])
 def test_search_without_usable_sources_is_not_a_success(monkeypatch, rows):
     install_search(monkeypatch, rows)
     assert_error(asyncio.run(research_tools.execute_tool("web_search", {"query": "Q"})), "no usable")
@@ -145,39 +145,61 @@ def test_search_backend_failure_is_explicit_and_does_not_echo_secrets(monkeypatc
     assert "SECRET" not in result["text"]
 
 
-def test_search_timeout_is_bounded(monkeypatch):
+@pytest.mark.parametrize("limit, call", [
+    ("SEARCH_TIMEOUT", lambda: asyncio.run(research_tools.execute_tool("web_search", {"query": "Q"}))),
+    ("DNS_TIMEOUT", lambda: fetch(lambda request: pytest.fail("Unresolved host reached transport"))),
+], ids=["search", "dns"])
+def test_stalled_worker_thread_timeout_is_bounded(monkeypatch, limit, call):
     async def stalled_thread(*args, **kwargs):
         await asyncio.sleep(60)
 
-    monkeypatch.setattr(research_tools, "SEARCH_TIMEOUT", .01)
+    monkeypatch.setattr(research_tools, limit, .01)
     monkeypatch.setattr(asyncio, "to_thread", stalled_thread)
-    assert_error(asyncio.run(research_tools.execute_tool("web_search", {"query": "Q"})), "timed out")
+    assert_error(call(), "timed out")
 
 
-def test_html_fetch_extracts_title_and_visible_text_without_ddgs():
+@pytest.mark.parametrize("html, title, visible", [
+    ("""
+        <html><head><title>Paper &amp; evidence</title><style>HIDDEN_STYLE</style></head>
+        <body><h1>Actual finding</h1><p>Alpha &amp; beta.</p>
+        <script>SECRET_SCRIPT</script><noscript>NO_SCRIPT</noscript>
+        <template>HIDDEN_TEMPLATE</template><svg><text>SVG_DATA</text></svg></body></html>
+    """, "Paper & evidence", ["Actual finding", "Alpha & beta."]),
+    # Regression: an omitted </head> (valid HTML) used to hide the whole body.
+    ("<html><head><title>Paper</title><body><p>Actual finding</p></body></html>", "Paper", ["Actual finding"]),
+    ("<head><title>Paper</title><meta charset=utf-8><h1>Actual finding</h1>", "Paper", ["Actual finding"]),
+], ids=["hidden-elements", "unclosed-head-body-tag", "unclosed-head-flow-content"])
+def test_html_fetch_extracts_title_and_visible_text_over_pinned_dns_without_ddgs(html, title, visible):
     def handler(request):
         assert request.url.host == "93.184.216.34"  # DNS is pinned, not resolved again by HTTPX.
         assert request.headers["host"] == "example.test"
         assert request.extensions["sni_hostname"] == "example.test"
-        return httpx.Response(200, headers={"content-type": "text/html; charset=utf-8"}, text="""
-            <html><head><title>Paper &amp; evidence</title><style>HIDDEN_STYLE</style></head>
-            <body><h1>Actual finding</h1><p>Alpha &amp; beta.</p>
-            <script>SECRET_SCRIPT</script><noscript>NO_SCRIPT</noscript>
-            <template>HIDDEN_TEMPLATE</template><svg><text>SVG_DATA</text></svg></body></html>
-        """)
+        return httpx.Response(200, headers={"content-type": "text/html; charset=utf-8"}, text=html)
 
     result = fetch(handler)
     assert result["is_error"] is False
-    assert result["citations"] == [{"url": "https://example.test/page", "title": "Paper & evidence"}]
-    assert "Actual finding" in result["text"] and "Alpha & beta." in result["text"]
+    assert result["citations"] == [{"url": "https://example.test/page", "title": title}]
+    for text in visible:
+        assert text in result["text"]
     for hidden in ("HIDDEN_STYLE", "SECRET_SCRIPT", "NO_SCRIPT", "HIDDEN_TEMPLATE", "SVG_DATA"):
         assert hidden not in result["text"]
 
 
 @pytest.mark.parametrize("name", ["web_fetch", "fetch_url"])
-def test_text_fetch_and_alias(name):
-    result = fetch(lambda request: httpx.Response(200, text="Plain evidence", headers={"content-type": "text/plain"}), name=name)
-    assert result["is_error"] is False
+def test_text_fetch_and_alias_close_pinned_connections_without_importing_ddgs(monkeypatch, name):
+    original = builtins.__import__
+    def guarded(module, *args, **kwargs):
+        if module == "ddgs":
+            pytest.fail("Fetching must not import ddgs")
+        return original(module, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", guarded)
+    def handler(request):
+        # Pinned requests must not reuse TLS connections across original hosts.
+        assert request.headers["connection"] == "close"
+        return httpx.Response(200, text="Plain evidence", headers={"content-type": "text/plain"})
+    result = fetch(handler, name=name)
+    assert result["is_error"] is False and result["error"] is False
+    assert result["text"] == result["content"]
     assert "Plain evidence" in result["text"]
     assert result["citations"][0]["url"] == "https://example.test/page"
 
@@ -224,45 +246,47 @@ def test_dns_failure_is_explicit(monkeypatch):
     assert "SECRET" not in result["text"]
 
 
-def test_dns_timeout_is_bounded(monkeypatch):
-    async def stalled_thread(*args, **kwargs):
-        await asyncio.sleep(60)
-    monkeypatch.setattr(research_tools, "DNS_TIMEOUT", .01)
-    monkeypatch.setattr(asyncio, "to_thread", stalled_thread)
-    assert_error(fetch(lambda request: pytest.fail("Unresolved host reached transport")), "timed out")
-
-
 def test_public_ipv6_literal_is_supported():
     result = fetch(lambda request: httpx.Response(200, text="IPv6 evidence"), "https://[2606:4700:4700::1111]/")
     assert result["is_error"] is False
 
 
 @pytest.mark.parametrize("status", [301, 302, 303, 307, 308])
-def test_relative_redirect_uses_original_host_and_cites_final_url(status):
+def test_relative_redirect_uses_original_host_cites_final_url_and_drops_injected_client_credentials(status):
     requests = []
     def handler(request):
         requests.append(request)
+        for header in ("authorization", "proxy-authorization", "x-api-key", "cookie", "anthropic-version"):
+            assert header not in request.headers
+        assert not request.url.query
+        assert request.headers["accept-encoding"] == "identity"
         if len(requests) == 1:
-            return httpx.Response(status, headers={"location": "/final"})
+            return httpx.Response(status, headers={"location": "/final", "set-cookie": "session=SECRET"})
         assert request.url.path == "/final"
         assert request.headers["host"] == "example.test"
         return httpx.Response(200, text="Final evidence")
-    result = fetch(handler)
+    result = fetch(handler, auth=("user", "secret"), headers={"x-api-key": "SECRET", "anthropic-version": "secret"},
+                   cookies={"session": "SECRET"}, params={"api_key": "SECRET"}, follow_redirects=True)
+    assert result["is_error"] is False
     assert len(requests) == 2
     assert result["citations"][0]["url"] == "https://example.test/final"
 
 
-@pytest.mark.parametrize("target", [
-    "http://127.0.0.1/secrets", "http://169.254.169.254/latest/meta-data/", "//localhost/admin",
-    "http://[::1]/", "file:///etc/passwd", "https://user:secret@example.test/", "https://example.test:8080/",
+@pytest.mark.parametrize("target, phrase", [
+    *[(unsafe, "url") for unsafe in (
+        "http://127.0.0.1/secrets", "http://169.254.169.254/latest/meta-data/", "//localhost/admin",
+        "http://[::1]/", "file:///etc/passwd", "https://user:secret@example.test/", "https://example.test:8080/")],
+    # HTTPX may reject a malformed Location while constructing next_request,
+    # even with automatic redirects disabled; either path must report an error.
+    *[(malformed, "") for malformed in ("http://[broken/", "https://[::1", "\t/hidden", "/page\n")],
 ])
-def test_redirect_to_unsafe_destination_is_not_followed(target):
+def test_unsafe_or_malformed_redirect_is_an_error_and_not_followed(target, phrase):
     requests = []
     def handler(request):
         requests.append(request)
         assert len(requests) == 1
         return httpx.Response(302, headers={"location": target})
-    assert_error(fetch(handler), "url")
+    assert_error(fetch(handler), phrase)
     assert len(requests) == 1
 
 
@@ -306,11 +330,14 @@ def test_unsupported_content_types_are_explicit(content_type):
     assert_error(fetch(lambda request: httpx.Response(200, content=b"not a page", headers={"content-type": content_type})), "content type")
 
 
-def test_http_timeout_is_an_explicit_tool_error():
-    def timeout(request):
-        raise httpx.ReadTimeout("SECRET", request=request)
-    result = fetch(timeout)
-    assert_error(result, "timed out")
+@pytest.mark.parametrize("failure, phrase", [
+    (httpx.ReadTimeout, "timed out"), (httpx.ConnectError, "http fetch failed"),
+], ids=["timeout", "transport"])
+def test_http_timeout_or_transport_failure_is_explicit_and_does_not_echo_credentials(failure, phrase):
+    def failed(request):
+        raise failure("proxy user:SECRET", request=request)
+    result = fetch(failed)
+    assert_error(result, phrase)
     assert "SECRET" not in result["text"]
 
 
@@ -366,23 +393,6 @@ def test_empty_pages_do_not_become_sources(body, content_type):
     assert_error(fetch(lambda request: httpx.Response(200, text=body, headers={"content-type": content_type})), "no usable")
 
 
-def test_injected_client_auth_cookies_headers_and_params_are_not_inherited():
-    requests = []
-    def handler(request):
-        requests.append(request)
-        for header in ("authorization", "proxy-authorization", "x-api-key", "cookie", "anthropic-version"):
-            assert header not in request.headers
-        assert not request.url.query
-        assert request.headers["accept-encoding"] == "identity"
-        if len(requests) == 1:
-            return httpx.Response(302, headers={"location": "/final", "set-cookie": "session=SECRET"})
-        return httpx.Response(200, text="Public evidence")
-    result = fetch(handler, auth=("user", "secret"), headers={"x-api-key": "SECRET", "anthropic-version": "secret"},
-                   cookies={"session": "SECRET"}, params={"api_key": "SECRET"}, follow_redirects=True)
-    assert result["is_error"] is False
-    assert len(requests) == 2
-
-
 def test_default_fetch_creates_a_clean_client_ignoring_environment(monkeypatch):
     real_client = httpx.AsyncClient
     created = []
@@ -400,16 +410,6 @@ def test_default_fetch_creates_a_clean_client_ignoring_environment(monkeypatch):
     assert len(created) == 1
 
 
-def test_fetch_does_not_import_the_optional_search_package(monkeypatch):
-    original = builtins.__import__
-    def guarded(name, *args, **kwargs):
-        if name == "ddgs":
-            pytest.fail("Fetching must not import ddgs")
-        return original(name, *args, **kwargs)
-    monkeypatch.setattr(builtins, "__import__", guarded)
-    assert fetch(lambda request: httpx.Response(200, text="Evidence"))["is_error"] is False
-
-
 def test_caller_cancellation_is_not_swallowed():
     async def cancelled(request):
         raise asyncio.CancelledError
@@ -421,31 +421,6 @@ def test_normalized_url_length_is_bounded_before_fetch():
     url = "https://example.test/" + "é" * 600
     assert len(url) < 2048
     assert_error(fetch(lambda request: pytest.fail("Oversized encoded URL reached transport"), url), "url")
-
-
-def test_search_rejects_a_source_whose_normalized_url_exceeds_the_limit(monkeypatch):
-    install_search(monkeypatch, [{"href": "https://example.test/" + "é" * 600, "title": "Oversized"}])
-    assert_error(asyncio.run(research_tools.execute_tool("web_search", {"query": "Q"})), "no usable")
-
-
-@pytest.mark.parametrize("target", ["http://[broken/", "https://[::1", "\t/hidden", "/page\n"])
-def test_malformed_redirect_is_an_explicit_error(target):
-    requests = []
-    def handler(request):
-        requests.append(request)
-        assert len(requests) == 1
-        return httpx.Response(302, headers={"location": target})
-    # HTTPX may reject a malformed Location while constructing next_request,
-    # even with automatic redirects disabled; either path must report an error.
-    assert_error(fetch(handler), "")
-
-
-def test_http_transport_failure_does_not_echo_credentials():
-    def failed(request):
-        raise httpx.ConnectError("proxy user:SECRET", request=request)
-    result = fetch(failed)
-    assert_error(result, "http fetch failed")
-    assert "SECRET" not in result["text"]
 
 
 def test_cross_host_redirect_preserves_the_new_host_and_sni():
@@ -484,21 +459,6 @@ def test_actual_search_worker_timeout_returns_before_the_worker_finishes(monkeyp
     asyncio.run(run())
 
 
-def test_error_flags_are_boolean_and_messages_are_in_text():
-    failed = asyncio.run(research_tools.execute_tool("unknown", {}))
-    assert failed["error"] is True and failed["is_error"] is True
-    assert failed["text"] == failed["content"] and failed["text"]
-    succeeded = fetch(lambda request: httpx.Response(200, text="Public evidence"))
-    assert succeeded["error"] is False and succeeded["is_error"] is False
-
-
-def test_pinned_requests_do_not_reuse_tls_connections_across_original_hosts():
-    def handler(request):
-        assert request.headers["connection"] == "close"
-        return httpx.Response(200, text="Evidence")
-    assert fetch(handler)["is_error"] is False
-
-
 @pytest.mark.parametrize("url_field", ["href", "url", "link"])
 @pytest.mark.parametrize("snippet_field", ["body", "snippet", "description"])
 def test_search_accepts_compatible_result_field_names_and_bounds_snippets(monkeypatch, url_field, snippet_field):
@@ -522,8 +482,3 @@ def test_search_falls_back_past_empty_or_nontext_snippets(monkeypatch):
     assert result["error"] is False
     assert "Actual finding." in result["text"]
     assert result["citations"] == [{"url": "https://example.test/paper", "title": "Paper"}]
-
-
-def test_search_link_alias_cannot_bypass_source_url_validation(monkeypatch):
-    install_search(monkeypatch, [{"link": "http://127.0.0.1/secrets", "description": "Not public evidence"}])
-    assert_error(asyncio.run(research_tools.execute_tool("web_search", {"query": "Q"})), "no usable")

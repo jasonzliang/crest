@@ -20,34 +20,32 @@ def assert_retrieval(config, top_k, top_n, *, reranking=True):
     assert kb["rerank_top_n"] == top_n
 
 
-def test_shipped_preset_uses_fifty_ten(tmp_path):
-    settings = yaml.safe_load((ROOT / "crest/configs/crest.yaml").read_text())["research"]["caesar"]
-    assert settings["enable_reranking"] is True
-    assert_retrieval(build_config("Question", settings, tmp_path, "preset"), 50, 10)
+def _shipped_preset():
+    return yaml.safe_load((ROOT / "crest/configs/crest.yaml").read_text())["research"]["caesar"]
 
 
-def test_python_config_defaults_use_fifty_ten(tmp_path):
+def _python_defaults():
     from crest.config import DEFAULTS
-
-    settings = DEFAULTS["research"]["caesar"]
-    assert settings["enable_reranking"] is True
-    assert_retrieval(build_config("Question", settings, tmp_path, "python-defaults"), 50, 10)
+    return DEFAULTS["research"]["caesar"]
 
 
-def test_direct_worker_uses_fifty_ten_when_omitted(tmp_path):
-    assert_retrieval(build_config("Question", {}, tmp_path, "defaults"), 50, 10)
+@pytest.mark.parametrize("source", [_shipped_preset, _python_defaults, dict], ids=["shipped-preset", "python-defaults", "omitted"])
+def test_every_default_source_uses_fifty_ten_with_reranking(tmp_path, source):
+    settings = source()
+    if settings:
+        assert settings["enable_reranking"] is True
+    assert_retrieval(build_config("Question", settings, tmp_path, "defaults"), 50, 10)
 
 
-@pytest.mark.parametrize("top_k,top_n", [(15, 10), (32, 7)])
-def test_explicit_retrieval_overrides_are_preserved(tmp_path, top_k, top_n):
-    settings = {"synthesis_top_k": top_k, "synthesis_top_n": top_n}
-    assert_retrieval(build_config("Question", settings, tmp_path, "override"), top_k, top_n)
-
-
-@pytest.mark.parametrize("enabled", [True, False])
-def test_reranking_flag_is_forwarded_without_forcing_it_on(tmp_path, enabled):
-    config = build_config("Question", {"enable_reranking": enabled}, tmp_path, "flag")
-    assert_retrieval(config, 50, 10, reranking=enabled)
+@pytest.mark.parametrize("settings,top_k,top_n,reranking", [
+    ({"synthesis_top_k": 15, "synthesis_top_n": 10}, 15, 10, True),
+    ({"synthesis_top_k": 32, "synthesis_top_n": 7}, 32, 7, True),
+    ({"synthesis_top_k": 15, "synthesis_top_n": 10, "enable_reranking": False}, 15, 10, False),
+    ({"enable_reranking": True}, 50, 10, True),  # The flag is forwarded without forcing it on.
+    ({"enable_reranking": False}, 50, 10, False),
+])
+def test_explicit_retrieval_overrides_and_reranking_flag_are_preserved(tmp_path, settings, top_k, top_n, reranking):
+    assert_retrieval(build_config("Question", settings, tmp_path, "override"), top_k, top_n, reranking=reranking)
 
 
 @pytest.mark.parametrize("bad", ["false", 0, 1, None])
@@ -98,4 +96,3 @@ def test_word_accounting_excludes_abstract_and_appended_sources(tmp_path, body_w
     assert result["text"].startswith(main_text + "\n\nSources\n")
     assert len(result["text"].split()) > body_words
     assert _answer_words(result["text"]) == body_words
-    assert (_answer_words(result["text"]) > 600) is (body_words > 600)

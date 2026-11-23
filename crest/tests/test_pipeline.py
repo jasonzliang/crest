@@ -32,7 +32,7 @@ def test_single_flight_rechecks_cache_after_lock(tmp_path):
                 await asyncio.sleep(.01)
                 job.save(status='completed', result={'text': 'paid once'})
                 return job.state['result']
-        return await asyncio.gather(request(), request(), request())
+        return await asyncio.wait_for(asyncio.gather(request(), request(), request()), timeout=10)
     assert asyncio.run(run()) == [{'text': 'paid once'}] * 3
     assert len(calls) == 1
 
@@ -89,6 +89,9 @@ def test_malformed_completed_generation_is_never_accepted_or_resubmitted(tmp_pat
     job = pipeline.cache.job(task['key'])
     job.save(status='completed', result=result)
     original = job.path.read_bytes()
+    # Regression: plan() before the run used to raise AttributeError for None/list results.
+    assert pipeline.answers() == []
+    assert pipeline.plan()['judge_jobs_ready'] == 0
     for _ in range(2):
         summary = asyncio.run(pipeline.generate())
         assert summary['failed'] == 1
@@ -209,7 +212,7 @@ def test_budget_history_path_is_resolved_and_cannot_mix_with_recovery(tmp_path):
 
 
 def test_timestamped_stages_resume_and_rubric_change_never_rebuys_answers(tmp_path):
-    config = fixture_config(tmp_path)
+    config = fixture_config(tmp_path, n=1)
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
@@ -221,23 +224,23 @@ def test_timestamped_stages_resume_and_rubric_change_never_rebuys_answers(tmp_pa
     assert len(list(run.glob('03-analysis-*/ranking.json'))) == 1
     assert (run / '.cache' / 'judgments').is_dir()
     assert (run / '.cache' / 'analysis').is_dir()
-    assert sum(len(p.generations) for p in providers.values()) == 6
-    assert sum(len(p.judgments) for p in providers.values()) == 24
+    assert sum(len(p.generations) for p in providers.values()) == 3
+    assert sum(len(p.judgments) for p in providers.values()) == 12
     second = Pipeline(config, providers=providers, run_dir=run)
     asyncio.run(second.judge())
     second_analysis = second.analyze()
     assert second_analysis['cache_hit'] is True
     assert len(list(run.glob('02-judge-*'))) == 2
     assert len(list(run.glob('03-analysis-*/ranking.json'))) == 2
-    assert sum(len(p.judgments) for p in providers.values()) == 24
+    assert sum(len(p.judgments) for p in providers.values()) == 12
     Path(config['rubric']).write_text('Changed rubric; still binary.')
     asyncio.run(second.judge())
-    assert sum(len(p.generations) for p in providers.values()) == 6
-    assert sum(len(p.judgments) for p in providers.values()) == 48
+    assert sum(len(p.generations) for p in providers.values()) == 3
+    assert sum(len(p.judgments) for p in providers.values()) == 24
     third = Pipeline(config, providers=providers)
     asyncio.run(third.generate())
     assert third.run_dir != run
-    assert sum(len(p.generations) for p in providers.values()) == 6
+    assert sum(len(p.generations) for p in providers.values()) == 3
 
 
 def test_empty_aut_judgment_stage_keeps_family_from_frozen_rubric(tmp_path):
@@ -290,34 +293,24 @@ def test_aut_rejudging_reuses_answers_and_persists_separate_family_receipts(tmp_
     assert all(row['valid_for_ranking'] is False for row in prior)
 
 
-def test_analysis_cli_accepts_run_dir_and_does_not_need_api_keys(tmp_path):
-    import os
-    import subprocess
-    import sys
+def test_analysis_cli_accepts_run_dir_without_api_keys_and_cache_ignores_completion_order_and_workers(
+        tmp_path, monkeypatch, capsys):
+    from crest.cli import main
     config = fixture_config(tmp_path, n=1)
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
-    env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    env['PYTHONPATH'] = str(Path(__file__).parents[2])
-    result = subprocess.run([sys.executable, '-m', 'crest', 'analyze',
-                             '--run', str(pipeline.run_dir), '--config', config['_config_path']],
-                            cwd=tmp_path, env=env, text=True, capture_output=True)
-    assert result.returncode == 0, result.stderr
+    monkeypatch.chdir(tmp_path)
+    capsys.readouterr()
+    assert main(['analyze', '--run', str(pipeline.run_dir), '--config', config['_config_path']]) == 0
+    assert json.loads(capsys.readouterr().out)['cache_hit'] is True
     assert len(list(pipeline.run_dir.glob('03-analysis-*'))) == 2
-
-
-def test_changed_one_provider_invalidates_only_its_generations(tmp_path):
-    config = fixture_config(tmp_path, n=1)
-    providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
-    first = Pipeline(config, providers=providers).generation_jobs()
-    config['research']['openai']['reasoning_effort'] = 'medium'
-    second = Pipeline(config, providers=providers).generation_jobs()
-    before = {j['agent']: j['key'] for j in first}
-    after = {j['agent']: j['key'] for j in second}
-    assert before['caesar'] == after['caesar']
-    assert before['gemini'] == after['gemini']
-    assert before['openai'] != after['openai']
+    # Neither judgment completion order nor the analysis worker count is part of the cache key.
+    source = pipeline._latest_stage('judge') / 'judgments.jsonl'
+    source.write_text('\n'.join(reversed(source.read_text().splitlines())) + '\n')
+    assert pipeline.analyze()['cache_hit'] is True
+    config['analysis']['workers'] = 2
+    assert pipeline.analyze()['cache_hit'] is True
 
 
 def test_generation_failure_does_not_erase_other_paid_answers(tmp_path):
@@ -335,8 +328,9 @@ def test_generation_failure_does_not_erase_other_paid_answers(tmp_path):
     assert pipeline.cache.job(task['key']).state['remote_id'] == 'still-poll-this'
 
 
-def test_default_dataset_plan_has_fifty_questions_five_agents_and_three_judges():
+def test_default_dataset_plan_has_fifty_questions_five_agents_and_three_judges(tmp_path):
     config = load_config()
+    config.update(cache_dir=str(tmp_path / 'cache'), output_dir=str(tmp_path / 'results'))
     providers = {name: FakeProvider(name) for name in config['research']}
     pipeline = Pipeline(config, providers=providers)
     assert len(pipeline.questions) == 50
@@ -362,20 +356,12 @@ def test_all_five_agents_generate_concurrently_on_exact_v2_inputs(tmp_path):
     """Offline orchestration only: fake costs prove concurrency, not live spending."""
     from copy import deepcopy
 
+    # Default paths, budgets and word limits are pinned by test_layout and the default-plan test.
     config = load_config()
-    root = Path(__file__).resolve().parents[2]
-    assert Path(config['_config_path']) == root / 'crest/configs/crest.yaml'
-    assert Path(config['questions']) == root / 'crest/data/queries_n50_v2.jsonl'
-    assert Path(config['rubric']) == root / 'crest/prompts/nus_pairwise_v2.txt'
     questions = load_questions(config['questions'])
-    assert len(questions) == 50  # limit=1 below must not replace the full input set.
     names = {'caesar', 'openai', 'gemini', 'anthropic', 'gpt_researcher'}
     assert set(config['research']) == names
     expected_settings = deepcopy(config['research'])
-    assert config['answer_word_limit'] is None
-    for name, settings in expected_settings.items():
-        assert settings['answer_word_limit'] is None
-        assert settings['budget_usd'] == (4.5 if name == 'anthropic' else 4.0)
     assert all(s['budget_cap'] == 'soft' for s in expected_settings.values())  # Warnings, not invoice caps.
     config.update(cache_dir=str(tmp_path / 'cache'), output_dir=str(tmp_path / 'results'))
     entered, controllers = set(), {}
@@ -446,19 +432,6 @@ def test_all_five_agents_generate_concurrently_on_exact_v2_inputs(tmp_path):
     assert config['research'] == expected_settings
 
 
-def test_judge_adapter_change_invalidates_only_that_judge(tmp_path):
-    config = fixture_config(tmp_path, n=1)
-    providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
-    pipeline = Pipeline(config, providers=providers)
-    asyncio.run(pipeline.run())
-    providers['openai'].ADAPTER_VERSION = 'changed-request-semantics'
-    assert pipeline.plan()['judge_cache_hits'] == 6
-    asyncio.run(pipeline.judge())
-    assert len(providers['openai'].judgments) == 12
-    assert len(providers['gemini'].judgments) == 6
-    assert sum(len(p.generations) for p in providers.values()) == 3
-
-
 def test_failed_paid_verdict_keeps_usage_and_cost_but_never_enters_rankings(tmp_path):
     config = fixture_config(tmp_path, n=1)
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
@@ -482,33 +455,23 @@ def test_failed_paid_verdict_keeps_usage_and_cost_but_never_enters_rankings(tmp_
     assert report['costs']['total']['known_usd'] == pytest.approx(charged + .66)
 
 
-def test_analysis_cache_ignores_completion_order(tmp_path):
+def test_missing_credentials_stop_before_creating_a_paid_run(tmp_path, monkeypatch, capsys):
+    from crest.cli import main
     config = fixture_config(tmp_path, n=1)
-    providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
-    pipeline = Pipeline(config, providers=providers)
-    asyncio.run(pipeline.run())
-    source = pipeline._latest_stage('judge') / 'judgments.jsonl'
-    rows = source.read_text().splitlines()
-    source.write_text('\n'.join(reversed(rows)) + '\n')
-    assert pipeline.analyze()['cache_hit'] is True
-
-
-def test_missing_credentials_stop_before_creating_a_paid_run(tmp_path):
-    import os
-    import subprocess
-    import sys
-    config = fixture_config(tmp_path, n=1)
-    env = {k: v for k, v in os.environ.items() if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY'}}
-    env['PYTHONPATH'] = str(Path(__file__).parents[2])
-    result = subprocess.run([sys.executable, '-m', 'crest', 'generate',
-                             '--config', config['_config_path'], '--agents', 'openai'],
-                            cwd=tmp_path, env=env, text=True, capture_output=True)
-    assert result.returncode == 2
-    assert 'OPENAI_API_KEY' in result.stderr
+    async def paid_work(self):
+        raise AssertionError('preflight must stop before any generation starts')
+    # A preflight regression fails here instead of reaching a real adapter (and blocking on it).
+    monkeypatch.setattr(Pipeline, 'generate', paid_work)
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit) as exc:
+        main(['generate', '--config', config['_config_path'], '--agents', 'openai'])
+    assert exc.value.code == 2
+    assert 'OPENAI_API_KEY' in capsys.readouterr().err
     assert not Path(config['output_dir']).exists()
 
 
 def test_single_flight_across_processes(tmp_path):
+    import os
     import subprocess
     import sys
     script = '''
@@ -525,11 +488,18 @@ asyncio.run(run())
 '''
     marker = tmp_path / 'requests.txt'
     children = [subprocess.Popen([sys.executable, '-c', script, str(tmp_path / 'cache'), str(marker)],
-                                 cwd=Path(__file__).parents[2], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 cwd=Path(__file__).parents[2], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 env=os.environ | {'PYTHONDONTWRITEBYTECODE': '1'})
                 for _ in range(2)]
-    for child in children:
-        _, error = child.communicate(timeout=10)
-        assert child.returncode == 0, error.decode()
+    try:
+        for child in children:
+            _, error = child.communicate(timeout=10)
+            assert child.returncode == 0, error.decode()
+    finally:
+        for child in children:  # Never leave a lock holder running after a timeout.
+            if child.poll() is None:
+                child.kill()
+                child.wait()
     assert marker.read_text().splitlines() == ['request']
 
 
@@ -558,24 +528,39 @@ def test_parallelism_ramps_to_ceiling_and_cached_work_does_not_ramp(tmp_path):
     assert cached['parallelism']['openai']['current'] == 1
 
 
-def test_transport_tuning_does_not_invalidate_paid_work(tmp_path):
+def test_transport_tuning_keeps_paid_work_but_changed_provider_or_judge_invalidates_only_its_own(tmp_path):
     config = fixture_config(tmp_path, n=1)
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
-    before = {t['agent']: t['key'] for t in Pipeline(config, providers=providers).generation_jobs()}
+
+    def generation_keys():
+        return {t['agent']: t['key'] for t in Pipeline(config, providers=providers).generation_jobs()}
+
+    before = generation_keys()
     config['research']['openai'].update(initial_concurrency=1, retry_attempts=6)
     config['judges']['openai'].update(initial_concurrency=1, retry_attempts=6)
-    after = {t['agent']: t['key'] for t in Pipeline(config, providers=providers).generation_jobs()}
-    assert before == after
+    assert generation_keys() == before
     assert pipeline.plan()['judge_cache_hits'] == 12
+    # A changed judge adapter invalidates only that judge's verdicts, never the answers.
+    providers['openai'].ADAPTER_VERSION = 'changed-request-semantics'
+    assert pipeline.plan()['judge_cache_hits'] == 6
+    asyncio.run(pipeline.judge())
+    assert len(providers['openai'].judgments) == 12
+    assert len(providers['gemini'].judgments) == 6
+    assert sum(len(p.generations) for p in providers.values()) == 3
+    # A changed request setting invalidates only that provider's generations.
+    before = generation_keys()
+    config['research']['openai']['reasoning_effort'] = 'medium'
+    after = generation_keys()
+    assert before['caesar'] == after['caesar']
+    assert before['gemini'] == after['gemini']
+    assert before['openai'] != after['openai']
 
 
-def test_standalone_judging_reuses_answers_without_keys_or_original_questions(tmp_path):
+def test_standalone_judging_reuses_answers_without_keys_or_original_questions(tmp_path, monkeypatch):
     import importlib
-    import os
-    import subprocess
-    import sys
+    from crest.cli import main
     config = fixture_config(tmp_path, n=1)
     providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
     for name in ('openai', 'gemini'):
@@ -583,26 +568,14 @@ def test_standalone_judging_reuses_answers_without_keys_or_original_questions(tm
     pipeline = Pipeline(config, providers=providers)
     asyncio.run(pipeline.run())
     Path(config['questions']).unlink()
-    env = {k: v for k, v in os.environ.items()
-           if k not in {'OPENAI_API_KEY', 'GOOGLE_API_KEY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY'}}
-    env['PYTHONPATH'] = str(Path(__file__).parents[2])
-    completed = subprocess.run([sys.executable, '-m', 'crest', 'judge', '--judges', 'openai', 'gemini',
-                                '--run', str(pipeline.run_dir), '--config', config['_config_path']],
-                               cwd=tmp_path, env=env, capture_output=True, text=True)
-    assert completed.returncode == 0, completed.stderr
+    monkeypatch.chdir(tmp_path)
+    # Real adapters, no keys (conftest strips them): only cached judgments can succeed.
+    assert main(['judge', '--judges', 'openai', 'gemini',
+                 '--run', str(pipeline.run_dir), '--config', config['_config_path']]) == 0
     stage = json.loads((pipeline.run_dir / 'run.json').read_text())['stages'][-1]
     assert stage['name'] == 'judge'
     assert stage['summary']['cached'] == 12
     assert stage['summary']['failed'] == 0
-
-
-def test_analysis_worker_count_does_not_invalidate_result_cache(tmp_path):
-    config = fixture_config(tmp_path, n=1)
-    providers = {name: FakeProvider(name) for name in ('caesar', 'openai', 'gemini')}
-    pipeline = Pipeline(config, providers=providers)
-    asyncio.run(pipeline.run())
-    config['analysis']['workers'] = 2
-    assert pipeline.analyze()['cache_hit'] is True
 
 
 def test_budget_failure_preserves_observed_estimate_usage_and_flag(tmp_path):
@@ -1035,7 +1008,8 @@ def test_judgment_retries_are_single_flight_under_concurrent_resume(tmp_path):
         return {**verdict_receipt(), 'text': 'invalid JSON'} if len(calls) == 1 else verdict_receipt()
     provider.judge = judge
     async def run():
-        return await asyncio.gather(*(pipeline._execute(task, 'judge') for _ in range(3)))
+        return await asyncio.wait_for(asyncio.gather(*(pipeline._execute(task, 'judge') for _ in range(3))),
+                                      timeout=10)
     results = asyncio.run(run())
     assert [cached for _, cached in results] == [False, True, True]
     assert all(row['cost_usd'] == pytest.approx(.04) for row, _ in results)

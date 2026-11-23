@@ -259,7 +259,7 @@ def _account(turns, prior_attempts=(), *, settings=None):
     usage = sum_usage(usage for usage, _ in accounts) | {
         "turns": len(turns), "interrupted_attempts": len(prior_attempts), "known_cost_usd": known,
         "interrupted_attempt_cost_usd": math.fsum(value for value in prior_known if value is not None)}
-    return usage, None if any(value is None or isinstance(value, bool) for value in costs) else known
+    return usage, None if any(value is None for value in costs) else known
 
 
 def _text_and_citations(turns):
@@ -282,6 +282,17 @@ def _text_and_citations(turns):
 
 def _finished(turn):
     return turn.get("stop_reason") in ("end_turn", "stop_sequence")
+
+
+def _requests_client_tools(turn):
+    return turn.get("stop_reason") == "tool_use" and any(
+        block.get("type") == "tool_use" for block in turn.get("content") or [])
+
+
+def _paused(turn):
+    """The server stopped mid-turn: pause_turn, or tool_use on its own server tools only."""
+    return turn.get("stop_reason") == "pause_turn" or (
+        turn.get("stop_reason") == "tool_use" and not _requests_client_tools(turn))
 
 
 def _client_records(job):
@@ -388,7 +399,8 @@ class _Assembler:
             elif delta_type == "citations_delta":
                 if not isinstance(block.get("citations"), list):
                     block["citations"] = []
-                block["citations"].append(delta.get("citation"))
+                if isinstance(delta.get("citation"), dict):  # A malformed delta must not poison the answer.
+                    block["citations"].append(delta["citation"])
             elif delta_type == "thinking_delta":
                 block["thinking"] = block.get("thinking", "") + delta.get("thinking", "")
             elif delta_type == "signature_delta":
@@ -678,7 +690,11 @@ async def _run(prompt, settings, job, *, client, is_judge):
     if "model" not in settings:
         settings = {**settings, "model": JUDGE_MODEL if is_judge else RESEARCH_MODEL}
     saved = (job.state.get("raw") or {}).get("turns") if isinstance(job.state.get("raw"), dict) else None
-    if saved and saved[-1].get("stop_reason") not in (None, "pause_turn"):
+    # An exchange saved mid-turn (paused, or stopped while client tools ran) is interrupted, not finished.
+    # A client tool turn after a finished round keeps that paid answer rather than paying again.
+    interrupted = saved and (saved[-1].get("stop_reason") is None or _paused(saved[-1]) or (
+        _requests_client_tools(saved[-1]) and not any(_finished(turn) for turn in saved)))
+    if saved and not interrupted:
         # A finished exchange already exists for this job; reuse it instead of paying again (even after an
         # interrupt left submission_unknown set). A round below the budget floor cannot be deepened from a
         # checkpoint, so it is final (and warned about).
@@ -688,10 +704,10 @@ async def _run(prompt, settings, job, *, client, is_judge):
     _validate_settings(settings)
     strict_exposure = (_api_url(settings) != API_URL
                        or not is_judge and settings.get("tool_mode", "server") == "client" and budget_is_hard(settings))
-    retries = max(1, int(settings.get("retry_attempts", 4)))
+    retries = retry_policy(settings)[0]
     if saved:
-        # Paused turns cannot be resumed from a checkpoint (encrypted search results are not kept),
-        # so the exchange restarts; its billed turns stay in the accounting.
+        # Interrupted turns cannot be resumed from a checkpoint (encrypted search results and in-flight
+        # client tool results are not kept), so the exchange restarts; its billed turns stay in the accounting.
         abandoned_usage, abandoned_cost = _account(saved, settings=settings)
         abandoned_raw = copy.deepcopy(job.state["raw"])
         job.save(raw=None, consecutive_interruptions=job.state.get("consecutive_interruptions", 0) + 1,
@@ -700,6 +716,9 @@ async def _run(prompt, settings, job, *, client, is_judge):
             "known_cost_usd": abandoned_usage["known_cost_usd"], "raw": abandoned_raw,
             "model": saved[-1].get("model"), "turns": len(saved)}])
     streak = job.state.get("consecutive_interruptions", len(job.state.get("interrupted_attempts", [])))
+    # Restarted exchanges stay on the streak until one finishes; otherwise its first saved turn
+    # would clear the streak and a crash on every resume would pay again without limit.
+    restarts = streak if saved else 0
     if streak >= retries:
         raise ProviderError(f"Anthropic stream was interrupted {streak} times in a row; review before retrying")
     if client is None:
@@ -759,15 +778,13 @@ async def _run(prompt, settings, job, *, client, is_judge):
             message["_request_budget"] = reservation
         turns.append(message)
         job.save(raw=_raw(turns, settings, _client_records(job)), submission_unknown=False,
-                 remote_status=message.get("stop_reason"), consecutive_interruptions=0)
+                 remote_status=message.get("stop_reason"), consecutive_interruptions=0 if _finished(message) else restarts)
         receipt = _receipt(turns, settings, job)
         usage, cost = receipt["usage"], receipt["cost_usd"]
         over_budget = receipt["budget_exceeded"]
         if over_budget:
             job.save(budget_exceeded=True)
-        paused = message.get("stop_reason") == "pause_turn" or (
-            message.get("stop_reason") == "tool_use"  # The server loop stopped on one of its own tools.
-            and not any(block.get("type") == "tool_use" for block in message.get("content") or []))
+        paused = _paused(message)
         client_use = (not is_judge and settings.get("tool_mode", "server") == "client"
                       and message.get("stop_reason") == "tool_use")
         if paused or client_use:

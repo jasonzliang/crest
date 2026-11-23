@@ -52,13 +52,17 @@ def test_both_protocols_accept_one_overall_winner(winner):
     {"reason": "An overall comparison.", "winner": "tie"},
     {"reason": " ", "winner": "A"},
     {"reason": "An overall comparison.", "winner": "A", "score": 4},
+    {"reason": "An overall comparison.", "winner": "A", "new": "A"},
+    {"winner": "A"},
     {criterion: {"reason": "A separate criterion vote.", "winner": "A"}
      for criterion in ("new", "useful", "surprising")},
 ])
 def test_both_protocols_reject_ties_ratings_and_separate_criterion_votes(verdict):
-    for validate in (ais_protocol.validate_verdict, crest_judging.validate_verdict):
+    for check in (ais_protocol.validate_verdict, crest_judging.validate_verdict):
         with pytest.raises(ValueError):
-            validate(verdict)
+            check(verdict)
+    with pytest.raises(ValueError):
+        ais_protocol.parse_verdict(json.dumps(verdict))
 
 
 def _balanced_equivalent_data(block_count):

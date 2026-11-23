@@ -45,4 +45,4 @@ crest_ais = ["configs/*.json", "prompts/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["crest/tests", "crest_ais/tests"]
-addopts = "-n logical"
+addopts = "-n logical --dist loadgroup"

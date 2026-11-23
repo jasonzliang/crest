@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import random
 
-from .costs import summarize_costs
+from .costs import _money, summarize_costs
 from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, protocol_rubric_kind
 
 ANALYSIS_VERSION = "10"
@@ -37,10 +37,6 @@ def _interval(values):
     return [percentile(0.025), percentile(0.975)]
 
 
-def _known_cost(value):
-    return type(value) in (int, float) and math.isfinite(value) and value >= 0
-
-
 def _costs(records):
     summary = summarize_costs(records)
     return summary | {"known_usd": summary["cumulative_known_estimate_usd"]}
@@ -48,7 +44,7 @@ def _costs(records):
 
 def _failure_costs(records):
     observed = [r["observed_cost_usd"] for r in records
-                if not _known_cost(r.get("cost_usd")) and _known_cost(r.get("observed_cost_usd"))]
+                if not _money(r.get("cost_usd")) and _money(r.get("observed_cost_usd"))]
     return {**_costs(records), "partial_observed_estimate_usd": math.fsum(observed),
             "observed_count": len(observed),
             "budget_exceeded_count": sum(r.get("budget_exceeded") is True for r in records)}
@@ -71,8 +67,9 @@ def _summarize_view(task):
     totals = {a: sum(v[a] for v in vectors) for a in agents}
     scores, ranks = {a: [] for a in agents}, {a: [] for a in agents}
     contrast_draws = {pair: [] for pair in combinations(agents, 2)} if include_contrasts else {}
+    columns = {a: [vector[a] for vector in vectors] for a in agents}
     for draw in draws:
-        sample = {a: sum(vectors[i][a] for i in draw) for a in agents}
+        sample = {a: sum(map(column.__getitem__, draw)) for a, column in columns.items()}
         for a in agents:
             scores[a].append(sample[a] / denominator)
             ranks[a].append(1 + sum(value > sample[a] for value in sample.values()))
@@ -118,7 +115,8 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
     superseded_keys = {row['key'] for row in prior_judgments}
     superseded_excluded = 0
     question_ids = [q["id"] for q in questions]
-    if len(set(question_ids)) != len(question_ids):
+    question_id_set = set(question_ids)
+    if len(question_id_set) != len(question_ids):
         raise ValueError("Question IDs must be unique")
     families = set()
     if rubric_kind is not None:
@@ -126,7 +124,7 @@ def analyze(questions: list[dict], answers: list[dict], judgments: list[dict], *
             raise ValueError('Unsupported rubric kind')
         families.add(rubric_kind)
     for row in judgments:
-        if row.get('key') in superseded_keys or row.get('question_id') not in question_ids:
+        if row.get('key') in superseded_keys or row.get('question_id') not in question_id_set:
             continue
         family = protocol_rubric_kind(row.get('protocol_version'))
         if row.get('rubric_kind', family) != family:

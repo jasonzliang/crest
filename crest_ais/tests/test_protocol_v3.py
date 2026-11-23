@@ -55,30 +55,24 @@ def test_new_plan_versions_change_keys_without_changing_paper_draw(tmp_path):
     assert {job["key"] for job in old["jobs"]}.isdisjoint(job["key"] for job in plan["jobs"])
 
 
-def test_new_prompts_neutralize_urls_and_record_raw_and_presented_hashes(tmp_path):
-    old = legacy_plan(tmp_path)
-    raw = "[Page 1]\nA mechanism [source](https://example.org/paper?utm_source=openai)."
-    (tmp_path / "a.txt").write_text(raw)
-    plan = make_plan(old["catalog"], old["agents"], old["judges"], tmp_path, "Compare creativity.")
-    job = plan["jobs"][0]
-    data = json.loads(job["prompt"].split("UNTRUSTED INPUT DATA (JSON):\n", 1)[1])
-    assert "utm_source" not in data["A"]
-    assert "example.org" not in data["A"]
-    assert "A mechanism" in data["A"]
-    assert job["answer_hashes"][0] == hashlib.sha256(raw.encode()).hexdigest()
-    assert job["presented_answer_hashes"][0] == hashlib.sha256(data["A"].encode()).hexdigest()
-    assert job["presentation_version"] == "citation-neutral-v1"
-    assert job["judging_protocol"] == "nus-overall-pairwise-v3"
-    assert (tmp_path / "a.txt").read_text() == raw
-
-
-def test_raw_url_changes_preserve_presentation_but_invalidate_job_identity(tmp_path):
+def test_new_prompts_neutralize_urls_record_hashes_and_raw_url_changes_invalidate_job_identity(tmp_path):
     old = legacy_plan(tmp_path)
     plans = []
     for provider in ("openai", "google"):
-        (tmp_path / "a.txt").write_text(
-            f"[Page 1]\nA mechanism [source](https://example.org/paper?utm_source={provider}).")
+        raw = f"[Page 1]\nA mechanism [source](https://example.org/paper?utm_source={provider})."
+        (tmp_path / "a.txt").write_text(raw)
         plans.append(make_plan(old["catalog"], old["agents"], old["judges"], tmp_path, "Compare creativity."))
+        job = plans[-1]["jobs"][0]
+        data = json.loads(job["prompt"].split("UNTRUSTED INPUT DATA (JSON):\n", 1)[1])
+        assert "utm_source" not in data["A"]
+        assert "example.org" not in data["A"]
+        assert "A mechanism" in data["A"]
+        assert job["answer_hashes"][0] == hashlib.sha256(raw.encode()).hexdigest()
+        assert job["presented_answer_hashes"][0] == hashlib.sha256(data["A"].encode()).hexdigest()
+        assert job["presentation_version"] == "citation-neutral-v1"
+        assert job["judging_protocol"] == "nus-overall-pairwise-v3"
+        assert (tmp_path / "a.txt").read_text() == raw
+    # Raw URL changes keep the presented prompt but still change every job key.
     assert [job["prompt"] for job in plans[0]["jobs"]] == [job["prompt"] for job in plans[1]["jobs"]]
     assert {job["key"] for job in plans[0]["jobs"]}.isdisjoint(job["key"] for job in plans[1]["jobs"])
 

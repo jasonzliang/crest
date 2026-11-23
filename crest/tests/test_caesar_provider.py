@@ -1,8 +1,11 @@
 """Offline Caesar protocol, isolation, and SDK accounting checks."""
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+import importlib
 import json
 from pathlib import Path
+import threading
 from types import SimpleNamespace
 import time
 
@@ -11,9 +14,53 @@ import pytest
 from crest.providers import caesar
 from crest.providers import caesar_worker as worker
 
+ROME = str(Path(__file__).resolve().parents[3] / "rome")
+
+
+@pytest.fixture(autouse=True)
+def _restore_litellm_cost_map_env(monkeypatch):
+    # worker._runtime setdefaults this for its dedicated subprocess; undo it after each in-process test.
+    monkeypatch.setenv("LITELLM_LOCAL_MODEL_COST_MAP", "True")
+
+
+# Importing the Rome stack costs ~5 s per process; keep every test that loads it on one xdist worker.
+ROME_WORKER = pytest.mark.xdist_group("rome")
+
+
+def rome_class(tmp_path, module, name):
+    """Import a Rome class through the worker runtime, as the real worker does."""
+    with worker._runtime({"rome_path": ROME}, worker.UsageAudit(5, tmp_path / "setup-usage.json")):
+        return getattr(importlib.import_module(module), name)
+
+
+def _options(model=worker.SOL, tokens=100):
+    return SimpleNamespace(json_data={"model": model, "messages": [], "max_completion_tokens": tokens})
+
 
 class FakeAgent:
     def perceive(self): return "content", []
+
+
+class Clock:
+    """A settable monotonic clock: Caesar has one wall-clock deadline; phases never stop on time."""
+    def __init__(self, now=0): self.now = now
+    def monotonic(self): return self.now
+    def advance(self, seconds): self.now += seconds
+
+
+class Transient(Exception):
+    status_code = 520
+    response = SimpleNamespace(headers={})
+    body = {"retryable": True, "retry_after": 60}
+
+
+def _failing_sdk(sent, error=Transient):
+    """A fake SDK client whose every request fails after being counted as sent."""
+    class SDK:
+        def request(self, *args, **kwargs):
+            sent.append(1)
+            raise error()
+    return SDK
 
 
 class Job:
@@ -98,15 +145,23 @@ def test_unknown_audit_cost_is_not_zero():
     assert result["warnings"]
 
 
-def test_identity_changes_when_rome_source_changes_without_reading_env(tmp_path):
+def test_identity_tracks_rome_source_version_and_commit_without_reading_env(tmp_path, monkeypatch):
     (tmp_path / "caesar").mkdir()
     source = tmp_path / "caesar" / "caesar_agent.py"
     source.write_text("version = 1\n")
     (tmp_path / ".env").write_text("never include credentials")
+    project = tmp_path / "pyproject.toml"
+    project.write_text('[project]\nname="caesar-agent"\nversion="0.4.31"\n')
+    monkeypatch.setattr(caesar.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout="1a297af410063ef44e270bf727a7d4ee0ccc72d9\n"))
     old = caesar.identity_metadata({"rome_path": str(tmp_path)})
-    source.write_text("version = 2\n")
-    assert old != caesar.identity_metadata({"rome_path": str(tmp_path)})
+    assert old["rome_source_version"] == "0.4.31"
+    assert old["rome_git_commit"] == "1a297af410063ef44e270bf727a7d4ee0ccc72d9"
     assert "credentials" not in json.dumps(old)
+    source.write_text("version = 2\n")
+    changed_source = caesar.identity_metadata({"rome_path": str(tmp_path)})
+    assert old != changed_source
+    project.write_text('[project]\nname="caesar-agent"\nversion="0.4.32"\n')
+    assert changed_source != caesar.identity_metadata({"rome_path": str(tmp_path)})
 
 
 def test_completed_local_worker_is_replayed_without_subprocess(tmp_path, monkeypatch):
@@ -198,15 +253,25 @@ def test_worker_retries_honor_configured_backoff_through_adapter(tmp_path, monke
     assert result["usage"]["successful_calls"] == 1
 
 
-def test_resumed_live_worker_is_waited_for_without_duplicate_launch(tmp_path, monkeypatch):
+@pytest.mark.parametrize("elapsed,finishes", [(8000, True), (worker.DEFAULT_TIMEOUT_SECONDS + 301, False)])
+def test_resumed_live_worker_is_awaited_without_relaunch_until_the_worker_timeout(tmp_path, monkeypatch, elapsed, finishes):
+    # Regression: the parent defaulted to 7200 s and killed workers still inside their own 21600 s deadline.
     path = tmp_path / "result.json"
-    job = Job(tmp_path, {"result_path": str(path), "worker_pid": 876, "worker_started_at": time.time()})
-    monkeypatch.setattr(caesar, "_worker_alive", lambda state: True)
+    job = Job(tmp_path, {"result_path": str(path), "worker_pid": 876, "worker_started_at": time.time() - elapsed})
+    terminated = []
+    async def stop(state): terminated.append(state["worker_pid"])
     async def sleep(_): path.write_text(json.dumps(completed()))
     async def no_launch(*args, **kwargs): pytest.fail("duplicate worker")
+    monkeypatch.setattr(caesar, "_worker_alive", lambda state: True)
+    monkeypatch.setattr(caesar, "_terminate_worker", stop)
     monkeypatch.setattr(asyncio, "sleep", sleep)
     monkeypatch.setattr(asyncio, "create_subprocess_exec", no_launch)
-    assert asyncio.run(caesar.generate("Q", {}, job))["text"]
+    if finishes:
+        assert asyncio.run(caesar.generate("Q", {}, job))["text"] and not terminated
+    else:
+        with pytest.raises(TimeoutError, match="21600 seconds"):
+            asyncio.run(caesar.generate("Q", {}, job))
+        assert terminated == [876]
 
 
 @pytest.mark.parametrize("state", [{"submission_unknown": True}, {"worker_pid": 876, "worker_started_at": 1}])
@@ -257,16 +322,25 @@ def test_worker_invokes_api_shuts_down_and_atomically_persists_result(tmp_path, 
     assert not list(tmp_path.glob("*.tmp"))
 
 
-def test_scoped_compatibility_registers_prices_reasoning_and_llama_models():
+def test_scoped_compatibility_registers_prices_models_tokenizer_and_prompt_helpers_then_restores():
     class Handler:
         MODEL_PRICING = {"old": {"input": 1, "output": 2}}
         MODEL_CONTEXT_SIZE = {"old": 1}
         REASONING_MODELS = {"old"}
         _known_models_registered = True
+    class Settings:
+        _prompt_helper, _chat_prompt_helper = None, "preset"
+        prompt_helper = property(lambda self: self._prompt_helper, lambda self, v: setattr(self, "_prompt_helper", v))
+        chat_prompt_helper = property(lambda self: self._chat_prompt_helper, lambda self, v: setattr(self, "_chat_prompt_helper", v))
     config = {"LLMHandler": {"max_completion_tokens": 10000}}
     llama = SimpleNamespace(O1_MODELS={}, CHAT_MODELS={}, ALL_AVAILABLE_MODELS={})
-    llm = SimpleNamespace(register_model=lambda entries: None)
-    with worker.compatibility(Handler, config, llm, llama, 2000):
+    llm = SimpleNamespace(model_cost={}, register_model=lambda entries: None)
+    registry, settings = {}, Settings()
+    with worker.compatibility(Handler, config, llm, llama, 2000, tokenizer_registry=registry, llama_settings=settings,
+                              prompt_helpers={"prompt_helper": "big", "chat_prompt_helper": "big-chat"}):
+        assert registry["gpt-6.1-sol"] == "o200k_base"
+        assert settings.prompt_helper == "big" and settings.chat_prompt_helper == "big-chat"
+        assert llama.ALL_AVAILABLE_MODELS[worker.LUNA] == worker.KB_CONTEXT_WINDOW
         assert Handler.MODEL_PRICING["gpt-6.1-sol"] == {"input": 2, "output": 10}
         assert Handler.MODEL_CONTEXT_SIZE["gpt-6.1-sol"] == 1050000
         assert Handler.MODEL_PRICING["gpt-6-luna"] == {"input": .1, "output": .5}
@@ -278,8 +352,10 @@ def test_scoped_compatibility_registers_prices_reasoning_and_llama_models():
         assert llama.CHAT_MODELS["gpt-6.1-sol"] == 1050000
         assert config["LLMHandler"]["max_completion_tokens"] == 2000
     assert "gpt-6.1-sol" not in Handler.MODEL_PRICING
-    assert not llama.CHAT_MODELS
+    assert not llama.CHAT_MODELS and llama.ALL_AVAILABLE_MODELS == {}
     assert config["LLMHandler"]["max_completion_tokens"] == 10000
+    assert registry == {}
+    assert settings._prompt_helper is None and settings._chat_prompt_helper == "preset"
 
 
 def test_sdk_audit_covers_chat_embeddings_and_failed_call_unknown_cost(tmp_path):
@@ -358,17 +434,6 @@ def test_worker_failure_retains_partial_usage_and_still_shuts_down(tmp_path, mon
     assert instances[0].closed
 
 
-def test_compatibility_registers_tokenizer_without_persisting_global_change():
-    class Handler:
-        MODEL_PRICING, MODEL_CONTEXT_SIZE, REASONING_MODELS = {}, {}, set()
-        _known_models_registered = False
-    llama = SimpleNamespace(O1_MODELS={}, CHAT_MODELS={}, ALL_AVAILABLE_MODELS={})
-    registry = {}
-    with worker.compatibility(Handler, {"LLMHandler": {"max_completion_tokens": 10000}}, SimpleNamespace(register_model=lambda _: None), llama, 2000, tokenizer_registry=registry):
-        assert registry["gpt-6.1-sol"] == "o200k_base"
-    assert registry == {}
-
-
 def test_cancellation_keeps_checkpoint_for_resuming_live_worker(tmp_path, monkeypatch):
     job = Job(tmp_path)
     async def launch(*args, **kwargs):
@@ -387,29 +452,13 @@ def test_cancellation_keeps_checkpoint_for_resuming_live_worker(tmp_path, monkey
     assert job.state["remote_status"] == "running"
 
 
-def test_worker_has_own_timeout_when_parent_is_interrupted(tmp_path, monkeypatch):
-    class Agent(FakeAgent):
-        shutdown_called = False
-        def __init__(self, **kwargs): pass
-        def explore(self):
-            time.sleep(.1)
-            return artifact()
-        def shutdown(self): self.shutdown_called = True
-    @contextmanager
-    def runtime(settings, audit): yield Agent
-    monkeypatch.setattr(worker, "_runtime", runtime)
-    path = tmp_path / "result.json"
-    assert worker.run_worker({"prompt": "Q", "settings": {"timeout_seconds": .01}, "output_dir": str(tmp_path / "output"), "job_key": "abc"}, path) == 1
-    assert "Deadline" in json.loads(path.read_text())["error"]
-
-
 def test_sdk_audit_rejects_truncated_chat_output_but_keeps_billed_usage(tmp_path):
     class SDK:
         def request(self, cast_to, options, **kwargs):
             return SimpleNamespace(usage=SimpleNamespace(prompt_tokens=100, completion_tokens=20), choices=[SimpleNamespace(finish_reason="length")])
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
     with audit.installed(SDK), pytest.raises(ValueError, match="incomplete"):
-        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100}))
+        SDK().request(object, _options())
     assert audit.snapshot()["cost_usd"] == pytest.approx(.0004)
     assert audit.snapshot()["successful_calls"] == 1
 
@@ -467,18 +516,18 @@ def test_finished_result_does_not_hang_on_child_exit(tmp_path, monkeypatch):
     assert stopped == [876]
 
 
+@ROME_WORKER
 def test_real_rome_handler_and_llama_kb_offline_validation(tmp_path, monkeypatch):
     """Exercise installed LiteLLM validation and SDK payloads without network access."""
     import socket
     import httpx
     monkeypatch.setenv("OPENAI_API_KEY", "offline-regression-test")
-    monkeypatch.setenv("LITELLM_LOCAL_MODEL_COST_MAP", "True")
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
     sent = []
     import copy
     import litellm
     original_sol = copy.deepcopy(litellm.model_cost.get(worker.SOL))
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
+    with worker._runtime({"rome_path": ROME}, audit):
         with monkeypatch.context() as local:
             import openai
             from rome.llm_handler import LLMHandler
@@ -516,10 +565,9 @@ def test_real_rome_handler_and_llama_kb_offline_validation(tmp_path, monkeypatch
     assert litellm.model_cost.get(worker.SOL) == original_sol
 
 
+@ROME_WORKER
 def test_fatal_deadline_passes_actual_rome_synthesis_catch_and_cleans_up(tmp_path, monkeypatch):
-    audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
-        from caesar.artifact_synthesis import ArtifactSynthesizer
+    ArtifactSynthesizer = rome_class(tmp_path, "caesar.artifact_synthesis", "ArtifactSynthesizer")
     calls = []
     class Agent(FakeAgent):
         def __init__(self, **kwargs): pass
@@ -546,47 +594,37 @@ def test_fatal_deadline_passes_actual_rome_synthesis_catch_and_cleans_up(tmp_pat
     assert "Deadline" in saved["error"]
 
 
-@pytest.mark.parametrize("usage", [{"prompt_tokens": 1000}, {"completion_tokens": 100}])
-def test_missing_essential_chat_usage_keeps_cost_unknown(tmp_path, usage):
+@pytest.mark.parametrize("model,usage,expected", [
+    pytest.param(worker.SOL, {"prompt_tokens": 1000}, None, id="missing-output-tokens"),
+    pytest.param(worker.SOL, {"completion_tokens": 100}, None, id="missing-input-tokens"),
+    pytest.param(worker.SOL, {"prompt_tokens": 1000, "completion_tokens": 100,
+                              "prompt_tokens_details": {"cache_write_tokens": 1000}}, .0035, id="sol-cache-write"),
+    pytest.param(worker.SOL, {"prompt_tokens": 1000, "completion_tokens": 100,
+                              "prompt_tokens_details": {"cached_tokens": 1000}}, .0011, id="sol-cache-read"),
+    pytest.param(worker.SOL, {"prompt_tokens": 1000, "completion_tokens": 100,
+                              "prompt_tokens_details": {"cached_tokens": 400, "cache_write_tokens": 200}}, .00234,
+                 id="sol-cache-read-and-write"),
+    pytest.param(worker.SOL, {"prompt_tokens": 1000, "completion_tokens": 100,
+                              "prompt_tokens_details": {"cached_tokens": 900, "cache_write_tokens": 200}}, None,
+                 id="sol-invalid-cache-partition"),
+    pytest.param(worker.SOL, {"prompt_tokens": 272001, "completion_tokens": 100}, 1.089504, id="sol-long-context"),
+    pytest.param(worker.LUNA, {"prompt_tokens": 1000, "completion_tokens": 100,
+                               "prompt_tokens_details": {"cache_write_tokens": 1000}}, .000175, id="luna-cache-write"),
+    pytest.param(worker.LUNA, {"prompt_tokens": 272001, "completion_tokens": 100, "prompt_tokens_details": {}}, .0544752,
+                 id="luna-long-context"),
+])
+def test_reported_chat_usage_prices_cache_and_long_context_or_stays_unknown(tmp_path, model, usage, expected):
+    """Cache reads/writes partition reported input; long context reprices the whole request."""
     class SDK:
         def request(self, *args, **kwargs): return SimpleNamespace(usage=usage)
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
     with audit.installed(SDK):
-        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100}))
-    assert audit.snapshot()["unknown_cost"] is True
-    assert audit.snapshot()["cost_usd"] is None
-
-
-@pytest.mark.parametrize("details,expected", [({"cache_write_tokens": 1000}, .0035), ({"cached_tokens": 1000}, .0011), ({"cached_tokens": 400, "cache_write_tokens": 200}, .00234)])
-def test_sol_cache_write_and_read_tokens_are_part_of_total_input(tmp_path, details, expected):
-    class SDK:
-        def request(self, *args, **kwargs):
-            return SimpleNamespace(usage={"prompt_tokens": 1000, "completion_tokens": 100, "prompt_tokens_details": details})
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with audit.installed(SDK):
-        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100}))
-    assert audit.snapshot()["cost_usd"] == pytest.approx(expected)
-
-
-def test_sol_long_context_applies_rates_to_whole_request(tmp_path):
-    class SDK:
-        def request(self, *args, **kwargs):
-            return SimpleNamespace(usage={"prompt_tokens": 272001, "completion_tokens": 100})
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with audit.installed(SDK):
-        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100}))
-    assert audit.snapshot()["cost_usd"] == pytest.approx(1.089504)
-
-
-def test_invalid_cache_token_partition_cannot_report_known_cost(tmp_path):
-    class SDK:
-        def request(self, *args, **kwargs):
-            return SimpleNamespace(usage={"prompt_tokens": 1000, "completion_tokens": 100, "prompt_tokens_details": {"cached_tokens": 900, "cache_write_tokens": 200}})
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with audit.installed(SDK):
-        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100}))
-    assert audit.snapshot()["cost_usd"] is None
-    assert audit.snapshot()["unknown_cost"] is True
+        SDK().request(object, _options(model))
+    snapshot = audit.snapshot()
+    if expected is None:
+        assert snapshot["cost_usd"] is None and snapshot["unknown_cost"] is True
+    else:
+        assert snapshot["cost_usd"] == pytest.approx(expected)
 
 
 @pytest.mark.parametrize("reserve,expected_status,page_calls,synthesis_fails", [(1.5, "completed", 3, False), (4., "failed", 0, False), (1.5, "failed", 3, True)])
@@ -645,31 +683,132 @@ def test_exploration_reserve_leaves_budget_for_real_synthesis_and_rejects_no_ins
         assert any("exploration" in warning.lower() and "reserve" in warning.lower() for warning in result["warnings"])
 
 
-def test_sdk_retries_confirmed_rate_limit_once_without_double_billing(tmp_path, monkeypatch):
+@pytest.mark.parametrize("status,budget,wait", [(520, .003, 60), (429, .002, 3)], ids=["http520-body", "confirmed-429"])
+def test_real_sdk_retry_waits_server_delay_and_bills_only_possibly_paid_attempts(tmp_path, monkeypatch, status, budget, wait):
+    """A 520 may have been billed, so its reservation is retained; a confirmed 429 is never double billed."""
     import httpx
-    from openai import OpenAI
-    from openai._base_client import SyncAPIClient
-    requests, waits = [], []
+    sent, waits = [], []
     def transport(request):
-        requests.append(request)
-        if len(requests) == 1:
-            return httpx.Response(429, headers={"Retry-After": "3"}, json={"error": {"message": "try later", "code": "rate_limit_exceeded", "type": "rate_limit_error"}})
-        return httpx.Response(200, json={"id": "offline", "object": "chat.completion", "created": 0, "model": "gpt-6.1-sol", "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": "answer"}}], "usage": {"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120}})
+        sent.append(request)
+        if len(sent) > 1:
+            return _sdk_chat_reply()
+        if status == 520:
+            return httpx.Response(520, json={"title": "Unknown origin error", "status": 520, "retryable": True, "retry_after": 60})
+        return httpx.Response(429, headers={"Retry-After": "3"}, json={"error": {"message": "try later", "code": "rate_limit_exceeded", "type": "rate_limit_error"}})
     monkeypatch.setattr(worker.time, "sleep", waits.append)
     monkeypatch.setattr(worker.random, "uniform", lambda *args: 0)
-    audit = worker.UsageAudit(.002, tmp_path / "usage.json")
-    with audit.installed(SyncAPIClient), OpenAI(api_key="offline", max_retries=0, http_client=httpx.Client(transport=httpx.MockTransport(transport))) as client:
-        assert client.chat.completions.create(model="gpt-6.1-sol", messages=[], max_completion_tokens=100).choices[0].message.content == "answer"
+    audit = worker.UsageAudit(budget, tmp_path / "usage.json")
+    assert _real_sdk_chat(audit, transport, False).choices[0].message.content == "answer"
     usage = audit.snapshot()
-    assert len(requests) == 2
-    assert waits == [3]
-    assert usage["rate_limit_events"] == 1
-    assert usage["failed_calls"] == 1
+    assert len(sent) == 2
+    assert waits == [wait]
     assert usage["successful_calls"] == 1
-    assert usage["unknown_cost"] is False
-    assert usage["cost_usd"] == pytest.approx(.0004)
-    assert usage["events"][0]["reserved_usd"] == 0
-    assert usage["events"][0]["cost_usd"] == 0
+    assert usage["failed_calls"] == 1
+    if status == 520:
+        assert usage["unknown_cost"] is True
+        assert usage["cost_usd"] is None
+        assert usage["events"][0]["reserved_usd"] > 0
+        assert usage["known_cost_usd"] + usage["events"][0]["reserved_usd"] <= budget
+    else:
+        assert usage["rate_limit_events"] == 1
+        assert usage["unknown_cost"] is False
+        assert usage["cost_usd"] == pytest.approx(.0004)
+        assert usage["events"][0]["reserved_usd"] == 0
+        assert usage["events"][0]["cost_usd"] == 0
+
+
+class RateLimited(Exception):
+    status_code = 429
+    response = SimpleNamespace(headers={"Retry-After": "2"})
+
+
+@pytest.mark.parametrize("error,budget,wait", [(Transient, .003, 60), (RateLimited, .002, 2)], ids=["http520-body", "confirmed-429"])
+def test_async_sdk_retry_keeps_both_attempts_and_server_delay(tmp_path, monkeypatch, error, budget, wait):
+    attempts, waits = [], []
+    class Sync:
+        def request(self, *args, **kwargs): pytest.fail("sync request")
+    class Async:
+        async def request(self, *args, **kwargs):
+            attempts.append(1)
+            if len(attempts) == 1: raise error()
+            return SimpleNamespace(usage={"prompt_tokens": 100, "completion_tokens": 20})
+    async def sleep(delay): waits.append(delay)
+    monkeypatch.setattr(asyncio, "sleep", sleep)
+    monkeypatch.setattr(worker.random, "uniform", lambda *args: 0)
+    audit = worker.UsageAudit(budget, tmp_path / "usage.json")
+    with audit.installed(Sync, Async):
+        asyncio.run(Async().request(object, _options()))
+    assert len(attempts) == 2
+    assert waits == [wait]
+    if error is Transient:
+        assert audit.snapshot()["unknown_cost"] is True
+    else:
+        assert audit.snapshot()["rate_limit_events"] == 1
+        assert audit.snapshot()["cost_usd"] == pytest.approx(.0004)
+
+
+def test_transient_retry_is_blocked_when_second_reservation_cannot_fit(tmp_path, monkeypatch):
+    sent = []
+    SDK = _failing_sdk(sent)
+    monkeypatch.setattr(worker.time, "sleep", lambda _: None)
+    audit = worker.UsageAudit(.002, tmp_path / "usage.json")
+    with audit.installed(SDK), pytest.raises(worker.BudgetExceeded):
+        SDK().request(object, _options())
+    assert len(sent) == 1
+    assert audit.snapshot()["events"][0]["reserved_usd"] > 0
+    assert audit.snapshot()["unknown_cost"] is True
+
+
+def test_explicit_nonretryable_520_is_not_repeated(tmp_path, monkeypatch):
+    class Final(Transient):
+        body = {"retryable": False, "retry_after": 60}
+    sent = []
+    SDK = _failing_sdk(sent, Final)
+    monkeypatch.setattr(worker.time, "sleep", lambda _: pytest.fail("must not sleep"))
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    with audit.installed(SDK), pytest.raises(worker.SDKRequestFailed):
+        SDK().request(object, _options())
+    assert len(sent) == 1
+
+
+def test_retry_after_wait_never_extends_worker_wall_deadline(tmp_path):
+    sent = []
+    SDK = _failing_sdk(sent)
+    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    with worker._deadline(.02), audit.installed(SDK), pytest.raises(worker.WorkerDeadlineExceeded):
+        SDK().request(object, _options())
+    assert len(sent) == 1
+
+
+def test_four_520_attempts_hold_four_reservations_and_never_enter_outer_retry(tmp_path, monkeypatch):
+    sent, waits = [], []
+    SDK = _failing_sdk(sent)
+    monkeypatch.setattr(worker.time, "sleep", waits.append)
+    audit = worker.UsageAudit(.01, tmp_path / "usage.json")
+    with audit.installed(SDK), pytest.raises(worker.SDKRequestFailed):
+        SDK().request(object, _options())
+    assert len(sent) == 4
+    assert waits == [60, 60, 60]
+    value = audit.snapshot()
+    assert value["failed_calls"] == 4
+    assert len(value["events"]) == 4
+    assert sum(event["reserved_usd"] for event in value["events"]) <= .01
+    assert all(event["unknown_cost"] for event in value["events"])
+
+
+def test_unpriced_model_failure_is_never_retried_in_soft_mode(tmp_path, monkeypatch):
+    # Hard mode refuses the unpriced model before dispatch: test_hard_sdk_audit_rejects_unpriced_invalid_price_or_unbounded_dispatch.
+    sent = []
+    SDK = _failing_sdk(sent)
+    monkeypatch.setattr(worker.time, "sleep", lambda _: pytest.fail("unbounded retry"))
+    audit = worker.UsageAudit(5, tmp_path / "usage.json", enforce=False)
+    with audit.installed(SDK), pytest.raises(worker.SDKRequestFailed):
+        SDK().request(object, _options("unpriced-helper"))
+    assert len(sent) == 1
+    assert not audit.pending
+    assert len(audit.events) == 1
+    assert audit.events[0]["unknown_cost"] is True
+    assert audit.events[0]["cost_usd"] is None
 
 
 @pytest.mark.parametrize("status,expected_attempts", [(401, 1), (429, 4)])
@@ -685,34 +824,10 @@ def test_sdk_permanent_auth_and_exhausted_rejections_do_not_retry_outside_bounda
     monkeypatch.setattr(worker.time, "sleep", lambda _: None)
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
     with audit.installed(SDK), pytest.raises(worker.SDKRequestFailed):
-        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100}))
+        SDK().request(object, _options())
     assert len(attempts) == expected_attempts
     assert audit.snapshot()["cost_usd"] == 0
     assert audit.snapshot()["unknown_cost"] is False
-
-
-def test_async_sdk_rate_retry_keeps_exact_attempt_usage(tmp_path, monkeypatch):
-    attempts, waits = [], []
-    class Rejected(Exception):
-        status_code = 429
-        response = SimpleNamespace(headers={"Retry-After": "2"})
-    class Sync:
-        def request(self, *args, **kwargs): pytest.fail("sync request")
-    class Async:
-        async def request(self, *args, **kwargs):
-            attempts.append(1)
-            if len(attempts) == 1: raise Rejected()
-            return SimpleNamespace(usage={"prompt_tokens": 100, "completion_tokens": 20})
-    async def sleep(delay): waits.append(delay)
-    monkeypatch.setattr(asyncio, "sleep", sleep)
-    monkeypatch.setattr(worker.random, "uniform", lambda *args: 0)
-    audit = worker.UsageAudit(.002, tmp_path / "usage.json")
-    with audit.installed(Sync, Async):
-        asyncio.run(Async().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100})))
-    assert len(attempts) == 2
-    assert waits == [2]
-    assert audit.snapshot()["rate_limit_events"] == 1
-    assert audit.snapshot()["cost_usd"] == pytest.approx(.0004)
 
 
 def test_unparseable_paid_response_retains_unknown_cost_reservation(tmp_path):
@@ -724,7 +839,7 @@ def test_unparseable_paid_response_retains_unknown_cost_reservation(tmp_path):
             attempts.append(1)
             return SimpleNamespace(usage={"prompt_tokens": 100, "completion_tokens": 20}) if len(attempts) == 1 else BadResponse()
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    options = SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100})
+    options = _options()
     with audit.installed(SDK):
         SDK().request(object, options)
         with pytest.raises(worker.SDKRequestFailed): SDK().request(object, options)
@@ -733,10 +848,10 @@ def test_unparseable_paid_response_retains_unknown_cost_reservation(tmp_path):
     assert audit.snapshot()["in_flight"]
 
 
+@ROME_WORKER
 def test_bad_accepted_response_cannot_reenter_actual_rome_paid_retry_loop(tmp_path):
+    ArtifactSynthesizer = rome_class(tmp_path, "caesar.artifact_synthesis", "ArtifactSynthesizer")
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
-        from caesar.artifact_synthesis import ArtifactSynthesizer
     paid = []
     class BadResponse:
         def parse(self): raise ValueError("accepted response could not be decoded")
@@ -745,7 +860,7 @@ def test_bad_accepted_response_cannot_reenter_actual_rome_paid_retry_loop(tmp_pa
             paid.append(1)
             if len(paid) == 1: return BadResponse()
             return SimpleNamespace(usage={"prompt_tokens": 100, "completion_tokens": 20}, text='{"artifact":"complete"}')
-    options = SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100})
+    options = _options()
     synthesizer = object.__new__(ArtifactSynthesizer)
     synthesizer.agent = SimpleNamespace(chat_completion=lambda *a, **kw: SDK().request(object, options).text, parse_json_response=json.loads)
     synthesizer._reasoning_floor = {}
@@ -814,20 +929,23 @@ def test_async_accepted_response_parse_failure_is_fatal_without_retry(tmp_path):
             return BadResponse()
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
     with audit.installed(Sync, Async), pytest.raises(worker.SDKRequestFailed):
-        asyncio.run(Async().request(object, SimpleNamespace(json_data={"model": "gpt-6.1-sol", "messages": [], "max_completion_tokens": 100})))
+        asyncio.run(Async().request(object, _options()))
     assert len(paid) == 1
     assert audit.snapshot()["cost_usd"] is None
     assert len(audit.snapshot()["in_flight"]) == 1
 
 
+@ROME_WORKER
 def test_chroma_start_uses_worker_interpreter_without_chroma_on_path(tmp_path, monkeypatch):
     """Exercise Rome's real startup lifecycle with a local fake Chroma CLI."""
     import atexit
     import socket
     import sys
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
-        from rome.kb_server import ChromaServerManager
+    ChromaServerManager = rome_class(tmp_path, "rome.kb_server", "ChromaServerManager")
+    # Rome polls readiness with time.sleep(1); poll every 20 ms instead, with the same 5 s overall bound.
+    real_sleep = time.sleep
+    monkeypatch.setattr(sys.modules[ChromaServerManager.__module__], "time",
+                        SimpleNamespace(sleep=lambda seconds: real_sleep(min(seconds, .02))))
     package = tmp_path / "fake-modules" / "chromadb"
     (package / "cli").mkdir(parents=True)
     (package / "__init__.py").write_text("")
@@ -855,7 +973,7 @@ def app():
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
     manager = ChromaServerManager({"host": "127.0.0.1", "port": port,
-        "persist_path": str(tmp_path / "store"), "startup_timeout": 3, "shutdown_timeout": 1})
+        "persist_path": str(tmp_path / "store"), "startup_timeout": 250, "shutdown_timeout": 1})
     original = ChromaServerManager._try_start_command
     with worker.chroma_python_cli(ChromaServerManager):
         try:
@@ -868,16 +986,14 @@ def app():
             manager._kill_process()
             atexit.unregister(manager.stop)
     assert ChromaServerManager._try_start_command is original
-    assert audit.snapshot()["successful_calls"] == 0
 
 
+@ROME_WORKER
 def test_parallel_quick_exploration_reserves_synthesis_budget_and_ingests_completed_pages(tmp_path, monkeypatch):
     """Run Rome's quick loop, including its real executor and result ingestion."""
     import threading
     import networkx as nx
-    audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
-        from caesar.caesar_agent import CaesarAgent
+    CaesarAgent = rome_class(tmp_path, "caesar.caesar_agent", "CaesarAgent")
     barrier = threading.Barrier(2)
     lock = threading.Lock()
     observed = {"active": 0, "peak": 0, "pages": 0}
@@ -958,10 +1074,9 @@ def test_reduced_qa_rounds_preserve_complete_artifact_and_actual_metadata():
     assert any("4" in warning and "15" in warning for warning in result["warnings"])
 
 
+@ROME_WORKER
 def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatch):
-    setup_audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, setup_audit):
-        from caesar.artifact_synthesis import ArtifactSynthesizer
+    ArtifactSynthesizer = rome_class(tmp_path, "caesar.artifact_synthesis", "ArtifactSynthesizer")
     calls = []
     class SDK:
         def request(self, cast_to, options, **kwargs):
@@ -1036,17 +1151,6 @@ def test_adaptive_qa_budget_finishes_three_drafts_and_merge(tmp_path, monkeypatc
     assert result["raw"]["synthesis_budget"]["merge_completed"] is True
 
 
-@pytest.mark.parametrize("inputs,details,expected", [(1000, {"cache_write_tokens": 1000}, .000175), (272001, {}, .0544752)])
-def test_latest_luna_usage_uses_verified_cache_and_long_context_prices(tmp_path, inputs, details, expected):
-    class SDK:
-        def request(self, *args, **kwargs):
-            return SimpleNamespace(usage={"prompt_tokens": inputs, "completion_tokens": 100, "prompt_tokens_details": details})
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    with audit.installed(SDK):
-        SDK().request(object, SimpleNamespace(json_data={"model": "gpt-6-luna", "messages": [], "max_completion_tokens": 100}))
-    assert audit.snapshot()["cost_usd"] == pytest.approx(expected)
-
-
 def recovery_source(tmp_path, *, worker_id="original-worker", known_cost=.45898205, unknown_reserved=.2114525, budget=5):
     import networkx as nx
     source = tmp_path / "old-job"
@@ -1069,10 +1173,9 @@ def recovery_source(tmp_path, *, worker_id="original-worker", known_cost=.458982
     return source
 
 
+@ROME_WORKER
 def test_explicit_recovery_copies_store_and_uses_rome_checkpoint_without_exploration(tmp_path, monkeypatch):
-    audit = worker.UsageAudit(5, tmp_path / "setup-usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
-        from caesar.checkpoint import CheckpointManager
+    CheckpointManager = rome_class(tmp_path, "caesar.checkpoint", "CheckpointManager")
     import networkx as nx
     source = recovery_source(tmp_path)
     original = {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
@@ -1204,11 +1307,12 @@ def test_recovery_uses_fresh_source_collection_unless_prior_recovery_names_one(t
     assert (output / "chroma" / "chroma.sqlite3-wal").read_bytes() == b"preserved WAL"
 
 
+@ROME_WORKER
 @pytest.mark.parametrize("timeout,expected", [(None, 1200), (600, 600), (37, 37)])
 def test_runtime_timeout_reaches_sdk_even_when_library_supplies_shorter_value(tmp_path, timeout, expected):
     import openai
     audit = worker.UsageAudit(5, tmp_path / "usage.json")
-    settings = {"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}
+    settings = {"rome_path": ROME}
     if timeout is not None:
         settings["call_timeout_seconds"] = timeout
     with worker._runtime(settings, audit):
@@ -1220,7 +1324,6 @@ def test_runtime_timeout_reaches_sdk_even_when_library_supplies_shorter_value(tm
                 assert client.timeout == expected
                 assert client.with_options(timeout=1).timeout == expected
         asyncio.run(check_async())
-    assert audit.snapshot()["successful_calls"] == 0
 
 
 def test_recovery_source_content_is_part_of_cache_identity(tmp_path):
@@ -1240,33 +1343,12 @@ def test_recovery_cannot_overwrite_its_original_job(tmp_path):
     assert original == {str(path.relative_to(source)): path.read_bytes() for path in source.rglob("*") if path.is_file()}
 
 
-def test_compatibility_sets_and_restores_llamaindex_prompt_helpers():
-    class Handler:
-        MODEL_PRICING, MODEL_CONTEXT_SIZE, REASONING_MODELS, _known_models_registered = {}, {}, set(), True
-    class Utils:
-        O1_MODELS, CHAT_MODELS, ALL_AVAILABLE_MODELS = {}, {}, {}
-    class Litellm:
-        model_cost = {}
-        def register_model(self, entries): pass
-    class Settings:
-        _prompt_helper, _chat_prompt_helper = None, "preset"
-        prompt_helper = property(lambda self: self._prompt_helper, lambda self, v: setattr(self, "_prompt_helper", v))
-        chat_prompt_helper = property(lambda self: self._chat_prompt_helper, lambda self, v: setattr(self, "_chat_prompt_helper", v))
-    settings = Settings()
-    config = {"LLMHandler": {"max_completion_tokens": 25000}}
-    with worker.compatibility(Handler, config, Litellm(), Utils, 2000, llama_settings=settings,
-                              prompt_helpers={"prompt_helper": "big", "chat_prompt_helper": "big-chat"}):
-        assert settings.prompt_helper == "big" and settings.chat_prompt_helper == "big-chat"
-        assert Utils.ALL_AVAILABLE_MODELS[worker.LUNA] == worker.KB_CONTEXT_WINDOW
-    assert settings._prompt_helper is None and settings._chat_prompt_helper == "preset"
-    assert Utils.ALL_AVAILABLE_MODELS == {}
-
-
+@ROME_WORKER
 def test_runtime_packs_a_knowledge_base_query_into_one_call(tmp_path, monkeypatch):
     """llama-index-core 0.14.23 would otherwise use a 3,900-token window and split 20 chunks into 5 calls."""
     monkeypatch.setenv("OPENAI_API_KEY", "offline-test-key")  # construction only; nothing is sent
     audit = worker.UsageAudit(1, tmp_path / "usage.json")
-    with worker._runtime({"rome_path": str(Path(__file__).resolve().parents[3] / "rome")}, audit):
+    with worker._runtime({"rome_path": ROME}, audit):
         from llama_index.core import Settings
         from llama_index.core.prompts import PromptTemplate
         from llama_index.core.response_synthesizers import get_response_synthesizer
@@ -1303,6 +1385,7 @@ def test_soft_budget_cap_records_but_never_refuses(tmp_path):
     assert records["enforced"] is False and row["budget_limited"] is False and row["qa_allowance_usd"] is None
 
 
+@ROME_WORKER
 def test_soft_budget_passes_real_rome_config_validation_and_disables_cost_checks(tmp_path, monkeypatch):
     from crest.config import load_config
     monkeypatch.setenv("OPENAI_API_KEY", "offline-soft-budget-test")
@@ -1346,6 +1429,7 @@ def test_worker_identity_recognizes_legacy_and_relocated_commands(tmp_path, monk
     assert not caesar._worker_alive({'worker_pid': 43210, 'result_path': result})
 
 
+@ROME_WORKER
 def test_runtime_default_rome_path_stays_sibling_of_checkout(monkeypatch):
     import builtins
     original_import, paths = builtins.__import__, []
@@ -1359,7 +1443,7 @@ def test_runtime_default_rome_path_stays_sibling_of_checkout(monkeypatch):
     with pytest.raises(ImportError, match='stop before importing'):
         with worker._runtime({}, None):
             pytest.fail('external runtime must not execute')
-    assert paths == [Path(__file__).resolve().parents[3] / 'rome']
+    assert paths == [Path(ROME)]
 
 
 
@@ -1409,16 +1493,19 @@ def test_hard_sdk_audit_rejects_late_json_overrides_before_dispatch(tmp_path, as
 
 
 @pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
-@pytest.mark.parametrize("changes", [
-    {"model": "unpriced-helper"}, {"max_completion_tokens": None},
-    {"max_completion_tokens": 0}, {"max_completion_tokens": True},
-], ids=["unknown-price", "missing-limit", "zero-limit", "boolean-limit"])
-def test_hard_sdk_audit_rejects_unpriced_or_unbounded_dispatch(tmp_path, asynchronous, changes):
+@pytest.mark.parametrize("changes,output_rate", [
+    ({"model": "unpriced-helper"}, None), ({"max_completion_tokens": None}, None),
+    ({"max_completion_tokens": 0}, None), ({"max_completion_tokens": True}, None),
+    ({}, -1.), ({}, float("nan")), ({}, True),
+], ids=["unknown-price", "missing-limit", "zero-limit", "boolean-limit",
+        "negative-price", "nan-price", "boolean-price"])
+def test_hard_sdk_audit_rejects_unpriced_invalid_price_or_unbounded_dispatch(tmp_path, asynchronous, changes, output_rate):
     sent = []
     def transport(request):
         sent.append(1)
         return _sdk_chat_reply()
-    audit = worker.UsageAudit(5, tmp_path / "usage.json")
+    prices = None if output_rate is None else {worker.SOL: {"input": 2., "output": output_rate}}
+    audit = worker.UsageAudit(5, tmp_path / "usage.json", prices)
     with pytest.raises(worker.BudgetExceeded):
         _real_sdk_chat(audit, transport, asynchronous, **changes)
     assert not sent and not audit.pending and not audit.events
@@ -1426,15 +1513,38 @@ def test_hard_sdk_audit_rejects_unpriced_or_unbounded_dispatch(tmp_path, asynchr
 
 @pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
 @pytest.mark.parametrize("output_rate", [-1., float("nan"), True])
-def test_hard_sdk_audit_rejects_invalid_prices_before_dispatch(tmp_path, asynchronous, output_rate):
+def test_soft_sdk_audit_refuses_invalid_prices_and_keeps_persisting(tmp_path, asynchronous, output_rate):
+    # Regression: a soft cap reserved NaN, after which every usage.json write failed (allow_nan=False).
     sent = []
     def transport(request):
         sent.append(1)
-        return _sdk_chat_reply()
-    audit = worker.UsageAudit(5, tmp_path / "usage.json", {worker.SOL: {"input": 2., "output": output_rate}})
-    with pytest.raises(worker.BudgetExceeded):
+        return _sdk_chat_reply(model=worker.LUNA)
+    prices = {worker.SOL: {"input": 2., "output": output_rate}}
+    audit = worker.UsageAudit(5, tmp_path / "usage.json", prices, enforce=False)
+    with pytest.raises(worker.SDKRequestFailed, match=f"Invalid Caesar price for {worker.SOL}"):
         _real_sdk_chat(audit, transport, asynchronous)
     assert not sent and not audit.pending
+    _real_sdk_chat(audit, transport, asynchronous, model=worker.LUNA)
+    assert json.loads((tmp_path / "usage.json").read_text())["successful_calls"] == 1
+
+
+def test_worker_records_an_invalid_price_failure(tmp_path, monkeypatch):
+    class Agent(FakeAgent):
+        def __init__(self, **kwargs): pass
+        def explore(self): audits[0].before(_options())
+        def shutdown(self): pass
+    audits = []
+    @contextmanager
+    def runtime(settings, audit):
+        audits.append(audit)
+        yield Agent
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    settings = {"budget_cap": "soft", "model_pricing": {worker.SOL: {"input": 2., "output": float("nan")}}}
+    request = {"prompt": "Q", "settings": settings, "output_dir": str(tmp_path / "output"), "job_key": "abc"}
+    assert worker.run_worker(request, tmp_path / "result.json") == 1
+    record = json.loads((tmp_path / "result.json").read_text())
+    assert record["status"] == "failed" and "Invalid Caesar price" in record["error"]
+    assert record["usage"]["in_flight"] == [] and json.loads((tmp_path / "output" / "usage.json").read_text())["events"] == []
 
 
 @pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
@@ -1565,34 +1675,126 @@ def test_hard_sdk_audit_preserves_supported_embedding_requests(tmp_path, asynchr
 
 
 
-def test_worker_explicit_legacy_completion_timeout_and_effort_are_preserved(tmp_path):
-    settings = {"max_completion_tokens": 10000, "call_timeout_seconds": 600,
-                "synthesis_reasoning_effort": "medium"}
-    config = worker.build_config("Q", settings, tmp_path, "explicit-legacy")
-    assert config["LLMHandler"]["max_completion_tokens"] == 10000
-    assert config["LLMHandler"]["timeout"] == 600
-    assert config["ArtifactSynthesizer"]["synthesis_reasoning_effort"] == "medium"
+def test_quick_exploration_runs_past_old_time_limits_until_the_budget_reserve(tmp_path, monkeypatch):
+    clock = Clock()
+    monkeypatch.setattr(worker, 'time', clock)
+    audit = worker.UsageAudit(5, tmp_path / 'usage.json')
+    accepted = threading.Barrier(2)
+    calls, ingested = [], []
+    class Agent:
+        _crest_worker_started = 0
+        current_iteration = 0
+        visited_urls = {}
+        shutdown_called = False
+        def __init__(self):
+            self.kb_manager = SimpleNamespace(add_texts=lambda values: ingested.extend(values))
+            self.synthesizer = SimpleNamespace(synthesize_artifact=lambda: {'artifact': 'Complete draft'})
+        def _quick_perceive_and_think(self, url, iteration):
+            calls.append(url)
+            accepted.wait(timeout=5)
+            clock.now = 7000  # Far past any per-phase time share; only the budget may stop pages.
+            return {'url': url, 'insights': 'Collected', 'iteration': iteration}
+        def explore(self):
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                values = list(pool.map(lambda i: self._quick_perceive_and_think(str(i), i), range(4)))
+            values = [value for value in values if value]
+            self.visited_urls = {value['url']: 1 for value in values}
+            self.current_iteration = max(value['iteration'] for value in values)
+            self.kb_manager.add_texts(values)
+            return self.synthesizer.synthesize_artifact()
+    agent = Agent()
+    artifact, stop = worker._quick_explore_with_synthesis_reserve(agent, {}, audit)
+    assert artifact['artifact'] == 'Complete draft'
+    assert len(calls) == len(ingested) == 4 and stop is None
+    assert audit.exploration_limit is None
+
+
+def test_ordinary_exploration_stops_only_on_the_budget_reserve(tmp_path, monkeypatch):
+    clock = Clock()
+    monkeypatch.setattr(worker, 'time', clock)
+    audit = worker.UsageAudit(5, tmp_path / 'usage.json')
+    audit.events.append({'status': 'completed', 'cost_usd': 2.5, 'model': 'gpt-6-luna'})  # Reserve is $3 of $5.
+    calls = []
+    class Agent:
+        _crest_worker_started = 0
+        current_iteration = 0
+        def __init__(self):
+            self.synthesizer = SimpleNamespace(synthesize_artifact=lambda: {'artifact': 'Complete draft'})
+        def perceive(self):
+            calls.append(self.current_iteration)
+            clock.advance(9000)  # Hours pass; time alone never ends exploration.
+        def explore(self):
+            for iteration in range(1, 251):
+                self.current_iteration = iteration
+                self.perceive()
+    agent = Agent()
+    artifact, stop = worker._explore_with_synthesis_reserve(agent, {}, audit)
+    assert calls == []  # Stopped before the first page: $2.50 committed exceeds the $2 exploration limit.
+    assert stop['reason'] == 'budget_reserve' and 'time_limited' not in stop
+    assert stop['iterations_completed'] == 0
+    assert artifact['artifact'] == 'Complete draft'
+
+
+def test_synthesis_allowance_is_money_only(tmp_path, monkeypatch):
+    clock = Clock(7100)  # Would have been past every old time allowance.
+    monkeypatch.setattr(worker, 'time', clock)
+    audit = worker.UsageAudit(5, tmp_path / 'usage.json')
+    calls = []
+    class Synthesizer:
+        synthesis_drafts = 3
+        synthesis_iterations = 15
+        synthesis_merge_artifacts = True
+        _current_draft = 1
+        def _generate_qa_pairs(self):
+            calls.append('genuine query')
+            clock.advance(5000)
+            return [('Question', 'Answer', [])]
+    agent = SimpleNamespace(synthesizer=Synthesizer())
+    with worker.adaptive_synthesis_budget(agent, {'budget_usd': 5}, audit) as records:
+        assert agent.synthesizer._generate_qa_pairs() == [('Question', 'Answer', [])]
+        assert audit.request_limit is None  # Restored after the draft's allowance.
+    assert calls == ['genuine query']
+    row = records['drafts'][0]
+    assert row['completed_qa_rounds'] == 1 and row['budget_limited'] is False and row['qa_allowance_usd'] > 0
+    assert 'time_policy' not in records and 'time_limited' not in row
 
 
 @pytest.mark.parametrize("settings,expected", [({}, 21600), ({"timeout_seconds": 37}, 37)])
-def test_worker_overall_timeout_has_generous_default_and_preserves_override(tmp_path, monkeypatch, settings, expected):
-    limits = []
+def test_worker_arms_one_monotonic_overall_deadline_with_generous_default_or_override(tmp_path, monkeypatch, settings, expected):
+    clock = Clock(100)
+    monkeypatch.setattr(worker, 'time', clock)
+    seen = {'deadlines': []}
     @contextmanager
     def deadline(seconds):
-        limits.append(seconds)
+        seen['deadlines'].append(seconds)
         yield
-    class Agent(FakeAgent):
-        def __init__(self, **kwargs): pass
-        def explore(self): return artifact()
+    class Agent:
+        shutdown_called = False
+        def __init__(self, **kwargs): clock.advance(3000)
+        def perceive(self): clock.advance(4000)  # Exploration outlives the old 37.5% time share.
+        def explore(self):
+            self.current_iteration = 1
+            self.perceive()
+            return self.synthesizer.synthesize_artifact()
+        @property
+        def synthesizer(self):
+            def synthesize():
+                seen['start'] = self._crest_worker_started
+                return {'artifact': 'A complete final answer', 'num_drafts': 3,
+                        'metadata': {'synthesis_queries': 1}}
+            return SimpleNamespace(synthesize_artifact=synthesize)
         def shutdown(self): pass
     @contextmanager
     def runtime(settings, audit): yield Agent
-    monkeypatch.setattr(worker, "time", SimpleNamespace(monotonic=lambda: 100., time=lambda: 100.))
-    monkeypatch.setattr(worker, "_deadline", deadline)
-    monkeypatch.setattr(worker, "_runtime", runtime)
-    assert worker.run_worker({"prompt": "Q", "settings": settings,
-        "output_dir": str(tmp_path / "output"), "job_key": "offline"}, tmp_path / "result.json") == 0
-    assert limits == [expected]
+    monkeypatch.setattr(worker, '_runtime', runtime)
+    monkeypatch.setattr(worker, '_deadline', deadline)
+    path = tmp_path / 'result.json'
+    assert worker.run_worker({'prompt': 'Q', 'settings': settings, 'output_dir': str(tmp_path / 'output'),
+                              'job_key': 'a' * 64}, path) == 0
+    assert seen['start'] == 100
+    assert seen['deadlines'] == [expected]  # The whole timeout, armed once before the agent starts.
+    result = json.loads(path.read_text())['result']
+    assert 'exploration_budget_stop' not in result['raw']
 
 
 @pytest.mark.parametrize("effort,expected_hold,expected_allowance", [

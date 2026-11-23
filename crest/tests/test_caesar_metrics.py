@@ -8,6 +8,9 @@ from types import SimpleNamespace
 import pytest
 
 from crest.providers import caesar_worker as worker
+
+# These tests import the Rome stack; share one xdist worker with the other Rome tests.
+pytestmark = pytest.mark.xdist_group("rome")
 from crest.providers.caesar_metrics import iteration_metrics
 
 

@@ -173,9 +173,6 @@ def _create_extension(source_run: Path, run_dir: Path, data_root: Path, *, plan_
     """
     from .analysis import analyze
 
-    source_run, run_dir = Path(source_run).resolve(), Path(run_dir).resolve()
-    if source_run == run_dir:
-        raise ValueError("Extension requires a new immutable run directory")
     parent = json.loads((source_run / "plan.json").read_text(encoding="utf-8"))
     source_results = load_results(source_run)
     if analyze(parent, source_results)["status"] != "complete":
@@ -366,6 +363,9 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
                       workers_per_judge: int | None = None) -> list[dict]:
     """Judge or resume a frozen plan; return only strictly valid successful votes.
 
+    Called only by run_judging, which has verified the fingerprint, resolved
+    run_dir and taken the lifecycle lock.
+
     By default at most two calls per provider run concurrently; an explicit
     operational worker override may select one through sixteen. It never changes
     frozen prompts, model settings, job keys, or remote submission identities.
@@ -379,11 +379,9 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
         raise ValueError("workers_per_judge must be an integer from 1 through 16")
     if _money(max_spend_usd) is None:
         raise ValueError("max_spend_usd must be a finite nonnegative number")
-    validate_plan_fingerprint(plan)
     tasks = plan.get("jobs", [])
     if len({task["key"] for task in tasks}) != len(tasks):
         raise ValueError("Duplicate planned job keys")
-    run_dir = Path(run_dir).expanduser().resolve()
     _reject_superseded(run_dir)
     # A judge added to a legacy run must read that run's exact frozen prompts, so
     # only the added judges' jobs of a legacy judge addition may be dispatched.
@@ -426,24 +424,45 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
         effective_worker_counts[name] = (workers_per_judge if workers_per_judge is not None
                                          else max(1, min(2, int(settings.get("concurrency", 2)))))
 
-    def snapshot():
+    # Snapshots run after every job, so each checkpoint is reparsed only when its
+    # bytes change. Writes by other processes judging the same run are still seen.
+    outcomes = {}
+
+    def outcome(task):
+        path = cache.root / "jobs" / task["key"] / "state.json"  # crest.cache.Job.path
+        try:
+            signature = path.read_bytes()
+        except FileNotFoundError:
+            signature = None
+        cached = outcomes.get(task["key"])
+        if cached is not None and cached[0] == signature:
+            return cached[1]
+        state = cache.job(task["key"]).state
+        account = _account(state, task["judge"], task["settings"])
+        observed = any(field in state for field in ("result", "raw", "remote_id", "submitted_at")) or state.get("submission_unknown")
+        result = _completed(task, state, require_reason_quality=require_reason_quality)
+        failure = None
+        if not result and state.get("status") in TERMINAL_FAILURES | {"pending_retrieval"}:
+            failure = {"key": task["key"], "judge": task["judge"], "status": state["status"],
+                       "error": state.get("error", ""), "submission_unknown": bool(state.get("submission_unknown")),
+                       "remote_id": state.get("remote_id"), **account}
+        value = (account["cost_usd"], bool(observed), result, failure)
+        outcomes[task["key"]] = (signature, value)
+        return value
+
+    def snapshot(*, publish=True):
         results, failures = [], []
         known, unknown = 0.0, 0
         for task in tasks:
-            state = cache.job(task["key"]).state
-            account = _account(state, task["judge"], task["settings"])
-            observed = any(field in state for field in ("result", "raw", "remote_id", "submitted_at")) or state.get("submission_unknown")
-            if account["cost_usd"] is not None:
-                known += account["cost_usd"]
+            cost, observed, result, failure = outcome(task)
+            if cost is not None:
+                known += cost
             elif observed:
                 unknown += 1
-            result = _completed(task, state, require_reason_quality=require_reason_quality)
             if result:
                 results.append(result)
-            elif state.get("status") in TERMINAL_FAILURES | {"pending_retrieval"}:
-                failures.append({"key": task["key"], "judge": task["judge"], "status": state["status"],
-                                 "error": state.get("error", ""), "submission_unknown": bool(state.get("submission_unknown")),
-                                 "remote_id": state.get("remote_id"), **account})
+            elif failure:
+                failures.append(failure)
         summary = {"version": "crest-ais-judging-v1", "updated_at": datetime.now(timezone.utc).isoformat(),
                    "expected_jobs": len(tasks), "completed_jobs": len(results), "failed_jobs": len(failures),
                    "deferred_jobs": len(deferred), "known_usd": known, "unknown_cost_jobs": unknown,
@@ -455,9 +474,10 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
                    "resumed_cached_jobs": len(resumed),
                    "imported_jobs": len(imported_keys), "newly_completed_jobs": len(results) - len(imported_keys),
                    "imported_known_usd": imported_known, "new_known_usd": known - imported_known}
-        write_json(run_dir / "results.json", results)
-        write_json(run_dir / "failures.json", failures)
-        write_json(run_dir / "judging.json", summary)
+        if publish:
+            write_json(run_dir / "results.json", results)
+            write_json(run_dir / "failures.json", failures)
+            write_json(run_dir / "judging.json", summary)
         return results, summary
 
     async def execute(task):
@@ -475,7 +495,8 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
                 return
             result = job.state.get("result")
             if not isinstance(result, dict):
-                _, summary = snapshot()
+                # The budget check only reads; the next completion or the final snapshot publishes.
+                _, summary = snapshot(publish=False)
                 if summary["known_usd"] >= max_spend_usd and not job.state.get("remote_id"):
                     deferred.add(task["key"])
                     return

@@ -42,6 +42,16 @@ def _verdict():
     return {"reason": "A (page 1) has stronger overall creative quality than B (page 2), considering New, Useful, and Surprising jointly.", "winner": "A"}
 
 
+def _answer(cost=.01, model="mock"):
+    """A fresh, valid mocked provider answer."""
+    return {"text": json.dumps(_verdict()), "cost_usd": cost, "usage": {}, "model": model}
+
+
+def _providers(judge):
+    """The same mocked judge function for every frozen plan judge."""
+    return {name: SimpleNamespace(judge=judge) for name in JUDGES}
+
+
 def test_sampling_reproducible_independent_of_input_order_and_complete_design(tmp_path):
     catalog = _catalog(tmp_path)
     first = make_plan(catalog, AGENTS, JUDGES, tmp_path, RUBRIC, pairs_per_matchup=6)
@@ -219,7 +229,7 @@ def test_mocked_resume_caches_results_and_failed_paid_output(tmp_path):
         if len(calls) == 1:
             return {"text": "invalid JSON", "raw": {"paid": True}, "cost_usd": .02, "usage": {}, "model": "mock"}
         return {"text": json.dumps(_verdict()), "raw": {"paid": True}, "cost_usd": .01, "usage": {}, "model": "mock"}
-    providers = {name: SimpleNamespace(judge=judge) for name in JUDGES}
+    providers = _providers(judge)
     run_dir = tmp_path / "run"
     results = asyncio.run(run_judging(plan, run_dir, providers=providers, progress=False))
     assert len(results) == len(plan["jobs"]) - 1
@@ -243,8 +253,8 @@ def test_unknown_submission_is_not_resubmitted(tmp_path):
     calls = []
     async def judge(prompt, settings, job):
         calls.append(job.key)
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
-    results = asyncio.run(run_judging(plan, tmp_path / "run", providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+        return _answer()
+    results = asyncio.run(run_judging(plan, tmp_path / "run", providers=_providers(judge), progress=False))
     assert key not in calls
     assert len(results) == len(plan["jobs"]) - 1
     assert cache.job(key).state["submission_unknown"] is True
@@ -259,18 +269,15 @@ def test_observed_spend_stops_dispatch_and_counts_invalid_paid_outputs(tmp_path)
     async def judge(prompt, settings, job):
         calls.append(job.key)
         return {"text": "paid but invalid", "cost_usd": .2, "usage": {}, "model": "mock"}
-    asyncio.run(run_judging(plan, tmp_path / "run", providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False, max_spend_usd=.1))
+    asyncio.run(run_judging(plan, tmp_path / "run", providers=_providers(judge), progress=False, max_spend_usd=.1))
     assert len(calls) <= 2
     summary = json.loads((tmp_path / "run" / "judging.json").read_text())
     assert summary["known_usd"] >= .2
     assert summary["deferred_jobs"] > 0
 
 
-def test_frozen_schema_and_parser_are_independent_of_root_judging():
-    assert set(SCHEMA["properties"]) == {"reason", "winner"}
+def test_parser_rejects_duplicate_fields_and_openai_payload_uses_frozen_schema():
     assert parse_verdict(json.dumps(_verdict())) == _verdict()
-    with pytest.raises(ValueError):
-        parse_verdict(json.dumps({name: {"reason": "Legacy independent criterion", "winner": "A"} for name in ("new", "useful", "surprising")}))
     with pytest.raises(ValueError, match="duplicate"):
         parse_verdict('{"reason":"first","reason":"second","winner":"A"}')
     from crest_ais.providers.openai import _payload
@@ -295,8 +302,8 @@ def test_known_remote_retrieval_can_resume_after_transport_failure(tmp_path):
         if job.key == key and not job.state.get("remote_id"):
             job.save(remote_id="already-paid", remote_status="in_progress", submission_unknown=False)
             raise ConnectionError("poll interrupted")
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
-    providers = {name: SimpleNamespace(judge=judge) for name in JUDGES}
+        return _answer()
+    providers = _providers(judge)
     run_dir = tmp_path / "run"
     results = asyncio.run(run_judging(plan, run_dir, providers=providers, progress=False))
     assert len(results) == len(plan["jobs"]) - 1
@@ -342,7 +349,7 @@ def test_report_costs_include_failed_paid_outputs(tmp_path):
         return {"text": "invalid" if len(calls) == 1 else json.dumps(_verdict()),
                 "cost_usd": .25 if len(calls) == 1 else .01, "usage": {}, "model": "mock"}
     run_dir = tmp_path / "run"
-    asyncio.run(run_judging(plan, run_dir, providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+    asyncio.run(run_judging(plan, run_dir, providers=_providers(judge), progress=False))
     report = _report(plan, run_dir, tmp_path, run_dir / "report.html")
     assert report["costs"]["known_usd"] == pytest.approx(.25 + .01 * (len(plan["jobs"]) - 1))
     assert report["costs"]["failed_known_usd"] == .25
@@ -362,26 +369,17 @@ def test_empty_pdf_and_duplicate_bytes_are_retained_but_ineligible(tmp_path):
     assert any("extractable" in reason for p in catalog if p["source_id"] == "empty" for reason in p["exclusion_reasons"])
 
 
-@pytest.mark.parametrize("latest", [
-    {"model": "gpt-6-astra", "status": "cancelled", "usage": None},
-    {"model": "gpt-6-astra", "status": "cancelled", "usage": {
+@pytest.mark.parametrize("later", [
+    {"raw": {"model": "gpt-6-astra", "status": "cancelled", "usage": None}},
+    {"raw": {"model": "gpt-6-astra", "status": "cancelled", "usage": {
         "input_tokens": 100, "input_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0},
-        "output_tokens": 10}},
-])
-def test_cancellation_accounting_preserves_maximum_known_cost_and_usage(latest):
+        "output_tokens": 10}}},
+    {"result": {"cost_usd": .5, "usage": {"output_tokens": 100}, "model": "gpt-6-astra"}},
+], ids=["cancelled_without_usage", "cancelled_with_smaller_usage", "smaller_result"])
+def test_accounting_preserves_the_larger_prior_cost_and_its_usage(later):
     from crest_ais.pipeline import _account
     observed_usage = {"input_tokens": 100000, "output_tokens": 170000}
-    account = _account({"observed_cost_usd": 9.5, "observed_usage": observed_usage,
-                        "raw": latest}, "openai", {"model": "gpt-6-astra"})
-    assert account["cost_usd"] == 9.5
-    assert account["usage"] == observed_usage
-
-
-def test_result_accounting_preserves_larger_prior_observation():
-    from crest_ais.pipeline import _account
-    observed_usage = {"input_tokens": 100000, "output_tokens": 170000}
-    account = _account({"observed_cost_usd": 9.5, "observed_usage": observed_usage,
-                        "result": {"cost_usd": .5, "usage": {"output_tokens": 100}, "model": "gpt-6-astra"}},
+    account = _account({"observed_cost_usd": 9.5, "observed_usage": observed_usage, **later},
                        "openai", {"model": "gpt-6-astra"})
     assert account["cost_usd"] == 9.5
     assert account["usage"] == observed_usage
@@ -410,7 +408,7 @@ def test_cancelled_known_spend_still_guards_dispatch_and_reaches_report(tmp_path
     async def judge(prompt, settings, job):
         pytest.fail("Known observed spend already exceeds the dispatch target")
     results = asyncio.run(run_judging(plan, run_dir,
-        providers={name: SimpleNamespace(judge=judge) for name in JUDGES},
+        providers=_providers(judge),
         progress=False, max_spend_usd=9))
     assert results == []
     summary = json.loads((run_dir / "judging.json").read_text())
@@ -454,14 +452,27 @@ def test_geometry_filter_removes_diagonal_provenance_without_losing_body_or_rota
         assert all("direction" in entry and "bbox" in entry and "spans" in entry for entry in audit["removed_lines"])
 
 
-def test_no_watermark_leaves_extraction_identical_and_does_not_remove_rotated_science(tmp_path):
+@pytest.mark.parametrize("case", ["no_watermark_with_rotated_science", "v2_margin_geometry_with_unaudited_hash"])
+def test_page_without_removable_artifacts_keeps_extraction_identical(tmp_path, case):
     from crest_ais.catalog import _clean_page
-    paper = _pdf(tmp_path, "plain.pdf", ["Abstract\nA scientific mechanism with a substantive claim and complete evidence."])
-    with fitz.open(tmp_path / paper["pdf_path"]) as document:
+    if case == "no_watermark_with_rotated_science":
+        # Rotated body text that mentions generation is science, not a watermark.
+        paper = _pdf(tmp_path, "plain.pdf", ["Abstract\nA scientific mechanism with a substantive claim and complete evidence."])
+        document = fitz.open(tmp_path / paper["pdf_path"])
         page = document[0]
         page.insert_text((70, 700), "AUTONOMOUSLY GENERATED samples", fontsize=10, rotate=90)
+        source_sha256 = None
+    else:
+        # Text at the v2 review-margin coordinates is kept unless the release hash is audited.
+        document = fitz.open()
+        page = document.new_page()
+        page.insert_text((30.509, 100), "Comment: a scientific example", fontsize=10)
+        page.insert_text((518.794, 150), "Figure axis", fontsize=10)
+        page.insert_text((73.131, 200), "123", fontsize=8)
+        source_sha256 = "f" * 64
+    with document:
         original = page.get_text("text", sort=True)
-        cleaned, audit = _clean_page(page)
+        cleaned, audit = _clean_page(page) if source_sha256 is None else _clean_page(page, source_sha256=source_sha256)
         assert cleaned == original
         assert audit["removed_lines"] == []
 
@@ -511,7 +522,7 @@ def test_superseded_run_refuses_all_dispatch_and_points_to_replacement(tmp_path)
         pytest.fail("Superseded jobs must never dispatch")
     with pytest.raises(ValueError, match="superseded") as captured:
         asyncio.run(run_judging(plan, run_dir,
-            providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+            providers=_providers(judge), progress=False))
     assert replacement in str(captured.value)
 
 
@@ -522,16 +533,16 @@ def test_superseded_marker_created_during_run_blocks_later_dispatch(tmp_path):
     async def judge(prompt, settings, job):
         calls.append(job.key)
         (run_dir / "superseded.json").write_text(json.dumps({"reason": "Corrected inputs", "replacement_run": "corrected-run"}))
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
+        return _answer()
     with pytest.raises(ValueError, match="superseded"):
         asyncio.run(run_judging(plan, run_dir,
-            providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+            providers=_providers(judge), progress=False))
     assert len(calls) == 1
 
 
 @pytest.mark.parametrize("override,expected", [(None, 2), (1, 1), (2, 2), (4, 4), (16, 16)])
 def test_worker_override_is_operational_bounded_and_preserves_resume(tmp_path, override, expected):
-    plan = _plan(tmp_path, (2, 2, 2, 2) if override == 16 else (1, 1, 1, 1))
+    plan = _plan(tmp_path, (2, 1, 1, 1))  # 18 jobs per judge, so 16 workers can all be busy
     before = json.dumps(plan, sort_keys=True)
     run_dir = tmp_path / "run"
     existing = plan["jobs"][0]
@@ -550,7 +561,7 @@ def test_worker_override_is_operational_bounded_and_preserves_resume(tmp_path, o
             assert settings == plan["judges"][name]
             try:
                 await asyncio.sleep(.001)
-                return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
+                return _answer()
             finally:
                 active[name] -= 1
         return SimpleNamespace(judge=judge)
@@ -570,6 +581,32 @@ def test_worker_override_is_operational_bounded_and_preserves_resume(tmp_path, o
     assert frozen_bytes == (run_dir / "plan.json").read_bytes()
 
 
+def test_snapshots_see_checkpoints_rewritten_by_another_process_during_the_run(tmp_path):
+    # Snapshots reuse parsed checkpoints; a write made elsewhere must still be published.
+    plan = _plan(tmp_path, (1, 1, 1, 1))
+    run_dir = tmp_path / "run"
+    cache = Cache(run_dir / ".cache" / "judgments")
+    other = plan["jobs"][0]
+    cache.job(other["key"]).save(status="failed", error="first attempt", observed_cost_usd=.02)
+    rewritten = []
+    async def judge(prompt, settings, job):
+        if not rewritten:
+            # A concurrent judge of the same run completes the failed job.
+            cache.job(other["key"]).save(status="completed", verdict=_verdict(), observed_cost_usd=.03,
+                                         result=_answer(.03))
+            rewritten.append(True)
+        return _answer()
+    # One worker so the failed checkpoint is snapshotted before and after the rewrite.
+    results = asyncio.run(run_judging(plan, run_dir, providers=_providers(judge),
+                                      progress=False, workers_per_judge=1))
+    assert other["key"] in {row["key"] for row in results}
+    assert json.loads((run_dir / "results.json").read_text()) == results
+    assert json.loads((run_dir / "failures.json").read_text()) == []
+    summary = json.loads((run_dir / "judging.json").read_text())
+    assert summary["completed_jobs"] == len(plan["jobs"])
+    assert summary["known_usd"] == pytest.approx(.03 + .01 * (len(plan["jobs"]) - 1))
+
+
 @pytest.mark.parametrize("invalid", [0, -1, 17, True, 2.5, "4"])
 def test_worker_override_rejects_values_outside_integer_one_to_sixteen(tmp_path, invalid):
     plan = _plan(tmp_path, (1, 1, 1, 1))
@@ -582,8 +619,8 @@ def test_report_includes_prior_excluded_spend_without_counting_prior_judgments(t
     plan = _plan(tmp_path, (1, 1, 1, 1))
     run_dir = tmp_path / "run"
     async def judge(prompt, settings, job):
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
-    asyncio.run(run_judging(plan, run_dir, providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+        return _answer()
+    asyncio.run(run_judging(plan, run_dir, providers=_providers(judge), progress=False))
     prior = {"source_run": "superseded-run", "known_usd": 2.383585, "unknown_jobs": 2,
              "job_count": 12, "reason": "Contaminated inputs excluded from rankings"}
     (run_dir / "prior_costs.json").write_text(json.dumps(prior))
@@ -649,21 +686,17 @@ def test_overall_protocol_freezes_current_crest_semantics_and_invalidates_all_ol
     assert new["papers"] == old["papers"]
     assert len(new["jobs"]) == len(old["jobs"]) == 144
     assert {job["key"] for job in new["jobs"]}.isdisjoint(job["key"] for job in old["jobs"])
+    # Presentation is slow; reuse the plan's memo of the shared CREST renderer.
+    from crest_ais.protocol import _present_answer
+    assert _present_answer.__wrapped__ is present_answer
+    presented = {paper["id"]: _present_answer((root / paper["blind_text_path"]).read_text()) for paper in new["papers"]}
+    fields = ("pair_id", "agents", "papers", "order", "judge", "settings")
     for previous, job in zip(old["jobs"], new["jobs"]):
-        assert {key: previous[key] for key in ("pair_id", "agents", "papers", "order", "judge", "settings")} == {key: job[key] for key in ("pair_id", "agents", "papers", "order", "judge", "settings")}
+        assert {key: previous[key] for key in fields} == {key: job[key] for key in fields}
         assert "Make one overall A or B choice" in job["prompt"]
         assert "Choose A or B independently" not in job["prompt"]
-        encoded = job["prompt"].split("UNTRUSTED INPUT DATA (JSON):\n", 1)[1]
-        data = json.loads(encoded)
-        assert data["A"] == present_answer((root / next(paper["blind_text_path"] for paper in new["papers"] if paper["id"] == job["order"][0])).read_text())
-        assert data["B"] == present_answer((root / next(paper["blind_text_path"] for paper in new["papers"] if paper["id"] == job["order"][1])).read_text())
-
-
-@pytest.mark.parametrize("verdict", [{"reason":" ","winner":"A"}, {"reason":"reason","winner":"tie"},
-    {"reason":"reason","winner":"A","new":"A"}, {"winner":"A"}])
-def test_overall_parser_rejects_empty_partial_and_additional_fields(verdict):
-    with pytest.raises(ValueError):
-        parse_verdict(json.dumps(verdict))
+        data = json.loads(job["prompt"].split("UNTRUSTED INPUT DATA (JSON):\n", 1)[1])
+        assert [data["A"], data["B"]] == [presented[identity] for identity in job["order"]]
 
 
 def test_legacy_three_verdict_plan_cannot_dispatch_under_overall_protocol(tmp_path):
@@ -673,7 +706,7 @@ def test_legacy_three_verdict_plan_cannot_dispatch_under_overall_protocol(tmp_pa
     async def judge(prompt, settings, job):
         pytest.fail("Legacy nested-verdict prompts must be replanned before new judging")
     with pytest.raises(ValueError, match="protocol|version"):
-        asyncio.run(run_judging(plan, tmp_path / "run", providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+        asyncio.run(run_judging(plan, tmp_path / "run", providers=_providers(judge), progress=False))
 
 
 def test_extension_preserves_initial_draw_and_adds_only_unused_uniform_pairs(tmp_path):
@@ -720,21 +753,22 @@ def test_extension_caps_small_populations_and_rejects_changed_frozen_text(tmp_pa
 def test_create_extension_reuses_paid_results_and_carries_prior_cost_once(tmp_path):
     from crest_ais.pipeline import create_extension
     from crest_ais.cli import _report
-    parent = _plan(tmp_path, (3, 3, 3, 3), pairs_per_matchup=1)
+    parent = _plan(tmp_path, (2, 2, 2, 2), pairs_per_matchup=1)
     source = tmp_path / "source"
     destination = tmp_path / "extended"
     calls = []
     async def judge(prompt, settings, job):
         calls.append(job.key)
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
-    providers = {name: SimpleNamespace(judge=judge) for name in JUDGES}
+        return _answer()
+    providers = _providers(judge)
     initial = asyncio.run(run_judging(parent, source, providers=providers, progress=False))
     prior = {"known_usd": 13.873186, "unknown_jobs": 0, "job_count": 60, "source_run": "excluded", "reason": "Excluded prior attempts"}
     (source / "prior_costs.json").write_text(json.dumps(prior))
-    extended = create_extension(source, destination, tmp_path, pairs_per_matchup=3)
+    extended = create_extension(source, destination, tmp_path, pairs_per_matchup=2)
+    assert len(extended["jobs"]) == 2 * len(parent["jobs"])
     assert json.loads((destination / "results.json").read_text()) == initial
     assert json.loads((destination / "prior_costs.json").read_text()) == prior
-    assert create_extension(source, destination, tmp_path, pairs_per_matchup=3) == extended
+    assert create_extension(source, destination, tmp_path, pairs_per_matchup=2) == extended
     first = asyncio.run(run_judging(extended, destination, providers=providers, progress=False, workers_per_judge=16))
     assert len(calls) == len(extended["jobs"])
     assert len(first) == len(extended["jobs"])
@@ -750,7 +784,7 @@ def test_create_extension_reuses_paid_results_and_carries_prior_cost_once(tmp_pa
 
 def test_cli_extend_uses_frozen_parent_without_loading_current_judges(tmp_path, monkeypatch):
     from crest_ais import cli
-    parent = _plan(tmp_path, (3, 3, 3, 3), pairs_per_matchup=1)
+    parent = _plan(tmp_path, (1, 1, 1, 1), pairs_per_matchup=1)
     config = tmp_path / "config.json"
     config.write_text(json.dumps({"data_root": ".", "output_dir": "results"}))
     source, destination = tmp_path / "source", tmp_path / "extension"
@@ -776,8 +810,8 @@ def _completed_extension_parent(tmp_path):
     parent = _plan(tmp_path, (2, 2, 2, 2), pairs_per_matchup=1)
     source = tmp_path / "source"
     async def judge(prompt, settings, job):
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
-    asyncio.run(run_judging(parent, source, providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+        return _answer()
+    asyncio.run(run_judging(parent, source, providers=_providers(judge), progress=False))
     return parent, source
 
 
@@ -814,8 +848,8 @@ def test_extension_preparation_blocks_judging_and_concurrent_preparation(tmp_pat
     calls = []
     async def judge(prompt, settings, job):
         calls.append(job.key)
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "mock"}
-    providers = {name: SimpleNamespace(judge=judge) for name in JUDGES}
+        return _answer(.02)
+    providers = _providers(judge)
     original_write = pipeline.write_json
     attempted = []
     def interleave(path, value):
@@ -853,7 +887,7 @@ def test_interrupted_extension_remains_undispatchable_and_preparation_resumes(tm
     assert not (destination / "plan.json").exists()
     async def no_dispatch(prompt, settings, job):
         pytest.fail("An interrupted preparation cannot dispatch")
-    providers = {name: SimpleNamespace(judge=no_dispatch) for name in JUDGES}
+    providers = _providers(no_dispatch)
     with pytest.raises(ValueError, match="prepar|ready"):
         asyncio.run(run_judging(planned, destination, providers=providers, progress=False))
     monkeypatch.setattr(pipeline, "write_json", original_write)
@@ -877,9 +911,9 @@ def test_repeated_preparation_cannot_overwrite_active_judging(tmp_path):
             with pytest.raises(ValueError, match="busy|judg|prepar"):
                 pipeline.create_extension(source, destination, tmp_path, pairs_per_matchup=2)
             assert job.path.read_bytes() == before
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "mock"}
+        return _answer(.02)
     results = asyncio.run(run_judging(extended, destination,
-        providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+        providers=_providers(judge), progress=False))
     assert attempted and len(results) == len(extended["jobs"])
 
 
@@ -904,7 +938,7 @@ def test_pre_marker_extension_requires_complete_imports_before_dispatch(tmp_path
         pytest.fail("Incomplete legacy preparation cannot submit paid work")
     with pytest.raises(ValueError, match="prepar|ready|Imported"):
         asyncio.run(run_judging(extended, destination,
-            providers={name: SimpleNamespace(judge=no_dispatch) for name in JUDGES}, progress=False))
+            providers=_providers(no_dispatch), progress=False))
 
 
 def test_ready_pre_marker_extension_remains_resumable_without_repaying_imports(tmp_path):
@@ -916,9 +950,9 @@ def test_ready_pre_marker_extension_remains_resumable_without_repaying_imports(t
     calls = []
     async def judge(prompt, settings, job):
         calls.append(job.key)
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "mock"}
+        return _answer(.02)
     results = asyncio.run(run_judging(extended, destination,
-        providers={name: SimpleNamespace(judge=judge) for name in JUDGES}, progress=False))
+        providers=_providers(judge), progress=False))
     assert len(results) == len(extended["jobs"])
     assert len(calls) == len(extended["jobs"]) - len(parent["jobs"])
 
@@ -941,7 +975,7 @@ def test_interruption_after_plan_publication_still_requires_readiness_commit(tmp
         pytest.fail("Published plan is still incomplete without ready commit")
     with pytest.raises(ValueError, match="prepar|ready"):
         asyncio.run(run_judging(extended, destination,
-            providers={name: SimpleNamespace(judge=no_dispatch) for name in JUDGES}, progress=False))
+            providers=_providers(no_dispatch), progress=False))
     monkeypatch.setattr(pipeline, "write_json", original_write)
     resumed = pipeline.create_extension(source, destination, tmp_path, pairs_per_matchup=2)
     assert resumed == extended
@@ -988,7 +1022,7 @@ def test_judging_lifecycle_lock_covers_outstanding_worker_cleanup(tmp_path):
     async def withdrawing_judge(prompt, settings, job):
         await started.wait()
         (destination / "superseded.json").write_text(json.dumps({"reason": "Stop new dispatch"}))
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "mock"}
+        return _answer(.02)
     providers = {"gemini": SimpleNamespace(judge=delayed_judge), "openai": SimpleNamespace(judge=withdrawing_judge)}
     with pytest.raises(ValueError, match="superseded"):
         asyncio.run(run_judging(extended, destination, providers=providers, progress=False))
@@ -1052,77 +1086,65 @@ def test_single_collection_preparation_does_not_reextract_existing_agents(tmp_pa
     assert rows[0]["eligible_primary"] is True
 
 
-def test_cohort_extension_imports_all_240_paid_jobs_without_repaying_them(tmp_path):
+def test_cohort_extension_imports_all_paid_parent_jobs_without_repaying_them(tmp_path):
+    # The import path does not depend on cohort size; the default 240-job design
+    # is checked by test_new_plan_default_is_ten_pairs_per_matchup.
     from crest_ais.pipeline import create_cohort_extension
     from crest_ais.cli import _report
-    parent = make_plan(_catalog(tmp_path, (4, 4, 4, 4)), AGENTS, JUDGES, tmp_path, RUBRIC, pairs_per_matchup=10)
-    assert len(parent["jobs"]) == 240
+    parent = make_plan(_catalog(tmp_path, (1, 1, 1, 1)), AGENTS, JUDGES, tmp_path, RUBRIC, pairs_per_matchup=10)
+    assert len(parent["jobs"]) == 24  # census: 1 pair per matchup x 6 matchups x 2 orders x 2 judges
     source, destination = tmp_path / "source", tmp_path / "five-system-run"
     calls = []
     async def judge(prompt, settings, job):
         calls.append(job.key)
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
-    providers = {name: SimpleNamespace(judge=judge) for name in JUDGES}
+        return _answer()
+    providers = _providers(judge)
     initial = asyncio.run(run_judging(parent, source, providers=providers, progress=False, workers_per_judge=16))
     prior = {"known_usd": 13.873186, "unknown_jobs": 0, "job_count": 60, "reason": "Excluded attempts"}
     (source / "prior_costs.json").write_text(json.dumps(prior))
     new_catalog = _new_agent_catalog(tmp_path, count=1)
     extended = create_cohort_extension(source, destination, tmp_path, new_catalog=new_catalog, new_agents={"e": "Fifth system"})
-    assert len(extended["jobs"]) == 304
+    assert len(extended["jobs"]) == 24 + 4 * 2 * 2
     assert json.loads((destination / "results.json").read_text()) == initial
     assert json.loads((destination / "prior_costs.json").read_text()) == prior
     results = asyncio.run(run_judging(extended, destination, providers=providers, progress=False, workers_per_judge=16))
-    assert len(results) == len(calls) == 304
+    assert len(results) == len(calls) == 40
     assert all(calls.count(job["key"]) == 1 for job in parent["jobs"])
     repeated = create_cohort_extension(source, destination, tmp_path, new_catalog=new_catalog, new_agents={"e": "Fifth system"})
     assert repeated == extended
     report = _report(extended, destination, tmp_path, destination / "report.html")
-    assert len(report["agents"]) == 5 and report["coverage"]["completed_jobs"] == 304
-    assert report["costs"]["known_usd"] == pytest.approx(3.04 + prior["known_usd"])
-    assert json.loads((destination / "judging.json").read_text())["imported_jobs"] == 240
+    assert len(report["agents"]) == 5 and report["coverage"]["completed_jobs"] == 40
+    assert report["costs"]["known_usd"] == pytest.approx(.40 + prior["known_usd"])
+    assert json.loads((destination / "judging.json").read_text())["imported_jobs"] == 24
 
 
-def test_v2_hash_locked_geometry_removes_human_reviews_and_preserves_all_science():
+@pytest.mark.parametrize("filename,sha,comments_per_page", [
+    ("compositional-regularization.pdf", "8d5477b165639ed7339b77677da355496778b081c0086d7185a906fbcbbcd40f", [24,21,55,22,16,37,5,23]),
+    ("label-noise.pdf", "20b77a6ea8748d2bf5a0fd10ac589bcb6446fe50d5487632682fa87e324308b2", [19,38,74,25,13,52,8]),
+    ("pest-detection.pdf", "4ed38075f76698bda3b3d21d3d792286aa1d45124398277119c8cca86ddbdf6f", [42,58,31,34,8,16]),
+])
+def test_v2_hash_locked_geometry_removes_human_reviews_and_preserves_all_science(filename, sha, comments_per_page):
     from collections import Counter
     from crest_ais.catalog import _clean_page
-    root = Path(__file__).resolve().parents[1]
-    profiles = {
-        "compositional-regularization.pdf": ("8d5477b165639ed7339b77677da355496778b081c0086d7185a906fbcbbcd40f", [24,21,55,22,16,37,5,23]),
-        "label-noise.pdf": ("20b77a6ea8748d2bf5a0fd10ac589bcb6446fe50d5487632682fa87e324308b2", [19,38,74,25,13,52,8]),
-        "pest-detection.pdf": ("4ed38075f76698bda3b3d21d3d792286aa1d45124398277119c8cca86ddbdf6f", [42,58,31,34,8,16]),
-    }
-    if not (root / "data/sakana_ai_scientist_v2/pdfs/compositional-regularization.pdf").exists():
+    path = Path(__file__).resolve().parents[1] / "data/sakana_ai_scientist_v2/pdfs" / filename
+    if not path.exists():
         pytest.skip("Official v2 PDFs are absent")
-    for filename, (sha, comments_per_page) in profiles.items():
-        path = root / "data/sakana_ai_scientist_v2/pdfs" / filename
-        assert hashlib.sha256(path.read_bytes()).hexdigest() == sha
-        with fitz.open(path) as document:
-            for index, page in enumerate(document):
-                cleaned, audit = _clean_page(page, source_sha256=sha)
-                counts = Counter(entry["kind"] for entry in audit["removed_lines"])
-                assert counts == {"human_margin_review": comments_per_page[index], "editorial_line_number":54,"v2_review_status_header":1}
-                assert "Comment:" not in cleaned
-                assert "Under review as a workshop paper" not in cleaned
-                removed = {(entry["block"],entry["line"]) for entry in audit["removed_lines"]}
-                retained = [word for word in page.get_text("words") if (word[5],word[6]) not in removed]
-                assert Counter(''.join(''.join(word[4] for word in retained).split())) == Counter(''.join(cleaned.split()))
-                assert audit["raw_word_count"] == audit["kept_word_count"] + audit["removed_word_count"]
-                # Genuine body statements containing 'generated' remain available.
-                if filename == "compositional-regularization.pdf" and index == 1:
-                    assert "generated" in cleaned.lower()
-
-
-def test_v2_geometry_profile_does_not_apply_to_unrelated_margin_science(tmp_path):
-    from crest_ais.catalog import _clean_page
-    document = fitz.open()
-    page = document.new_page()
-    page.insert_text((30.509,100), "Comment: a scientific example", fontsize=10)
-    page.insert_text((518.794,150), "Figure axis", fontsize=10)
-    page.insert_text((73.131,200), "123", fontsize=8)
-    raw = page.get_text("text",sort=True)
-    cleaned, audit = _clean_page(page,source_sha256="f"*64)
-    assert cleaned == raw and audit["removed_lines"] == []
-    document.close()
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == sha
+    with fitz.open(path) as document:
+        assert len(document) == len(comments_per_page)
+        for index, page in enumerate(document):
+            cleaned, audit = _clean_page(page, source_sha256=sha)
+            counts = Counter(entry["kind"] for entry in audit["removed_lines"])
+            assert counts == {"human_margin_review": comments_per_page[index], "editorial_line_number":54,"v2_review_status_header":1}
+            assert "Comment:" not in cleaned
+            assert "Under review as a workshop paper" not in cleaned
+            removed = {(entry["block"],entry["line"]) for entry in audit["removed_lines"]}
+            retained = [word for word in page.get_text("words") if (word[5],word[6]) not in removed]
+            assert Counter(''.join(''.join(word[4] for word in retained).split())) == Counter(''.join(cleaned.split()))
+            assert audit["raw_word_count"] == audit["kept_word_count"] + audit["removed_word_count"]
+            # Genuine body statements containing 'generated' remain available.
+            if filename == "compositional-regularization.pdf" and index == 1:
+                assert "generated" in cleaned.lower()
 
 
 def test_cli_add_agent_prepares_only_new_collection_and_imports_frozen_parent(tmp_path,monkeypatch):

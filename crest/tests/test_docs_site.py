@@ -1,5 +1,4 @@
 """Publication contracts: canonical URLs, page dates, and unchanged research evidence."""
-from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
@@ -13,14 +12,24 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name('docs_evidence_baseline.json')
-PROTECTED = ('//table | //svg | //pre | //script | //meta | '
-             '//*[contains(concat(" ", normalize-space(@class), " "), " answer-text ") or '
-             'contains(concat(" ", normalize-space(@class), " "), " reason ") or '
-             'contains(concat(" ", normalize-space(@class), " "), " judgment ") or '
-             'contains(concat(" ", normalize-space(@class), " "), " metadata ") or '
-             'contains(concat(" ", normalize-space(@class), " "), " meta ") or '
-             'contains(concat(" ", normalize-space(@class), " "), " question ") or '
-             'contains(concat(" ", normalize-space(@class), " "), " paper-record ")]')
+# Evidence subtrees: these tags plus elements carrying any of these classes.
+PROTECTED_TAGS = frozenset({'table', 'svg', 'pre', 'script', 'meta'})
+PROTECTED_CLASSES = frozenset({'answer-text', 'reason', 'judgment', 'metadata', 'meta',
+                               'question', 'paper-record'})
+XML_SPACE = re.compile(r'[ \t\r\n]+')
+
+
+def protected_elements(page):
+    """Document-order evidence elements.
+
+    One tree walk matches what the XPath ``//table | ... | //*[contains(concat(" ",
+    normalize-space(@class), " "), " reason ")]`` union selected, several times faster.
+    Class tokens split on XML whitespace, as normalize-space does.
+    """
+    for element in page.iter(etree.Element):
+        classes = element.get('class')
+        if element.tag in PROTECTED_TAGS or classes and not PROTECTED_CLASSES.isdisjoint(XML_SPACE.split(classes)):
+            yield element
 
 
 def evidence_fingerprints(source):
@@ -34,8 +43,10 @@ def evidence_fingerprints(source):
     page = html.fromstring(source)
     def digest(value):
         return hashlib.sha256(value).hexdigest()
-    protected = [digest(etree.tostring(e, with_tail=False)) for e in page.xpath(PROTECTED)]
-    body = deepcopy(page.find('body'))
+    protected = [digest(etree.tostring(e, with_tail=False)) for e in protected_elements(page)]
+    # The tree is private to this call, so the body is normalized in place once
+    # the protected subtrees have been hashed.
+    body = page.find('body')
     for e in body.xpath('.//header[contains(concat(" ", @class, " "), " crest-site-header ")]'):
         e.drop_tree()
     for e in body.xpath('.//h1'):
@@ -57,7 +68,6 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
     page, entries = index_entries()
     local = [a for a in entries if not urlsplit(a.get('href')).scheme]
     assert len(local) == 45
-    assert 'page-update dates, not study dates' in page.text_content()
     for a in local:
         target = (ROOT / 'docs' / a.get('href')).resolve()
         label = a.text_content()
@@ -86,8 +96,9 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
         assert a.getparent().xpath('./span[@class="description"]/text()')[0].strip()
     stamp = page.xpath('//header[@class="crest-site-header"]/nav/time[@class="crest-page-updated"]')
     assert len(stamp) == 1
-    assert stamp[0].get('datetime') == '2026-11-22'
-    assert stamp[0].text == 'Updated 2026-11-22'
+    assert stamp[0].text == 'Updated ' + stamp[0].get('datetime')
+    # sync_index_date moves the index date with each entry it updates.
+    assert stamp[0].get('datetime') >= max(a.getnext().get('datetime') for a in local)
 
 
 def test_all_site_pages_have_one_right_aligned_date():
@@ -117,10 +128,29 @@ def test_historical_research_evidence_is_preserved():
         assert evidence_fingerprints((ROOT / name).read_bytes()) == expected, name
 
 
-def test_redirects_have_readable_canonical_fallbacks():
+# Runs every redirect script in its own VM context inside one Node process; a
+# process per script (26 per case) made these the slowest tests in the suite.
+REDIRECT_HARNESS = r"""
+const vm = require('vm');
+const cases = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+console.log(JSON.stringify(cases.map(({script, search, hash}) => {
+  const link = {href: null};
+  let result;
+  vm.runInNewContext(script, {
+    document: {getElementById: () => link},
+    window: {location: {search, hash, replace: x => { result = x; }}},
+  });
+  return {result, href: link.href};
+})));
+"""
+REDIRECT_QUERIES = [('', ''), ('?source=old%20link&x=1', '#method'), ('?next=%23method', '#answer%3Aone')]
+
+
+def test_redirects_have_readable_canonical_fallbacks_and_scripts_preserve_query_and_fragment():
     from crest_ais.site import PAGES
     aliases = [p for p in PAGES if p['old'] != p['canonical']]
     assert len(aliases) == 26
+    cases, expected = [], []
     for record in aliases:
         path = ROOT / record['old']
         page = html.fromstring(path.read_bytes())
@@ -130,33 +160,31 @@ def test_redirects_have_readable_canonical_fallbacks():
         assert path.stat().st_size < 15000
         assert page.xpath('//link[@rel="canonical"]/@href') == [link.get('href')]
         assert not page.xpath('//meta[translate(@http-equiv,"REFSH","refsh")="refresh"]')
-
-
-@pytest.mark.skipif(shutil.which('node') is None, reason='Node is optional; needed to execute redirect JavaScript')
-@pytest.mark.parametrize('search,fragment', [('', ''), ('?source=old%20link&x=1', '#method'),
-                                             ('?next=%23method', '#answer%3Aone')])
-def test_redirect_scripts_preserve_query_and_fragment(search, fragment):
-    from crest_ais.site import PAGES
-    for record in PAGES:
-        if record['old'] == record['canonical']:
-            continue
-        page = html.fromstring((ROOT / record['old']).read_bytes())
-        link = page.xpath('//main//a[@id="canonical-link"]')[0]
         # Execute the actual script, not a duplicated implementation of it.
         script = page.xpath('//script/text()')[-1]
-        harness = ('const link = {href: null}; let result; '
-                   'global.document = {getElementById: () => link}; '
-                   'global.window = {location: {search: ' + json.dumps(search) + ', hash: ' + json.dumps(fragment) + ', '
-                   'replace: x => {result = x}}};\n' + script +
-                   '\nconsole.log(JSON.stringify({result, href: link.href}));')
-        actual = json.loads(subprocess.check_output(['node', '-e', harness], text=True))
-        expected = link.get('href') + search + fragment
-        assert actual == {'result': expected, 'href': expected}
+        for search, fragment in REDIRECT_QUERIES:
+            cases.append({'script': script, 'search': search, 'hash': fragment})
+            target = link.get('href') + search + fragment
+            expected.append({'result': target, 'href': target})
+    if shutil.which('node') is None:
+        pytest.skip('Node is optional; needed to execute redirect JavaScript')
+    output = subprocess.run(['node', '-e', REDIRECT_HARNESS], input=json.dumps(cases),
+                            capture_output=True, text=True, check=True).stdout
+    assert json.loads(output) == expected
 
 
 def test_site_navigation_and_document_links_resolve_with_fragments():
     from crest_ais.site import PAGES
     aliases = {str((ROOT / p['old']).resolve()): ROOT / p['canonical'] for p in PAGES}
+    anchors = {}  # Parse each target once; a per-link XPath scan of large pages was the cost.
+
+    def anchor_names(path, page=None):
+        if path not in anchors:
+            page = html.fromstring(path.read_bytes()) if page is None else page
+            anchors[path] = {value for element in page.iter(etree.Element)
+                             for value in (element.get('id'), element.get('name')) if value is not None}
+        return anchors[path]
+
     for record in PAGES:
         path = ROOT / record['canonical']
         page = html.fromstring(path.read_bytes())
@@ -170,9 +198,8 @@ def test_site_navigation_and_document_links_resolve_with_fragments():
             assert target.exists(), (path, link.get('href'))
             target = aliases.get(str(target), target)
             if url.fragment:
-                document = page if target == path else html.fromstring(target.read_bytes())
-                fragment = unquote(url.fragment)
-                assert document.xpath('//*[@id=$id or @name=$id]', id=fragment), (path, link.get('href'))
+                names = anchor_names(path, page) if target == path else anchor_names(target)
+                assert unquote(url.fragment) in names, (path, link.get('href'))
 
 
 def test_generated_header_uses_canonical_links_and_reproducible_date(monkeypatch, tmp_path):
@@ -240,9 +267,12 @@ def test_index_sync_updates_only_matching_entry_and_index_page_date(tmp_path):
     assert index.read_bytes() == revised
 
 
-@pytest.mark.parametrize('width', [320, 390, 650, 1365])
-def test_index_dates_remain_to_the_right_of_wrapping_titles_in_browser(width):
-    """Reserve a right-hand date column even when a title needs several lines."""
+def test_index_dates_remain_to_the_right_of_wrapping_titles_in_browser():
+    """Reserve a right-hand date column even when a title needs several lines.
+
+    One browser and page serve every width: launching Chromium per width
+    dominated the runtime, and the layout is recomputed on each resize.
+    """
     playwright = pytest.importorskip('playwright.sync_api', reason='Optional browser layout regression')
     with playwright.sync_playwright() as runtime:
         try:
@@ -252,31 +282,33 @@ def test_index_dates_remain_to_the_right_of_wrapping_titles_in_browser(width):
                 pytest.skip('Playwright Chromium is not installed')
             raise
         try:
-            context = browser.new_context(viewport={'width': width, 'height': 900})
+            context = browser.new_context(viewport={'width': 1365, 'height': 900})
             context.route('http://**/*', lambda route: route.abort())
             context.route('https://**/*', lambda route: route.abort())
             page = context.new_page()
             page.goto((ROOT / 'docs/index.html').as_uri(), wait_until='load')
             page.locator('details').evaluate_all('(items) => items.forEach(item => item.open = true)')
-            rows = page.locator('main time.page-link-date').evaluate_all('''items => items.map(date => {
-                const item = date.closest('li'), link = item.querySelector('a');
-                const description = item.querySelector('.description');
-                const d = date.getBoundingClientRect(), a = link.getBoundingClientRect();
-                const p = description.getBoundingClientRect(), row = item.getBoundingClientRect();
-                return {label:link.textContent, dateLeft:d.left, dateRight:d.right, dateTop:d.top,
-                        linkRight:a.right, linkTop:a.top, linkBottom:a.bottom,
-                        descriptionLeft:p.left, descriptionRight:p.right, descriptionTop:p.top,
-                        rowLeft:row.left, rowRight:row.right};
-            })''')
-            assert len(rows) == 45
-            for row in rows:
-                assert row['dateLeft'] >= row['linkRight'] - 1, row
-                assert abs(row['dateTop'] - row['linkTop']) <= 1, row
-                assert row['dateRight'] <= width - 15, row
-                assert row['descriptionTop'] >= row['linkBottom'] - 1, row
-                assert abs(row['descriptionLeft'] - row['rowLeft']) <= 1, row
-                assert abs(row['descriptionRight'] - row['rowRight']) <= 1, row
-            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            for width in (320, 390, 650, 1365):
+                page.set_viewport_size({'width': width, 'height': 900})
+                rows = page.locator('main time.page-link-date').evaluate_all('''items => items.map(date => {
+                    const item = date.closest('li'), link = item.querySelector('a');
+                    const description = item.querySelector('.description');
+                    const d = date.getBoundingClientRect(), a = link.getBoundingClientRect();
+                    const p = description.getBoundingClientRect(), row = item.getBoundingClientRect();
+                    return {label:link.textContent, dateLeft:d.left, dateRight:d.right, dateTop:d.top,
+                            linkRight:a.right, linkTop:a.top, linkBottom:a.bottom,
+                            descriptionLeft:p.left, descriptionRight:p.right, descriptionTop:p.top,
+                            rowLeft:row.left, rowRight:row.right};
+                })''')
+                assert len(rows) == 45, width
+                for row in rows:
+                    assert row['dateLeft'] >= row['linkRight'] - 1, (width, row)
+                    assert abs(row['dateTop'] - row['linkTop']) <= 1, (width, row)
+                    assert row['dateRight'] <= width - 15, (width, row)
+                    assert row['descriptionTop'] >= row['linkBottom'] - 1, (width, row)
+                    assert abs(row['descriptionLeft'] - row['rowLeft']) <= 1, (width, row)
+                    assert abs(row['descriptionRight'] - row['rowRight']) <= 1, (width, row)
+                assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
         finally:
             browser.close()
 

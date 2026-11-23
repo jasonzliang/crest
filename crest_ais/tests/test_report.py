@@ -160,10 +160,14 @@ def test_no_judgments_cannot_turn_missing_scores_into_ranked_zeroes(report, tmp_
     assert "Scientist One" in html and "Agentic Scientist v3" in html
 
 
-def test_partial_run_with_stale_ranks_cannot_publish_primary_leaderboard(report, tmp_path):
+@pytest.mark.parametrize("incomplete", ["partial_run_with_stale_ranks", "complete_status_with_unusable_jobs"])
+def test_incomplete_evidence_with_stale_ranks_cannot_publish_primary_leaderboard(report, tmp_path, incomplete):
     complete(report)
-    report["status"] = "partial"
-    report["coverage"].update(completed_jobs=1, usable_jobs=1, complete_pairs=0, used_decisions=0)
+    if incomplete == "partial_run_with_stale_ranks":
+        report["status"] = "partial"
+        report["coverage"].update(completed_jobs=1, usable_jobs=1, complete_pairs=0, used_decisions=0)
+    else:
+        report["coverage"]["usable_jobs"] = 3
     html = render(report, tmp_path)
     doc = Document(html)
     assert "Ranking withheld" in html
@@ -181,13 +185,23 @@ def test_complete_scores_and_uncertainty_are_visible_without_javascript(report, 
     assert any(tag == "svg" and attrs.get("role") == "img" for tag, attrs in doc.tags)
 
 
-def test_pdfs_are_relative_to_output_and_sources_preserved(report, tmp_path):
+def test_pdfs_are_relative_sources_preserved_and_concept_links_remain_visible(report, tmp_path):
     html = render(report, tmp_path)
-    links = [attrs["href"] for tag, attrs in Document(html).tags if tag == "a"]
+    doc = Document(html)
+    links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
     assert "../crest_ais/data/one/first%20paper.pdf" in links
     assert "../crest_ais/data/v3/second.pdf" in links
     assert "https://example.org/first" in links
     assert not any(str(tmp_path) in link for link in links)
+    # The concept bookmark and the primary creativity papers stay linked.
+    assert any(attrs.get("id") == "concepts" for _, attrs in doc.tags)
+    assert "https://doi.org/10.1080/10400419.2012.650092" in links
+    assert "https://doi.org/10.1080/10400419.2017.1302776" in links
+    assert "why-one-overall-judgment.html" in links
+    assert 'href="nus-rubric.html">the NUS rubric</a>' in html
+    assert 'href="why-one-overall-judgment.html">why we ask for one overall judgment</a>' in html
+    method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
+    assert method.index('id="concepts"') < method.index('ai-scientist-comparison-method.html')
 
 
 def test_counts_do_not_confuse_downloaded_selected_and_judged_papers(report, tmp_path):
@@ -204,7 +218,8 @@ def test_counts_do_not_confuse_downloaded_selected_and_judged_papers(report, tmp
 
 
 @pytest.mark.parametrize(("winner", "preferred"), [("A", "Second paper"), ("B", "First paper")])
-def test_reasons_map_answer_labels_to_ordered_paper_ids(report, tmp_path, winner, preferred):
+def test_pair_table_maps_answer_labels_to_ordered_papers_and_keeps_reasons_expandable(
+        report, tmp_path, winner, preferred):
     report["judgments"] = [judgment()]
     report["judgments"][0]["verdict"]["winner"] = winner
     html = render(report, tmp_path)
@@ -212,6 +227,11 @@ def test_reasons_map_answer_labels_to_ordered_paper_ids(report, tmp_path, winner
     assert "B: First paper" in html
     assert f"Preferred: {preferred}" in html
     assert "A’s unexpected mechanism offers the stronger overall proposal, despite B’s stronger experimental evidence." in html
+    # Pair outcomes are a visible table; the full reasons stay in an expandable disclosure.
+    doc = Document(html)
+    assert any(tag == "table" and attrs.get("id") == "judgment-pair-table" for tag, attrs in doc.tags)
+    assert not any(attrs.get("id") == "judgment-browser" for _, attrs in doc.tags)
+    assert any(tag == "details" and attrs.get("class") == "pair-reasons" for tag, attrs in doc.tags)
 
 
 def test_untrusted_titles_reasons_and_urls_cannot_inject_html_or_scripts(report, tmp_path):
@@ -240,7 +260,7 @@ def test_null_and_invalid_intervals_do_not_fabricate_chart_geometry(report, tmp_
     assert "Unavailable" in html
 
 
-def test_report_is_an_offline_document_and_does_not_mutate_data(report, tmp_path):
+def test_report_is_an_offline_document_without_embedded_analysis_and_does_not_mutate_data(report, tmp_path):
     original = deepcopy(report)
     html = render(report, tmp_path)
     assert report == original
@@ -249,14 +269,9 @@ def test_report_is_an_offline_document_and_does_not_mutate_data(report, tmp_path
     assert not any(tag == "link" and attrs.get("rel") == "stylesheet" for tag, attrs in doc.tags)
     assert not any(tag == "script" and "src" in attrs for tag, attrs in doc.tags)
     assert any(tag == "meta" and attrs.get("name") == "viewport" for tag, attrs in doc.tags)
-
-
-def test_complete_status_with_unusable_jobs_still_withholds_primary_ranks(report, tmp_path):
-    complete(report)
-    report["coverage"]["usable_jobs"] = 3
-    html = render(report, tmp_path)
-    assert "Ranking withheld" in html
-    assert not any(attrs.get("class") == "rank" for _, attrs in Document(html).tags)
+    assert "Complete analysis data (JSON)" not in html
+    assert not any(attrs.get("id") in {"analysis-record", "analysis-data", "analysis-json"}
+                   for _, attrs in doc.tags)
 
 
 def test_broken_source_url_does_not_prevent_reading_remaining_papers(report, tmp_path):
@@ -266,15 +281,23 @@ def test_broken_source_url_does_not_prevent_reading_remaining_papers(report, tmp
     assert not any(attrs.get("href") == "https://[malformed" for _, attrs in Document(html).tags)
 
 
-def test_zero_is_a_real_score_and_reverse_heatmap_uses_complement(report, tmp_path):
+def test_observed_zero_is_a_real_score_with_visible_marker_and_collapsed_bounds(report, tmp_path):
     complete(report)
     report["rankings"][1]["overall_pct"] = 0
     html = render(report, tmp_path)
     doc = Document(html)
     assert any(attrs.get("data-score") == "0" for _, attrs in doc.tags)
+    # The reverse heatmap cell uses the complement of the supplied pair score.
     heatmap = html.split('<table class="heatmap">', 1)[1].split('</table>', 1)[0]
     assert "62.5%" in heatmap and "37.5%" in heatmap
     assert 'width="0.000"' in html
+    assert any(tag == "circle" and attrs.get("class") == "mean-dot" and attrs.get("cx") == "4.000"
+               for tag, attrs in doc.tags)
+    bounds = [(tag, attrs) for tag, attrs in doc.tags if attrs.get("id") == "sampling-uncertainty"]
+    assert len(bounds) == 1 and bounds[0][0] == "details" and "open" not in bounds[0][1]
+    assert "95% sampling range" in html
+    assert "Overlapping ranges mean the order between those scientists is uncertain." in html
+    assert not any(attrs.get("class") == "interval-line" for _, attrs in doc.tags)
 
 
 def test_overall_ties_and_rank_order_are_preserved_from_analysis(report, tmp_path):
@@ -361,7 +384,7 @@ def test_total_cost_does_not_double_count_already_included_prior_requests(report
     assert "$16.00" not in html
 
 
-def test_shared_site_navigation_and_current_document_titles_are_retained(report, tmp_path):
+def test_shared_site_navigation_titles_and_results_first_reading_order(report, tmp_path):
     html = render(report, tmp_path)
     doc = Document(html)
     assert any(tag == "header" and attrs.get("class") == "crest-site-header" for tag, attrs in doc.tags)
@@ -371,28 +394,11 @@ def test_shared_site_navigation_and_current_document_titles_are_retained(report,
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
     assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "research-pipeline.html",
                          "deep-research-comparison-v2.html", "ai-scientist-comparison-v1.html", "index.html"]
-
-
-def test_main_reading_order_puts_results_and_method_before_caveats_and_audit(report, tmp_path):
-    doc = Document(render(report, tmp_path))
+    # Results and method come before caveats and the audit sections.
     sections = [attrs["id"] for tag, attrs in doc.tags if tag == "section"]
     assert sections == ["overall", "matchups", "method", "judges", "limits", "coverage", "progress", "papers", "reasons"]
     nav = [attrs["href"] for tag, attrs in doc.tags if tag == "a" and attrs.get("href", "").startswith("#")][1:]
     assert nav == ["#" + section for section in sections]
-
-
-def test_observed_zero_has_visible_marker_and_bounds_are_in_collapsed_disclosure(report, tmp_path):
-    complete(report)
-    report["rankings"][1]["overall_pct"] = 0
-    html = render(report, tmp_path)
-    doc = Document(html)
-    assert any(tag == "circle" and attrs.get("class") == "mean-dot" and attrs.get("cx") == "4.000"
-               for tag, attrs in doc.tags)
-    bounds = [(tag, attrs) for tag, attrs in doc.tags if attrs.get("id") == "sampling-uncertainty"]
-    assert len(bounds) == 1 and bounds[0][0] == "details" and "open" not in bounds[0][1]
-    assert "95% sampling range" in html
-    assert "Overlapping ranges mean the order between those scientists is uncertain." in html
-    assert not any(attrs.get("class") == "interval-line" for _, attrs in doc.tags)
 
 
 def test_missing_confidence_or_partial_run_does_not_invent_95_percent_ranges(report, tmp_path):
@@ -468,30 +474,6 @@ def test_coverage_explains_diffusing_blame_exclusion_only_when_catalog_records_i
         assert "humans substantially guided and revised it" in coverage
 
 
-def test_pair_outcomes_are_visible_and_full_reasons_remain_expandable(report, tmp_path):
-    report["judgments"] = [judgment()]
-    html = render(report, tmp_path)
-    doc = Document(html)
-    assert any(tag == "table" and attrs.get("id") == "judgment-pair-table" for tag, attrs in doc.tags)
-    assert not any(attrs.get("id") == "judgment-browser" for _, attrs in doc.tags)
-    assert any(tag == "details" and attrs.get("class") == "pair-reasons" for tag, attrs in doc.tags)
-    assert "A’s unexpected mechanism offers the stronger overall proposal" in html
-
-
-def test_concept_bookmark_and_primary_paper_links_remain_visible(report, tmp_path):
-    html = render(report, tmp_path)
-    doc = Document(html)
-    assert any(attrs.get("id") == "concepts" for _, attrs in doc.tags)
-    links = [attrs.get("href") for tag, attrs in doc.tags if tag == "a"]
-    assert "https://doi.org/10.1080/10400419.2012.650092" in links
-    assert "https://doi.org/10.1080/10400419.2017.1302776" in links
-    assert "why-one-overall-judgment.html" in links
-    assert 'href="nus-rubric.html">the NUS rubric</a>' in html
-    assert 'href="why-one-overall-judgment.html">why we ask for one overall judgment</a>' in html
-    method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
-    assert method.index('id="concepts"') < method.index('ai-scientist-comparison-method.html')
-
-
 def test_extended_plan_displays_ten_pairs_and_240_votes_from_report_data(report, tmp_path):
     report["selection"]["pairs_per_matchup"] = 10
     report["coverage"].update(expected_pairs=60, complete_pairs=60, expected_jobs=240,
@@ -515,13 +497,6 @@ def test_post_result_extension_ranges_are_exploratory_without_false_confidence_c
     assert "We grew this comparison after seeing earlier results." in html
     # Without an analysis note, the page still refuses to call the ranges confidence intervals.
     assert "rough guides, not confidence intervals" in html
-
-
-def test_report_omits_complete_analysis_json_panel_and_embedded_payload(report, tmp_path):
-    html = render(report, tmp_path)
-    assert "Complete analysis data (JSON)" not in html
-    assert not any(attrs.get("id") in {"analysis-record", "analysis-data", "analysis-json"}
-                   for _, attrs in Document(html).tags)
 
 
 def test_paper_groups_share_primary_order_and_partial_ignores_stale_ranks(report, tmp_path):
@@ -685,8 +660,10 @@ def test_five_agent_report_names_colors_and_opponent_count_are_dynamic(five_repo
     assert "Sakana Agentic Scientist (v3) has 2 eligible papers" in html
 
 
-def test_five_agent_tables_and_filter_cover_ten_unequal_matchups(five_report, tmp_path):
+def test_five_agent_tables_filter_and_supplied_macro_score_cover_ten_unequal_matchups(five_report, tmp_path):
+    original = deepcopy(five_report)
     html = render(five_report, tmp_path)
+    assert five_report == original
     doc = Document(html)
     assert "96 / 96" in html and "384 / 384" in html
     assert len(pair_rows(html)) == 96
@@ -700,29 +677,19 @@ def test_five_agent_tables_and_filter_cover_ten_unequal_matchups(five_report, tm
         table = html.split(f'<table class="{classname}">', 1)[1].split('</table>', 1)[0]
         assert [attrs["data-agent"] for tag, attrs in Document(table).tags if tag == "tr" and "data-agent" in attrs] == expected
     assert "6 pairs (all possible)" in html
-
-
-def test_unequal_matchup_renderer_preserves_supplied_macro_score(five_report, tmp_path):
-    original = deepcopy(five_report)
-    html = render(five_report, tmp_path)
-    row = next(attrs for tag, attrs in Document(html).tags
+    # The renderer shows the supplied opponent-mean score, never a pooled 12.5% vote share.
+    row = next(attrs for tag, attrs in doc.tags
                if tag == "div" and attrs.get("class") == "overall-row" and attrs.get("data-agent") == "sakana_ai_scientist_v2")
     assert row["data-score"] == "18.75"
     overall = html.split('<section id="overall"', 1)[1].split('</section>', 1)[0]
     assert "18.8%" in overall and "12.5%" not in overall
     assert "even where fewer pairs were possible" in overall
-    assert five_report == original
 
 
-def test_v2_processing_details_are_omitted_from_report_method(five_report, tmp_path):
-    note = "The v2 PDFs include human review comments in the margins; these were excluded from the text shown to judges."
-    html = render(five_report, tmp_path)
-    method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
-    assert note not in method
-
-
-def test_four_agent_report_does_not_invent_v2_review_comment_note(report, tmp_path):
-    assert "The v2 PDFs include human review comments" not in render(report, tmp_path)
+@pytest.mark.parametrize("fixture", ["report", "five_report"])
+def test_v2_manifest_processing_notes_stay_out_of_the_report(fixture, request, tmp_path):
+    # The v2 manifest records reviewer-comment removal; that provenance is not report prose.
+    assert "human review comments" not in render(request.getfixturevalue(fixture), tmp_path)
 
 
 def test_hidden_pair_label_is_positioned_inside_its_scroll_container(report, tmp_path):
@@ -969,20 +936,6 @@ def test_canonical_scientist_report_title_date_and_unchanged_metadata(report, tm
     assert report['generated_at'] == '2026-10-27T00:00:00Z'
 
 
-def test_scientist_publication_keeps_index_date_in_sync(report, tmp_path, monkeypatch):
-    from lxml import html
-    import crest_ais.report as renderer
-    from crest_ais.report import write_report
-    monkeypatch.setattr(renderer, "ROOT", tmp_path)
-    docs = tmp_path / 'docs'; docs.mkdir()
-    index = docs / 'index.html'
-    index.write_text('<main><li><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
-                     '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li></main>')
-    write_report(report, docs / 'ai-scientist-comparison-v1.html', data_root=tmp_path / 'crest_ais', updated='2026-11-06')
-    assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
-    assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
-
-
 def test_scientist_generator_does_not_overwrite_compatibility_redirect(report, tmp_path):
     from crest_ais.report import write_report
     output = tmp_path / 'ai-scientist-creativity.html'
@@ -1012,21 +965,25 @@ def test_external_data_root_does_not_authorize_an_unrelated_site_index(report, t
     assert (destination.parent / favicon).resolve() == project / 'docs/favicon.svg'
 
 
-def test_relocated_data_root_keeps_publication_and_pdf_authorities_separate(report, tmp_path, monkeypatch):
+@pytest.mark.parametrize("layout", ["package_data_root", "relocated_data_root"])
+def test_publication_syncs_index_date_and_keeps_site_and_pdf_authorities_separate(report, tmp_path, monkeypatch, layout):
     from lxml import html
     from urllib.parse import unquote
     import crest_ais.report as renderer
     project = tmp_path / 'source-project'; docs = project / 'docs'; docs.mkdir(parents=True)
     monkeypatch.setattr(renderer, 'ROOT', project)
     index = docs / 'index.html'
-    index.write_text('<main><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
-                     '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></main>')
-    data_root = tmp_path / 'relocated' / 'paper-data'
+    entry = ('<a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+             '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>')
+    # The site index lists entries as list items; a bare dated link must sync too.
+    index.write_text(f'<main><li>{entry}</li></main>' if layout == "package_data_root" else f'<main>{entry}</main>')
+    data_root = project / 'crest_ais' if layout == "package_data_root" else tmp_path / 'relocated' / 'paper-data'
     pdf = data_root / 'data/one/first paper.pdf'; pdf.parent.mkdir(parents=True)
     pdf.write_bytes(b'Local test PDF; report rendering only checks its existence.')
     destination = docs / 'ai-scientist-comparison-v1.html'
     renderer.write_report(report, destination, data_root=data_root, updated='2026-11-06')
     assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
+    assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
     page = html.fromstring(destination.read_bytes())
     assert page.xpath('//header//a[text()="Research pipeline"]/@href') == ['research-pipeline.html']
     assert page.xpath('//link[@rel="icon"]/@href') == ['favicon.svg']

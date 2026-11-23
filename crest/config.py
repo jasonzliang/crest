@@ -319,7 +319,7 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
                         'synthesis_drafts', 'synthesis_iterations', 'max_completion_tokens',
                         'query_max_completion_tokens', 'synthesis_top_k', 'synthesis_top_n',
                         'exploration_max_completion_tokens', 'kb_max_completion_tokens', 'quick_explore_workers',
-                        'max_web_searches', 'max_web_fetches', 'max_continuations', 'max_research_rounds',
+                        'max_web_fetches', 'max_continuations', 'max_research_rounds',
                         'deep_research_breadth', 'deep_research_depth', 'deep_research_concurrency',
                         'max_search_results_per_query', 'max_input_tokens', 'synthesis_max_completion_tokens'):
                 if key in settings and (isinstance(settings[key], bool) or

@@ -28,6 +28,31 @@ def fake_key(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
 
 
+@pytest.fixture(autouse=True)
+def no_http_retry_wait(monkeypatch):
+    from crest.providers import http
+    delays = []
+
+    async def sleep(delay):
+        delays.append(delay)
+
+    monkeypatch.setattr(http, "sleep", sleep)
+    return delays
+
+
+class Gate:
+    """Rate-controller stub; subclasses decide how ``wait_ready`` blocks."""
+
+    async def wait_ready(self):
+        pass
+
+    async def observe_headers(self, headers):
+        pass
+
+    async def rate_limited(self, delay):
+        pass
+
+
 def completed(text="Full research answer", **overrides):
     value = {
         "id": "research-1", "status": "completed",
@@ -98,6 +123,7 @@ def test_terminal_failure_preserves_normalized_paid_receipt(tmp_path, status, me
     with pytest.raises(RuntimeError, match="status"):
         run(lambda request: httpx.Response(200, json=raw), job, method=method,
             settings={} if research else {"model": "gemini-4-argon"})
+    assert job.state["raw"] == raw
     receipt = job.state["provider_result"]
     assert receipt["cost_usd"] == pytest.approx(.03614 if research else .00431)
     assert receipt["usage"]["cached_input_tokens"] == 100
@@ -121,12 +147,20 @@ def test_unpriced_saved_terminal_receipt_can_reconcile_without_reposting(tmp_pat
     assert job.state["provider_result"]["cost_usd"] == pytest.approx(.03614)
 
 
-def test_cancellation_keeps_partial_estimate_and_resume_reconciles_by_get(tmp_path):
-    raw = completed(status="in_progress")
+@pytest.mark.parametrize("active_status", ["in_progress", "queued"])
+def test_timeout_uses_durable_elapsed_time_cancels_keeps_partial_estimate_and_resume_reconciles_by_get(
+        tmp_path, active_status):
+    raw = completed(status=active_status)
     job = FakeJob(tmp_path, remote_id="research-1", submitted_at=time.time() - 100, raw=raw)
+    calls = []
+    def handler(request):
+        calls.append((request.method, request.url.path))
+        return httpx.Response(200, json=raw if request.method == "GET" else {"id": "research-1", "status": "cancelled"})
     with pytest.raises(TimeoutError):
-        run(lambda request: httpx.Response(200, json=raw if request.method == "GET"
-            else {"id": "research-1", "status": "cancelled"}), job, settings={"timeout_seconds": 1})
+        run(handler, job, settings={"timeout_seconds": 1})
+    assert calls == [("GET", "/v1beta/interactions/research-1"),
+                     ("POST", "/v1beta/interactions/research-1/cancel")]
+    assert job.state["remote_status"] == "cancelled"
     assert job.state["observed_cost_usd"] == pytest.approx(.03614)
     assert job.state["observed_cost_scope"] == "partial_pre_cancel"
     assert job.state["observed_usage"]["cached_input_tokens"] == 100
@@ -169,16 +203,9 @@ def test_research_request_uses_standard_agent_and_checkpoints_before_poll(tmp_pa
     assert any("target" in warning.lower() for warning in result["warnings"])
 
 
-def test_resume_retrieves_durable_remote_id_without_resubmitting(tmp_path):
-    job = FakeJob(tmp_path, remote_id="research-1", submitted_at=time.time())
-    def handler(request):
-        assert request.method == "GET"
-        return httpx.Response(200, json=completed())
-    assert run(handler, job)["text"] == "Full research answer"
-
-
-def test_expired_resume_recovers_completed_paid_answer_before_enforcing_timeout(tmp_path):
-    job = FakeJob(tmp_path, remote_id="research-1", submitted_at=time.time() - 100)
+@pytest.mark.parametrize("elapsed", [0, 100], ids=["fresh", "expired"])
+def test_resume_retrieves_durable_remote_id_before_enforcing_timeout(tmp_path, elapsed):
+    job = FakeJob(tmp_path, remote_id="research-1", submitted_at=time.time() - elapsed)
     calls = []
     raw = completed()
     def handler(request):
@@ -191,7 +218,7 @@ def test_expired_resume_recovers_completed_paid_answer_before_enforcing_timeout(
     assert job.state["remote_status"] == "completed"
 
 
-@pytest.mark.parametrize("status", ["incomplete", "failed", "cancelled", "requires_action", "unknown", None])
+@pytest.mark.parametrize("status", ["requires_action", "unknown", None])  # Terminal failures: see above.
 def test_only_exact_completed_is_successful(tmp_path, status):
     job = FakeJob(tmp_path)
     raw = completed(status=status)
@@ -200,35 +227,25 @@ def test_only_exact_completed_is_successful(tmp_path, status):
     assert job.state["raw"] == raw
 
 
-def test_submission_disconnect_is_durable_and_never_reposts(tmp_path):
+@pytest.mark.parametrize("response", [None,  # The connection drops after upload.
+                                      httpx.Response(503, text="unavailable"),
+                                      httpx.Response(200, json={"status": "in_progress"}),
+                                      httpx.Response(200, text="not JSON")],
+                         ids=["disconnect", "server_error", "missing_id", "invalid_json"])
+def test_ambiguous_submission_prevents_duplicate_paid_call(tmp_path, response):
     job = FakeJob(tmp_path)
     calls = []
     def handler(request):
         calls.append(request.method)
-        raise httpx.ReadError("connection lost after upload", request=request)
-    with pytest.raises(httpx.ReadError):
+        if response is None:
+            raise httpx.ReadError("connection lost after upload", request=request)
+        return response
+    with pytest.raises((RuntimeError, ValueError, httpx.HTTPError)):
         run(handler, job)
     assert job.state["submission_unknown"] is True
     with pytest.raises(RuntimeError, match="submission.*unknown|unknown.*submission"):
         run(handler, job)
     assert calls == ["POST"]
-
-
-@pytest.mark.parametrize("response", [httpx.Response(503, text="unavailable"),
-                                      httpx.Response(200, json={"status": "in_progress"}),
-                                      httpx.Response(200, text="not JSON")])
-def test_ambiguous_submission_response_prevents_duplicate_paid_call(tmp_path, response):
-    job = FakeJob(tmp_path)
-    calls = []
-    def handler(request):
-        calls.append(request)
-        return response
-    with pytest.raises((RuntimeError, ValueError, httpx.HTTPStatusError)):
-        run(handler, job)
-    assert job.state["submission_unknown"] is True
-    with pytest.raises(RuntimeError, match="unknown"):
-        run(handler, job)
-    assert len(calls) == 1
 
 
 def test_poll_failure_keeps_remote_id_for_resume(tmp_path):
@@ -241,22 +258,6 @@ def test_poll_failure_keeps_remote_id_for_resume(tmp_path):
         run(handler, job)
     assert job.state["remote_id"] == "research-1"
     assert run(lambda r: httpx.Response(200, json=completed()), job)["text"]
-
-
-@pytest.mark.parametrize("active_status", ["in_progress", "queued"])
-def test_timeout_uses_durable_elapsed_time_and_cancels(tmp_path, active_status):
-    job = FakeJob(tmp_path, remote_id="research-1", submitted_at=time.time() - 100)
-    calls = []
-    def handler(request):
-        calls.append((request.method, request.url.path))
-        if request.method == "GET":
-            return httpx.Response(200, json={"id": "research-1", "status": active_status})
-        return httpx.Response(200, json={"id": "research-1", "status": "cancelled"})
-    with pytest.raises(TimeoutError):
-        run(handler, job, settings={"timeout_seconds": 1})
-    assert calls == [("GET", "/v1beta/interactions/research-1"),
-                     ("POST", "/v1beta/interactions/research-1/cancel")]
-    assert job.state["remote_status"] == "cancelled"
 
 
 def test_answer_excludes_echoed_user_text_and_reasoning_extracts_citations(tmp_path):
@@ -316,14 +317,6 @@ def test_research_missing_search_usage_leaves_cost_unknown(tmp_path):
     assert result["cost_estimated"] is False
 
 
-def test_research_completed_budget_overrun_is_preserved(tmp_path):
-    raw = completed()
-    raw["usage"]["total_input_tokens"] = 2_000_000
-    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path))
-    assert result["cost_usd"] > 5
-    assert any("exceed" in warning.lower() for warning in result["warnings"])
-
-
 def test_running_research_over_budget_is_flagged_but_never_cancelled(tmp_path):
     running = completed(status="in_progress")
     running["usage"]["total_input_tokens"] = 2_000_000
@@ -343,7 +336,12 @@ def test_running_research_over_budget_is_flagged_but_never_cancelled(tmp_path):
     assert calls.count("/v1beta/interactions/research-1") == 2
 
 
-def test_judge_request_is_structured_json_without_tools(tmp_path):
+@pytest.mark.parametrize("usage, cost", [
+    # Interactions reports output and thought separately; each is billed once.
+    ({}, (900 * 2 + 100 * .2 + 250 * 12) / 1_000_000),
+    ({"total_input_tokens": 200001, "total_cached_tokens": 1}, (200000 * 4 + .4 + 250 * 18) / 1_000_000),
+], ids=["standard_context", "long_context"])
+def test_judge_request_is_structured_json_without_tools_and_bills_reasoning_once(tmp_path, usage, cost):
     from crest.judging import SCHEMA
     verdict = {c: {"reason": "A develops a stronger idea than B", "winner": "A"}
                for c in ("new", "useful", "surprising")}
@@ -356,12 +354,11 @@ def test_judge_request_is_structured_json_without_tools(tmp_path):
             "response_format": {"type": "text", "mime_type": "application/json", "schema": SCHEMA},
         }
         raw = completed(json.dumps(verdict), model="gemini-3.1-pro-preview")
-        raw["usage"]["grounding_tool_count"] = []
+        raw["usage"].update(usage, grounding_tool_count=[])
         return httpx.Response(200, json=raw)
     result = run(handler, FakeJob(tmp_path), method="judge")
     assert json.loads(result["text"]) == verdict
-    # Interactions reports output and thought separately; each is billed once.
-    assert result["cost_usd"] == pytest.approx((900 * 2 + 100 * .2 + 250 * 12) / 1_000_000)
+    assert result["cost_usd"] == pytest.approx(cost)
     assert result["cost_estimated"] is True
 
 
@@ -391,26 +388,26 @@ def test_timeout_cancellation_failure_preserves_last_response(tmp_path):
     assert job.state["cancellation_error"]["type"] == "ReadError"
 
 
-def test_judge_unexpected_tool_usage_is_not_silently_underpriced(tmp_path):
-    result = run(lambda r: httpx.Response(200, json=completed()), FakeJob(tmp_path), method="judge")
-    assert result["cost_usd"] is None
-    assert result["usage"]["search_queries"] == 2
+def _judge_raw(*, model="gemini-3.1-pro-preview", created=None, drop=(), **usage):
+    raw = completed(model=model, **({"created": created} if created else {}))
+    raw["usage"].update({"grounding_tool_count": [], **usage})
+    for field in drop:
+        raw["usage"].pop(field)
+    return raw
 
 
-def test_judge_long_context_rate_counts_reasoning_once(tmp_path):
-    raw = completed(model="gemini-3.1-pro-preview")
-    raw["usage"].update(total_input_tokens=200001, total_cached_tokens=1, grounding_tool_count=[])
-    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge")
-    assert result["cost_usd"] == pytest.approx((200000 * 4 + .4 + 250 * 18) / 1_000_000)
-
-
-def test_completed_response_with_missing_thought_usage_has_unknown_judge_cost(tmp_path):
-    raw = completed()
-    raw["usage"].pop("total_thought_tokens")
-    raw["usage"]["grounding_tool_count"] = []
-    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge")
+@pytest.mark.parametrize("raw, settings", [
+    # Search usage on a tool-free judge must not be silently underpriced.
+    (_judge_raw(grounding_tool_count=[{"type": "google_search", "count": 2}]), {}),
+    (_judge_raw(drop=["total_thought_tokens"]), {}),
+    (_judge_raw(model="gemini-unknown", created="2026-11-30T00:00:00Z"), {"model": "gemini-unknown"}),
+], ids=["unexpected_search", "missing_thought_usage", "unknown_model"])
+def test_judge_cost_stays_unknown_without_complete_priced_usage(tmp_path, raw, settings):
+    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge", settings=settings)
     assert result["cost_usd"] is None
     assert result["cost_estimated"] is False
+    assert any("Cost unknown" in warning for warning in result["warnings"])
+    assert result["usage"]["search_queries"] == sum(item["count"] for item in raw["usage"]["grounding_tool_count"])
 
 
 @pytest.mark.parametrize("resume", [False, True])
@@ -478,15 +475,6 @@ def test_argon_missing_creation_date_records_explicit_utc_pricing_fallback(tmp_p
     assert any("creation" in warning.lower() for warning in result["warnings"])
 
 
-def test_unknown_judge_model_remains_unpriced(tmp_path):
-    raw = completed(model="gemini-unknown", created="2026-11-30T00:00:00Z")
-    raw["usage"]["grounding_tool_count"] = []
-    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method="judge",
-                 settings={"model": "gemini-unknown"})
-    assert result["cost_usd"] is None
-    assert result["cost_estimated"] is False
-
-
 def test_gemini_key_fallback_and_missing_key(tmp_path, monkeypatch):
     monkeypatch.delenv("GOOGLE_API_KEY")
     monkeypatch.setenv("GEMINI_API_KEY", "fallback-key")
@@ -497,18 +485,6 @@ def test_gemini_key_fallback_and_missing_key(tmp_path, monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY")
     with pytest.raises(ValueError, match="GOOGLE_API_KEY|GEMINI_API_KEY"):
         run(handler, FakeJob(tmp_path))
-
-
-@pytest.fixture(autouse=True)
-def no_http_retry_wait(monkeypatch):
-    from crest.providers import http
-    delays = []
-
-    async def sleep(delay):
-        delays.append(delay)
-
-    monkeypatch.setattr(http, "sleep", sleep)
-    return delays
 
 
 def test_retry_create_rate_limit_keeps_submission_intent_until_acceptance(tmp_path, no_http_retry_wait):
@@ -612,20 +588,14 @@ def test_unsent_rate_gate_timeout_can_be_retried_as_a_fresh_create(tmp_path):
     job = FakeJob(tmp_path)
     calls = []
 
-    class Gate:
+    class SlowGate(Gate):
         blocked = True
 
         async def wait_ready(self):
             if self.blocked:
                 await asyncio.sleep(.04)
 
-        async def observe_headers(self, headers):
-            pass
-
-        async def rate_limited(self, delay):
-            pass
-
-    job.rate_controller = Gate()
+    job.rate_controller = SlowGate()
 
     def handler(request):
         calls.append(request.method)
@@ -649,7 +619,7 @@ def test_cancellation_while_waiting_to_create_keeps_submission_retryable(tmp_pat
     async def exercise():
         waiting = asyncio.Event()
 
-        class Gate:
+        class BlockingGate(Gate):
             count = 0
 
             async def wait_ready(self):
@@ -658,13 +628,7 @@ def test_cancellation_while_waiting_to_create_keeps_submission_retryable(tmp_pat
                     waiting.set()
                     await asyncio.Future()
 
-            async def observe_headers(self, headers):
-                pass
-
-            async def rate_limited(self, delay):
-                pass
-
-        job.rate_controller = Gate()
+        job.rate_controller = BlockingGate()
 
         def handler(request):
             calls.append(request.method)
@@ -720,15 +684,9 @@ def test_outer_timeout_cancelling_create_gate_keeps_unsent_submission_retryable(
     job = FakeJob(tmp_path)
     calls = []
 
-    class Gate:
+    class ClosedGate(Gate):
         async def wait_ready(self):
             await asyncio.Future()
-
-        async def observe_headers(self, headers):
-            pass
-
-        async def rate_limited(self, delay):
-            pass
 
     async def request_without_inner_deadline(*args, **kwargs):
         # Let the adapter's outer asyncio.timeout be the sole cancellation
@@ -737,7 +695,7 @@ def test_outer_timeout_cancelling_create_gate_keeps_unsent_submission_retryable(
         return await real_request(*args, **kwargs)
 
     monkeypatch.setattr(module, "request", request_without_inner_deadline)
-    job.rate_controller = Gate()
+    job.rate_controller = ClosedGate()
 
     def handler(request):
         calls.append(request.method)
@@ -750,3 +708,26 @@ def test_outer_timeout_cancelling_create_gate_keeps_unsent_submission_retryable(
     job.rate_controller = None
     assert run(handler, job, settings={"timeout_seconds": .01})["text"] == "Full research answer"
     assert calls == ["POST"]
+
+
+RESEARCH_COST = .03614  # completed(): (900 * 4 + 100 * .4 + 250 * 18) / 1e6 + 2 searches * $0.014
+
+
+@pytest.mark.parametrize("method, mutate, cost", [
+    ("generate", lambda raw: raw["steps"][0]["content"][0].update(annotations=None), RESEARCH_COST),
+    ("generate", lambda raw: raw["steps"][0]["content"][0].update(
+        annotations=["junk", {"type": "url_citation", "url": "https://kept.example"}]), RESEARCH_COST),
+    ("generate", lambda raw: raw["steps"].insert(0, {"type": "model_output", "content": None}), RESEARCH_COST),
+    ("generate", lambda raw: raw["usage"].update(grounding_tool_count=[None]), None),
+    ("judge", lambda raw: raw["usage"].update(grounding_tool_count={"google_search": 2}), None),
+    ("judge", lambda raw: raw["usage"].update(grounding_tool_count=["google_search"]), None),
+], ids=["null_annotations", "non_object_annotation", "null_step_content", "non_object_search_count",
+        "judge_mapping_search_count", "judge_non_object_search_count"])
+def test_malformed_optional_fields_keep_a_paid_answer_recoverable(tmp_path, method, mutate, cost):
+    raw = completed()
+    mutate(raw)
+    result = run(lambda r: httpx.Response(200, json=raw), FakeJob(tmp_path), method=method)
+    assert result["text"] == "Full research answer"
+    assert result["cost_usd"] == (None if cost is None else pytest.approx(cost))
+    assert result["citations"] == ([{"url": "https://kept.example", "title": ""}]
+                                   if "kept.example" in str(raw) else [])

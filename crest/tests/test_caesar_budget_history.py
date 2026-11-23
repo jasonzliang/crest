@@ -1,4 +1,4 @@
-"""Fresh restarts inherit spending, never old research state."""
+"""Budget history and synthesis recovery: restarts inherit every prior attempt's spending, never old research state."""
 from contextlib import contextmanager
 import hashlib
 import json
@@ -9,7 +9,123 @@ import pytest
 
 from crest.providers import caesar_worker as worker
 from crest.providers import caesar
-from test_caesar import _source, _options
+
+
+def _options():
+    return SimpleNamespace(json_data={"model": worker.SOL, "messages": [], "max_completion_tokens": 100})
+
+
+def _source(path, known, reserved, previous=None):
+    output = path / "caesar-output"
+    (output / "__rome__").mkdir(parents=True)
+    (output / "chroma").mkdir()
+    (output / "chroma" / "chroma.sqlite3").write_bytes(b"saved database")
+    worker.atomic_json(output / "__rome__" / "agent_saved.checkpoint.json", {
+        "iteration": 163, "visited_urls": {"https://example.test": 1}, "cost": {"accumulated_cost": 99},
+        "config": {"starting_query": "Q", "starting_url": "https://example.test"}})
+    settings = {"budget_usd": 5. if previous is None else 4.3}
+    if previous is not None: settings["recovery_from"] = str(previous)
+    worker.atomic_json(path / "caesar-request.json", {"prompt": "Q", "worker_id": path.name, "job_key": path.name, "settings": settings})
+    worker.atomic_json(path / "caesar-result.json", {"status": "failed", "usage": {
+        "known_cost_usd": known, "budget_target_usd": settings["budget_usd"], "unknown_cost": True,
+        "events": [{"status": "failed", "unknown_cost": True, "reserved_usd": reserved}], "in_flight": []},
+        "raw": {"recovery": {"source_job": str(previous)} if previous is not None else None}})
+    return path
+
+
+def test_second_recovery_inherits_every_prior_attempt_and_rejects_the_previous_430_allowance(tmp_path):
+    first = _source(tmp_path / "original", .45898205, .2114525)
+    second = _source(tmp_path / "recovery-one", .05257166, .00454525, first)
+    original = {str(p): p.read_bytes() for root in (first, second) for p in root.rglob("*") if p.is_file()}
+    rejected = tmp_path / "rejected-output"
+    config = worker.build_config("Q", {}, rejected, "new")
+    with pytest.raises(ValueError):
+        worker.prepare_synthesis_recovery("Q", {"recovery_from": str(second), "budget_usd": 4.3}, rejected, "new", config)
+    destination = tmp_path / "recovery-two-output"
+    config = worker.build_config("Q", {}, destination, "new")
+    result = worker.prepare_synthesis_recovery("Q", {"recovery_from": str(second), "budget_usd": 4.25}, destination, "new", config)
+    assert result["previous_known_cost_usd"] == pytest.approx(.51155371)
+    assert result["previous_unknown_reserved_usd"] == pytest.approx(.21599775)
+    assert result["budgeted_total_exposure_usd"] == pytest.approx(4.97755146)
+    assert len(result["ancestry"]) == 2
+    assert original == {str(p): p.read_bytes() for root in (first, second) for p in root.rglob("*") if p.is_file()}
+
+
+def test_recovery_ancestry_cycle_is_rejected_before_copying(tmp_path):
+    first = _source(tmp_path / "original", .45898205, .2114525)
+    second = _source(tmp_path / "recovery-one", .05257166, .00454525, first)
+    request = json.loads((first / "caesar-request.json").read_text())
+    request["settings"]["recovery_from"] = str(second)
+    worker.atomic_json(first / "caesar-request.json", request)
+    config = worker.build_config("Q", {}, tmp_path / "destination", "new")
+    with pytest.raises(ValueError, match="cycle"):
+        worker.prepare_synthesis_recovery("Q", {"recovery_from": str(second), "budget_usd": 4.25}, tmp_path / "destination", "new", config)
+    assert not (tmp_path / "destination" / "chroma").exists()
+
+
+def test_deep_ancestor_ledger_changes_recovery_cache_identity(tmp_path):
+    first = _source(tmp_path / "original", .45898205, .2114525)
+    second = _source(tmp_path / "recovery-one", .05257166, .00454525, first)
+    settings = {"rome_path": str(tmp_path), "recovery_from": str(second)}
+    old = caesar.identity_metadata(settings)
+    record = json.loads((first / "caesar-result.json").read_text())
+    record["usage"]["known_cost_usd"] = .6
+    worker.atomic_json(first / "caesar-result.json", record)
+    assert old != caesar.identity_metadata(settings)
+
+
+@pytest.mark.parametrize("prior_unknown", [False, True])
+def test_recovery_result_reports_cumulative_cost_and_keeps_new_attempt_audit(tmp_path, monkeypatch, prior_unknown):
+    source = _source(tmp_path / "original", 1.2, .2)
+    record = json.loads((source / "caesar-result.json").read_text())
+    if not prior_unknown:
+        record["usage"].update(unknown_cost=False, events=[])
+        worker.atomic_json(source / "caesar-result.json", record)
+    class SDK:
+        def request(self, *args, **kwargs):
+            return SimpleNamespace(usage={"prompt_tokens": 100, "completion_tokens": 20})
+    class Agent:
+        def __init__(self, **kwargs):
+            self.current_iteration = 163
+            self.visited_urls = {"https://example.test": 1}
+            self.kb_manager = SimpleNamespace(size=lambda: 1)
+            self.synthesizer = SimpleNamespace(synthesize_artifact=self.synthesize)
+        def synthesize(self):
+            SDK().request(object, _options())
+            return {"artifact": "completed answer", "sources": {}, "num_drafts": 3, "metadata": {"synthesis_queries": 15}}
+        def explore(self): pytest.fail("recovery must not explore")
+        def shutdown(self): pass
+    @contextmanager
+    def runtime(settings, audit):
+        with audit.installed(SDK): yield Agent
+    monkeypatch.setattr(worker, "_runtime", runtime)
+    path = tmp_path / "new-job" / "result.json"
+    settings = {"recovery_from": str(source), "budget_usd": 3.}
+    assert worker.run_worker({"prompt": "Q", "settings": settings, "output_dir": str(path.parent / "output"), "job_key": "new"}, path) == 0
+    result = json.loads(path.read_text())["result"]
+    assert result["usage"]["known_cost_usd"] == pytest.approx(1.2004)
+    assert result["usage"]["cumulative_known_cost_usd"] == pytest.approx(1.2004)
+    assert result["raw"]["new_attempt_usage_audit"]["known_cost_usd"] == pytest.approx(.0004)
+    assert result["usage"]["new_attempt_cost_usd"] == pytest.approx(.0004)
+    if prior_unknown:
+        assert result["cost_usd"] is None
+    else:
+        assert result["cost_usd"] == pytest.approx(1.2004)
+
+
+def test_history_prefers_per_attempt_audit_over_cumulative_success_summary(tmp_path):
+    first = _source(tmp_path / "original", .45898205, .2114525)
+    second = _source(tmp_path / "recovery-one", .05257166, .00454525, first)
+    value = json.loads((second / "caesar-result.json").read_text())
+    attempt = value.pop("usage")
+    previous = value.pop("raw")["recovery"]
+    value.update(status="completed", result={"usage": dict(attempt, known_cost_usd=.51155371),
+        "raw": {"recovery": previous, "new_attempt_usage_audit": attempt}})
+    worker.atomic_json(second / "caesar-result.json", value)
+    history, budget = worker.recovery_history(second, "Q")
+    assert budget == 5
+    assert sum(row["known_cost_usd"] for row in history) == pytest.approx(.51155371)
+    assert sum(row["unknown_reserved_usd"] for row in history) == pytest.approx(.21599775)
 
 
 def test_fresh_restart_keeps_global_budget_and_does_not_restore_knowledge(tmp_path, monkeypatch):
@@ -103,7 +219,7 @@ def test_fresh_and_synthesis_recovery_modes_are_mutually_exclusive(tmp_path, mon
             "job_key": "new", "output_dir": str(tmp_path / "output")}, tmp_path / "result.json")
 
 
-def test_fresh_identity_hashes_all_prior_ledgers_but_not_saved_knowledge(tmp_path):
+def test_fresh_identity_hashes_all_prior_ledgers_and_final_usage_but_not_saved_knowledge(tmp_path):
     source = _source(tmp_path / "old", .5, .2)
     settings = {"rome_path": str(tmp_path), "budget_history_from": str(source)}
     old = caesar.identity_metadata(settings)
@@ -113,6 +229,15 @@ def test_fresh_identity_hashes_all_prior_ledgers_but_not_saved_knowledge(tmp_pat
     record["usage"]["known_cost_usd"] = .6
     worker.atomic_json(source / "caesar-result.json", record)
     assert old != caesar.identity_metadata(settings)
+    # The ancestral final usage file is a ledger too.
+    final = {"known_cost_usd": .6, "unknown_cost": True, "budget_target_usd": 5.,
+        "events": [{"status": "failed", "unknown_cost": True, "reserved_usd": .1}], "in_flight": []}
+    path = source / "caesar-output" / "usage.json"
+    worker.atomic_json(path, final)
+    with_final = caesar.identity_metadata(settings)
+    final["known_cost_usd"] = .7
+    worker.atomic_json(path, final)
+    assert with_final != caesar.identity_metadata(settings)
 
 
 @pytest.mark.parametrize("bad_status,bad_known", [("running", .5), ("failed", float("nan"))])
@@ -148,14 +273,6 @@ def test_short_synthesis_calls_use_6000_with_reasoning_and_restore_25000():
     assert [row[2] for row in calls] == [6000, 6000, 25000, 25000]
     assert agent.chat_completion == original_chat
     assert agent.llm_handler.max_completion_tokens == 25000
-
-
-def test_new_retrieval_fields_preserve_legacy_fallback(tmp_path):
-    config = worker.build_config("Q", {"synthesis_top_k": 15, "synthesis_top_n": 10, "enable_reranking": False}, tmp_path / "new", "new")
-    assert config["ArtifactSynthesizer"]["synthesis_top_k"] == 15
-    assert config["ArtifactSynthesizer"]["synthesis_top_n"] == 10
-    assert config["ChromaClientManager"]["top_k"] == 15
-    assert config["ChromaClientManager"]["enable_reranking"] is False
 
 
 @pytest.mark.parametrize("effort,completion_limit,hold", [("medium", 10000, .515), ("xhigh", 32768, 1.88072)])
@@ -204,39 +321,24 @@ def test_final_usage_file_replaces_stale_terminal_snapshot(tmp_path):
     assert value["previous_cost_unknown"] is False
 
 
-def test_ancestral_final_usage_changes_history_identity(tmp_path):
-    source = _source(tmp_path / "old", .5, .2)
-    final = {"known_cost_usd": .6, "unknown_cost": True, "budget_target_usd": 5.,
-        "events": [{"status": "failed", "unknown_cost": True, "reserved_usd": .1}], "in_flight": []}
-    path = source / "caesar-output" / "usage.json"
-    worker.atomic_json(path, final)
-    settings = {"rome_path": str(tmp_path), "budget_history_from": str(source)}
-    old = caesar.identity_metadata(settings)
-    final["known_cost_usd"] = .7
-    worker.atomic_json(path, final)
-    assert old != caesar.identity_metadata(settings)
-
-
-@pytest.mark.parametrize("module", ["crest.caesar_worker", "crest.providers.caesar_worker"])
-def test_live_owned_worker_prevents_history_admission(tmp_path, monkeypatch, module):
+@pytest.mark.parametrize("command,blocks", [
+    (["-m", "crest.caesar_worker", "--result", "{result}"], True),
+    (["-m", "crest.providers.caesar_worker", "--result", "{result}"], True),
+    (["-m", "unrelated"], False),
+], ids=["legacy-module-live", "provider-module-live", "recycled-pid"])
+def test_only_a_live_owned_worker_pid_prevents_history_admission(tmp_path, monkeypatch, command, blocks):
     import psutil
     source = _source(tmp_path / "old", .5, .2)
     worker.atomic_json(source / "state.json", {"worker_pid": 43210})
-    process = SimpleNamespace(status=lambda: psutil.STATUS_RUNNING,
-        cmdline=lambda: ["python", "-m", module, "--result", str(source / "caesar-result.json")])
+    cmdline = ["python"] + [part.format(result=source / "caesar-result.json") for part in command]
+    process = SimpleNamespace(status=lambda: psutil.STATUS_RUNNING, cmdline=lambda: cmdline)
     monkeypatch.setattr(psutil, "Process", lambda pid: process)
-    with pytest.raises(ValueError, match="running|alive"):
-        worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
-
-
-def test_recycled_pid_for_unrelated_process_does_not_block_final_history(tmp_path, monkeypatch):
-    import psutil
-    source = _source(tmp_path / "old", .5, .2)
-    worker.atomic_json(source / "state.json", {"worker_pid": 43210})
-    process = SimpleNamespace(status=lambda: psutil.STATUS_RUNNING, cmdline=lambda: ["python", "-m", "unrelated"])
-    monkeypatch.setattr(psutil, "Process", lambda pid: process)
-    value = worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
-    assert value["new_attempt_budget_usd"] == pytest.approx(4.3)
+    if blocks:
+        with pytest.raises(ValueError, match="running|alive"):
+            worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
+    else:
+        value = worker.prepare_budget_history("Q", {"budget_history_from": str(source), "budget_usd": 5})
+        assert value["new_attempt_budget_usd"] == pytest.approx(4.3)
 
 
 @pytest.mark.parametrize("mode", ["recovery", "budget_history"])

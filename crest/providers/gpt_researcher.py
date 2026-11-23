@@ -248,6 +248,7 @@ async def generate(prompt: str, settings: dict, job, *, client=None):
     else:
         if request is not None:
             raise RuntimeError('Orphan GPT Researcher request; cannot rule out previous paid execution')
+        import psutil  # Lazy so the provider imports without site-packages; still before any paid launch.
         identity = preflight(s)
         # Cross-process exclusive launch claim also covers the crash-before-job.save window.
         try:
@@ -267,9 +268,8 @@ async def generate(prompt: str, settings: dict, job, *, client=None):
                 cwd=str(Path(__file__).resolve().parents[2]), env=_environment(),
                 stdout=log, stderr=log, start_new_session=True)
         try:
-            import psutil
             created = psutil.Process(child.pid).create_time()
-        except (ImportError, psutil.NoSuchProcess):
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             created = None
         job.save(worker_pid=child.pid, worker_create_time=created, submission_unknown=False, remote_status='running')
     remaining = s['timeout_seconds'] + 30 - (time.time() - job.state.get('worker_started_at', time.time()))

@@ -7,7 +7,7 @@ import pytest
 
 from crest_ais.pipeline import create_judge_extension, run_judging
 from crest_ais.protocol import add_judge_plan, validate_plan_fingerprint
-from crest_ais.tests.test_pipeline import JUDGES, _plan, _verdict
+from crest_ais.tests.test_pipeline import JUDGES, _answer, _plan, _providers
 
 FABLE = {"model": "claude-fable-5-1", "effort": "high", "max_output_tokens": 32768,
          "concurrency": 2, "initial_concurrency": 2, "timeout_seconds": 900, "poll_interval_seconds": 5}
@@ -20,8 +20,8 @@ def _complete_parent(tmp_path, calls=None):
     async def judge(prompt, settings, job):
         if calls is not None:
             calls.append(("parent", job.key))
-        return {"text": json.dumps(_verdict()), "cost_usd": .01, "usage": {}, "model": "mock"}
-    asyncio.run(run_judging(parent, source, providers={name: SimpleNamespace(judge=judge) for name in JUDGES},
+        return _answer()
+    asyncio.run(run_judging(parent, source, providers=_providers(judge),
                             progress=False))
     return parent, source
 
@@ -78,7 +78,7 @@ def test_judge_extension_imports_paid_votes_and_calls_only_the_new_judge(tmp_pat
 
     async def fable(prompt, settings, job):
         calls.append(job.key)
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "claude-fable-5-1"}
+        return _answer(.02, "claude-fable-5-1")
 
     async def refuse(prompt, settings, job):
         raise AssertionError("Existing judges must not be called again")
@@ -185,7 +185,7 @@ def test_legacy_v2_run_accepts_an_added_judge_with_its_exact_prompts(tmp_path):
 
     async def fable(prompt, settings, job):
         seen.append(prompt)
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "claude-fable-5-1"}
+        return _answer(.02, "claude-fable-5-1")
     providers = {"anthropic": SimpleNamespace(judge=fable), **{name: SimpleNamespace(judge=refuse) for name in parent["judges"]}}
     results = asyncio.run(run_judging(plan, tmp_path / "legacy-three", providers=providers, progress=False, workers_per_judge=16))
     assert len(results) == len(plan["jobs"]) == len(parent["jobs"]) * 3 // 2
@@ -203,7 +203,7 @@ def test_refused_pairs_keep_the_other_judges_votes_and_never_fill_in_a_vote(tmp_
         task = next(item for item in plan["jobs"] if item["key"] == job.key)
         if task["pair_id"] == refused_pair:
             raise RuntimeError('Anthropic stop_reason refusal; stop_details={"type": "refusal", "category": "bio"}')
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "claude-fable-5-1"}
+        return _answer(.02, "claude-fable-5-1")
     asyncio.run(run_judging(plan, destination, providers={"anthropic": SimpleNamespace(judge=fable)}, progress=False))
     report = _report(plan, destination, tmp_path, destination / "report.html")
     assert report["status"] == "complete" and set(report["judges"]) == {"anthropic", *JUDGES}
@@ -236,7 +236,7 @@ def test_a_complete_judge_addition_reports_all_judges_in_the_ranking(tmp_path):
     plan = create_judge_extension(source, destination, tmp_path, new_judges={"anthropic": FABLE})
 
     async def fable(prompt, settings, job):
-        return {"text": json.dumps(_verdict()), "cost_usd": .02, "usage": {}, "model": "claude-fable-5-1"}
+        return _answer(.02, "claude-fable-5-1")
     asyncio.run(run_judging(plan, destination, providers={"anthropic": SimpleNamespace(judge=fable)}, progress=False))
     report = _report(plan, destination, tmp_path, destination / "report.html")
     assert report["status"] == "complete" and "added_judges" not in report

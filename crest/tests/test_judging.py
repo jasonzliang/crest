@@ -55,29 +55,28 @@ def test_accepts_one_overall_binary_choice_with_reason_first(winner):
     lambda v: v.pop("reason"),
     lambda v: v.update(useful={"reason": "Mechanism.", "winner": "B"}),
     lambda v: v.update(reason={"new": "A", "useful": "B", "surprising": "A"}),
+    # The previous three-criterion verdict shape.
+    lambda v: (v.clear(), v.update({criterion: {"reason": "Criterion comparison.", "winner": "A"}
+                                    for criterion in ("new", "useful", "surprising")})),
 ])
-def test_rejects_scores_ties_extra_fields_and_missing_reasons(mutation):
+def test_rejects_scores_ties_extra_fields_legacy_criteria_and_missing_reasons(mutation):
     value = verdict()
     mutation(value)
     with pytest.raises(ValueError):
         judging.validate_verdict(value)
-
-
-@pytest.mark.parametrize("text", [
-    "```json\n{}\n```", "{} trailing text", "[]", "null",
-    '{"new": {}, "new": {}, "useful": {}, "surprising": {}}',
-])
-def test_parsing_rejects_nonobject_malformed_and_duplicate_json_keys(text):
     with pytest.raises(ValueError):
-        judging.parse_verdict(text)
+        judging.parse_verdict(json.dumps(value))
 
 
-@pytest.mark.parametrize("text", [
-    '{"reason":"First","reason":"Second","winner":"A"}',
-    '{"reason":"Creative proposal.","winner":"A","winner":"B"}',
+@pytest.mark.parametrize("text, match", [
+    ("```json\n{}\n```", None), ("{} trailing text", None), ("[]", None), ("null", None),
+    ('{"new": {}, "new": {}, "useful": {}, "surprising": {}}', None),
+    # Duplicate keys are rejected even when the last value would be valid.
+    ('{"reason":"First","reason":"Second","winner":"A"}', "duplicate"),
+    ('{"reason":"Creative proposal.","winner":"A","winner":"B"}', "duplicate"),
 ])
-def test_duplicate_keys_rejected_even_when_last_value_would_be_valid(text):
-    with pytest.raises(ValueError, match="duplicate"):
+def test_parsing_rejects_nonobject_malformed_and_duplicate_json_keys(text, match):
+    with pytest.raises(ValueError, match=match):
         judging.parse_verdict(text)
 
 
@@ -91,21 +90,15 @@ def test_schema_requires_exact_flat_overall_binary_choice():
     assert schema["properties"]["reason"]["type"] == "string"
 
 
-def test_rejects_previous_three_criterion_verdict():
-    legacy = {criterion: {"reason": "Criterion comparison.", "winner": "A"}
-              for criterion in ("new", "useful", "surprising")}
-    with pytest.raises(ValueError):
-        judging.validate_verdict(legacy)
-    with pytest.raises(ValueError):
-        judging.parse_verdict(json.dumps(legacy))
-
-
-def test_rendered_prompt_supplies_only_overall_choice_schema():
+def test_rendered_prompt_supplies_only_overall_choice_schema_and_advisory_word_range():
     prompt = judging.build_prompt("Question", "First answer", "Second answer", "Rubric")
     rendered_schema = json.loads(prompt.split("matching this schema:\n", 1)[1]
                                 .split("\n\nUNTRUSTED INPUT DATA", 1)[0])
     assert list(rendered_schema["properties"]) == ["reason", "winner"]
     assert rendered_schema["required"] == ["reason", "winner"]
+    # The word range is advisory; the explanation must be a complete paragraph.
+    assert 'Aim for 150–300 words in a complete comparative paragraph' in prompt
+    assert 'one complete paragraph of 150–300 words' not in prompt
 
 
 def test_schedules_all_pairs_judges_and_both_orders(experiment):
@@ -150,7 +143,8 @@ def test_job_prompt_blinds_metadata_and_preserves_full_untrusted_content(experim
     assert swapped_data["B"] == data["A"]
 
 
-def test_fingerprint_invalidates_full_content_rubric_settings_and_protocol(experiment, monkeypatch):
+def test_fingerprint_invalidates_full_content_rubric_settings_rendered_prompt_and_protocol(
+        experiment, monkeypatch):
     def keys(values):
         return {j["key"] for j in judging.make_judgment_jobs(*values)}
 
@@ -171,15 +165,12 @@ def test_fingerprint_invalidates_full_content_rubric_settings_and_protocol(exper
     before = keys(changed)
     changed[1][0]["result"]["text"] = "x" * 180_000 + "new end"
     assert len(before & keys(changed)) == 4
+    original = judging.build_prompt
+    monkeypatch.setattr(judging, "build_prompt", lambda *args, **kwargs: original(*args, **kwargs) + "\nExtra instruction.")
+    assert baseline.isdisjoint(keys(experiment))
+    monkeypatch.setattr(judging, "build_prompt", original)
     monkeypatch.setattr(judging, "PROTOCOL_VERSION", "test-next-version")
     assert baseline.isdisjoint(keys(experiment))
-
-
-def test_fingerprint_changes_if_rendered_prompt_changes(experiment, monkeypatch):
-    original = judging.build_prompt
-    baseline = {j["key"] for j in judging.make_judgment_jobs(*experiment)}
-    monkeypatch.setattr(judging, "build_prompt", lambda *args, **kwargs: original(*args, **kwargs) + "\nExtra instruction.")
-    assert baseline.isdisjoint({j["key"] for j in judging.make_judgment_jobs(*experiment)})
 
 
 def test_job_keys_stable_across_input_and_setting_mapping_order(experiment):
@@ -250,10 +241,20 @@ def test_quality_screen_rejects_meta_only_noncomparative_or_unfinished_reasons(r
     'A is more coherent than B because its conclusion is "test the mechanism."',
     'A is faster than B:\n- A: O(n)\n- B: O(n²)',
     'A is more explicit than B about the valid interval [0, 1).',
+    # Answer labels and "greater" comparatives.
+    'A gives a clearer mechanism than B, so there are no adverse tradeoffs in choosing A.',
+    'Both answers avoid superficial decoration, but A achieves greater creative quality '
+    'by specifying the operating mechanism and its failure modes.',
+    # Grammatical preposition endings and "but" comparisons.
+    'A supplies a stronger mechanism that B provides no evidence for.',
+    'A proposes an implementation, but B supplies assumptions without a mechanism.',
+    # A comparison without an allowlisted connective.
+    'A and B each provide viable mechanisms; A demonstrates feasibility, B merely asserts it.',
 ])
 def test_quality_screen_accepts_comparison_without_word_count_or_keyword_demands(reason):
     value = {'reason': reason, 'winner': 'A'}
     assert judging.parse_verdict(json.dumps(value), require_reason_quality=True) == value
+    assert judging.validate_verdict(dict(value), require_reason_quality=True) == value
 
 
 def test_jobs_store_raw_and_presented_provenance_and_share_presentations(experiment):
@@ -290,35 +291,3 @@ def test_direct_prompt_calls_apply_same_presentation_as_scheduled_jobs():
     prompt = judging.build_prompt('Question', 'See https://one.test.', 'See https://two.test.', 'Rubric')
     data = json.loads(prompt.split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])
     assert data == {'question': 'Question', 'A': 'See [Source 1].', 'B': 'See [Source 1].'}
-
-
-@pytest.mark.parametrize('reason', [
-    'A gives a clearer mechanism than B, so there are no adverse tradeoffs in choosing A.',
-    'Both answers avoid superficial decoration, but A achieves greater creative quality '
-    'by specifying the operating mechanism and its failure modes.',
-])
-def test_quality_screen_accepts_answer_labels_and_greater_comparative_language(reason):
-    assert judging.validate_verdict({'reason': reason, 'winner': 'A'},
-                                    require_reason_quality=True)['reason'] == reason
-
-
-def test_prompt_word_range_is_advisory_and_explanation_must_be_complete():
-    prompt = judging.build_prompt('Question', 'First answer', 'Second answer', 'Rubric')
-    assert 'Aim for 150–300 words in a complete comparative paragraph' in prompt
-    assert 'one complete paragraph of 150–300 words' not in prompt
-
-
-@pytest.mark.parametrize('reason', [
-    'A supplies a stronger mechanism that B provides no evidence for.',
-    'A proposes an implementation, but B supplies assumptions without a mechanism.',
-])
-def test_quality_screen_accepts_grammatical_preposition_endings_and_but_comparisons(reason):
-    assert judging.validate_verdict({'reason': reason, 'winner': 'A'},
-                                    require_reason_quality=True)['reason'] == reason
-
-
-def test_quality_screen_accepts_comparison_without_allowlisted_connective():
-    reason = ('A and B each provide viable mechanisms; A demonstrates feasibility, '
-              'B merely asserts it.')
-    assert judging.validate_verdict({'reason': reason, 'winner': 'A'},
-                                    require_reason_quality=True)['reason'] == reason

@@ -14,7 +14,7 @@ import sys
 import time
 import tomllib
 
-from crest.providers.caesar_worker import PROTOCOL_VERSION, atomic_json, recovery_history
+from crest.providers.caesar_worker import DEFAULT_TIMEOUT_SECONDS, PROTOCOL_VERSION, atomic_json, recovery_history
 
 ADAPTER_VERSION = "caesar-subprocess-v2"  # v2: knowledge-base queries pack all chunks into one call again
 # Only public execution settings cross the worker boundary. Credentials are inherited.
@@ -171,7 +171,7 @@ async def generate(prompt: str, settings: dict, job, *, client=None) -> dict:
     if job.state.get("remote_status") in {"timed_out", "interrupted", "failed"}:
         raise RuntimeError("Caesar worker was interrupted or failed; review the saved audit before retrying")
     child = None
-    timeout = float(settings.get("timeout_seconds", 7200))
+    timeout = float(settings.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS))
     started = job.state.get("worker_started_at", time.time())
     if job.state.get("worker_pid"):
         if not _worker_alive(job.state):

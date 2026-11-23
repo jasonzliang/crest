@@ -46,6 +46,19 @@ def test_judge_retry_unknown_charge_retains_known_subtotal_and_uncertainty():
     assert cost['estimate_incomplete'] is True
 
 
+def test_judge_retry_with_no_known_attempt_charge_is_unpriced_like_a_single_receipt():
+    # The outer result reports a price, but every retained attempt's charge is unknown.
+    row = {'judge': 'openai', 'key': CURRENT_KEY, 'cost_usd': None, 'cost_scope': 'all_judgment_attempts',
+           'result': {'model': 'gpt-6-astra', 'cost_usd': .3},
+           'attempts': [{'key': PRIOR_KEY, 'cost_usd': None, 'result': {'model': 'gpt-6-astra'}},
+                        {'key': CURRENT_KEY, 'cost_usd': None, 'result': {'model': 'gpt-6-astra'}}]}
+    cost = cost_for_row(row)
+    assert cost['cumulative_known_estimate_usd'] is None and cost['estimate_incomplete'] is True
+    assert cost['cost_basis'] == assess_cost({'model': 'gpt-6-astra', 'cost_usd': None}, agent='openai')['cost_basis'] == 'unpriced'
+    summary = summarize_costs([row])
+    assert summary['basis_counts'] == {'unpriced': 1} and summary['usage_priced_estimate_usd'] == 0
+
+
 def caesar_result():
     current = {"known_cost_usd": 1.4, "unknown_cost": False,
                "events": [{"status": "completed", "cost_usd": 1.4}], "in_flight": []}
@@ -338,9 +351,12 @@ def test_anthropic_judge_executor_row_keeps_receipt_tariff_without_settings(tmp_
     assert row == before
 
 
-def test_anthropic_proven_native_legacy_route_overrides_todays_gateway_config():
-    result = {'model': ANTHROPIC_MODEL, 'cost_usd': .123,
-              'raw': {'turns': [{'model': ANTHROPIC_MODEL, '_api_url': NATIVE_URL, '_tool_mode': 'server'}]}}
+@pytest.mark.parametrize('raw', [
+    {'turns': [{'model': ANTHROPIC_MODEL, '_api_url': NATIVE_URL, '_tool_mode': 'server'}]},
+    {'transport': {'api_url': NATIVE_URL}, 'tool_mode': 'server'},
+], ids=['turns', 'aggregate'])
+def test_anthropic_proven_native_legacy_route_overrides_todays_gateway_config(raw):
+    result = {'model': ANTHROPIC_MODEL, 'cost_usd': .123, 'usage': {}, 'raw': raw}
     details = assess_cost(result, agent='anthropic', settings={
         'api_base': 'https://gateway.example', 'tool_mode': 'client',
         'model_pricing': {ANTHROPIC_MODEL: GATEWAY_RATES}})

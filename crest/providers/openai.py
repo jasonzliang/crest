@@ -121,7 +121,7 @@ def _total(rounds):
     return usage, None if any(cost is None for cost in costs) else sum(costs)
 
 
-def _result(rounds, settings, is_judge):
+def _result(rounds, settings, is_judge, unresolved=False):
     """The last completed round is the answer; every round is billed and contributes citations."""
     answer = next((raw for raw in reversed(rounds) if raw.get("status") == "completed"), None)
     if answer is None:
@@ -149,9 +149,12 @@ def _result(rounds, settings, is_judge):
     if not text.strip():
         raise ProviderError("OpenAI completed response contains empty answer text")
     usage, cost = _total(rounds)
+    if unresolved:
+        cost = None
     warnings = [] if is_judge else [("Budget is a ceiling; " if budget_is_hard(settings) else "Budget is a soft target; ") + "hosted usage may be unavailable until completion, and cancellation can incur charges."]
-    warnings += budget_warnings(settings, cost, len(rounds),
-                                unknown_reason="essential usage, search actions, or applicable model/service-tier pricing is unavailable.")
+    warnings += budget_warnings(settings, cost, len(rounds), unknown_reason=(
+        "a later submission has an unknown outcome and may have been billed." if unresolved
+        else "essential usage, search actions, or applicable model/service-tier pricing is unavailable."))
     if rounds[-1] is not answer:
         warnings.append(f"The final round ended with status {rounds[-1].get('status')!r}; the previous round's answer is kept.")
     return {"text": text, "citations": citations, "model": answer.get("model", settings.get("model", "gpt-6.1-sol")),
@@ -206,8 +209,12 @@ async def _run(prompt, settings, job, *, client, is_judge):
             if not earlier:
                 raise
             # A later round failed or was cancelled: keep the paid earlier answer and account for the attempt.
+            # Only an accepted round (it has a remote id) carries a receipt; an explicit rejection is unbilled,
+            # and a submission of unknown outcome may have been billed, so it makes the total unknown.
             failed = job.state.get("raw")
-            return _terminal_result([*earlier, failed] if isinstance(failed, dict) else earlier, settings, job, is_judge)
+            accepted = job.state.get("remote_id") and isinstance(failed, dict)
+            return _terminal_result([*earlier, failed] if accepted else earlier, settings, job, is_judge,
+                                    unresolved=bool(job.state.get("submission_unknown")))
         rounds = [*earlier, raw]
         if (not is_judge and raw.get("status") == "completed"
                 and needs_more_research(settings, len(rounds), _total(rounds)[1], _account(raw)[1])):
@@ -312,12 +319,14 @@ async def _response(prompt, previous_response_id, prior_cost, settings, job, cli
             raise
 
 
-def _terminal_result(rounds, settings, job, is_judge):
+def _terminal_result(rounds, settings, job, is_judge, unresolved=False):
     """Keep a priced receipt even when the terminal response cannot be an answer."""
     try:
-        return _result(rounds, settings, is_judge)
+        return _result(rounds, settings, is_judge, unresolved)
     except ProviderError:
         usage, cost = _total(rounds)
+        if unresolved:
+            cost = None
         job.save(provider_result={"model": rounds[-1].get("model", settings.get("model", "gpt-6.1-sol")),
                                   "usage": usage, "cost_usd": cost,
                                   "cost_estimated": cost is not None, "raw": rounds[-1]})

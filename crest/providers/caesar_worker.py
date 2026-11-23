@@ -329,6 +329,9 @@ class UsageAudit:
             for value in (rates.get("input"), rates.get("output"), rates.get("cache_read", 0), rates.get("cache_write", 0)))
         if self.enforce and (not priced or not bounded):
             raise BudgetExceeded("Hard Caesar budgets require known finite prices and bounded output")
+        if rates is not None and not priced:
+            # A soft cap still refuses a malformed price: a NaN reservation would make every later persist fail.
+            raise SDKRequestFailed(f"Invalid Caesar price for {model}: rates must be nonnegative finite numbers; request not sent")
         input_multiplier = 2 if model in (SOL, LUNA) and input_bound > 272_000 else 1
         output_multiplier = 1.5 if input_multiplier == 2 else 1
         input_rate = max(rates.get("input", 0), rates.get("cache_write", 0)) if rates else 0
