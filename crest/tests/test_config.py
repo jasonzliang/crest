@@ -117,7 +117,7 @@ def test_custom_numeric_limits_render_for_every_agent(tmp_path, write_master_con
         else:
             assert f"at most {limits[name]} words" in task["prompt"]
             assert "{max_words}" not in task["prompt"]
-        if "continuation_prompt" in settings:
+        if settings.get("continuation_prompt") is not None:
             assert f"at most {limits[name]} words" in continuation_prompt(settings, 1.25)
 
 
@@ -151,9 +151,8 @@ def test_default_generation_accepts_uncapped_long_answers_for_every_agent(
         assert "{max_words}" not in task["prompt"] and "at most 600 words" not in task["prompt"]
     for name in ("openai", "anthropic"):
         prompt = continuation_prompt(config["research"][name], 1.25)
-        ceiling = "$4.50" if name == "anthropic" else "$4.00"
-        assert "$1.25" in prompt and "$3.00" in prompt and ceiling in prompt
-        assert "{max_words}" not in prompt and "None" not in prompt and "words" not in prompt
+        assert "$1.25 of a $4.00 research budget" in prompt
+        assert "{" not in prompt and "None" not in prompt and "words" not in prompt
 
 
 def test_answer_words_ignores_the_appended_sources_block():
@@ -199,15 +198,28 @@ def test_cli_rejects_unknown_agents(write_master_config, capsys):
     assert "Unknown agents: mystery" in capsys.readouterr().err
 
 
-def test_continuation_targets_apply_to_openai_and_anthropic():
+def test_hosted_agents_run_a_fixed_number_of_follow_ups_without_a_floor():
     config = load_config()
-    for name in ("openai", "anthropic"):
+    for name, rounds in (("openai", 5), ("anthropic", 14)):
         settings = config["research"][name]
-        assert settings["budget_floor_usd"] == 3.0
-        assert settings["budget_usd"] == (4.5 if name == "anthropic" else 4.0)
+        assert settings["budget_floor_usd"] is None and settings["max_research_rounds"] == rounds
+        assert settings["budget_usd"] == 4.0
         assert settings["continuation_prompt"] == config["research_continuation_prompt"]
+        assert "{floor}" not in settings["continuation_prompt"]
     for name in ("caesar", "gemini"):
         assert "budget_floor_usd" not in config["research"][name]
+
+
+def test_a_single_round_needs_no_continuation_prompt(write_master_config):
+    settings = load_config(write_master_config(**{"research.openai.max_research_rounds": 1}))["research"]["openai"]
+    assert settings["continuation_prompt"] is None
+
+
+def test_an_explicit_floor_still_opts_in_to_follow_up_rounds(write_master_config):
+    settings = load_config(write_master_config(**{
+        "research.openai.budget_floor_usd": 3.0,
+        "research.openai.continuation_prompt": "Spent {spent} of {floor}-{ceiling}."}))["research"]["openai"]
+    assert continuation_prompt(settings, 1.25) == "Spent 1.25 of 3.00-4.00."
 
 
 @pytest.mark.parametrize("cap", ["soft", "hard"])

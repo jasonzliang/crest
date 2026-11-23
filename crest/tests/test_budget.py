@@ -51,6 +51,17 @@ def test_another_round_must_land_near_the_floor_and_under_the_ceiling():
     assert not needs_more_research(settings, 1, None, 0.1)       # unknown cost never continues
 
 
+def test_without_a_floor_follow_ups_run_to_the_fixed_round_count_unless_they_would_pass_the_ceiling():
+    for cap in ("soft", "hard"):
+        fixed = {"budget_cap": cap, "budget_usd": 4.0, "budget_floor_usd": None, "max_research_rounds": 5}
+        assert needs_more_research(fixed, 1, 0.24, 0.24)         # well under any target: keep going
+        assert needs_more_research(fixed, 4, 2.70, 1.20)         # 3.90 projected: still under the ceiling
+        assert not needs_more_research(fixed, 4, 2.90, 1.20)     # 4.10 projected: past the ceiling
+        assert not needs_more_research(fixed, 5, 1.00, 0.10)     # the fixed round count is reached
+        assert not needs_more_research(fixed, 1, None, 0.10)     # unknown cost never continues
+    assert not needs_more_research({"budget_usd": 4.0}, 1, 0.1, 0.1)  # one round by default
+
+
 def test_soft_cap_rounds_aim_at_the_floor_but_ignore_the_ceiling():
     soft = {"budget_cap": "soft", "budget_usd": 3.0, "budget_floor_usd": 3.0, "max_research_rounds": 6}
     assert needs_more_research(soft, 3, 2.80, 0.25)           # 3.05 projected: over the ceiling, inside the aim's shortfall
@@ -58,7 +69,7 @@ def test_soft_cap_rounds_aim_at_the_floor_but_ignore_the_ceiling():
     assert not needs_more_research(soft, 3, 2.50, 1.20)       # 3.70 projected overshoots the aim by more than the 0.50 shortfall
     assert not needs_more_research(soft, 3, 3.05, 0.5)        # the floor is reached
     assert not needs_more_research(soft, 6, 1.0, 0.5)         # rounds exhausted
-    assert not needs_more_research({**soft, "budget_floor_usd": None}, 1, 1.0, 0.5)  # no aim: one round
+    assert not needs_more_research({**soft, "budget_floor_usd": None, "max_research_rounds": 1}, 1, 1.0, 0.5)
     assert budget_is_hard({"budget_cap": "auto"}) and budget_is_hard({}) and not budget_is_hard(soft)
 
 
@@ -75,19 +86,15 @@ def test_auto_cap_overrides_configured_depth_and_reports_every_override(write_ma
     assert changed[("caesar", "max_iterations")] == (300, derived["max_iterations"])
     assert changed[("caesar", "synthesis_iterations")] == (20, derived["synthesis_iterations"])
     assert ("caesar", "synthesis_drafts") not in changed  # unchanged values are not reported
-    assert changed[("openai", "budget_floor_usd")] == (3.0, 2.62)
+    assert changed[("openai", "budget_floor_usd")] == (None, 2.62)
     err = capsys.readouterr().err
     assert f"budget_cap auto: research.caesar.max_iterations 300 -> {derived['max_iterations']} (derived from budget_usd 3.5 by crest/budget.py)" in err
-    assert "research.openai.budget_floor_usd 3.0 -> 2.62" in err
+    assert "research.openai.budget_floor_usd None -> 2.62" in err
     assert load_config()["budget_overrides"] == []  # Fixed-depth hard/soft caps override nothing
 
 
-@pytest.mark.parametrize("cost, other_exceeded, anthropic_exceeded", [
-    (3.75, False, False), (4.0, False, False), (4.25, True, False),
-    (4.5, True, False), (4.75, True, True),
-])
-def test_research_budget_warnings_respect_each_agents_ceiling(
-        tmp_path, write_master_config, cost, other_exceeded, anthropic_exceeded):
+@pytest.mark.parametrize("cost, exceeded", [(3.75, False), (4.0, False), (4.25, True)])
+def test_research_budget_warnings_respect_each_agents_ceiling(tmp_path, write_master_config, cost, exceeded):
     questions = tmp_path / "questions.jsonl"
     questions.write_text(json.dumps({"query": "Design a new game."}) + "\n")
     config = load_config(write_master_config(**{
@@ -109,10 +116,9 @@ def test_research_budget_warnings_respect_each_agents_ceiling(
     assert {row["agent"] for row in rows} == set(config["research"])
     for row in rows:
         result = row["result"]
-        exceeded = anthropic_exceeded if row["agent"] == "anthropic" else other_exceeded
         assert result.get("budget_exceeded", False) is exceeded, row["agent"]
         warnings = [warning for warning in result["warnings"] if "budget" in warning]
         assert bool(warnings) is exceeded
         if exceeded:
-            assert ("$4.50" if row["agent"] == "anthropic" else "$4.00") in warnings[0]
+            assert "$4.00" in warnings[0]
             assert ("soft cap" in warnings[0]) == (config["research"][row["agent"]]["budget_cap"] == "soft")

@@ -24,7 +24,7 @@ def test_sonnet_high_client_research_with_headroom_preserves_opus_sol_argon_high
         assert research['max_output_tokens'] == 64000
         assert values['judges']['anthropic']['max_output_tokens'] == 32768
         assert research['budget_cap'] == 'soft'
-        assert research['budget_usd'] == 4.5
+        assert research['budget_usd'] == 4.0
         # The live 10-turn profile returned an earlier $1.15 answer during deepening.
         assert research['tool_mode'] == 'client'
         assert research['max_continuations'] == 50
@@ -43,7 +43,7 @@ def test_sonnet_high_client_research_with_headroom_preserves_opus_sol_argon_high
             assert anthropic['api_base'] == 'https://litellm.evolution.ml'
             assert anthropic['api_key_env'] == 'LITELLM_API_KEY'
             assert anthropic['model_pricing'] == {model: rates}
-    assert config['research']['anthropic']['budget_floor_usd'] == 3
+    assert config['research']['anthropic']['budget_floor_usd'] is None
 
 
 @pytest.mark.parametrize('section', ['research', 'judges'])
@@ -344,7 +344,7 @@ def test_all_research_profiles_use_high_soft_budgets_without_xhigh_or_word_caps(
     assert set(settings) == {'caesar', 'openai', 'gemini', 'anthropic', 'gpt_researcher'}
     for name, values in settings.items():
         assert values['answer_word_limit'] is None, name
-        assert values['budget_usd'] == (4.5 if name == 'anthropic' else 4), name
+        assert values['budget_usd'] == 4, name
         assert values['budget_cap'] == 'soft', name
         assert not any(value == 'xhigh' for key, value in values.items()
                        if key.endswith(('effort', 'thinking_level'))), name

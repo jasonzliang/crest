@@ -137,19 +137,19 @@ Judging makes additional paid calls; analysis is local. Omit `--limit 1` for all
 
 ### Budgets and recorded prices
 
-**Configured policy for new runs: all five research providers use `budget_cap: soft`.** Warning thresholds remain **$4.50 for Anthropic and $4 for Caesar, OpenAI, Google and GPT Researcher**. Crossing a USD threshold alone does not refuse requests, cancel jobs or shrink output allowances to fit a dollar ceiling. Offline validation passed; these remain warning thresholds, not spending caps.
+**Configured policy for new runs: all five research providers use `budget_cap: soft`.** Warning thresholds are **$4 for every research provider**. Crossing a USD threshold alone does not refuse requests, cancel jobs or shrink output allowances to fit a dollar ceiling. Offline validation passed; these remain warning thresholds, not spending caps.
 
 | System | Configured soft policy | Work limits / planning |
 | --- | --- | --- |
 | Caesar | Soft $4 warning; $2.60 reserve inactive in soft | Up to 300 iterations, 3 drafts × 20 Q&A rounds; no reserve-driven handoff or USD-ceiling admission stop |
-| OpenAI | Soft $4 warning; $3 continuation floor | At most 6 research rounds; no hosted-job cancellation solely for exceeding the USD threshold |
+| OpenAI | Soft $4 warning; fixed 5 rounds (initial + 4 follow-ups) | A follow-up is skipped only if one as costly as the last would pass $4; no hosted-job cancellation solely for exceeding the USD threshold |
 | Google Deep Research | Soft $4 warning, unchanged | Managed standard agent decides; overruns are flagged, not prevented |
-| Anthropic Sonnet 5.5 | Soft $4.50 warning; $3 continuation floor | At most 14 research rounds and 50 client-tool continuations; configured 64,000-token request limit remains independent of the USD threshold |
+| Anthropic Sonnet 5.5 | Soft $4 warning; fixed 14 rounds (initial + 13 follow-ups) | A follow-up is skipped only if one as costly as the last would pass $4; 50 client-tool continuations; configured 64,000-token request limit remains independent of the USD threshold |
 | GPT Researcher | Soft $4 warning; $3.40 planning target, $0.50 synthesis planning allowance | Target-driven research/writer handoff; ledger tracks charges and unresolved exposure, not a hard USD admission ceiling |
 
 **Caesar limits:** Sol/medium research, Sol/high synthesis and Luna/low exploration/KB. Up to 300 exploration iterations; synthesis allows 32,768 tokens, with 1,200-second calls and 21,600 seconds overall. The $2.60 reserve is inactive in soft mode; hard-only pricing/admission checks do not apply. Unknown exposure is still recorded.
 
-Soft budgets warn rather than stop spending. Provider-specific validation, finite work/token/time limits and accounting still apply. OpenAI/Anthropic use $3 continuation floors; GPT uses its planning target and allowance. None forces minimum spending or guarantees a final cost.
+Soft budgets warn rather than stop spending. Provider-specific validation, finite work/token/time limits and accounting still apply. OpenAI/Anthropic run a fixed number of follow-up rounds, sized from pilot costs to land near $3 within $2–4 (OpenAI 5 rounds: mean $3.12 over 51 replayed pilot answers, 46 inside $2–4; Anthropic 14 rounds: $3.18–3.25 on two Sonnet pilots). Those pilots used xhigh effort; the configured high effort may land lower, so confirm with a pilot. GPT uses its planning target and allowance. None forces minimum spending or guarantees a final cost.
 
 **Cost limits:** Estimates are not invoices. Unknown usage is not zero; preserve outstanding exposure and receipts before any authorized retry. Saved runs retain their original policies; judging costs are separate.
 

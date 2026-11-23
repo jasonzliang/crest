@@ -49,10 +49,10 @@ DEFAULTS = {
     ),
     # No answer length cap by default; agents inherit it unless they set a numeric limit.
     'answer_word_limit': None,
-    # Sent to a hosted single-call agent (OpenAI, Anthropic) whose finished answer cost less than its
-    # budget_floor_usd: the agent researches further and rewrites the answer, up to max_research_rounds.
+    # Starts each OpenAI/Anthropic follow-up round. Without budget_floor_usd the round count is fixed at
+    # max_research_rounds (a follow-up is skipped only if it would pass budget_usd); with one, rounds run to the floor.
     'research_continuation_prompt': (
-        'Your research so far cost ${spent} of a ${floor} to ${ceiling} research budget. Continue the research: '
+        'Your research so far cost ${spent} of a ${ceiling} research budget. Continue the research: '
         'run further web searches on the aspects of the query that are weakest or least evidenced, read the '
         'most promising sources, and then rewrite the complete response so that it '
         'stands alone and incorporates the new findings. Keep every requirement of the original task.'
@@ -86,7 +86,7 @@ DEFAULTS = {
             'use_research_prompt': True, 'answer_word_limit': None,
             'model': 'gpt-6.1-sol', 'reasoning_effort': 'high', 'search_context_size': 'high',
             'max_output_tokens': 100000, 'max_tool_calls': 150,
-            'budget_usd': 4.0, 'budget_floor_usd': 3.0, 'max_research_rounds': 6, 'continuation_prompt': None,
+            'budget_usd': 4.0, 'budget_floor_usd': None, 'max_research_rounds': 5, 'continuation_prompt': None,
             'timeout_seconds': 3600, 'poll_interval_seconds': 5,
             'initial_concurrency': 3, 'concurrency': 12, 'revision': 1,
         },
@@ -106,7 +106,7 @@ DEFAULTS = {
             'model_pricing': copy.deepcopy(SONNET_GATEWAY_PRICING), 'tool_mode': 'client',
             'max_output_tokens': 64000, 'max_web_searches': 30, 'max_web_fetches': 10,
             'web_fetch': True, 'max_continuations': 50, 'refusal_fallback': False,
-            'budget_usd': 4.5, 'budget_floor_usd': 3.0, 'max_research_rounds': 14, 'continuation_prompt': None,
+            'budget_usd': 4.0, 'budget_floor_usd': None, 'max_research_rounds': 14, 'continuation_prompt': None,
             'timeout_seconds': 5400,
             'initial_concurrency': 2, 'concurrency': 8, 'revision': 1,
         },
@@ -269,12 +269,14 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
             ceiling = settings.get('budget_usd')
             if any(type(v) is bool or not isinstance(v, (int, float)) for v in (floor, ceiling)) or not 0 < floor <= ceiling:
                 raise ValueError(f'research.{name}.budget_floor_usd must be positive and at most budget_usd')
+        rounds = settings.get('max_research_rounds')
+        if name in HOSTED_AGENTS and (floor is not None or type(rounds) is int and rounds > 1):
             if settings.get('continuation_prompt') is None:
                 settings['continuation_prompt'] = config['research_continuation_prompt']
             prompt = settings['continuation_prompt']
-            if (not isinstance(prompt, str) or any(tag not in prompt for tag in ('{spent}', '{floor}', '{ceiling}'))
+            if (not isinstance(prompt, str) or any(tag not in prompt for tag in ('{spent}', '{ceiling}'))
                     or ('{max_words}' in prompt) != (settings['answer_word_limit'] is not None)):
-                raise ValueError(f'research.{name}.continuation_prompt must contain {{spent}}, {{floor}} and {{ceiling}}, '
+                raise ValueError(f'research.{name}.continuation_prompt must contain {{spent}} and {{ceiling}}, '
                                  'and {max_words} exactly when an answer_word_limit applies')
     for section in ('research', 'judges'):
         for name, settings in config[section].items():

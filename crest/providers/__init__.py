@@ -1,8 +1,9 @@
 """Provider adapters; credentials are read only when a live request is needed.
 
-Shared budget-range logic for hosted single-call research agents: when a finished
-answer cost less than ``budget_floor_usd``, the agent is asked to research further
-and rewrite the answer, until the floor is reached or ``max_research_rounds`` is spent.
+Shared follow-up logic for hosted single-call research agents. Without a
+``budget_floor_usd`` every answer gets a fixed ``max_research_rounds`` (the initial
+round plus follow-ups), skipping a follow-up only when one as costly as the last
+would pass ``budget_usd``. With a floor, follow-ups run until the floor is reached.
 """
 
 DEFAULT_BUDGET_USD = 4.0
@@ -23,15 +24,19 @@ def budget_is_hard(settings: dict) -> bool:
 
 
 def needs_more_research(settings: dict, rounds: int, cost, last_cost=0.) -> bool:
-    """Another round is due while the total is under the floor and rounds remain. With a hard or auto
-    cap a round as costly as the last one (context grows every round) must also stay under the ceiling
-    and not overshoot the floor by more than the current shortfall, so totals settle near the floor.
-    With a soft cap the ceiling never cuts a round, but the overshoot guard still applies; without a
-    floor there is one round."""
+    """Whether another round is due; rounds counts those finished, including the initial one.
+
+    Without a floor the round count is fixed: follow-ups run until max_research_rounds, except that
+    a round as costly as the last one (context grows every round) must stay under the ceiling, under
+    any cap. With a floor, rounds run while the total is under it; a hard or auto cap also keeps the
+    projected round under the ceiling, and every cap refuses a round that would overshoot the floor
+    by more than the current shortfall, so totals settle near the floor."""
     floor, ceiling = settings.get("budget_floor_usd"), settings.get("budget_usd", DEFAULT_BUDGET_USD)
-    if cost is None or rounds >= int(settings.get("max_research_rounds", 6)):
+    if cost is None or rounds >= int(settings.get("max_research_rounds", 1)):
         return False
-    if floor is None or not cost < floor:
+    if floor is None:
+        return cost + (last_cost or 0.) <= ceiling + 1e-9
+    if not cost < floor:
         return False
     projected = cost + (last_cost or 0.)
     if not budget_is_hard(settings):
@@ -41,7 +46,8 @@ def needs_more_research(settings: dict, rounds: int, cost, last_cost=0.) -> bool
 
 def continuation_prompt(settings: dict, spent: float) -> str:
     text = settings["continuation_prompt"]
-    for tag, value in (("{spent}", f"{spent:.2f}"), ("{floor}", f"{settings['budget_floor_usd']:.2f}"),
+    floor = settings.get("budget_floor_usd")
+    for tag, value in (("{spent}", f"{spent:.2f}"), ("{floor}", "" if floor is None else f"{floor:.2f}"),
                        ("{ceiling}", f"{settings.get('budget_usd', DEFAULT_BUDGET_USD):.2f}"),
                        ("{max_words}", str(settings.get("answer_word_limit")))):
         text = text.replace(tag, value)

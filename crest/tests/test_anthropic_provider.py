@@ -938,7 +938,7 @@ def test_crash_after_new_post_replays_prior_answer_with_unknown_total(tmp_path, 
             raise Crash()
         return stream_response(client_turn() if len(calls) == 1 else answer("Paid answer"))
     settings = {"api_base": "https://proxy.example", "tool_mode": "client", "model": OPUS, "model_pricing": {OPUS: PROXY_RATES},
-                "budget_floor_usd": .1, "continuation_prompt": "{spent} {floor} {ceiling}"}
+                "budget_floor_usd": .1, "max_research_rounds": 6, "continuation_prompt": "{spent} {floor} {ceiling}"}
     job = FakeJob(tmp_path)
     with pytest.raises(Crash):
         invoke(handler, job, settings)
@@ -1101,7 +1101,7 @@ def test_budget_reservation_keeps_last_complete_answer_when_context_cannot_fit(t
         calls.append(json.loads(request.content))
         assert len(calls) == 1, "large next-round context cannot fit remaining funds"
         return stream_response(answer("Paid answer"))
-    result = invoke(handler, job, {**HARD_GATEWAY_CLIENT, "budget_usd": .2, "budget_floor_usd": .1,
+    result = invoke(handler, job, {**HARD_GATEWAY_CLIENT, "budget_usd": .2, "budget_floor_usd": .1, "max_research_rounds": 6,
                                   "continuation_prompt": "界" * 16000})
     assert result["text"] == "Paid answer" and result["cost_usd"] == pytest.approx(.01221)
     assert result["raw"]["budget_stop"]["input_usd"] > result["raw"]["budget_stop"]["remaining_usd"]
@@ -1406,7 +1406,7 @@ def test_http_body_deadline_preserves_previous_sonnet_answer_with_unknown_later_
         assert len(calls) == 2, "a timed-out later submission cannot be retried"
         return httpx.Response(400, stream=SlowErrorBody())
     settings = {"api_base": "https://proxy.example", "tool_mode": "client", "timeout_seconds": .05,
-                "budget_floor_usd": .1, "continuation_prompt": "Continue {spent} {floor} {ceiling}",
+                "budget_floor_usd": .1, "max_research_rounds": 6, "continuation_prompt": "Continue {spent} {floor} {ceiling}",
                 "model_pricing": {SONNET: SONNET_PROXY_RATES}}
     result = invoke(handler, job, settings)
     assert calls == [1, 1] and result["text"] == "Earlier complete answer"

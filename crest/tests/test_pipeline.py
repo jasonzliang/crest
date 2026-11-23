@@ -340,9 +340,8 @@ def test_default_dataset_plan_has_fifty_questions_five_agents_and_three_judges(t
     plan = pipeline.plan()
     assert plan['judge_calls_total'] == 50 * 10 * 2 * 3 == 3000
     assert plan['answer_word_limit'] is None
-    assert plan['budget_targets_usd'] == {
-        name: (4.5 if name == 'anthropic' else 4.0) for name in config['research']}
-    assert plan['generation_budget_targets_usd'] == 1025.0
+    assert plan['budget_targets_usd'] == {name: 4.0 for name in config['research']}
+    assert plan['generation_budget_targets_usd'] == 1000.0
     prompts = {job['agent']: job['prompt'] for job in pipeline.generation_jobs()[:5]}
     assert prompts['caesar'] == pipeline.questions[0]['text']
     assert all('### YOUR TASK' in prompts[name]

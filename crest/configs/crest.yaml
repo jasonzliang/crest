@@ -37,16 +37,16 @@ research_prompt: |-
 
   IMPORTANT: Avoid excessive jargon, ensure artifact text is well-organized (logical, clear, focused), and convincing to a skeptical reader
 
-# OpenAI/Anthropic can request another rewrite below budget_floor_usd, subject to
-# max_research_rounds and a projected-cost guard against overshooting the floor.
-# hard/auto also check the ceiling; the floor is a target, not guaranteed spend.
-# {spent}, {floor}, and {ceiling} are substituted at runtime.
+# OpenAI/Anthropic run a fixed max_research_rounds (initial round plus follow-ups),
+# chosen from pilot costs so totals land near $3 within $2-4. A follow-up is skipped
+# only when one as costly as the last would pass budget_usd. This prompt starts each
+# follow-up; {spent} and {ceiling} (and optionally {floor}) are substituted at runtime.
 research_continuation_prompt: |-
-  Your research so far cost ${spent} of a ${floor} to ${ceiling} research budget. Continue the research: run further web searches on the aspects of the query that are weakest or least evidenced, read the most promising sources, and then rewrite the complete response so that it stands alone and incorporates the new findings. Keep every requirement of the original task.
+  Your research so far cost ${spent} of a ${ceiling} research budget. Continue the research: run further web searches on the aspects of the query that are weakest or least evidenced, read the most promising sources, and then rewrite the complete response so that it stands alone and incorporates the new findings. Keep every requirement of the original task.
 
 # Research budgets apply per answer, across its turns and rounds.
 # soft: report dollar-ceiling overruns without request refusal/cancellation.
-# Research targets still guide continuation/handoff; finite work/token/time limits remain.
+# Finite work/token/time limits remain.
 # hard: enforce provider-specific limits; delayed/estimated usage can still overrun.
 # auto: hard enforcement plus settings derived by crest/budget.py: Caesar depth,
 # reserve and timeout; OpenAI/Anthropic floor and round cap; GPT Researcher target.
@@ -102,8 +102,7 @@ research:
     search_context_size: high  # Search context requested per call.
     budget_usd: 4.0  # Warning threshold; soft does not cancel hosted work at this amount.
     budget_cap: soft
-    budget_floor_usd: 3.0  # Continuation target, not a minimum spend.
-    max_research_rounds: 6  # Includes the initial response; timeout applies per round.
+    max_research_rounds: 5  # Initial response + 4 follow-ups (pilot mean ~$3.1); fewer only if the next would pass budget_usd.
     max_output_tokens: 100000  # Per response, including reasoning.
     max_tool_calls: 150  # Per-response tool-call cap.
     initial_concurrency: 6
@@ -128,10 +127,9 @@ research:
     model_pricing:
       claude-sonnet-5-5: {input: 2.2, cached_input: 0.11, cache_write_5m: 2.75, output: 11.0, web_search: 0.0}
     effort: high
-    budget_usd: 4.5  # Warning threshold, not an enforced dollar ceiling.
+    budget_usd: 4.0  # Warning threshold, not an enforced dollar ceiling.
     budget_cap: soft  # No dollar-based refusal or token shrinking; usage is still recorded.
-    budget_floor_usd: 3.0  # Continuation target, not a minimum spend.
-    max_research_rounds: 14  # Includes the initial research round.
+    max_research_rounds: 14  # Initial round + 13 follow-ups (pilots ~$3.1-3.3); fewer only if the next would pass budget_usd.
     max_output_tokens: 64000  # Per turn; client hard mode may lower it to fit remaining budget.
     max_web_searches: 30  # Executed client searches across the answer, including bootstrap.
     web_fetch: true  # Allow full-page reads.
@@ -158,7 +156,7 @@ research:
     deep_research_concurrency: 2
     max_iterations: 3
     max_search_results_per_query: 5
-    max_research_rounds: 3
+    max_research_rounds: 3  # Research passes; follow-ups stop at the $3.40 handoff target or on repeated sources.
     max_completion_tokens: 32000  # Reasoning + visible output; the prior 8k cap was exhausted by xhigh reasoning.
     synthesis_max_completion_tokens: 32000  # Same headroom for the final writer; no word-count cap.
     max_input_tokens: 64000  # Conservative UTF-8 JSON + framing bound, not a tokenizer count/context window.
