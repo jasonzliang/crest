@@ -43,15 +43,15 @@ Review the single master [configuration](crest/configs/crest.yaml) before runnin
 
 | Research provider | Model / effort | Research tools |
 | --- | --- | --- |
-| `caesar` | Sol (`gpt-6.1-sol`), **medium** main research, **high** synthesis; Luna exploration and KB helpers, low (unchanged) | Caesar/Rome exploration and synthesis |
+| `caesar` | Sol (`gpt-6.1-sol`), **medium** main research, **high** synthesis; Luna exploration and KB helpers, low | Caesar/Rome exploration and synthesis |
 | `openai` | Sol (`gpt-6.1-sol`), **high** | OpenAI hosted web search |
-| `gemini` | Standard managed `deep-research-preview-04-2026` (unchanged) | Google-managed research; no exposed effort/depth control |
+| `gemini` | Standard managed `deep-research-preview-04-2026` | Google-managed research; no exposed effort/depth control |
 | `anthropic` | Opus 5.5 (`claude-opus-5-5`), **high**, through LiteLLM | Free source bootstrap, then client-side DDGS public web search and HTTP fetch |
 | `gpt_researcher` | Sol (`gpt-6.1-sol`), **high** for every role: fast, smart, and strategic | DDGS public web search and HTTP fetch in an isolated worker |
 
 All three judges use **high** reasoning/thinking/effort: **Opus 5.5** through the gateway, **Sol** through direct OpenAI, and **Gemini 4 Argon**. Judges do not use tools. See [Judge models](docs/judge-models.html) for request settings and prices.
 
-The gateway's Bedrock route rejects native Anthropic `web_search`, so the active Anthropic research mode is explicitly `tool_mode: client`, with **no fallback to native hosted tools**. Before the first paid model request, a free DDGS bootstrap search must return usable source text and actual source URLs. The adapter checkpoints that evidence as untrusted context, not a fabricated model tool call; if retrieval supplies no usable evidence, it stops before submitting a paid request. Client searches through DDGS’s free public-engine auto mode and HTTP fetches have **no search/fetch API fee**; the model tokens used to read and reason over those results are still billed. OpenAI's hosted search is a separate, paid tool and remains unchanged.
+The gateway's Bedrock route rejects native Anthropic `web_search`, so the active Anthropic research mode is explicitly `tool_mode: client`, with **no fallback to native hosted tools**. Before the first paid model request, a free DDGS bootstrap search must return usable source text and actual source URLs. The adapter checkpoints that evidence as untrusted context, not a fabricated model tool call; if retrieval supplies no usable evidence, it stops before submitting a paid request. Client searches through DDGS’s free public-engine auto mode and HTTP fetches have **no search/fetch API fee**; the model tokens used to read and reason over those results are still billed. OpenAI's hosted search is a separate, paid tool.
 
 ### GPT Researcher setup
 
@@ -118,7 +118,7 @@ GPT v3 returned an answer at $0.377987 and used 16,848 writer output tokens, dem
 
 These are single-question usage-priced observations, not invoices or current-profile averages. The historical xhigh pilot costs do not calibrate current high-effort research. Citation records are collected URLs, not independently fact-checked support. Soft thresholds do not prevent overruns or guarantee spending near $3; judging costs extra. Caesar’s recovery used a separate soft $2.70 advisory for new synthesis work and retained the original unresolved exposure.
 
-Earlier failures and hard-policy pilots remain [historical context](docs/research-pipeline.html#pilot-history); saved comparison pages and receipts are unchanged.
+Earlier failures and hard-policy pilots are covered in [historical context](docs/research-pipeline.html#pilot-history).
 
 **Mac runs:** Keep the Mac awake with its lid open. Optional `caffeinate -i -w PID` suppresses idle sleep, not lid-closure sleep. Inspect receipts and unresolved exposure before any separately authorized retry; never reset unknown charges.
 
@@ -188,7 +188,7 @@ With all five current providers, each question has **10 pairs × 3 judges × 2 o
 
 Systems rank by their share of overall wins on common complete questions. New, Useful, and Surprising guide a single decision; they are not separate rankings. Question-level bootstrap intervals describe sensitivity to the question mix with saved answers and judges held fixed. These results measure judge preferences, not verified factual accuracy or absolute creativity.
 
-See the [NUS rubric](docs/nus-rubric.html), [current NUS v3 rubric](crest/prompts/nus_pairwise_v3.txt), and [50-question dataset](crest/data/queries_n50_v2.jsonl). The earlier [NUS v2](crest/prompts/nus_pairwise_v2.txt) and [NUS v1](crest/prompts/nus_pairwise_v1.txt) rubrics are kept; select their prompt path explicitly for comparisons, and note that saved runs keep the exact prompt text they used. V3 has the judge state the expected approach from the task before reading either answer, credits what an answer adds to a cited idea rather than the idea itself, and judges payoff against the task's need rather than the answer's framing. These are design improvements, not measured gains in agreement with human judges. The current set was generated by the three judge models configured at the time, in the five categories of Caesar's original [50 questions](crest/data/queries_n50_v1.jsonl), which the published comparison used.
+See the [NUS rubric](docs/nus-rubric.html), [current NUS v3 rubric](crest/prompts/nus_pairwise_v3.txt), and [50-question dataset](crest/data/queries_n50_v2.jsonl). [NUS v2](crest/prompts/nus_pairwise_v2.txt) and [NUS v1](crest/prompts/nus_pairwise_v1.txt) are also available; select their prompt path explicitly for comparisons. Saved runs keep the exact prompt text they used. V3 has the judge state the expected approach from the task before reading either answer, credits what an answer adds to a cited idea rather than the idea itself, and judges payoff against the task's need rather than the answer's framing. These are design improvements, not measured gains in agreement with human judges. The current set was generated by the three judge models configured at the time, in the five categories of Caesar's original [50 questions](crest/data/queries_n50_v1.jsonl), which the published comparison used.
 
 ## Browse the reports
 
@@ -200,7 +200,7 @@ python -m http.server 8000
 
 Open [the documentation index](http://localhost:8000/docs/index.html) for the research comparison, AI scientist comparison, guides, and historical project material.
 
-Page names use sentence case, with matching lowercase kebab-case HTML filenames. Directory landing pages retain `index.html`; existing directory paths are unchanged. The canonical names and compatibility aliases live in `crest_ais/site.py`. Old URLs redirect to their canonical page, retaining query strings and section fragments when JavaScript is enabled, and provide a readable link without JavaScript.
+Page names use sentence case, with matching lowercase kebab-case HTML filenames. Directory landing pages use `index.html`. The canonical names and compatibility aliases live in `crest_ais/site.py`. Old URLs redirect to their canonical page, retaining query strings and section fragments when JavaScript is enabled, and provide a readable link without JavaScript.
 
 `Updated YYYY-MM-DD` is the **page-update date**, not the study date or run date. Saved answers, judgments, scores, tables, figures, and original study metadata are not changed when publication wrappers are updated. Report writers accept `updated="YYYY-MM-DD"`; `python -m crest.report` also accepts `--updated`. Date precedence is the explicit argument, `CREST_PAGE_UPDATED`, `SOURCE_DATE_EPOCH` (UTC), then the current UTC build date. Set `CREST_PAGE_UPDATED=2026-11-05` to reproduce this documentation publication. Canonical report filenames determine the versioned page title; custom filenames retain the generic comparison title. Regenerating a canonical report in this site automatically updates its index entry date and the index page date. Legacy output filenames are rejected so they cannot overwrite compatibility redirects. For manually edited pages, update the page header and its matching index date together. The catalog’s `updated` fields record the migration baseline, not a build-time clock.
 
