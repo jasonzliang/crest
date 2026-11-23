@@ -11,11 +11,10 @@ from crest.pipeline import Pipeline
 
 GATEWAY_RATES = {'input': 4.4, 'cached_input': .22, 'cache_write_5m': 5.5,
                  'output': 22., 'web_search': .01}
-SONNET_GATEWAY_RATES = {'input': 2.2, 'cached_input': .11, 'cache_write_5m': 2.75,
-                        'output': 11., 'web_search': 0.}
+OPUS_RESEARCH_RATES = {**GATEWAY_RATES, 'web_search': 0.}  # Client-side search has no per-call fee.
 
 
-def test_sonnet_high_client_research_with_headroom_preserves_opus_sol_argon_high_judges():
+def test_opus_high_client_research_with_headroom_preserves_opus_sol_argon_high_judges():
     config = load_config()
     for values in (DEFAULTS, config):
         research = values['research']['anthropic']
@@ -35,7 +34,7 @@ def test_sonnet_high_client_research_with_headroom_preserves_opus_sol_argon_high
         assert values['judges']['gemini']['model'] == 'gemini-4-argon'
         assert values['judges']['gemini']['thinking_level'] == 'high'
         for section, model, effort, rates in (
-                ('research', 'claude-sonnet-5-5', 'high', SONNET_GATEWAY_RATES),
+                ('research', 'claude-opus-5-5', 'high', OPUS_RESEARCH_RATES),
                 ('judges', 'claude-opus-5-5', 'high', GATEWAY_RATES)):
             anthropic = values[section]['anthropic']
             assert anthropic['model'] == model

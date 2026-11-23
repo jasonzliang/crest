@@ -1,6 +1,6 @@
 """Anthropic Messages adapter: streamed web-search research and structured judging.
 
-Research uses Claude Sonnet with hosted server tools or explicit client search/fetch;
+Research uses Claude Opus with hosted server tools or explicit client search/fetch;
 judging uses Claude Opus with a JSON-schema output format and no tools. Both run
 through the same durable transport conventions as the other adapters: raw httpx,
 checkpoints on the job before any paid request, and no silent resubmission.
@@ -45,7 +45,7 @@ ADAPTER_VERSION = "anthropic-messages-v5"
 API_URL = "https://api.anthropic.com/v1/messages"
 API_VERSION = "2026-10-21"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
-RESEARCH_MODEL = "claude-sonnet-5-5"
+RESEARCH_MODEL = "claude-opus-5-5"
 JUDGE_MODEL = "claude-opus-5-5"
 # USD per million tokens: input, cache read, 5-minute cache write, output.
 RATES = {"claude-opus-5-5": (4, .20, 5, 20),

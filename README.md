@@ -46,7 +46,7 @@ Review the single master [configuration](crest/configs/crest.yaml) before runnin
 | `caesar` | Sol (`gpt-6.1-sol`), **medium** main research, **high** synthesis; Luna exploration and KB helpers, low (unchanged) | Caesar/Rome exploration and synthesis |
 | `openai` | Sol (`gpt-6.1-sol`), **high** | OpenAI hosted web search |
 | `gemini` | Standard managed `deep-research-preview-04-2026` (unchanged) | Google-managed research; no exposed effort/depth control |
-| `anthropic` | Sonnet 5.5 (`claude-sonnet-5-5`), **high**, through LiteLLM | Free source bootstrap, then client-side DDGS public web search and HTTP fetch |
+| `anthropic` | Opus 5.5 (`claude-opus-5-5`), **high**, through LiteLLM | Free source bootstrap, then client-side DDGS public web search and HTTP fetch |
 | `gpt_researcher` | Sol (`gpt-6.1-sol`), **high** for every role: fast, smart, and strategic | DDGS public web search and HTTP fetch in an isolated worker |
 
 All three judges use **high** reasoning/thinking/effort: **Opus 5.5** through the gateway, **Sol** through direct OpenAI, and **Gemini 4 Argon**. Judges do not use tools. See [Judge models](docs/judge-models.html) for request settings and prices.
@@ -144,12 +144,12 @@ Judging makes additional paid calls; analysis is local. Omit `--limit 1` for all
 | Caesar | Soft $4 warning; $2.60 reserve inactive in soft | Up to 300 iterations, 3 drafts × 20 Q&A rounds; no reserve-driven handoff or USD-ceiling admission stop |
 | OpenAI | Soft $4 warning; fixed 5 rounds (initial + 4 follow-ups) | A follow-up is skipped only if one as costly as the last would pass $4; no hosted-job cancellation solely for exceeding the USD threshold |
 | Google Deep Research | Soft $4 warning, unchanged | Managed standard agent decides; overruns are flagged, not prevented |
-| Anthropic Sonnet 5.5 | Soft $4 warning; fixed 14 rounds (initial + 13 follow-ups) | A follow-up is skipped only if one as costly as the last would pass $4; 50 client-tool continuations; configured 64,000-token request limit remains independent of the USD threshold |
+| Anthropic Opus 5.5 | Soft $4 warning; fixed 7 rounds (initial + 6 follow-ups) | A follow-up is skipped only if one as costly as the last would pass $4; 50 client-tool continuations; configured 64,000-token request limit remains independent of the USD threshold |
 | GPT Researcher | Soft $4 warning; $3.40 planning target, $0.50 synthesis planning allowance | Target-driven research/writer handoff; ledger tracks charges and unresolved exposure, not a hard USD admission ceiling |
 
 **Caesar limits:** Sol/medium research, Sol/high synthesis and Luna/low exploration/KB. Up to 300 exploration iterations; synthesis allows 32,768 tokens, with 1,200-second calls and 21,600 seconds overall. The $2.60 reserve is inactive in soft mode; hard-only pricing/admission checks do not apply. Unknown exposure is still recorded.
 
-Soft budgets warn rather than stop spending. Provider-specific validation, finite work/token/time limits and accounting still apply. OpenAI/Anthropic run a fixed number of follow-up rounds, sized from pilot costs to land near $3 within $2–4 (OpenAI 5 rounds: mean $3.12 over 51 replayed pilot answers, 46 inside $2–4; Anthropic 14 rounds: $3.18–3.25 on two Sonnet pilots). Those pilots used xhigh effort; the configured high effort may land lower, so confirm with a pilot. GPT uses its planning target and allowance. None forces minimum spending or guarantees a final cost.
+Soft budgets warn rather than stop spending. Provider-specific validation, finite work/token/time limits and accounting still apply. OpenAI/Anthropic run a fixed number of follow-up rounds, sized from pilot costs to land near $3 within $2–4 (OpenAI 5 rounds: mean $3.12 over 51 replayed pilot answers, 46 inside $2–4; Anthropic 7 rounds: half the 14 that put two Sonnet pilots at $3.18–3.25, since Opus tokens cost 2× Sonnet's and client search is free for both). Those pilots used xhigh effort; the configured high effort may land lower, so confirm with a pilot. GPT uses its planning target and allowance. None forces minimum spending or guarantees a final cost.
 
 **Cost limits:** Estimates are not invoices. Unknown usage is not zero; preserve outstanding exposure and receipts before any authorized retry. Saved runs retain their original policies; judging costs are separate.
 
@@ -157,8 +157,7 @@ The verified active-route assumptions are USD per million tokens:
 
 | Route / model | Input | Cached input | Cache write | Output |
 | --- | ---: | ---: | ---: | ---: |
-| LiteLLM gateway / Sonnet 5.5 research | $2.20 | $0.11 | $2.75 (5-minute) | $11 |
-| LiteLLM gateway / Opus 5.5 judge | $4.40 | $0.22 | $5.50 (5-minute) | $22 |
+| LiteLLM gateway / Opus 5.5 research and judge | $4.40 | $0.22 | $5.50 (5-minute) | $22 |
 | Direct OpenAI / Sol | $2 | $0.10 | $2.50 (default 30-minute) | $10 |
 
 These are route-specific estimates, not account invoices; use the gateway tariff rather than Anthropic's direct tariff for gateway requests. Cached reads and writes replace ordinary input tokens, and reasoning/thinking is billed once. Long-context pricing and hosted-tool charges may change a request's total; [Judge models](docs/judge-models.html#cost) records the estimator assumptions. Client DDGS/HTTP tools add no API fee, but their content consumes billed model tokens.

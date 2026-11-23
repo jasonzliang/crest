@@ -119,17 +119,17 @@ research:
   # Anthropic Messages through the configured gateway, with client-side research tools.
   anthropic:
     use_research_prompt: true
-    model: claude-sonnet-5-5
+    model: claude-opus-5-5
     api_base: https://litellm.evolution.ml
     api_key_env: LITELLM_API_KEY  # Environment-variable name, not a key literal.
     tool_mode: client  # Local search/fetch; retrieved text still incurs model token costs.
     # USD per million tokens; web_search is per call and is zeroed in client mode.
     model_pricing:
-      claude-sonnet-5-5: {input: 2.2, cached_input: 0.11, cache_write_5m: 2.75, output: 11.0, web_search: 0.0}
+      claude-opus-5-5: {input: 4.4, cached_input: 0.22, cache_write_5m: 5.5, output: 22.0, web_search: 0.0}
     effort: high
     budget_usd: 4.0  # Warning threshold, not an enforced dollar ceiling.
     budget_cap: soft  # No dollar-based refusal or token shrinking; usage is still recorded.
-    max_research_rounds: 14  # Initial round + 13 follow-ups (pilots ~$3.1-3.3); fewer only if the next would pass budget_usd.
+    max_research_rounds: 7  # Initial round + 6 follow-ups: half Sonnet's 14, as Opus tokens cost 2x and client search is free for both; fewer only if the next would pass budget_usd.
     max_output_tokens: 64000  # Per turn; client hard mode may lower it to fit remaining budget.
     max_web_searches: 30  # Executed client searches across the answer, including bootstrap.
     web_fetch: true  # Allow full-page reads.

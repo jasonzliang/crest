@@ -63,7 +63,7 @@ class FixedProvider:
     # Only the Anthropic sections take model_pricing, and every rate there must be finite and nonnegative.
     *[(f"{section}.anthropic.model_pricing", {model: {**rates, "output": bad}}, "nonnegative finite")
       for section, model, rates in [
-          ("research", "claude-sonnet-5-5", {"input": 2.2, "cached_input": .11, "cache_write_5m": 2.75, "web_search": 0}),
+          ("research", "claude-opus-5-5", {"input": 4.4, "cached_input": .22, "cache_write_5m": 5.5, "web_search": 0}),
           ("judges", "claude-opus-5-5", {"input": 4.4, "cached_input": .22, "cache_write_5m": 5.5, "web_search": .01})]
       for bad in (float("nan"), float("inf"), -1, "11")],
     *[(f"{section}.{name}.model_pricing", {"gpt-6.1-sol": {"input": float("nan"), "output": 10}},
@@ -200,7 +200,7 @@ def test_cli_rejects_unknown_agents(write_master_config, capsys):
 
 def test_hosted_agents_run_a_fixed_number_of_follow_ups_without_a_floor():
     config = load_config()
-    for name, rounds in (("openai", 5), ("anthropic", 14)):
+    for name, rounds in (("openai", 5), ("anthropic", 7)):
         settings = config["research"][name]
         assert settings["budget_floor_usd"] is None and settings["max_research_rounds"] == rounds
         assert settings["budget_usd"] == 4.0

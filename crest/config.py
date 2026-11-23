@@ -28,6 +28,8 @@ ANTHROPIC_GATEWAY_PRICING = {'claude-opus-5-5': {
 SONNET_GATEWAY_PRICING = {'claude-sonnet-5-5': {
     'input': 2.2, 'cached_input': .11, 'cache_write_5m': 2.75, 'output': 11., 'web_search': 0.,
 }}
+# Research runs client-side search/fetch, so no per-search fee applies.
+OPUS_RESEARCH_PRICING = {'claude-opus-5-5': {**ANTHROPIC_GATEWAY_PRICING['claude-opus-5-5'], 'web_search': 0.}}
 DEFAULTS = {
     'questions': '../data/queries_n50_v2.jsonl',
     'rubric': '../prompts/nus_pairwise_v2.txt',
@@ -101,12 +103,12 @@ DEFAULTS = {
         'anthropic': {
             'budget_cap': 'soft',  # Dollar threshold is advisory; explicit hard/auto modes remain available.
             'use_research_prompt': True, 'answer_word_limit': None,
-            'model': 'claude-sonnet-5-5', 'effort': 'high',
+            'model': 'claude-opus-5-5', 'effort': 'high',
             'api_base': 'https://litellm.evolution.ml', 'api_key_env': 'LITELLM_API_KEY',
-            'model_pricing': copy.deepcopy(SONNET_GATEWAY_PRICING), 'tool_mode': 'client',
+            'model_pricing': copy.deepcopy(OPUS_RESEARCH_PRICING), 'tool_mode': 'client',
             'max_output_tokens': 64000, 'max_web_searches': 30, 'max_web_fetches': 10,
             'web_fetch': True, 'max_continuations': 50, 'refusal_fallback': False,
-            'budget_usd': 4.0, 'budget_floor_usd': None, 'max_research_rounds': 14, 'continuation_prompt': None,
+            'budget_usd': 4.0, 'budget_floor_usd': None, 'max_research_rounds': 7, 'continuation_prompt': None,
             'timeout_seconds': 5400,
             'initial_concurrency': 2, 'concurrency': 8, 'revision': 1,
         },

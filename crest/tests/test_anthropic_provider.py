@@ -425,21 +425,21 @@ PROXY_RATES = {"input": 4.4, "cached_input": .22, "cache_write_5m": 5.5, "output
 
 
 @pytest.mark.parametrize("judge", [False, True])
-def test_default_native_research_is_sonnet_high_and_judge_stays_opus_high_without_bootstrap(tmp_path, monkeypatch, judge):
+def test_default_native_research_and_judge_are_opus_high_without_bootstrap(tmp_path, monkeypatch, judge):
     forbid_client_tools(monkeypatch, "server research and judges must not bootstrap")
     seen = []
     def handler(request):
         assert str(request.url) == "https://api.anthropic.com/v1/messages"
         seen.append(json.loads(request.content))
-        return stream_response(turn(model=OPUS if judge else SONNET, searches=0 if judge else 2, tool=not judge))
+        return stream_response(turn(model=OPUS, searches=0 if judge else 2, tool=not judge))
     result = invoke(handler, FakeJob(tmp_path), judge=judge)  # tool_mode defaults to "server".
-    assert seen[0]["model"] == (OPUS if judge else SONNET)
+    assert seen[0]["model"] == OPUS
     assert seen[0]["output_config"]["effort"] == "high"
     assert not any(key in seen[0] for key in ("thinking", "system", "tool_choice"))
     assert seen[0]["messages"][0]["content"][0]["text"] == "Exact prompt"
     assert len(seen[0]["messages"][0]["content"]) == 1
     assert ("tools" in seen[0]) is not judge
-    assert result["cost_usd"] == pytest.approx(.0111 if judge else .02555)
+    assert result["cost_usd"] == pytest.approx(.0111 if judge else .0311)  # Opus list rates plus two $0.01 searches.
 
 
 @pytest.mark.parametrize("base", ["https://litellm.evolution.ml", "https://litellm.evolution.ml/",
@@ -1353,7 +1353,7 @@ def test_sonnet_xhigh_client_budget_signed_history_and_replay(tmp_path, monkeypa
         if len(requests) == 2:
             assert payload["messages"][1]["content"][0] == {"type": "thinking", "thinking": "Find supporting evidence", "signature": "signed-block"}
         return stream_response(client_turn(model=SONNET) if len(requests) == 1 else answer("Sonnet answer", model=SONNET))
-    settings = {"tool_mode": "client", "budget_cap": "hard", "budget_usd": 4, "effort": "xhigh"}
+    settings = {"model": SONNET, "tool_mode": "client", "budget_cap": "hard", "budget_usd": 4, "effort": "xhigh"}
     if gateway:
         settings.update(api_base="https://proxy.example", model_pricing={SONNET: SONNET_PROXY_RATES})
     result = invoke(handler, job, settings)
@@ -1386,7 +1386,8 @@ def test_sonnet_gateway_response_alias_stops_unknown_exposure_without_second_pos
         return stream_response(client_turn(model="unpriced-sonnet-alias"))
     job = FakeJob(tmp_path)
     with pytest.raises(anthropic.ProviderError, match="cost.*unknown"):
-        invoke(handler, job, {"api_base": "https://proxy.example", "tool_mode": "client", "model_pricing": {SONNET: SONNET_PROXY_RATES}})
+        invoke(handler, job, {"model": SONNET, "api_base": "https://proxy.example", "tool_mode": "client",
+                              "model_pricing": {SONNET: SONNET_PROXY_RATES}})
     assert calls == [1]
     assert job.state["provider_result"]["cost_usd"] is None
     assert job.state["provider_result"]["usage"]["client_web_search_calls"] == 1
@@ -1405,7 +1406,7 @@ def test_http_body_deadline_preserves_previous_sonnet_answer_with_unknown_later_
             return stream_response(answer("Earlier complete answer", model=SONNET))
         assert len(calls) == 2, "a timed-out later submission cannot be retried"
         return httpx.Response(400, stream=SlowErrorBody())
-    settings = {"api_base": "https://proxy.example", "tool_mode": "client", "timeout_seconds": .05,
+    settings = {"model": SONNET, "api_base": "https://proxy.example", "tool_mode": "client", "timeout_seconds": .05,
                 "budget_floor_usd": .1, "max_research_rounds": 6, "continuation_prompt": "Continue {spent} {floor} {ceiling}",
                 "model_pricing": {SONNET: SONNET_PROXY_RATES}}
     result = invoke(handler, job, settings)
@@ -1426,7 +1427,7 @@ def test_empty_failure_receipt_keeps_research_and_judge_model_identity(tmp_path,
     with pytest.raises(anthropic.ProviderError):
         invoke(handler, job, {"api_base": "https://proxy.example"}, judge=judge)
     receipt = job.state["provider_result"]
-    assert receipt["model"] == (OPUS if judge else SONNET)
+    assert receipt["model"] == OPUS
     assert receipt["cost_usd"] == (None if status == 200 else 0)
 
 
