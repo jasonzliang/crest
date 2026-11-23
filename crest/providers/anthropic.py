@@ -53,6 +53,8 @@ RATES = {"claude-opus-5-5": (4, .20, 5, 20),
 PRICE_FIELDS = ("input", "cached_input", "cache_write_5m", "output", "web_search")
 WEB_SEARCH_USD = .01  # $10 per 1,000 searches; web_fetch bills only its tokens.
 RETRYABLE = {408, 429, 500, 502, 503, 504, 529}
+BOOTSTRAP_ATTEMPTS = 3  # Free public searches per run before the job fails without a paid request.
+BOOTSTRAP_RETRY_DELAY_S = 3.0  # Linear backoff between those searches.
 ENCRYPTED_FIELDS = ("encrypted_content", "encrypted_index")
 # Nonempty text and reason quality are checked by parse_verdict.
 JUDGE_SCHEMA = {
@@ -600,8 +602,16 @@ async def _bootstrap_context(prompt, settings, job, deadline):
         # A cancelled/free search is not an ambiguous paid submission. Preserve
         # its attempted call, then allow recovery within the same search limit.
         record.update(status="interrupted", error="Bootstrap search interrupted before evidence was checkpointed")
+    if record is not None and record.get("status") != "completed":
+        # Public search fails transiently; an earlier failed free search stays in the
+        # receipt and a resumed job searches again within the same search limit.
         record = None
-    if record is None:
+    attempt = 0
+    while record is None or (record.get("status") == "failed" and record.get("executed")
+                             and attempt < BOOTSTRAP_ATTEMPTS and time.time() < deadline):
+        if attempt:
+            await asyncio.sleep(min(BOOTSTRAP_RETRY_DELAY_S * attempt, max(0, deadline - time.time())))
+        attempt += 1
         query = _bootstrap_query(prompt)
         record = {"origin": "bootstrap", "name": "web_search", "arguments": {"query": query},
                   "executed": False, "status": "failed", "citations": [], "cost_usd": 0.0}

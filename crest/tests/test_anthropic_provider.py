@@ -76,6 +76,7 @@ def invoke(handler, job, settings=None, *, judge=False, prompt="Exact prompt"):
 @pytest.fixture(autouse=True)
 def api_key(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setattr(anthropic, "BOOTSTRAP_RETRY_DELAY_S", 0)
     async def offline_tool(name, arguments, *, client=None):
         return bootstrap_evidence()
     install_client_tool(monkeypatch, offline_tool)
@@ -1027,12 +1028,69 @@ def test_bootstrap_failure_has_zero_paid_posts_and_truthful_receipt(tmp_path, mo
     for _ in range(2):
         with pytest.raises(anthropic.ProviderError, match="bootstrap.*evidence"):
             invoke(lambda request: pytest.fail("no source evidence means zero model calls"), job, {"tool_mode": "client"})
-    assert len(searches) == 1
+    # Each run retries the free search; a resumed run searches again instead of replaying the failure.
+    attempts = 2 * anthropic.BOOTSTRAP_ATTEMPTS
+    assert len(searches) == attempts
     receipt = job.state["provider_result"]
-    assert receipt["cost_usd"] == 0 and receipt["usage"]["client_web_search_calls"] == 1
-    assert receipt["raw"]["client_tools"][0]["status"] == "failed"
+    assert receipt["cost_usd"] == 0 and receipt["usage"]["client_web_search_calls"] == attempts
+    assert [item["status"] for item in receipt["raw"]["client_tools"]] == ["failed"] * attempts
     assert not job.state.get("submission_unknown")
     assert "secret-must-not-leak" not in json.dumps(job.state)
+
+
+def test_transient_bootstrap_failure_recovers_within_one_run(tmp_path, monkeypatch):
+    searches, posts = [], []
+    async def execute(name, arguments, *, client=None):
+        searches.append(arguments)
+        if len(searches) == 1:
+            raise RuntimeError("search backend hiccup")
+        return bootstrap_evidence()
+    install_client_tool(monkeypatch, execute, default_bootstrap=False)
+    def handler(request):
+        posts.append(1)
+        return stream_response(answer())
+    job = FakeJob(tmp_path)
+    result = invoke(handler, job, {"tool_mode": "client"})
+    assert len(searches) == 2 and posts == [1]
+    assert [item["status"] for item in result["raw"]["client_tools"]] == ["failed", "completed"]
+    assert result["usage"]["client_web_search_calls"] == 2
+
+
+def test_failed_bootstrap_is_searched_again_on_resume(tmp_path, monkeypatch):
+    searches, posts = [], []
+    outage = [True]
+    async def execute(name, arguments, *, client=None):
+        searches.append(arguments)
+        if outage[0]:
+            return {"text": "", "citations": []}
+        return bootstrap_evidence()
+    install_client_tool(monkeypatch, execute, default_bootstrap=False)
+    def handler(request):
+        posts.append(1)
+        return stream_response(answer())
+    job = FakeJob(tmp_path)
+    with pytest.raises(anthropic.ProviderError, match="bootstrap.*evidence"):
+        invoke(handler, job, {"tool_mode": "client"})
+    assert posts == [] and len(searches) == anthropic.BOOTSTRAP_ATTEMPTS
+    outage[0] = False
+    result = invoke(handler, job, {"tool_mode": "client"})
+    assert posts == [1] and len(searches) == anthropic.BOOTSTRAP_ATTEMPTS + 1
+    statuses = [item["status"] for item in result["raw"]["client_tools"]]
+    assert statuses == ["failed"] * anthropic.BOOTSTRAP_ATTEMPTS + ["completed"]
+
+
+def test_bootstrap_retries_stop_at_search_limit(tmp_path, monkeypatch):
+    searches = []
+    async def execute(name, arguments, *, client=None):
+        searches.append(arguments)
+        raise RuntimeError("down")
+    install_client_tool(monkeypatch, execute, default_bootstrap=False)
+    job = FakeJob(tmp_path)
+    for _ in range(2):
+        with pytest.raises(anthropic.ProviderError, match="bootstrap.*evidence"):
+            invoke(lambda request: pytest.fail("not grounded"), job, {"tool_mode": "client", "max_web_searches": 2})
+    assert len(searches) == 2
+    assert job.state["client_tool_results"][-1]["status"] == "limit_reached"
 
 
 def test_bootstrap_respects_zero_search_limit(tmp_path, monkeypatch):
