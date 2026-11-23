@@ -53,8 +53,8 @@ RATES = {"claude-opus-5-5": (4, .20, 5, 20),
 PRICE_FIELDS = ("input", "cached_input", "cache_write_5m", "output", "web_search")
 WEB_SEARCH_USD = .01  # $10 per 1,000 searches; web_fetch bills only its tokens.
 RETRYABLE = {408, 429, 500, 502, 503, 504, 529}
-BOOTSTRAP_ATTEMPTS = 3  # Free public searches per run before the job fails without a paid request.
-BOOTSTRAP_RETRY_DELAY_S = 3.0  # Linear backoff between those searches.
+BOOTSTRAP_ATTEMPTS = 5  # Free public searches per run before the job fails without a paid request.
+BOOTSTRAP_RETRY_DELAY_S = 5.0  # Linear backoff (5, 10, 15, 20 s): DDGS throttles under many concurrent jobs.
 ENCRYPTED_FIELDS = ("encrypted_content", "encrypted_index")
 # Nonempty text and reason quality are checked by parse_verdict.
 JUDGE_SCHEMA = {
