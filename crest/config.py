@@ -53,8 +53,8 @@ DEFAULTS = {
     # budget_floor_usd: the agent researches further and rewrites the answer, up to max_research_rounds.
     'research_continuation_prompt': (
         'Your research so far cost ${spent} of a ${floor} to ${ceiling} research budget. Continue the research: '
-        'run further web searches on the aspects of the query that are weakest, least evidenced or most '
-        'conventional, read the most promising sources, and then rewrite the complete response so that it '
+        'run further web searches on the aspects of the query that are weakest or least evidenced, read the '
+        'most promising sources, and then rewrite the complete response so that it '
         'stands alone and incorporates the new findings. Keep every requirement of the original task.'
     ),
     'research': {

@@ -42,7 +42,7 @@ research_prompt: |-
 # hard/auto also check the ceiling; the floor is a target, not guaranteed spend.
 # {spent}, {floor}, and {ceiling} are substituted at runtime.
 research_continuation_prompt: |-
-  Your research so far cost ${spent} of a ${floor} to ${ceiling} research budget. Continue the research: run further web searches on the aspects of the query that are weakest, least evidenced or most conventional, read the most promising sources, and then rewrite the complete response so that it stands alone and incorporates the new findings. Keep every requirement of the original task.
+  Your research so far cost ${spent} of a ${floor} to ${ceiling} research budget. Continue the research: run further web searches on the aspects of the query that are weakest or least evidenced, read the most promising sources, and then rewrite the complete response so that it stands alone and incorporates the new findings. Keep every requirement of the original task.
 
 # Research budgets apply per answer, across its turns and rounds.
 # soft: report dollar-ceiling overruns without request refusal/cancellation.
