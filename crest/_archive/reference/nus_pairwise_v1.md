@@ -1,10 +1,10 @@
 # Archived judging rubrics
 
-[nus_pairwise_v1.txt](../../prompts/nus_pairwise_v1.txt) is the original New, Useful, and Surprising rubric, now stored with the versioned prompts. Its text is retained byte-for-byte for reproducing earlier judgments. The active default remains [NUS v2](../../prompts/nus_pairwise_v2.txt).
+[nus_pairwise_v1.txt](../../prompts/nus_pairwise_v1.txt) is the original New, Useful, and Surprising rubric, now stored with the versioned prompts. Saved judge stages keep the exact rubric text they used, so earlier judgments remain reproducible from their saved stages. The active default is now [NUS v3](../../prompts/nus_pairwise_v3.txt).
 
 The [AIS v1 alias](../../../crest_ais/prompts/rubric_v1.txt) points to the canonical v1 prompt; the old `reference/nus_pairwise_v1.txt` copy is no longer present. Relocation did not change the prompt content, judgment keys, or saved results. Select the v1 prompt explicitly when recreating a v1 comparison. Do not substitute v2 into an earlier run's saved prompts or pool its judgments into that run's ranking.
 
-## Why v2 is the default
+## Why v2 replaced v1
 
 - **Originality concerns the contribution.** V1 rewards the least recognizable component and excludes combinations from New. V2 assesses the central contribution, including meaningful combinations, and does not let an obscure peripheral detail determine originality.
 - **Unfamiliarity is uncertainty.** V2 explicitly rejects failure to recall prior art as proof of historical novelty and requires support for named precedents.

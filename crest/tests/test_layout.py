@@ -17,7 +17,7 @@ def test_master_config_is_the_only_profile_resolves_the_packaged_layout_and_name
     assert Path(config['_config_path']) == ROOT / 'crest/configs/crest.yaml'
     assert Path(config['questions']) == ROOT / 'crest/data/queries_n50_v2.jsonl'
     assert len(load_questions(config['questions'])) == 50
-    assert Path(config['rubric']) == ROOT / 'crest/prompts/nus_pairwise_v2.txt'
+    assert Path(config['rubric']) == ROOT / 'crest/prompts/nus_pairwise_v3.txt'
     assert Path(config['output_dir']) == ROOT / 'crest/results'
     assert Path(config['cache_dir']) == ROOT / 'crest/results/.cache/generation'
     assert Path(config['research']['caesar']['rome_path']) == ROOT.parent / 'rome'

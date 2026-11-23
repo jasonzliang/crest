@@ -9,7 +9,7 @@
 # Inputs and outputs. v1 alternatives: ../data/queries_n50_v1.jsonl and
 # ../prompts/nus_pairwise_v1.txt. The active selections below remain v2.
 questions: ../data/queries_n50_v2.jsonl
-rubric: ../prompts/nus_pairwise_v2.txt
+rubric: ../prompts/nus_pairwise_v3.txt
 cache_dir: ../results/.cache/generation
 output_dir: ../results
 results_timezone: America/Chicago  # Directory naming timezone; event timestamps remain UTC.

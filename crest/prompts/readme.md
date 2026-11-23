@@ -2,8 +2,8 @@
 
 Pairwise judging rubrics. The active one is set by `rubric` in [crest.yaml](../configs/crest.yaml).
 
-- **v3**: [nus_pairwise_v3.txt](nus_pairwise_v3.txt). Revised New, Useful, and Surprising (NUS) rubric. Not yet the default.
-- **v2**: [nus_pairwise_v2.txt](nus_pairwise_v2.txt). Current default NUS rubric.
+- **v3**: [nus_pairwise_v3.txt](nus_pairwise_v3.txt). Current default New, Useful, and Surprising (NUS) rubric.
+- **v2**: [nus_pairwise_v2.txt](nus_pairwise_v2.txt). Previous default NUS rubric, used for the 2026-11-05 study.
 - **v1**: [nus_pairwise_v1.txt](nus_pairwise_v1.txt). Original NUS rubric.
 - **AUT**: [aut_pairwise_v1.txt](aut_pairwise_v1.txt). Alternative rubric based on the Alternate Uses Task: fluency, flexibility, originality.
 

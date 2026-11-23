@@ -1,6 +1,6 @@
 {
   "docs/nus-rubric.html": {
-    "body": "75e72d38dcc162709e8dcfb5ed80d2951b0e966a330b3e591b17a199c7b23113",
+    "body": "87ae28d043de570a02e45b5f85a04d23f48d0cc7fd6a55e33e5bdf958efd2d35",
     "protected_count": 3,
     "protected": "52d8877025facd849f91aedc0afa619557d0aa7aee0b6b682e319b9b87159b55"
   },
@@ -15,14 +15,14 @@
     "protected": "bf8b241cfbca442996ccea4af6e2d6cafa53cb86f72dc1e70797167be38614e1"
   },
   "docs/judge-models.html": {
-    "body": "67d2e16f8d358dc149e75c7075cb96b863dfeb60c94a725397ae16351dee47b1",
+    "body": "090ae20984fa26ed7740006eca03d3654a9dab872f69186c75eca2b7a4a9de81",
     "protected_count": 4,
     "protected": "3d1a102f99b0aab68ecf2ad03fa213b4603248ff7fd12d4a2c9b15c959062e81"
   },
   "docs/research-pipeline.html": {
-    "body": "7ca08b615146ed2a3f9c6d2542c8f0b2ecdff105ddda3277d2790e6509ea4ae2",
+    "body": "96f3233f999c06e99213cc911f40e51d0952fed8f7b8f0868caed9969dc7a28f",
     "protected_count": 16,
-    "protected": "5ae7b325067aa6c4f62daf72d30000d2c196b2831eff70283e0cb5c4c8b13de9"
+    "protected": "235fd97a8ed7c3d07d803273974c513f7c56cba07438454ff8ab3afedc9530c0"
   },
   "docs/deep-research-comparison-v2.html": {
     "body": "ba08783552b488745bd12ba499f852a640864adf5abc56b5eb16384eee040cf1",
@@ -40,9 +40,9 @@
     "protected": "a8828b024476f683366727e0b54995b765d12e41cbe18a66d8833825e3baac1e"
   },
   "docs/ai-scientist-comparison-method.html": {
-    "body": "2d7e94aa89f79568b9f70c5a23080bd54b5ccd09ebc67a4f1af7f3804ac191ff",
+    "body": "9cc148caefe99d844eb9235331934d3bb58aa264f61ee8463a1aef91e012a5a0",
     "protected_count": 7,
-    "protected": "a459dcf0de72ebc01fdd327e6f9ed8aebf7124e02774e9cfce54850bb2cc1060"
+    "protected": "1386ea65e540edcaaec3cbdd6a6181fc8f3b5fad2e7e72e257981d26a75fdb63"
   },
   "docs/ai-scientist-comparison-v1.html": {
     "body": "ff8f6eb22446f42d47e8925342440176f9011d8df7e85c9595ad1a4aff9d385a",
