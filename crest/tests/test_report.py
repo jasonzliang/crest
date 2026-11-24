@@ -184,10 +184,9 @@ def test_legacy_nus_rendering_matches_explicit_family_and_model_notes_cite_provi
     data = load_run(run)
     # Model notes cite provider history and preserve this run's uncertainty.
     html = _models(data)
-    assert 'reasoning effort: high' in html
+    assert 'reasoning effort high' in html
     assert 'built with Gemini 3.1 Pro' in html
-    assert 'Per-loop backend models are not reported for this run' in html
-    assert 'not an override' in html
+    assert 'Google chooses the models it runs and does not report them' in html
     assert 'July 23, 2026' in html
     assert 'o3-deep-research' in html and 'o4-mini-deep-research' in html
     for source in [
@@ -229,8 +228,8 @@ def test_revised_method_describes_judge_presentations_not_raw_url_metadata():
             'answers': [{'agent': 'openai', 'result': {'text': 'https://example.com?utm_source=openai'}},
                         {'agent': 'gemini', 'result': {'text': 'https://vertexaisearch.cloud.google.com/source'}}]}
     html = _method(data)
-    assert 'URL destinations were hidden' in html
-    assert 'Original answers are preserved' in html
+    assert 'link addresses hidden' in html
+    assert 'The answers below are the originals.' in html
     assert 'this run was not fully blinded' not in html
 
 
@@ -245,8 +244,9 @@ def test_judging_estimate_includes_rejected_attempt_without_changing_receipts(ru
     original = path.read_bytes()
     data = load_run(run)
     html = _resources(data)
-    assert 'Total for 600 judgments: $60.0500' in html
-    assert 'Includes retries' in html
+    assert 'Total for 600 judgments: $60.05' in html
+    assert 'Includes the cost of retried calls.' in html
+    assert 'replaced' not in html
     assert path.read_bytes() == original
     assert data['judgments'][0]['result']['cost_usd'] == .1
 
@@ -303,12 +303,12 @@ def test_uses_saved_bootstrap_intervals_preserves_exact_ties_and_all_evidence(tm
     assert text.count('class="question"') == 50
     assert text.count('class="answer"') == 150
     assert text.count('class="judgment"') == 600
-    assert '200 / 400' in text
+    assert '200 of 400 won' in text
     assert '1,000' in text and 'question' in text
     assert 'Serfling' not in text
     assert 'OpenAI (Sol + web search)' in text
     assert 'this run was not fully blinded' not in text
-    assert 'not an override' in text
+    assert 'does not report them' in text
     assert 'Lifetime budget compliance is not established' not in text
     assert 'fetch(' not in text and '<script src=' not in text
     outcomes = re.findall(r'class="question-outcome" data-winners="([^"]+)" data-wins="(\d+)"', text)
@@ -420,7 +420,7 @@ def test_html_omits_usage_events_without_changing_canonical_usage_or_costs(run, 
     output = tmp_path / 'page.html'; write_report(run, output)
     html = output.read_text()
     assert marker not in html
-    assert 'Usage events omitted from this HTML: 2.' in html
+    assert 'Usage events left out of this page: 2.' in html
     assert '01-generate-test/answers.jsonl' in html and 'result.usage.events' in html
     assert rows[0]['key'] in html
     assert '&quot;input_tokens&quot;: 1234' in html and '&quot;output_tokens&quot;: 567' in html
@@ -572,6 +572,19 @@ def test_cost_totals_use_shared_assessment_and_keep_google_scenarios_conditional
     assert '&quot;actual_billed_usd&quot;: null' in html
 
 
+def test_without_final_audit_the_cost_section_omits_total_recorded_time(run, tmp_path):
+    from crest.report import write_report
+    from lxml import html
+    output = write_report(run, tmp_path / 'page.html')
+    section = html.fromstring(output.read_text()).xpath('//section[@id="resources"]')[0]
+    text = ' '.join(section.text_content().split())
+    headers = [' '.join(th.text_content().split()) for th in section.xpath('.//th')]
+    assert 'Mean total recorded time' not in headers and 'Median total recorded time' not in headers
+    assert 'Answers with complete total time' not in headers
+    assert 'final audit' not in text and 'Total recorded time' not in text
+    assert 'Costs come from each answer’s saved records.' in text
+
+
 def test_lifetime_audit_costs_are_separate_from_saved_attempt_assessment(run, tmp_path):
     from crest.report import load_run, write_report
     doc = final_audit(run)
@@ -584,7 +597,7 @@ def test_lifetime_audit_costs_are_separate_from_saved_attempt_assessment(run, tm
     output = tmp_path / 'page.html'
     write_report(run, output, audit=path)
     assert 'Audited lifetime generation estimates' in output.read_text()
-    assert '$50.0000' in output.read_text() and '$51.5000' in output.read_text()
+    assert '$50.00' in output.read_text() and '$51.50' in output.read_text()
 
 
 def test_all_unpriced_answers_and_incomplete_lifetime_times_remain_unknown(run, tmp_path):
@@ -645,9 +658,9 @@ def test_per_question_means_preserve_partial_costs_and_use_observed_times(run, t
     write_report(run, output, audit=audit)
     html = output.read_text()
     assert 'Mean estimated cost' in html
-    assert 'Mean elapsed time, successful job' in html
-    assert 'Mean total recorded time' in html
-    assert '$1.0400' in html and '$1.1200' in html
+    assert 'Mean job time' in html
+    assert 'Mean time including earlier attempts' in html
+    assert '$1.04' in html and '$1.12' in html
     assert 'Caesar has unpriced' not in html
     assert 'Google’s estimate uses assumed model rates' in html
     assert '<small>partial estimate</small>' not in html
@@ -760,14 +773,14 @@ def test_concise_results_keep_limits_visible_and_metadata_expandable(run, tmp_pa
     visible = ' '.join(parser.visible_text)
     assert parser.visible_tables == ['Overall head-to-head preferences',
                                      'Per-judge overall preferences and order diagnostics',
-                                     'Per-question cost and elapsed-time means']
+                                     'Mean cost and time per answer']
     assert 'Google’s estimate uses assumed model rates' in visible
-    assert 'internal billing breakdown is unavailable' in visible
+    assert 'Google does not report its internal billing' in visible
     assert 'this run was not fully blinded' in html
     assert 'These cues do not establish that provider bias caused the ranking.' in html
     assert 'Factual accuracy has not been independently verified' in visible
-    assert 'Chose A' in visible
-    for detail in ['Paired 95% interval', 'Historical unknown reservations',
+    assert 'First answer won' in visible
+    for detail in ['Resamples where the first is higher', 'Historical unknown reservations',
                    'gpt-6-astra', 'configuration_sha256', 'Answer key:', 'Judgment key:']:
         assert detail not in visible
     assert parser.keys == {'Answer key:': 150, 'Judgment key:': 600}
@@ -835,7 +848,7 @@ def test_matrix_and_evidence_follow_saved_ranking_with_four_judgments_per_matchu
     assert parser.answers == [f'answer-{i}-{agent}' for i in range(1, 51) for agent in ['openai', 'caesar', 'gemini']]
     assert parser.groups == [4] * 150
     assert len(parser.presentations) == 600
-    assert set(parser.presentations) == {f'A: {a} · B: {b}' for a in names for b in names if a != b}
+    assert set(parser.presentations) == {f'Shown first (A): {a}; shown second (B): {b}' for a in names for b in names if a != b}
     assert parser.question_numbers == parser.question_titles == 50
     assert parser.outcomes == [('openai', '8')] * 50
 
@@ -946,9 +959,9 @@ def test_superseded_judgments_are_retained_but_excluded_from_published_cost_and_
     output = tmp_path / 'page.html'
     write_report(run, output)
     text = output.read_text()
-    assert 'Includes retries for this judging round; excludes earlier superseded judging.' in text
-    assert 'Total for 600 judgments: $60.0000' in text
-    assert '$60.8000' not in text
+    assert 'Earlier judging that this round replaced is not included.' in text
+    assert 'Total for 600 judgments: $60.00' in text
+    assert '$60.80' not in text
     assert text.count('class="judgment"') == 600
     # An old paid key cannot also be counted as a currently scored verdict.
     prior[0]['key'] = current[0]['key']
@@ -969,9 +982,9 @@ def test_duplicate_prior_jobs_do_not_change_published_current_cost(run):
     html = _resources(data)
     assert data['resources']['prior_judging']['records'] == 1
     assert data['resources']['paid_judging']['cumulative_known_estimate_usd'] == pytest.approx(60.3)
-    assert 'Total for 600 judgments: $60.0000' in html
-    assert '$60.3000' not in html
-    assert 'Includes retries for this judging round; excludes earlier superseded judging.' in html
+    assert 'Total for 600 judgments: $60.00' in html
+    assert '$60.30' not in html
+    assert 'Earlier judging that this round replaced is not included.' in html
     assert data['ranking']['coverage']['valid_judgments'] == 600
 
 
@@ -1006,8 +1019,8 @@ def test_prior_ledger_stays_in_source_records_and_out_of_html(run, tmp_path, led
     assert data['prior_judgments'] == [prior, prior]
     assert data['resources']['prior_judging']['cumulative_known_estimate_usd'] == .2
     assert data['resources']['prior_judging']['unknown_count'] == 1
-    assert 'Total for 600 judgments: $60.0000' in html
-    assert '$60.2000' not in html
+    assert 'Total for 600 judgments: $60.00' in html
+    assert '$60.20' not in html
     assert evidence in html
     assert html.count('class="answer"') == 150 and html.count('class="reason"') == 600
     assert ledger.read_bytes() == original
@@ -1029,21 +1042,21 @@ def test_four_agent_three_judge_run_renders_computed_totals_and_anthropic_labels
     assert html.count('class="judgment"') == 1800
     assert '<strong>200</strong><span>answers</span>' in html
     assert '<strong>1,800</strong><span>pairwise judgments</span>' in html
-    assert 'Three model judges compare the 200 saved answers' in html
-    assert 'Total for 1,800 judgments: $180.0000' in html
-    # 50 questions × 3 opponents × 2 orders × 3 judges = 900 decisions per system.
-    assert 'divided by 900 judgments across 50 questions, three opponents, three judges, and both answer orders' in html
-    assert 'Each system appears in 900 decisions; wins ÷ 900 gives its win rate.' in html
-    assert '/ 900 wins' in html and '/ 400 wins' not in html
-    assert '(300 comparisons per matchup)' in html
-    assert 'Each question produces 36 decisions: six answer pairs, evaluated by three judges in both orders.' in html
-    assert 'all four complete answers and its 36 saved overall judgments' in html
-    assert 'Read all 36 overall judgments' in html
-    assert 'wins in 18 comparisons per system' in html
+    assert 'Three model judges compare the 200 answers two at a time' in html
+    assert 'Total for 1,800 judgments: $180.00' in html
+    # 50 questions × 3 opponents × 2 orders × 3 judges = 900 judgments per system.
+    assert 'its wins divided by its 900 judgments (50 questions, three opponents, three judges, both answer orders)' in html
+    assert 'Each system appears in 900 judgments; its wins divided by 900 is its win rate.' in html
+    assert 'of 900 won' in html and 'of 400 won' not in html
+    assert 'out of 300 judgments for each pair of systems' in html
+    assert 'Each question has 36 judgments: six answer pairs, each judged by three judges in both orders.' in html
+    assert 'lists all four answers and its 36 judgments.' in html
+    assert 'Read all 36 judgments' in html
+    assert 'of its 18 judgments' in html
     assert 'All three judges evaluated every pair in both orders' in html and 'Both judges' not in html
     assert ('<a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool">'
             'Anthropic (Claude + web search)</a>') in html
-    assert 'Sonnet + hosted web search through the Messages API; effort: max.' in html
+    assert 'Sonnet with Anthropic’s hosted web search, through the Messages API; effort max.' in html
     assert '<summary>Claude Fable 5.1 · preferred' in html
     assert '&quot;model&quot;: &quot;claude-fable-5-1&quot;' in html
     assert 'https://platform.claude.com/docs/en/about-claude/pricing' in html
@@ -1075,15 +1088,15 @@ def test_two_agent_single_judge_run_renders_singular_counts_and_skips_absent_pro
     assert html.count('class="answer"') == 100 and html.count('class="judgment"') == 100
     assert '<strong>100</strong><span>answers</span>' in html
     assert '<strong>100</strong><span>pairwise judgments</span>' in html
-    assert 'evaluates Caesar and OpenAI (Sol + web search) on the same 50 questions' in html
-    assert 'One model judge compares the 100 saved answers' in html
-    assert 'divided by 100 judgments across 50 questions, one opponent, one judge, and both answer orders' in html
-    assert 'Each question produces 2 decisions: one answer pair, evaluated by one judge in both orders.' in html
-    assert '(100 comparisons per matchup)' in html
-    assert 'wins in 2 comparisons per system' in html
+    assert 'runs Caesar and OpenAI (Sol + web search) on the same 50 questions' in html
+    assert 'One model judge compares the 100 answers two at a time' in html
+    assert 'its wins divided by its 100 judgments (50 questions, one opponent, one judge, both answer orders)' in html
+    assert 'Each question has 2 judgments: one answer pair, each judged by one judge in both orders.' in html
+    assert 'out of 100 judgments for each pair of systems' in html
+    assert 'of its 2 judgments' in html
     assert 'The judge evaluated every pair in both orders' in html
     assert 'Judges disagree' not in html and 'Unavailable' not in html
-    assert 'Total for 100 judgments: $10.0000' in html
+    assert 'Total for 100 judgments: $10.00' in html
     assert 'Google' not in html and 'Gemini' not in html
     assert 'Links reveal provenance' not in html
     assert 'OpenAI Sol' in html and 'Claude pricing' not in html
@@ -1098,7 +1111,7 @@ def test_unknown_agent_falls_back_to_identifier_label_default_color_and_no_link(
     assert html.count('class="answer"') == 150 and html.count('class="judgment"') == 300
     assert '<strong>mystery</strong></div>' in html
     assert f'fill="{DEFAULT_COLOR}"' in html
-    assert '<td>mystery</td><td>unrecorded-model</td><td>Settings recorded in the frozen configuration.</td>' in html
+    assert '<td>mystery</td><td>unrecorded-model</td><td>See the saved settings with each answer.</td>' in html
     assert '<summary>mystery</summary>' in html
     assert not re.search(r'<a href="[^"]*">mystery</a>', html)
 
@@ -1144,8 +1157,8 @@ def test_audited_cost_drives_headline_without_changing_frozen_records(run, tmp_p
     data = load_run(run, audit=audit)
     html = _resources(data)
     headline = html.split('<details', 1)[0]
-    assert '$1.1000' in headline  # (49 original dollars + 6 checked dollars) / 50
-    assert '1 Caesar answer estimate' in headline  # $6 exceeds this fixture's $5 target.
+    assert '$1.10' in headline  # (49 original dollars + 6 checked dollars) / 50
+    assert 'one Caesar answer' in headline  # $6 exceeds this fixture's $5 target.
     assert data['resources']['generation']['caesar']['known_cost_usd'] == 50.
     assert answers_path(run).read_bytes() == before_answers
     assert audit.read_bytes() == before_audit
@@ -1161,8 +1174,8 @@ def test_incomplete_audit_cost_does_not_mix_partial_totals_into_headline(run, tm
     data = load_run(run, audit=audit)
     assert data['resources']['generation']['caesar']['audited_known_cost_usd'] is None
     headline = _resources(data).split('<details', 1)[0]
-    assert '$1.0000' in headline
-    assert '$1.1000' not in headline
+    assert '$1.00' in headline
+    assert '$1.10' not in headline
 
 
 def test_partial_active_timing_coverage_is_visible_without_expanding_details(run, tmp_path):
@@ -1172,7 +1185,7 @@ def test_partial_active_timing_coverage_is_visible_without_expanding_details(run
     for row in rows[:20]: row.update(timing_complete=False, active_attempt_seconds=None)
     audit = tmp_path / 'audit.json'; dump(audit, doc)
     headline = _resources(load_run(run, audit=audit)).split('<details', 1)[0]
-    assert '30 / 50' in headline
+    assert '30 of 50 answers timed' in headline
 
 
 def test_known_citation_url_with_spaces_keeps_full_link_and_original_text(run, tmp_path):
@@ -1276,12 +1289,13 @@ def test_current_static_document_headers_link_to_latest_research_report():
     docs = Path(__file__).resolve().parents[2] / 'docs'
     # Evidence remains frozen; publication wrappers use canonical versioned names.
     for path in sorted(docs.glob('*.html')):
-        if path.name in {'deep-research-comparison-v1.html', 'deep-research-comparison-v2.html'}:
+        if path.name in {'deep-research-comparison-v1.html', 'deep-research-comparison-v2.html',
+                         'deep-research-comparison-v3.html'}:
             continue
         page = html.fromstring(path.read_bytes())
         links = page.xpath('//header[@class="crest-site-header"]//a[starts-with(text(), "Deep research comparison")]/@href')
         if links:
-            assert links == ['deep-research-comparison-v2.html'], path.name
+            assert links == ['deep-research-comparison-v3.html'], path.name
     for name in ('index.html', 'research-pipeline.html'):
         page = html.fromstring((docs / name).read_bytes())
         links = page.xpath('//a[@href="deep-research-comparison-v1.html"]')
@@ -1397,6 +1411,25 @@ def test_publication_validates_each_saved_presentation_version(run, version):
         load_run(run)
 
 
+def test_models_name_the_saved_anthropic_model_and_its_client_web_tools():
+    from crest.report import _models
+    data = {'ranking': {'ranking': [{'agent': 'anthropic'}]},
+            'manifest': {'config': {'research': {'anthropic': {
+                'model': 'claude-opus-5-5', 'effort': 'high', 'tool_mode': 'client'}}}},
+            'answers': [{'agent': 'anthropic', 'result': {'model': 'claude-opus-5-5'}}]}
+    html = _models(data)
+    assert 'Claude Opus 5.5 with web search and page fetching run locally by CREST, through the Messages API; effort high.' in html
+    assert 'claude-opus-5-5 +' not in html
+
+
+def test_v3_comparison_is_a_catalog_page_linked_from_the_header():
+    from pathlib import Path
+    from crest_ais.site import PAGES, page_title
+    entry = next(p for p in PAGES if p['canonical'] == 'docs/deep-research-comparison-v3.html')
+    assert entry['label'] == 'Deep research comparison v3'
+    assert page_title(Path('docs/deep-research-comparison-v3.html'), 'x') == 'Deep research comparison v3'
+
+
 def test_method_says_judges_did_not_see_the_appended_uncited_sources():
     from crest.report import _method
     data = {'ranking': {'bootstrap': {'seed': 2026}, 'ranking': [{'agent': agent} for agent in AGENTS]},
@@ -1405,7 +1438,385 @@ def test_method_says_judges_did_not_see_the_appended_uncited_sources():
                            'presentation_version': 'citation-neutral-v2'}],
             'answers': [{'agent': 'openai', 'result': {'text': 'Answer.'}}]}
     html = _method(data)
-    assert 'URL destinations were hidden' in html
+    assert 'link addresses hidden' in html
     assert 'never cites' in html
     data['judgments'][0]['presentation_version'] = 'citation-neutral-v1'
     assert 'never cites' not in _method(data)
+
+
+REFUSAL = ('ProviderError: Anthropic stop_reason refusal; '
+           'stop_details={"type": "refusal", "category": "bio", "explanation": null}')
+
+
+def record_judge_failure(run, question_index=47, pair=('caesar', 'gemini'), judge='openai', attempts=3):
+    """Drop one saved judgment and record it as the stage's failure, as the pipeline does."""
+    path = run / '02-judge-test/judgments.jsonl'
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    qid = f'q{question_index:03}'
+    order = list(pair[::-1])
+    failed = next(r for r in rows if r['question_id'] == qid and r['pair'] == list(pair)
+                  and r['order'] == order and r['judge'] == judge)
+    rows.remove(failed)
+    path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    tasks = [{'key': r['key'], 'question_id': r['question_id'], 'pair': r['pair'], 'order': r['order'],
+              'judge': r['judge']} for r in [*rows, failed]]
+    dump(run / '02-judge-test/tasks.json', tasks)
+    error = {'key': failed['key'], 'question_id': qid, 'stage': 'judge', 'provider': judge,
+             'error': f'ValueError: Judge response rejected after {attempts} attempts',
+             'cost_usd': .4, 'known_cost_usd': .4, 'unknown_cost_count': 0, 'cost_scope': 'all_judgment_attempts',
+             'attempts': [{'attempt': i + 1, 'key': f'refused-{i}', 'status': 'rejected', 'error': REFUSAL,
+                           'cost_usd': .4 / attempts, 'result': {'cost_usd': .4 / attempts, 'usage': {}}}
+                          for i in range(attempts)]}
+    (run / '02-judge-test/errors.jsonl').write_text(json.dumps(error) + '\n')
+    questions = json.loads((run / '02-judge-test/questions.json').read_text())
+    answers = json.loads(answers_path(run).read_text())
+    judges = list(json.loads((run / '02-judge-test/judges.json').read_text()))
+    agents = json.loads((run / 'run.json').read_text())['agents']
+    dump(ranking_path(run), analyze(questions, answers, rows, agents=agents, judges=judges,
+                                    bootstrap_samples=1000, seed=2026))
+    return failed, error
+
+
+def test_recorded_judge_failure_publishes_remaining_questions_with_disclosure(run, tmp_path):
+    from crest.report import load_run, write_report
+    record_judge_failure(run)
+    data = load_run(run)
+    assert data['ranking']['coverage']['complete_questions'] == 49
+    output = write_report(run, tmp_path / 'page.html')
+    html = output.read_text()
+    assert '<strong>49</strong><span>of 50 questions ranked</span>' in html
+    assert '<strong>599</strong><span>of 600 pairwise judgments</span>' in html
+    # 49 questions × 2 opponents × 2 orders × 2 judges.
+    assert 'its wins divided by its 392 judgments (49 questions, two opponents, two judges, both answer orders)' in html
+    assert 'of 392 won' in html and 'of 400 won' not in html
+    assert 'out of 196 judgments for each pair of systems' in html
+    assert '<a href="#question-48">Question 48</a> is not ranked.' in html
+    assert ('One of its 12 judgments is missing: GPT-6 Astra refused all 3 attempts to judge '
+            'Google Deep Research (shown first) against Caesar (shown second); the API labeled the refusal “bio”.') in html
+    assert 'A question is ranked only when all 12 judgments exist, so every system is compared on the same questions.' in html
+    assert 'Its 11 saved judgments are shown with the question.' in html
+    assert 'The failed judgment’s attempts cost $0.40 and are included in the judging total.' in html
+    assert 'Total for 599 saved judgments and one failed judgment: $60.30.' in html
+    assert 'We resample the 49 ranked questions 1,000 times' in html
+    assert 'The ranking uses 49 of the 50 questions' in html
+    assert html.count('class="judgment"') == 599
+    assert 'Read all 11 saved judgments' in html
+    assert re.search(r'id="question-48".{0,400}Not ranked: 11 of 12 judgments', html, re.S)
+
+
+@pytest.mark.parametrize('kind', ['no_tasks', 'unknown_key', 'scored_cell', 'wrong_judge', 'two_rows', 'duplicate_task'])
+def test_missing_judgments_publish_only_for_matching_recorded_failures(run, kind):
+    from crest.report import load_run
+    failed, error = record_judge_failure(run)
+    errors = run / '02-judge-test/errors.jsonl'
+    if kind == 'no_tasks':
+        (run / '02-judge-test/tasks.json').unlink()
+    elif kind == 'unknown_key':
+        error['key'] = 'never-scheduled'
+    elif kind == 'scored_cell':
+        rows = [json.loads(line) for line in (run / '02-judge-test/judgments.jsonl').read_text().splitlines()]
+        error.update(key=rows[0]['key'], question_id=rows[0]['question_id'], provider=rows[0]['judge'])
+    elif kind == 'wrong_judge':
+        error['provider'] = 'gemini'
+    elif kind == 'duplicate_task':
+        tasks = json.loads((run / '02-judge-test/tasks.json').read_text())
+        dump(run / '02-judge-test/tasks.json', [*tasks, dict(tasks[0])])
+    else:
+        errors.write_text((json.dumps(error) + '\n') * 2)
+    if kind not in ('no_tasks', 'two_rows', 'duplicate_task'):
+        errors.write_text(json.dumps(error) + '\n')
+    with pytest.raises(ValueError, match='failure|task'):
+        load_run(run)
+
+
+def unknown_outcome(error):
+    """Turn a recorded refusal into a call whose connection dropped after it was sent."""
+    message = 'ProviderError: gateway HTTP 408; submission status unknown'
+    error.update(error=message, cost_usd=None, known_cost_usd=0, unknown_cost_count=1,
+                 attempts=[{'attempt': 1, 'key': 'unknown-0', 'status': 'failed', 'error': message, 'cost_usd': None}])
+    return error
+
+
+def test_unknown_outcome_failure_reports_no_known_cost_instead_of_zero(run, tmp_path):
+    from crest.report import write_report
+    _, error = record_judge_failure(run)
+    (run / '02-judge-test/errors.jsonl').write_text(json.dumps(unknown_outcome(error)) + '\n')
+    body = write_report(run, tmp_path / 'page.html').read_text()
+    assert '$0.00' not in body.split('id="resources"')[1].split('</section>')[0]
+    assert 'The failed call has no known cost, so it is not in the judging total.' in body
+    assert 'timed out or lost its connection, so CREST cannot tell whether it was processed' in body
+
+
+def test_failure_disclosures_use_singular_attempts_and_per_refusal_categories(tmp_path):
+    from crest.report import write_report
+    main_run = use_packaged_rubric(make_run(tmp_path / 'v4'), 'v4')
+    v2 = use_packaged_rubric(make_run(tmp_path / 'v2'), 'v2')
+    _, error = record_judge_failure(v2, attempts=1)
+    rows = [json.loads(line) for line in (v2 / '02-judge-test/judgments.jsonl').read_text().splitlines()]
+    lost = next(r for r in rows if r['question_id'] == 'q010' and r['judge'] == 'openai')
+    rows.remove(lost)
+    (v2 / '02-judge-test/judgments.jsonl').write_text(''.join(json.dumps(r) + '\n' for r in rows))
+    uncategorized = {**error, 'key': lost['key'], 'question_id': 'q010',
+                     'attempts': [{**error['attempts'][0], 'error': 'stop_reason refusal'}]}
+    (v2 / '02-judge-test/errors.jsonl').write_text(json.dumps(error) + '\n' + json.dumps(uncategorized) + '\n')
+    questions = json.loads((v2 / '02-judge-test/questions.json').read_text())
+    answers = json.loads(answers_path(v2).read_text())
+    dump(ranking_path(v2), analyze(questions, answers, rows, agents=AGENTS, judges=JUDGES,
+                                   bootstrap_samples=1000, seed=2026))
+    body = write_report(main_run, tmp_path / 'page.html', rubric_runs=[v2]).read_text()
+    assert '1 attempts' not in body
+    assert 'The refusals came after one attempt each, and the API labeled one of them “bio”.' in body
+
+
+def test_failure_validation_messages_do_not_call_every_failure_paid():
+    import crest.report as report
+    from pathlib import Path
+    source = Path(report.__file__).read_text()
+    assert 'paid failure' not in source
+
+
+def use_packaged_rubric(run, version):
+    from crest.report import ROOT
+    text = (ROOT / f'crest/prompts/nus_pairwise_{version}.txt').read_text(encoding='utf-8')
+    (run / '02-judge-test/rubric.txt').write_text(text, encoding='utf-8')
+    return run
+
+
+def test_rubric_comparison_section_ranks_the_same_answers_under_each_rubric(tmp_path):
+    from crest.report import main
+    from lxml import html as lxml_html
+    first = lambda q, pair, judge, order: order[0]
+    main_run = use_packaged_rubric(make_run(tmp_path / 'v4'), 'v4')
+    v2 = use_packaged_rubric(make_run(tmp_path / 'v2'), 'v2')
+    v1 = use_packaged_rubric(make_run(tmp_path / 'v1', choose=first), 'v1')
+    output = tmp_path / 'page.html'
+    assert main([str(main_run), '--output', str(output), '--rubric-run', str(v2), '--rubric-run', str(v1)]) == 0
+    text = output.read_text()
+    assert '<a href="#rubrics">Rubrics</a>' in text
+    page = lxml_html.fromstring(text)
+    section = page.get_element_by_id('rubrics')
+    tables = section.xpath('.//table')
+    headers = [[th.text_content() for th in table.xpath('.//thead//th')] for table in tables[:2]]
+    assert headers == [['System', 'NUS v4 (this report)', 'NUS v2', 'NUS v1'],
+                       ['Measure', 'NUS v4 (this report)', 'NUS v2', 'NUS v1']]
+    links = section.xpath('.//a/@href')
+    assert {'../crest/prompts/nus_pairwise_v1.txt', '../crest/prompts/nus_pairwise_v2.txt',
+            '../crest/prompts/nus_pairwise_v4.txt'} <= set(links)
+    body = section.text_content()
+    assert 'Only the rubric changed;' in body
+    # Every fixture system wins half its judgments, so all three share first place.
+    assert 'Caesar, Google Deep Research, and OpenAI (Sol + web search) tie for first under every rubric.' in body
+    # v2 repeats every v4 choice; v1 picks the first answer, matching v4 in one order of each pair.
+    rows = {tr.xpath('./th')[0].text_content(): [td.text_content() for td in tr.xpath('./td')]
+            for table in tables[:2] for tr in table.xpath('.//tbody/tr')}
+    assert rows['Same winner as NUS v4'][1:] == ['100.0%600 of 600 judgments', '50.0%300 of 600 judgments']
+    assert rows['Questions with all 12 judgments'] == ['50 of 50'] * 3
+    assert 'each column uses the 50 questions that have every judgment under all three rubrics, so the NUS v4 column matches the ranking above' in body
+    assert all(cell.startswith('50.0%') for cell in [rows[name][2] for name in ('Caesar', 'Google Deep Research', 'OpenAI (Sol + web search)')])
+    assert 'Win rates by judge under each rubric' in body
+    # The per-question evidence below stays the v4 judging.
+    assert text.count('class="judgment"') == 600
+
+
+@pytest.mark.parametrize('kind', ['same_rubric', 'unknown_rubric', 'other_questions', 'other_answers', 'other_agents',
+                                  'other_protocol', 'other_judges', 'aut'])
+def test_rubric_comparison_refuses_runs_that_differ_beyond_the_rubric(tmp_path, kind):
+    from crest.report import write_report
+    main_run = use_packaged_rubric(make_run(tmp_path / 'v4'), 'v4')
+    variant = use_packaged_rubric(make_run(tmp_path / 'variant'), 'v4' if kind == 'same_rubric' else 'v2')
+    if kind == 'unknown_rubric':
+        (variant / '02-judge-test/rubric.txt').write_text('Some unpublished rubric.')
+    elif kind == 'other_questions':
+        variant = use_packaged_rubric(make_run(tmp_path / 'variant2'), 'v2')
+        manifest = json.loads((variant / 'run.json').read_text())
+        manifest['questions'][0]['text'] += ' Changed.'
+        dump(variant / 'run.json', manifest)
+        questions = json.loads((variant / '02-judge-test/questions.json').read_text())
+        questions[0]['text'] += ' Changed.'
+        dump(variant / '02-judge-test/questions.json', questions)
+    elif kind == 'other_answers':
+        rows = json.loads(answers_path(variant).read_text())
+        rows[0]['result']['text'] += ' Edited.'
+        dump(answers_path(variant), rows)
+    elif kind == 'other_agents':
+        variant = use_packaged_rubric(make_run(tmp_path / 'variant3', agents=['caesar', 'gemini', 'mystery']), 'v2')
+    elif kind == 'other_protocol':
+        path = variant / '02-judge-test/judgments.jsonl'
+        rows = [json.loads(line) for line in path.read_text().splitlines()]
+        for row in rows:
+            row['protocol_version'] = 'nus-overall-pairwise-v2'
+        path.write_text(''.join(json.dumps(r) + '\n' for r in rows))
+    elif kind == 'other_judges':
+        variant = use_packaged_rubric(make_run(tmp_path / 'variant4', judges=['openai']), 'v2')
+    elif kind == 'aut':
+        make_aut_run(variant)
+    expected = {'same_rubric': 'different rubric', 'unknown_rubric': 'packaged NUS rubric',
+                'other_questions': 'same questions', 'other_answers': 'same saved answers',
+                'other_agents': 'same saved answers', 'other_protocol': 'same judging protocol',
+                'other_judges': 'same judges', 'aut': 'NUS rubric'}[kind]
+    with pytest.raises(ValueError, match=expected):
+        write_report(main_run, tmp_path / 'page.html', rubric_runs=[variant])
+    assert not (tmp_path / 'page.html').exists()
+
+
+def test_rubric_section_groups_missing_judgments_by_rubric_and_question(tmp_path):
+    from crest.report import write_report
+    main_run = use_packaged_rubric(make_run(tmp_path / 'v4'), 'v4')
+    v2 = use_packaged_rubric(make_run(tmp_path / 'v2'), 'v2')
+    record_judge_failure(v2, question_index=47)
+    errors = v2 / '02-judge-test/errors.jsonl'
+    rows = [json.loads(line) for line in (v2 / '02-judge-test/judgments.jsonl').read_text().splitlines()]
+    lost = next(r for r in rows if r['question_id'] == 'q010' and r['judge'] == 'openai')
+    rows.remove(lost)
+    (v2 / '02-judge-test/judgments.jsonl').write_text(''.join(json.dumps(r) + '\n' for r in rows))
+    errors.write_text(errors.read_text() + json.dumps({
+        'key': lost['key'], 'question_id': 'q010', 'stage': 'judge', 'provider': 'openai',
+        'error': 'ProviderError: gateway HTTP 408; submission status unknown', 'cost_usd': None,
+        'attempts': [{'attempt': 1, 'key': 'unknown-0', 'status': 'failed',
+                      'error': 'ProviderError: gateway HTTP 408; submission status unknown', 'cost_usd': None}]}) + '\n')
+    questions = json.loads((v2 / '02-judge-test/questions.json').read_text())
+    answers = json.loads(answers_path(v2).read_text())
+    judges = list(json.loads((v2 / '02-judge-test/judges.json').read_text()))
+    dump(ranking_path(v2), analyze(questions, answers, rows, agents=AGENTS, judges=judges,
+                                   bootstrap_samples=1000, seed=2026))
+    output = write_report(main_run, tmp_path / 'page.html', rubric_runs=[v2])
+    body = output.read_text()
+    assert ('Missing judgments under NUS v2: one on question 11 (unknown outcome) and one on question 48 (refused).') in body
+    assert 'Every missing judgment is GPT-6 Astra’s.' in body
+    assert 'The refusal came after three attempts, and the API labeled it “bio”.' in body
+    assert ('A call has an unknown outcome when it timed out or lost its connection, so CREST cannot tell '
+            'whether it was processed. '
+            'CREST does not resend such a call, because the first request may have been billed.') in body
+    assert 'each column uses the 48 questions that have every judgment under both rubrics' in body
+    assert 'differ slightly from the ranking above, which uses all 50' in body
+
+
+def test_intro_states_the_ranking_in_order(tmp_path):
+    from crest.report import write_report
+    preference = {'openai': 0, 'caesar': 1, 'gemini': 2}
+    run = make_run(tmp_path / 'run', choose=lambda q, pair, judge, order: min(pair, key=preference.get))
+    html = write_report(run, tmp_path / 'page.html').read_text()
+    intro = html.split('<nav aria-label="Report contents">')[0]
+    assert ('OpenAI (Sol + web search) is first at 100.0%, Caesar second at 50.0%, '
+            'and Google Deep Research third at 0.0%.') in intro
+    assert 'too close to separate' not in intro
+
+
+def test_intro_groups_systems_whose_paired_interval_includes_zero(run, tmp_path):
+    from crest.report import write_report
+    intro = write_report(run, tmp_path / 'page.html').read_text().split('<nav aria-label="Report contents">')[0]
+    # Every fixture system wins half its judgments, so no pair can be separated.
+    assert ('Caesar at 50.0%, Google Deep Research at 50.0%, and OpenAI (Sol + web search) at 50.0% '
+            'are too close to separate for first place') in intro
+
+
+def test_judge_section_names_judges_that_share_a_model_with_a_system(tmp_path):
+    from crest.report import load_run, _judges
+    preference = {'openai': 0, 'caesar': 1, 'gemini': 2}
+    data = load_run(make_run(tmp_path / 'run', choose=lambda q, pair, judge, order: min(pair, key=preference.get)))
+    assert 'shares a model' not in _judges(data)
+    data['judges']['openai'] = {**data['judges']['openai'], 'model': 'gpt-6.1-sol'}
+    html = _judges(data)
+    assert ('One judge shares a model with systems it judges: GPT-6.1 Sol is also the main model of '
+            'OpenAI (Sol + web search) and Caesar.') in html
+    assert 'GPT-6.1 Sol rates OpenAI (Sol + web search) highest (100.0%).' in html
+    assert 'Gemini 4 Argon shares no model with any system; it rates' in html
+
+
+def test_head_to_head_explains_a_lower_ranked_system_winning_the_direct_matchup(tmp_path):
+    from crest.report import load_run, _head_to_head
+    def choose(q, pair, judge, order):
+        if set(pair) == {'caesar', 'openai'}:
+            return 'openai' if q % 5 < 3 else 'caesar'
+        if set(pair) == {'caesar', 'gemini'}:
+            return 'caesar'
+        return 'openai' if q % 5 == 0 else 'gemini'
+    data = load_run(make_run(tmp_path / 'run', choose=choose))
+    assert [r['agent'] for r in data['ranking']['ranking']][0] == 'caesar'
+    html = _head_to_head(data)
+    assert ('OpenAI (Sol + web search) wins 60.0% of its judgments against Caesar but ranks lower overall, '
+            'because the overall win rate also counts judgments against every other system.') in html
+
+
+def test_paired_differences_list_the_higher_ranked_system_first_in_points(tmp_path):
+    from crest.report import load_run, _ranking
+    from lxml import html as lxml_html
+    preference = {'openai': 0, 'caesar': 1, 'gemini': 2}
+    data = load_run(make_run(tmp_path / 'run', choose=lambda q, pair, judge, order: min(pair, key=preference.get)))
+    page = lxml_html.fromstring(_ranking(data))
+    rows = [[td.text_content() for td in tr.xpath('./td')] for tr in page.xpath('.//details//tbody/tr')]
+    assert [row[0] for row in rows] == ['OpenAI (Sol + web search) vs Caesar',
+                                        'OpenAI (Sol + web search) vs Google Deep Research',
+                                        'Caesar vs Google Deep Research']
+    assert rows[0][1] == '+50.0 points' and rows[0][2].endswith(' points') and ' to ' in rows[0][2]
+    assert rows[0][3] == '100.0%'
+    assert ' pp' not in _ranking(data)
+
+
+def test_judge_disagreement_counts_judge_pairings_with_thousands_separators(tmp_path):
+    from crest.report import load_run, _judges
+    html = _judges(load_run(make_run(tmp_path / 'run', agents=FOUR_AGENTS, judges=THREE_JUDGES)))
+    assert re.search(r'picked different winners in [0-9.]+% of judge pairings \([0-9,]+ of 1,800\)', html)
+
+
+def test_cost_means_flag_answers_with_incomplete_estimates(run, tmp_path):
+    from crest.report import load_run, _resources
+    rows = json.loads(answers_path(run).read_text())
+    caesar = next(row for row in rows if row['agent'] == 'caesar')
+    caesar['result'].update(cost_usd=None, raw={'usage_audit': {'known_cost_usd': 3., 'unknown_cost': True}})
+    dump(answers_path(run), rows)
+    headline = _resources(load_run(run)).split('<details', 1)[0]
+    assert '1 of 50 estimates incomplete' in headline
+    assert 'An incomplete estimate is missing the cost of some calls' in headline
+
+
+def test_cost_target_sentence_names_one_shared_target(tmp_path):
+    from crest.report import load_run, _resources
+    run = make_run(tmp_path / 'run')
+    rows = json.loads(answers_path(run).read_text())
+    for row in rows[:3]:
+        row['result']['cost_usd'] = 6.
+    dump(answers_path(run), rows)
+    headline = _resources(load_run(run)).split('<details', 1)[0]
+    assert 'Estimated cost was above the $5.00 per-answer target for one Caesar answer, one Google Deep Research answer, and one OpenAI (Sol + web search) answer.' in headline
+
+
+def test_rubric_notes_describe_each_version_without_relying_on_v3():
+    from crest.report import RUBRIC_NOTES
+    assert 'v3' not in RUBRIC_NOTES['v4']
+    assert 'does not establish' in RUBRIC_NOTES['v4'] and 'supplied material' in RUBRIC_NOTES['v4']
+    assert '2026-11-05' in RUBRIC_NOTES['v2'] and 'criteria' in RUBRIC_NOTES['v2']
+
+
+def test_rubric_takeaway_does_not_say_stays_when_a_rank_is_shared():
+    from crest.report import _rubric_takeaway
+    agents = ['caesar', 'anthropic', 'gpt_researcher']
+    view = lambda r: {'rank': r, 'ci95': [.4, .6]}
+    views = [{'caesar': view(1), 'anthropic': view(1), 'gpt_researcher': view(3)},
+             {'caesar': view(1), 'anthropic': view(2), 'gpt_researcher': view(3)}]
+    text = _rubric_takeaway(agents, views)
+    assert 'Caesar is first or tied for first' in text
+    assert 'Caesar stays first' not in text
+    assert 'GPT Researcher stays third' in text
+
+
+def test_ordinal_handles_a_missing_rank():
+    from crest.report import _ordinal
+    assert _ordinal(None) == 'unranked'
+    assert _ordinal(2) == 'second'
+
+
+def test_cost_section_names_a_lower_soft_target(tmp_path):
+    from crest.report import load_run, _resources
+    run = make_run(tmp_path / 'run')
+    rows = json.loads(answers_path(run).read_text())
+    for row in rows:
+        row['result']['cost_usd'] = 6. if row['agent'] == 'caesar' else 1.
+    dump(answers_path(run), rows)
+    data = load_run(run)
+    for row in data['answers']:
+        if row['agent'] == 'caesar':
+            data['configurations'].setdefault(row.get('configuration_id'), {}).setdefault('settings', {}).update(
+                {'budget_usd': 5., 'budget_target_usd': 4.25})
+    headline = _resources(data).split('<details', 1)[0]
+    assert 'Caesar also aims for a lower $4.25 target;' in headline

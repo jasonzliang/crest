@@ -67,7 +67,7 @@ def index_entries():
 def test_index_names_match_canonical_titles_headings_filenames_and_dates():
     page, entries = index_entries()
     local = [a for a in entries if not urlsplit(a.get('href')).scheme]
-    assert len(local) == 45
+    assert len(local) == 46
     for a in local:
         target = (ROOT / 'docs' / a.get('href')).resolve()
         label = a.text_content()
@@ -89,7 +89,7 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
         ('https://github.com/jasonzliang/crest#readme', 'Project README'),
         ('https://llm-keys.evolution.ml/guide#claude-code', 'LiteLLM gateway setup'),
     ]
-    assert len(entries) == 47
+    assert len(entries) == 48
     assert page.xpath('//section[@id="current"]//li/a') == external
     for a in external:
         assert not a.getparent().xpath('.//time')
@@ -123,7 +123,7 @@ def test_all_site_pages_have_one_right_aligned_date():
 
 def test_historical_research_evidence_is_preserved():
     baseline = json.loads(BASELINE.read_text())
-    assert len(baseline) == 45
+    assert len(baseline) == 46
     for name, expected in baseline.items():
         assert evidence_fingerprints((ROOT / name).read_bytes()) == expected, name
 
@@ -207,7 +207,7 @@ def test_generated_header_uses_canonical_links_and_reproducible_date(monkeypatch
     monkeypatch.setenv('CREST_PAGE_UPDATED', '2026-11-05')
     fragment = html.fromstring(site_header(tmp_path, tmp_path / 'docs/report.html'))
     assert fragment.xpath('.//a/@href')[1:] == [
-        'research-pipeline.html', 'deep-research-comparison-v2.html',
+        'research-pipeline.html', 'deep-research-comparison-v3.html',
         'ai-scientist-comparison-v1.html', 'index.html']
     assert fragment.xpath('.//time/@datetime') == ['2026-11-05']
     assert html.fromstring(site_header(tmp_path, tmp_path / 'docs/report.html', updated='2026-11-06')).xpath('.//time/@datetime') == ['2026-11-06']
@@ -300,7 +300,7 @@ def test_index_dates_remain_to_the_right_of_wrapping_titles_in_browser():
                             descriptionLeft:p.left, descriptionRight:p.right, descriptionTop:p.top,
                             rowLeft:row.left, rowRight:row.right};
                 })''')
-                assert len(rows) == 45, width
+                assert len(rows) == 46, width
                 for row in rows:
                     assert row['dateLeft'] >= row['linkRight'] - 1, (width, row)
                     assert abs(row['dateTop'] - row['linkTop']) <= 1, (width, row)

@@ -2,13 +2,13 @@
 
 CREST benchmarks the creativity of deep research agents and AI scientist papers using **pairwise LLM judging**. Judges choose one overall winner, guided by **New, Useful, and Surprising**. Saved answers, judgments, configurations, API costs, and timing make each comparison inspectable.
 
-The current research configuration compares five systems on **50 questions across five categories**: [Caesar](https://github.com/jasonzliang/caesar-agent), OpenAI Responses with hosted web search, Google Deep Research, Anthropic Sonnet 5.5 with client-side search, and [GPT Researcher](https://github.com/assafelovic/gpt-researcher). Using all five systems and three judges would produce **250 answers and 3,000 judgments**; these are planned counts, not a completed study. All five configured research budgets are soft. Offline regression and independent review passed. See the current pilot outcomes below; no all-five cost target or average is claimed.
+The current research configuration compares five systems on **50 questions across five categories**: [Caesar](https://github.com/jasonzliang/caesar-agent), OpenAI Responses with hosted web search, Google Deep Research, Anthropic Opus 5.5 with client-side search, and [GPT Researcher](https://github.com/assafelovic/gpt-researcher). The completed study has **250 answers and 2,999 of 3,000 planned judgments**. Claude Opus 5.5 refused one judgment, so the ranking uses 49 of the 50 questions. The same answers were also judged under the older NUS v1 and v2 rubrics. See [Deep research comparison v3](docs/deep-research-comparison-v3.html) for results and costs. All five configured research budgets are soft.
 
-The earlier four-system configuration implied **200 answers and 1,800 judgments**. The latest completed study selected three research systems and two judges, yielding **150 answers and 600 judgments**. Its saved models, settings, scores, and costs remain historical evidence, not measurements of the current configuration.
+The previous study used three research systems and two judges, with **150 answers and 600 judgments**. Its saved models, settings, scores, and costs are historical and do not measure the current configuration.
 
 | Pipeline | What it compares | Documentation |
 | --- | --- | --- |
-| `crest` | Answers generated for the same research questions | [Research pipeline](docs/research-pipeline.html) · [Deep research comparison v2](docs/deep-research-comparison-v2.html) · [Deep research comparison v1](docs/deep-research-comparison-v1.html) |
+| `crest` | Answers generated for the same research questions | [Research pipeline](docs/research-pipeline.html) · [Deep research comparison v3](docs/deep-research-comparison-v3.html) · [Deep research comparison v2](docs/deep-research-comparison-v2.html) · [Deep research comparison v1](docs/deep-research-comparison-v1.html) |
 | `crest_ais` | Released papers from AI scientist systems | [AI scientist comparison method](docs/ai-scientist-comparison-method.html) · [AI scientist comparison v1](docs/ai-scientist-comparison-v1.html) |
 
 ## Quick start
@@ -93,7 +93,7 @@ python -m crest run --config crest/configs/crest.yaml \
 Start with one provider and one question. Planning is local; generation makes paid model calls and live web requests. These are example commands; recorded pilot outcomes are listed below:
 
 ```bash
-# Sonnet/high gateway/client-tool pilot.
+# Opus/high gateway/client-tool pilot.
 python -m crest plan --agents anthropic --limit 1
 python -m crest generate --agents anthropic --limit 1
 
@@ -162,7 +162,7 @@ The verified active-route assumptions are USD per million tokens:
 
 These are route-specific estimates, not account invoices; use the gateway tariff rather than Anthropic's direct tariff for gateway requests. Cached reads and writes replace ordinary input tokens, and reasoning/thinking is billed once. Long-context pricing and hosted-tool charges may change a request's total; [Judge models](docs/judge-models.html#cost) records the estimator assumptions. Client DDGS/HTTP tools add no API fee, but their content consumes billed model tokens.
 
-For historical context, the published **2026-10-26** run measured **$1.60 (Caesar), $0.10 (OpenAI), and $3.71 (Google)** per answer. The older **2026-11-02** standard Google pilot at 600 words was below the $2–4 range. Neither those measurements nor earlier pilots establish spending for the current Sonnet/high or GPT Researcher/high profiles.
+For historical context, the published **2026-10-26** run measured **$1.60 (Caesar), $0.10 (OpenAI), and $3.71 (Google)** per answer. The older **2026-11-02** standard Google pilot at 600 words was below the $2–4 range. Neither those measurements nor earlier pilots establish spending for the current Opus/high or GPT Researcher/high profiles.
 
 **Google pricing assumptions / sensitivity:** Both Google figures use the same conditional estimator: high-context rates, tool-use tokens counted as extra input, and full-price searches. The historical 600-word v2 profile totals $146.0447 across 50 answers, or $2.9209 per answer. Applied to the new uncapped q1, that pricing scenario gives $6.9990348. Neither is a verified bill; the q1 figure is not a confirmed overrun or current mean. See the [historical v2 comparison](docs/deep-research-comparison-v2.html#resources).
 

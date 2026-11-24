@@ -393,7 +393,7 @@ def test_shared_site_navigation_titles_and_results_first_reading_order(report, t
                for tag, attrs in doc.tags)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
     assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "research-pipeline.html",
-                         "deep-research-comparison-v2.html", "ai-scientist-comparison-v1.html", "index.html"]
+                         "deep-research-comparison-v3.html", "ai-scientist-comparison-v1.html", "index.html"]
     # Results and method come before caveats and the audit sections.
     sections = [attrs["id"] for tag, attrs in doc.tags if tag == "section"]
     assert sections == ["overall", "matchups", "method", "judges", "limits", "coverage", "progress", "papers", "reasons"]

@@ -101,7 +101,7 @@ def site_header(project_root: Path, destination: Path, *, research_report: Path 
     root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
     def link(path):
         return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
-    comparison = research_report if research_report is not None else root / page_path('Deep research comparison v2')
+    comparison = research_report if research_report is not None else root / page_path('Deep research comparison v3')
     label = page_title(comparison, 'Deep research comparison')
     current = ' aria-current="page"' if research_report is not None else ''
     stamp = page_updated(updated)
