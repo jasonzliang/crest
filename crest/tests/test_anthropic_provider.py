@@ -690,6 +690,84 @@ def test_client_search_limit_prevents_extra_execution(tmp_path, monkeypatch):
     assert result["raw"]["client_tools"][-1]["status"] == "limit_reached"
 
 
+def client_turns_then_answer(requests, turns):
+    """A handler that requests one client search per turn for ``turns`` turns, then answers."""
+    def handler(request):
+        requests.append(json.loads(request.content))
+        return stream_response(client_turn(tool_id=f"tool-{len(requests)}") if len(requests) <= turns else answer())
+    return handler
+
+
+def test_failed_client_searches_do_not_use_up_the_search_limit(tmp_path, monkeypatch):
+    outcomes, executed = iter([False, False, True, True]), []
+    async def execute(name, arguments, *, client=None):
+        executed.append(next(outcomes))
+        if not executed[-1]:
+            raise RuntimeError("search backend down")
+        return {"text": "Source evidence", "citations": [{"url": f"https://example.org/{len(executed)}", "title": "S"}]}
+    install_client_tool(monkeypatch, execute)
+    requests = []
+    result = invoke(client_turns_then_answer(requests, 5), FakeJob(tmp_path), {"tool_mode": "client", "max_web_searches": 3})
+    # Bootstrap plus two successful model searches reach the limit of three; the two failures do not count.
+    assert executed == [False, False, True, True]
+    assert [item["status"] for item in result["raw"]["client_tools"]] == [
+        "completed", "failed", "failed", "completed", "completed", "limit_reached"]
+
+
+def test_failed_client_searches_stop_at_twice_the_search_limit(tmp_path, monkeypatch):
+    executed = []
+    async def execute(name, arguments, *, client=None):
+        executed.append(name)
+        raise RuntimeError("search backend down")
+    install_client_tool(monkeypatch, execute)
+    requests = []
+    result = invoke(client_turns_then_answer(requests, 5), FakeJob(tmp_path), {"tool_mode": "client", "max_web_searches": 2})
+    assert executed == ["web_search"] * 3  # Bootstrap plus three failures make four attempts, twice the limit.
+    assert [item["status"] for item in result["raw"]["client_tools"]] == [
+        "completed", "failed", "failed", "failed", "limit_reached", "limit_reached"]
+
+
+def test_client_tool_errors_ask_the_model_not_to_mention_them(tmp_path, monkeypatch):
+    async def execute(name, arguments, *, client=None):
+        raise RuntimeError("search backend down")
+    install_client_tool(monkeypatch, execute)
+    requests = []
+    invoke(client_turns_then_answer(requests, 4), FakeJob(tmp_path), {"tool_mode": "client", "max_web_searches": 2})
+    failed, limited = (requests[i]["messages"][-1]["content"][0] for i in (1, 4))
+    assert failed["is_error"] and limited["is_error"]
+    assert "research tool failed" in failed["content"] and "No more web_search calls" in limited["content"]
+    for result in (failed, limited):
+        assert "Do not mention tool limits, tool errors or the research process" in result["content"]
+
+
+@pytest.mark.parametrize("searches, posts", [(1, 1), (2, 2)])
+def test_client_follow_up_rounds_need_search_capacity(tmp_path, monkeypatch, searches, posts):
+    install_evidence_tool(monkeypatch)
+    requests = []
+    def handler(request):
+        requests.append(json.loads(request.content))
+        return stream_response(answer(f"Round {len(requests)}"))
+    settings = {"tool_mode": "client", "max_web_searches": searches, "max_research_rounds": 2,
+                "continuation_prompt": "Continue {spent} {ceiling}"}
+    result = invoke(handler, FakeJob(tmp_path), settings)
+    # The bootstrap uses one search; a follow-up round only runs while another search remains.
+    assert len(requests) == posts and result["text"] == f"Round {posts}"
+    assert any("search limit was used up" in warning for warning in result["warnings"]) == (posts == 1)
+
+
+def test_client_follow_up_round_asks_for_the_answer_only(tmp_path, monkeypatch):
+    install_evidence_tool(monkeypatch)
+    requests = []
+    def handler(request):
+        requests.append(json.loads(request.content))
+        return stream_response(answer(f"Round {len(requests)}"))
+    settings = {"tool_mode": "client", "max_research_rounds": 2, "continuation_prompt": "Continue {spent} {ceiling}"}
+    invoke(handler, FakeJob(tmp_path), settings)
+    text = requests[1]["messages"][-1]["content"][0]["text"]
+    assert text.startswith("Continue 0.0") and text.endswith(anthropic.ANSWER_ONLY_NOTE)
+    assert "Do not mention this round, earlier versions" in anthropic.ANSWER_ONLY_NOTE
+
+
 def test_client_tool_turn_limit_preserves_billed_usage(tmp_path, monkeypatch):
     tool_calls = []
     install_evidence_tool(monkeypatch, tool_calls)

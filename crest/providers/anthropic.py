@@ -41,7 +41,7 @@ from crest.providers.http import _controller_call, _record, backoff, retry_polic
 if TYPE_CHECKING:
     from crest.cache import Job
 
-ADAPTER_VERSION = "anthropic-messages-v5"
+ADAPTER_VERSION = "anthropic-messages-v6"
 API_URL = "https://api.anthropic.com/v1/messages"
 API_VERSION = "2026-10-21"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -55,6 +55,11 @@ WEB_SEARCH_USD = .01  # $10 per 1,000 searches; web_fetch bills only its tokens.
 RETRYABLE = {408, 429, 500, 502, 503, 504, 529}
 BOOTSTRAP_ATTEMPTS = 5  # Free public searches per run before the job fails without a paid request.
 BOOTSTRAP_RETRY_DELAY_S = 5.0  # Linear backoff (5, 10, 15, 20 s): DDGS throttles under many concurrent jobs.
+TOOL_ATTEMPT_FACTOR = 2  # Failed client calls don't use up a tool's limit; its attempts stop at twice the limit.
+# Model-facing guidance: answers otherwise narrate tool limits and failures instead of answering.
+TOOL_RESULT_NOTE = "Do not mention tool limits, tool errors or the research process in your response."
+ANSWER_ONLY_NOTE = ("Return only the complete rewritten response. Do not mention this round, earlier versions, "
+                    "what changed, tool limits or errors, or the research process.")
 ENCRYPTED_FIELDS = ("encrypted_content", "encrypted_index")
 # Nonempty text and reason quality are checked by parse_verdict.
 JUDGE_SCHEMA = {
@@ -359,6 +364,8 @@ def _result(turns, settings, job, is_judge):
                         f"${settings.get('budget_usd', DEFAULT_BUDGET_USD):.2f} budget; total cost remains unknown.")
     if client_research and any(record.get("status") != "completed" for record in _client_records(job)):
         warnings.append("Some client research tools failed or reached their limits; see raw.client_tools.")
+    if client_research and job.state.get("research_stopped") == "search_limit":
+        warnings.append("Further research rounds were skipped because the search limit was used up.")
     if receipt["raw"].get("budget_stop"):
         warnings.append("Stopped before another paid turn: conservative input/output reservation cannot fit the remaining budget.")
     if receipt["raw"].get("unresolved_submission"):
@@ -532,6 +539,14 @@ def _record_interruption(job, message, error, *, uncertain=False):
              **({"unresolved_submission": True} if uncertain else {}))
 
 
+def _tool_capacity(name, settings, records):
+    """Calls of one client tool still allowed: failed calls don't count, but total attempts are bounded."""
+    limit = settings.get("max_web_searches" if name == "web_search" else "max_web_fetches", 30 if name == "web_search" else 10)
+    executed = [item for item in records if item.get("executed") and item.get("name") == name]
+    used = sum(item.get("status") != "failed" for item in executed)
+    return max(0, min(limit - used, TOOL_ATTEMPT_FACTOR * limit - len(executed)))
+
+
 async def _execute_client_tools(message, settings, job, deadline):
     records = list(_client_records(job))
     results = []
@@ -547,12 +562,9 @@ async def _execute_client_tools(message, settings, job, deadline):
         elif (not isinstance(arguments, dict) or set(arguments) != {argument}
               or not isinstance(arguments[argument], str) or not arguments[argument].strip()):
             error = "Research tool requires one nonempty string argument"
-        else:
-            limit = settings.get("max_web_searches" if name == "web_search" else "max_web_fetches", 30 if name == "web_search" else 10)
-            used = sum(item.get("executed", False) and item.get("name") == name for item in records)
-            if used >= limit:
-                record["status"] = "limit_reached"
-                error = "Research tool call limit reached"
+        elif not _tool_capacity(name, settings, records):
+            record["status"] = "limit_reached"
+            error = "Research tool call limit reached"
         records.append(record)
         if error is None:
             record.update(executed=True, status="running")
@@ -580,7 +592,10 @@ async def _execute_client_tools(message, settings, job, deadline):
                 record["status"] = "failed"
         if error is not None:
             record["error"] = error
-            text = error
+            advice = (f"No more {name} calls are available for this answer; write it from the evidence already gathered."
+                      if record["status"] == "limit_reached" else
+                      "Try a different query or source, or continue with the evidence already gathered.")
+            text = f"{error.rstrip().rstrip('.')}. {advice} {TOOL_RESULT_NOTE}"
         job.save(client_tool_results=records)
         results.append({"type": "tool_result", "tool_use_id": block.get("id"), "content": text, "is_error": error is not None})
     if not results:
@@ -826,8 +841,14 @@ async def _run(prompt, settings, job, *, client, is_judge):
             continue
         if (not is_judge and message.get("stop_reason") == "end_turn"
                 and needs_more_research(settings, rounds, cost, sum(_turn_cost(turn, settings)[1] or 0. for turn in turns if turn.get("_round") == rounds))):
+            if client_research and not _tool_capacity("web_search", settings, _client_records(job)):
+                # A follow-up round asks for new searches; with none left it only re-describes the same answer.
+                job.save(research_stopped="search_limit")
+                return _result(turns, settings, job, is_judge)
             # Below the budget floor: ask for more research and a full rewrite in a new round.
             rounds, pauses = rounds + 1, 0
-            history += [("assistant", message["content"]), ("user", continuation_prompt(settings, cost))]
+            follow_up = continuation_prompt(settings, cost)
+            history += [("assistant", message["content"]),
+                        ("user", f"{follow_up}\n\n{ANSWER_ONLY_NOTE}" if client_research else follow_up)]
             continue
         return _result(turns, settings, job, is_judge)
