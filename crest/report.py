@@ -265,9 +265,11 @@ def _validate(data):
                 hashlib.sha256(a['result']['text'].encode()).hexdigest() for a in ordered]:
             raise ValueError('Judgment answer content hashes do not match')
         if strict_reason:
-            from .presentation import PRESENTATION_VERSION, present_answer
-            if row.get('presentation_version') != PRESENTATION_VERSION or row.get('presented_answer_hashes') != [
-                    hashlib.sha256(present_answer(a['result']['text']).encode()).hexdigest() for a in ordered]:
+            from .presentation import ANSWER_PRESENTATION_VERSION, PRESENTATION_VERSION, present_research_answer
+            version = row.get('presentation_version')
+            if version not in (PRESENTATION_VERSION, ANSWER_PRESENTATION_VERSION) or row.get('presented_answer_hashes') != [
+                    hashlib.sha256(present_research_answer(a['result']['text'], version).encode()).hexdigest()
+                    for a in ordered]:
                 raise ValueError('Judgment presentation hashes do not match the saved answers')
     protocols = {j.get('protocol_version') for j in judgments}
     if protocols.intersection((NUS_PROTOCOL, AUT_PROTOCOL)) and len(protocols) != 1:
@@ -845,11 +847,14 @@ def _method(data):
     provenance = ''
     revised = bool(data.get('judgments')) and all(
         j.get('protocol_version') in (NUS_PROTOCOL, AUT_PROTOCOL)
-        and j.get('presentation_version') == 'citation-neutral-v1' for j in data['judgments'])
+        and j.get('presentation_version') in ('citation-neutral-v1', 'citation-neutral-v2') for j in data['judgments'])
+    trimmed = revised and all(j.get('presentation_version') == 'citation-neutral-v2' for j in data['judgments'])
     if revised:
         provenance = ('<p>URL destinations were hidden uniformly in judge presentations; meaningful citation labels and '
                       'answer content were retained. Original answers are preserved below. Wording can still reveal '
                       'which system wrote an answer.</p>'
+                      + ('<p>Judges did not see the list of collected sources that the pipeline appends to an answer '
+                         'when the answer never cites them. The answers below keep that list.</p>' if trimmed else '')
                       + ('<p>Originality can come from combining familiar ideas. Elaboration supports evaluating '
                       'the contribution; it is not a word-count score. If a judge cannot support a substantive '
                       'preference, it must say so and choose A. Doing this in both orders gives each system one win.</p>' if aut else

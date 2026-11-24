@@ -1361,3 +1361,51 @@ def test_research_invalid_index_wrapper_preserves_existing_report(run, tmp_path,
         renderer.write_report(run, output, updated='2026-11-06')
     assert output.read_text() == 'Previously published report'
     assert index.read_text() == original_index
+
+
+def mark_nus_judgments(run, version):
+    """Label fixture judgments as current NUS rows presented with the given version."""
+    from crest.presentation import present_research_answer
+    path = run / '02-judge-test/judgments.jsonl'
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    answers = json.loads(answers_path(run).read_text())
+    answer_map = {(a['question_id'], a['agent']): a for a in answers}
+    for row in rows:
+        row.update(protocol_version='nus-overall-pairwise-v3', presentation_version=version)
+        row['presented_answer_hashes'] = [hashlib.sha256(present_research_answer(
+            answer_map[row['question_id'], agent]['result']['text'], version).encode()).hexdigest()
+            for agent in row['order']]
+        row['verdict']['reason'] = 'A develops a distinct causal mechanism, while B supplies a familiar explanation.'
+        row['result']['text'] = json.dumps(row['verdict'])
+    path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    return rows
+
+
+@pytest.mark.parametrize('version', ['citation-neutral-v1', 'citation-neutral-v2'])
+def test_publication_validates_each_saved_presentation_version(run, version):
+    from crest.report import load_run
+    answers = json.loads(answers_path(run).read_text())
+    answers[0]['result']['text'] += '\n\nSources:\nhttps://uncited.test/a'
+    dump(answers_path(run), answers)
+    rows = mark_nus_judgments(run, version)
+    load_run(run)
+    # The first judgment compares the answer that carries the appended list.
+    assert answers[0]['agent'] in rows[0]['order'] and rows[0]['question_id'] == answers[0]['question_id']
+    rows[0]['presentation_version'] = 'citation-neutral-v2' if version.endswith('v1') else 'citation-neutral-v1'
+    (run / '02-judge-test/judgments.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    with pytest.raises(ValueError, match='presentation'):
+        load_run(run)
+
+
+def test_method_says_judges_did_not_see_the_appended_uncited_sources():
+    from crest.report import _method
+    data = {'ranking': {'bootstrap': {'seed': 2026}, 'ranking': [{'agent': agent} for agent in AGENTS]},
+            'manifest': {}, 'judges': {judge: JUDGE_SETTINGS[judge] for judge in JUDGES},
+            'judgments': [{'protocol_version': 'nus-overall-pairwise-v3',
+                           'presentation_version': 'citation-neutral-v2'}],
+            'answers': [{'agent': 'openai', 'result': {'text': 'Answer.'}}]}
+    html = _method(data)
+    assert 'URL destinations were hidden' in html
+    assert 'never cites' in html
+    data['judgments'][0]['presentation_version'] = 'citation-neutral-v1'
+    assert 'never cites' not in _method(data)

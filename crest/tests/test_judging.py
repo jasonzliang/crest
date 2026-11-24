@@ -291,3 +291,18 @@ def test_direct_prompt_calls_apply_same_presentation_as_scheduled_jobs():
     prompt = judging.build_prompt('Question', 'See https://one.test.', 'See https://two.test.', 'Rubric')
     data = json.loads(prompt.split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])
     assert data == {'question': 'Question', 'A': 'See [Source 1].', 'B': 'See [Source 1].'}
+
+
+def test_judges_see_answers_without_the_appended_uncited_source_list(experiment):
+    questions, answers, judges, rubric = experiment
+    raw = 'Full answer from entrant 0.\n\nSources:\nhttps://uncited.test/a\nhttps://uncited.test/b'
+    answers[0]['result']['text'] = raw
+    jobs = judging.make_judgment_jobs(questions, answers, judges, rubric)
+    job = next(j for j in jobs if j['order'] == ['caesar', 'gemini'])
+    data = json.loads(job['prompt'].split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])
+    assert data['A'] == 'Full answer from entrant 0.'
+    assert job['presentation_version'] == 'citation-neutral-v2'
+    assert job['answer_hashes'][0] == hashlib.sha256(raw.encode()).hexdigest()
+    assert job['presented_answer_hashes'][0] == hashlib.sha256(b'Full answer from entrant 0.').hexdigest()
+    direct = judging.build_prompt('Question', raw, 'Other answer.', rubric)
+    assert json.loads(direct.split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])['A'] == 'Full answer from entrant 0.'

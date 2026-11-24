@@ -32,7 +32,7 @@ SONNET_GATEWAY_PRICING = {'claude-sonnet-5-5': {
 OPUS_RESEARCH_PRICING = {'claude-opus-5-5': {**ANTHROPIC_GATEWAY_PRICING['claude-opus-5-5'], 'web_search': 0.}}
 DEFAULTS = {
     'questions': '../data/queries_n50_v2.jsonl',
-    'rubric': '../prompts/nus_pairwise_v3.txt',
+    'rubric': '../prompts/nus_pairwise_v4.txt',
     'cache_dir': '../results/.cache/generation', 'output_dir': '../results',
     'results_timezone': DEFAULT_RESULTS_TIMEZONE,
     # Rendered for every research agent whose use_research_prompt flag is true.

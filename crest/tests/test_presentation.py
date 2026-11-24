@@ -69,3 +69,34 @@ def test_source_labels_do_not_depend_on_other_answers_or_tracking_identity():
     assert present_answer(first) == present_answer(second) == 'Evidence: [Source 1] and [Source 2].'
     assert present_answer('Other https://unrelated.test.') == 'Other [Source 1].'
     assert present_answer(first) == 'Evidence: [Source 1] and [Source 2].'
+
+
+# The pipeline appends collected URLs that the answer text never cites as a bare list.
+APPENDED = ('Body cites [a paper](https://cited.test/p).\n\nSources:\n'
+            'https://uncited.test/a\nhttps://uncited.test/b?utm_source=openai')
+
+
+def test_research_presentation_drops_the_appended_list_of_uncited_sources():
+    from crest.presentation import ANSWER_PRESENTATION_VERSION, PRESENTATION_VERSION, present_research_answer
+    assert present_research_answer(APPENDED) == 'Body cites [a paper].'
+    assert ANSWER_PRESENTATION_VERSION == 'citation-neutral-v2' != PRESENTATION_VERSION
+
+
+@pytest.mark.parametrize('text', [
+    'Body.\n\nSources:\nhttps://x.test/a\n\nMore prose after the list.',  # not a trailing list
+    'Body cites https://x.test/a.\n\nSources:\nhttps://x.test/a',  # listed URL is cited
+    'Body [1].\n\nSources:\n[1] https://x.test/a',  # numbered list written by the answer
+    'Body.\n\n**Sources:**\nhttps://x.test/a',  # the answer's own markup
+    '\n\nSources:\nhttps://x.test/a',  # nothing would remain
+    'Body without any source list.',
+])
+def test_keeps_source_lists_that_are_cited_or_not_in_the_appended_form(text):
+    from crest.presentation import drop_uncited_sources
+    assert drop_uncited_sources(text) == text
+
+
+def test_saved_v1_research_presentations_stay_reproducible():
+    from crest.presentation import PRESENTATION_VERSION, present_research_answer
+    assert present_research_answer(APPENDED, PRESENTATION_VERSION) == present_answer(APPENDED)
+    with pytest.raises(ValueError, match='presentation'):
+        present_research_answer(APPENDED, 'citation-neutral-v0')

@@ -10,7 +10,11 @@ import re
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
-PRESENTATION_VERSION = 'citation-neutral-v1'
+PRESENTATION_VERSION = 'citation-neutral-v1'  # Manuscripts and saved research judgments.
+# Research answers additionally drop the source list the pipeline appends for
+# collected URLs that the answer never cites (crest.pipeline, generation stage).
+ANSWER_PRESENTATION_VERSION = 'citation-neutral-v2'
+_APPENDED_SOURCES = re.compile(r'\n\nSources:\n((?:[a-z][a-z0-9+.-]*://\S+\n)*[a-z][a-z0-9+.-]*://\S+)\Z', re.I)
 _URL = re.compile(r'(?<![a-z0-9+.-])(?:[a-z][a-z0-9+.-]*://|www\.)[^\s<>"\']+', re.I)
 _EXTERNAL_DESTINATION = re.compile(
     r'(?:[a-z][a-z0-9+.-]*://|(?:mailto|tel|doi|urn):|//|www\.)\S+', re.I)
@@ -183,3 +187,28 @@ def present_answer(text: str) -> str:
         return ''.join(output)
 
     return render(text)
+
+
+def drop_uncited_sources(text: str) -> str:
+    """Remove a trailing pipeline-appended list whose URLs the answer never cites.
+
+    Only the exact appended form qualifies: a final "Sources:" heading followed
+    solely by bare URLs, none of which appears in the text before it. Lists the
+    answer wrote itself (numbered, linked or styled) and any cited URL keep it.
+    """
+    match = _APPENDED_SOURCES.search(text)
+    if not match or not text[:match.start()].strip():
+        return text
+    body = text[:match.start()]
+    if any(url in body for url in match.group(1).split('\n')):
+        return text
+    return body
+
+
+def present_research_answer(text: str, version: str = ANSWER_PRESENTATION_VERSION) -> str:
+    """Judge presentation of a research answer under a saved presentation version."""
+    if version == PRESENTATION_VERSION:
+        return present_answer(text)
+    if version == ANSWER_PRESENTATION_VERSION:
+        return present_answer(drop_uncited_sources(text))
+    raise ValueError(f'Unsupported presentation version: {version}')

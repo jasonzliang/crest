@@ -11,7 +11,7 @@ import json
 import re
 
 from .cache import digest
-from .presentation import PRESENTATION_VERSION, present_answer
+from .presentation import ANSWER_PRESENTATION_VERSION, present_research_answer
 from .rubrics import AUT_KIND, AUT_PROTOCOL, rubric_kind
 
 
@@ -42,7 +42,7 @@ def build_prompt(question: str, answer_a: str, answer_b: str, rubric: str, *,
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"{name} must be a nonempty string")
     if not answers_are_presented:
-        answer_a, answer_b = present_answer(answer_a), present_answer(answer_b)
+        answer_a, answer_b = present_research_answer(answer_a), present_research_answer(answer_b)
     data = json.dumps({"question": question, "A": answer_a, "B": answer_b}, ensure_ascii=False)
     if rubric_kind(rubric) == AUT_KIND:
         return (
@@ -184,7 +184,7 @@ def make_judgment_jobs(questions: list[dict], answers: list[dict], judges: dict,
         by_question.setdefault(answer["question_id"], {})[answer["agent"]] = answer
 
     presentations = {
-        (question_id, agent): present_answer(answer["result"]["text"])
+        (question_id, agent): present_research_answer(answer["result"]["text"])
         for question_id, available in by_question.items()
         for agent, answer in available.items()
     }
@@ -207,7 +207,7 @@ def make_judgment_jobs(questions: list[dict], answers: list[dict], judges: dict,
                 for judge, settings in sorted(judges.items()):
                     key = digest({
                         "protocol_version": protocol,
-                        "presentation_version": PRESENTATION_VERSION,
+                        "presentation_version": ANSWER_PRESENTATION_VERSION,
                         "question_id": question["id"],
                         "question": question["text"],
                         "pair": pair,
@@ -222,7 +222,7 @@ def make_judgment_jobs(questions: list[dict], answers: list[dict], judges: dict,
                     job = {
                         "key": key,
                         "protocol_version": protocol,
-                        "presentation_version": PRESENTATION_VERSION,
+                        "presentation_version": ANSWER_PRESENTATION_VERSION,
                         "question_id": question["id"],
                         "pair": list(pair),
                         "order": list(order),
