@@ -87,6 +87,16 @@ def test_gateway_cost_assessment_uses_configured_rates_not_native_list_prices():
     assert settings == original
 
 
+def test_caesar_answer_parallelism_starts_at_25_and_grows_to_50():
+    """2026-11-23: 50 concurrent Caesar answers ran with no rate limiting (~0.65 GB each incl. Chroma).
+
+    Caesar answers take ~2.7 h, and the limiter grows by one per two completions, so the
+    starting width sets wall time; 4->8 left most of a 50-question run queued for hours.
+    """
+    settings = load_config()['research']['caesar']
+    assert (settings['initial_concurrency'], settings['concurrency']) == (25, 50)
+
+
 def test_gpt_researcher_is_a_fifth_budgeted_sol_provider_with_a_bounded_final_write():
     """Candidate deeper profile; only a completed pilot can establish its spend."""
     config = load_config()

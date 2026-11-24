@@ -92,8 +92,9 @@ research:
     synthesis_merge_artifacts: true
     # Call timeout and adaptive concurrency.
     call_timeout_seconds: 1200  # Twenty minutes for a synthesis request.
-    initial_concurrency: 4
-    concurrency: 8
+    # Answers take ~2.7 h, so start wide; 50 ran together on 2026-11-23 without rate limits.
+    initial_concurrency: 25
+    concurrency: 50
   # Hosted research rounds; usage may only become available after completion.
   openai:
     use_research_prompt: true
