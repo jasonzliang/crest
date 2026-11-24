@@ -7,6 +7,12 @@ from .cache import Cache, digest
 _TERMINAL = {'completed', 'failed', 'incomplete', 'cancelled'}
 
 
+def _refused(state):
+    # A returned refusal is a billed, finished response, so another attempt cannot
+    # duplicate it. Retrying the same judge keeps the panel's model unchanged.
+    return state.get('remote_status') == 'refusal' and not state.get('submission_unknown')
+
+
 def _terminal(state):
     raw = state.get('raw')
     return (isinstance(raw, dict) and raw.get('status') in _TERMINAL
@@ -123,6 +129,8 @@ async def execute_judgment(pipeline, task, controller=None):
         provider = pipeline._provider(task['judge'])
         while True:
             child = children[-1] if children else None
+            if child is not None and child.state.get('status') == 'failed' and _refused(child.state):
+                child.save(status='rejected', completed_at=child.state.get('failed_at') or timestamp())
             if child is None or child.state.get('status') == 'rejected':
                 if len(children) >= limit:
                     _save_accounting(parent, children)
@@ -201,7 +209,7 @@ async def execute_judgment(pipeline, task, controller=None):
             # Only a returned response or confirmed terminal remote state permits
             # another paid attempt. Poll/transport ambiguity stays on this child.
             rejected = (provider_error is not None
-                        and (validation_rejected or _terminal(child.state))
+                        and (validation_rejected or _terminal(child.state) or _refused(child.state))
                         and not child.state.get('submission_unknown'))
             finished = timestamp()
             child.save(status='rejected' if rejected else 'failed',

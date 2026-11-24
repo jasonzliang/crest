@@ -981,6 +981,65 @@ def test_judgment_terminal_provider_failure_retains_cost_when_next_attempt_succe
     assert len(calls) == 2
 
 
+def test_judgment_refusal_is_a_terminal_paid_attempt_retried_within_the_judge_budget(tmp_path):
+    # Anthropic records stop_reason "refusal" as the remote status of a returned,
+    # billed response: a fresh attempt is safe, and the refused cost is kept.
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        if len(calls) == 1:
+            job.save(remote_status='refusal', raw={'turns': [{'stop_reason': 'refusal'}]},
+                     provider_result={'cost_usd': .11, 'usage': {'output_tokens': 45}})
+            raise RuntimeError('Anthropic stop_reason refusal; stop_details={"category": "bio"}')
+        return verdict_receipt(cost=.02)
+    provider.judge = judge
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert len(calls) == 2 and calls[0] != calls[1]
+    assert row['cost_usd'] == pytest.approx(.13)
+    assert 'refusal' in row['attempts'][0]['error']
+
+
+def test_repeated_judgment_refusals_stop_at_the_attempt_limit_with_every_cost_kept(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def refuse(prompt, settings, job):
+        calls.append(job.path)
+        job.save(remote_status='refusal', raw={'turns': [{'stop_reason': 'refusal'}]},
+                 provider_result={'cost_usd': .11, 'usage': {'output_tokens': 45}})
+        raise RuntimeError('Anthropic stop_reason refusal')
+    provider.judge = refuse
+    with pytest.raises(ValueError, match='rejected after 3 attempts'):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    assert len(calls) == 3
+    state = pipeline._stage_cache('judge').job(task['key']).state
+    assert state['cost_usd'] == pytest.approx(.33)
+
+
+def test_saved_failed_refusal_resumes_with_a_fresh_attempt_and_keeps_its_error(tmp_path):
+    # Refusals saved before refusals counted as terminal: the old child is kept,
+    # with its error and cost, and the resume opens a second, fresh attempt.
+    from crest.cache import Cache
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    parent = pipeline._stage_cache('judge').job(task['key'])
+    key = digest({'judgment': task['key'], 'attempt': 1})
+    error = 'ProviderError: Anthropic stop_reason refusal; stop_details={"category": "bio"}'
+    Cache(parent.directory / 'attempts').job(key).save(
+        status='failed', error=error, remote_status='refusal', submission_unknown=False,
+        raw={'turns': [{'stop_reason': 'refusal'}]},
+        provider_result={'cost_usd': .11, 'usage': {'output_tokens': 45}})
+    parent.save(status='failed', error=error, attempt_keys=[key])
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(job.path)
+        return verdict_receipt(cost=.02)
+    provider.judge = judge
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert len(calls) == 1
+    assert row['cost_usd'] == pytest.approx(.13)
+    assert row['attempts'][0]['error'] == error
+
+
 def test_judgment_unknown_submission_never_automatically_resubmits(tmp_path):
     pipeline, provider, task = judgment_fixture(tmp_path)
     calls = []
