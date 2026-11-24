@@ -41,7 +41,7 @@ from crest.providers.http import _controller_call, _record, backoff, retry_polic
 if TYPE_CHECKING:
     from crest.cache import Job
 
-ADAPTER_VERSION = "anthropic-messages-v6"
+ADAPTER_VERSION = "anthropic-messages-v7"
 API_URL = "https://api.anthropic.com/v1/messages"
 API_VERSION = "2026-10-21"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -331,15 +331,35 @@ def _receipt(turns, settings, job):
             "budget_exceeded": exceeded, "raw": raw}
 
 
+def _client_citations(text, records):
+    """The retrieved sources the answer links to, in order of first mention, then fetched pages it read.
+
+    Unlinked search hits are not the answer's sources (the pipeline would append them all to the text);
+    an answer that links no retrieved source keeps every retrieved source and is flagged.
+    """
+    retrieved = list({citation["url"]: citation for record in records
+                      if record.get("status") == "completed" for citation in record.get("citations", [])}.values())
+    fetched = {citation["url"] for record in records if record.get("status") == "completed"
+               and record.get("name") == "web_fetch" for citation in record.get("citations", [])}
+    mentions = {}
+    for citation in retrieved:
+        match = re.search(re.escape(citation["url"]) + r"(?![\w/%~?=&#+\-]|\.\w)", text)
+        if match:
+            mentions[citation["url"]] = match.start()
+    citations = (sorted((c for c in retrieved if c["url"] in mentions), key=lambda c: mentions[c["url"]])
+                 + [c for c in retrieved if c["url"] in fetched and c["url"] not in mentions])
+    return (citations, False) if citations else (retrieved, True)
+
+
 def _result(turns, settings, job, is_judge):
     final = next((turn for turn in reversed(turns) if _finished(turn)), turns[-1])
     stop = final.get("stop_reason")
     receipt = _receipt(turns, settings, job)
     client_research = not is_judge and receipt["raw"]["tool_mode"] == "client"
     text, citations = _text_and_citations([final] if client_research else turns[:turns.index(final) + 1])
+    uncited = False
     if client_research:
-        citations = list({citation["url"]: citation for record in _client_records(job)
-                          if record.get("status") == "completed" for citation in record.get("citations", [])}.values())
+        citations, uncited = _client_citations(text, _client_records(job))
     usage, cost = receipt["usage"], receipt["cost_usd"]
     receipt["model"] = final.get("model", settings.get("model", JUDGE_MODEL if is_judge else RESEARCH_MODEL))
     try:
@@ -364,6 +384,8 @@ def _result(turns, settings, job, is_judge):
                         f"${settings.get('budget_usd', DEFAULT_BUDGET_USD):.2f} budget; total cost remains unknown.")
     if client_research and any(record.get("status") != "completed" for record in _client_records(job)):
         warnings.append("Some client research tools failed or reached their limits; see raw.client_tools.")
+    if client_research and uncited:
+        warnings.append("The answer cites no retrieved source; every retrieved source is listed.")
     if client_research and job.state.get("research_stopped") == "search_limit":
         warnings.append("Further research rounds were skipped because the search limit was used up.")
     if receipt["raw"].get("budget_stop"):

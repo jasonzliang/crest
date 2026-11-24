@@ -768,6 +768,39 @@ def test_client_follow_up_round_asks_for_the_answer_only(tmp_path, monkeypatch):
     assert "Do not mention this round, earlier versions" in anthropic.ANSWER_ONLY_NOTE
 
 
+def test_client_citations_are_the_sources_the_answer_cites_or_fetched(tmp_path, monkeypatch):
+    async def execute(name, arguments, *, client=None):
+        if name == "web_fetch":
+            return {"text": "Page", "citations": [{"url": "https://example.org/read", "title": "Read"}]}
+        return {"text": "Hits", "citations": [{"url": "https://example.org/cited", "title": "Cited"},
+                                              {"url": "https://example.org/unused", "title": "Unused"}]}
+    install_client_tool(monkeypatch, execute)
+    requests = []
+    def handler(request):
+        requests.append(1)
+        if len(requests) == 1:
+            return stream_response(client_turn())
+        if len(requests) == 2:
+            return stream_response(client_turn("web_fetch", {"url": "https://example.org/read"}, "tool-2"))
+        return stream_response(answer("Grounded in [Cited](https://example.org/cited)."))
+    result = invoke(handler, FakeJob(tmp_path), {"tool_mode": "client"})
+    # Uncited search hits (and the uncited bootstrap source) are not the answer's sources.
+    assert result["citations"] == [{"url": "https://example.org/cited", "title": "Cited"},
+                                   {"url": "https://example.org/read", "title": "Read"}]
+    assert not any("cites no retrieved" in warning for warning in result["warnings"])
+
+
+def test_client_answer_citing_nothing_lists_every_retrieved_source_with_a_warning(tmp_path, monkeypatch):
+    install_evidence_tool(monkeypatch)
+    requests = []
+    def handler(request):
+        requests.append(1)
+        return stream_response(client_turn() if len(requests) == 1 else answer("No links here."))
+    result = invoke(handler, FakeJob(tmp_path), {"tool_mode": "client"})
+    assert result["citations"] == [*bootstrap_evidence()["citations"], {"url": "https://example.org", "title": "Source"}]
+    assert any("cites no retrieved source" in warning for warning in result["warnings"])
+
+
 def test_client_tool_turn_limit_preserves_billed_usage(tmp_path, monkeypatch):
     tool_calls = []
     install_evidence_tool(monkeypatch, tool_calls)
