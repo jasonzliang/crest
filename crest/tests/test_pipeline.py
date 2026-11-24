@@ -1057,6 +1057,115 @@ def test_judgment_unknown_submission_never_automatically_resubmits(tmp_path):
     assert state['attempts'][0]['status'] == 'failed'
 
 
+STAND_IN = {'model': 'stand-in-judge',
+            'rates': {'input': 2.2, 'cached_input': 0.11, 'cache_write_5m': 2.75, 'output': 11.0, 'web_search': 0.0}}
+
+
+def refusing_then(calls, receipt):
+    async def judge(prompt, settings, job):
+        calls.append(settings)
+        if settings['model'] != STAND_IN['model']:
+            job.save(remote_status='refusal', raw={'turns': [{'stop_reason': 'refusal'}]},
+                     provider_result={'cost_usd': .11, 'usage': {'output_tokens': 45}})
+            raise RuntimeError('Anthropic stop_reason refusal; stop_details={"category": "bio"}')
+        return receipt(settings)
+    return judge
+
+
+def test_refused_judgment_moves_to_the_stand_in_model_after_the_attempt_limit(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path, attempts=2)
+    pipeline.config['judges']['openai']['refusal_substitute'] = STAND_IN
+    calls = []
+    provider.judge = refusing_then(calls, lambda s: {**verdict_receipt(cost=.03), 'model': s['model']})
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert [c['model'] for c in calls] == [task['settings']['model']] * 2 + ['stand-in-judge']
+    assert calls[-1]['model_pricing']['stand-in-judge'] == STAND_IN['rates']
+    assert row['result']['model'] == 'stand-in-judge'
+    assert [a['substitute_model'] for a in row['attempts']] == [None, None, 'stand-in-judge']
+    assert row['cost_usd'] == pytest.approx(.25)
+
+
+def test_stand_in_model_does_not_change_judgment_cache_keys(tmp_path):
+    config = fixture_config(tmp_path, n=1)
+    before = Pipeline(config)._judge_settings()
+    config['judges']['openai']['refusal_substitute'] = STAND_IN
+    assert Pipeline(config)._judge_settings() == before
+
+
+def test_stand_in_model_is_not_used_when_answers_are_rejected_for_other_reasons(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path, attempts=2)
+    pipeline.config['judges']['openai']['refusal_substitute'] = STAND_IN
+    calls = []
+    async def judge(prompt, settings, job):
+        calls.append(settings['model'])
+        return {**verdict_receipt(), 'text': 'invalid JSON'}
+    provider.judge = judge
+    with pytest.raises(ValueError, match='rejected after 2 attempts'):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    assert calls == [task['settings']['model']] * 2
+
+
+def test_stand_in_attempts_are_bounded_by_the_attempt_limit(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path, attempts=2)
+    pipeline.config['judges']['openai']['refusal_substitute'] = STAND_IN
+    calls = []
+    provider.judge = refusing_then(calls, lambda s: {**verdict_receipt(), 'text': 'invalid JSON'})
+    with pytest.raises(ValueError, match='rejected after 4 attempts'):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    assert [c['model'] for c in calls].count('stand-in-judge') == 2
+
+
+def test_acknowledged_unknown_submission_is_resent_once_and_keeps_its_unknown_cost(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    async def unknown(prompt, settings, job):
+        calls.append(job.path)
+        job.save(submission_unknown=True)
+        raise RuntimeError('submission outcome unknown')
+    provider.judge = unknown
+    with pytest.raises(RuntimeError, match='unknown'):
+        asyncio.run(pipeline._execute(task, 'judge'))
+    pipeline.resend_unknown = True
+    async def answer(prompt, settings, job):
+        calls.append(job.path)
+        return verdict_receipt(cost=.02)
+    provider.judge = answer
+    row, _ = asyncio.run(pipeline._execute(task, 'judge'))
+    assert len(calls) == 2 and calls[0] != calls[1]
+    assert row['attempts'][0]['submission_unknown'] and row['attempts'][0]['cost_usd'] is None
+    assert row['attempts'][0]['resent_after_unknown_outcome'] is True
+    assert row['unknown_cost_count'] == 1 and row['cost_usd'] is None
+    assert row['known_cost_usd'] == pytest.approx(.02)
+
+
+def test_acknowledged_resend_happens_only_once_per_judgment(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    pipeline.resend_unknown = True
+    calls = []
+    async def unknown(prompt, settings, job):
+        calls.append(job.path)
+        job.save(submission_unknown=True)
+        raise RuntimeError('submission outcome unknown')
+    provider.judge = unknown
+    for _ in range(3):
+        with pytest.raises(RuntimeError, match='unknown'):
+            asyncio.run(pipeline._execute(task, 'judge'))
+    assert len(calls) == 2
+
+
+def test_cli_resend_unknown_flag_reaches_the_pipeline(write_master_config, monkeypatch, tmp_path):
+    from crest import cli
+    seen = {}
+    class Recorder:
+        def __init__(self, config, **kwargs):
+            seen.update(kwargs)
+        def plan(self):
+            return {}
+    monkeypatch.setattr(cli, 'Pipeline', Recorder)
+    cli.main(['plan', '--config', str(write_master_config()), '--resend-unknown'])
+    assert seen['resend_unknown'] is True
+
+
 def test_judgment_retries_are_single_flight_under_concurrent_resume(tmp_path):
     pipeline, provider, task = judgment_fixture(tmp_path)
     calls = []

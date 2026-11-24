@@ -14,6 +14,8 @@ DEFAULT_RESULTS_TIMEZONE = 'America/Chicago'
 TRANSPORT_SETTINGS = frozenset({
     'concurrency', 'initial_concurrency', 'poll_interval_seconds',
     'retry_attempts', 'retry_backoff_base_seconds', 'retry_backoff_max_seconds',
+    # A judge's stand-in model for refused calls; each attempt records the model it used.
+    'refusal_substitute',
 })
 
 

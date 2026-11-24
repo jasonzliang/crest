@@ -264,3 +264,21 @@ def test_category_metadata_does_not_change_derived_id_prompt_or_generation_key(t
     assert categorized.questions[0]['id'] == original.questions[0]['id']
     assert categorized.generation_jobs() == original_jobs
     assert original_jobs[0]['prompt'] == 'QUESTION:\n  exact question?  '
+
+
+@pytest.mark.parametrize("value, ok", [
+    (None, True),
+    ({"model": "claude-sonnet-5-5", "rates": {"input": 2.2, "cached_input": 0.11, "cache_write_5m": 2.75,
+                                               "output": 11.0, "web_search": 0.0}}, True),
+    ({"model": "", "rates": {}}, False),
+    ({"model": "claude-sonnet-5-5"}, False),
+    ({"model": "claude-sonnet-5-5", "rates": {"input": -1, "cached_input": 0, "cache_write_5m": 0,
+                                               "output": 0, "web_search": 0}}, False),
+])
+def test_judge_refusal_substitute_needs_a_model_and_its_rates(write_master_config, value, ok):
+    path = write_master_config(**{"judges.anthropic.refusal_substitute": value})
+    if ok:
+        assert load_config(path)["judges"]["anthropic"]["refusal_substitute"] == value
+    else:
+        with pytest.raises(ValueError, match="refusal_substitute"):
+            load_config(path)

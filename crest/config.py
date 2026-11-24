@@ -141,6 +141,8 @@ for _section in ('research', 'judges'):
         for _key, _value in {'retry_attempts': 4, 'retry_backoff_base_seconds': 1,
                              'retry_backoff_max_seconds': 30}.items():
             _settings.setdefault(_key, _value)
+for _settings in DEFAULTS['judges'].values():
+    _settings.setdefault('refusal_substitute', None)
 
 
 def _merge(base, updates):
@@ -316,6 +318,16 @@ def load_config(path: Path | str = DEFAULT_CONFIG) -> dict:
                 raise ValueError(f'{section}.{name}.effort must be low, medium, high, xhigh or max')
             if 'search_context_size' in settings and settings['search_context_size'] not in ('low', 'medium', 'high'):
                 raise ValueError(f'{section}.{name}.search_context_size must be low, medium or high')
+            substitute = settings.get('refusal_substitute')
+            if substitute is not None:
+                fields = {'input', 'cached_input', 'cache_write_5m', 'output', 'web_search'}
+                rates = substitute.get('rates') if isinstance(substitute, dict) else None
+                if (section != 'judges' or name != 'anthropic' or set(substitute) != {'model', 'rates'}
+                        or not isinstance(substitute['model'], str) or not substitute['model'].strip()
+                        or not isinstance(rates, dict) or set(rates) != fields
+                        or any(not _is_number(v) or not math.isfinite(v) or v < 0 for v in rates.values())):
+                    raise ValueError(f'{section}.{name}.refusal_substitute must name a model and its '
+                                     'input/cache/output/search rates (Anthropic judge only)')
             for key in ('web_fetch', 'refusal_fallback'):
                 if key in settings and not isinstance(settings[key], bool):
                     raise ValueError(f'{section}.{name}.{key} must be a boolean')

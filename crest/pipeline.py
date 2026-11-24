@@ -90,8 +90,10 @@ def _answer_words(text: str) -> int:
 
 
 class Pipeline:
-    def __init__(self, config: dict, *, providers=None, run_dir=None, limit=None):
+    def __init__(self, config: dict, *, providers=None, run_dir=None, limit=None, resend_unknown=False):
         self.config = config
+        # Opt-in: resend each judge call whose first submission had an unknown outcome, once.
+        self.resend_unknown = resend_unknown
         self.providers = dict(providers or {})  # Never mutate a caller's mapping.
         self.cache = Cache(config['cache_dir'])
         self.run_dir = Path(run_dir).expanduser().resolve() if run_dir else None

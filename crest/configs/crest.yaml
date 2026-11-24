@@ -191,7 +191,12 @@ judges:
       claude-opus-5-5: {input: 4.4, cached_input: 0.22, cache_write_5m: 5.5, output: 22.0, web_search: 0.01}
     effort: high
     max_output_tokens: 32768
-    refusal_fallback: false  # Do not switch models after a refusal.
+    refusal_fallback: false  # The gateway ignores the API's server-side fallback.
+    # After Opus refuses every allowed attempt, the same prompt goes to this stand-in;
+    # each attempt records its model. Not part of the judgment cache key.
+    refusal_substitute:
+      model: claude-sonnet-5-5
+      rates: {input: 2.2, cached_input: 0.11, cache_write_5m: 2.75, output: 11.0, web_search: 0.0}
     initial_concurrency: 8
     concurrency: 16
 

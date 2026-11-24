@@ -33,6 +33,8 @@ def _attempt_record(job, index):
             'error': state.get('error'), 'result': result,
             'cost_usd': result.get('cost_usd', raw_usage.get('cost_usd')),
             'usage': result.get('usage') or state.get('observed_usage') or raw_usage,
+            'substitute_model': state.get('substitute_model'),
+            'resent_after_unknown_outcome': bool(state.get('resent_after_unknown_outcome')),
             'observed_cost_usd': state.get('observed_cost_usd'),
             'observed_cost_scope': state.get('observed_cost_scope'),
             'retry_events': state.get('retry_events', []), 'timing': _job_timing(state)}
@@ -65,6 +67,29 @@ def checkpoint_cost_record(parent):
     if not children:
         return None
     return _accounting(children) | {'key': parent.key, 'cache_record': str(parent.path)}
+
+
+def _substitute_settings(settings, substitute):
+    """The same judge call on the stand-in model, priced at its own rates."""
+    model = substitute['model']
+    return settings | {'model': model, 'model_pricing': {
+        **(settings.get('model_pricing') or {}), model: dict(substitute['rates'])}}
+
+
+def _next_attempt(children, limit, substitute):
+    """The stand-in for the next attempt (None for the configured model), or False when none is allowed.
+
+    The stand-in is used only after the configured model has refused on every one of
+    its allowed attempts, and it gets the same number of attempts of its own.
+    """
+    stand_in = [child for child in children if child.state.get('substitute_model')]
+    if stand_in:
+        return stand_in[-1].state['substitute'] if len(stand_in) < limit else False
+    if len(children) < limit:
+        return None
+    if substitute and children and _refused(children[-1].state):
+        return dict(substitute)
+    return False
 
 
 def _row(task, parent, cached):
@@ -108,6 +133,7 @@ async def execute_judgment(pipeline, task, controller=None):
             k: v for k, v in pipeline.config['judges'][task['judge']].items()
             if k in TRANSPORT_SETTINGS}
         limit = max(1, int(settings.get('retry_attempts', 4)))
+        substitute = settings.pop('refusal_substitute', None)
         attempt_cache = Cache(parent.directory / 'attempts')
         keys = list(parent.state.get('attempt_keys', []))
         children = [attempt_cache.job(key) for key in keys]
@@ -131,30 +157,42 @@ async def execute_judgment(pipeline, task, controller=None):
             child = children[-1] if children else None
             if child is not None and child.state.get('status') == 'failed' and _refused(child.state):
                 child.save(status='rejected', completed_at=child.state.get('failed_at') or timestamp())
+            if (child is not None and child.state.get('submission_unknown')
+                    and not child.state.get('remote_id') and child.state.get('status') != 'rejected'):
+                # Even injected providers must obey the transport's no-resubmit rule.
+                # A terminal raw response with an ID can be reconciled by the adapter.
+                raw = child.state.get('raw') or {}
+                if not (isinstance(raw, dict) and raw.get('id') and _terminal(child.state)):
+                    if (getattr(pipeline, 'resend_unknown', False)
+                            and not any(c.state.get('resent_after_unknown_outcome') for c in children)):
+                        # An explicit, recorded resend: the first try keeps its unknown charge.
+                        child.save(status='rejected', resent_after_unknown_outcome=True,
+                                   completed_at=child.state.get('failed_at') or timestamp())
+                    else:
+                        message = 'Judge submission outcome unknown; reconcile before submitting again'
+                        child.save(status='failed', error=message, failed_at=timestamp())
+                        _save_accounting(parent, children)
+                        parent.save(status='failed', error=message, failed_at=timestamp())
+                        raise RuntimeError(message)
             if child is None or child.state.get('status') == 'rejected':
-                if len(children) >= limit:
+                stand_in = _next_attempt(children, limit, substitute)
+                if stand_in is False:
                     _save_accounting(parent, children)
                     message = f'Judge response rejected after {len(children)} attempts'
                     parent.save(status='failed', error=message, failed_at=timestamp())
                     raise ValueError(message)
                 key = digest({'judgment': task['key'], 'attempt': len(children) + 1})
                 child = attempt_cache.job(key)
+                if stand_in:
+                    child.save(substitute_model=stand_in['model'], substitute=stand_in)
                 keys.append(key)
                 children.append(child)
                 # Link the child before any provider action so a crash can never
                 # orphan a paid submission and open a fresh attempt on resume.
                 parent.save(attempt_keys=keys)
             child.rate_controller = controller
-            if child.state.get('submission_unknown') and not child.state.get('remote_id'):
-                # Even injected providers must obey the transport's no-resubmit rule.
-                # A terminal raw response with an ID can be reconciled by the adapter.
-                raw = child.state.get('raw') or {}
-                if not (isinstance(raw, dict) and raw.get('id') and _terminal(child.state)):
-                    message = 'Judge submission outcome unknown; reconcile before submitting again'
-                    child.save(status='failed', error=message, failed_at=timestamp())
-                    _save_accounting(parent, children)
-                    parent.save(status='failed', error=message, failed_at=timestamp())
-                    raise RuntimeError(message)
+            attempt_settings = (_substitute_settings(settings, child.state['substitute'])
+                                if child.state.get('substitute_model') else settings)
             # A failed legacy checkpoint can contain a placeholder result while
             # its paid remote job is still active. Only a completed checkpoint or
             # a provider receipt establishes that there is a response to validate.
@@ -181,7 +219,7 @@ async def execute_judgment(pipeline, task, controller=None):
             validation_rejected = False
             if not received or reconcile_remote or child.state.get('submission_unknown'):
                 try:
-                    result = await provider.judge(task['prompt'], settings, child)
+                    result = await provider.judge(task['prompt'], attempt_settings, child)
                 except Exception as exc:
                     provider_error = exc
                 else:

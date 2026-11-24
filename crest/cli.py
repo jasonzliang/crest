@@ -18,6 +18,9 @@ def main(argv=None):
                         help='Subset of the configured research agents (default: all in the config)')
     parser.add_argument('--judges', nargs='+', metavar='JUDGE',
                         help='Subset of the configured judges (default: all in the config)')
+    parser.add_argument('--resend-unknown', action='store_true',
+                        help='Resend each judge call whose submission outcome is unknown, once; '
+                             'its possible charge stays recorded as unknown')
     parser.add_argument('--dry-run', action='store_true', help='Plan only; no API calls or new run directories')
     args = parser.parse_args(argv)
     try:
@@ -43,7 +46,7 @@ def main(argv=None):
             raise ValueError('An existing run keeps its agent snapshot; use a new generation run to change agents')
         if args.limit is not None and run:
             raise ValueError('--limit applies only to a new generation run; existing runs keep their question snapshot')
-        pipeline = Pipeline(config, run_dir=run, limit=args.limit)
+        pipeline = Pipeline(config, run_dir=run, limit=args.limit, resend_unknown=args.resend_unknown)
         if args.stage == 'plan' or args.dry_run:
             result = pipeline.plan()
         elif args.stage == 'analyze':
