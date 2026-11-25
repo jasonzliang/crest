@@ -2657,3 +2657,24 @@ def test_load_run_formats_each_answer_once_per_presentation_version(run, monkeyp
     # A second run over the same answers, like a rubric run, reuses the formatted text.
     load_run(run)
     assert len(calls) == len(data['answers'])
+
+def test_v3_profiles_render_strengths_and_weaknesses_linked_to_answers(tmp_path):
+    from lxml import html as lxml_html
+    from crest.report import PROFILES, V3_CONFIGURATIONS, _profiles, load_run
+    agents = ['caesar', 'openai', 'anthropic', 'gpt_researcher', 'gemini']
+    run = make_run(tmp_path / 'run', agents=agents, judges=THREE_JUDGES)
+    data = load_run(run)
+    assert _profiles(data) == ''
+    by_agent = {cid.rsplit('-', 1)[0]: cid for cid in V3_CONFIGURATIONS}
+    for row in data['answers']:
+        row['configuration_id'] = by_agent[row['agent']]
+    section_html = _profiles(data)
+    assert section_html.startswith('<section id="profiles"><h2>Strengths and weaknesses</h2>')
+    assert '—' not in section_html
+    doc = lxml_html.fromstring(section_html)
+    articles = doc.xpath('.//article[@class="profile"]')
+    assert [a.get('data-agent') for a in articles] == [r['agent'] for r in data['ranking']['ranking']]
+    assert set(PROFILES) == set(agents)
+    for href in doc.xpath('.//a/@href'):
+        assert re.fullmatch(r'#answer-([1-9]|[1-4][0-9]|50)-(caesar|openai|anthropic|gpt_researcher|gemini)', href), href
+
