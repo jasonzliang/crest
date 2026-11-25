@@ -87,7 +87,7 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
     external = [a for a in entries if urlsplit(a.get('href')).scheme]
     assert [(a.get('href'), a.text_content()) for a in external] == [
         ('https://github.com/jasonzliang/crest#readme', 'Project README'),
-        ('https://llm-keys.evolution.ml/guide#claude-code', 'LiteLLM gateway setup'),
+        ('https://llm-keys.evolution.ml/guide#claude-code', 'LiteLLM Gateway Setup'),
     ]
     assert len(entries) == 48
     assert page.xpath('//section[@id="current"]//li/a') == external
@@ -213,6 +213,12 @@ def test_generated_header_uses_canonical_links_and_reproducible_date(monkeypatch
     assert html.fromstring(site_header(tmp_path, tmp_path / 'docs/report.html', updated='2026-11-06')).xpath('.//time/@datetime') == ['2026-11-06']
 
 
+def test_page_path_matches_labels_without_regard_to_case():
+    from crest_ais.site import page_path
+    assert page_path('NUS Rubric') == page_path('NUS rubric') == Path('docs/nus-rubric.html')
+    assert page_path('why one overall judgment') == Path('docs/why-one-overall-judgment.html')
+
+
 def test_date_source_precedence_and_validation(monkeypatch):
     from crest_ais.site import page_updated
     monkeypatch.delenv('CREST_PAGE_UPDATED', raising=False)
@@ -250,9 +256,9 @@ def test_index_sync_updates_only_matching_entry_and_index_page_date(tmp_path):
     docs = tmp_path / 'docs'; docs.mkdir()
     index = docs / 'index.html'
     original = ('<header><time class="crest-page-updated" datetime="2026-11-05">Updated 2026-11-05</time></header>'
-                '<main><li><a href="deep-research-comparison-v2.html">Deep research comparison v2</a>'
+                '<main><li><a href="deep-research-comparison-v2.html">Deep Research Comparison v2</a>'
                 '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li>'
-                '<li><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+                '<li><a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
                 '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li></main>')
     index.write_text(original)
     sync_index_date(tmp_path, docs / 'deep-research-comparison-v2.html', '2026-11-06')

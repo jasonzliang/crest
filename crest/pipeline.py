@@ -13,6 +13,7 @@ import math
 import os
 from pathlib import Path
 import subprocess
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 import uuid
 
 from .cache import Cache, CacheCorruption, digest, write_json
@@ -80,6 +81,59 @@ def _semantic_settings(settings: dict) -> dict:
 
 
 _SOURCES_HEADING = re.compile(r'\n[ \t]*(?:#{1,6}[ \t]*|\*\*)?(?:Sources|References|Citations)\b[^\n]{0,40}\n')
+
+
+# Query parameters that only track a click or report a cookie redirect; they never select a different source.
+_TRACKING_PARAMS = frozenset({'fbclid', 'gclid', 'dclid', 'gbraid', 'wbraid', 'msclkid', 'yclid', 'twclid',
+                              'ttclid', 'igshid', 'mc_cid', 'mc_eid', '_ga', '_gl', '_hsenc', '_hsmi', 'mkt_tok'})
+_INLINE_URL = re.compile(r'[a-z][a-z0-9+.-]*://[^\s<>"\'`]+', re.I)
+_CLOSERS = {')': '(', ']': '[', '}': '{'}
+
+
+def source_key(url: str) -> str:
+    """Comparison key for a source URL; the URL text itself is never rewritten.
+
+    Lowercases scheme and host, drops the fragment, a trailing slash, utm_* and
+    click-tracking parameters, and Springer/Nature's error=cookies_not_supported
+    redirect with its code=. Every other query parameter is kept.
+    """
+    try:
+        parts = urlsplit(url.strip())
+        query = parse_qsl(parts.query, keep_blank_values=True)
+    except ValueError:
+        return url
+    cookie_error = ('error', 'cookies_not_supported') in [(key.lower(), value) for key, value in query]
+    kept = [(key, value) for key, value in query
+            if not (key.lower().startswith('utm_') or key.lower() in _TRACKING_PARAMS
+                    or cookie_error and key.lower() in ('error', 'code'))]
+    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip('/'), urlencode(kept), ''))
+
+
+def _inline_urls(text: str):
+    for match in _INLINE_URL.finditer(text):
+        url = match.group().rstrip('.,;:!?*_\'"')
+        while url and url[-1] in _CLOSERS and url.count(url[-1]) > url.count(_CLOSERS[url[-1]]):
+            url = url[:-1].rstrip('.,;:!?*_\'"')
+        yield url
+
+
+def append_uncited_sources(text: str, citations) -> str:
+    """Append a "Sources:" list of cited URLs the text never links, one per source.
+
+    URLs are compared by source_key, so a tracking or cookie-redirect variant of a
+    link already in the text, or of one already listed, is not appended again.
+    """
+    seen = {source_key(url) for url in _inline_urls(text)}
+    missing = []
+    for citation in citations or []:
+        url = citation.get('url') if isinstance(citation, dict) else None
+        if not isinstance(url, str) or not url or url in text:
+            continue
+        key = source_key(url)
+        if key not in seen:
+            seen.add(key)
+            missing.append(url)
+    return text + '\n\nSources:\n' + '\n'.join(missing) if missing else text
 
 
 def _answer_words(text: str) -> int:
@@ -360,10 +414,7 @@ class Pipeline:
                     job.save(provider_result=result)
                     if not isinstance(result, dict) or not isinstance(result.get('text'), str) or not result['text'].strip():
                         raise ValueError('Provider returned no complete answer text')
-                    missing = [c['url'] for c in result.get('citations', [])
-                               if isinstance(c, dict) and c.get('url') and c['url'] not in result['text']]
-                    if missing:
-                        result['text'] += '\n\nSources:\n' + '\n'.join(dict.fromkeys(missing))
+                    result['text'] = append_uncited_sources(result['text'], result.get('citations', []))
                     limit = task['settings'].get('answer_word_limit')  # Frozen with the job, never today's value.
                     words = _answer_words(result['text'])
                     result['word_count'] = words
@@ -559,13 +610,15 @@ class Pipeline:
 
     async def judge(self) -> dict:
         from .judging import make_judgment_jobs
+        from .rubrics import rubric_identity
         if not self.run_dir:
             raise ValueError('Generate first or select --run PATH')
         generation_source = self._latest_stage('generate')
         answers = _read_jsonl(generation_source / 'answers.jsonl')
-        rubric = Path(self.config['rubric']).read_text()
+        rubric_path = Path(self.config['rubric'])
+        rubric = rubric_path.read_text()
         judges = self._judge_settings()
-        tasks = make_judgment_jobs(self.questions, answers, judges, rubric)
+        tasks = make_judgment_jobs(self.questions, answers, judges, rubric, rubric_file=rubric_path.name)
         directory = self._new_stage(2, 'judge')
         write_json(directory / 'questions.json', self.questions)
         write_json(directory / 'answers.json', answers)
@@ -595,7 +648,11 @@ class Pipeline:
             for row in prior_judgments if row.get('key') not in covered), encoding='utf-8')
         expected = len(self.questions) * len(list(itertools.combinations(self.manifest['agents'], 2))) * len(judges) * 2
         summary['unavailable'] = expected - len(tasks)
+        # rubric_id names the exact text judged (sha256 of its UTF-8 bytes), so a
+        # later file rename cannot relabel this stage; rubric_sha256 is the older
+        # JSON-string digest and is kept for compatibility.
         self._finish_stage(directory, summary, rubric_sha256=digest(rubric),
+                           rubric_id=rubric_identity(rubric, rubric_path.name),
                            generation_directory=generation_source.name)
         return summary | {'directory': str(directory), 'run_dir': str(self.run_dir)}
 

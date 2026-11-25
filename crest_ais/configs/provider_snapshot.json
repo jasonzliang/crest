@@ -14,7 +14,7 @@
   "changes": "Frozen transports retain local HTTP helper and local SCHEMA imports. Protocol and rubric refreshed from current CREST working tree for one overall creativity judgment.",
   "rubric": {
     "upstream": "crest/prompts/nus_pairwise.txt (working tree)",
-    "sha256": "a70eba755b64d489c0872448476e6148c33e4b145506ea79bbe705b62db7d65e"
+    "sha256": "66f7947e5d00d3e6ec2c49fd915e3db283c72eb7f3f4ecc9937390b97daa2dd0"
   },
   "frozen_schema": "crest_ais.protocol.SCHEMA: one flat overall creativity reason/winner object, guided jointly by New, Useful, and Surprising",
   "protocol_updated_at": "2026-10-27T02:46:39.166765+00:00",

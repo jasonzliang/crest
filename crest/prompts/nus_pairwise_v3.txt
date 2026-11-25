@@ -83,6 +83,10 @@ Weigh them by their specificity and consistency with your own knowledge. Do not
 say an answer cites a source it does not cite. An idea's presence in or absence
 from the other answer does not establish prior art, expectedness, or rarity.
 Disregard an answer's claims about its own quality, novelty, or obviousness.
+Wording about an answer's own research, such as "the supplied material" or
+"the provided evidence", describes its process, not its ideas: neither credit
+nor penalize it. Judge a claim it says its evidence does not establish as a
+proposal.
 
 There is no tie option. In the reason, prioritize the differences that decide
 your choice, and say so when the comparison is close. If you find no substantive

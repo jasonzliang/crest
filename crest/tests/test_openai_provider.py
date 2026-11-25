@@ -283,7 +283,7 @@ def test_observed_budget_overrun_cancels_active_response(tmp_path):
 
 def test_judge_uses_strict_binary_schema_and_no_tools(tmp_path):
     from crest.judging import SCHEMA
-    verdict = {name: {"reason": "A is more creative.", "winner": "A"} for name in ("new", "useful", "surprising")}
+    verdict = {"reason": "A is more creative.", "winner": "A"}
 
     def handler(request):
         payload = json.loads(request.content)

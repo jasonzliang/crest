@@ -13,7 +13,7 @@ from pathlib import Path
 import sys
 
 from crest.cache import Cache, digest, write_json
-from .protocol import LEGACY_PROTOCOL_VERSION, PROTOCOL_VERSION, add_agent_plan, add_judge_plan, extend_plan, parse_verdict, requires_reason_quality, validate_verdict, validate_plan_fingerprint
+from .protocol import CURRENT_PROTOCOL_VERSIONS, LEGACY_PROTOCOL_VERSION, PROTOCOL_VERSION, add_agent_plan, add_judge_plan, extend_plan, parse_verdict, requires_reason_quality, validate_verdict, validate_plan_fingerprint
 
 TERMINAL_FAILURES = {"invalid_verdict", "failed", "submission_unknown"}
 PROVIDERS = {"openai", "gemini", "anthropic"}
@@ -386,7 +386,8 @@ async def _run_judging(plan: dict, run_dir: Path, *, providers: dict | None = No
     # A judge added to a legacy run must read that run's exact frozen prompts, so
     # only the added judges' jobs of a legacy judge addition may be dispatched.
     legacy_added = _legacy_added_judges(plan)
-    if plan.get("version") != PROTOCOL_VERSION and legacy_added is None:
+    # Frozen v3 plans stay dispatchable with their exact saved prompts.
+    if plan.get("version") not in CURRENT_PROTOCOL_VERSIONS and legacy_added is None:
         raise ValueError(f"Plan protocol version must be {PROTOCOL_VERSION}; create a new overall-judgment plan before judging")
     save_plan(plan, run_dir)
     cache = Cache(run_dir / ".cache" / "judgments")

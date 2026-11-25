@@ -2,7 +2,6 @@
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 import json
-import time
 from types import SimpleNamespace
 
 import pytest

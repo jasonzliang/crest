@@ -2,14 +2,14 @@
 
 CREST benchmarks the creativity of deep research agents and AI scientist papers using **pairwise LLM judging**. Judges choose one overall winner, guided by **New, Useful, and Surprising**. Saved answers, judgments, configurations, API costs, and timing make each comparison inspectable.
 
-The current research configuration compares five systems on **50 questions across five categories**: [Caesar](https://github.com/jasonzliang/caesar-agent), OpenAI Responses with hosted web search, Google Deep Research, Anthropic Opus 5.5 with client-side search, and [GPT Researcher](https://github.com/assafelovic/gpt-researcher). The completed study has **250 answers and 2,999 of 3,000 planned judgments**. Claude Opus 5.5 refused one judgment, so the ranking uses 49 of the 50 questions. The same answers were also judged under the older NUS v1 and v2 rubrics. See [Deep research comparison v3](docs/deep-research-comparison-v3.html) for results and costs. All five configured research budgets are soft.
+The current research configuration compares five systems on **50 questions across five categories**: [Caesar](https://github.com/jasonzliang/caesar-agent), OpenAI Responses with hosted web search, Google Deep Research, Anthropic Opus 5.5 with client-side search, and [GPT Researcher](https://github.com/assafelovic/gpt-researcher). The completed study has **250 answers and 3,000 judgments** per rubric. Its main ranking uses the NUS v1 rubric; the same answers judged under NUS v2 and NUS v3 are in collapsed sections at the bottom of the page. Across the three rubrics, Claude Opus 5.5 refused five judgments on question 48, and Claude Sonnet 5.5 made them in its place. See [Deep Research Comparison v3](docs/deep-research-comparison-v3.html) for results and costs. All five configured research budgets are soft.
 
 The previous study used three research systems and two judges, with **150 answers and 600 judgments**. Its saved models, settings, scores, and costs are historical and do not measure the current configuration.
 
 | Pipeline | What it compares | Documentation |
 | --- | --- | --- |
-| `crest` | Answers generated for the same research questions | [Research pipeline](docs/research-pipeline.html) · [Deep research comparison v3](docs/deep-research-comparison-v3.html) · [Deep research comparison v2](docs/deep-research-comparison-v2.html) · [Deep research comparison v1](docs/deep-research-comparison-v1.html) |
-| `crest_ais` | Released papers from AI scientist systems | [AI scientist comparison method](docs/ai-scientist-comparison-method.html) · [AI scientist comparison v1](docs/ai-scientist-comparison-v1.html) |
+| `crest` | Answers generated for the same research questions | [Research Pipeline](docs/research-pipeline.html) · [Deep Research Comparison v3](docs/deep-research-comparison-v3.html) · [Deep Research Comparison v2](docs/deep-research-comparison-v2.html) · [Deep Research Comparison v1](docs/deep-research-comparison-v1.html) |
+| `crest_ais` | Released papers from AI scientist systems | [AI Scientist Comparison Method](docs/ai-scientist-comparison-method.html) · [AI Scientist Comparison v1](docs/ai-scientist-comparison-v1.html) |
 
 ## Quick start
 
@@ -37,7 +37,7 @@ set +a
 
 The file should supply `OPENAI_API_KEY` for OpenAI, Caesar, and GPT Researcher; `GOOGLE_API_KEY` (or `GEMINI_API_KEY`) for Google; and `LITELLM_API_KEY` for Anthropic. The active Anthropic research and judge settings use `api_base: https://litellm.evolution.ml` and `api_key_env: LITELLM_API_KEY`, not a direct `ANTHROPIC_API_KEY`. See the public [LiteLLM gateway setup guide](https://llm-keys.evolution.ml/guide#claude-code). CREST reads environment variables and does not automatically load dotenv files.
 
-Review the single master [configuration](crest/configs/crest.yaml) before running. It holds the models, prompts, budgets, depth, concurrency, and transport settings. The active inputs are [`crest/data/queries_n50_v2.jsonl`](crest/data/queries_n50_v2.jsonl) and [`crest/prompts/nus_pairwise_v4.txt`](crest/prompts/nus_pairwise_v4.txt). Do not redirect the OpenAI-backed providers through the Anthropic gateway: their configured route and pricing are direct OpenAI.
+Review the single master [configuration](crest/configs/crest.yaml) before running. It holds the models, prompts, budgets, depth, concurrency, and transport settings. The active inputs are [`crest/data/queries_n50_v2.jsonl`](crest/data/queries_n50_v2.jsonl) and [`crest/prompts/nus_pairwise_v3.txt`](crest/prompts/nus_pairwise_v3.txt). Do not redirect the OpenAI-backed providers through the Anthropic gateway: their configured route and pricing are direct OpenAI.
 
 ### Active models
 
@@ -49,7 +49,7 @@ Review the single master [configuration](crest/configs/crest.yaml) before runnin
 | `anthropic` | Opus 5.5 (`claude-opus-5-5`), **high**, through LiteLLM | Free source bootstrap, then client-side DDGS public web search and HTTP fetch |
 | `gpt_researcher` | Sol (`gpt-6.1-sol`), **high** for every role: fast, smart, and strategic | DDGS public web search and HTTP fetch in an isolated worker |
 
-All three judges use **high** reasoning/thinking/effort: **Opus 5.5** through the gateway, **Sol** through direct OpenAI, and **Gemini 4 Argon**. Judges do not use tools. See [Judge models](docs/judge-models.html) for request settings and prices.
+All three judges use **high** reasoning/thinking/effort: **Opus 5.5** through the gateway, **Sol** through direct OpenAI, and **Gemini 4 Argon**. Judges do not use tools. If Opus refuses a judgment on every one of its `retry_attempts`, `judges.anthropic.refusal_substitute` sends the same prompt to **Sonnet 5.5** (`claude-sonnet-5-5`) at its own rates. The stand-in is a transport setting, so judgment cache keys do not change, and each attempt records its `substitute_model`. See [Judge Models](docs/judge-models.html) for request settings and prices.
 
 The gateway's Bedrock route rejects native Anthropic `web_search`, so the active Anthropic research mode is explicitly `tool_mode: client`, with **no fallback to native hosted tools**. Before the first paid model request, a free DDGS bootstrap search must return usable source text and actual source URLs. The adapter checkpoints that evidence as untrusted context, not a fabricated model tool call; if retrieval supplies no usable evidence, it stops before submitting a paid request. Client searches through DDGS’s free public-engine auto mode and HTTP fetches have **no search/fetch API fee**; the model tokens used to read and reason over those results are still billed. OpenAI's hosted search is a separate, paid tool.
 
@@ -72,7 +72,7 @@ The canonical CREST worker, [crest/providers/gpt_researcher_worker.py](crest/pro
 
 ### All five providers in parallel
 
-From the repository root, the master configuration uses exactly [`crest/data/queries_n50_v2.jsonl`](crest/data/queries_n50_v2.jsonl) and [`crest/prompts/nus_pairwise_v4.txt`](crest/prompts/nus_pairwise_v4.txt). Preview all 50 questions, five research providers and three judges first:
+From the repository root, the master configuration uses exactly [`crest/data/queries_n50_v2.jsonl`](crest/data/queries_n50_v2.jsonl) and [`crest/prompts/nus_pairwise_v3.txt`](crest/prompts/nus_pairwise_v3.txt). Preview all 50 questions, five research providers and three judges first:
 
 ```bash
 # Preview the full plan locally; no paid calls.
@@ -111,7 +111,7 @@ Inspect each run’s saved answer, sources, word count, usage, request ledger wh
 | Anthropic Sonnet/xhigh v4 | Complete; $3.04599548 | Soft $4.50 profile; 2,074 words, 38 turns / 13 rounds, 106 citation records. Complete final answer; cost accounting settled. |
 | Caesar synthesis-only recovery | Complete; $3.837518580 cumulative known + $0.001510625 historically unresolved | Reused exploration; all 3 drafts and merge completed. New known charges: $2.541199485. Cumulative total remains unknown; not a fresh soft-300-iteration average. |
 | OpenAI Sol/xhigh q1 | Complete; $3.1459949 | Existing hard-policy pilot with a nonbinding ceiling; 2,184 words. Usable single-question evidence, not a new all-soft run. |
-| Google standard q1 | Complete; actual cost unverified | 4,525 words. Historical v2 conditional mean: **$2.9209 per answer across 50**, under the older 600-word profile—not today’s actual cost. |
+| Google standard q1 | Complete; actual cost unverified | 4,525 words. Historical v2 conditional mean: **$2.9209 per answer across 50**, under the older 600-word profile, not today’s actual cost. |
 | GPT Researcher input-fit v4 | Stopped at user request before final writing; no completed-answer cost calibration. | No final answer from this attempt. |
 
 GPT v3 returned an answer at $0.377987 and used 16,848 writer output tokens, demonstrating the larger output allowance. Its first research round stopped at the input-size request_bound guard, not the dollar threshold; it was not full-depth or near-$3 calibration.
@@ -133,7 +133,7 @@ python -m crest judge --run "$CREST_RUN"
 python -m crest analyze --run "$CREST_RUN"
 ```
 
-Judging makes additional paid calls; analysis is local. Omit `--limit 1` for all 50 questions. `python -m crest run` runs all three stages; without `--agents`, it selects all configured providers. Use `--config PATH` for another configuration, `--agents` for new generation runs only, `--judges` for a judge subset, or `--run PATH` to resume an existing run with its saved agent settings.
+Judging makes additional paid calls; analysis is local. Omit `--limit 1` for all 50 questions. `python -m crest run` runs all three stages; without `--agents`, it selects all configured providers. Use `--config PATH` for another configuration, `--agents` for new generation runs only, `--judges` for a judge subset, or `--run PATH` to resume an existing run with its saved agent settings. A judge call whose submission outcome is unknown stops judging for review; `judge --resend-unknown` resends each such call once, and the first try keeps its unknown cost.
 
 ### Budgets and recorded prices
 
@@ -151,7 +151,7 @@ Judging makes additional paid calls; analysis is local. Omit `--limit 1` for all
 
 Soft budgets warn rather than stop spending. Provider-specific validation, finite work/token/time limits and accounting still apply. OpenAI/Anthropic run a fixed number of follow-up rounds, sized from pilot costs to land near $3 within $2–4 (OpenAI 5 rounds: mean $3.12 over 51 replayed pilot answers, 46 inside $2–4; Anthropic 7 rounds: half the 14 that put two Sonnet pilots at $3.18–3.25, since Opus tokens cost 2× Sonnet's and client search is free for both). Those pilots used xhigh effort; the configured high effort may land lower, so confirm with a pilot. GPT uses its planning target and allowance. None forces minimum spending or guarantees a final cost.
 
-**Cost limits:** Estimates are not invoices. Unknown usage is not zero; preserve outstanding exposure and receipts before any authorized retry. Saved runs retain their original policies; judging costs are separate.
+**Cost limits:** Estimates are not invoices. Unknown usage is not zero; preserve outstanding exposure and receipts before any authorized retry. Saved runs retain their original policies; judging costs are separate. For the report only, [cost_imputation.py](crest/cost_imputation.py) imputes a cost for each call that never reported one (failed Caesar calls, a lost Anthropic turn, judge first tries that were resent) from comparable known calls, and keeps it apart from the known total; saved records are not changed. Google's assumed-price estimate stays marked incomplete.
 
 The verified active-route assumptions are USD per million tokens:
 
@@ -160,7 +160,7 @@ The verified active-route assumptions are USD per million tokens:
 | LiteLLM gateway / Opus 5.5 research and judge | $4.40 | $0.22 | $5.50 (5-minute) | $22 |
 | Direct OpenAI / Sol | $2 | $0.10 | $2.50 (default 30-minute) | $10 |
 
-These are route-specific estimates, not account invoices; use the gateway tariff rather than Anthropic's direct tariff for gateway requests. Cached reads and writes replace ordinary input tokens, and reasoning/thinking is billed once. Long-context pricing and hosted-tool charges may change a request's total; [Judge models](docs/judge-models.html#cost) records the estimator assumptions. Client DDGS/HTTP tools add no API fee, but their content consumes billed model tokens.
+These are route-specific estimates, not account invoices; use the gateway tariff rather than Anthropic's direct tariff for gateway requests. Cached reads and writes replace ordinary input tokens, and reasoning/thinking is billed once. Long-context pricing and hosted-tool charges may change a request's total; [Judge Models](docs/judge-models.html#cost) records the estimator assumptions. Client DDGS/HTTP tools add no API fee, but their content consumes billed model tokens.
 
 For historical context, the published **2026-10-26** run measured **$1.60 (Caesar), $0.10 (OpenAI), and $3.71 (Google)** per answer. The older **2026-11-02** standard Google pilot at 600 words was below the $2–4 range. Neither those measurements nor earlier pilots establish spending for the current Opus/high or GPT Researcher/high profiles.
 
@@ -180,6 +180,8 @@ New runs live in `crest/results/YYYY-MM-DD/HH-MM-SS-TZ-<agents>-q<count>-<id>/`,
 
 Existing run directories keep their original names, including older `HH-MM-SS-TZ-ID` paths. Resume or analyze them using their exact saved `--run` path; do not rename historical runs to match the new format. Same-name collisions receive a numeric suffix such as `-2` without overwriting existing work. These readable names do not change paid-work cache identities. Generation caches remain shared across runs; judgment and analysis caches live inside each run. Changing the rubric or judges reuses the saved answers. Configuration identities distinguish answers generated with different settings.
 
+Cited URLs that an answer's text never links are appended as a `Sources:` list. URLs are compared by a normalized key (case, fragment, trailing slash, tracking parameters), so a variant of a link already present is not added again.
+
 Provider concurrency adapts to successful requests and rate limits, within configured bounds. Failed attempts have bounded retries. Cost and timing records retain the original measurements when cached work is reused.
 
 ## How the ranking works
@@ -188,7 +190,11 @@ With all five current providers, each question has **10 pairs × 3 judges × 2 o
 
 Systems rank by their share of overall wins on common complete questions. New, Useful, and Surprising guide a single decision; they are not separate rankings. Question-level bootstrap intervals describe sensitivity to the question mix with saved answers and judges held fixed. These results measure judge preferences, not verified factual accuracy or absolute creativity.
 
-See the [NUS rubric](docs/nus-rubric.html), [current NUS v4 rubric](crest/prompts/nus_pairwise_v4.txt), and [50-question dataset](crest/data/queries_n50_v2.jsonl). [NUS v3](crest/prompts/nus_pairwise_v3.txt), [NUS v2](crest/prompts/nus_pairwise_v2.txt) and [NUS v1](crest/prompts/nus_pairwise_v1.txt) are also available; select their prompt path explicitly for comparisons. Saved runs keep the exact prompt text they used. V3 has the judge state the expected approach from the task before reading either answer, credits what an answer adds to a cited idea rather than the idea itself, and judges payoff against the task's need rather than the answer's framing. V4 keeps v3 and adds one rule: wording about an answer's own research, such as "the supplied material", is neither credited nor penalized. These are design improvements, not measured gains in agreement with human judges. The current set was generated by the three judge models configured at the time, in the five categories of Caesar's original [50 questions](crest/data/queries_n50_v1.jsonl), which the published comparison used.
+See the [NUS Rubric](docs/nus-rubric.html), [default NUS v3 rubric](crest/prompts/nus_pairwise_v3.txt), and [50-question dataset](crest/data/queries_n50_v2.jsonl). [NUS v2](crest/prompts/nus_pairwise_v2.txt) and [NUS v1](crest/prompts/nus_pairwise_v1.txt) are also available; select their prompt path explicitly for comparisons. Saved runs keep the exact prompt text they used. V3 has the judge state the expected approach from the task before reading either answer, credits what an answer adds to a cited idea rather than the idea itself, and judges payoff against the task's need rather than the answer's framing. It neither credits nor penalizes wording about an answer's own research, such as "the supplied material". These are design improvements, not measured gains in agreement with human judges.
+
+Rubric file versions (NUS v1, v2, v3) are separate from the judging protocol version, which sets the response instructions added after every NUS rubric. NUS jobs use protocol `nus-overall-pairwise-v4` by default (`CURRENT_NUS_PROTOCOL` in [rubrics.py](crest/rubrics.py)): it asks for the stronger creative contribution, has the judge consider the guidance as a whole rather than as separate scales, and asks for about 150–300 words, a target rather than a limit. Protocol `nus-overall-pairwise-v3`, which the 50-question study used under all three rubrics, is frozen so saved stages and their cache keys can be rebuilt exactly; the protocol is part of the judgment key, so a `nus-overall-pairwise-v4` pass does not reuse v3-protocol judgments. Judge stage manifests and protocol-v4 jobs record `rubric_id` (the rubric file name and the SHA-256 of its text). It is not part of the job key, and `rubrics.resolve_rubric_version` names the packaged rubric by content, so a renamed file still resolves. The AI scientist pipeline follows the same split: `crest_ais` plans use `crest-ais-overall-v4` by default, and `crest-ais-overall-v3` plans stay frozen.
+
+The current question set was generated by the three judge models configured at the time, in the five categories of Caesar's original [50 questions](crest/data/queries_n50_v1.jsonl), which the published comparison used.
 
 ## Browse the reports
 
@@ -200,9 +206,18 @@ python -m http.server 8000
 
 Open [the documentation index](http://localhost:8000/docs/index.html) for the research comparison, AI scientist comparison, guides, and historical project material.
 
-Page names use sentence case, with matching lowercase kebab-case HTML filenames. Directory landing pages use `index.html`. The canonical names and compatibility aliases live in `crest_ais/site.py`. Old URLs redirect to their canonical page, retaining query strings and section fragments when JavaScript is enabled, and provide a readable link without JavaScript.
+Page names use title case, with matching lowercase kebab-case HTML filenames. Directory landing pages use `index.html`. The canonical names and compatibility aliases live in `crest_ais/site.py`. Old URLs redirect to their canonical page, retaining query strings and section fragments when JavaScript is enabled, and provide a readable link without JavaScript.
 
-`Updated YYYY-MM-DD` is the **page-update date**, not the study date or run date. Saved answers, judgments, scores, tables, figures, and original study metadata are not changed when publication wrappers are updated. Report writers accept `updated="YYYY-MM-DD"`; `python -m crest.report` also accepts `--updated`. Date precedence is the explicit argument, `CREST_PAGE_UPDATED`, `SOURCE_DATE_EPOCH` (UTC), then the current UTC build date. Set `CREST_PAGE_UPDATED=2026-11-05` to reproduce this documentation publication. Canonical report filenames determine the versioned page title; custom filenames retain the generic comparison title. Regenerating a canonical report in this site automatically updates its index entry date and the index page date. Legacy output filenames are rejected so they cannot overwrite compatibility redirects. For manually edited pages, update the page header and its matching index date together. The catalog’s `updated` fields record the migration baseline, not a build-time clock.
+To render a comparison page from a complete 50-question run, without API calls:
+
+```bash
+python -m crest.report RUN --output docs/deep-research-comparison-v3.html \
+  --rubric-run OTHER_RUBRIC_RUN --rubric-run ANOTHER_RUBRIC_RUN
+```
+
+Pass `--rubric-run` once for each extra run that judged the same answers under another packaged NUS rubric; those results appear in collapsed sections at the bottom of the page. The published v3 page renders the NUS v1 run `crest/results/2026-11-24/04-13-43-CST-5-research-agents-q50-6324120b` with the NUS v3 run `2026-11-23/22-38-07-CST-5-research-agents-q50-1eaaa56c` and the NUS v2 run `2026-11-24/04-14-01-CST-5-research-agents-q50-d1ec03a9`. Run outputs are local and ignored by Git.
+
+`Updated YYYY-MM-DD` is the **page-update date**, not the study date or run date. Saved answers, judgments, scores, tables, figures, and original study metadata are not changed when publication wrappers are updated. Report writers accept `updated="YYYY-MM-DD"`; `python -m crest.report` also accepts `--updated`. Date precedence is the explicit argument, `CREST_PAGE_UPDATED`, `SOURCE_DATE_EPOCH` (UTC), then the current UTC build date. Set `CREST_PAGE_UPDATED` to a page's shown date to reproduce that publication. Canonical report filenames determine the versioned page title; custom filenames retain the generic comparison title. Regenerating a canonical report in this site automatically updates its index entry date and the index page date. Legacy output filenames are rejected so they cannot overwrite compatibility redirects. For manually edited pages, update the page header and its matching index date together. The catalog’s `updated` fields are recorded dates, not a build-time clock.
 
 ## Development
 

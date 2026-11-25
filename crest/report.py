@@ -8,7 +8,7 @@ the page then names it. Rendering never submits jobs, changes analysis, or reads
 mutable generation caches.
 
 Add --rubric-run RUN (repeatable) to show the same answers judged under other
-packaged NUS rubrics in a separate section.
+packaged NUS rubrics in small collapsed dropdowns at the bottom of the page.
 Category headings use saved metadata or the bundled query dataset.
 
 Optional enrichment uses the existing crest-final-audit-v1 artifact produced by
@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, defaultdict
+from decimal import ROUND_HALF_UP, Decimal
 from html import escape
 import hashlib
 from itertools import combinations
@@ -35,11 +36,12 @@ from markdown_it.renderer import RendererHTML
 
 from .analysis import analyze
 from .artifacts import configuration_record
+from .cost_imputation import impute_answer_costs, impute_judgment_costs
 from .costs import cost_for_row, summarize_costs
 from .judging import parse_verdict, validate_verdict
-from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, NUS_PROTOCOL, protocol_rubric_kind
+from .rubrics import AUT_KIND, NUS_KIND, STRICT_REASON_PROTOCOLS, protocol_rubric_kind
 from crest_ais.navigation import CSS as SITE_CSS, site_favicon, site_header
-from crest_ais.site import page_path, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
+from crest_ais.site import page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
 
 ROOT = Path(__file__).resolve().parents[1]
 # Agents and judges come from each frozen run; these tables only decorate known identifiers.
@@ -47,17 +49,17 @@ IDENTIFIER = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]*')
 LABELS = {'caesar': 'Caesar', 'openai': 'OpenAI (Sol + web search)', 'gemini': 'Google Deep Research',
           'anthropic': 'Anthropic (Claude + web search)', 'gpt_researcher': 'GPT Researcher'}
 JUDGE_LABELS = {'gpt-6.1-sol': 'GPT-6.1 Sol', 'claude-opus-5-5': 'Claude Opus 5.5', 'gpt-6-astra': 'GPT-6 Astra', 'gemini-4-argon': 'Gemini 4 Argon', 'claude-fable-5-1': 'Claude Fable 5.1',
-                'claude-sonnet-5-5': 'Claude Sonnet 5.5'}
+                'claude-sonnet-5-5': 'Claude Sonnet 5.5', 'gpt-6-luna': 'GPT-6 Luna'}
 SOURCE_URLS = {'gpt_researcher': 'https://github.com/assafelovic/gpt-researcher', 'caesar': 'https://github.com/jasonzliang/caesar-agent',
                'openai': 'https://developers.openai.com/api/docs/guides/tools-web-search',
                'gemini': 'https://ai.google.dev/gemini-api/docs/deep-research',
                'anthropic': 'https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool'}
 COLORS = {'gpt_researcher': '#8a4d69', 'caesar': '#0b5967', 'gemini': '#b4652b', 'openai': '#5e628c', 'anthropic': '#3d7a4a'}
 DEFAULT_COLOR = '#526574'
-PRICING_LINKS = {'openai': ('<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">OpenAI Sol</a>',
-                            '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">OpenAI Luna</a>'),
-                 'gemini': ('<a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini API pricing</a>',),
-                 'anthropic': ('<a href="https://platform.claude.com/docs/en/about-claude/pricing">Claude pricing</a>',)}
+PRICING_LINKS = {'openai': ('<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">GPT-6.1 Sol</a>',
+                            '<a href="https://developers.openai.com/api/docs/models/gpt-6-luna">GPT-6 Luna</a>'),
+                 'gemini': ('<a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini API</a>',),
+                 'anthropic': ('<a href="https://platform.claude.com/docs/en/about-claude/pricing">Claude</a>',)}
 PRICING_PROVIDER = {'caesar': 'openai', 'gpt_researcher': 'openai'}  # Caesar's SDK calls bill at OpenAI rates.
 
 
@@ -84,8 +86,10 @@ class _AnswerMarkdownRenderer(RendererHTML):
             return f'<a href="{_text(source)}">{label}</a>'
         return label
 
-    def table_open(self, _tokens, _idx, _options, _env):
-        return '<div class="table-scroll" role="region" aria-label="Answer table" tabindex="0"><table>'
+    def table_open(self, _tokens, _idx, _options, env):
+        env['tables'] = env.get('tables', 0) + 1
+        label = _text(f'Table {env["tables"]} in {env.get("table_label", "the answer")}')
+        return f'<div class="table-scroll" role="region" aria-label="{label}" tabindex="0"><table>'
 
     def table_close(self, _tokens, _idx, _options, _env):
         return '</table></div>\n'
@@ -115,17 +119,23 @@ def _link_known_source_urls(state, silent):
     return True
 
 
-def _markdown_answer(text, source_urls=()):
+def _markdown_answer(text, source_urls=(), label='the answer'):
     parser = MarkdownIt('js-default', {'breaks': True, 'linkify': True}, renderer_cls=_AnswerMarkdownRenderer)
     parser.inline.ruler.before('linkify', 'known_source_urls', _link_known_source_urls)
     env = {'source_urls': sorted({u for u in source_urls if isinstance(u, str) and ' ' in u
                                 and not any(c in u for c in '\r\n\t')
                                 and u.lower().startswith(('https://', 'http://'))
-                                and parser.validateLink(u)}, key=len, reverse=True)}
+                                and parser.validateLink(u)}, key=len, reverse=True),
+           'table_label': label}
     tokens = parser.parse(text, env)
     for token in tokens:
         if token.type in {'heading_open', 'heading_close'}:
-            token.tag = f'h{min(6, int(token.tag[1:]) + 3)}'
+            level = int(token.tag[1:])
+            # The page's question headings are h3/h4, so an answer's own h1 becomes h5. Levels 2 and 3 both
+            # become h6, so level 3 and below get a smaller style.
+            token.tag = f'h{min(6, level + 4)}'
+            if token.type == 'heading_open' and level >= 3:
+                token.attrSet('class', 'answer-minor-heading')
         elif token.type == 'th_open':
             token.attrSet('scope', 'col')
     return parser.renderer.render(tokens, parser.options, env)
@@ -149,9 +159,15 @@ def _plural(count, noun, plural=None):
     return f'{_word(count)} {noun if count == 1 else plural or noun + "s"}'
 
 
-def _join(items):
+def _count(count, noun, plural=None):
+    """A count in digits, for answers, calls and judgments in cost and judging prose."""
+    return f'{count:,} {noun if count == 1 else plural or noun + "s"}'
+
+
+def _join(items, conjunction='and'):
     items = list(items)
-    return ' and '.join(items) if len(items) < 3 else ', '.join(items[:-1]) + ', and ' + items[-1]
+    return (f' {conjunction} '.join(items) if len(items) < 3
+            else ', '.join(items[:-1]) + f', {conjunction} ' + items[-1])
 
 
 def _agents(data):
@@ -262,7 +278,7 @@ def _validate(data):
         row_family = protocol_rubric_kind(protocol)
         if row_family != family or row.get('rubric_kind', row_family) != family:
             raise ValueError('Ranking and judgment rubric kinds must match the frozen protocol')
-        strict_reason = protocol in (NUS_PROTOCOL, AUT_PROTOCOL)
+        strict_reason = protocol in STRICT_REASON_PROTOCOLS
         verdict = validate_verdict(row.get('verdict'), require_reason_quality=strict_reason)
         text = (row.get('result') or {}).get('text')
         if text is not None and parse_verdict(text, require_reason_quality=strict_reason) != verdict:
@@ -281,7 +297,7 @@ def _validate(data):
                     for a in ordered]:
                 raise ValueError('Judgment presentation hashes do not match the saved answers')
     protocols = {j.get('protocol_version') for j in judgments}
-    if protocols.intersection((NUS_PROTOCOL, AUT_PROTOCOL)) and len(protocols) != 1:
+    if protocols.intersection(STRICT_REASON_PROTOCOLS) and len(protocols) != 1:
         raise ValueError('Do not mix judgments from different rubric protocols')
     failed = {f['cell'] for f in failures}
     if failed & seen or seen | failed != cells or len(judgments) + len(failed) != counts['judgments']:
@@ -340,11 +356,16 @@ def _audit_records(run, path, answers, counts):
     return records, path, doc
 
 
-def _summarize(rows, audit_records):
+def _summarize(rows, audit_records, imputed=None):
     # One shared accounting implementation handles partial estimates and ancestry
     # deduplication. The lifetime audit is displayed separately, never substituted
-    # into saved cost_details or added to them.
+    # into saved cost_details or added to them. Calls that never reported a cost are
+    # counted at an imputed amount (crest.cost_imputation), kept apart from the known total.
     costs = summarize_costs(rows)
+    records = [(imputed or {}).get(r.get('key')) for r in rows]
+    records = [r for r in records if r]
+    with_calls = [r for r in records if r['imputed_calls']]
+    imputed_total = math.fsum(r['imputed_usd'] for r in with_calls)
     details = [cost_for_row(row) for row in rows]
     known_available = any(_number(c.get('cumulative_known_estimate_usd')) for c in details)
     current_available = any(_number(c.get('current_attempt_known_estimate_usd')) for c in details)
@@ -355,17 +376,22 @@ def _summarize(rows, audit_records):
     lifetime = [v for v in lifetime if _number(v)]
     known = [r.get('known_usd') for r in audited if _number(r.get('known_usd'))]
     known_total = costs['cumulative_known_estimate_usd'] if known_available else None
+    estimated = known_total + imputed_total if known_total is not None else None
     return {'answers': len(rows), 'cost_assessment': costs,
             'known_cost_usd': known_total,
             'mean_known_cost_usd': known_total / len(rows) if known_total is not None and rows else None,
+            'imputed_cost_usd': imputed_total, 'imputed_answers': len(with_calls),
+            'imputed_calls': sum(r['imputed_calls'] for r in with_calls), 'imputed_records': with_calls,
+            'estimated_cost_usd': estimated,
+            # Rows still missing some cost after imputation; Google's assumed-price scenario is not one of them.
+            'unimputed_missing_answers': sum(r['residual_incomplete'] and r['residual_reason'] != 'conditional_list_price_scenario'
+                                             for r in records) if records else None,
             'current_attempt_known_cost_usd': costs['current_attempt_known_estimate_usd'] if current_available else None,
             'unknown_cost_answers': costs['unknown_count'],
             # Google's assumed-price scenario is flagged incomplete by design; only missing calls make a lower bound.
             'missing_cost_answers': sum(bool(c.get('estimate_incomplete'))
                                         and c.get('cost_basis') != 'conditional_list_price_scenario' for c in details),
-            'unknown_current_cost_answers': costs['current_attempt_unknown_count'],
             'historical_unknown_reserved_usd': costs['historical_unresolved_reserved_exposure_usd'],
-            'current_unknown_reserved_usd': costs['current_unresolved_reserved_exposure_usd'],
             'audited_known_cost_usd': math.fsum(known) if len(known) == len(rows) else None,
             'duration_count': len(durations), 'duration_sum_seconds': math.fsum(durations) if durations else None,
             'mean_duration_seconds': statistics.mean(durations) if durations else None,
@@ -375,8 +401,7 @@ def _summarize(rows, audit_records):
             'unknown_duration_answers': len(rows) - len(durations),
             'lifetime_duration_count': len(lifetime),
             'mean_lifetime_duration_seconds': statistics.mean(lifetime) if lifetime else None,
-            'median_lifetime_duration_seconds': statistics.median(lifetime) if lifetime else None,
-            'estimated_above_target': sum(bool((r.get('result') or {}).get('budget_exceeded')) for r in rows)}
+            'median_lifetime_duration_seconds': statistics.median(lifetime) if lifetime else None}
 
 
 def _answer_artifact(generation, row):
@@ -397,13 +422,22 @@ def _refused(attempt):
     return attempt.get('status') == 'rejected' and 'stop_reason refusal' in str(attempt.get('error') or '')
 
 
+def _attempts(row):
+    return [a for a in row.get('attempts') or [] if isinstance(a, dict)]
+
+
+def _refusal_categories(attempts):
+    """The safety category the API gave each refused attempt that named one."""
+    return [m.group(1) for a in attempts for m in [REFUSAL.search(str(a.get('error') or ''))] if m]
+
+
 def _stand_in(data, row):
     """The model that judged in place of the judge's saved model, or None.
 
     A stand-in is accepted only after the saved model refused every earlier try;
     any other change of model is an error."""
     configured, model = data['judges'][row['judge']].get('model'), (row.get('result') or {}).get('model')
-    attempts = [a for a in row.get('attempts') or [] if isinstance(a, dict)]
+    attempts = _attempts(row)
     if not any(a.get('substitute_model') for a in attempts) and (model is None or configured is None or model == configured):
         return None
     first = next((i for i, a in enumerate(attempts) if a.get('substitute_model')), len(attempts))
@@ -422,8 +456,8 @@ def _stand_ins(data):
     for row in data['judgments']:
         model = _stand_in(data, row)
         if model:
-            refused = [a for a in row['attempts'] if isinstance(a, dict) and not a.get('substitute_model')]
-            labels = [m.group(1) for a in refused for m in [REFUSAL.search(str(a.get('error') or ''))] if m]
+            refused = [a for a in _attempts(row) if not a.get('substitute_model')]
+            labels = _refusal_categories(refused)
             found.append({'key': row['key'], 'question_id': row['question_id'], 'pair': list(row['pair']),
                           'order': list(row['order']), 'judge': row['judge'], 'model': model,
                           'refusals': len(refused), 'labeled': len(labels), 'categories': sorted(set(labels))})
@@ -432,23 +466,48 @@ def _stand_ins(data):
 
 def _resent_tries(data):
     """Earlier tries of saved judgments whose outcome, and so whose cost, is unknown."""
-    tries = []
+    tries, imputed = [], data.get('cost_imputation', {}).get('judgments', {})
     for row in data['judgments']:
-        attempts = [a for a in row.get('attempts') or [] if isinstance(a, dict)]
+        attempts = _attempts(row)
+        calls = {c['attempt_key']: c for c in (imputed.get(row.get('key')) or {}).get('calls', [])}
         for index, attempt in enumerate(attempts[:-1]):
             if attempt.get('submission_unknown') and not _number(attempt.get('cost_usd')):
+                call = calls.get(attempt.get('key')) or {}
                 tries.append({'index': index, 'after': len(attempts) - index - 1,
-                              'error': str(attempt.get('error') or '')})
+                              'error': str(attempt.get('error') or ''),
+                              'imputed_usd': call.get('imputed_usd'), 'basis': call.get('basis')})
     return tries
 
 
+def _resent_sentence(resent):
+    """Say which earlier tries never reported a cost, that they were sent again, and how the total counts them."""
+    if not resent:
+        return ''
+    one, first = len(resent) == 1, 'first ' if all(t['index'] == 0 for t in resent) else ''
+    timeouts = all(re.search(r'HTTP 408|timeout|timed out', t['error'], re.I) for t in resent)
+    how = 'timed out' if timeouts else 'timed out or lost its connection' if one else 'timed out or lost their connection'
+    once = all(t['after'] == 1 for t in resent)
+    again = ('We sent it once more' if one else 'We sent each once more') if once \
+        else ('We sent it again' if one else 'We sent each again')
+    what = (f'The {first}try of 1 judgment' if one else f'The {first}tries of {len(resent):,} judgments') if first \
+        else f'Earlier tries of {_count(len(resent), "judgment")}'  # A judgment has at most one unknown first try.
+    lead = f'{what} {how} and never reported a cost. {again}'
+    if not all(_number(t.get('imputed_usd')) for t in resent):
+        return f'{lead}. {"That" if one else "Those"} {first}{"try is" if one else "tries are"} not in the total.'
+    amount = _money(math.fsum(t['imputed_usd'] for t in resent))
+    tries = f'the {first}try' if one else f'each {first}try'
+    if once and first and all(t['basis'] == 'same_job_resend' for t in resent):
+        cost = 'what the second try cost' if one else 'what its second try cost'
+    else:
+        cost = 'the cost of similar calls'
+    return f'{lead} and count {tries} at {cost} ({amount}{"" if one else " in total"}).'
+
+
 def _failure_kind(row):
-    attempts = [a for a in row.get('attempts') or [] if isinstance(a, dict)]
-    errors = [str(a.get('error') or '') for a in attempts]
-    if attempts and all(a.get('status') == 'rejected' and 'stop_reason refusal' in e for a, e in zip(attempts, errors)):
-        categories = sorted({m.group(1) for e in errors for m in [REFUSAL.search(e)] if m})
-        return 'refusal', categories
-    text = ' '.join([str(row.get('error') or ''), *errors])
+    attempts = _attempts(row)
+    if attempts and all(_refused(a) for a in attempts):
+        return 'refusal', sorted(set(_refusal_categories(attempts)))
+    text = ' '.join([str(row.get('error') or ''), *(str(a.get('error') or '') for a in attempts)])
     if 'status unknown' in text or 'outcome unknown' in text or 'StreamInterrupted' in text:
         return 'unknown_outcome', []
     return 'other', []
@@ -558,10 +617,16 @@ def load_run(run_dir, *, audit=None):
             if expected != {hashlib.sha256(source.read_bytes()).hexdigest()}:
                 raise ValueError('Final audit input hashes do not match the selected snapshot')
     failed = [f['row'] for f in data['judge_failures']]
+    # Failed judgments have no resend to compare with, so only saved judgments are imputed.
+    data['cost_imputation'] = {
+        'answers': {r['key']: r for r in impute_answer_costs(data['answers'])},
+        'judgments': {r['key']: r for r in impute_judgment_costs(data['judgments'], judges=data['judges'])}}
     data['resources'] = {
-        'generation': {agent: _summarize([a for a in data['answers'] if a['agent'] == agent], audit_records) for agent in agents},
+        'generation': {agent: _summarize([a for a in data['answers'] if a['agent'] == agent], audit_records,
+                                         data['cost_imputation']['answers']) for agent in agents},
         'judging': {judge: _summarize([j for j in data['judgments'] if j['judge'] == judge]
-                                      + [f['row'] for f in data['judge_failures'] if f['judge'] == judge], {})
+                                      + [f['row'] for f in data['judge_failures'] if f['judge'] == judge], {},
+                                      data['cost_imputation']['judgments'])
                     for judge in judges},
         'failed_judging': summarize_costs(failed),
         'paid_judging': summarize_costs([*data['judgments'], *failed, *prior]),
@@ -589,7 +654,7 @@ def _cell_winners(data):
 
 def _judging_total(data):
     judging = data['resources']['judging']
-    return math.fsum(judging[j]['known_cost_usd'] or 0 for j in data['ranking']['judges'])
+    return math.fsum(judging[j]['estimated_cost_usd'] or 0 for j in data['ranking']['judges'])
 
 
 def _rubric_variants(data, runs):
@@ -599,7 +664,7 @@ def _rubric_variants(data, runs):
         raise ValueError('A rubric comparison needs this report to use a packaged NUS rubric')
     identity, presentation = _answer_identity(data), {j.get('presentation_version') for j in data['judgments']}
     protocol = {j.get('protocol_version') for j in data['judgments']}
-    entries = [{'version': main_version}]
+    entries = [_variant_summary(main_version, data)]
     for run in runs:
         variant = load_run(run)
         version = _rubric_version((variant['judging_dir'] / 'rubric.txt').read_text(encoding='utf-8'))
@@ -622,7 +687,7 @@ def _rubric_variants(data, runs):
             raise ValueError(f'{Path(run).name}: rubric comparison runs must present answers to judges the same way')
         entries.append(_variant_summary(version, variant))
         del variant  # Each run's answers are large; keep only what the section shows.
-    entries[0] = _variant_summary(main_version, data)
+    entries[1:] = sorted(entries[1:], key=lambda e: int(e['version'].lstrip('v')))
     complete = set.intersection(*(e['complete_ids'] for e in entries))
     questions = [q for q in data['questions'] if q['id'] in complete]
     answers = [a for a in data['answers'] if a['question_id'] in complete]
@@ -642,13 +707,19 @@ def _variant_summary(version, data):
             'complete_ids': set(data['ranking']['coverage']['complete_question_ids']),
             'votes': [{k: j[k] for k in fields if k in j} for j in data['judgments']],
             'winners': _cell_winners(data), 'judging_total': _judging_total(data),
+            'resent': _resent_sentence(_resent_tries(data)),
             'unknown_costs': sum(data['resources']['judging'][j]['unknown_cost_answers'] for j in data['ranking']['judges']),
             'stand_ins': data['stand_ins'],
             'failures': [{k: v for k, v in f.items() if k != 'row'} for f in data['judge_failures']]}
 
 
+def _tenths(value):
+    """Round a share to tenths of a percent, halves up, from its shortest decimal form (35.25 shows as 35.3)."""
+    return (Decimal(str(value)) * 100).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP) + 0  # + 0 turns −0.0 into 0.0.
+
+
 def _pct(value):
-    return f'{value * 100:.1f}%' if _number(value) else 'Unavailable'
+    return f'{_tenths(value)}%' if _number(value) else 'Unavailable'
 
 
 def _money(value, places=2):
@@ -666,7 +737,7 @@ def _interval(value):
 
 
 def _points(value):
-    return f'{value * 100:+.1f}'.replace('-', '−')
+    return f'{_tenths(value):+}'.replace('-', '−')
 
 
 def _main_models(data):
@@ -679,26 +750,43 @@ def _main_models(data):
     return models
 
 
-def _top_group(data):
-    """Systems whose paired interval with the leader includes zero, in rank order."""
-    report = data['ranking']
-    order = [row['agent'] for row in report['ranking']]
-    if not order:
-        return []
-    leader, group = order[0], [order[0]]
-    contrasts = {frozenset(c['pair']): c for c in report.get('paired_contrasts', [])}
-    for agent in order[1:]:
-        contrast = contrasts.get(frozenset((leader, agent)))
-        if contrast and contrast['ci95'][0] <= 0 <= contrast['ci95'][1]:
-            group.append(agent)
-    return group
+WORD = re.compile(r"[^\W_]+(?:['’-][^\W_]+)*")
 
 
-def _table(headers, rows, label, extra='', *, row_headers=False):
+def _answer_lengths(data):
+    """Each system's mean answer length in words, counted on the text the judges saw when every judgment
+    used one presentation, else on the saved text without its appended list of uncited sources."""
+    from .presentation import drop_uncited_sources, present_research_answer
+    versions = {j.get('presentation_version') for j in data.get('judgments', [])}
+    version = next(iter(versions)) if len(versions) == 1 else None
+    exact = version in ('citation-neutral-v1', 'citation-neutral-v2')
+    words = defaultdict(list)
+    for answer in data['answers']:
+        text = answer['result']['text']
+        text = present_research_answer(text, version) if exact else drop_uncited_sources(text)
+        words[answer['agent']].append(len(WORD.findall(text)))
+    label = 'Mean length (words)' if exact else 'Mean length (words, sources list excluded)'
+    return {a: statistics.fmean(n) for a, n in words.items()}, label
+
+
+WIDE_TABLE_COLUMNS = 5  # Tables this wide keep a minimum width and scroll on phones instead of squeezing.
+
+
+def _table(headers, rows, label, extra='', *, row_headers=False, num_from=None, wide=None):
+    """Columns from index num_from on hold numbers: right-aligned, unbroken, tabular figures."""
+    def num(index):
+        return ' class="num"' if num_from is not None and index >= num_from else ''
+    if wide is None:
+        wide = len(headers) >= WIDE_TABLE_COLUMNS and 'class="matrix' not in extra  # The matrix has its own width.
+    attributes = extra
+    if wide:
+        attributes = extra.replace('class="', 'class="wide ', 1) if 'class="' in extra else ' '.join(
+            part for part in (extra, 'class="wide"') if part)
     return (f'<div class="table-scroll" role="region" aria-label="{_text(label)}" tabindex="0">'
-            f'<table {extra}><thead><tr>' + ''.join(f'<th scope="col">{_text(h)}</th>' for h in headers)
+            f'<table{" " + attributes if attributes else ""}><thead><tr>'
+            + ''.join(f'<th scope="col"{num(index)}>{_text(h)}</th>' for index, h in enumerate(headers))
             + '</tr></thead><tbody>' + ''.join('<tr>' + ''.join(
-                f'<th scope="row">{c}</th>' if row_headers and index == 0 else f'<td>{c}</td>'
+                f'<th scope="row">{c}</th>' if row_headers and index == 0 else f'<td{num(index)}>{c}</td>'
                 for index, c in enumerate(row)) + '</tr>' for row in rows)
             + '</tbody></table></div>')
 
@@ -727,40 +815,85 @@ def _category_gloss(categories):
     return ', ' + _join(glosses) if len(categories) == 1 and glosses else ''
 
 
-def _stand_in_note(data, stand_ins, *, counted=False):
-    """Say which judgments a stand-in model made, and why, grouped by question and pair."""
-    numbers, agents, counts = _question_numbers(data), _system_order(data), _counts(data)
-    groups = defaultdict(list)
-    for row in stand_ins:
-        groups[row['judge'], row['model']].append(row)
+def _stand_in_items(data, rows):
+    """'Question 48, A vs B, both orders' for each question and pair a stand-in model judged."""
+    numbers, agents = _question_numbers(data), _system_order(data)
+    cells = defaultdict(list)
+    for row in rows:
+        cells[numbers[row['question_id']], tuple(sorted(row['pair'], key=agents.index))].append(row['order'])
+    items = []
+    for (number, pair), orders in sorted(cells.items(), key=lambda c: (c[0][0], [agents.index(a) for a in c[0][1]])):
+        first, second = pair if len(orders) > 1 else orders[0]
+        items.append(f'Question {number}, {_label(first)} vs {_label(second)}, '
+                     + ('both orders' if len(orders) > 1 else f'{_label(first)} shown first'))
+    return items
+
+
+def _asked(rows):
+    tries = sorted({row['refusals'] for row in rows})
+    whom = 'it' if len(rows) == 1 else 'each of them'
+    return (f'{whom} on its only try' if tries == [1] else f'{whom} on all {tries[0]:,} tries'
+            if len(tries) == 1 else f'{whom} on every try, from {tries[0]:,} to {tries[-1]:,} tries')
+
+
+def _refusal_labels(rows):
+    refusals, labeled = sum(r['refusals'] for r in rows), sum(r['labeled'] for r in rows)
+    categories = sorted({c for r in rows for c in r['categories']})
+    if not categories:
+        return ''
+    whom = (('the refusal' if refusals == 1 else 'every refusal') if labeled == refusals
+            else f'{labeled:,} of the {refusals:,} refusals')
+    return f'the API labeled {whom} ' + _join(f'“{c}”' for c in categories) + _category_gloss(categories)
+
+
+def _refused_shown(data, rows):
+    """Which judgments the stand-in rows are: one system shown first against several, or each item."""
+    agents, numbers = _system_order(data), _question_numbers(data)
+    firsts = {row['order'][0] for row in rows}
+    if len(rows) > 1 and len(firsts) == 1 and len({numbers[row['question_id']] for row in rows}) == 1:
+        first = next(iter(firsts))
+        against = sorted({row['order'][1] for row in rows}, key=agents.index)
+        if len(against) == len(rows):
+            return f'all showed {_label(first)} first, against {_join(_label(a) for a in against)}'
+    return 'are ' + '; '.join(_stand_in_items(data, rows))
+
+
+def _stand_in_summary(data):
+    """One note, for the judges section, on every judgment a stand-in model made under any rubric on the page."""
+    entries = (data['rubric_variants']['entries'] if data.get('rubric_variants')
+               else [{'version': _main_rubric(data), 'stand_ins': data.get('stand_ins', [])}])
+    main, numbers = entries[0]['version'], _question_numbers(data)
+    groups = defaultdict(lambda: defaultdict(list))
+    for entry in entries:
+        for row in entry['stand_ins']:
+            groups[row['judge'], row['model']][entry['version']].append(row)
     sentences = []
-    for judge, model in sorted(groups, key=lambda g: (data['ranking']['judges'].index(g[0]), g[1])):
-        rows, name, n = groups[judge, model], _judge_label(data, judge), len(groups[judge, model])
-        cells = defaultdict(list)
-        for row in rows:
-            cells[numbers[row['question_id']], tuple(sorted(row['pair'], key=agents.index))].append(row['order'])
-        items = []
-        for (number, pair), orders in sorted(cells.items(), key=lambda c: (c[0][0], [agents.index(a) for a in c[0][1]])):
-            first, second = pair if len(orders) > 1 else orders[0]
-            items.append(f'Question {number}, {_label(first)} vs {_label(second)}, '
-                         + ('both orders' if len(orders) > 1 else f'{_label(first)} shown first'))
-        tries = sorted({row['refusals'] for row in rows})
-        each = '' if n == 1 else 'each one '
-        asked = ('the only time it was asked' if tries == [1] else f'all {_word(tries[0])} times it was asked'
-                 if len(tries) == 1 else f'every time it was asked, from {_word(tries[0])} to {_word(tries[-1])} times')
-        sentences.append(f'{name} refused to make {_word(n)} of its {counts["judgments"] // counts["judges"]:,} '
-                         f'judgments: {"; ".join(items)}. It refused {each}{asked}.')
-        refusals, labeled = sum(r['refusals'] for r in rows), sum(r['labeled'] for r in rows)
-        categories = sorted({c for r in rows for c in r['categories']})
-        if categories:
-            whom = (('the refusal' if refusals == 1 else 'the refusals') if labeled == refusals
-                    else f'{_word(labeled)} of the {_word(refusals)} refusals')
-            sentences.append(f'The API labeled {whom} ' + _join(f'“{c}”' for c in categories)
-                             + _category_gloss(categories) + '.')
-        sentences.append(f'{JUDGE_LABELS.get(model, model)} made '
-                         + ('that judgment' if n == 1 else f'those {_word(n)} judgments') + ' instead'
-                         + ((', and it counts' if n == 1 else ', and they count') + f' toward {name}’s results below'
-                            if counted else '') + '.')
+    for (judge, model), by_version in sorted(groups.items(),
+                                            key=lambda g: (data['ranking']['judges'].index(g[0][0]), g[0][1])):
+        versions = [e['version'] for e in entries if by_version.get(e['version'])]
+        rows = [r for v in versions for r in by_version[v]]
+        name, substitute, n = _judge_label(data, judge), JUDGE_LABELS.get(model, model), len(rows)
+        questions = sorted({numbers[r['question_id']] for r in rows})
+        where = ('Question ' if len(questions) == 1 else 'Questions ') + _join(str(q) for q in questions)
+        lead = f'{name} refused {_count(n, "judgment")} on {where}'
+        if len(versions) == 1 and len(entries) > 1:
+            lead += f' under NUS {versions[0]}'
+        elif len(versions) > 1:
+            lead += ': ' + _join(f'{len(by_version[v]):,} under NUS {v}' for v in versions)
+        sentences.append(lead + '.')
+        labels = _refusal_labels(rows)
+        sentences.append(f'It refused {_asked(rows)}' + (f', and {labels}' if labels else '') + '.')
+        sentences.append(f'{substitute} made {"that judgment" if n == 1 else f"those {n:,} judgments"} instead, '
+                         f'and {"it counts" if n == 1 else "they count"} toward {name}’s results.')
+        shown = by_version.get(main)
+        if shown:
+            one = len(shown) == 1
+            subject = 'the refused judgment' if one else f'the {len(shown):,} refused judgments'
+            prefix = f'Under NUS {main}, {subject}' if len(entries) > 1 else subject[0].upper() + subject[1:]
+            detail = _refused_shown(data, shown)
+            if one:
+                detail = 'is ' + _stand_in_items(data, shown)[0]
+            sentences.append(f'{prefix} {detail}.')
     return ' '.join(sentences)
 
 
@@ -775,7 +908,7 @@ def _failure_reason(data, failure):
         return f'{judge} refused {tries} to judge {matchup}{category}'
     if failure['kind'] == 'unknown_outcome':
         return (f'the call asking {judge} to judge {matchup} timed out or lost its connection, so we cannot tell '
-                'whether it was processed, and we do not resend a call that may already have been billed')
+                'whether it was processed or billed')
     return f'the call asking {judge} to judge {matchup} failed'
 
 
@@ -794,7 +927,7 @@ def _unranked_note(data):
         parts.append(f'<a href="#question-{number}">Question {number}</a> is not ranked. ' + _text(
             missing + '; '.join(_failure_reason(data, f) for f in rows) + '. '
             f'Its {counts["per_question"] - len(rows)} saved judgments are shown with the question.'))
-    return (f'<p class="small" id="unranked">' + ' '.join(parts)
+    return ('<p class="small" id="unranked">' + ' '.join(parts)
             + _text(f' A question is ranked only when all {counts["per_question"]} judgments exist, '
                     'so every system is compared on the same questions.') + '</p>')
 
@@ -802,10 +935,15 @@ def _unranked_note(data):
 def _ranking(data):
     report, counts = data['ranking'], _counts(data)
     heading = 'AUT-inspired preference ranking' if report.get('rubric_kind') == AUT_KIND else 'Creativity ranking'
+    samples = report.get('bootstrap', {}).get('samples', 1000)
     parts = [f'<section id="overall"><h2>{heading}</h2>',
              f'<p>Each system’s win rate is its wins divided by its {counts["per_system"]:,} judgments ({counts["ranked"]} questions, '
              f'{_plural(counts["systems"] - 1, "opponent")}, {_plural(counts["judges"], "judge")}, both answer orders). '
-             'The black line on each bar is the 95% interval: the middle 95% of win rates when the questions are resampled. '
+             'Every judgment counts equally.</p>'
+             f'<p>The dark bracket above each bar is the 95% interval. We redrew the {counts["ranked"]} '
+             f'{"" if counts["ranked"] == 50 else "ranked "}questions at random '
+             f'{samples:,} times, allowing repeats, and recomputed each win rate, keeping each question’s '
+             f'{counts["per_question"]:,} judgments together. The bracket covers the middle 95% of those results. '
              'It shows how much the result depends on which questions were asked, for these answers and judges.</p>']
     for row in report['ranking']:
         agent, value = row['agent'], row['preference_rate']
@@ -823,8 +961,8 @@ def _ranking(data):
                      f'<path d="M{4 + low * 392:.3f} 11H{4 + high * 392:.3f}M{4 + low * 392:.3f} 6V16M{4 + high * 392:.3f} 6V16" stroke="#172c3e" stroke-width="2"/>'
                      f'<circle cx="{4 + value * 392:.3f}" cy="23.5" r="4" fill="#172c3e" stroke="white"/></svg>'
                      f'<div class="score"><strong>{_pct(value)}</strong><small>{row["wins"]:,} of {counts["per_system"]:,} won<br>95% interval <span class="nowrap">{_interval(row["ci95"])}</span></small></div></div>')
-    parts.append('<p class="small">Bars run from 0% to 100%; the dashed line marks 50%. '
-                 'Factual accuracy has not been independently verified.</p>' + _unranked_note(data))
+    parts.append('<p class="small">Bars run from 0% to 100%. The dashed line marks 50%, where a system wins as often '
+                 'as it loses.</p>' + _unranked_note(data))
     parts.append('<details><summary>Differences between systems</summary>')
     position = {agent: index for index, agent in enumerate(_system_order(data))}
     rows = []
@@ -836,16 +974,18 @@ def _ranking(data):
             a, b, sign, higher = b, a, -1, stability.get('second_higher')
         low, high = sorted(sign * v for v in c['ci95'])
         rows.append((position[a], position[b], [
-            _text(f'{_label(a)} vs {_label(b)}'), f'{_points(sign * c["difference"])} points',
-            f'{_points(low)} to {_points(high)} points', _pct(higher), _pct(equal)]))
-    parts.append(_table(['Systems', 'Difference in win rate', '95% interval', 'Resamples where the first is higher',
-                         'Resamples where they are equal'], [row for *_, row in sorted(rows)],
-                        'Differences in win rate between systems'))
+            _text(f'{_label(a)} vs {_label(b)}'), _points(sign * c['difference']),
+            f'{_points(low)} to {_points(high)}', _pct(higher), _pct(equal)]))
+    parts.append(_table(['Comparison (first vs second)', 'Difference in win rate (percentage points)', '95% interval',
+                         'Redraws where the first system led', 'Redraws with equal win rates'],
+                        [row for *_, row in sorted(rows)],
+                        'Differences in win rate between systems', row_headers=True, num_from=1))
     opponents = ('every opponent, not only the direct matchup' if counts['systems'] > 2 else 'the single matchup')
     parts.append(f'<p class="small">A difference compares overall win rates, which count {opponents}. '
                  'An interval that includes zero means the two systems cannot be separated on these questions. '
-                 'The last two columns give the share of the 1,000 question resamples in which the first system '
-                 'was higher or the two were equal; they are not the probability that one system is better.</p>'
+                 'Each redraw of the questions scores every system on the same questions. '
+                 f'The last two columns say how often, across the {samples:,} redraws, the first system was ahead '
+                 'or the two were tied. They are not the probability that one system is better.</p>'
                  '</details></section>')
     return ''.join(parts)
 
@@ -858,19 +998,22 @@ def _head_to_head(data):
         cells = [f'<strong>{_text(_label(a))}</strong>']
         for b in agents:
             value = report['pairwise']['overall'][a][b]
-            cells.append('<span class="diagonal" role="img" aria-label="Same system; no comparison">Same system</span>' if a == b
+            cells.append('<span class="diagonal"><span class="visually-hidden">Same system; no comparison</span></span>' if a == b
                          else f'<span class="heat-cell" style="--shade:{.06 + value * .28:.3f}">{_pct(value)}</span>')
         rows.append(cells)
-    parts = ['<section id="matchups"><h2>Head-to-head results</h2>'
+    parts = ['<section id="matchups"><h2>Head-to-head</h2>'
              f'<p>How often the row system won against the column system, out of {counts["per_matchup"]:,} judgments '
              'for each pair of systems.</p>',
-             _table(['Row / column', *[_label(a) for a in agents]], rows,
+             _table(['Win rate of row system against column system', *[_label(a) for a in agents]], rows,
                     'Overall head-to-head preferences', 'class="matrix"', row_headers=True)]
-    ranks = {row['agent']: row['rank'] for row in report['ranking']}
-    upsets = [f'{_label(b)} wins {_pct(report["pairwise"]["overall"][b][a])} of its judgments against {_label(a)} '
-              'but ranks lower overall, because the overall win rate also counts judgments against every other system.'
-              for a, b in combinations(agents, 2)
-              if ranks[b] > ranks[a] and report['pairwise']['overall'][b][a] > .5]
+    overall = {row['agent']: row for row in report['ranking']}
+    upsets = []
+    for a, b in combinations(agents, 2):
+        if overall[b]['rank'] > overall[a]['rank'] and report['pairwise']['overall'][b][a] > .5:
+            gap = _tenths(overall[a]['preference_rate']) - _tenths(overall[b]['preference_rate'])
+            upsets.append(f'{_label(b)} wins {_pct(report["pairwise"]["overall"][b][a])} of its judgments against '
+                          f'{_label(a)}, yet its overall win rate is {gap} {"point" if gap == 1 else "points"} lower, '
+                          'because the overall rate also counts judgments against every other system.')
     if upsets:
         parts.append('<p>' + _text(' '.join(upsets)) + '</p>')
     cycles = report['diagnostics']['cycles']
@@ -885,154 +1028,290 @@ def _judge_effort(settings):
     return settings.get('reasoning_effort') or settings.get('thinking_level') or settings.get('effort')
 
 
+def _judge_settings(data):
+    """A small table of each judge's saved settings; endpoints, keys and prices stay in the saved records."""
+    entries = data.get('rubric_variants', {}).get('entries') or [{'stand_ins': data.get('stand_ins', [])}]
+    used = defaultdict(set)
+    for entry in entries:
+        for row in entry['stand_ins']:
+            used[row['judge']].add(row['model'])
+    rows = []
+    for judge in data['ranking']['judges']:
+        settings = data['judges'][judge]
+        substitute = settings.get('refusal_substitute')
+        substitutes = ({substitute} if isinstance(substitute, str) and substitute
+                       else (substitute or {}).get('model') and {substitute['model']} if isinstance(substitute, dict)
+                       else used[judge])
+        timeout = settings.get('timeout_seconds')
+        tokens = settings.get('max_output_tokens')
+        rows.append([_text(_judge_label(data, judge)),
+                     f'<span class="nowrap">{_text(settings.get("model", "Not recorded"))}</span>',
+                     _text(str(_judge_effort(settings) or 'Not recorded').capitalize()),
+                     f'{tokens:,}' if isinstance(tokens, int) else 'Not recorded',
+                     _duration(timeout) if _number(timeout) else 'Not recorded',
+                     _text(_join(sorted(JUDGE_LABELS.get(m, m) for m in substitutes)) or 'None')])
+    return _table(['Judge', 'Model', 'Reasoning effort', 'Max output tokens', 'Timeout', 'Stand-in model after refusals'],
+                  rows, 'Saved judge settings', row_headers=True)
+
+
 def _judges(data):
     report, counts = data['ranking'], _counts(data)
     agents = _system_order(data)
     who = ('The judge' if counts['judges'] == 1 else 'Both judges' if counts['judges'] == 2
            else f'All {_word(counts["judges"])} judges')
-    parts = [f'<section id="judges"><h2>{"How the judges compare" if counts["judges"] > 1 else "How the judge decided"}</h2>'
-             f'<p>{who} evaluated every pair in both orders, without tools'
-             + (', on every ranked question' if counts['failed'] else '') + '.']
     efforts = {judge: _judge_effort(data['judges'][judge]) for judge in report['judges']}
     same = len(set(efforts.values())) == 1 and next(iter(efforts.values()))
-    parts.append((f' {"It" if counts["judges"] == 1 else who} ran at {same} reasoning effort.' if same else '') + '</p>')
-    if data.get('stand_ins'):
-        parts.append('<p>' + _text(_stand_in_note(data, data['stand_ins'], counted=True)) + '</p>')
-    rows = []
+    parts = [f'<section id="judges"><h2>Judges</h2>'
+             f'<p>{who} saw every pair in both orders'
+             + (', on every ranked question' if counts['failed'] else '') + ', with no web access'
+             + (f', at {same} reasoning effort' if same else '') + '.</p>']
+    labels, rates, order = {}, [], []
     for judge in report['judges']:
         by_agent = {r['agent']: r for r in report['per_judge'][judge]}
         diag = report['diagnostics']['by_judge'][judge]
         effort = efforts[judge]
-        label = _judge_label(data, judge) + (f', {effort} effort' if effort and not same else '')
-        rows.append([_text(label), *[_pct(by_agent[a]['preference_rate']) for a in agents],
-                     _pct(diag['position_a_preference']['rate']), _pct(diag['swapped_inconsistency']['rate'])])
-    parts.append(_table(['Judge', *[_label(a) + ' win rate' for a in agents], 'First answer won', 'Winner changed when order swapped'], rows, 'Per-judge overall preferences and order diagnostics'))
+        labels[judge] = _text(_judge_label(data, judge) + (f', {effort} effort' if effort and not same else ''))
+        rates.append([labels[judge], *[_pct(by_agent[a]['preference_rate']) for a in agents]])
+        order.append([labels[judge], _pct(diag['position_a_preference']['rate']),
+                      _pct(diag['swapped_inconsistency']['rate'])])
+    parts.append('<p>Win rate of each system under each judge:</p>'
+                 + _table(['Judge', *[_label(a) for a in agents]], rates, 'Win rates by judge',
+                          row_headers=True, num_from=1))
+    summary = _stand_in_summary(data) if data.get('stand_ins') or data.get('rubric_variants') else ''
+    if summary:
+        parts.append('<p class="small">' + _text(summary) + '</p>')
+    parts.append('<p>Answer-order checks:</p>'
+                 + _table(['Judge', 'Share won by the answer shown first',
+                           'Pairs whose winner changed when the order was swapped'], order,
+                          'Answer-order checks by judge', row_headers=True, num_from=1))
     diag = report['diagnostics']['judge_disagreement']
-    disagreement = (f'Taking any two judges and the same pair in the same order, they picked different winners '
-                    f'{_pct(diag["rate"])} of the time ({diag["disagreements"]:,} of {diag["comparisons"]:,} cases). '
-                    if counts['judges'] > 1 else '')
+    disagreement = ''
+    if counts['judges'] > 1:
+        judge_pairs = math.comb(counts['judges'], 2)
+        ordered = diag['comparisons'] // judge_pairs
+        disagreement = (f'When two judges saw the same pair in the same order, they picked different winners '
+                        f'{_pct(diag["rate"])} of the time ({diag["disagreements"]:,} of {diag["comparisons"]:,} '
+                        f'comparisons, from {_plural(judge_pairs, "pair")} of judges on each of {ordered:,} ordered '
+                        'answer pairs). ')
     parts.append(f'<p>{disagreement}'
-                 '“First answer won” is how often the answer shown first won; 50% means no lean toward either position. '
-                 '“Winner changed when order swapped” is how often a judge picked a different system after the two '
-                 'answers swapped places. This can come from order effects or from ordinary variation between calls.</p>')
+                 'A share of 50% for the answer shown first means no lean toward either position. '
+                 'A winner can change when the order is swapped because of order effects, ordinary variation '
+                 'between calls, or the rule that a judge who sees no real difference picks the answer shown first.</p>')
     overlap = _judge_overlap(data)
     if overlap:
         parts.append('<p>' + _text(overlap) + '</p>')
-    parts.append('<details><summary>Saved judge settings</summary><pre>'
-                 + _text(json.dumps(data['judges'], ensure_ascii=False, indent=2)) + '</pre></details>')
+    parts.append('<details><summary>Saved judge settings</summary>' + _judge_settings(data) + '</details>')
     parts.append('</section>')
     return ''.join(parts)
 
 
-def _judge_overlap(data):
-    """Name judges whose model also writes answers for a system, from the saved settings only."""
+def _judge_models(data):
     report, agents, models = data['ranking'], _system_order(data), _main_models(data)
-    shared, alone = [], []
     for judge in report['judges']:
         model = data['judges'][judge].get('model')
-        systems = [a for a in agents if model in models.get(a, ())]
-        rates = {r['agent']: r['preference_rate'] for r in report['per_judge'][judge]}
-        best = max(rates.values())
-        top = _join(_label(a) for a in agents if rates.get(a) == best)
-        (shared if systems else alone).append((_judge_label(data, judge), systems, top, best))
+        yield judge, [a for a in agents if model in models.get(a, ())]
+
+
+def _judge_overlap(data):
+    """Name judges whose model also writes answers for a system, from the saved settings only."""
+    shared = [(_judge_label(data, judge), systems) for judge, systems in _judge_models(data) if systems]
     if not shared:
         return ''
     count = len(shared)
-    sentences = [(f'{_word(count).capitalize()} judge shares a model with systems it judges: ' if count == 1 else
-                  f'{_word(count).capitalize()} judges share a model with systems they judge: ')
-                 + '; '.join(f'{name} is also the main model of {_join(_label(a) for a in systems)}'
-                             for name, systems, _, _ in shared) + '.']
-    sentences += [f'{name} rates {top} highest ({_pct(best)}).' for name, _, top, best in shared]
-    sentences += [f'{name} shares no model with any system; it rates {top} highest ({_pct(best)}).'
-                  for name, _, top, best in alone]
+    return ((f'{_word(count).capitalize()} judge shares a model with systems it judges: ' if count == 1 else
+             f'{_word(count).capitalize()} judges share a model with systems they judge: ')
+            + '; '.join(f'{name} is also the main model of {_join(_label(a) for a in systems)}'
+                        for name, systems in shared) + '.')
+
+
+UNREPORTED_MODELS = {'gemini': 'Google'}  # Systems whose maker does not report the models they run.
+
+
+def _judge_picks(data):
+    """The system each judge gives its highest win rate, when some judge shares a model with a system."""
+    report, agents = data['ranking'], _system_order(data)
+    judges = list(_judge_models(data))
+    if not any(systems for _, systems in judges):
+        return ''
+    unreported = [f'{UNREPORTED_MODELS[a]} does not report which models {_label(a)} runs'
+                  for a in agents if a in UNREPORTED_MODELS]
+    picked = []
+    for judge, systems in sorted(judges, key=lambda item: not item[1]):  # Judges that share a model first.
+        rates = {r['agent']: r['preference_rate'] for r in report['per_judge'][judge]}
+        best = max(rates.values())
+        picked.append((_judge_label(data, judge), systems, [a for a in agents if rates.get(a) == best], best))
+    sharing = [p for p in picked if p[1]]
+    sentences = []
+    if all(set(top) <= set(systems) for _, systems, top, _ in sharing):
+        gives = [f'{name}{f", the main model of {_join(_label(a) for a in systems)}," if len(systems) > 1 else ""} '
+                 f'gives {_join(_label(a) for a in top)} {_pct(best)}{" each" if len(top) > 1 else ""}'
+                 for name, systems, top, best in sharing]
+        lead = ('Each judge that shares a model with one or more systems ranks one of those systems highest: '
+                if len(sharing) > 1
+                else 'The only judge that shares a model with any system ranks '
+                     + ('that system' if len(sharing[0][1]) == 1 else 'one of those systems') + ' highest: ')
+        sentences.append(lead + ', and '.join(gives) + '.')
+    else:
+        for name, systems, top, best in sharing:
+            picks = (f'gives {_join(_label(a) for a in top)} the same win rate ({_pct(best)} each)' if len(top) > 1
+                     else f'gives its highest win rate to {_label(top[0])}, {_pct(best)}')
+            sentences.append(f'{name}, the main model of {_join(_label(a) for a in systems)}, {picks}.')
+    why = f' ({"; ".join(unreported)})' if unreported else ''
+    for name, _, top, best in (p for p in picked if not p[1]):
+        picks = (f'gives {_join(_label(a) for a in top)} the same win rate, {_pct(best)}' if len(top) > 1
+                 else f'gives its highest win rate to {_label(top[0])}, {_pct(best)}')
+        sentences.append(f'{name}, which is not the main model of any system here{why}, {picks}.')
     return ' '.join(sentences)
 
 
+NUS_DEFINITION = ('NUS stands for New (what the answer adds beyond known work), Useful (whether it works for the task), '
+                  'and Surprising (how far it departs from the approach an expert would most likely take).')
 RUBRIC_NOTES = {
-    'v1': 'is the first version. For New, the judge breaks an answer into parts and tries to name where each part '
-          'already appears in prior work.',
-    'v2': 'uses the criteria of the 2026-11-05 study. For New, the judge asks what is original about the '
-          'central contribution as a whole.',
-    'v3': 'adds a baseline to v2: before reading the answers, the judge states the approach a skilled '
-          'practitioner would most likely take.',
-    'v4': 'is the current default. It rewrites the v2 criteria: before reading the answers, the judge states the '
-          'approach a skilled practitioner would most likely take; it judges creative contribution rather than general '
-          'answer quality; and it credits what an answer adds to a cited idea, not the idea itself. It also tells the '
-          'judge not to credit or penalize wording about an answer’s own research, such as “the supplied material”, '
-          'and to treat a claim as a proposal when the answer itself says its evidence does not prove it.'}
-RUBRIC_SHARED_NOTE = ('All rubric files now end with the same shared block of rules and output format; that block was '
-                      'edited on 2026-11-23, so the v1 and v2 files are not word-for-word the rubrics of earlier studies.')
+    'v1': 'For New, the judge breaks each answer into parts and tries to name where each part already appears in '
+          'prior work. How the parts combine counts toward Surprising instead.',
+    'v2': 'For New, the judge asks what is original about the central contribution as a whole, including how its '
+          'parts combine. For Surprising, the judge first names the approach a competent answer would most likely take.',
+    'v3': 'Before reading the answers, the judge states the approach a skilled practitioner would most likely take. '
+          'The judge weighs creative contribution rather than general answer quality, and credits what an answer adds '
+          'to a cited idea, not the idea itself. It neither credits nor penalizes wording about an answer’s own '
+          'research, such as “the supplied material”, and it treats a claim as a proposal when the answer itself says '
+          'its evidence does not prove it.'}
+# These packaged files share their closing rules and output format with the others, so their text differs
+# from the files earlier studies used.
+EARLIER_TEXT_DIFFERS = ('v1', 'v2')
 
 
 def _rubric_link(version):
     return f'<a href="../crest/prompts/nus_pairwise_{version}.txt">NUS {version}</a>'
 
 
+def _earlier_note(version):
+    if version not in EARLIER_TEXT_DIFFERS:
+        return ''
+    others = sorted((p.stem.rsplit('_', 1)[-1] for p in (ROOT / 'crest/prompts').glob('nus_pairwise_v*.txt')),
+                    key=lambda v: int(v.lstrip('v')))
+    others = [v for v in others if v != version]
+    return (f'The NUS {version} file shares its closing rules and output format with '
+            f'{_join(f"NUS {v}" for v in others)}, so its wording differs from the file earlier studies used.')
+
+
+def _main_rubric(data):
+    """The packaged NUS version this report's judges used, or None for unpackaged or AUT rubrics."""
+    if data['ranking'].get('rubric_kind') == AUT_KIND or 'judging_dir' not in data:
+        return None
+    path = data['judging_dir'] / 'rubric.txt'
+    return _rubric_version(path.read_text(encoding='utf-8')) if path.is_file() else None
+
+
+def _rank_changes(agents, views):
+    """Systems whose rank differs across views, the rank each other system keeps, and ranks a view shares."""
+    ranks = {a: {view[a]['rank'] for view in views} for a in agents}
+    moving = [a for a in agents if len(ranks[a]) > 1]
+    steady = {a: next(iter(ranks[a])) for a in agents if a not in moving}
+    shared = {rank for view in views for rank, n in Counter(view[a]['rank'] for a in agents).items() if n > 1}
+    return moving, steady, shared
+
+
+def _separate_places(report):
+    """Each system's rank when the paired intervals separate it from every other system, else None."""
+    clustered = {row['agent'] for i, j in _clusters(report) for row in report['ranking'][i:j + 1]}
+    return {row['agent']: None if row['agent'] in clustered else row['rank'] for row in report['ranking']}
+
+
+def _rubric_pointer(agents, entries):
+    """Say how each other rubric's ranking reads under the headline's rule: systems the paired
+    intervals cannot separate get no places of their own. Rubrics that read the same share a sentence."""
+    main, groups = _separate_places(entries[0]['common']), defaultdict(list)
+    for entry in entries[1:]:
+        report = entry['common']
+        places, clauses = _separate_places(report), []
+        for i, j in _clusters(report):
+            members = [row['agent'] for row in report['ranking'][i:j + 1]]
+            who = f'the top {_word(len(members))}' if i == 0 else _join(_label(a) for a in members)
+            clauses.append(f'{who} cannot be fully separated')
+        steady = [a for a in agents if places[a] is not None and places[a] == main[a]]
+        moved = sorted((a for a in agents if places[a] is not None and places[a] != main[a]), key=places.get)
+        clauses += [f'{_label(a)} is {_ordinal(places[a])}' for a in moved]
+        if len(steady) == len(agents):
+            clauses = ['every system keeps its place']  # Places that hold are in the table at the bottom.
+        groups[tuple(clauses)].append(entry['version'])
+    sentences = []
+    for clauses, versions in groups.items():
+        body = ', and '.join(clauses) if len(clauses) == 2 else _join(clauses)
+        sentences.append(f'Under the {_join(f"NUS {v}" for v in versions)} {"rubrics" if len(versions) > 1 else "rubric"}, '
+                         f'{body}.')
+    return ' '.join(sentences)
+
+
+def _rubric_dropdown(data, entry, main, common, every):
+    counts, version, view = _counts(data), entry['version'], entry['common']
+    name = f'NUS {version}'
+    judges = 'the same judge' if counts['judges'] == 1 else f'the same {_word(counts["judges"])} judges'
+    if entry['complete'] == common == counts['ranked'] == counts['questions']:
+        coverage = (f'All {counts["judgments"]:,} judgments are present, {counts["per_question"]} for each of the '
+                    f'{counts["questions"]} questions.')
+    else:
+        coverage = (f'These numbers use the {common} questions that have every judgment under {every}'
+                    + (f', the same questions as the NUS {main} ranking at the top of the page.' if common == counts['ranked']
+                       else f', so they differ slightly from the NUS {main} ranking at the top of the page, which uses '
+                            f'{"all 50" if counts["ranked"] == 50 else counts["ranked"]}.'))
+    parts = [f'<details class="rubric-results" id="rubric-{version}"><summary>{name} results</summary><div class="rubric-body">',
+             f'<p>Here the same {counts["answers"]:,} answers are judged by {judges}, with the same settings, under the '
+             f'{_rubric_link(version)} rubric. '
+             + _text(' '.join(s for s in (RUBRIC_NOTES.get(version, ''), _earlier_note(version)) if s)) + '</p>',
+             f'<p>{_text(coverage)}</p>', f'<p>{_text(_headline({"ranking": view}))}</p>']
+    differences = _cluster_differences(view)
+    if differences:
+        parts.append(f'<p class="small">{_text(differences)}</p>')
+    rows = [[_text(_label(row['agent'])), str(row['rank']), _pct(row['preference_rate']),
+             f'<span class="nowrap">{_interval(row["ci95"])}</span>'] for row in view['ranking']]
+    parts.append(_table(['System', 'Rank', 'Win rate', '95% interval'], rows, f'Ranking under {name}', row_headers=True, num_from=1))
+    same, total = entry['agreement']
+    if total:
+        parts.append(f'<p>The judges pick the same winner as under NUS {main} in {_pct(same / total)} of judgments '
+                     f'({same:,} of {total:,}). Each judgment is compared with the NUS {main} judgment of the same '
+                     'question, answer order, and judge.</p>')
+    parts.append(f'<p>Judging cost: {_money(entry["judging_total"], 2)}'
+                 + (f'. {_text(entry["resent"])}' if entry.get('resent') else
+                    f', plus {_plural(entry["unknown_costs"], "call")} of unknown cost.' if entry['unknown_costs'] else '.')
+                 + '</p>')
+    rows = []
+    for judge in view['judges']:
+        per = {r['agent']: r for r in view['per_judge'][judge]}
+        rows.append([_text(_judge_label(data, judge)), *[_pct(per[a]['preference_rate']) for a in _system_order(data)]])
+    parts.append('<p>Win rates by judge:</p>'
+                 + _table(['Judge', *[_label(a) for a in _system_order(data)]], rows, f'Win rates by judge under {name}',
+                          row_headers=True, num_from=1))
+    parts.append(_rubric_missing(data, [entry]))
+    parts.append('</div></details>')
+    return ''.join(parts)
+
+
 def _rubrics(data):
+    """Small collapsed dropdowns for the other rubrics, placed after everything else on the page."""
     comparison = data.get('rubric_variants')
     if not comparison:
         return ''
     entries, common = comparison['entries'], comparison['common_questions']
     main = entries[0]['version']
-    names = [f'NUS {main} (this report)', *[f'NUS {e["version"]}' for e in entries[1:]]]
-    others = _join(f'NUS {e["version"]}' for e in entries[1:])
-    counts, agents = _counts(data), _system_order(data)
     every = 'both rubrics' if len(entries) == 2 else f'all {_word(len(entries))} rubrics'
-    by_version = [{row['agent']: row for row in e['common']['ranking']} for e in entries]
-    parts = ['<section id="rubrics"><h2>Same answers, other rubrics</h2>',
-             f'<p>The rubric is the instruction the judges follow. NUS stands for its three criteria: New, Useful '
-             f'and Surprising. The same {counts["answers"]:,} saved answers were judged again under the older {others} rubrics. '
-             'Only the rubric changed; the answers, the judges and their settings, and the way answers were shown '
-             f'to the judges stayed the same.</p>',
-             '<p>' + ' '.join(f'{_rubric_link(e["version"])} {_text(RUBRIC_NOTES.get(e["version"], "is a packaged NUS rubric."))}'
-                              for e in entries)
-             + (' NUS v3 was a draft that was never used in a study.'
-                if 'v3' not in {e['version'] for e in entries} and main != 'v3' else '') + '</p>',
-             (f'<p>Every rubric has all {counts["per_question"]} judgments for each of the {common} questions, '
-              f'so the NUS {main} column matches the ranking above.</p>'
-              if common == counts['ranked'] == counts['questions'] else
-              f'<p>To compare like with like, each column uses the {common} questions '
-              f'that have every judgment under {every}'
-              + (f', so the NUS {main} column matches the ranking above.' if common == counts['ranked'] else
-                 f', so the NUS {main} numbers differ slightly from the ranking above, which uses '
-                 f'{"all 50" if counts["ranked"] == 50 else counts["ranked"]}.')
-              + '</p>'), _rubric_takeaway(agents, by_version)]
-    rows = []
-    for agent in agents:
-        rows.append([_text(_label(agent)), *[
-            f'{_pct(view[agent]["preference_rate"])}<br><small>rank {view[agent]["rank"]}; 95% interval <span class="nowrap">{_interval(view[agent]["ci95"])}</span></small>'
-            for view in by_version]])
-    parts.append(_table(['System', *names], rows, 'Win rates under each rubric', row_headers=True))
-    measures = [
-        [f'Questions with all {counts["per_question"]} judgments', *[f'{e["complete"]} of 50' for e in entries]],
-        ['Same winner as NUS ' + main, 'Baseline', *[
-            f'{_pct(e["agreement"][0] / e["agreement"][1]) if e["agreement"][1] else "Unavailable"}'
-            f'<br><small>{e["agreement"][0]:,} of {e["agreement"][1]:,} judgments</small>' for e in entries[1:]]],
-        ['Judging cost', *[_money(e['judging_total'], 2) + (f'<br><small>plus {_plural(e["unknown_costs"], "call")} of unknown cost</small>'
-                                                             if e['unknown_costs'] else '') for e in entries]]]
-    parts.append(_table(['Measure', *names], measures, 'Rubric coverage, agreement and cost', row_headers=True))
-    parts.append(f'<p class="small">“Same winner” compares each judgment with the NUS {main} judgment of the same question, '
-                 'answer order and judge, wherever both exist. Win-rate intervals come from resampling the questions, as above; '
-                 'they do not say which rubric is right.</p>')
-    parts.append(_rubric_missing(data, entries[1:]))
-    notes = defaultdict(list)
-    for entry in entries[1:]:
-        if entry['stand_ins']:
-            notes[_stand_in_note(data, entry['stand_ins'])].append(f'NUS {entry["version"]}')
-    for note, versions in notes.items():
-        parts.append(f'<p class="small">{_text(f"Under {_join(versions)}, {note}")}</p>')
-    if any(e['version'] in ('v1', 'v2') for e in entries):
-        parts.append(f'<p class="small">{_text(RUBRIC_SHARED_NOTE)}</p>')
-    parts.append('<details><summary>Win rates by judge under each rubric</summary>')
-    for e, name in zip(entries, names):
-        view = e['common']
-        rows = []
-        for judge in view['judges']:
-            per = {r['agent']: r for r in view['per_judge'][judge]}
-            rows.append([_text(_judge_label(data, judge)), *[_pct(per[a]['preference_rate']) for a in agents]])
-        parts.append(f'<h3>{_text(name)}</h3>'
-                     + _table(['Judge', *[_label(a) for a in agents]], rows, f'Per-judge win rates under {name}', row_headers=True))
-    parts.append('</details></section>')
+    parts = ['<section id="other-rubrics" class="other-rubrics" aria-labelledby="other-rubrics-heading">'
+             '<h2 id="other-rubrics-heading" class="visually-hidden">Results under other rubrics</h2>']
+    parts += [_rubric_dropdown(data, entry, main, common, every) for entry in entries[1:]]
+    agents = _system_order(data)
+    views = [{row['agent']: row for row in e['common']['ranking']} for e in entries]
+    rows = [[_text(_label(agent)), *[f'{_pct(view[agent]["preference_rate"])}<br><small>rank {view[agent]["rank"]}</small>'
+                                     for view in views]] for agent in agents]
+    parts.append(f'<details class="rubric-results" id="rubric-comparison"><summary>Win rates under {every}</summary>'
+                 '<div class="rubric-body">' + _table(['System', f'NUS {main} (top of page)', *[f'NUS {e["version"]}' for e in entries[1:]]], rows,
+                          f'Win rates under {every}', row_headers=True, num_from=1)
+                 + _rubric_takeaway(agents, entries)
+                 + '<p class="small">The 95% intervals in each dropdown come from resampling the questions, as for the '
+                   'ranking at the top of the page. They do not say which rubric is right. Whether two systems can be '
+                   'separated depends on the interval for their difference, which each rubric’s results list for '
+                   'the systems that are close.</p>'
+                   '</div></details>')
+    parts.append('</section>')
     return ''.join(parts)
 
 
@@ -1045,23 +1324,53 @@ def _ordinal(rank):
     return ORDINALS[rank - 1] if 0 < rank <= len(ORDINALS) else f'number {rank}'
 
 
-def _rubric_takeaway(agents, views):
-    """Say which places hold under every rubric and which change, from the computed ranks only."""
-    ranks = {a: {view[a]['rank'] for view in views} for a in agents}
-    moving = [a for a in agents if len(ranks[a]) > 1]
-    steady = defaultdict(list)
-    for agent in agents:
-        if len(ranks[agent]) == 1:
-            steady[next(iter(ranks[agent]))].append(agent)
+def _rubric_takeaway(agents, entries):
+    """Say which places hold under every rubric and which change, and whether the paired intervals
+    separate the systems that change places, from the computed ranks and contrasts only."""
+    views = [{row['agent']: row for row in e['common']['ranking']} for e in entries]
+    moving, steady, shared = _rank_changes(agents, views)
     sentences = []
     if moving:
-        sentences.append(f'{_join(_label(a) for a in moving)} {"change places" if len(moving) > 1 else "changes place"} '
-                         'from one rubric to another.')
+        top = sorted(views[0][a]['rank'] for a in moving) == list(range(1, len(moving) + 1))
+        who = f'The top {_word(len(moving))}' if top and len(moving) > 1 else _join(_label(a) for a in moving)
+        pairs = [(entry, a, b) for entry in entries for a, b in combinations(moving, 2)]
+        close = sum(_separable(entry['common'])(a, b) for entry, a, b in pairs)
+        share = ('all' if close == len(pairs) else 'most' if 2 * close > len(pairs) else 'some' if close else 'none')
+        verb = 'trade places' if len(moving) > 1 else 'changes place'
+        sentences.append(f'{who} {verb} from one rubric to another' + (
+            '.' if len(moving) == 1 else
+            ', and the 95% intervals separate every pair of them.' if share == 'none' else
+            f', and for {share} pairs of them the 95% interval for the difference includes zero, so the two cannot '
+            'be separated.'))
+        for entry, view in zip(entries, views):
+            near, order = _separable(entry['common']), sorted(moving, key=lambda a: view[a]['rank'])
+            behind = defaultdict(list)
+            for a, b in combinations(order, 2):
+                if not near(a, b):
+                    behind[a].append(b)
+            if not behind:
+                continue
+            clauses = []
+            for a, bs in behind.items():
+                text = f'{_label(a)} is ahead of {_join(_label(b) for b in bs)}'
+                second = order[order.index(a) + 1] if order.index(a) + 1 < len(order) else None
+                if second and second not in bs and near(a, second):
+                    first, other = view[a], view[second]
+                    gap = first['wins'] - other['wins']
+                    of = f' of {first["choices"]:,}' if first['choices'] == other['choices'] else ''
+                    score = f'{first["wins"]:,} to {other["wins"]:,}{of}'
+                    text += (f', and it ties {_label(second)}, {score}' if not gap else
+                             f', and its {gap:,}-judgment lead over {_label(second)}, {score}, is too small to '
+                             'separate them')
+                clauses.append(text)
+            sentences.append(f'Under NUS {entry["version"]}, {_join(clauses)}.')
     if steady:
-        shared = {rank for view in views for rank, n in Counter(view[a]['rank'] for a in agents).items() if n > 1}
+        groups = defaultdict(list)
+        for agent, rank in steady.items():
+            groups[rank].append(agent)
         held = [f'{_join(_label(a) for a in group)} tie for {_ordinal(rank)}' if len(group) > 1
                 else f'{_label(group[0])} is {_ordinal(rank)} or tied for {_ordinal(rank)}' if rank in shared
-                else f'{_label(group[0])} stays {_ordinal(rank)}' for rank, group in sorted(steady.items())]
+                else f'{_label(group[0])} stays {_ordinal(rank)}' for rank, group in sorted(groups.items())]
         sentences.append(f'{_join(held)} under every rubric.')
     return '<p>' + _text(' '.join(sentences)) + '</p>'
 
@@ -1106,51 +1415,140 @@ def _rubric_missing(data, entries):
     if unknown:
         notes.append('A call has an unknown outcome when it timed out or lost its connection, so we cannot tell '
                      'whether it was processed. '
-                     'We do not resend such a call, because the first request may have been billed.')
+                     'Such a call is sent again at most once, because the first request may have been billed.')
     return '<p class="small">' + _text(' '.join(notes)) + '</p>'
+
+
+IN_ANSWER_BASES = {'same_reservation_in_answer', 'nearest_reservation_in_answer', 'same_model_mean_in_answer',
+                   'same_kind_turns_in_round', 'same_kind_turns_in_answer', 'any_turn_in_answer'}
+
+
+def _an(label):
+    return ('an ' if label[:1].lower() in 'aeiou' else 'a ') + label
+
+
+def _imputed_sentence(generation, agents):
+    """One plain note on answer calls that never reported a cost and how the means count them."""
+    shown = [a for a in agents if generation[a]['imputed_calls'] and not _number(generation[a]['audited_known_cost_usd'])]
+    if not shown:
+        return ''
+    calls = sum(generation[a]['imputed_calls'] for a in shown)
+    records = [r for a in shown for r in generation[a]['imputed_records']]
+    added = _money(math.fsum(generation[a]['imputed_cost_usd'] for a in shown))
+    number = '{:,}'.format  # Counts of calls and answers in cost prose are digits.
+    unfinished = any(c.get('source') == 'in_flight' for r in records for c in r['calls'])
+    how = 'failed or never finished' if unfinished else 'failed with a server or network error'
+    where = ('similar calls in the same answer' if all(c['basis'] in IN_ANSWER_BASES for r in records for c in r['calls'])
+             else 'similar calls by the same system')
+
+    def answers(agent):
+        n = generation[agent]['imputed_answers']
+        return _an(_label(agent)) + ' answer' if n == 1 else f'{number(n)} {_label(agent)} answers'
+    if calls == 1:
+        return (f'1 call in {answers(shown[0])} {how} and never reported a cost. '
+                f'We count it at the average cost of {where}, which adds {added}.')
+    items = [f'{number(generation[a]["imputed_calls"])}{" call" if generation[a]["imputed_calls"] == 1 else " calls"}'
+             f' in {answers(a)}' if i == 0 else f'{number(generation[a]["imputed_calls"])} in {answers(a)}'
+             for i, a in enumerate(shown)]
+    return (f'Some calls {how} and never reported a cost: {_join(items)}. '
+            f'We count each at the average cost of {where}, which adds {added} in total.')
+
+
+def _time_range(low, high):
+    """'99.2–202.6 min' when both ends share a unit, else each end with its own."""
+    first, last = _duration(low), _duration(high)
+    if first == last:
+        return first
+    unit = first.rsplit(' ', 1)[-1]
+    return (f'{first.rsplit(" ", 1)[0]}–{last}' if unit == last.rsplit(' ', 1)[-1] and unit in ('min', 's')
+            else f'{first}–{last}')
+
+
+def _answer_amounts(data):
+    """Per answer: the known cost and the known cost plus the imputed cost of calls that never reported one."""
+    for row in data['answers']:
+        record = data['audit_records'].get((row['question_id'], row['agent']), {})
+        known = record.get('known_usd')
+        if _number(known):
+            yield row, known, known
+            continue
+        known = cost_for_row(row).get('cumulative_known_estimate_usd')
+        extra = (data['cost_imputation']['answers'].get(row['key']) or {}).get('imputed_usd', 0)
+        yield row, known, known + extra if _number(known) else None
+
+
+def _reused_sentence(data):
+    reused, total = sum(bool(a.get('cache_hit')) for a in data['answers']), len(data['answers'])
+    if not reused:
+        return ''
+    if reused == total:
+        return (f'All {total:,} answers were reused from earlier runs, so each time is that of the job that first '
+                'wrote the answer.')
+    return (f'Of the {total:,} answers, {reused:,} {"was" if reused == 1 else "were"} reused from earlier runs, so '
+            f'{"its time is" if reused == 1 else "their times are"} that of the job that first wrote the answer.')
 
 
 def _resources(data):
     generation, judging = data['resources']['generation'], data['resources']['judging']
     agents, judges, counts = _system_order(data), data['ranking']['judges'], _counts(data)
+    # Means, totals and the target count all use the same amounts: the audit when it covers a
+    # system, otherwise the known estimate plus the imputed cost of calls that never reported one.
     totals = {a: (generation[a]['audited_known_cost_usd']
                   if _number(generation[a]['audited_known_cost_usd'])
-                  else generation[a]['known_cost_usd']) for a in agents}
+                  else generation[a]['estimated_cost_usd']) for a in agents}
     audited = bool(data['audit_records'])
+    google = generation.get('gemini')
+    lengths, length_label = _answer_lengths(data)
+    exact_lengths = 'sources list excluded' not in length_label
     parts = ['<section id="resources"><h2>Cost and time</h2>'
-             + ('<p>Costs use the final audit when it covers every answer for a system, including earlier attempts. '
-                'Otherwise they use the original records. Dollar figures are estimates, not invoices.</p>' if audited else
-                '<p>Costs come from each answer’s saved records. Dollar figures are estimates, not invoices.</p>')]
+             + ('<p>Costs are estimates, not invoices. They use the final audit when it covers every answer for a '
+                'system, and the original records otherwise. They include earlier failed attempts when those were recorded.</p>'
+                if audited else
+                '<p>Costs are estimates from each answer’s saved records, not invoices. They include earlier failed '
+                'attempts when those were recorded.</p>')]
     averages, incomplete = [], False
     for agent in agents:
         r = generation[agent]
         mean = totals[agent] / r['answers'] if _number(totals[agent]) and r['answers'] else None
-        partial = 0 if _number(generation[agent]['audited_known_cost_usd']) else r['missing_cost_answers']
+        missing = r['unimputed_missing_answers']
+        partial = 0 if _number(generation[agent]['audited_known_cost_usd']) else (
+            r['missing_cost_answers'] if missing is None else missing)
         incomplete = incomplete or bool(partial)
         averages.append([_text(_label(agent)), _money(mean)
-                         + (f'<br><small>{partial} of {r["answers"]} estimates incomplete</small>' if partial else ''),
+                         + (f'<br><small>{partial} of {r["answers"]} estimates incomplete</small>' if partial else '')
+                         + ('<br><small>assumed prices</small>' if agent in UNREPORTED_MODELS else ''),
                          _duration(r['mean_duration_seconds'])
                          + (f'<br><small>{r["duration_count"]} of {r["answers"]} answers timed</small>'
                             if r['duration_count'] != r['answers'] else '')]
                         + ([_duration(r['mean_lifetime_duration_seconds'])
-                            + f'<br><small>{r["lifetime_duration_count"]} of {r["answers"]} answers timed</small>'] if audited else []))
+                            + f'<br><small>{r["lifetime_duration_count"]} of {r["answers"]} answers timed</small>'] if audited else [])
+                        + [f'{lengths[agent]:,.0f}' if agent in lengths else 'Unavailable'])
     parts.append(_table(['System', 'Mean estimated cost', 'Mean job time']
-                        + (['Mean time including earlier attempts'] if audited else []), averages, 'Mean cost and time per answer'))
-    google = generation.get('gemini')
-    parts.append('<p class="small">'
+                        + (['Mean time including earlier attempts'] if audited else []) + [length_label],
+                        averages, 'Mean cost, time, and length per answer', row_headers=True, num_from=1))
+    untimed = any(generation[a]['duration_count'] != generation[a]['answers'] for a in agents) or (audited and any(
+        generation[a]['lifetime_duration_count'] != generation[a]['answers'] for a in agents))
+    imputed = _imputed_sentence(generation, agents)
+    reused = _reused_sentence(data)
+    parts.append(('<p class="small">'
+                 + (_text(imputed) + ' ' if imputed else '')
                  + ('An incomplete estimate is missing the cost of some calls, so the mean is a lower bound. ' if incomplete else '')
-                 + ('Google’s estimate uses assumed model rates because Google does not report its internal billing. ' if google else '')
-                 + 'Charges that were never reported are left out. Job time runs from the start of the job that produced '
+                 + ('Google does not report its billing, so its estimate assumes Gemini 3.1 Pro rates for long inputs, '
+                    'counts the text its tools send and receive as extra input, and charges every search at full price. '
+                    if google else '')
+                 + ('' if imputed and not incomplete else 'Charges that were never reported are left out. ')
+                 + 'Job time runs from the start of the job that produced '
                  'the answer to its end, including waiting in queues and retries. '
+                 + (_text(reused) + ' ' if reused else '')
                  + ('Time including earlier attempts adds failed or interrupted attempts and leaves out known gaps between them. ' if audited else '')
-                 + 'Each time average uses only answers with complete timing.</p>')
-    exceeded, targets, soft, soft_over = Counter(), set(), {}, Counter()
-    for row in data['answers']:
+                 + ('Each time average uses only answers with complete timing. ' if untimed else '')
+                 + (('Length counts the words in the copy of each answer the judges saw, including citation labels and '
+                     'reference lists but not lists of uncited sources.' if exact_lengths else
+                     'Length counts the words in each saved answer without its list of uncited sources.')
+                    if lengths else '')).rstrip() + '</p>')
+    exceeded, imputed_over, targets, soft, soft_over, reserve = Counter(), Counter(), set(), {}, Counter(), {}
+    for row, known, amount in _answer_amounts(data):
         agent = row['agent']
-        audited = data['audit_records'].get((row['question_id'], agent), {})
-        amount = audited.get('known_usd')
-        if not _number(amount):
-            amount = cost_for_row(row).get('cumulative_known_estimate_usd')
         config = data['configurations'].get(row.get('configuration_id'), {})
         settings = config.get('settings') or data['manifest'].get('config', {}).get('research', {}).get(agent, {})
         target = settings.get('budget_usd')
@@ -1158,54 +1556,53 @@ def _resources(data):
             targets.add(target)
         if _number(amount) and _number(target) and target > 0 and amount > target:
             exceeded[agent] += 1
+            imputed_over[agent] += not (_number(known) and known > target)
         aim = settings.get('budget_target_usd')
         if _number(aim) and _number(target) and 0 < aim < target:
             soft[agent] = aim
             soft_over[agent] += 1 if _number(amount) and amount > aim else 0
+            if _number(settings.get('synthesis_reserve_usd')) and 0 < settings['synthesis_reserve_usd'] < aim:
+                reserve[agent] = settings['synthesis_reserve_usd']
     if exceeded:
-        items = [f'{_word(exceeded[a])} {_text(_label(a))} answer{"s" if exceeded[a] != 1 else ""}'
+        items = [f'{exceeded[a]:,} {_text(_label(a))} answer{"s" if exceeded[a] != 1 else ""}'
+                 + (' (' + ('' if exceeded[a] == 1 else 'all of them ' if imputed_over[a] == exceeded[a]
+                           else f'{imputed_over[a]:,} of them ')
+                    + 'only after adding the calls that never reported a cost)' if imputed_over[a] else '')
                  for a in agents if exceeded[a]]
-        target = (f'the {_money(next(iter(targets)))} per-answer target' if len(targets) == 1
-                  else 'its per-answer target')
+        under = [a for a in agents if not exceeded[a]]
+        one = len(targets) == 1
+        target = f'the {_money(next(iter(targets)))} per-answer target' if one else 'its per-answer target'
         parts.append(f'<p class="small">Estimated cost was above {target} for ' + _join(items) + '. '
-                     'These costs include earlier failed attempts when they were recorded. '
-                     'The target is a soft budget the systems aim for, '
-                     'not a spending cap enforced by the provider; actual bills have not been checked.</p>')
+                     + (_text(_join(_label(a) for a in under)) + ' had no answer over it. ' if under else '')
+                     + (f'The {_money(next(iter(targets)))} target is a goal' if one else 'Each target is a goal')
+                     + ', and no system is stopped when it goes over.</p>')
     if soft:
         parts.append('<p class="small">' + ' '.join(
-            f'{_text(_label(a))}’s own settings use a stricter {_money(soft[a])} target; '
-            f'{_word(soft_over[a])} of its answers {"was" if soft_over[a] == 1 else "were"} over it.'
+            f'{_text(_label(a))}’s own settings use a stricter {_money(soft[a])} target, and '
+            + (f'{soft_over[a]:,} of its answers went over it.' if soft_over[a]
+               else 'none of its answers went over it.')
+            + (f' It starts no new research round once its spending reaches {_money(soft[a] - reserve[a])}, which '
+               f'leaves {_money(reserve[a])} of that target for writing the final answer.' if a in reserve else '')
             for a in agents if a in soft) + '</p>')
     parts.append('<details class="resource-details"><summary>Cost totals and timing</summary>')
-    if google:
-        parts.append('<p>Google’s estimate assumes Gemini 3.1 Pro rates for long inputs, counts tool tokens as extra input, '
-                     'and charges every search at full price.</p>')
-    parts.append('<p class="small">Each mean above is the total below divided by all of that system’s answers.'
-                 + (' The original records are kept even when the final audit gives a corrected total.' if audited else '')
-                 + '</p>')
+    if audited:
+        parts.append('<p class="small">The original records are kept even when the final audit gives a corrected total.</p>')
     parts.append(_table(['System', 'Total cost of writing the answers'], [
-        [_text(_label(a)), _money(totals[a])] for a in agents], 'Generation cost totals'))
+        [_text(_label(a)), _money(totals[a])] for a in agents], 'Generation cost totals', row_headers=True, num_from=1))
     stand_ins = Counter((r['judge'], r['model']) for r in data.get('stand_ins', []))
-    parts.append('<p class="small">Judging costs extra: '
-                 + '; '.join(_text(_judge_label(data, j)) + ' ' + _money(judging[j]['known_cost_usd']) + ''.join(
-                     f' (including the {_plural(n, "judgment")} {_text(JUDGE_LABELS.get(model, model))} made)'
+    parts.append('<p class="small">Judging cost '
+                 + _join(_money(judging[j]['estimated_cost_usd']) + ' for ' + _text(_judge_label(data, j)) + ''.join(
+                     f' (including the {_count(n, "judgment")} {_text(JUDGE_LABELS.get(model, model))} made)'
                      for (judge, model), n in sorted(stand_ins.items()) if judge == j) for j in judges) + '.</p>')
-    scored = math.fsum(judging[j]['known_cost_usd'] or 0 for j in judges)
-    subject = (f'{counts["saved"]:,} saved judgments and {_plural(counts["failed"], "failed judgment")}'
+    scored = math.fsum(judging[j]['estimated_cost_usd'] or 0 for j in judges)
+    subject = (f'{counts["saved"]:,} saved judgments and {_count(counts["failed"], "failed judgment")}'
                if counts['failed'] else f'{counts["judgments"]:,} judgments')
     replaced = bool(data.get('prior_judgments'))
-    parts.append(f'<p><strong>Total for {subject}: {_money(scored)}.</strong> Includes the cost of retried calls.'
+    parts.append(f'<p><strong>The {subject} cost {_money(scored)} in total, including retried calls.</strong>'
                  + (' Earlier judging that this round replaced is not included.' if replaced else ''))
-    resent = _resent_tries(data)
+    resent = _resent_sentence(_resent_tries(data))
     if resent:
-        one, first = len(resent) == 1, 'first ' if all(t['index'] == 0 for t in resent) else ''
-        how = ('timed out at the gateway' if all('gateway' in t['error'] for t in resent)
-               else 'timed out or lost its connection' if one else 'timed out or lost their connection')
-        again = ('it was sent once more' if one else 'each was sent once more') if all(t['after'] == 1 for t in resent) \
-            else ('it was sent again' if one else 'each was sent again')
-        parts.append(f' {_word(len(resent)).capitalize()} {first}{"try" if one else "tries"} {how}, so we do not know '
-                     f'whether {"it was" if one else "they were"} charged; {again}. '
-                     f'{"That" if one else "Those"} {first}{"try is" if one else "tries are"} not in the total.')
+        parts.append(' ' + resent)
     if counts['failed']:
         failed = data['resources']['failed_judging']
         known, unknown = failed['cumulative_known_estimate_usd'], failed['unknown_count']
@@ -1214,10 +1611,10 @@ def _resources(data):
             parts.append(f' {whose} cost {_money(known)} and are included in the judging total.')
         elif unknown == counts['failed'] and not known:
             parts.append(' The failed call has no known cost, so it is not in the judging total.' if unknown == 1 else
-                         f' The {_word(unknown)} failed calls have no known cost, so they are not in the judging total.')
+                         f' The {unknown:,} failed calls have no known cost, so they are not in the judging total.')
         else:
-            parts.append(f' Failed calls with a known cost add {_money(known)}, included in the judging total; '
-                         f'{_plural(unknown, "failed call")} {"has" if unknown == 1 else "have"} no known cost and '
+            parts.append(f' Failed calls with a known cost add {_money(known)}, included in the judging total. '
+                         f'{_count(unknown, "failed call")} {"has" if unknown == 1 else "have"} no known cost and '
                          f'{"is" if unknown == 1 else "are"} not included.')
     parts.append('</p>')
     providers = set(judges) | {PRICING_PROVIDER.get(a, a) for a in agents}
@@ -1229,14 +1626,14 @@ def _resources(data):
     for agent in agents:
         r = generation[agent]
         rows.append([_text(_label(agent)), _duration(r['median_duration_seconds']),
-                     _duration(r['min_duration_seconds']) + ' to ' + _duration(r['max_duration_seconds']),
-                     f'{r["duration_count"]} of {r["answers"]}']
-                    + ([_duration(r['median_lifetime_duration_seconds']),
-                        f'{r["lifetime_duration_count"]} of {r["answers"]}'] if audited else []))
-    parts.append(_table(['System', 'Median job time', 'Shortest to longest job time', 'Answers timed']
-                        + (['Median time including earlier attempts', 'Answers with complete timing'] if audited else []),
-                        rows, 'Saved answer elapsed times'))
-    parts.append('<p class="small">Answers reused from the cache keep the times of the job that first produced them.</p>')
+                     _time_range(r['min_duration_seconds'], r['max_duration_seconds'])]
+                    + ([f'{r["duration_count"]} of {r["answers"]}'] if untimed else [])
+                    + ([_duration(r['median_lifetime_duration_seconds'])] if audited else [])
+                    + ([f'{r["lifetime_duration_count"]} of {r["answers"]}'] if audited and untimed else []))
+    parts.append(_table(['System', 'Median job time', 'Shortest to longest job time'] + (['Answers timed'] if untimed else [])
+                        + (['Median time including earlier attempts'] if audited else [])
+                        + (['Answers with complete timing'] if audited and untimed else []),
+                        rows, 'Saved answer elapsed times', row_headers=True, num_from=1))
     differs = any(_number(generation[a]['audited_known_cost_usd'])
                   and (not _number(generation[a]['known_cost_usd']) or not math.isclose(
                       generation[a]['audited_known_cost_usd'], generation[a]['known_cost_usd'])) for a in agents)
@@ -1244,9 +1641,33 @@ def _resources(data):
         parts.append(_table(['System', 'Estimate in the answer records', 'Audited estimate, all attempts'], [
             [_text(_label(a)), _money(generation[a]['known_cost_usd']),
              _money(generation[a]['audited_known_cost_usd'])] for a in agents],
-            'Audited lifetime generation estimates'))
+            'Audited lifetime generation estimates', row_headers=True, num_from=1))
     parts.append('</details></section>')
     return ''.join(parts)
+
+
+def _model_name(model):
+    return JUDGE_LABELS.get(model, model) if isinstance(model, str) and model else '(not recorded)'
+
+
+def _reasoning_effort(agent, settings):
+    """The reasoning effort each system's saved research settings give, in plain words."""
+    if agent == 'gemini':
+        return 'Not reported (Google manages it)'
+    main = settings.get('effort' if agent == 'anthropic' else 'reasoning_effort')
+    if not main:
+        return 'Not recorded'
+    parts = [str(main).capitalize() + (' (main model)' if agent == 'caesar' else '')]
+    if agent == 'caesar':
+        final, explore, kb = (settings.get(k) for k in (
+            'synthesis_reasoning_effort', 'exploration_reasoning_effort', 'kb_reasoning_effort'))
+        if final:
+            parts.append(f'{final} (final write-up)')
+        if explore and explore == kb:
+            parts.append(f'{explore} (exploration and knowledge base)')
+        else:
+            parts += [f'{value} ({step})' for value, step in ((explore, 'exploration'), (kb, 'knowledge base')) if value]
+    return _join(parts) if len(parts) > 1 else parts[0]
 
 
 def _models(data):
@@ -1256,43 +1677,161 @@ def _models(data):
     for agent in agents:
         settings = research.get(agent) or {}
         models = sorted({str(a['result'].get('model', 'Unavailable')) for a in data['answers'] if a['agent'] == agent})
-        if agent == 'gemini':
-            detail = (f'Google’s managed agent {settings.get("agent", "(not recorded)")}. Cost is estimated with '
-                      f'{settings.get("billing_model", "(not recorded)")} rates; Google chooses the models it runs and does not report them.')
+        if agent in UNREPORTED_MODELS:
+            detail = (f'Google’s managed agent {settings.get("agent", "(not recorded)")}. Google chooses the models it '
+                      'runs and does not report them.')
         elif agent == 'openai':
-            detail = f'Sol with OpenAI’s hosted web search, through the Responses API; reasoning effort {settings.get("reasoning_effort", "not recorded")}.'
+            detail = (f'{_model_name(settings.get("model") or (models[0] if len(models) == 1 else None))} '
+                      'with OpenAI’s built-in web search.')
         elif agent == 'anthropic':
             model = str(settings.get('model', ''))
             model = ('Sonnet' if model.startswith('claude-sonnet')
                      else JUDGE_LABELS.get(model, model or 'Claude'))
-            tools = ('web search and page fetching run by the test harness' if settings.get('tool_mode') == 'client'
-                     else 'Anthropic’s hosted web search')
-            detail = f'{model} with {tools}, through the Messages API; effort {settings.get("effort", "not recorded")}.'
+            tools = ('web search and page reading tools we provide' if settings.get('tool_mode') == 'client'
+                     else 'Anthropic’s built-in web search')
+            detail = f'{model} with {tools}.'
         elif agent == 'gpt_researcher':
-            detail = (f'GPT Researcher in deep research mode, with {settings.get("model", "(not recorded)")} for every step; '
-                      f'reasoning effort {settings.get("reasoning_effort", "not recorded")}. It searches the public web '
-                      'through DuckDuckGo, filters pages by keyword, and sets money aside for writing the final answer.')
+            detail = (f'GPT Researcher in deep research mode, with {_model_name(settings.get("model"))} for every step. '
+                      'It searches the public web through DuckDuckGo and filters pages by keyword.')
         elif agent == 'caesar':
-            explore, kb = settings.get('exploration_model', '(not recorded)'), settings.get('kb_model', '(not recorded)')
-            detail = ((f'Writes with the answer model and uses {explore} to explore the web and build its knowledge base. '
+            main = _model_name(settings.get('model') or (models[0] if len(models) == 1 else None))
+            explore, kb = _model_name(settings.get('exploration_model')), _model_name(settings.get('kb_model'))
+            detail = ((f'Writes with {main} and uses {explore} to explore the web and build its knowledge base. '
                        if explore == kb else
-                       f'Writes with the answer model, explores the web with {explore}, '
+                       f'Writes with {main}, explores the web with {explore}, '
                        f'and builds its knowledge base with {kb}. ')
                       + 'Each answer’s saved settings list every model it used.')
         else:
             detail = 'See the saved settings with each answer.'
-        rows.append([_text(_label(agent)), _text(', '.join(models)), _text(detail)])
-    return ('<details id="systems"><summary>Models and research workflows</summary>'
-            + _table(['System', 'Answer model (for Google, the pricing model)' if 'gemini' in agents else 'Answer model',
-                      'How it researches'], rows, 'Frozen research systems')
+        # Google's saved model is only its pricing model.
+        shown = 'Not reported' if agent in UNREPORTED_MODELS else ', '.join(_model_name(m) for m in models)
+        rows.append([_text(_label(agent)), ', '.join(f'<span class="nowrap">{_text(m)}</span>' for m in shown.split(', ')),
+                     _text(_reasoning_effort(agent, settings)), _text(detail)])
+    return ('<details id="systems" open><summary>Models and research workflows</summary>'
+            + _table(['System', 'Main model', 'Reasoning effort', 'How it researches'], rows, 'Frozen research systems',
+                     wide=True, row_headers=True)
             + ('<p class="small">Google introduced its April 2026 Deep Research agents as built with Gemini 3.1 Pro '
                '(<a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/next-generation-gemini-deep-research/">Google announcement</a>). '
                'That announcement does not say which models this run used.</p>' if 'gemini' in agents else '')
             + ('<p class="small">OpenAI’s o3-deep-research and o4-mini-deep-research API models shut down July 23, 2026 '
                '(<a href="https://developers.openai.com/api/docs/deprecations">deprecation notice</a>; '
                '<a href="https://developers.openai.com/api/docs/guides/deep-research">deep research guide</a>). '
-               'The OpenAI results here come from the Sol setup above, not from those models.</p>' if 'openai' in agents else '')
+               f'The {_label("openai")} results come from '
+               f'{_model_name(research.get("openai", {}).get("model"))} with web search, not from those models.</p>'
+               if 'openai' in agents else '')
             + '</details>')
+
+
+LOCAL_PATH = re.compile(r'(?:~|/(?:Users|home|opt|private|var|tmp|usr|Volumes|mnt))/|[A-Za-z]:[\\/]')
+HOME_PATH = re.compile(r'(?<![\w.:/~-])/(?:Users|home)/[^/\s"]+')  # Not inside URLs or relative paths.
+
+
+def _local_path(value):
+    return isinstance(value, str) and bool(LOCAL_PATH.match(value))
+
+
+def _without_local_paths(value, removed, key=None):
+    """Settings as shown on the page: machine-specific absolute paths are left out; the saved records keep them.
+
+    The name of every field that lost a path is appended to removed."""
+    if isinstance(value, dict):
+        removed.extend(k for k, v in value.items() if _local_path(v))
+        return {k: _without_local_paths(v, removed, k) for k, v in value.items() if not _local_path(v)}
+    if isinstance(value, list):
+        if any(_local_path(v) for v in value):
+            removed.append(key)
+        return [_without_local_paths(v, removed, key) for v in value if not _local_path(v)]
+    return HOME_PATH.sub('~', value) if isinstance(value, str) else value
+
+
+GATEWAY_KEYS = ('api_base', 'api_key_env', 'api_url')
+
+
+def _gateway_keys(value):
+    if isinstance(value, dict):
+        for k, v in value.items():
+            if k in GATEWAY_KEYS:
+                yield k
+            yield from _gateway_keys(v)
+    elif isinstance(value, list):
+        for v in value:
+            yield from _gateway_keys(v)
+
+
+def _without_gateway(value):
+    """A record without the gateway address and key-variable fields; the saved records keep them."""
+    if isinstance(value, dict):
+        return {k: _without_gateway(v) for k, v in value.items() if k not in GATEWAY_KEYS}
+    if isinstance(value, list):
+        return [_without_gateway(v) for v in value]
+    return value
+
+
+def _answer_configuration(data, row):
+    """Return (key, record) for the research settings an answer was run with."""
+    identity = row.get('configuration_id')
+    configuration = data['configurations'].get(identity) if identity else None
+    if configuration is None:
+        return f'legacy-{row["agent"]}', {'source': 'legacy run manifest; per-answer configuration was not recorded',
+                                          'settings': data['manifest'].get('config', {}).get('research', {}).get(row['agent'])}
+    return identity, configuration
+
+
+def _settings_anchor(key):
+    return 'settings-' + re.sub(r'[^A-Za-z0-9_-]', '-', str(key))
+
+
+def _saved_settings(data):
+    """Each distinct saved research configuration once; every answer links here instead of repeating it."""
+    order = _system_order(data)
+    groups = {}
+    for row in sorted(data['answers'], key=lambda r: order.index(r['agent']) if r['agent'] in order else len(order)):
+        key, configuration = _answer_configuration(data, row)
+        groups.setdefault(key, [row['agent'], configuration, 0])[2] += 1
+    per_agent = Counter(agent for agent, _, _ in groups.values())
+    parts = []
+    for key, (agent, configuration, count) in groups.items():
+        removed = []
+        shown = _without_local_paths(configuration, removed)
+        removed = list(dict.fromkeys(k for k in removed if k))
+        label = _text(_label(agent))
+        gateway = list(dict.fromkeys(_gateway_keys(shown)))
+        shown = _without_gateway(shown)
+        left_out = _join(part for part in (
+            'Local file paths' if removed else '', 'gateway connection fields' if gateway else '') if part)
+        parts.append(f'<details class="configuration"><summary>Saved research settings: {label}'
+                     + (f' <small>{_text(key)}</small>' if per_agent[agent] > 1 else '') + '</summary>'
+                     f'<div class="configuration-body" id="{_settings_anchor(key)}">'
+                     f'<p class="small">Used by {_count(count, "answer")}.'
+                     + (f' {left_out[0].upper() + left_out[1:]} are left out: '
+                        + _join(f'<code>{_text(k)}</code>' for k in removed + gateway) + '.' if left_out else '') + '</p>'
+                     f'<pre tabindex="0" aria-label="Saved research settings for {label}">'
+                     f'{_text(json.dumps(shown, ensure_ascii=False, indent=2))}</pre></div></details>')
+    return ''.join(parts)
+
+
+def _question_winners(judgments, agents):
+    votes = Counter(row['order'][0 if row['verdict']['winner'] == 'A' else 1] for row in judgments)
+    most_wins = max(votes.values())
+    return [agent for agent in agents if votes[agent] == most_wins], most_wins
+
+
+def _question_tally(data, judgments, missing):
+    """How many ranked questions each system wins outright, and how many end in ties."""
+    agents, outright, ties = _system_order(data), Counter(), 0
+    for question in data['questions']:
+        if missing[question['id']] or not judgments[question['id']]:
+            continue
+        winners, _ = _question_winners(judgments[question['id']], agents)
+        if len(winners) == 1:
+            outright[winners[0]] += 1
+        else:
+            ties += 1
+    first = outright[agents[0]]
+    items = [f'{_label(agents[0])} wins {first or "no"} question{"" if first == 1 else "s"} outright',
+             *(f'{_label(a)} {outright[a] or "none"}' for a in agents[1:])]
+    tie = f', with {ties} {"tie" if ties == 1 else "ties"}' if ties else ''
+    return f'{_join(items)}{tie}.'
 
 
 def _questions(data):
@@ -1305,11 +1844,13 @@ def _questions(data):
     stand_ins = {r['key']: r['model'] for r in data.get('stand_ins', [])}
     exceptions = _join(f'question {numbers[q]}, which has {counts["per_question"] - n}'
                        for q, n in sorted(missing.items(), key=lambda item: numbers[item[0]]))
-    parts = ['<section id="questions"><h2>All questions, answers and judgments</h2>',
-             f'<p>Each question lists {"both" if counts["systems"] == 2 else "all " + _word(counts["systems"])} answers and its '
+    opponents = counts['systems'] - 1
+    parts = ['<section id="questions"><h2>Answers and judgments</h2>',
+             f'<p>Each question lists {"both" if counts["systems"] == 2 else "all " + str(counts["systems"])} answers and its '
              f'{counts["per_question"]:,} judgments' + (f', except {exceptions}' if missing else '') + '. '
              f'A question’s winner is the system that won the most of its {counts["per_question_system"]:,} judgments '
-             'on that question; ties are shown. Open an answer or a judgment to read it.</p>']
+             f'on that question ({_plural(opponents, "opponent")}, {_plural(counts["judges"], "judge")}, two orders). '
+             'A tie is shown when two or more systems share the most wins. ' + _text(_question_tally(data, judgments, missing)) + ' Open an answer or a judgment to read it.</p>']
     # Category order follows the question files; snapshots without categories are matched by text.
     catalog = [row for name in ('queries_n50_v2.jsonl', 'queries_n50_v1.jsonl') for row in _jsonl(ROOT / 'crest/data' / name)]
     categories = {row['query']: row['category'] for row in catalog}
@@ -1333,10 +1874,7 @@ def _questions(data):
                 outcome = (f'<span class="question-outcome" data-unranked="true" title="Missing judgments keep this question '
                            f'out of the ranking">Not ranked: {saved} of {counts["per_question"]} judgments</span>')
             else:
-                votes = Counter(row['order'][0 if row['verdict']['winner'] == 'A' else 1]
-                                for row in judgments[qid])
-                most_wins = max(votes.values())
-                winners = [agent for agent in agents if votes[agent] == most_wins]
+                winners, most_wins = _question_winners(judgments[qid], agents)
                 label = ('Winner: ' if len(winners) == 1 else 'Tie: ') + ' / '.join(_label(a) for a in winners)
                 outcome = (f'<span class="question-outcome" data-winners="{" ".join(winners)}" data-wins="{most_wins}" '
                            f'title="Won {most_wins} of its {counts["per_question_system"]} judgments">{_text(label)}</span>')
@@ -1348,7 +1886,20 @@ def _questions(data):
                 row = answers[qid, agent]
                 cost = cost_for_row(row)
                 audited = data['audit_records'].get((qid, agent))
+                imputation = data['cost_imputation']['answers'].get(row['key']) or {}
                 record = {'cost_details': cost, 'usage': row['result'].get('usage'), 'timing': row.get('timing')}
+                if imputation.get('imputed_calls'):
+                    record['imputed_cost'] = {k: imputation[k] for k in (
+                        'version', 'known_usd', 'imputed_usd', 'imputed_calls', 'upper_bound_usd', 'estimate_usd', 'calls')}
+                    calls = imputation['imputed_calls']
+                    part = imputation['imputed_usd']
+                    part = _money(part) if round(part, 2) else 'less than $0.01'
+                    cost_note = (f'{_money(imputation["estimate_usd"])}, including {part} for '
+                                 + ('a call that never reported a cost' if calls == 1 else f'{_word(calls)} calls that never reported a cost'))
+                else:
+                    cost_note = _money(cost['cumulative_known_estimate_usd'])
+                cost_note += ' (incomplete)' if (imputation.get('residual_incomplete') if imputation
+                                                 else cost.get('estimate_incomplete')) else ''
                 usage = record['usage']
                 event_note = ''
                 if isinstance(usage, dict) and isinstance(usage.get('events'), list):
@@ -1360,6 +1911,9 @@ def _questions(data):
                     event_note = (f'<p class="small">Usage events left out of this page: {count:,}. '
                                   f'They are in <code>{_text(source)}</code>, field <code>result.usage.events</code>, '
                                   f'answer key <code>{_text(row["key"])}</code>.</p>')
+                gateway = list(dict.fromkeys(_gateway_keys(record)))
+                gateway_note = ('<p class="small">Gateway connection fields are left out: '
+                                + _join(f'<code>{k}</code>' for k in gateway) + '.</p>' if gateway else '')
                 audit_note = ''
                 if audited:
                     record['final_audit'] = audited
@@ -1371,11 +1925,10 @@ def _questions(data):
                 if artifact:
                     relative = artifact.relative_to(data['generation_dir'])
                     artifact_note = f'Local Markdown: <code>{_text(relative)}</code><br>'
-                identity = row.get('configuration_id')
-                configuration = data['configurations'].get(identity) if identity else None
-                if configuration is None:
-                    configuration = {'source': 'legacy run manifest; per-answer configuration was not recorded',
-                                     'settings': data['manifest'].get('config', {}).get('research', {}).get(agent)}
+                settings_key = _answer_configuration(data, row)[0]
+                settings_link = (f'<p class="small"><a href="#{_settings_anchor(settings_key)}">Saved research settings</a>'
+                                 + ('' if settings_key.startswith('legacy-') else f' (configuration <code>{_text(settings_key)}</code>)')
+                                 + '</p>')
                 raw = row['result'].get('raw') or {}
                 native = raw.get('artifact') if isinstance(raw, dict) else None
                 source_urls = native.get('sources', {}) if isinstance(native, dict) else ()
@@ -1384,16 +1937,14 @@ def _questions(data):
                 parts.append(f'<details class="answer" id="answer-{index}-{agent}"><summary>{_text(_label(agent))}</summary>'
                              f'<div class="answer-text" data-answer-sha256="{hashlib.sha256(row["result"]["text"].encode()).hexdigest()}" '
                              f'role="region" tabindex="0" aria-label="{_text(_label(agent))} answer, question {index}">'
-                             f'{_markdown_answer(row["result"]["text"], source_urls)}</div>'
+                             f'{_markdown_answer(row["result"]["text"], source_urls, f"{_label(agent)} answer, question {index}")}</div>'
                              '<details class="answer-metadata"><summary>Answer metadata and source records</summary>'
-                             f'<p class="small">Estimated cost {_money(cost["cumulative_known_estimate_usd"])}'
-                             f'{" (incomplete)" if cost.get("estimate_incomplete") else ""}; job time '
+                             f'<p class="small">Estimated cost {cost_note}; job time '
                              f'{_duration((row.get("timing") or {}).get("duration_seconds"))}{audit_note}</p>'
-                             '<details class="configuration"><summary>Saved research settings</summary>'
-                             f'<pre tabindex="0" aria-label="Saved research settings">{_text(json.dumps(configuration, ensure_ascii=False, indent=2))}</pre></details>'
+                             f'{settings_link}'
                              f'<details class="cost-record"><summary>Cost, usage and timing record</summary>'
-                             f'{event_note}'
-                             f'<pre tabindex="0" aria-label="Cost, usage and timing record">{_text(json.dumps(record, ensure_ascii=False, indent=2))}</pre></details>'
+                             f'{event_note}{gateway_note}'
+                             f'<pre tabindex="0" aria-label="Cost, usage and timing record">{_text(json.dumps(_without_gateway(record), ensure_ascii=False, indent=2))}</pre></details>'
                              f'<p class="small">{artifact_note}Answer key: <code>{_text(row["key"])}</code></p></details></details>')
             parts.append(f'<details class="judgments"><summary>Read all {saved:,} {"saved " if missing[qid] else ""}judgments</summary>')
             for pair in combinations(agents, 2):
@@ -1413,7 +1964,7 @@ def _questions(data):
                     if j['key'] in stand_ins:
                         judge = f'{JUDGE_LABELS.get(stand_ins[j["key"]], stand_ins[j["key"]])} in place of {judge}'
                     parts.append(f'<details class="judgment"><summary>{_text(judge)} '
-                                 f'· preferred {_text(_label(winner))}</summary>'
+                                 f'· {_text(_label(order[0]))} shown first · preferred {_text(_label(winner))}</summary>'
                                  f'<p class="presentation">Shown first (A): {_text(_label(order[0]))}; shown second (B): {_text(_label(order[1]))}</p>'
                                  f'<p class="reason">{_evidence_text(j["verdict"]["reason"])}</p>'
                                  '<details class="judgment-metadata"><summary>Judgment source record</summary>'
@@ -1425,17 +1976,30 @@ def _questions(data):
     return ''.join(parts)
 
 
-def _method(data):
-    bootstrap = data['ranking']['bootstrap']
+def _length_sentence(data):
+    if not data.get('answers'):
+        return ''
+    means, _ = _answer_lengths(data)
+    order = sorted(means, key=means.get)
+    if len(order) < 2:
+        return ''
+    return (f'In the text the judges saw, {_label(order[-1])} answers are the longest, at {means[order[-1]]:,.0f} '
+            'words on average, and '
+            f'{_label(order[0])} answers the shortest, at {means[order[0]]:,.0f}.')
+
+
+def _method(data, previous=''):
     aut = data['ranking'].get('rubric_kind') == AUT_KIND
     winner_guidance = (
         'Each judge chooses A or B using <strong>Fluency</strong> (expressed coverage only when a comparable '
         'task explicitly requests multiple ideas), <strong>Flexibility</strong> (meaningful conceptual directions), '
         'and <strong>Originality</strong> (substantive contributions and relationships). '
         if aut else
-        'Each judge reads two answers, A and B, and picks the more creative one, guided by <strong>New</strong> '
-        '(what the answer adds beyond known work), <strong>Useful</strong> (whether it works for the task), and '
-        '<strong>Surprising</strong> (how far it departs from the approach an expert would expect). '
+        'Each judge reads two answers, A and B, and picks the more creative one, guided by the three NUS criteria: '
+        '<strong>New</strong>, <strong>Useful</strong>, and <strong>Surprising</strong>. '
+        'Combining familiar ideas can still be original. Judges assess usefulness within the question’s '
+        'premises, and an idea is not new just because it is unfamiliar. A judge that finds no real '
+        'difference must say so and choose A. Doing that in both orders gives each system one win. '
     )
     scope = (
         '<p>This AUT-inspired rubric is a qualitative adaptation for expressed research contributions. '
@@ -1457,46 +2021,46 @@ def _method(data):
                 for agent, marker in cues.items() if agent in agents}
     provenance = ''
     revised = bool(data.get('judgments')) and all(
-        j.get('protocol_version') in (NUS_PROTOCOL, AUT_PROTOCOL)
+        j.get('protocol_version') in STRICT_REASON_PROTOCOLS
         and j.get('presentation_version') in ('citation-neutral-v1', 'citation-neutral-v2') for j in data['judgments'])
     trimmed = revised and all(j.get('presentation_version') == 'citation-neutral-v2' for j in data['judgments'])
     if revised:
-        provenance = ('<p>Judges saw every answer with its link addresses hidden in the same way; citation labels and '
-                      'the rest of the text were kept. The answers below are the originals. An answer’s wording can still '
-                      'reveal which system wrote it.</p>'
+        provenance = ('<p>We hid the link addresses in every answer the same way and kept the citation labels and all '
+                      'other text. The answers below are the originals.</p>'
                       + ('<p>Some answers end with a list of sources the system collected but never cites. Judges did not '
-                         'see that list; the answers below keep it.</p>' if trimmed else '')
+                         'see that list, but the answers below keep it.</p>' if trimmed else '')
                       + ('<p>Originality can come from combining familiar ideas. Elaboration supports evaluating '
                       'the contribution; it is not a word-count score. If a judge cannot support a substantive '
                       'preference, it must say so and choose A. Doing this in both orders gives each system one win.</p>' if aut else
-                      '<p>Combining familiar ideas can still be original. Usefulness is judged within the question’s '
-                      'premises, and an idea is not new just because it is unfamiliar. A judge that finds no real '
-                      'difference must say so and choose A; doing that in both orders gives each system one win.</p>')
-                      + '<p>A judgment is retried when its explanation is incomplete or does not compare the two answers. '
-                      'These checks do not verify what the judges claim.</p>')
+                      '')
+                      + '<p>We resend a judgment when its explanation is incomplete or does not compare the two answers. '
+                      'This check does not verify what the judge claims.</p>')
     elif any(revealed.values()):
         provenance = ('<p>Provider labels were withheld, but this run was not fully blinded. '
                       'Links reveal provenance in '
                       + _join(f'{count} / 50 {_text(_label(agent))} answers' for agent, count in revealed.items()) + '. '
                       'These cues do not establish that provider bias caused the ranking.</p>')
-    rubric_links = ('' if aut else f'<a href="{page_path("NUS rubric").name}">NUS rubric</a>; '
-                    f'<a href="{page_path("Why one overall judgment").name}">Why one overall judgment</a>. ')
-    return ('<section id="method"><h2>How the comparison works</h2>'
-            f'<p>Each question has {counts["per_question"]:,} judgments: {_plural(counts["pairs"], "answer pair")}, '
-            f'each judged by {_plural(counts["judges"], "judge")} in both orders.</p>'
+    # Link text follows each page's catalog title, so a retitled page reads the same here.
+    rubric, why = (f'<a href="{name}">{_text(page_title(Path(name), name))}</a>'
+                   for name in ('nus-rubric.html', 'why-one-overall-judgment.html'))
+    rubric_links = '' if aut else f'The {rubric} page has the full rubric, and {why} explains the single pick.'
+    version = _main_rubric(data)
+    rubric_used = (f'The ranking uses the {_rubric_link(version)} rubric. ' + _text(RUBRIC_NOTES.get(version, '')) + ' '
+                   if version else '')
+    earlier = f'<p>{_text(_earlier_note(version))}</p>' if version and _earlier_note(version) else ''
+    lengths = _length_sentence(data)
+    return ('<section id="method"><h2>Method</h2>'
+            f'<p>Each question has {counts["per_question"]:,} judgments, from {_count(counts["pairs"], "answer pair")} '
+            f'that {_word(counts["judges"])} {"judge" if counts["judges"] == 1 else "judges each"} saw in both orders. '
+            f'Each system takes part in {counts["per_system"] // counts["ranked"]:,} of them per question and '
+            f'{counts["per_system"]:,} in total.</p>'
             + scope + '<dl class="method-summary">'
-            '<dt>Pick a winner</dt><dd>' + winner_guidance +
-            'The judge makes one overall choice and gives no separate scores. ' + rubric_links + '</dd>'
-            f'<dt>Count the wins</dt><dd>Every judgment counts equally. Each system appears in {counts["per_system"]:,} judgments; '
-            f'its wins divided by {counts["per_system"]:,} is its win rate.</dd>'
-            f'<dt>Read the intervals</dt><dd>We resample the {"50" if counts["ranked"] == 50 else str(counts["ranked"]) + " ranked"} questions 1,000 times, keeping each question’s {counts["per_question"]:,} judgments '
-            'together. The middle 95% of the resulting win rates is the 95% interval.</dd></dl>'
+            '<dt>Pick a winner</dt><dd>' + winner_guidance
+            + rubric_used + 'The judge makes one overall choice and gives no separate scores. ' + rubric_links + '</dd></dl>'
             '<p class="small">The intervals do not account for regenerating the answers or choosing other judges. '
-            'Answer length or style may sway the judges.</p>'
-            + _models(data) +
-            '<details><summary>Rubric, how answers were shown, and references</summary>' + provenance +
-            '<p>Every system is scored on the same resampled question sets, so comparisons between systems are '
-            f'like for like. The random seed is {_text(bootstrap["seed"])}.</p>'
+            'Answer length or style may sway the judges.' + (' ' + _text(lengths) if lengths else '') + '</p>'
+            + _models(data) + _saved_settings(data) +
+            '<details><summary>Rubric, how answers were shown, and references</summary>' + earlier + provenance
             + creativity_reference +
             '<li><a href="https://jmlr.org/papers/v18/16-206.html">Shah and Wainwright, 2018</a>: '
             'ranking by pairwise win counts (Borda counting).</li>'
@@ -1504,40 +2068,175 @@ def _method(data):
             'resampling methods and their assumptions in evaluation.</li>'
             '<li><a href="https://arxiv.org/abs/2306.05685">Zheng et al., 2023</a>: '
             'position and verbosity biases in LLM judging.</li></ul>'
-            '<p class="small">These sources inform the design; they do not validate this rubric or its judgments against human experts.</p>'
-            '</details></section>')
+            '<p class="small">These sources shaped the design. None of them validates this rubric or its judgments '
+            'against human experts.</p>'
+            '</details>' + (f'<p class="small">{previous}</p>' if previous else '') + '</section>')
 
 
 CSS = """
 #judges>details{margin:.3rem 0}
+#main-content>.other-rubrics{margin-top:4rem;padding-top:.6rem;border-top:1px solid var(--line);font-size:.78rem}.other-rubrics>details{display:inline-block;margin:0 1.2rem 0 0;padding:0;vertical-align:top}.other-rubrics>details[open]{display:block;margin:.6rem 0 1rem;padding-bottom:1rem;border-bottom:1px solid var(--line)}
+.other-rubrics>details>summary{display:inline-block;list-style:none;padding:.3rem 0;margin:0;font-size:.75rem;font-weight:400;line-height:1.6;color:#68788a;cursor:pointer}.other-rubrics>details>summary::-webkit-details-marker{display:none}.other-rubrics>details>summary::after{content:" ▸";content:" ▸" / ""}.other-rubrics>details[open]>summary::after{content:" ▾";content:" ▾" / ""}.other-rubrics>details[open]>summary{font-size:.9rem;font-weight:650;color:#526574}.other-rubrics>details>summary:hover{text-decoration:underline}.other-rubrics>details>summary:focus-visible{outline:2px solid #0b5967;outline-offset:2px}.other-rubrics .rubric-body{font-size:.92rem;margin-top:.5rem}
 .question-category{margin-top:2rem}.question-category>h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .8rem}
 .method-summary{display:grid;grid-template-columns:10rem minmax(0,1fr);gap:1rem 1.5rem}.method-summary dt{font-weight:650;color:#0b5967}.method-summary dd{margin:0}
-.small,small{color:#526574}.small{font-size:.9rem}.nowrap{white-space:nowrap}
-.run-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin:1.8rem 0}.run-stats strong{display:block;color:#0b5967;font-size:1.9rem}.run-stats span{font-size:.85rem;color:#526574}
+.small,small{color:#526574}.small{font-size:.9rem}.nowrap{white-space:nowrap}.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+main table{font-variant-numeric:tabular-nums}main td.num,main th.num{text-align:right}main td.num{white-space:nowrap}main td.num small{white-space:normal}.table-scroll tbody th,.table-scroll tbody th a{overflow-wrap:normal;word-break:normal;hyphens:none}.table-scroll table:not(.matrix) tbody th{white-space:nowrap}
+.run-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1.5rem;margin:1.8rem 0}.run-stats strong{display:block;color:#0b5967;font-size:1.9rem}.run-stats span{font-size:.85rem;color:#526574}
 .ranking-row{display:grid;grid-template-columns:minmax(160px,1.1fr) minmax(150px,2fr) 130px;gap:1rem;align-items:center;margin:1.1rem 0}.rank-label{display:flex;align-items:center;gap:.7rem}.rank{color:#526574;font-size:1.3rem}.ranking-row svg{width:100%;height:48px}.score{text-align:right;font-variant-numeric:tabular-nums}.score strong{display:block;font-size:1.4rem}.score small{display:block;font-size:.8rem;line-height:1.5}
-.table-scroll{max-width:100%;overflow:auto;background:linear-gradient(to right,#fff 30%,rgba(255,255,255,0)),linear-gradient(to left,#fff 30%,rgba(255,255,255,0)) 100% 0,radial-gradient(farthest-side at 0 50%,rgba(23,44,62,.22),rgba(23,44,62,0)),radial-gradient(farthest-side at 100% 50%,rgba(23,44,62,.22),rgba(23,44,62,0)) 100% 0;background-repeat:no-repeat;background-size:40px 100%,40px 100%,14px 100%,14px 100%;background-attachment:local,local,scroll,scroll}.answer-text .table-scroll{background:none}.table-scroll table{min-width:630px}.table-scroll .matrix{table-layout:fixed;min-width:700px}.matrix th,.matrix td{vertical-align:middle;padding:.9rem}.matrix th:first-child{width:29%}.matrix thead th,.matrix td{text-align:center}.matrix tbody th{font-weight:650;line-height:1.5}.heat-cell,.diagonal{display:flex;align-items:center;justify-content:center;min-height:3rem;padding:.6rem;font-variant-numeric:tabular-nums}.heat-cell{background:rgba(11,89,103,var(--shade))}.diagonal{background:#f0f3f5;color:#71818c;font-size:.85rem}
-.question{padding:0;border:1px solid #d7e1e6;border-radius:6px;margin:1rem 0}.question>summary{display:grid;grid-template-columns:2rem minmax(0,1fr) auto 1rem;gap:.8rem;align-items:start;padding:1.2rem;font-size:1rem;list-style:none}.question>summary::-webkit-details-marker{display:none}.question>summary::after{grid-column:-2;grid-row:1;content:"+";font-size:1.2rem;line-height:1.2;text-align:center}.question[open]>summary::after{content:"−"}.question-number{color:#526574;font-weight:400;font-variant-numeric:tabular-nums}.question-title{min-width:0}.question-outcome{max-width:16rem;font-size:.78rem;line-height:1.6;font-weight:500;text-align:right}.question-content{padding:0 1.2rem 1rem}.question .evidence-heading{margin:1rem 0 .5rem}.question .answer{border-top:1px solid #d7e1e6;margin:0;padding:.15rem 0}.question .answer>summary{font-size:1rem;padding:1rem 0}.reason{white-space:pre-wrap;overflow-wrap:anywhere}.answer-text{white-space:normal;overflow-wrap:anywhere;max-height:40rem;overflow:auto;background:#f5f8f9;padding:1.2rem;font-size:.95rem;line-height:1.8}.answer-text>:first-child{margin-top:0}.answer-text>:last-child{margin-bottom:0}.answer-text h4{font-size:1.2rem}.answer-text h5{font-size:1.05rem}.answer-text h6{font-size:1rem}.answer-text pre{white-space:pre;overflow:auto}.answer-text .table-scroll table{min-width:480px}.answer-text .table-scroll th,.answer-text .table-scroll td{padding:.6rem .75rem;border-bottom:1px solid var(--line)}.answer-metadata{margin:1rem 0}.cost-record pre{max-height:32rem;white-space:pre-wrap;overflow-wrap:anywhere}.question .judgments{border-top:1px solid #d7e1e6;margin:1rem 0 0;padding-top:.5rem}.judgment-group{margin:1.5rem 0;padding-top:1rem;border-top:1px solid #d7e1e6}.judgment-group:first-of-type{margin-top:.5rem;padding-top:0;border-top:0}.judgment-group>h4{font-size:1rem;margin:.5rem 0}.question .judgment{margin:.3rem 0;padding:.2rem 0}.judgment .presentation{font-size:.85rem;color:#526574;margin:.2rem 0 1rem}.judgment .reason{margin:.7rem 0 1.5rem}summary{overflow-wrap:anywhere}code{overflow-wrap:anywhere}
-@media(max-width:650px){.question-outcome{grid-column:2;grid-row:2;max-width:none;text-align:left}.method-summary{grid-template-columns:1fr;gap:.25rem}.method-summary dd{margin-bottom:1rem}.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{max-height:32rem;padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
+.table-scroll{max-width:100%;overflow:auto;background:linear-gradient(to right,#fff 30%,rgba(255,255,255,0)),linear-gradient(to left,#fff 30%,rgba(255,255,255,0)) 100% 0,radial-gradient(farthest-side at 0 50%,rgba(23,44,62,.22),rgba(23,44,62,0)),radial-gradient(farthest-side at 100% 50%,rgba(23,44,62,.22),rgba(23,44,62,0)) 100% 0;background-repeat:no-repeat;background-size:40px 100%,40px 100%,14px 100%,14px 100%;background-attachment:local,local,scroll,scroll}.answer-text .table-scroll{background:none}.table-scroll table{min-width:630px}.table-scroll .matrix{table-layout:fixed;min-width:700px}.matrix th,.matrix td{vertical-align:middle;padding:.9rem}.matrix th:first-child{width:29%}.matrix thead th,.matrix td{text-align:center}.matrix tbody th{font-weight:650;line-height:1.5}.heat-cell,.diagonal{position:relative;display:flex;align-items:center;justify-content:center;min-height:3rem;padding:.6rem;font-variant-numeric:tabular-nums}.heat-cell{background:rgba(11,89,103,var(--shade))}.diagonal{background:repeating-linear-gradient(135deg,#f7f9fa 0 5px,#e1e8ec 5px 6px);color:#5f6f7b;font-size:.85rem}.matrix thead th:first-child{text-align:left}
+.question{padding:0;border:1px solid #d7e1e6;border-radius:6px;margin:1rem 0}.question>summary{display:grid;grid-template-columns:2rem minmax(0,1fr) auto 1rem;gap:.8rem;align-items:start;padding:1.2rem;font-size:1rem;list-style:none}.question>summary::-webkit-details-marker{display:none}.question>summary::after{grid-column:-2;grid-row:1;content:"+";content:"+" / "";font-size:1.2rem;line-height:1.2;text-align:center}.question[open]>summary::after{content:"−";content:"−" / ""}.question-number{color:#526574;font-weight:400;font-variant-numeric:tabular-nums}.question-title{min-width:0}.question-outcome{max-width:16rem;font-size:.78rem;line-height:1.6;font-weight:500;text-align:right}.question-content{padding:0 1.2rem 1rem}.question .evidence-heading{margin:1rem 0 .5rem}.question .answer{border-top:1px solid #d7e1e6;margin:0;padding:.15rem 0}.question .answer>summary{font-size:1rem;padding:1rem 0}.reason{white-space:pre-wrap;overflow-wrap:anywhere}.answer-text{white-space:normal;overflow-wrap:anywhere;max-height:40rem;overflow:auto;background:#f5f8f9;padding:1.2rem;font-size:.95rem;line-height:1.8}.answer-text>:first-child{margin-top:0}.answer-text>:last-child{margin-bottom:0}.answer-text h5{font-size:1.2rem}.answer-text h6{font-size:1.05rem}.answer-text h6.answer-minor-heading{font-size:.95rem;font-weight:600;color:#3b5060}details.configuration pre{white-space:pre-wrap;overflow-wrap:break-word}.configuration-body{scroll-margin-top:4.5rem}.answer-text pre{white-space:pre;overflow:auto}.answer-text .table-scroll table{min-width:480px}.answer-text .table-scroll th,.answer-text .table-scroll td{padding:.6rem .75rem;border-bottom:1px solid var(--line)}.answer-metadata{margin:1rem 0}.cost-record pre{max-height:32rem;white-space:pre;overflow-wrap:normal}.question .judgments{border-top:1px solid #d7e1e6;margin:1rem 0 0;padding-top:.5rem}.judgment-group{margin:1.5rem 0;padding-top:1rem;border-top:1px solid #d7e1e6}.judgment-group:first-of-type{margin-top:.5rem;padding-top:0;border-top:0}.judgment-group>h4{font-size:1rem;margin:.5rem 0}.question .judgment{margin:.3rem 0;padding:.2rem 0}.judgment .presentation{font-size:.85rem;color:#526574;margin:.2rem 0 1rem}.judgment .reason{margin:.7rem 0 1.5rem}summary{overflow-wrap:anywhere}code{overflow-wrap:anywhere}
+@media(max-width:999px){.table-scroll table:not(.matrix) tbody th{white-space:normal}}
+@media(max-width:650px){.run-stats{grid-template-columns:repeat(6,minmax(0,1fr))}.run-stats>div{grid-column:span 2}.run-stats>div:nth-last-child(-n+2){grid-column:span 3}.matrix th,.matrix td{padding:.5rem .4rem}.matrix th:first-child{width:24%}.matrix thead th{font-size:.8rem}.matrix tbody th,.matrix thead th:first-child{position:sticky;left:0;z-index:1;background:#fff}.table-scroll table{min-width:0}.table-scroll table:not(.matrix) tbody th{white-space:normal;min-width:6rem}main .table-scroll table:not(.matrix) th,main .table-scroll table:not(.matrix) td{padding:.6rem .45rem}.table-scroll table.wide{min-width:560px}.table-scroll .matrix{min-width:620px}.answer-text{max-height:none;overflow:visible}.question-outcome{grid-column:2;grid-row:2;max-width:none;text-align:left}.method-summary{grid-template-columns:1fr;gap:.25rem}.method-summary dd{margin-bottom:1rem}.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
 @media print{.skip-link,main>nav{display:none}.ranking-row{break-inside:avoid}.answer-text{max-height:none;overflow:visible}details>summary{break-after:avoid}}
 """
 
 
-def _headline(data):
-    """State the ranking in order, grouping leaders the paired intervals cannot separate."""
-    rows = data['ranking']['ranking']
-    group = _top_group(data)
-    rest = [row for row in rows if row['agent'] not in group]
+def _separable(report):
+    """close(a, b) is true when the paired 95% interval of two systems' difference includes zero."""
+    contrasts = {frozenset(c['pair']): c for c in report.get('paired_contrasts', [])}
+
+    def close(a, b):
+        c = contrasts.get(frozenset((a, b)))
+        return bool(c) and c['ci95'][0] <= 0 <= c['ci95'][1]
+    return close
+
+
+def _cluster_differences(report):
+    """The paired 95% interval for every pair inside each group the intervals cannot fully separate."""
+    contrasts, rows = {frozenset(c['pair']): c for c in report.get('paired_contrasts', [])}, report['ranking']
     sentences = []
-    if len(group) > 1:
-        sentences.append(_join(f'{_label(row["agent"])} at {_pct(row["preference_rate"])}' for row in rows
-                               if row['agent'] in group) + ' are too close to separate for first place.')
-    else:
-        rest = rows
-    items = [f'{_label(row["agent"])}{" is" if index == 0 else ""} {_ordinal(row["rank"])} at {_pct(row["preference_rate"])}'
-             for index, row in enumerate(rest)]
-    if items:
-        sentences.append(_join(items) + '.')
+    for i, j in _clusters(report):
+        members = [row['agent'] for row in rows[i:j + 1]]
+        items = []
+        for a, b in combinations(members, 2):
+            c = contrasts[frozenset((a, b))]
+            low, high = sorted((1 if c['pair'][0] == a else -1) * v for v in c['ci95'])
+            items.append(f'{_label(a)} vs {_label(b)} {_points(low)} to {_points(high)}')
+        who = f'the top {_word(len(members))}' if i == 0 else _join(_label(a) for a in members)
+        sentences.append(f'The 95% interval for each difference among {who}, in percentage points: '
+                         + '; '.join(items) + '.')
     return ' '.join(sentences)
+
+
+def _clusters(report):
+    """(first, last) row indexes of each run of ranked systems that the paired intervals cannot fully separate.
+
+    A group is a maximal run of neighbors in which every pair is too close to separate;
+    groups that share a system join into one cluster."""
+    rows, close = report['ranking'], _separable(report)
+    clusters, end = [], -1
+    for i in range(len(rows)):
+        j = i
+        while j + 1 < len(rows) and all(close(rows[k]['agent'], rows[j + 1]['agent']) for k in range(i, j + 1)):
+            j += 1
+        if j > i and j > end:
+            if clusters and i <= clusters[-1][1]:
+                clusters[-1] = (clusters[-1][0], j)
+            else:
+                clusters.append((i, j))
+            end = j
+    return clusters
+
+
+def _split_clause(report, a, b):
+    """For a system ahead of another overall: a clause when their own judgments split about evenly."""
+    rate = ((report.get('pairwise') or {}).get('overall') or {}).get(a, {}).get(b)
+    if not _number(rate) or not .45 <= rate <= .55:
+        return ''
+    how = 'evenly' if _tenths(rate) == 50 else 'nearly evenly'
+    return f', although the two split their own head-to-head judgments {how} ({_pct(rate)})'
+
+
+def _headline(data):
+    """State the ranking in order. Systems whose paired interval includes zero are never given separate places."""
+    report = data['ranking']
+    rows, close, clusters = report['ranking'], _separable(report), dict(_clusters(report))
+    sentences, named, singles = [], set(), []
+
+    def mention(row):
+        first = row['agent'] not in named
+        named.add(row['agent'])
+        return _label(row['agent']) + (f' at {_pct(row["preference_rate"])}' if first else '')
+
+    def flush():
+        if singles:
+            sentences.append(_join(f'{_label(r["agent"])}{" is" if n == 0 else ""} {_ordinal(r["rank"])} at '
+                                   f'{_pct(r["preference_rate"])}' for n, r in enumerate(singles)) + '.')
+            named.update(r['agent'] for r in singles)
+            singles.clear()
+
+    index = 0
+    while index < len(rows):
+        if index not in clusters:
+            singles.append(rows[index])
+            index += 1
+            continue
+        flush()
+        members = rows[index:clusters[index] + 1]
+        agents = [r['agent'] for r in members]
+        apart = [(a, b) for a, b in combinations(agents, 2) if not close(a, b)]
+        if not apart:
+            sentences.append(f'{_join(mention(r) for r in members)} are too close to separate for '
+                             f'{_ordinal(members[0]["rank"])} place.')
+        else:
+            # A chain: name the leader, then whom each later system cannot be separated from, then who is ahead.
+            lead = members[0]
+            named.add(lead['agent'])
+            sentences.append(f'{_label(lead["agent"])} {"leads" if index == 0 else "is next"} at '
+                             f'{_pct(lead["preference_rate"])}.')
+            stated, told = set(), set()
+            for row in members[1:]:
+                partners = [p for p in members if p is not row and close(row['agent'], p['agent'])
+                            and frozenset((row['agent'], p['agent'])) not in stated]
+                if not partners:
+                    continue
+                stated.update(frozenset((row['agent'], p['agent'])) for p in partners)
+                sentence = f'{mention(row)} cannot be separated ' + _join((f'from {mention(p)}' for p in partners), 'or')
+                among = {p['agent'] for p in partners}
+                plain = [(a, b) for a, b in apart if {a, b} <= among and not _split_clause(report, a, b)]
+                if plain:
+                    sentence += ', but ' + _join(f'{_label(a)} is ahead of {_label(b)}' for a, b in plain)
+                    told.update(plain)
+                sentences.append(sentence + '.')
+            behind = defaultdict(list)
+            for a, b in apart:
+                if (a, b) in told:
+                    continue
+                split = _split_clause(report, a, b)
+                if split:
+                    sentences.append(f'{_label(a)} is ahead of {_label(b)}{split}.')
+                else:
+                    behind[a].append(b)
+            sentences += [f'{_label(a)} is ahead of {_join(_label(b) for b in bs)}.' for a, bs in behind.items()]
+        index += len(members)
+    flush()
+    return ' '.join(sentences)
+
+
+def _cost_summary(data):
+    """Per-answer cost and time of the first-ranked system against the range of the others, linked to the details."""
+    generation, agents = data['resources']['generation'], _system_order(data)
+    if len(agents) < 2:
+        return ''
+    cost, minutes = {}, {}
+    for agent in agents:
+        r = generation[agent]
+        total = r['audited_known_cost_usd'] if _number(r['audited_known_cost_usd']) else r['estimated_cost_usd']
+        cost[agent] = total / r['answers'] if _number(total) and r['answers'] else None
+        minutes[agent] = r['mean_duration_seconds'] / 60 if _number(r['mean_duration_seconds']) else None
+    first, others = agents[0], agents[1:]
+    if cost[first] is None or minutes[first] is None or any(cost[a] is None or minutes[a] is None for a in others):
+        return ''
+
+    def spread(values, show):
+        low, high = show(min(values)), show(max(values))
+        return low if low == high else f'{low} to {high}'
+    assumed = [a for a in others if a in UNREPORTED_MODELS]
+    note = (f', with {_join(_label(a) + "’s" for a in assumed)} cost at assumed prices' if assumed else '')
+    return _text(f'Per answer, {_label(first)} cost {_money(cost[first])} on average and took '
+                 f'{minutes[first]:,.0f} minutes. The other systems cost {spread([cost[a] for a in others], _money)} '
+                 f'and took {spread([minutes[a] for a in others], lambda m: f"{m:,.0f}")} minutes{note} (see ') \
+        + '<a href="#resources">Cost and time</a>).'
 
 
 def _previous_version(destination):
@@ -1549,15 +2248,27 @@ def _previous_version(destination):
 
 
 def _render(data, destination, *, updated=None):
-    title = _text(page_title(destination, "Deep research comparison"))
-    agents, counts = data['manifest']['agents'], _counts(data)
-    judge_phrase = _plural(counts['judges'], 'model judge').capitalize() + (' compares' if counts['judges'] == 1 else ' compare')
+    title = _text(page_title(destination, "Deep Research Comparison"))
+    agents, counts = _system_order(data), _counts(data)
+    one = counts['judges'] == 1
+    judge_phrase = ('One AI model acts as the judge. It compares' if one else
+                    f'{_word(counts["judges"]).capitalize()} AI models act as judges. They compare')
     aut = data['ranking'].get('rubric_kind') == AUT_KIND
-    rubric = ('an AUT-inspired creativity rubric' if aut else
-              'the NUS rubric, which asks how New, Useful and Surprising each answer is')
-    shared = [j for j in data['ranking']['judges']
-              if any(data['judges'][j].get('model') in models for models in _main_models(data).values())]
+    version = None if aut else _main_rubric(data)
+    rubric = ('an AUT-inspired creativity rubric.' if aut else
+              f'the {_rubric_link(version) if version else "NUS"} rubric. ' + NUS_DEFINITION)
+    pointer, rubric_note = '', ''
     previous = _previous_version(Path(destination))
+    if previous:
+        systems = previous.read_text(encoding='utf-8').count('class="ranking-row"')
+        link = (f'<a href="{previous.name}">{_text(page_title(previous, previous.stem))}</a>'
+                ' (its version number is unrelated to the NUS rubric versions)')
+        pointer = (f'An earlier study, {link}, compared {_word(systems)} systems.' if systems > 1
+                   else f'An earlier study is {link}.')
+    if data.get('rubric_variants'):
+        rubric_note = (_text(_rubric_pointer(_system_order(data), data['rubric_variants']['entries']))
+                       + ' Those results are at the <a href="#other-rubrics">bottom of the page</a>.')
+    picks, cost = _judge_picks(data), _cost_summary(data)
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">',
              f'<title>{title}</title>', site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
@@ -1565,29 +2276,35 @@ def _render(data, destination, *, updated=None):
              f'<main id="main-content" tabindex="-1"><h1>{title}</h1>',
              f'<p>This comparison runs {_text(_join(_label(a) for a in agents))} '
              f'on the same 50 questions. {judge_phrase} the {counts["answers"]:,} answers two at a time, in both orders, '
-             f'and pick the more creative one under {rubric}. '
+             f'and {"picks" if one else "pick"} the more creative one under {rubric} '
              + (f'The ranking uses {counts["ranked"]} of the 50 questions; <a href="#unranked">'
                 f'{"one question is" if 50 - counts["ranked"] == 1 else _word(50 - counts["ranked"]) + " questions are"} not ranked</a>. '
                 if counts['ranked'] != 50 else '')
-             + 'The models behind each system are listed under <a href="#systems">Models and research workflows</a>.</p>'
-             + f'<p><strong>{_text(_headline(data))}</strong>'
-             + ((f' {_word(len(shared)).capitalize()} of the {_word(counts["judges"])} judges use' if len(shared) > 1 else
-                 ' One judge uses' if counts['judges'] > 1 else ' The judge uses')
-                + ' the same model as some of the systems being judged; <a href="#judges">see how each judge ruled</a>.'
-                if shared else '')
-             + (f' The previous study is <a href="{previous.name}">{_text(page_title(previous, previous.stem))}</a>.' if previous else '')
-             + '</p>',
-             '<nav aria-label="Report contents"><a href="#overall">Ranking</a><a href="#matchups">Head-to-head</a>'
-             '<a href="#judges">Judges</a>' + ('<a href="#rubrics">Rubrics</a>' if data.get('rubric_variants') else '')
-             + '<a href="#resources">Cost and time</a>'
-             '<a href="#method">Method</a><a href="#questions">Answers</a></nav>',
+             + ('A judgment is the judge picking the more creative of two answers.' if one else
+                'A judgment is one judge picking the more creative of two answers.')
+             + ' A system’s win rate is the share of its judgments it won.</p>'
+             + f'<p><strong>{_text(_headline(data))}</strong></p>'
+             + ('<p>The judge did not check facts. A high win rate means the judge found the answers more creative, '
+                'not that they are more correct. The judge is an AI model whose choices have not' if one else
+                '<p>The judges did not check facts. A high win rate means the judges found the answers more creative, '
+                'not that they are more correct. The judges are AI models whose choices have not')
+             + ' been checked against human experts, and an answer’s wording or length can reveal or favor the system '
+               'that wrote it.</p>'
+             + (f'<p>{cost}</p>' if cost else '')
+             + (f'<p>{_text(picks)} <a href="#judges">See how each judge ruled</a>.</p>' if picks else '')
+             + (f'<p class="small">{rubric_note}</p>' if rubric_note else ''),
+             '<nav aria-label="Report contents"><a href="#overall">Creativity ranking</a><a href="#matchups">Head-to-head</a>'
+             '<a href="#judges">Judges</a><a href="#resources">Cost and time</a>'
+             '<a href="#method">Method</a><a href="#questions">Answers and judgments</a></nav>',
              (f'<div class="run-stats"><div><strong>{counts["ranked"]}</strong><span>of 50 questions ranked</span></div>'
               if counts['ranked'] != 50 else '<div class="run-stats"><div><strong>50</strong><span>questions</span></div>')
+             + f'<div><strong>{counts["systems"]}</strong><span>systems</span></div>'
+             + f'<div><strong>{counts["judges"]}</strong><span>{"judge" if one else "judges"}</span></div>'
              + f'<div><strong>{counts["answers"]:,}</strong><span>answers</span></div>'
              + (f'<div><strong>{counts["saved"]:,}</strong><span>of {counts["judgments"]:,} pairwise judgments</span></div></div>'
                 if counts['failed'] else f'<div><strong>{counts["judgments"]:,}</strong><span>pairwise judgments</span></div></div>'),
-             _ranking(data), _head_to_head(data), _judges(data), _rubrics(data), _resources(data), _method(data),
-             _questions(data),
+             _ranking(data), _head_to_head(data), _judges(data), _resources(data), _method(data, pointer),
+             _questions(data), _rubrics(data),
              '</main></body></html>\n']
     return ''.join(parts)
 

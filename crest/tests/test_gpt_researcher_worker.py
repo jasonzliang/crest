@@ -293,6 +293,171 @@ def test_one_explicit_retry_is_individually_metered(tmp_path, instant_backoff):
     assert a.snapshot()['retry_calls'] == 1
 
 
+@pytest.fixture
+def recorded_sleeps(monkeypatch):
+    """Record every retry backoff the worker requests, without waiting."""
+    delays, real_sleep = [], asyncio.sleep
+    async def sleep(delay, *args, **kwargs):
+        delays.append(delay)
+        return await real_sleep(0, *args, **kwargs)
+    monkeypatch.setattr(asyncio, 'sleep', sleep)
+    monkeypatch.setattr(time, 'sleep', delays.append)
+    return delays
+
+
+class ServerError(Exception):
+    """Offline stand-in for openai.InternalServerError (e.g. a Cloudflare 520)."""
+    def __init__(self, status_code=520, headers=None):
+        super().__init__('offline server error')
+        self.status_code = status_code
+        self.response = SimpleNamespace(headers=headers or {})
+
+
+def flaky_clients(failures, error=lambda: ServerError()):
+    """Sync and async SDK stand-ins that raise ``failures`` errors, then succeed."""
+    def outcome():
+        Sync.calls += 1
+        if Sync.calls <= failures:
+            raise error()
+        return response()
+    class Sync:
+        base_url = 'https://api.openai.com/v1/'
+        max_retries = 2
+        calls = 0
+        def request(self, cast_to, opts, **kwargs):
+            return outcome()
+    class Async(Sync):
+        async def request(self, cast_to, opts, **kwargs):
+            return outcome()
+    return Sync, Async
+
+
+def send(a, asynchronous, failures, error=lambda: ServerError()):
+    Sync, Async = flaky_clients(failures, error)
+    with a.installed(Sync, Async):
+        if asynchronous:
+            asyncio.run(Async().request(object, options()))
+        else:
+            Sync().request(object, options())
+    return Sync
+
+
+@pytest.mark.parametrize('asynchronous', [False, True], ids=['sync', 'async'])
+def test_transient_5xx_retries_and_keeps_failed_reservation_unknown(tmp_path, recorded_sleeps, asynchronous):
+    a = audit(tmp_path)
+    client = send(a, asynchronous, failures=1)
+    state = a.snapshot()
+    assert client.calls == 2
+    assert recorded_sleeps == [2.]
+    failed, completed = state['events']
+    assert failed['status'] == 'failed' and failed['status_code'] == 520
+    assert failed['unknown_cost'] is True and failed['cost_usd'] is None
+    assert failed['retry_scheduled'] is True and failed['reserved_usd'] > 0
+    assert completed['status'] == 'completed' and completed['attempt'] == 1
+    # The possibly billed 520 attempt is never reset: it stays reserved and unknown.
+    assert state['unknown_cost'] is True and state['cost_usd'] is None
+    assert state['reserved_usd'] == failed['reserved_usd']
+    assert state['upper_bound_usd'] == pytest.approx(state['known_cost_usd'] + failed['reserved_usd'])
+    assert state['terminal_failure'] is None and not state['in_flight']
+    assert not a.unresolved()
+    assert json.loads((tmp_path / 'usage.json').read_text())['events'][0]['retry_scheduled'] is True
+
+
+@pytest.mark.parametrize('asynchronous', [False, True], ids=['sync', 'async'])
+def test_persistent_5xx_stops_after_bounded_retries_with_all_reservations_held(
+        tmp_path, recorded_sleeps, asynchronous):
+    w = worker()
+    a = audit(tmp_path)
+    with pytest.raises(w.SDKStopped):
+        send(a, asynchronous, failures=10 ** 6)
+    state = a.snapshot()
+    retries = w.SERVER_ERROR_RETRIES
+    assert len(state['events']) == retries + 1
+    assert recorded_sleeps == [min(w.SERVER_RETRY_MAX_SECONDS, w.SERVER_RETRY_BASE_SECONDS * 2 ** n)
+                               for n in range(retries)]
+    assert [e.get('retry_scheduled', False) for e in state['events']] == [True] * retries + [False]
+    assert all(e['unknown_cost'] and e['reserved_usd'] > 0 for e in state['events'])
+    assert state['reserved_usd'] == pytest.approx(sum(e['reserved_usd'] for e in state['events']))
+    assert state['terminal_failure'] == 'SDKStopped' and a.unresolved()
+    with pytest.raises(w.SDKStopped):
+        a.before(options())
+
+
+@pytest.mark.parametrize('asynchronous', [False, True], ids=['sync', 'async'])
+@pytest.mark.parametrize('status', [400, 404, None])
+def test_4xx_or_unknown_errors_are_never_retried(tmp_path, recorded_sleeps, asynchronous, status):
+    w = worker()
+    a = audit(tmp_path)
+    with pytest.raises(w.SDKStopped):
+        send(a, asynchronous, failures=1, error=lambda: ServerError(status))
+    state = a.snapshot()
+    assert recorded_sleeps == [] and len(state['events']) == 1
+    assert not state['events'][0].get('retry_scheduled')
+    assert state['terminal_failure'] == 'SDKStopped' and state['reserved_usd'] > 0
+
+
+@pytest.mark.parametrize('header,expected', [('7', 7.), ('9999', 'cap'), ('soon', 2.), ('0.5', 2.)])
+def test_5xx_backoff_honors_capped_retry_after(tmp_path, recorded_sleeps, header, expected):
+    w = worker()
+    a = audit(tmp_path)
+    send(a, False, failures=1, error=lambda: ServerError(503, {'retry-after': header}))
+    assert recorded_sleeps == [w.RETRY_AFTER_CAP_SECONDS if expected == 'cap' else expected]
+
+
+def test_5xx_backoff_never_sleeps_past_the_worker_deadline(tmp_path, recorded_sleeps):
+    a = audit(tmp_path)
+    a.deadline = time.monotonic() + .5
+    send(a, False, failures=1, error=lambda: ServerError(502, {'retry-after': '30'}))
+    assert len(recorded_sleeps) == 1 and 0 <= recorded_sleeps[0] <= .5
+
+
+def test_retried_5xx_does_not_block_synthesis_but_unscheduled_unknown_does(tmp_path, recorded_sleeps):
+    w = worker()
+    a = audit(tmp_path)
+    send(a, True, failures=1)
+    async def finish(audit_):
+        await w._finish_research(audit_, asyncio.all_tasks())
+    asyncio.run(finish(a))
+    assert a.snapshot()['phase_stops'] == {'research': 'completed'}
+    assert a.snapshot()['terminal_failure'] is None
+    # Any other unresolved charge (here without a latched circuit) still blocks synthesis.
+    b = audit(tmp_path / 'b')
+    b.events.append({'request_id': 'x', 'status': 'failed', 'status_code': 500, 'unknown_cost': True,
+                     'cost_usd': None, 'reserved_usd': .1, 'input_tokens': 0, 'output_tokens': 0})
+    assert b.unresolved()
+    with pytest.raises(w.SDKStopped):
+        asyncio.run(finish(b))
+
+
+@pytest.mark.parametrize('url,same', [
+    ('https://example.test/a/', 'https://example.test/a'),
+    ('https://Example.test/a/b/', 'https://example.test/a/b'),
+    ('https://example.test/a/?q=1', 'https://example.test/a?q=1'),
+    ('https://example.test/a/#part', 'https://example.test/a'),
+    ('https://example.test/', 'https://example.test'),
+])
+def test_source_key_treats_trailing_path_slash_as_the_same_resource(url, same):
+    w = worker()
+    assert w._source_key(url) == w._source_key(same)
+    for text, retrieved in [(url, same), (same, url)]:
+        result = w.extract_result(f'Claim [source]({text}).', [{'url': retrieved}], {'cost_usd': .1}, {}, {})
+        assert result['citations'] == [{'url': retrieved, 'title': retrieved}]
+
+
+def test_source_key_keeps_root_and_other_distinctions():
+    w = worker()
+    assert w._source_key('https://example.test') == 'https://example.test/'
+    assert w._source_key('https://example.test/') == 'https://example.test/'
+    assert w._source_key('https://example.test/a') != w._source_key('https://example.test/b')
+    assert w._source_key('https://example.test/a') != w._source_key('https://example.test/a/b')
+    assert w._source_key('https://example.test/a?q=1/') != w._source_key('https://example.test/a?q=1')
+    assert w._source_key('http://example.test/a/') != w._source_key('https://example.test/a')
+    assert w._source_key('ftp://example.test/a/') is None
+    with pytest.raises(ValueError, match='not a retrieved source'):
+        w.extract_result('Claim [x](https://example.test/a/b/).', [{'url': 'https://example.test/a'}],
+                         {'cost_usd': .1}, {}, {})
+
+
 def test_result_requires_text_and_sources_and_keeps_unknown_cost():
     w = worker()
     # Word limits and missing citations have their own tests below.
@@ -859,6 +1024,50 @@ def test_confirmed_429_backoff_is_nonbillable_cleanup_not_unknown_failure(tmp_pa
     assert sent == ['rejected', 'synthesis']
     assert result['cost_usd'] == pytest.approx(spent + .0004)
     assert not a.snapshot()['unknown_cost'] and not a.snapshot()['terminal_failure']
+
+
+@gpt_runtime
+def test_real_sdk_520_in_research_and_writer_retries_to_an_answer_with_held_reservations(
+        tmp_path, recorded_sleeps):
+    from gpt_researcher.utils.llm import create_chat_completion
+    w = worker()
+    a = audit(tmp_path, max_research_rounds=1)
+    captures = [{'context': 'Evidence https://example.test/evidence',
+                 'sources': [{'url': 'https://example.test/evidence'}]}]
+    sent = []
+    async def go():
+        async def handler(request):
+            name = json.loads(request.content)['messages'][0]['content']
+            sent.append(name)
+            if sent.count(name) == 1:  # One Cloudflare edge failure per role.
+                return httpx.Response(520, text='<html>origin error</html>')
+            return chat_response('Finding [source](https://example.test/evidence/).')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            async def completion(name):
+                return await create_chat_completion(messages=[{'role': 'user', 'content': name}],
+                    model=w.MODEL, llm_provider='openai', max_tokens=8000,
+                    llm_kwargs=offline_kwargs(client, reasoning_effort='high'))
+            class Researcher:
+                def __init__(self, **kwargs): self.cfg = SimpleNamespace(llm_kwargs={}, smart_token_limit=8000)
+                async def conduct_research(self): return await completion('research')
+                async def write_report(self, **kwargs): return await completion('synthesis')
+                def get_costs(self): return 0.
+            with w._runtime({}, a, captures):
+                return await w.research({'prompt': 'Original', 'source_identity': {}}, a, Researcher, captures)
+    result = asyncio.run(go())
+    state = a.snapshot()
+    assert sent == ['research', 'research', 'synthesis', 'synthesis']
+    assert recorded_sleeps.count(w.SERVER_RETRY_BASE_SECONDS) == 2
+    failed = [e for e in state['events'] if e['status'] == 'failed']
+    assert [(e['status_code'], e['error_type'], e['phase']) for e in failed] == [
+        (520, 'InternalServerError', 'research'), (520, 'InternalServerError', 'synthesis')]
+    assert all(e['retry_scheduled'] and e['unknown_cost'] and e['reserved_usd'] > 0 for e in failed)
+    assert state['reserved_usd'] == pytest.approx(sum(e['reserved_usd'] for e in failed))
+    assert state['known_cost_usd'] == pytest.approx(.0008)
+    assert state['terminal_failure'] is None and not state['in_flight']
+    assert result['cost_usd'] is None and result['usage']['unknown_cost'] is True
+    assert result['citations'] == [{'url': 'https://example.test/evidence', 'title': 'https://example.test/evidence'}]
+    assert any('Uncertain billed usage' in warning for warning in result['warnings'])
 
 
 @gpt_runtime

@@ -343,8 +343,7 @@ def test_running_research_over_budget_is_flagged_but_never_cancelled(tmp_path):
 ], ids=["standard_context", "long_context"])
 def test_judge_request_is_structured_json_without_tools_and_bills_reasoning_once(tmp_path, usage, cost):
     from crest.judging import SCHEMA
-    verdict = {c: {"reason": "A develops a stronger idea than B", "winner": "A"}
-               for c in ("new", "useful", "surprising")}
+    verdict = {"reason": "A develops a stronger idea than B", "winner": "A"}
     def handler(request):
         body = json.loads(request.content)
         assert body == {
@@ -413,8 +412,7 @@ def test_judge_cost_stays_unknown_without_complete_priced_usage(tmp_path, raw, s
 @pytest.mark.parametrize("resume", [False, True])
 def test_argon_queued_submission_resume_and_poll_complete_without_resubmission(tmp_path, resume):
     from crest.judging import SCHEMA
-    verdict = {criterion: {"reason": "A develops the clearer idea", "winner": "A"}
-               for criterion in ("new", "useful", "surprising")}
+    verdict = {"reason": "A develops the clearer idea", "winner": "A"}
     job = FakeJob(tmp_path, **({"remote_id": "research-1", "submitted_at": time.time()} if resume else {}))
     calls = []
     statuses = iter(["queued", "queued", "in_progress", "completed"])

@@ -9,6 +9,7 @@ import argparse
 import asyncio
 from contextlib import contextmanager
 import copy
+from email.utils import parsedate_to_datetime
 import hashlib
 import inspect
 import json
@@ -44,6 +45,13 @@ DEFAULTS = {
 }
 # Standard USD / million tokens, checked 2026-11-21. No paid tools are enabled.
 PRICES = {'input': 2., 'cache_read': .1, 'cache_write': 2.5, 'output': 10.}
+# Transient HTTP 5xx (e.g. a Cloudflare 520 from api.openai.com) is retried a
+# bounded number of times, as Caesar does. Each failed attempt keeps its full
+# reservation as an unknown-cost event; it is never reset to zero.
+SERVER_ERROR_RETRIES = 3
+SERVER_RETRY_BASE_SECONDS = 2.
+SERVER_RETRY_MAX_SECONDS = 30.
+RETRY_AFTER_CAP_SECONDS = 60.
 
 
 def normalize_settings(settings: dict) -> dict:
@@ -218,14 +226,6 @@ def _research_context(query, context, limit):
     return fitted
 
 
-def _writer_context(context, prompt, role, limit):
-    # Exact custom-prompt messages used by pinned actions/report_generation.py.
-    return _fit_prefix(context, lambda value: _input_bound([
-        {'role': 'system', 'content': role},
-        {'role': 'user', 'content': prompt + '\n\nContext: ' + value},
-    ]) <= limit)
-
-
 def _writer_evidence(captures, prompt, role, limit):
     """Select bounded evidence and its permitted sources together, newest first."""
     def header(items):
@@ -324,6 +324,32 @@ def _mapping(value):
     return vars(value) if value is not None and hasattr(value, '__dict__') else {}
 
 
+def _server_error(error):
+    status = getattr(error, 'status_code', None)
+    return isinstance(error, Exception) and type(status) is int and 500 <= status < 600
+
+
+def _retry_after_seconds(error):
+    """Provider-advised delay (seconds or HTTP date), 0 when absent or invalid."""
+    headers = getattr(getattr(error, 'response', None), 'headers', None) or {}
+    body = getattr(error, 'body', None)
+    body = body.get('error', body) if isinstance(body, dict) else {}
+    body = body if isinstance(body, dict) else {}
+    delay = 0.
+    for value in (headers.get('retry-after', headers.get('Retry-After')),
+                  body.get('retry_after'), body.get('retry_after_seconds')):
+        try:
+            advised = float(value)
+        except (TypeError, ValueError):
+            try:
+                advised = parsedate_to_datetime(value).timestamp() - time.time()
+            except (TypeError, ValueError, OverflowError):
+                continue
+        if math.isfinite(advised):
+            delay = max(delay, advised)
+    return delay
+
+
 class UsageAudit:
     """Persist-before-dispatch accounting shared by every nested SDK client.
 
@@ -383,6 +409,25 @@ class UsageAudit:
 
     def persist(self):
         atomic_json(self.path, self.snapshot())
+
+    def unresolved(self):
+        """Pending or unknown charges, except failed 5xx attempts kept for a retry.
+
+        A retried attempt's reservation stays held and unknown; it is not a
+        reason to refuse synthesis, while every other unknown outcome still is.
+        """
+        with self.lock:
+            return bool(self.pending) or any(e.get('unknown_cost') and not e.get('retry_scheduled')
+                                             for e in self.events)
+
+    def can_retry_server_error(self, error, retries):
+        return _server_error(error) and retries < SERVER_ERROR_RETRIES
+
+    def server_retry_delay(self, error, retries):
+        delay = min(SERVER_RETRY_MAX_SECONDS, SERVER_RETRY_BASE_SECONDS * 2. ** retries)
+        delay = max(delay, min(RETRY_AFTER_CAP_SECONDS, _retry_after_seconds(error)))
+        # Never sleep past the worker deadline; admission then refuses the retry.
+        return max(0., min(delay, self.deadline - time.monotonic()))
 
     def latch(self, error):
         """A terminal circuit never reopens; a research stop still permits synthesis."""
@@ -485,17 +530,17 @@ class UsageAudit:
             self.persist()
             return token
 
-    def after(self, token, response=None, error=None):
+    def after(self, token, response=None, error=None, *, retrying=False):
         try:
-            event = self._settle(token, response=response, error=error)
+            event = self._settle(token, response=response, error=error, retrying=retrying)
         except BaseException as exc:
             self.latch(exc)
             raise
-        if event.get('unknown_cost'):
+        if event.get('unknown_cost') and not event.get('retry_scheduled'):
             self.latch(SDKStopped('Uncertain request outcome'))
         return event
 
-    def _settle(self, token, response=None, error=None):
+    def _settle(self, token, response=None, error=None, retrying=False):
         with self.lock:
             # An interrupted rollback can leave both the charge and reservation.
             # Reconcile by admitted request ID rather than charging a redelivery.
@@ -512,6 +557,9 @@ class UsageAudit:
                              unknown_cost=not rejected, cost_usd=0. if rejected else None)
                 if rejected:
                     event['reserved_usd'] = 0.
+                elif retrying and _server_error(error):
+                    # Possibly billed: keep the whole reservation and unknown cost.
+                    event['retry_scheduled'] = True
             else:
                 usage = _mapping(getattr(response, 'usage', None))
                 inputs, outputs = usage.get('prompt_tokens'), usage.get('completion_tokens')
@@ -570,12 +618,20 @@ class UsageAudit:
             if hasattr(options, 'max_retries'):
                 options.max_retries = 0
 
-        def can_retry(error, attempt):
-            return getattr(error, 'status_code', None) == 429 and attempt < audit.settings['retry_attempts']
+        def backoff(error, counts):
+            """Delay before the next attempt, or None to stop as before."""
+            if getattr(error, 'status_code', None) == 429 and counts['rate_limit'] < audit.settings['retry_attempts']:
+                counts['rate_limit'] += 1
+                return 1.
+            if audit.can_retry_server_error(error, counts['server']):
+                counts['server'] += 1
+                return audit.server_retry_delay(error, counts['server'] - 1)
+            return None
 
         def dispatch(instance, cast_to, options, **kwargs):
             prepare(instance, options)
-            for attempt in range(audit.settings['retry_attempts'] + 1):
+            counts, attempt = {'rate_limit': 0, 'server': 0}, 0
+            while True:
                 try:
                     token = audit.before(options, attempt=attempt)
                 except Exception:
@@ -587,15 +643,18 @@ class UsageAudit:
                     else:
                         parsed = result
                 except BaseException as error:
-                    audit.after(token, error=error)
-                    if can_retry(error, attempt):
-                        time.sleep(1.)
+                    audit.after(token, error=error,
+                                retrying=audit.can_retry_server_error(error, counts['server']))
+                    delay = backoff(error, counts)
+                    if delay is not None:
+                        time.sleep(delay)
+                        attempt += 1
                         continue
                     raise SDKStopped(f'SDK {type(error).__name__}; stopped without upstream retry') from None
                 audit.after(token, response=parsed)
                 return result
 
-        async def settle_request(instance, cast_to, options, token, kwargs):
+        async def settle_request(instance, cast_to, options, token, kwargs, server_retries):
             # The task that owns the accepted HTTP request also owns settlement.
             # Caller cancellation never settles it speculatively as zero/unknown.
             try:
@@ -609,7 +668,7 @@ class UsageAudit:
                     else:
                         parsed = result
             except BaseException as error:
-                audit.after(token, error=error)
+                audit.after(token, error=error, retrying=audit.can_retry_server_error(error, server_retries))
                 raise
             audit.after(token, response=parsed)
             return result
@@ -621,12 +680,14 @@ class UsageAudit:
 
         async def adispatch(instance, cast_to, options, **kwargs):
             prepare(instance, options)
-            for attempt in range(audit.settings['retry_attempts'] + 1):
+            counts, attempt = {'rate_limit': 0, 'server': 0}, 0
+            while True:
                 try:
                     token = audit.before(options, attempt=attempt)
                 except Exception:
                     raise SDKStopped('Cannot persist request reservation; no request sent') from None
-                task = asyncio.create_task(settle_request(instance, cast_to, options, token, kwargs))
+                task = asyncio.create_task(settle_request(instance, cast_to, options, token, kwargs,
+                                                          counts['server']))
                 audit.active_calls[token] = task
                 task.add_done_callback(lambda done, key=token: finished(key, done))
                 try:
@@ -639,8 +700,10 @@ class UsageAudit:
                     # but the worker's drain still gets the actual usage receipt.
                     raise SDKStopped('Caller cancelled while an admitted request is settling') from None
                 except BaseException as error:
-                    if can_retry(error, attempt):
-                        await asyncio.sleep(1.)
+                    delay = backoff(error, counts)
+                    if delay is not None:
+                        await asyncio.sleep(delay)
+                        attempt += 1
                         continue
                     raise SDKStopped(f'SDK {type(error).__name__}; stopped without upstream retry') from None
         def boundary(error):
@@ -686,7 +749,10 @@ def _source_key(url):
         parts = urlsplit(url)
         if parts.scheme not in ('http', 'https') or not parts.netloc or parts.username or parts.password:
             return None
-        return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path or '/', parts.query, ''))
+        path = parts.path or '/'
+        if len(path) > 1 and path.endswith('/'):
+            path = path[:-1]  # https://x.org/a/ is the same resource as https://x.org/a
+        return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), path, parts.query, ''))
     except ValueError:
         return None
 
@@ -904,7 +970,7 @@ async def _finish_research(audit, baseline):
     if any(not task.done() for task in asyncio.all_tasks() - baseline):
         audit.quarantine()
         raise SDKStopped('Research tasks remain alive; refusing a synthesis phase switch')
-    if expired or audit.snapshot()['unknown_cost']:
+    if expired or audit.unresolved():
         if audit.pending:
             audit.quarantine()
         audit.latch(SDKStopped('Research requests did not settle to known usage'))

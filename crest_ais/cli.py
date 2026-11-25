@@ -288,7 +288,7 @@ def main(argv=None):
         summary = {"run_dir": str(run_dir), "expected_jobs": len(plan["jobs"]),
                    "sampled_pairs": plan["selection"]["sampled_pairs"], "selected_papers": len(plan["papers"])}
         if args.command in {"report", "run"}:
-            destination = args.report_path.expanduser().resolve() if args.report_path else PACKAGE_ROOT.parent / page_path("AI scientist comparison v1")
+            destination = args.report_path.expanduser().resolve() if args.report_path else PACKAGE_ROOT.parent / page_path("AI Scientist Comparison v1")
             report = _report(plan, run_dir, root, destination)
             summary.update(report=str(destination), status=report["status"], completed_jobs=report["coverage"]["completed_jobs"])
         print(json.dumps(summary, indent=2))

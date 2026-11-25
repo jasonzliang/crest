@@ -18,7 +18,8 @@ Messages are synchronous, so a stream that breaks after the server starts
 generating has already been billed for an unknown amount. Such attempts are
 recorded on the job and leave the final cost unknown. Only legacy native server
 research can retry them in place; gateway and hard client research never do; a request that never received an HTTP response
-is left for review rather than resubmitted.
+is left for review rather than resubmitted, unless httpx proves it failed before
+sending (connect, TLS or pool errors): that attempt was never submitted and is retried.
 """
 from __future__ import annotations
 
@@ -55,6 +56,10 @@ WEB_SEARCH_USD = .01  # $10 per 1,000 searches; web_fetch bills only its tokens.
 RETRYABLE = {408, 429, 500, 502, 503, 504, 529}
 BOOTSTRAP_ATTEMPTS = 5  # Free public searches per run before the job fails without a paid request.
 BOOTSTRAP_RETRY_DELAY_S = 5.0  # Linear backoff (5, 10, 15, 20 s): DDGS throttles under many concurrent jobs.
+# Transport failures httpx raises before any request byte is written: connecting or TLS setup,
+# waiting for a pooled connection, or an unsupported URL scheme. Write, read and protocol
+# errors (and any timeout outside connect/pool) may follow delivery, so they stay unknown.
+NOT_SENT_ERRORS = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout, httpx.UnsupportedProtocol)
 TOOL_ATTEMPT_FACTOR = 2  # Failed client calls don't use up a tool's limit; its attempts stop at twice the limit.
 # Model-facing guidance: answers otherwise narrate tool limits and failures instead of answering.
 TOOL_RESULT_NOTE = "Do not mention tool limits, tool errors or the research process in your response."
@@ -524,8 +529,19 @@ async def _stream_turn(client, headers, payload, job, settings, deadline):
             # on a transport failure, or after content on a server error, was billed.
             billed = assembler.started() and (not isinstance(exc, StreamError) or assembler.message.get("content"))
             if billed or gateway and isinstance(exc, StreamError):
-                _record_interruption(job, assembler.message, f"{type(exc).__name__}: {exc}", uncertain=gateway)
+                _record_interruption(job, assembler.message, f"{type(exc).__name__}: {exc}", uncertain=gateway,
+                                     error_type=type(exc).__name__)
                 raise StreamInterrupted("Anthropic stream interrupted after generation started; the attempt is recorded") from exc
+            if isinstance(exc, NOT_SENT_ERRORS):
+                # No request byte left this process, so nothing reached the provider or was billed.
+                delay = backoff(attempt, base, cap)
+                job.save(submission_unknown=False)
+                event = _record(job, method="POST", attempt=attempt, delay=delay, error=exc,
+                                retrying=attempt < attempts and time.time() + delay < deadline)
+                if event["retrying"]:
+                    await asyncio.sleep(delay)
+                    continue
+                raise ProviderError(f"Anthropic request was not sent ({type(exc).__name__}); nothing was billed") from exc
             if isinstance(exc, StreamError):
                 delay = backoff(attempt, base, cap)
                 job.save(submission_unknown=False, last_rejection=str(exc))
@@ -535,6 +551,8 @@ async def _stream_turn(client, headers, payload, job, settings, deadline):
                     await asyncio.sleep(delay)
                     continue
                 raise
+            # Only the exception type is recorded: its message can carry request details.
+            _record(job, method="POST", attempt=attempt, delay=0, error=exc, retrying=False)
             # A complete explicit rejection remains unbilled if a later
             # controller/backoff/cleanup wait exhausts the operation deadline.
             if job.state.get("submission_unknown"):
@@ -552,10 +570,12 @@ async def _stream_turn(client, headers, payload, job, settings, deadline):
     raise AssertionError("retry loop did not return or raise")
 
 
-def _record_interruption(job, message, error, *, uncertain=False):
+def _record_interruption(job, message, error, *, uncertain=False, error_type=None):
     """Generation began, so the attempt was billed for an unknown amount; keep what was observed."""
     record = {"error": error, "at": time.time(), "cost_usd": None, "model": (message or {}).get("model"),
               "observed_usage": _turn_cost(message)[0] if message else {}}
+    if error_type is not None:
+        record["error_type"] = error_type
     job.save(submission_unknown=uncertain,
              interrupted_attempts=[*job.state.get("interrupted_attempts", []), record],
              **({"unresolved_submission": True} if uncertain else {}))
@@ -827,7 +847,7 @@ async def _run(prompt, settings, job, *, client, is_judge):
         job.save(raw=_raw(turns, settings, _client_records(job)), submission_unknown=False,
                  remote_status=message.get("stop_reason"), consecutive_interruptions=0 if _finished(message) else restarts)
         receipt = _receipt(turns, settings, job)
-        usage, cost = receipt["usage"], receipt["cost_usd"]
+        cost = receipt["cost_usd"]
         over_budget = receipt["budget_exceeded"]
         if over_budget:
             job.save(budget_exceeded=True)

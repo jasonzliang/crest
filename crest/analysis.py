@@ -10,17 +10,17 @@ from pathlib import Path
 import random
 
 from .costs import _money, summarize_costs
-from .rubrics import AUT_KIND, AUT_PROTOCOL, NUS_KIND, protocol_rubric_kind
+from .rubrics import AUT_KIND, NUS_KIND, STRICT_REASON_PROTOCOLS, protocol_rubric_kind
 
 ANALYSIS_VERSION = "10"
 
 
 def _valid_verdict(value, protocol_version=None):
     from .judging import validate_verdict
-    if protocol_version not in (None, 'nus-overall-pairwise-v2', 'nus-overall-pairwise-v3', AUT_PROTOCOL):
+    if protocol_version not in (None, 'nus-overall-pairwise-v2', *STRICT_REASON_PROTOCOLS):
         return False
     try:
-        validate_verdict(value, require_reason_quality=protocol_version in ('nus-overall-pairwise-v3', AUT_PROTOCOL))
+        validate_verdict(value, require_reason_quality=protocol_version in STRICT_REASON_PROTOCOLS)
     except (ValueError, TypeError):
         return False
     return True

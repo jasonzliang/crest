@@ -1040,14 +1040,18 @@ def test_saved_failed_refusal_resumes_with_a_fresh_attempt_and_keeps_its_error(t
     assert row['attempts'][0]['error'] == error
 
 
-def test_judgment_unknown_submission_never_automatically_resubmits(tmp_path):
-    pipeline, provider, task = judgment_fixture(tmp_path)
-    calls = []
+def unknown_outcome(calls):
     async def judge(prompt, settings, job):
         calls.append(job.path)
         job.save(submission_unknown=True)
         raise RuntimeError('submission outcome unknown')
-    provider.judge = judge
+    return judge
+
+
+def test_judgment_unknown_submission_never_automatically_resubmits(tmp_path):
+    pipeline, provider, task = judgment_fixture(tmp_path)
+    calls = []
+    provider.judge = unknown_outcome(calls)
     for _ in range(2):
         with pytest.raises(RuntimeError, match='unknown'):
             asyncio.run(pipeline._execute(task, 'judge'))
@@ -1118,11 +1122,7 @@ def test_stand_in_attempts_are_bounded_by_the_attempt_limit(tmp_path):
 def test_acknowledged_unknown_submission_is_resent_once_and_keeps_its_unknown_cost(tmp_path):
     pipeline, provider, task = judgment_fixture(tmp_path)
     calls = []
-    async def unknown(prompt, settings, job):
-        calls.append(job.path)
-        job.save(submission_unknown=True)
-        raise RuntimeError('submission outcome unknown')
-    provider.judge = unknown
+    provider.judge = unknown_outcome(calls)
     with pytest.raises(RuntimeError, match='unknown'):
         asyncio.run(pipeline._execute(task, 'judge'))
     pipeline.resend_unknown = True
@@ -1142,11 +1142,7 @@ def test_acknowledged_resend_happens_only_once_per_judgment(tmp_path):
     pipeline, provider, task = judgment_fixture(tmp_path)
     pipeline.resend_unknown = True
     calls = []
-    async def unknown(prompt, settings, job):
-        calls.append(job.path)
-        job.save(submission_unknown=True)
-        raise RuntimeError('submission outcome unknown')
-    provider.judge = unknown
+    provider.judge = unknown_outcome(calls)
     for _ in range(3):
         with pytest.raises(RuntimeError, match='unknown'):
             asyncio.run(pipeline._execute(task, 'judge'))
@@ -1488,3 +1484,55 @@ def test_uncertain_cumulative_overrun_warning_uses_original_target(tmp_path, mod
     assert result['budget_exceeded'] is True and result['cost_usd'] is None
     warnings = [w for w in result['warnings'] if 'exceeded' in w and 'budget' in w]
     assert len(warnings) == 1 and '$5.00' in warnings[0] and '$6.00' not in warnings[0]
+
+
+SPRINGER = 'https://link.springer.com/article/10.1007/s00221-013-3813-9'
+SPRINGER_COOKIE = SPRINGER + '?error=cookies_not_supported&code=3b65c993-0499-4af6-8137-e2ce3de95301'
+
+
+def _appended(text, urls):
+    from crest.pipeline import append_uncited_sources
+    return append_uncited_sources(text, [{'url': url} for url in urls])
+
+
+def test_appended_sources_dedupe_springer_cookie_error_variants():
+    text = _appended('Body.', [SPRINGER, SPRINGER_COOKIE])
+    assert text == f'Body.\n\nSources:\n{SPRINGER}'
+    # The first-seen spelling is kept verbatim.
+    assert _appended('Body.', [SPRINGER_COOKIE, SPRINGER]) == f'Body.\n\nSources:\n{SPRINGER_COOKIE}'
+
+
+def test_appended_sources_ignore_tracking_parameters_case_fragment_and_trailing_slash():
+    urls = ['https://Example.ORG/paper/?utm_source=x&utm_medium=y', 'https://example.org/paper#intro',
+            'HTTPS://example.org/paper?fbclid=abc', 'https://example.org/paper?gclid=1&msclkid=2']
+    assert _appended('Body.', urls) == f'Body.\n\nSources:\n{urls[0]}'
+
+
+def test_appended_sources_keep_meaningful_queries():
+    urls = ['https://example.org/view?id=1', 'https://example.org/view?id=2',
+            'https://example.org/view?doi=10.1/x', 'https://example.org/search?q=a', 'https://example.org/view?article=7',
+            'https://example.org/view?code=7']  # code= alone is not the cookie-error pair.
+    assert _appended('Body.', urls) == 'Body.\n\nSources:\n' + '\n'.join(urls)
+
+
+@pytest.mark.parametrize('body', [
+    f'Body cites [a paper]({SPRINGER}).',
+    f'Body cites <{SPRINGER}/>.',
+    f'Body cites {SPRINGER}.',
+    f'Body cites **{SPRINGER.replace("https://link.springer.com", "HTTPS://Link.Springer.com")}**?',
+])
+def test_appended_url_matching_an_inline_link_after_normalization_is_not_appended(body):
+    assert _appended(body, [SPRINGER_COOKIE, f'{SPRINGER}?utm_campaign=z']) == body
+
+
+def test_appended_url_paths_stay_case_sensitive():
+    body = f'Body cites {SPRINGER.upper()}.'
+    assert _appended(body, [SPRINGER]) == f'{body}\n\nSources:\n{SPRINGER}'
+
+
+def test_appended_sources_keep_exact_substring_behavior_and_skip_bad_entries():
+    text = 'See https://example.org/a.'
+    assert _appended(text, ['https://example.org/a', 'https://example.org/b', 'https://example.org/b']) == (
+        text + '\n\nSources:\nhttps://example.org/b')
+    from crest.pipeline import append_uncited_sources
+    assert append_uncited_sources(text, [None, {'url': ''}, {'title': 'x'}, 'https://x.test']) == text

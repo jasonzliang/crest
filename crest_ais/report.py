@@ -402,9 +402,9 @@ def _concepts(report):
                  'Acar, Burnett, and Cabra (2017), <cite>Ingredients of Creativity: Originality '
                  'and More</cite></a>, examines surprise alongside originality and value. '
                  'These works motivate the three ideas; they do not test CREST’s rubric. More detail: '
-                 + (f'<a href="{page_path("NUS rubric").name}">the current NUS rubric (v2, not used here)</a>'
-                    if historical else f'<a href="{page_path("NUS rubric").name}">the NUS rubric</a>')
-                 + f' and <a href="{page_path("Why one overall judgment").name}">why we ask for one overall judgment</a>.</p></div>')
+                 + (f'<a href="{page_path("NUS Rubric").name}">the current NUS rubric (v2, not used here)</a>'
+                    if historical else f'<a href="{page_path("NUS Rubric").name}">the NUS rubric</a>')
+                 + f' and <a href="{page_path("Why One Overall Judgment").name}">why we ask for one overall judgment</a>.</p></div>')
     return "".join(parts)
 
 
@@ -993,7 +993,7 @@ def _method(report):
              'score is the share of votes its paper won. A matchup averages its pairs, and a scientist’s score '
              f'averages its {plural(opponents, "matchup")}.</p>',
              _sampling_plan(report), saved_rubric, _concepts(report),
-             f'<p class="small">Full method: <a href="{page_path("AI scientist comparison method").name}">AI scientist comparison method</a>.</p>'
+             f'<p class="small">Full method: <a href="{page_path("AI Scientist Comparison Method").name}">AI scientist comparison method</a>.</p>'
              '</section>']
     return "".join(parts)
 
@@ -1131,7 +1131,7 @@ def write_report(report: dict, destination: Path, *, data_root: Path, updated: s
                 raise ValueError('Judgment protocol differs from the report rubric')
         validate_verdict(judgment.get("verdict"), require_reason_quality=family == AUT_KIND)
     destination, data_root = Path(destination), Path(data_root)
-    title = _text(page_title(destination, "AI scientist comparison"))
+    title = _text(page_title(destination, "AI Scientist Comparison"))
     coverage = report.get("coverage", {})
     ready = _ready(report)
     colors = {agent: COLORS[index % len(COLORS)] for index, agent in enumerate(report.get("agents", {}))}

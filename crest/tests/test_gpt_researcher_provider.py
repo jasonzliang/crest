@@ -443,3 +443,53 @@ def test_low_writer_reserve_soft_app_provider_and_overrun_receipt_agree_and_repl
     out = asyncio.run(p.generate('Q', loaded, job))
     assert out['cost_usd'] == .1806 and out['usage']['budget_cap'] == 'soft'
     assert (job.directory / 'gpt-researcher-result.json').read_bytes() == before
+
+
+def retried_5xx_record(req, mutation=None):
+    """A completed receipt whose only unknown charge is a retried 520 attempt's held reservation."""
+    from copy import deepcopy
+    record = budget_record(req, .9)
+    out, usage = record['result'], record['result']['usage']
+    failed = {'request_id': 'f' * 32, 'status': 'failed', 'status_code': 520, 'error_type': 'InternalServerError',
+              'unknown_cost': True, 'cost_usd': None, 'reserved_usd': .4, 'retry_scheduled': True}
+    completed = {'request_id': 'c' * 32, 'status': 'completed', 'unknown_cost': False, 'cost_usd': .9,
+                 'reserved_usd': 0., 'attempt': 1}
+    usage.update(cost_usd=None, known_cost_usd=.9, reserved_usd=.4, upper_bound_usd=1.3, unknown_cost=True,
+                 events=[failed, completed])
+    out['cost_usd'] = None
+    if mutation == 'not_retried': failed.pop('retry_scheduled')
+    elif mutation == 'client_error': failed['status_code'] = 400
+    elif mutation == 'released': failed['reserved_usd'] = 0.
+    elif mutation == 'reserved_total': usage['reserved_usd'] = 0.
+    elif mutation == 'upper_bound': usage['upper_bound_usd'] = .9
+    elif mutation == 'claimed_cost': out['cost_usd'] = usage['cost_usd'] = .9
+    elif mutation == 'pending': usage['in_flight'] = [{'reserved_usd': .1}]
+    elif mutation == 'terminal': usage['terminal_failure'] = 'SDKStopped'
+    elif mutation == 'other_unknown': usage['events'].append({'status': 'unknown', 'unknown_cost': True,
+                                                              'cost_usd': None, 'reserved_usd': 0.})
+    elif mutation == 'known_mismatch': usage['known_cost_usd'] = usage['upper_bound_usd'] = .5
+    out['raw'] = {'accounting': deepcopy(usage), 'gpt_researcher_audit': deepcopy(usage)}
+    return record
+
+
+@pytest.mark.parametrize('cap', ['hard', 'soft'])
+def test_completed_answer_keeps_retried_5xx_reservation_as_unknown_cost(
+        tmp_path, forbid_existing_request_dispatch, cap):
+    p, job = provider(), Job(tmp_path)
+    req = request(job, {'budget_cap': cap})
+    write_receipts(job, req, retried_5xx_record(req))
+    out = asyncio.run(p.generate('Q', {'budget_cap': cap}, job))
+    assert out['cost_usd'] is None
+    assert out['usage']['unknown_cost'] is True and out['usage']['reserved_usd'] == .4
+    assert job.state['remote_status'] == 'completed'
+
+
+@pytest.mark.parametrize('mutation', ['not_retried', 'client_error', 'released', 'reserved_total',
+    'upper_bound', 'claimed_cost', 'pending', 'terminal', 'other_unknown', 'known_mismatch'])
+def test_retried_5xx_receipt_cannot_hide_or_drop_an_unknown_charge(
+        tmp_path, forbid_existing_request_dispatch, mutation):
+    p, job = provider(), Job(tmp_path)
+    req = request(job, {'budget_cap': 'soft'})
+    write_receipts(job, req, retried_5xx_record(req, mutation))
+    with pytest.raises(RuntimeError, match='budget|accounting'):
+        asyncio.run(p.generate('Q', {'budget_cap': 'soft'}, job))

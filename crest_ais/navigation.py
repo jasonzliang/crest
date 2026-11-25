@@ -101,15 +101,15 @@ def site_header(project_root: Path, destination: Path, *, research_report: Path 
     root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
     def link(path):
         return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
-    comparison = research_report if research_report is not None else root / page_path('Deep research comparison v3')
-    label = page_title(comparison, 'Deep research comparison')
+    comparison = research_report if research_report is not None else root / page_path('Deep Research Comparison v3')
+    label = page_title(comparison, 'Deep Research Comparison')
     current = ' aria-current="page"' if research_report is not None else ''
     stamp = page_updated(updated)
     return ('<header class="crest-site-header"><nav aria-label="Documentation">'
             '<a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a>'
-            f'<a href="{link(root / page_path("Research pipeline"))}">Research pipeline</a>'
+            f'<a href="{link(root / page_path("Research Pipeline"))}">Research Pipeline</a>'
             f'<a href="{link(comparison)}"{current}>{escape(label)}</a>'
-            f'<a href="{link(root / page_path("AI scientist comparison v1"))}">AI scientist comparison v1</a>'
-            f'<a href="{link(root / "docs/index.html")}">All documents</a>'
+            f'<a href="{link(root / page_path("AI Scientist Comparison v1"))}">AI Scientist Comparison v1</a>'
+            f'<a href="{link(root / "docs/index.html")}">All Documents</a>'
             f'<time class="crest-page-updated" datetime="{stamp}">Updated {stamp}</time>'
             '</nav></header>')

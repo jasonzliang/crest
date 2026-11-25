@@ -150,6 +150,32 @@ def _interrupted(job, directory, status):
              raw={'status': status, 'usage': usage, 'raw': {'gpt_researcher_audit': usage}})
 
 
+def _money(value):
+    return type(value) in (int, float) and math.isfinite(value) and value >= 0
+
+
+def _retried_server_error_holds(usage):
+    """(known, held) when every unknown charge is a retried 5xx attempt's held reservation.
+
+    Such an attempt may have been billed, so its whole reservation stays in the
+    receipt as unknown cost. Any other unknown outcome returns None (rejected).
+    """
+    events = usage.get('events')
+    if not isinstance(events, list) or not all(isinstance(event, dict) for event in events):
+        return None
+    unknown = [event for event in events if event.get('unknown_cost')]
+    if not unknown or any(
+            event.get('status') != 'failed' or event.get('retry_scheduled') is not True
+            or type(event.get('status_code')) is not int or not 500 <= event['status_code'] < 600
+            or event.get('cost_usd') is not None or not _money(event.get('reserved_usd'))
+            or event['reserved_usd'] <= 0 for event in unknown):
+        return None
+    known = [event.get('cost_usd') for event in events if not event.get('unknown_cost')]
+    if not all(_money(value) for value in known):
+        return None
+    return math.fsum(known), math.fsum(event['reserved_usd'] for event in unknown)
+
+
 def _validate_budget_receipt(result, request):
     """Bind advisory/enforced accounting to the original request, never relabel it."""
     settings = normalize_settings(request.get('settings', {}))
@@ -164,7 +190,7 @@ def _validate_budget_receipt(result, request):
     # including when a newer application default explicitly selects soft.
     for value in (result.get('cost_usd'), usage.get('cost_usd'),
                   usage.get('known_cost_usd'), usage.get('upper_bound_usd')):
-        if value is not None and (type(value) not in (int, float) or not math.isfinite(value) or value < 0):
+        if value is not None and not _money(value):
             raise RuntimeError(error)
         if value is not None and settings['budget_cap'] != 'soft' and value > settings['budget_usd'] + 1e-12:
             raise RuntimeError(error)
@@ -183,11 +209,21 @@ def _validate_budget_receipt(result, request):
     for key in ('budget_usd', 'budget_target_usd', 'synthesis_reserve_usd'):
         if type(usage.get(key)) not in (int, float) or usage[key] != settings[key]:
             raise RuntimeError(error)
-    # A completed worker can only publish fully settled, known accounting.
-    for key in ('cost_usd', 'known_cost_usd', 'reserved_usd', 'upper_bound_usd'):
-        value = usage.get(key)
-        if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+    held = _retried_server_error_holds(usage) if usage.get('unknown_cost') is True else None
+    if held is not None:
+        # Retried transient 5xx attempts: publish the answer with unknown cost
+        # and every held reservation intact; nothing else may be unresolved.
+        known, reserved = held
+        if (not all(_money(usage.get(key)) for key in ('known_cost_usd', 'reserved_usd', 'upper_bound_usd'))
+                or usage.get('cost_usd') is not None or result.get('cost_usd') is not None
+                or usage.get('in_flight') or usage.get('terminal_failure')
+                or abs(usage['known_cost_usd'] - known) > 1e-9 or abs(usage['reserved_usd'] - reserved) > 1e-9
+                or abs(usage['upper_bound_usd'] - known - reserved) > 1e-9):
             raise RuntimeError(error)
+        return
+    # Otherwise a completed worker can only publish fully settled, known accounting.
+    if not all(_money(usage.get(key)) for key in ('cost_usd', 'known_cost_usd', 'reserved_usd', 'upper_bound_usd')):
+        raise RuntimeError(error)
     if (usage.get('unknown_cost') is not False or usage['reserved_usd'] != 0 or
             usage.get('in_flight') or usage.get('terminal_failure') or
             result.get('cost_usd') is None or

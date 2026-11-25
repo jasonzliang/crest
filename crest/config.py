@@ -25,14 +25,11 @@ DEFAULT_CONFIG = ROOT / 'crest/configs/crest.yaml'
 ANTHROPIC_GATEWAY_PRICING = {'claude-opus-5-5': {
     'input': 4.4, 'cached_input': .22, 'cache_write_5m': 5.5, 'output': 22., 'web_search': .01,
 }}
-SONNET_GATEWAY_PRICING = {'claude-sonnet-5-5': {
-    'input': 2.2, 'cached_input': .11, 'cache_write_5m': 2.75, 'output': 11., 'web_search': 0.,
-}}
 # Research runs client-side search/fetch, so no per-search fee applies.
 OPUS_RESEARCH_PRICING = {'claude-opus-5-5': {**ANTHROPIC_GATEWAY_PRICING['claude-opus-5-5'], 'web_search': 0.}}
 DEFAULTS = {
     'questions': '../data/queries_n50_v2.jsonl',
-    'rubric': '../prompts/nus_pairwise_v4.txt',
+    'rubric': '../prompts/nus_pairwise_v3.txt',
     'cache_dir': '../results/.cache/generation', 'output_dir': '../results',
     'results_timezone': DEFAULT_RESULTS_TIMEZONE,
     # Rendered for every research agent whose use_research_prompt flag is true.

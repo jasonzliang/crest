@@ -1686,3 +1686,76 @@ def test_complete_paused_recovery_counts_frozen_total_once(tmp_path):
     assert abandoned["known_cost_usd"] == pytest.approx(.00555)
     assert abandoned["raw"] == original
     assert result["raw"]["interrupted_attempts"][-1]["raw"] == original
+
+
+RETRY_NOW = {"retry_backoff_base_seconds": 0, "retry_backoff_max_seconds": 0}
+
+
+@pytest.mark.parametrize("error", [httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout])
+@pytest.mark.parametrize("base", [None, "https://proxy.example"], ids=["native", "gateway"])
+def test_pre_send_transport_failure_is_not_submitted_and_is_retried(tmp_path, error, base):
+    calls = []
+    def handler(request):
+        calls.append(1)
+        if len(calls) == 1:
+            raise error("no connection", request=request)
+        return stream_response(answer())
+    job = FakeJob(tmp_path)
+    settings = {"retry_attempts": 2, **RETRY_NOW, "model": OPUS}
+    if base:
+        settings |= {"api_base": base, "model_pricing": {OPUS: PROXY_RATES}}
+    result = invoke(handler, job, settings)
+    assert len(calls) == 2 and result["text"] == "A full answer."
+    assert result["cost_usd"] is not None and not result["raw"].get("unresolved_submission")
+    assert job.state["submission_unknown"] is False
+    assert not job.state.get("unresolved_submission") and not job.state.get("interrupted_attempts")
+    event = job.state["retry_events"][0]
+    assert event["error_type"] == error.__name__ and event["retrying"] is True and "status_code" not in event
+
+
+def test_pre_send_failure_after_the_last_attempt_has_no_unknown_cost(tmp_path):
+    calls = []
+    def handler(request):
+        calls.append(1)
+        raise httpx.ConnectError("refused", request=request)
+    job = FakeJob(tmp_path)
+    with pytest.raises(anthropic.ProviderError, match="not sent"):
+        invoke(handler, job, {"retry_attempts": 2, **RETRY_NOW})
+    assert len(calls) == 2
+    assert job.state["submission_unknown"] is False and not job.state.get("unresolved_submission")
+    assert job.state["provider_result"]["cost_usd"] == 0
+    assert [e["error_type"] for e in job.state["retry_events"]] == ["ConnectError"] * 2
+    assert [e["retrying"] for e in job.state["retry_events"]] == [True, False]
+    # Nothing was submitted, so a later run may submit again.
+    def succeed(request):
+        calls.append(1)
+        return stream_response(answer())
+    assert invoke(succeed, job)["text"] == "A full answer."
+
+
+@pytest.mark.parametrize("error", [httpx.ReadTimeout, httpx.RemoteProtocolError, httpx.ReadError,
+                                   httpx.WriteError, httpx.WriteTimeout])
+def test_possibly_sent_transport_failure_stays_unknown_and_records_its_type(tmp_path, error):
+    calls = []
+    def handler(request):
+        calls.append(1)
+        raise error("lost", request=request)
+    job = FakeJob(tmp_path)
+    with pytest.raises(anthropic.ProviderError, match="submission status unknown"):
+        invoke(handler, job, {"retry_attempts": 3, **RETRY_NOW})
+    assert calls == [1]
+    assert job.state["submission_unknown"] is True and job.state["unresolved_submission"] is True
+    assert job.state["retry_events"] == [{"method": "POST", "attempt": 1, "delay_seconds": 0,
+                                          "retrying": False, "error_type": error.__name__}]
+    with pytest.raises(anthropic.ProviderError, match="refusing"):
+        invoke(lambda request: pytest.fail("must not resubmit"), job)
+
+
+def test_interrupted_attempt_records_the_transport_error_type(tmp_path):
+    events = turn()
+    def handler(request):
+        return httpx.Response(200, stream=BrokenStream(sse(events[:2])), headers={"content-type": "text/event-stream"})
+    job = FakeJob(tmp_path)
+    with pytest.raises(anthropic.StreamInterrupted):
+        invoke(handler, job, {"retry_attempts": 1})
+    assert job.state["interrupted_attempts"][0]["error_type"] == "ReadError"

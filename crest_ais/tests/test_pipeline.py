@@ -673,8 +673,8 @@ def test_overall_protocol_freezes_current_crest_semantics_and_invalidates_all_ol
     old = json.loads(frozen.read_text())
     rubric = (root / "prompts" / "rubric_v2.txt").read_text()
     assert rubric == (root.parent / "crest" / "prompts" / "nus_pairwise_v2.txt").read_text()
-    assert PROTOCOL_VERSION == "crest-ais-overall-v3"
-    assert JUDGING_VERSION == root_judging.PROTOCOL_VERSION == "nus-overall-pairwise-v3"
+    assert PROTOCOL_VERSION == "crest-ais-overall-v4"
+    assert JUDGING_VERSION == root_judging.PROTOCOL_VERSION == "nus-overall-pairwise-v4"
     assert SAMPLING_VERSION == "crest-ais-v1"
     assert SCHEMA == root_judging.SCHEMA
     assert build_prompt("question", "paper A", "paper B", "rubric") == root_judging.build_prompt("question", "paper A", "paper B", "rubric")
@@ -1219,7 +1219,7 @@ def test_cli_default_report_uses_canonical_versioned_output(tmp_path, monkeypatc
     assert cli.main(['report', '--run-dir', str(run_dir)]) == 0
     destination = tmp_path / 'docs/ai-scientist-comparison-v1.html'
     page = html.fromstring(destination.read_bytes())
-    assert page.xpath('//h1/text()') == ['AI scientist comparison v1']
+    assert page.xpath('//h1/text()') == ['AI Scientist Comparison v1']
     assert page.xpath('//header//time/@datetime') == ['2026-11-05']
     assert not (tmp_path / 'docs/ai-scientist-creativity.html').exists()
     assert (run_dir / 'plan.json').read_bytes() == frozen

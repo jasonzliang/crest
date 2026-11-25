@@ -97,8 +97,11 @@ def test_rendered_prompt_supplies_only_overall_choice_schema_and_advisory_word_r
     assert list(rendered_schema["properties"]) == ["reason", "winner"]
     assert rendered_schema["required"] == ["reason", "winner"]
     # The word range is advisory; the explanation must be a complete paragraph.
-    assert 'Aim for 150–300 words in a complete comparative paragraph' in prompt
+    assert 'Aim for about 150–300 words in a complete comparative paragraph' in prompt
     assert 'one complete paragraph of 150–300 words' not in prompt
+    frozen = judging.build_prompt("Question", "First answer", "Second answer", "Rubric",
+                                  protocol_version=judging.NUS_PROTOCOL_V3)
+    assert 'Aim for 150–300 words in a complete comparative paragraph' in frozen
 
 
 def test_schedules_all_pairs_judges_and_both_orders(experiment):
@@ -169,8 +172,8 @@ def test_fingerprint_invalidates_full_content_rubric_settings_rendered_prompt_an
     monkeypatch.setattr(judging, "build_prompt", lambda *args, **kwargs: original(*args, **kwargs) + "\nExtra instruction.")
     assert baseline.isdisjoint(keys(experiment))
     monkeypatch.setattr(judging, "build_prompt", original)
-    monkeypatch.setattr(judging, "PROTOCOL_VERSION", "test-next-version")
-    assert baseline.isdisjoint(keys(experiment))
+    frozen = judging.make_judgment_jobs(*experiment, protocol_version=judging.NUS_PROTOCOL_V3)
+    assert baseline.isdisjoint(job["key"] for job in frozen)
 
 
 def test_job_keys_stable_across_input_and_setting_mapping_order(experiment):
@@ -306,3 +309,170 @@ def test_judges_see_answers_without_the_appended_uncited_source_list(experiment)
     assert job['presented_answer_hashes'][0] == hashlib.sha256(b'Full answer from entrant 0.').hexdigest()
     direct = judging.build_prompt('Question', raw, 'Other answer.', rubric)
     assert json.loads(direct.split('UNTRUSTED INPUT DATA (JSON):\n', 1)[1])['A'] == 'Full answer from entrant 0.'
+
+
+# --- nus-overall-pairwise-v4: wording follow-ups and rubric identity ----------------------
+
+# Pinned from the frozen v3 code before v4 existed (2026-11-24). Saved v3 stages and their
+# judgment-cache keys depend on these exact bytes.
+V3_FIXTURE_PROMPT_SHA256 = '16147824421c1c51e87d55d65afca726161dfce54d44bd4773ceede3f93fe1ff'
+V3_PACKAGED_RUBRIC_PROMPT_SHA256 = '27fe78019665896e290a23afbdc767c91840646f9e4c94478f6e724ecbb26168'
+V3_FIXTURE_JOBS_SHA256 = '71883ab797d80891c4ec74e61f4f378840d033f0de434bf70155243683af44fa'
+V3_FIXTURE_FIRST_KEYS = ['89db9cb1f76e954ba930904c537169f1b96621b47476064b6570404930ffae84',
+                         'cbb28cb6f1f812714a0b87493561ac31e6354bbbd5b846c259e934f8600170ea',
+                         '35b6286dc99b5c06705a417069d47c2482e8f9b8567bba5a83653c3c039bf35f']
+FIXTURE_ANSWERS = ("Invent a better bridge.", "Full answer from entrant 0.", "Full answer from entrant 1.")
+
+
+def _protocol_section(prompt):
+    return prompt.split("PAIRWISE RESPONSE PROTOCOL\n", 1)[1].split("matching this schema:", 1)[0]
+
+
+def _packaged(name):
+    from crest.rubrics import DEFAULT_NUS_RUBRIC
+    return DEFAULT_NUS_RUBRIC.with_name(name)
+
+
+def test_new_jobs_use_the_v4_protocol_and_v3_stays_selectable(experiment):
+    assert judging.NUS_PROTOCOL_V3 == "nus-overall-pairwise-v3"
+    assert judging.PROTOCOL_VERSION == judging.NUS_PROTOCOL_V4 == "nus-overall-pairwise-v4"
+    new = judging.make_judgment_jobs(*experiment)
+    old = judging.make_judgment_jobs(*experiment, protocol_version=judging.NUS_PROTOCOL_V3)
+    assert {job["protocol_version"] for job in new} == {"nus-overall-pairwise-v4"}
+    assert {job["protocol_version"] for job in old} == {"nus-overall-pairwise-v3"}
+    assert {job["key"] for job in new}.isdisjoint(job["key"] for job in old)
+    with pytest.raises(ValueError, match="protocol"):
+        judging.make_judgment_jobs(*experiment, protocol_version="nus-overall-pairwise-v9")
+    with pytest.raises(ValueError, match="protocol"):
+        judging.build_prompt(*FIXTURE_ANSWERS, "Rubric", protocol_version="unknown")
+
+
+def test_frozen_v3_prompt_bytes_jobs_and_keys_are_unchanged(experiment):
+    v3 = judging.NUS_PROTOCOL_V3
+    prompt = judging.build_prompt(*FIXTURE_ANSWERS, experiment[3], protocol_version=v3)
+    assert hashlib.sha256(prompt.encode()).hexdigest() == V3_FIXTURE_PROMPT_SHA256
+    packaged = judging.build_prompt(*FIXTURE_ANSWERS, _packaged("nus_pairwise_v3.txt").read_text(),
+                                    protocol_version=v3)
+    assert hashlib.sha256(packaged.encode()).hexdigest() == V3_PACKAGED_RUBRIC_PROMPT_SHA256
+    jobs = judging.make_judgment_jobs(*experiment, protocol_version=v3)
+    assert hashlib.sha256(json.dumps(jobs, sort_keys=True).encode()).hexdigest() == V3_FIXTURE_JOBS_SHA256
+    assert [job["key"] for job in jobs][:3] == V3_FIXTURE_FIRST_KEYS
+    assert all("rubric_id" not in job for job in jobs)
+
+
+def test_v4_prompt_says_creative_contribution_and_treats_guidance_as_a_whole(experiment):
+    rubric = _packaged("nus_pairwise_v3.txt").read_text()
+    new = judging.build_prompt(*FIXTURE_ANSWERS, rubric)
+    old = judging.build_prompt(*FIXTURE_ANSWERS, rubric, protocol_version=judging.NUS_PROTOCOL_V3)
+    protocol = _protocol_section(new)
+    assert "creative contribution" in protocol
+    assert "creative quality" not in protocol and "creative-quality" not in protocol
+    assert "creative quality" in _protocol_section(old)
+    assert "addressing each guidance aspect" not in protocol
+    assert "guidance as a whole" in protocol
+    # Only the protocol section changed: the rubric, schema and untrusted data are identical.
+    assert new.split("PAIRWISE RESPONSE PROTOCOL\n", 1)[0] == old.split("PAIRWISE RESPONSE PROTOCOL\n", 1)[0]
+    assert new.split("matching this schema:", 1)[1] == old.split("matching this schema:", 1)[1]
+    for job in judging.make_judgment_jobs(*experiment):
+        assert "creative quality" not in job["prompt"]
+
+
+def test_v4_word_range_is_a_target_and_no_validator_caps_reason_length():
+    protocol = _protocol_section(judging.build_prompt(*FIXTURE_ANSWERS, "Rubric"))
+    assert "Aim for about 150–300 words" in protocol
+    assert "not a limit" in protocol
+    for cap in ("at most", "no more than", "maximum", "must not exceed", "or fewer"):
+        assert cap not in protocol.lower()
+    assert set(judging.SCHEMA["properties"]["reason"]) == {"type", "minLength", "pattern"}
+    sentence = "A develops a more original coupled mechanism than B, which repeats a familiar design. "
+    long_reason = (sentence * 60).strip()  # About 840 words, far above the target range.
+    assert len(long_reason.split()) > 800
+    value = {"reason": long_reason, "winner": "A"}
+    assert judging.parse_verdict(json.dumps(value), require_reason_quality=True) == value
+    from crest.analysis import _valid_verdict
+    assert _valid_verdict(value, judging.NUS_PROTOCOL_V4)
+
+
+def test_v4_jobs_record_rubric_identity_outside_the_cache_key(experiment):
+    from crest.rubrics import rubric_identity
+    questions, answers, judges, _ = experiment
+    rubric = _packaged("nus_pairwise_v3.txt").read_text()
+    sha = hashlib.sha256(rubric.encode("utf-8")).hexdigest()
+    assert sha == hashlib.sha256(_packaged("nus_pairwise_v3.txt").read_bytes()).hexdigest()
+    # Without an explicit file name, a packaged rubric is named by its exact content.
+    jobs = judging.make_judgment_jobs(questions, answers, judges, rubric)
+    assert {json.dumps(job["rubric_id"], sort_keys=True) for job in jobs} == {
+        json.dumps({"file": "nus_pairwise_v3.txt", "sha256": sha}, sort_keys=True)}
+    named = judging.make_judgment_jobs(questions, answers, judges, rubric, rubric_file="renamed.txt")
+    assert all(job["rubric_id"] == {"file": "renamed.txt", "sha256": sha} for job in named)
+    # The rubric text is already hashed into the key, so the recorded name never changes it.
+    assert [job["key"] for job in named] == [job["key"] for job in jobs]
+    custom = judging.make_judgment_jobs(*experiment)
+    assert custom[0]["rubric_id"] == {"file": None, "sha256": hashlib.sha256(experiment[3].encode()).hexdigest()}
+    assert rubric_identity(rubric) == {"file": "nus_pairwise_v3.txt", "sha256": sha}
+    # AUT keeps its unchanged protocol and job shape.
+    aut = "RUBRIC ID: aut-inspired-pairwise-v1\nCompare fluency, flexibility, and originality."
+    assert all("rubric_id" not in job for job in judging.make_judgment_jobs(questions, answers, judges, aut))
+
+
+def test_rubric_resolver_uses_sha256_first_then_exact_text(tmp_path):
+    from crest.rubrics import resolve_rubric_version, resolve_stage_rubric_version
+    expected = {"nus_pairwise_v1.txt": "v1", "nus_pairwise_v2.txt": "v2", "nus_pairwise_v3.txt": "v3"}
+    for name, version in expected.items():
+        text = _packaged(name).read_text()
+        sha = hashlib.sha256(text.encode()).hexdigest()
+        assert resolve_rubric_version(text=text) == version
+        assert resolve_rubric_version({"file": name, "sha256": sha}) == version
+        # A renamed or stale file name never overrides the content hash.
+        assert resolve_rubric_version({"file": "nus_pairwise_v9.txt", "sha256": sha}, text=text) == version
+    v3 = _packaged("nus_pairwise_v3.txt").read_text()
+    assert resolve_rubric_version(text="Compare New, Useful, and Surprising.") is None
+    assert resolve_rubric_version({"file": "x.txt", "sha256": "0" * 64}) is None
+    with pytest.raises(ValueError, match="sha256"):
+        resolve_rubric_version({"file": "nus_pairwise_v3.txt", "sha256": "0" * 64}, text=v3)
+    with pytest.raises(ValueError, match="rubric"):
+        resolve_rubric_version()
+    # Saved stages: new ones carry rubric_id in manifest.json; old ones resolve by rubric.txt.
+    stage = tmp_path / "02-judge"
+    stage.mkdir()
+    (stage / "rubric.txt").write_text(v3)
+    (stage / "manifest.json").write_text(json.dumps({"name": "judge"}))
+    assert resolve_stage_rubric_version(stage) == "v3"
+    (stage / "manifest.json").write_text(json.dumps(
+        {"name": "judge", "rubric_id": {"file": "old_name.txt", "sha256": hashlib.sha256(v3.encode()).hexdigest()}}))
+    assert resolve_stage_rubric_version(stage) == "v3"
+
+
+def test_v4_rubric_kind_analysis_and_saved_rows_carry_the_new_protocol(experiment):
+    from crest.analysis import _valid_verdict
+    from crest.rubrics import protocol_rubric_kind
+    assert protocol_rubric_kind("nus-overall-pairwise-v4") == "nus"
+    assert protocol_rubric_kind("nus-overall-pairwise-v3") == "nus"
+    weak = {"reason": "Wait, no markdown!", "winner": "A"}
+    assert not _valid_verdict(weak, judging.NUS_PROTOCOL_V4)
+    assert not _valid_verdict(weak, judging.NUS_PROTOCOL_V3)
+    assert _valid_verdict(weak, "nus-overall-pairwise-v2")
+
+
+def test_judge_stage_records_rubric_identity_in_tasks_rows_and_manifest(tmp_path):
+    import asyncio
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_pipeline import FakeProvider, fixture_config
+    from crest.pipeline import Pipeline
+    config = fixture_config(tmp_path, n=1)
+    config['research'] = {name: config['research'][name] for name in ('openai', 'gemini')}
+    rubric = Path(config['rubric'])
+    identity = {"file": rubric.name, "sha256": hashlib.sha256(rubric.read_text().encode()).hexdigest()}
+    pipeline = Pipeline(config, providers={name: FakeProvider(name) for name in ('openai', 'gemini')})
+    asyncio.run(pipeline.generate())
+    stage = Path(asyncio.run(pipeline.judge())['directory'])
+    manifest = json.loads((stage / 'manifest.json').read_text())
+    assert manifest['rubric_id'] == identity
+    tasks = json.loads((stage / 'tasks.json').read_text())
+    rows = [json.loads(line) for line in (stage / 'judgments.jsonl').read_text().splitlines()]
+    assert tasks and rows
+    assert all(t['protocol_version'] == 'nus-overall-pairwise-v4' and t['rubric_id'] == identity for t in tasks)
+    assert all(r['protocol_version'] == 'nus-overall-pairwise-v4' and r['rubric_id'] == identity for r in rows)
+    assert pipeline.analyze()['report']['coverage']['complete_questions'] == 1

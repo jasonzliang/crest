@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <meta name="description" content="Run CREST's three stages: generate research answers, compare their creativity, and analyze the ranking.">
-<title>Research pipeline</title>
+<title>Research Pipeline</title>
 <style id="crest-site-navigation">
 .skip,.skip-link{position:fixed;left:1rem;top:-100px;z-index:20;background:#172c3e;color:#fff;padding:.7rem 1rem}.skip:focus,.skip-link:focus{top:1rem}
 .crest-site-header{display:block;margin:0;padding:0;border:0;background:#f5f8f9;color:#172c3e;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -89,9 +89,9 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 <link rel="icon" type="image/svg+xml" href="favicon.svg"><style id="crest-page-dates">.crest-page-updated,.page-link-date{font-size:.75rem;color:#637380;white-space:nowrap;font-variant-numeric:tabular-nums}.crest-page-updated{margin-left:auto;text-align:right}.index-group .page-link-date{display:inline-block;margin-left:.65rem}</style></head>
 <body>
 <a class="skip-link" href="#main-content">Skip to guide</a>
-<header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="research-pipeline.html">Research pipeline</a><a href="deep-research-comparison-v3.html">Deep research comparison v3</a><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a><a href="index.html">All documents</a><time class="crest-page-updated" datetime="2026-11-24">Updated 2026-11-24</time></nav></header>
+<header class="crest-site-header"><nav aria-label="Documentation"><a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a><a href="research-pipeline.html">Research Pipeline</a><a href="deep-research-comparison-v3.html">Deep Research Comparison v3</a><a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a><a href="index.html">All Documents</a><time class="crest-page-updated" datetime="2026-11-24">Updated 2026-11-24</time></nav></header>
 <main id="main-content" tabindex="-1">
-<h1>Research pipeline</h1>
+<h1>Research Pipeline</h1>
 <p>CREST runs five research systems on the same questions, then three AI judges compare the saved answers. All configured research budgets are soft. Offline regression and independent review passed. See <a href="#pilot-outcomes">current pilot outcomes</a> for completed answers and cost limitations. This is not an all-five near-$3 result.</p>
 <nav class="guide-nav" aria-label="Guide contents"><a href="#overview">Pipeline</a><a href="#running">Quick start</a><a href="#models">Systems</a><a href="#operations">Parallelism</a><a href="#files">Results and reuse</a><a href="#judging">Ranking method</a></nav>
 <section id="overview" aria-labelledby="overview-title">
@@ -149,7 +149,7 @@ python -m crest judge --run "$CREST_RUN"
 python -m crest analyze --run "$CREST_RUN"</code></pre>
 <p class="small">For all three stages of the five-provider one-question comparison, use <code>python -m crest run --limit 1</code>. Add <code>--dry-run</code> to preview work without API calls; omit <code>--limit 1</code> for all 50 questions.</p></div>
 </div>
-<p>Commands use <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>, the single master configuration for models, prompts, budgets, depth and concurrency. The active inputs are <a href="../crest/data/queries_n50_v2.jsonl"><code>crest/data/queries_n50_v2.jsonl</code></a> and <a href="../crest/prompts/nus_pairwise_v4.txt"><code>crest/prompts/nus_pairwise_v4.txt</code></a>. Configuration paths are relative to the YAML file. Keep the same configuration across stages unless intentionally changing the judges, rubric or analysis settings. <code>--agents</code> and <code>--judges</code> accept any subset of the configured names. For the explicit full-run commands, see <a href="../README.md#all-five-providers-in-parallel">all five providers in parallel</a>. Saved receipts retain their original policies; commands in this guide are not new paid-run authorization.</p>
+<p>Commands use <a href="../crest/configs/crest.yaml">crest/configs/crest.yaml</a>, the single master configuration for models, prompts, budgets, depth and concurrency. The active inputs are <a href="../crest/data/queries_n50_v2.jsonl"><code>crest/data/queries_n50_v2.jsonl</code></a> and <a href="../crest/prompts/nus_pairwise_v3.txt"><code>crest/prompts/nus_pairwise_v3.txt</code></a>. Configuration paths are relative to the YAML file. Keep the same configuration across stages unless intentionally changing the judges, rubric or analysis settings. <code>--agents</code> and <code>--judges</code> accept any subset of the configured names. For the explicit full-run commands, see <a href="../README.md#all-five-providers-in-parallel">all five providers in parallel</a>. Saved receipts retain their original policies; commands in this guide are not new paid-run authorization.</p>
 <details class="guide-details"><summary>Resume generation or rerun judging</summary>
 <pre><code>python -m crest generate --run "$CREST_RUN"
 python -m crest judge --run "$CREST_RUN"
@@ -272,16 +272,15 @@ python -m crest analyze --run "$CREST_RUN"</code></pre>
 <p>These intervals describe sensitivity to the observed mix of complete, curated questions. They hold the saved answers, selected judges, rubric and observed judgments fixed. They omit variation from generating new answers, choosing other judges or assessing whether the rubric measures creativity well.</p>
 <p>Diagnostics report A-position preference, changes in winner after swapping answer order, judge disagreement and preference cycles. A swap change combines order effects and sampling variability; one judgment per presentation cannot separate them. These are AI preferences, without human or domain-expert validation or independent fact-checking.</p>
 <details id="rubric-selection" class="guide-details"><summary>Choose the rubric file</summary>
-<p>Set the configuration’s <code>rubric</code> field to the desired prompt. The default is <a href="../crest/prompts/nus_pairwise_v4.txt">nus_pairwise_v4.txt</a>; <a href="../crest/prompts/nus_pairwise_v3.txt">NUS v3</a>, <a href="../crest/prompts/nus_pairwise_v2.txt">NUS v2</a> and <a href="../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> are available for comparisons, and saved runs keep the exact prompt text they used. The <a href="../crest/prompts/aut_pairwise_v1.txt">AUT-inspired prompt</a> remains an alternative:</p>
+<p>Set the configuration’s <code>rubric</code> field to the desired prompt. The default is <a href="../crest/prompts/nus_pairwise_v3.txt">nus_pairwise_v3.txt</a>; <a href="../crest/prompts/nus_pairwise_v2.txt">NUS v2</a> and <a href="../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> are available for comparisons, and saved runs keep the exact prompt text they used. The <a href="../crest/prompts/aut_pairwise_v1.txt">AUT-inspired prompt</a> remains an alternative:</p>
 <pre><code># In a configuration under crest/configs/:
-rubric: ../prompts/nus_pairwise_v4.txt
-# Comparisons: NUS v3, v2 or v1
-# rubric: ../prompts/nus_pairwise_v3.txt
+rubric: ../prompts/nus_pairwise_v3.txt
+# Comparisons: NUS v2 or v1
 # rubric: ../prompts/nus_pairwise_v2.txt
 # rubric: ../prompts/nus_pairwise_v1.txt
 # Alternative: AUT-inspired comparison
 # rubric: ../prompts/aut_pairwise_v1.txt</code></pre>
-<p>The old AIS v1 path remains a compatibility link to the archive. V3 has the judge state the expected approach from the task before reading either answer, credits what an answer adds to a cited idea rather than the idea itself, and judges payoff against the task’s need rather than the answer’s framing. V4 adds one rule: wording about an answer’s own research, such as “the supplied material”, is neither credited nor penalized. These are design improvements, not measured gains in agreement with human judges.</p>
+<p>The old AIS v1 path remains a compatibility link to the archive. V3 has the judge state the expected approach from the task before reading either answer, credits what an answer adds to a cited idea rather than the idea itself, and judges payoff against the task’s need rather than the answer’s framing. It neither credits nor penalizes wording about an answer’s own research, such as “the supplied material”. These are design improvements, not measured gains in agreement with human judges.</p>
 <p>All use the same answer presentation and response checks. Checks reject obvious noncomparisons and unfinished explanations; they do not verify factual accuracy or whether the explanation supports the winner. Original answers and exact prompts remain saved. Rerun judging and analysis after changing the rubric; different rubric families cannot share one ranking.</p>
 </details>
 <details class="guide-details"><summary>Method and references</summary>

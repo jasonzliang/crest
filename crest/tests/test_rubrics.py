@@ -36,18 +36,21 @@ def paper_plan(tmp_path, rubric):
 
 def test_historical_nus_prompt_and_content_keys_stay_byte_identical(tmp_path):
     questions, answers = answer_inputs()
-    prompt = judging.build_prompt(questions[0]['text'], 'Mechanism a.', 'Mechanism b.', NUS)
+    # nus-overall-pairwise-v4 is the default for new jobs; v3 stays frozen and selectable.
+    v3 = judging.NUS_PROTOCOL_V3
+    prompt = judging.build_prompt(questions[0]['text'], 'Mechanism a.', 'Mechanism b.', NUS, protocol_version=v3)
     assert hashlib.sha256(prompt.encode()).hexdigest() == '019f0c6c4821a3cbdadd6f8f5598cdafd203337835cf2cff651dcac3b09007b1'
     # 2026-11-24: research judging moved to citation-neutral-v2 (drops the appended uncited
     # source list), so research judgment keys changed (were 80ca8e36..., 0f125f88..., 82081aa2...,
     # 759b3f51...). Saved judgments keep their v1 presentation and still validate. Paper keys below
     # are unchanged.
-    assert [job['key'] for job in judging.make_judgment_jobs(questions, answers, JUDGES, NUS)] == [
+    assert [job['key'] for job in judging.make_judgment_jobs(questions, answers, JUDGES, NUS, protocol_version=v3)] == [
         '6013c97587ffc9ab72993c07b5a5c76bb321811f60b10cdf06d6cd30f887d0cf',
         'af9a2c7c2b1f87d16fe9dae09a048bbce81eba93d54b017fe4ee0ea689f3088b',
         '4324d0ca38b40973f82d9c6ca0809db734539d97a96533eb613754882be270a5',
         'f7c8bcdfd6e9abdfbc092ff6d25cb25b7aa21ef06edc110ad7d316a734fc47da']
-    plan = paper_plan(tmp_path, NUS)
+    from crest_ais.tests.test_protocol_v4 import as_frozen_v3
+    plan = as_frozen_v3(paper_plan(tmp_path, NUS), tmp_path)
     assert [job['key'] for job in plan['jobs']] == [
         '87463a17187034ca17139c1633058f776ae61174473740bd41332de3c3a78178',
         '046dd9dd867172f12a0d203a09479e394c838a1c924f4ccab508bde63fba96ae',
@@ -200,20 +203,17 @@ def test_archived_nus_v1_preserves_ais_alias_and_judgment_keys():
     assert [job['order'] for job in current_jobs] == [['a', 'b'], ['a', 'b'], ['b', 'a'], ['b', 'a']]
 
 
-def test_nus_v4_is_v3_plus_a_neutral_rule_for_process_wording():
+def test_nus_v3_is_the_default_with_pinned_bytes_and_a_neutral_rule_for_process_wording():
     from crest.config import ROOT
     from crest.rubrics import DEFAULT_NUS_RUBRIC
     v3 = ROOT / 'crest/prompts/nus_pairwise_v3.txt'
-    v4 = ROOT / 'crest/prompts/nus_pairwise_v4.txt'
-    # v3 stays a frozen instrument; v4 is the default for new judging.
-    assert hashlib.sha256(v3.read_bytes()).hexdigest() == '91524e4cf34343f9c6dfc6694e2b109e69f546b004a9b96956dc3dd621bb34d4'
-    assert DEFAULT_NUS_RUBRIC == v4
-    old, new = v3.read_text(), v4.read_text()
-    rules = new.index('RULES AND OUTPUT')
-    assert new[:rules] == old[:old.index('RULES AND OUTPUT')]
-    added = new[rules:]
+    # The pinned bytes keep saved judgments and judgment-cache keys valid.
+    assert hashlib.sha256(v3.read_bytes()).hexdigest() == '51a237d4760dc3e02745a15b83991bbcd11b0849146f5ed261d1dbc3abbf3509'
+    assert DEFAULT_NUS_RUBRIC == v3
+    text = v3.read_text()
+    rules = text[text.index('RULES AND OUTPUT'):]
     for phrase in ('"the supplied material"', 'own research', 'neither credit nor penalize'):
-        assert phrase in added.replace('\n', ' ')
-    assert len(v4.read_bytes()) <= 5120
+        assert phrase in rules.replace('\n', ' ')
+    assert len(v3.read_bytes()) <= 5120
     contract = json.loads((ROOT / 'crest_ais/configs/contract.json').read_text())
-    assert contract['rubric_selection']['nus'] == v4.name
+    assert contract['rubric_selection']['nus'] == v3.name

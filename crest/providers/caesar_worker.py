@@ -37,6 +37,8 @@ KB_CONTEXT_WINDOW = 1_050_000  # Sol and Luna; also registered with litellm and 
 DEFAULT_COMPLETION_TOKENS = 32768
 DEFAULT_CALL_TIMEOUT_SECONDS = 1200
 DEFAULT_TIMEOUT_SECONDS = 21600
+# Connection drops and timeouts retried per worker run; each request also stays within retry_attempts.
+DEFAULT_TRANSIENT_RETRY_LIMIT = 8
 
 
 _hard_budget = budget_is_hard  # budget_cap hard or auto enforces budget_usd; soft only records and flags overruns.
@@ -254,6 +256,32 @@ def _retry_after_seconds(error):
     return delay
 
 
+# httpx transport failures that mean the network or server dropped the call (connect/read/write/pool
+# timeouts, connect/read/write/close errors, a server disconnect). LocalProtocolError and
+# UnsupportedProtocol are client faults and stay terminal.
+_TRANSPORT_FAILURES = frozenset({"TimeoutException", "NetworkError", "RemoteProtocolError"})
+
+
+def _class_names(error, package):
+    return {cls.__name__ for cls in type(error).__mro__ if cls.__module__.split(".")[0] == package}
+
+
+def _transport_failure(error):
+    """Name the httpx failure behind a status-less SDK connection error or timeout, else None.
+
+    The OpenAI SDK wraps every exception raised while sending as APIConnectionError, so the
+    wrapped cause, not the wrapper, decides whether the failure is a network one.
+    """
+    if getattr(error, "status_code", None) is not None:
+        return None
+    if _class_names(error, "httpx") & _TRANSPORT_FAILURES:
+        return type(error).__name__
+    cause = getattr(error, "__cause__", None)
+    if "APIConnectionError" in _class_names(error, "openai") and cause is not None and _class_names(cause, "httpx") & _TRANSPORT_FAILURES:
+        return type(cause).__name__
+    return None
+
+
 class BudgetExceeded(RuntimeError):
     """A projected request cannot fit the observable remaining target budget."""
 
@@ -266,14 +294,21 @@ class UsageAudit:
     Confirmed 429 rejections release reservations; transient 5xx retries retain theirs.
     Both retry here with bounded attempts/backoff and a new budget check each time;
     SDK-internal retries are disabled so every attempt remains visible.
+    Connection errors and timeouts (no HTTP status) also retry, except inside synthesis
+    write calls; they keep their reservations as unknown cost, and at most
+    ``transient_retry_limit`` such retries happen per run.
     """
     def __init__(self, budget: float, path: Path, prices=None, *, retry_attempts=4,
-                 retry_backoff_base_seconds=1, retry_backoff_max_seconds=30, enforce=True):
+                 retry_backoff_base_seconds=1, retry_backoff_max_seconds=30, enforce=True,
+                 transient_retry_limit=DEFAULT_TRANSIENT_RETRY_LIMIT):
         self.budget = float(budget)
         self.enforce = bool(enforce)  # False: a soft cap; overruns are recorded, never refused.
         self.retry_attempts = max(1, int(retry_attempts))
         self.retry_backoff_base_seconds = max(0., float(retry_backoff_base_seconds))
         self.retry_backoff_max_seconds = max(0., float(retry_backoff_max_seconds))
+        self.transient_retry_limit = max(0, int(transient_retry_limit))
+        self.transient_retries_used = 0
+        self.terminal_transport_calls = 0  # >0 while a synthesis write call is in progress
         self.path = Path(path)
         self.prices = {**PRICES, **(prices or {})}
         self.events = []
@@ -367,6 +402,9 @@ class UsageAudit:
                              cost_usd=0. if rejected else None)
                 if status == 429 or isinstance(status, int) and 500 <= status < 600:
                     event["retry_after_seconds"] = _retry_after_seconds(error)
+                transport = _transport_failure(error)
+                if transport is not None:
+                    event["transport_error_type"] = transport
                 if rejected:
                     event["reserved_usd"] = 0.
             else:
@@ -421,6 +459,14 @@ class UsageAudit:
         status = getattr(error, "status_code", None)
         reserved = bool(failed_event and failed_event.get("reserved_usd", 0) > 0)
         transient = status == 429 or reserved and isinstance(status, int) and 500 <= status < 600
+        if reserved and _transport_failure(error) is not None:
+            # A dropped call may have been billed: its reservation stays held as unknown cost.
+            with self.lock:
+                transient = (not self.terminal_transport_calls and attempt + 1 < self.retry_attempts
+                             and self.transient_retries_used < self.transient_retry_limit)
+                self.transient_retries_used += transient
+                failed_event["transient_retry"] = transient
+                self.persist()
         if not transient or _error_body(error).get("retryable") is False or getattr(error, "code", None) == "insufficient_quota" or attempt + 1 >= self.retry_attempts:
             outcome = "rejected" if status in (401, 403, 429) else "billing outcome unknown"
             raise SDKRequestFailed(f"{type(error).__name__}: {outcome}; stopped after {attempt + 1} attempt(s)") from error
@@ -483,6 +529,17 @@ class UsageAudit:
             sync_class.request = sync_request
             if async_class:
                 async_class.request = async_request
+
+    @contextmanager
+    def transport_errors_terminal(self):
+        """Keep today's stop-on-first-error behavior for calls made inside this block."""
+        with self.lock:
+            self.terminal_transport_calls += 1
+        try:
+            yield
+        finally:
+            with self.lock:
+                self.terminal_transport_calls -= 1
 
 
 @contextmanager
@@ -602,6 +659,11 @@ def _committed_spend(audit):
 
 
 
+# Synthesis query-planning calls are short and retryable like exploration; every other
+# _llm_call label (SYNTHESIS drafts, MERGE, CLARIFY, POST-PROCESS, any new label) is a write.
+RETRYABLE_SYNTHESIS_LABELS = frozenset({"NEXT_QUERY", "REFINE"})
+
+
 @contextmanager
 def synthesis_query_completion_limits(agent, settings):
     """Keep query/refinement requests short without limiting draft/merge output."""
@@ -612,7 +674,7 @@ def synthesis_query_completion_limits(agent, settings):
         return
     def call(*args, **kwargs):
         label = kwargs.get("label", args[4] if len(args) > 4 else "LLM")
-        if label not in {"NEXT_QUERY", "REFINE"}:
+        if label not in RETRYABLE_SYNTHESIS_LABELS:
             return original(*args, **kwargs)
         chat = agent.chat_completion
         handler = getattr(agent, "llm_handler", None)
@@ -632,6 +694,27 @@ def synthesis_query_completion_limits(agent, settings):
             agent.chat_completion = chat
             if previous is not None:
                 handler.max_completion_tokens = previous
+    synthesizer._llm_call = call
+    try:
+        yield
+    finally:
+        synthesizer._llm_call = original
+
+
+@contextmanager
+def synthesis_writes_keep_transport_errors_terminal(agent, audit):
+    """A dropped draft or merge call may already be billed for long output; do not resend it."""
+    synthesizer = getattr(agent, "synthesizer", None)
+    original = getattr(synthesizer, "_llm_call", None)
+    if original is None:
+        yield
+        return
+    def call(*args, **kwargs):
+        label = kwargs.get("label", args[4] if len(args) > 4 else "LLM")
+        if label in RETRYABLE_SYNTHESIS_LABELS:
+            return original(*args, **kwargs)
+        with audit.transport_errors_terminal():
+            return original(*args, **kwargs)
     synthesizer._llm_call = call
     try:
         yield
@@ -964,7 +1047,8 @@ def run_worker(request: dict, result_path: Path) -> int:
     audit = UsageAudit(attempt_settings.get("budget_usd", 5.), output_dir / "usage.json", settings.get("model_pricing"),
                        retry_attempts=settings.get("retry_attempts", 4), enforce=_hard_budget(attempt_settings),
                        retry_backoff_base_seconds=settings.get("retry_backoff_base_seconds", 1),
-                       retry_backoff_max_seconds=settings.get("retry_backoff_max_seconds", 30))
+                       retry_backoff_max_seconds=settings.get("retry_backoff_max_seconds", 30),
+                       transient_retry_limit=settings.get("transient_retry_limit", DEFAULT_TRANSIENT_RETRY_LIMIT))
     agent = None
     record = None
     artifact = None
@@ -982,7 +1066,8 @@ def run_worker(request: dict, result_path: Path) -> int:
                     config["ChromaServerManager"]["port"] = sock.getsockname()[1]
             agent = agent_class(name=_agent_name(request["job_key"]), repository=str(output_dir), config=config)
             agent._crest_worker_started = worker_started
-            with iteration_metrics(agent, audit, Path(result_path).parent) as metrics, synthesis_query_completion_limits(agent, attempt_settings), adaptive_synthesis_budget(agent, attempt_settings, audit) as synthesis_budget:
+            with iteration_metrics(agent, audit, Path(result_path).parent) as metrics, synthesis_query_completion_limits(agent, attempt_settings), \
+                    synthesis_writes_keep_transport_errors_terminal(agent, audit), adaptive_synthesis_budget(agent, attempt_settings, audit) as synthesis_budget:
                 if recovery is not None:
                     if agent.current_iteration != recovery["iteration"] or not agent.visited_urls or agent.kb_manager.size() < 1:
                         raise ValueError("Native recovery did not load the copied checkpoint and knowledge")

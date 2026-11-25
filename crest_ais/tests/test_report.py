@@ -388,7 +388,7 @@ def test_shared_site_navigation_titles_and_results_first_reading_order(report, t
     html = render(report, tmp_path)
     doc = Document(html)
     assert any(tag == "header" and attrs.get("class") == "crest-site-header" for tag, attrs in doc.tags)
-    assert "<h1>AI scientist comparison</h1>" in html
+    assert "<h1>AI Scientist Comparison</h1>" in html
     assert any(tag == "link" and attrs.get("rel") == "icon" and attrs.get("href") == "favicon.svg"
                for tag, attrs in doc.tags)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
@@ -929,8 +929,8 @@ def test_canonical_scientist_report_title_date_and_unchanged_metadata(report, tm
     output = tmp_path / 'docs/ai-scientist-comparison-v1.html'
     write_report(report, output, data_root=tmp_path / 'crest_ais', updated='2026-11-05')
     page = html.fromstring(output.read_bytes())
-    assert page.findtext('.//title') == 'AI scientist comparison v1'
-    assert page.xpath('//h1/text()') == ['AI scientist comparison v1']
+    assert page.findtext('.//title') == 'AI Scientist Comparison v1'
+    assert page.xpath('//h1/text()') == ['AI Scientist Comparison v1']
     assert page.xpath('//header//time/@datetime') == ['2026-11-05']
     assert report == before
     assert report['generated_at'] == '2026-10-27T00:00:00Z'
@@ -952,14 +952,14 @@ def test_external_data_root_does_not_authorize_an_unrelated_site_index(report, t
     monkeypatch.setattr(renderer, 'ROOT', project)
     unrelated = tmp_path / 'unrelated'; docs = unrelated / 'docs'; docs.mkdir(parents=True)
     index = docs / 'index.html'
-    original = ('<main><a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+    original = ('<main><a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
                 '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></main>')
     index.write_text(original)
     destination = docs / 'ai-scientist-comparison-v1.html'
     renderer.write_report(report, destination, data_root=unrelated / 'arbitrary-data', updated='2026-11-06')
     assert index.read_text() == original
     page = html.fromstring(destination.read_bytes())
-    pipeline = page.xpath('//header//a[text()="Research pipeline"]/@href')[0]
+    pipeline = page.xpath('//header//a[text()="Research Pipeline"]/@href')[0]
     favicon = page.xpath('//link[@rel="icon"]/@href')[0]
     assert (destination.parent / pipeline).resolve() == project / 'docs/research-pipeline.html'
     assert (destination.parent / favicon).resolve() == project / 'docs/favicon.svg'
@@ -973,7 +973,7 @@ def test_publication_syncs_index_date_and_keeps_site_and_pdf_authorities_separat
     project = tmp_path / 'source-project'; docs = project / 'docs'; docs.mkdir(parents=True)
     monkeypatch.setattr(renderer, 'ROOT', project)
     index = docs / 'index.html'
-    entry = ('<a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+    entry = ('<a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
              '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>')
     # The site index lists entries as list items; a bare dated link must sync too.
     index.write_text(f'<main><li>{entry}</li></main>' if layout == "package_data_root" else f'<main>{entry}</main>')
@@ -985,7 +985,7 @@ def test_publication_syncs_index_date_and_keeps_site_and_pdf_authorities_separat
     assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
     assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
     page = html.fromstring(destination.read_bytes())
-    assert page.xpath('//header//a[text()="Research pipeline"]/@href') == ['research-pipeline.html']
+    assert page.xpath('//header//a[text()="Research Pipeline"]/@href') == ['research-pipeline.html']
     assert page.xpath('//link[@rel="icon"]/@href') == ['favicon.svg']
     pdf_links = [unquote(href) for href in page.xpath('//a/@href') if href.endswith('.pdf')]
     assert any((destination.parent / href).resolve() == pdf for href in pdf_links)
@@ -997,7 +997,7 @@ def test_scientist_invalid_index_wrapper_preserves_existing_report(report, tmp_p
     monkeypatch.setattr(renderer, 'ROOT', tmp_path)
     docs = tmp_path / 'docs'; docs.mkdir()
     index = docs / 'index.html'
-    entry = '<a href="ai-scientist-comparison-v1.html">AI scientist comparison v1</a>'
+    entry = '<a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
     stamp = '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>'
     original_index = '<main>' + ((entry + stamp) * dated_entries if dated_entries else entry) + '</main>'
     index.write_text(original_index)

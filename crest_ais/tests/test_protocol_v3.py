@@ -45,8 +45,9 @@ def result_rows(plan, verdict):
 def test_new_plan_versions_change_keys_without_changing_paper_draw(tmp_path):
     old = legacy_plan(tmp_path)
     plan = new_plan(tmp_path)
-    assert plan["version"] == "crest-ais-overall-v3"
-    assert plan["judging_protocol"] == "nus-overall-pairwise-v3"
+    # New plans use v4; frozen v3 plans are covered in test_protocol_v4.py.
+    assert plan["version"] == "crest-ais-overall-v4"
+    assert plan["judging_protocol"] == "nus-overall-pairwise-v4"
     assert plan["sampling_version"] == "crest-ais-v1"
     assert plan["presentation_version"] == "citation-neutral-v1"
     assert [(job["pair_id"], job["papers"], job["order"])
@@ -70,7 +71,7 @@ def test_new_prompts_neutralize_urls_record_hashes_and_raw_url_changes_invalidat
         assert job["answer_hashes"][0] == hashlib.sha256(raw.encode()).hexdigest()
         assert job["presented_answer_hashes"][0] == hashlib.sha256(data["A"].encode()).hexdigest()
         assert job["presentation_version"] == "citation-neutral-v1"
-        assert job["judging_protocol"] == "nus-overall-pairwise-v3"
+        assert job["judging_protocol"] == "nus-overall-pairwise-v4"
         assert (tmp_path / "a.txt").read_text() == raw
     # Raw URL changes keep the presented prompt but still change every job key.
     assert [job["prompt"] for job in plans[0]["jobs"]] == [job["prompt"] for job in plans[1]["jobs"]]
