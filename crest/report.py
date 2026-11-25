@@ -1050,219 +1050,260 @@ V3_CONFIGURATIONS = frozenset({
 PROFILES = {
     'caesar': {
         'summary': (
-            'Caesar treats each question like an engineering problem: it rules out shortcuts, writes out the full '
-            'mechanism, and calculates where the design breaks. This thoroughness wins 26 of the 50 questions '
-            'outright, though the answers are long and often read like rulebooks.'),
+            'Caesar treats each question like an engineering audit: it rules out shortcuts, builds a formal '
+            'mechanism, and calculates where the design can fail. All three judges credit its hard-to-place '
+            'mechanisms and loophole checks (winning 26 of 50 questions outright), while Claude Opus 5.5 and '
+            'Gemini 4 Argon often dock it for rulebook bloat, unfilled citation placeholders, or shrinking a '
+            'bold task into a cautious test plan.'),
         'strengths': [
-            ('Solves the hardest physical problem first',
-             'Caesar spots where an ordinary design would fail and builds around that point. For the three-piece '
-             'wooden cabinet latch (<a href="#answer-4-caesar">Question 4</a>), it notes that a sliding piece can '
-             'slip backward out of its slot unless a fourth piece blocks it, so it carves the catch trapped inside '
-             'a single wooden post.'),
-            ('Calculates where its own design breaks',
-             'Instead of only claiming an idea works, Caesar works out the math of how it can fail. For letters '
-             'that double in weight every two miles from the writer (<a href="#answer-13-caesar">Question 13</a>), '
-             'it calculates the exact queue speed where delayed mail gains weight faster than clerks can sort it. '
-             'For wood that regrows into trees (<a href="#answer-11-caesar">Question 11</a>), it shows how sawing '
-             'up a table multiplies its exposed surface area so the wood grows faster than the shop can break it down.'),
-            ('Spots hidden side effects in rules and incentives',
-             'For pottery insurance that pays for failed experiments (<a href="#answer-37-caesar">Question 37</a>), '
-             'it shows that subtracting a surviving pot’s sale price from the payout rewards potters for smashing '
-             'good work, so the payout must stay the same whether the pot cracks or survives. For Eurasia without '
-             'horses (<a href="#answer-19-caesar">Question 19</a>), it shows how fewer steppe raids tempt rulers '
-             'to plow winter pastures for grain, starving their own draft oxen years later.'),
+            ('Core mechanisms that are hard to trace to prior work',
+             'Under NUS v1, judges check whether each building block already appears in a known source. They '
+             'repeatedly find Caesar’s central moves hardest to place: carving a wooden latch catch trapped inside '
+             'a single cabinet post (<a href="#answer-4-caesar">Question 4</a>), using a failed analogy between '
+             'two library books to choose the third book on the shelf (<a href="#answer-33-caesar">Question 33</a>), '
+             'and designing living-room furniture for the transition from leaning to resting without signaling '
+             'social availability (<a href="#answer-50-caesar">Question 50</a>).'),
+            ('Math and incentive proofs that close loopholes',
+             'Judges, especially GPT-6.1 Sol and Gemini 4 Argon, reward Caesar for proving where a system breaks '
+             'or invites gaming. It calculates the queue speed where delayed letters that double in weight every '
+             'two miles grow heavier faster than clerks can sort them (<a href="#answer-13-caesar">Question 13</a>), '
+             'pre-assigns the backup parent’s own child so an emergency handoff never breaks a babysitting co-op’s '
+             'three-child limit (<a href="#answer-23-caesar">Question 23</a>), and proves that subtracting a '
+             'surviving pot’s sale price from an insurance payout rewards potters for smashing good work '
+             '(<a href="#answer-37-caesar">Question 37</a>).'),
+            ('Traces hidden institutional side effects',
+             'For Eurasia without horses (<a href="#answer-19-caesar">Question 19</a>), it shows how fewer steppe '
+             'raids tempt rulers to plow winter pastures for taxable grain, starving their own draft oxen years '
+             'later. For a treasure hunt with one allowed lie (<a href="#answer-24-caesar">Question 24</a>), it '
+             'shows that catching two witnesses in a contradiction proves the single lie is spent and makes every '
+             'other station trustworthy.'),
         ],
         'weaknesses': [
-            ('Reads like a long rulebook',
-             'At 5,868 words on average, Caesar turns even simple tasks into administrative manuals with boards, '
-             'permits, and custom terms. Clearing a cluttered bench for 15 minutes '
-             '(<a href="#answer-30-caesar">Question 30</a>) requires a 10-part permit, and a silent riverbank '
-             'wedding (<a href="#answer-7-caesar">Question 7</a>) gets a seven-signal procedure table.'),
-            ('Shrinks bold prompts or over-complicates hardware',
-             'To keep every step provable, Caesar sometimes scales the task way down or adds heavy machinery. For '
-             'hauling live eels to 13th-century Vienna (<a href="#answer-10-caesar">Question 10</a>), it carries '
-             'only 0.5 kg of fish in 150 liters of water; for living-room leaning furniture '
-             '(<a href="#answer-50-caesar">Question 50</a>), it builds a motorized screw-drive rig.'),
-            ('Makes light use of web search',
-             'Caesar relies mainly on its own reasoning. Several of its reference lists link to general search '
-             'pages or homepages rather than specific studies, and on historical questions '
-             '(<a href="#answer-18-caesar">Question 18</a>) it replaces period detail with abstract decision trees.'),
+            ('Bureaucratic bloat and unfilled citation placeholders',
+             'At 5,868 words on average, Caesar turns simple prompts into long compliance manuals and often leaves '
+             'bracketed [Source 1] placeholders in the text. Judges penalize it for requiring string players whose '
+             'hands are busy playing to flip cards, move pointers, and write prose definitions mid-piece '
+             '(<a href="#answer-32-caesar">Question 32</a>), requiring a 10-part permit to clear a cluttered bench '
+             'for 15 minutes (<a href="#answer-30-caesar">Question 30</a>), and putting 18 sections of court-like '
+             'procedure on a hiking club (<a href="#answer-40-caesar">Question 40</a>).'),
+            ('Retreats from the prompt’s main requirement to stay provable',
+             'Judges dock Caesar when its caution makes it decline the core task: openly stating that its wooden '
+             'latch is not childproof (<a href="#answer-4-caesar">Question 4</a>), letting its toy-block memory '
+             'fill up in a single afternoon instead of growing harder over months '
+             '(<a href="#answer-39-caesar">Question 39</a>), arguing that a recognizable weather-played garden '
+             'tune is infeasible (<a href="#answer-42-caesar">Question 42</a>), or hauling just 0.5 kg of eels in '
+             '150 liters of water for a medieval banquet (<a href="#answer-10-caesar">Question 10</a>).'),
+            ('Drops the source metaphor after the opening section',
+             'On cross-domain prompts such as canal-lock mediation (<a href="#answer-22-caesar">Question 22</a>), '
+             'the perfumery hotel (<a href="#answer-25-caesar">Question 25</a>), and fire-ecology decluttering '
+             '(<a href="#answer-30-caesar">Question 30</a>), Claude Opus 5.5 and Gemini 4 Argon note that Caesar '
+             'sets aside the source domain after Section 1 to write a generic governance manual.'),
         ],
     },
     'openai': {
         'summary': (
-            'OpenAI (Sol + web search) pairs clear mechanical or mathematical designs with checks from published '
-            'research, in about a third of Caesar’s length (1,903 words on average). It is especially strong at '
-            'designing rules and tests, though it repeats safety disclaimers and sometimes softens hard prompts '
-            'into checklists.'),
+            'OpenAI (Sol + web search) pairs clean mechanical or mathematical designs with checks from published '
+            'studies in 1,903 words on average. Judges praise its playable, loophole-free rules and complete '
+            'artifacts (putting it first on meta-creativity at 74.2%), while docking it when it offloads a hard '
+            'constraint onto a mechanical trigger or imposes heavy real-world effort.'),
         'strengths': [
-            ('Clean, workable mechanics and math',
-             'OpenAI turns tight constraints into clear geometry or simple hardware. For a pant hem that lifts in '
-             'the rain (<a href="#answer-49-openai">Question 49</a>), fastening the waist clasp winds a spring '
-             'while walking only trips the release catch, so the hem stays up when the wearer stops at a crosswalk. '
-             'For a 12-team soccer schedule (<a href="#answer-29-openai">Question 29</a>), it balances every field '
-             'and kickoff slot and proves that no schedule can avoid two early or two late games in a row.'),
+            ('Complete, workable designs that satisfy every rule',
+             'All three judges credit OpenAI for delivering verified artifacts without loose ends: a runnable '
+             'single-path SVG for an upside-down tonal script (<a href="#answer-1-openai">Question 1</a>), a '
+             '12-team soccer schedule that caps early or late kickoff streaks at the mathematical minimum of two '
+             '(<a href="#answer-29-openai">Question 29</a>), and a two-book roommate chore ledger with an exact '
+             'two-week repayment schedule (<a href="#answer-26-openai">Question 26</a>).'),
+            ('Closes behavioral and physical loopholes',
+             'Judges highlight how OpenAI spots and blocks ways a design can fail or be gamed: locking credit for '
+             'a trail feature to the first map that draws it so hikers do not draw blank maps to hoard discoveries '
+             '(<a href="#answer-40-openai">Question 40</a>), damping a rain-garden roof so rain drumming does not '
+             'drown out the music box (<a href="#answer-42-openai">Question 42</a>), and fixing pull duration in '
+             'its balance sport so athletes cannot game impulse with a long, gentle tug '
+             '(<a href="#answer-41-openai">Question 41</a>).'),
             ('Uses research papers to find and fix flaws in its own idea',
              'On <a href="#answer-8-openai">Question 8</a> (an edible drug-vial tag), it catches that a published '
              'corn-protein glue must bake at 80°C for two hours, which would ruin heat-sensitive medicine. On '
              '<a href="#answer-14-openai">Question 14</a> (human conception limited to two weeks in spring), it '
              'spots that the first hospital bottleneck is not winter delivery rooms, but summer 20-week ultrasound '
              'scans.'),
-            ('Closes ways people could game the rules',
-             'For a five-family babysitting network (<a href="#answer-23-openai">Question 23</a>), it notes that '
-             'using the third adult for bathroom breaks leaves no backup if someone cancels, so it adds a fourth '
-             'adult to separate break relief from emergency cover. For a club redrawing the same trail map '
-             '(<a href="#answer-40-openai">Question 40</a>), it stops hikers from drawing blank maps to hoard '
-             'discoveries by giving credit to the first map that shows a feature.'),
         ],
         'weaknesses': [
-            ('Frequent legal and safety disclaimers',
-             'Most answers pause every few paragraphs to state that the idea is not legal advice, a clinical trial, '
-             'or a certified safety product, or to warn teachers not to crowd real school hallways '
-             '(<a href="#answer-34-openai">Question 34</a>).'),
-            ('Sidesteps the hardest constraint on some open prompts',
-             'For a garden where wind and rain play a recognizable tune (<a href="#answer-42-openai">Question 42</a>), '
-             'it puts a mechanical music box in the garden and leaves the plants as background rustle. For a new '
-             'manual trade in a town of 5,000 (<a href="#answer-43-openai">Question 43</a>), it invents a '
-             'futuristic town where soft-robotic clothes are already common.'),
-            ('Practical trade-offs in tidy geometric answers',
-             'On <a href="#answer-1-openai">Question 1</a> (a script that reads the same upside down), the writer '
-             'must trace every word twice, once left-to-right and then upside-down right-to-left. On '
-             '<a href="#answer-6-openai">Question 6</a> (coat to backpack), keeping four pockets on a stiff front '
-             'panel leaves bulky boxes across the wearer’s chest.'),
+            ('Offloads the hardest constraint onto a safe trigger or hybrid',
+             'Judges dock OpenAI on Surprising and Useful when it sidesteps the prompt’s central mechanism: using '
+             'a mechanical music box instead of the plants to play the garden’s tune '
+             '(<a href="#answer-42-openai">Question 42</a>), using a drinking fountain only as an electric switch '
+             'for a wire loom (<a href="#answer-46-openai">Question 46</a>), or setting a small-town manual trade '
+             'in a near-future town where soft-robotic clothes are already common '
+             '(<a href="#answer-43-openai">Question 43</a>).'),
+            ('Practical and ergonomic costs in tidy solutions',
+             'Judges flag heavy user costs in several clean designs: committing four of five families on duty or '
+             'standby so only one family gets an afternoon off in the babysitting co-op '
+             '(<a href="#answer-23-openai">Question 23</a>), forcing writers to draw every word twice in the '
+             'upside-down script (<a href="#answer-1-openai">Question 1</a>), keeping four stiff pockets strapped '
+             'across the chest in coat mode (<a href="#answer-6-openai">Question 6</a>), and adding Ordinary and '
+             'Reset switches that let children bypass the building set’s memory '
+             '(<a href="#answer-39-openai">Question 39</a>).'),
+            ('Frequent disclaimers and occasional rule slips',
+             'Most answers pause every few paragraphs for legal or safety disclaimers, and judges catch occasional '
+             'internal slips, such as allowing a player in <a href="#answer-32-openai">Question 32</a>’s worked '
+             'example to reply to an opening sound that the rules had already retired, or keeping a failure-payout '
+             'bucket in <a href="#answer-37-openai">Question 37</a> that leaves room to game kiln failures.'),
         ],
     },
     'anthropic': {
         'summary': (
             'Anthropic (Claude + web search) often starts from an unexpected real-world fact, physical law, or '
-            'historical example, then checks its design with quick arithmetic. Its answers are readable and '
-            'concrete (2,527 words on average), though it sometimes bends a strict rule in the prompt or leaves '
-            'weak joints in physical designs.'),
+            'historical example, then checks its design with quick arithmetic. Claude Opus 5.5 (91.5%) and '
+            'Gemini 4 Argon (75.3%) rank it first or tied for first for its domain-grounded mechanisms, whereas '
+            'GPT-6.1 Sol (36.5%) heavily penalizes it whenever a lively idea bends a literal rule in the prompt.'),
         'strengths': [
-            ('Finds an angle that makes the hardest rule simple',
+            ('Cross-domain analogies that drive the actual rules',
+             'Judges praise Anthropic for keeping the source domain doing real work throughout the answer: '
+             'combining the clinical doorknob phenomenon and car conversations into angled doorway leaning bolsters '
+             '(<a href="#answer-50-anthropic">Question 50</a>), using real honeybee swarming biology where the old '
+             'queen leaves and veteran scouts trigger the handover (<a href="#answer-28-anthropic">Question 28</a>), '
+             'and reading a living shrub’s wound-gene clock as forensic timing evidence '
+             '(<a href="#answer-48-anthropic">Question 48</a>).'),
+            ('Reframes geometry or physics to make the hardest rule simple',
              'On <a href="#answer-1-anthropic">Question 1</a> (a continuous script readable upside down), it '
-             'defines every stroke by whether it turns left or right from the pen’s current direction, so a word '
+             'defines every stroke by whether it turns left or right from the pen’s current heading, so a word '
              'reads the same at any angle on the page. On <a href="#answer-6-anthropic">Question 6</a> (coat to '
              'backpack), it buttons the coat into a tube, cinches the hem as the floor, and flips the hood over as '
-             'the lid so all seven pockets stay upright.'),
-            ('Notices where a requested analogy breaks',
-             'When asked to model a babysitting network on electrical circuits '
-             '(<a href="#answer-23-anthropic">Question 23</a>), it notes that power switches disconnect the old '
-             'line before connecting the backup, whereas childcare requires the opposite: the outgoing adult cannot '
-             'let go until the incoming adult confirms the handoff. On '
-             '<a href="#answer-28-anthropic">Question 28</a> (bakery handover modeled on honeybee swarming), it '
-             'uses real bee biology, where the old queen leaves with most of the workers and the daughter keeps '
-             'the hive, to have the founder leave to run a baking school.'),
+             'the lid so all seven pockets stay upright. On <a href="#answer-40-anthropic">Question 40</a> (trail '
+             'mapping), it uses one 15-minute blind-finder test both to verify new landmarks and to settle '
+             'prior-art disputes.'),
             ('Checks its own ideas with simple math',
              'For a public drinking fountain that builds a structure from water runoff '
-             '(<a href="#answer-46-anthropic">Question 46</a>), it uses water-meter and mineral data to calculate '
-             'that each drink deposits only 10 to 27 mg of limestone (about one grain of rice), so quiet fountains '
-             'grow fist-sized annual stones while only busy rail stations coat a bench frame.'),
+             '(<a href="#answer-46-anthropic">Question 46</a>), judges credit its use of water-meter and mineral '
+             'data to calculate that each drink deposits only 10 to 27 mg of limestone (about one grain of rice), '
+             'scaling quiet fountains down to fist-sized annual stones. On '
+             '<a href="#answer-44-anthropic">Question 44</a> (eelgrass breeding), it multiplies five yield '
+             'components to prove a publicized 3.5 t/ha claim is impossible in wild stands.'),
         ],
         'weaknesses': [
-            ('Bends prompt rules when physics gets in the way',
-             'On <a href="#answer-5-anthropic">Question 5</a> (a soap bar where even wear turns a rabbit into a '
-             'fish and then a tortoise), it notes that hand washing wears thin ears down too fast, casts the three '
-             'layers from three different soap hardnesses, and admits this breaks the even-wear rule. On '
-             '<a href="#answer-15-anthropic">Question 15</a> (plants rely only on wind or water), it includes '
-             'humans hand-pollinating crops.'),
-            ('Weak joints or high part counts in physical designs',
-             'On <a href="#answer-4-anthropic">Question 4</a> (wooden cabinet latch), the frame piece is held in '
-             'shelf holes by two unglued 5 mm wooden pegs that a child can pull sideways out of the wall. On '
-             '<a href="#answer-39-anthropic">Question 39</a> (a building set that resists repeating old shapes), '
-             'putting an inhaler-style click counter in every socket requires 2,400 counters in a 150-piece box.'),
-            ('Sometimes adapts a familiar idea instead of inventing a new one',
-             'On <a href="#answer-41-anthropic">Question 41</a> (new spectator sport), scoring how fast an '
-             'athlete’s heart rate drops in the first minute after a sprint repackages a standard fitness and '
-             'horse-endurance test into a two-player race.'),
+            ('Bends literal prompt rules when physics or convenience pushes back',
+             'Judges, especially GPT-6.1 Sol, penalize Anthropic when an engaging design breaks an explicit '
+             'constraint: having children spend cube purses and earn wages despite "no play money" '
+             '(<a href="#answer-2-anthropic">Question 2</a>), treating a second roommate’s chat thumbs-up as '
+             'double-entry bookkeeping without debit and credit accounts (<a href="#answer-26-anthropic">Question 26</a>), '
+             'casting three soap hardnesses despite "even wear" (<a href="#answer-5-anthropic">Question 5</a>), '
+             'and having humans hand-pollinate crops when all plants rely only on wind or water '
+             '(<a href="#answer-15-anthropic">Question 15</a>).'),
+            ('Mechanical and logical gaps inside polished designs',
+             'Judges catch specific breakdowns in several physical and formal rules: unglued 5 mm wooden latch '
+             'pegs that a child can pull sideways out of shelf holes (<a href="#answer-4-anthropic">Question 4</a>), '
+             '2,400 inhaler counters in a 150-piece toy box where 90-degree joints go permanently limp after five '
+             'uses (<a href="#answer-39-anthropic">Question 39</a>), a 20-minute remote babysitting backup that '
+             'leaves children uncovered during travel (<a href="#answer-23-anthropic">Question 23</a>), and a '
+             'sample quartet score that breaks its own Keep / Change / Choose rule '
+             '(<a href="#answer-32-anthropic">Question 32</a>).'),
+            ('Building blocks that trace to familiar precedents',
+             'Under NUS v1’s block-level novelty check, judges note that several central vehicles come from '
+             'well-known sources that Anthropic cites itself, such as first-minute heart-rate recovery from '
+             'endurance horse vet checks (<a href="#answer-41-anthropic">Question 41</a>), Biorock cathodic '
+             'mineral accretion (<a href="#answer-46-anthropic">Question 46</a>), and observation prompt cards '
+             '(<a href="#answer-45-anthropic">Question 45</a>).'),
         ],
     },
     'gpt_researcher': {
         'summary': (
             'GPT Researcher uses GPT-6.1 Sol in every step with DuckDuckGo search and writes the shortest answers '
-            '(1,583 words on average). Because it shares its model with OpenAI (Sol + web search) while gathering '
-            'fewer sources and stopping earlier, it often lands on the same idea and title as OpenAI, but in a '
-            'thinner sketch.'),
+            '(1,583 words on average). GPT-6.1 Sol gives it a 50.3% win rate for its tidy rules and experimental '
+            'controls, while Claude Opus 5.5 (32.8%) and Gemini 4 Argon (30.3%) penalize it for repeating '
+            'OpenAI’s ideas in a thinner sketch and leaving mechanical gaps.'),
         'strengths': [
-            ('Clear, playable designs when a lab test or simple shape fits',
-             'Its single outright question win is <a href="#answer-41-gpt_researcher">Question 41</a> (17 of 24 '
-             'judgments won), which turns a motor-control lab test into a sport: athletes push a handle through a '
-             'sideways force field, then face hidden rounds where the machine locks the path straight to measure '
-             'how well their muscles predict the missing force. On '
-             '<a href="#answer-5-gpt_researcher">Question 5</a> (soap bar), a right-facing rabbit’s ears wear down '
-             'into a left-facing fish’s tail while the rabbit’s tail becomes the fish’s nose and tortoise’s head.'),
-            ('Catches subtle traps in the prompt',
-             'On <a href="#answer-15-gpt_researcher">Question 15</a> (plants reproduce only by wind or water), it '
-             'notes that modern wheat mostly self-pollinates inside closed flowers, so strict wind pollination '
-             'rules out closed self-pollination and forces crops to open their flowers and shed pollen together.'),
+            ('Clear, playable prototypes and rule systems',
+             'Its single outright question win is <a href="#answer-41-gpt_researcher">Question 41</a> (Ghostline, '
+             '17 of 24 judgments won), which turns a motor-control lab test into a sport where a robot locks a '
+             'reaching handle into a straight channel to measure how well an athlete’s muscles predict a missing '
+             'sideways force. Judges also praise its quartet rule that swaps the changing and preserved sound '
+             'qualities when an instrument hits a physical limit (<a href="#answer-32-gpt_researcher">Question 32</a>), '
+             'its seven-witness Hamming board where broken triples cross at the liar '
+             '(<a href="#answer-24-gpt_researcher">Question 24</a>), and its 150-pool lottery that guarantees '
+             'seated experts at exact 150/N odds (<a href="#answer-9-gpt_researcher">Question 9</a>).'),
+            ('Clean experimental controls and sharp premise checks',
+             'Judges credit its four-condition library test that separates book selection from shelf prompt tabs '
+             '(<a href="#answer-33-gpt_researcher">Question 33</a>), its equal-area reflective control experiment '
+             '(<a href="#answer-49-gpt_researcher">Question 49</a>), and its catch that strict wind pollination '
+             'rules out closed-flower self-pollination in wheat (<a href="#answer-15-gpt_researcher">Question 15</a>).'),
         ],
         'weaknesses': [
             ('Repeats OpenAI’s ideas and titles with less depth',
-             'Both systems use GPT-6.1 Sol, and GPT Researcher repeatedly arrives at the same title and concept as '
-             'OpenAI: Turnweave (<a href="#answer-1-gpt_researcher">Question 1</a>), Countersign '
+             'Because both systems use GPT-6.1 Sol, GPT Researcher repeatedly arrives at the same title and '
+             'concept as OpenAI: Turnweave (<a href="#answer-1-gpt_researcher">Question 1</a>), Countersign '
              '(<a href="#answer-32-gpt_researcher">Question 32</a>), The Hinge Library '
              '(<a href="#answer-33-gpt_researcher">Question 33</a>), Kiln Commons '
              '(<a href="#answer-37-gpt_researcher">Question 37</a>), and Elsewhere '
-             '(<a href="#answer-39-gpt_researcher">Question 39</a>). In each case it leaves out the working code, '
-             'math checks, or real book titles that make OpenAI’s version work.'),
-            ('Stops at a brief outline on hardware tasks',
-             'On <a href="#answer-48-gpt_researcher">Question 48</a> (forensic evidence), '
-             '<a href="#answer-49-gpt_researcher">Question 49</a> (rain-lifting hem), and '
-             '<a href="#answer-50-gpt_researcher">Question 50</a> (leaning furniture), its answers are 70 to 100 '
-             'lines that describe what the device should do and what a future test would check, without working '
-             'out forces or dimensions.'),
-            ('Uses workarounds that dodge the main constraint',
-             'For a wordless riverbank wedding (<a href="#answer-7-gpt_researcher">Question 7</a>), it replaces '
-             'speech by holding up large signboards printed with full English sentences. For physical toy blocks '
-             'that resist repeating old builds (<a href="#answer-39-gpt_researcher">Question 39</a>), it puts a '
-             'battery and computer chip inside the blocks.'),
+             '(<a href="#answer-39-gpt_researcher">Question 39</a>). In head-to-head matchups (where it loses '
+             '88.7% to OpenAI), judges note that it leaves out the runnable code, math checks, or real book '
+             'titles that make OpenAI’s version work.'),
+            ('Unresolved mechanical gaps and perverse incentives',
+             'Judges catch specific operational breakdowns: disqualifying unnominated background drawings on '
+             'trail maps so hikers are rewarded for drawing barren maps '
+             '(<a href="#answer-40-gpt_researcher">Question 40</a>), requiring a smell-only chef to write '
+             'structural remodeling instructions without knowing if the food is liquid or solid '
+             '(<a href="#answer-31-gpt_researcher">Question 31</a>), allowing a closed cabinet latch to be lifted '
+             'straight up before pulling (<a href="#answer-4-gpt_researcher">Question 4</a>), and leaving '
+             'five-game early-kickoff streaks in its soccer schedule '
+             '(<a href="#answer-29-gpt_researcher">Question 29</a>).'),
+            ('Workarounds and complaints about its own search results',
+             'Judges penalize it for putting a battery and microchip inside "physical" toy blocks '
+             '(<a href="#answer-39-gpt_researcher">Question 39</a>), holding up printed sentence boards in a '
+             'wordless wedding (<a href="#answer-7-gpt_researcher">Question 7</a>), and blaming "the supplied '
+             'research" instead of naming conflicting textbooks (<a href="#answer-34-gpt_researcher">Question 34</a>).'),
         ],
     },
     'gemini': {
         'summary': (
             'Google Deep Research cites the most web pages (a median of 68 URLs per answer) and pulls in '
-            'interesting facts from biology and physics, but wins only 14 of 1,200 judgments (1.2%). Every answer '
-            'is written as a long academic essay (none of the 50 uses a table or code block) that piles on tech '
-            'buzzwords, breaks rules in the prompt, or skips building what was asked.'),
+            'vivid facts from biology and physics, but wins only 14 of 1,200 judgments (1.2%). All three judges '
+            'heavily penalize it for stitching together easily placeable literature reviews (none of the 50 '
+            'answers uses a table or code block), breaking prompt rules and basic physics, and omitting the '
+            'requested design.'),
         'strengths': [
-            ('Brings in striking facts from biology and physics',
+            ('Unexpected biological and physical mechanisms when grounded',
              'Half of its 14 wins come on <a href="#answer-15-gemini">Question 15</a> (farming without animal '
-             'pollination, 8 of 24 judgments won), where it replaces clover and beans with nitrogen-fixing alder '
-             'trees and water ferns and uses Persian windcatcher towers to swirl pollen across grain fields. On '
-             '<a href="#answer-31-gemini">Question 31</a> (three-chef relay), it uses heat-sensitive taste '
-             'receptors so a dish chilled to 5°C tastes sour and salty at first, then turns sweet and savory as it '
-             'warms in the mouth.'),
+             'pollination, 8 of 24 judgments won), where judges credit its system of nitrogen-fixing alder trees, '
+             'water ferns, and Persian windcatcher towers that swirl pollen across grain fields. Judges also '
+             'award it 3 wins on <a href="#answer-44-gemini">Question 44</a> for addressing phosphorus toxicity '
+             'in a rare-earth-accumulating fern, and single wins on <a href="#answer-10-gemini">Question 10</a> '
+             '(peat-moss ammonia binding for live eels), <a href="#answer-22-gemini">Question 22</a> (canal-cill '
+             'ego recovery), and <a href="#answer-30-gemini">Question 30</a> (the kitchen junk drawer as an '
+             'unburned pocket of household repair items).'),
         ],
         'weaknesses': [
-            ('Writes literature reviews instead of building what was asked',
-             'When asked for a 12-team soccer schedule (<a href="#answer-29-gemini">Question 29</a>), it discusses '
-             'graph theory and ant-colony algorithms but never lists the 66 games. When asked for a five-minute '
-             'silent murder mystery play (<a href="#answer-3-gemini">Question 3</a>), it spends most of the answer '
-             'lecturing on theater theory before giving a five-paragraph plot summary where the killer mimes a '
-             'wire garrote in plain sight.'),
-            ('Breaks prompt rules and basic physics',
-             'On <a href="#answer-11-gemini">Question 11</a> (all wooden objects regrow into trees), it forgets '
-             'that cut wood regrows and reserves pruning shears "for dead, dry wood." On '
-             '<a href="#answer-2-gemini">Question 2</a> (teaching inflation with blocks and no play money), it '
-             'uses unit blocks as play money. On <a href="#answer-13-gemini">Question 13</a> (letters that double '
-             'in weight with distance from the writer), it hauls mail in 810-ton mining dump trucks and builds '
-             'nuclear fusion lasers at post offices to vaporize heavy letters. On '
-             '<a href="#answer-50-gemini">Question 50</a> (living-room furniture), it puts people face-down in a '
-             'massage-chair headrest looking at the floor while claiming a circle of these seats forces '
-             'face-to-face conversation.'),
-            ('Bolts on crypto, AI, and drones where they do not belong',
-             'Regardless of the topic, it adds blockchain DAOs and NFTs to pottery insurance '
-             '(<a href="#answer-37-gemini">Question 37</a>), drones, smart contracts, and digital-wallet gates to '
-             'a village apple orchard (<a href="#answer-47-gemini">Question 47</a>), crypto bots to a five-family '
-             'babysitting co-op (<a href="#answer-23-gemini">Question 23</a>), and deep-learning chips with '
-             'high-voltage clutches to a rain-lifting pant hem (<a href="#answer-49-gemini">Question 49</a>).'),
+            ('Collages of named papers and product specs score low on New',
+             'Under NUS v1, combining familiar ideas counts toward Surprising rather than New. Judges repeatedly '
+             'note that Google Deep Research staples together named textbooks, commercial hardware datasheets '
+             '(ESP32, Qwiic, chip-verification tools on <a href="#answer-35-gemini">Question 35</a>), and famous '
+             'projects (the terra0 smart-contract forest on <a href="#answer-47-gemini">Question 47</a>, '
+             'Circular Gallifreyan on <a href="#answer-1-gemini">Question 1</a>), leaving every building block '
+             'easy to place in existing work.'),
+            ('Self-contradictions, broken math, and violated prompt rules',
+             'All three judges reject its answers on Useful for fatal internal errors: putting people face-down '
+             'in a massage-chair headrest looking at the floor while claiming a circle of these seats forces '
+             'face-to-face conversation (<a href="#answer-50-gemini">Question 50</a>), forgetting that dead wood '
+             'regrows and reserving pruning shears "for dead, dry wood" (<a href="#answer-11-gemini">Question 11</a>), '
+             'writing a backward accounting equation where uncompleted chores increase assets '
+             '(<a href="#answer-26-gemini">Question 26</a>), claiming a 68-milliwatt pipe harvester can '
+             'electrolytically 3D-print limestone benches (<a href="#answer-46-gemini">Question 46</a>), and '
+             'hauling doubling-weight letters in 810-ton mining dump trucks to nuclear fusion lasers '
+             '(<a href="#answer-13-gemini">Question 13</a>).'),
+            ('Writes academic lectures and bolts on crypto, AI, and drones instead of building what was asked',
+             'Judges dock it for discussing graph theory and ant-colony algorithms without ever listing the 66 '
+             'soccer games (<a href="#answer-29-gemini">Question 29</a>), spending 80% of the five-minute silent '
+             'play on theater theory before miming an invisible wire garrote (<a href="#answer-3-gemini">Question 3</a>), '
+             'and adding blockchain DAOs, drones, crypto bots, and deep-learning chips to pottery insurance, '
+             'village orchards, babysitting co-ops, and pant hems (<a href="#answer-23-gemini">Question 23</a>, '
+             '<a href="#answer-37-gemini">Question 37</a>, <a href="#answer-47-gemini">Question 47</a>, '
+             '<a href="#answer-49-gemini">Question 49</a>).'),
         ],
     },
 }
 
 
 def _profiles(data):
-    """Summary of each research system's creative strengths and weaknesses from the v3 study answers."""
+    """Summary of each research system's creative strengths and weaknesses from the v3 study answers and judgments."""
     configs = {a.get('configuration_id') for a in data.get('answers', [])}
     if configs != V3_CONFIGURATIONS or data.get('judge_failures'):
         return ''
@@ -1283,10 +1324,12 @@ def _profiles(data):
     ranked = {row['agent']: row for row in data['ranking']['ranking']}
     parts = [
         '<section id="profiles"><h2>Strengths and weaknesses</h2>',
-        '<p>We read all 250 answers to see how each system approaches creative problems and where it falls short. '
-        'The top three systems win in different ways: Caesar builds detailed mechanisms and tests where they fail, '
-        'OpenAI (Sol + web search) writes compact designs checked against published studies, and Anthropic '
-        '(Claude + web search) finds unexpected real-world parallels and tests them with simple math.</p>',
+        '<p>We read all 250 answers and all 3,000 written judge evaluations to see how each system approaches '
+        'creative problems, what the judges reward, and where each system loses judgments. The top three systems '
+        'win in different ways: Caesar builds hard-to-place mechanisms and proves where designs fail, OpenAI '
+        '(Sol + web search) delivers complete, loophole-free rules checked against published studies, and '
+        'Anthropic (Claude + web search) turns unexpected real-world analogies and quick math into simple working '
+        'rules.</p>',
     ]
     for agent in agents:
         profile, row = PROFILES[agent], ranked[agent]
