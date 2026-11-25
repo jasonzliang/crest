@@ -5,12 +5,50 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "crest-research"
 version = "0.2.0"
-description = "Cached research generation, binary pairwise judging, and creativity ranking"
+description = "Creativity benchmark for deep research agents and AI scientist papers: cached research generation, pairwise LLM-as-a-judge comparisons, and creativity rankings"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
+authors = [
+    {name = "Jason Liang"},
+]
 requires-python = ">=3.11"
+keywords = [
+    "creativity",
+    "benchmark",
+    "deep research",
+    "research agents",
+    "AI scientist",
+    "LLM-as-a-judge",
+    "LLM evaluation",
+    "pairwise comparison",
+    "large language models",
+    "OpenAI",
+    "Gemini",
+    "Claude",
+    "GPT Researcher",
+]
+# License classifiers are omitted: setuptools>=77 rejects them alongside an SPDX license expression.
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dynamic = ["dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/jasonzliang/crest"
+Documentation = "https://github.com/jasonzliang/crest#readme"
+Repository = "https://github.com/jasonzliang/crest"
+Issues = "https://github.com/jasonzliang/crest/issues"
 
 [project.optional-dependencies]
 # The pymupdf import name was introduced in 1.24.3.

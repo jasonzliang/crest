@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 from lxml import etree, html
 import pytest
@@ -18,6 +18,34 @@ PROTECTED_CLASSES = frozenset({'answer-text', 'reason', 'judgment', 'metadata', 
                                'question', 'paper-record'})
 XML_SPACE = re.compile(r'[ \t\r\n]+')
 SECTIONS = {'judging', 'deep-research', 'ai-scientists'}
+REPOSITORY_FILES = 'https://github.com/jasonzliang/crest/blob/main/'
+# GitHub Pages serves the 404 page at any missing URL, so its links start at the site path.
+SITE_PATH = '/crest/'
+
+
+def repository_target(page, href):
+    """The repository file a docs link names: a relative path, a site path or this repository on GitHub."""
+    url = urlsplit(href)
+    if href.startswith(REPOSITORY_FILES):
+        return ROOT / unquote(url.path.removeprefix('/jasonzliang/crest/blob/main/'))
+    if url.scheme or url.netloc or not url.path:
+        return None
+    if url.path.startswith(SITE_PATH):
+        return ROOT / 'docs' / unquote(url.path.removeprefix(SITE_PATH))
+    return (page.parent / unquote(url.path)).resolve()
+
+
+def is_page_metadata(element):
+    """Search and link-preview tags that page_head() writes from the site registry.
+
+    Like the site header and H1 they are publication wrappers, not saved evidence.
+    """
+    if element.getparent() is None or element.getparent().tag != 'head':
+        return False
+    if element.tag == 'script':
+        return element.get('type') == 'application/ld+json'
+    name, prop = (element.get('name') or '').lower(), (element.get('property') or '').lower()
+    return element.tag == 'meta' and (name == 'description' or name.startswith('twitter:') or prop.startswith('og:'))
 
 
 def protected_elements(page):
@@ -30,7 +58,8 @@ def protected_elements(page):
     for element in page.iter(etree.Element):
         classes = element.get('class')
         if element.tag in PROTECTED_TAGS or classes and not PROTECTED_CLASSES.isdisjoint(XML_SPACE.split(classes)):
-            yield element
+            if not is_page_metadata(element):
+                yield element
 
 
 def evidence_fingerprints(source):
@@ -66,11 +95,13 @@ def index_entries():
 
 
 def test_index_names_match_canonical_titles_headings_filenames_and_dates():
+    from crest_ais.site import PAGES
     page, entries = index_entries()
-    local = [a for a in entries if not urlsplit(a.get('href')).scheme]
+    # Historical pages outside docs/ are linked on GitHub, since the site serves only docs/.
+    local = [a for a in entries if repository_target(ROOT / 'docs/index.html', a.get('href'))]
     assert len(local) == 46
     for a in local:
-        target = (ROOT / 'docs' / a.get('href')).resolve()
+        target = repository_target(ROOT / 'docs/index.html', a.get('href'))
         # Only the index sits at the top of docs/; every other page is in one section folder.
         if target.parent.parent == ROOT / 'docs':
             assert target.parent.name in SECTIONS, target
@@ -78,7 +109,9 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
         slug = re.sub('[^a-z0-9]+', '-', label.lower()).strip('-') + '.html'
         assert target.name in (slug, 'index.html'), (label, target.name)
         document = html.fromstring(target.read_bytes())
-        assert document.findtext('.//title') == label
+        # A served page's <title> is its registry search title; headings keep the label.
+        record = next(p for p in PAGES if ROOT / p['canonical'] == target)
+        assert document.findtext('.//title') == record.get('seo_title', label)
         assert document.xpath('//h1')[0].text_content() == label
         stamp = document.xpath('//header[@class="crest-site-header"]/nav/time[@class="crest-page-updated"]')
         assert len(stamp) == 1
@@ -88,7 +121,7 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
         assert date.tag == 'time'
         assert date.get('datetime') == stamp[0].get('datetime')
         assert date.text == stamp[0].text
-    external = [a for a in entries if urlsplit(a.get('href')).scheme]
+    external = [a for a in entries if a not in local]
     assert [(a.get('href'), a.text_content()) for a in external] == [
         ('https://github.com/jasonzliang/crest#readme', 'Project README'),
         ('https://llm-keys.evolution.ml/guide#claude-code', 'LiteLLM Gateway Setup'),
@@ -217,10 +250,15 @@ def test_generated_header_uses_canonical_links_and_reproducible_date(monkeypatch
     assert html.fromstring(site_header(tmp_path, tmp_path / 'docs/report.html', updated='2026-11-06')).xpath('.//time/@datetime') == ['2026-11-06']
 
 
-def test_docs_top_level_holds_only_the_index_and_its_icon():
+def test_docs_top_level_holds_only_the_index_its_icon_and_site_files():
     tracked = subprocess.run(['git', 'ls-files'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split('\n')
-    docs = [Path(n).relative_to('docs') for n in tracked if n.startswith('docs/')]
-    assert sorted(str(n) for n in docs if len(n.parts) == 1) == ['favicon.svg', 'index.html']
+    # Files that would be committed: tracked plus untracked, not ignored.
+    candidates = subprocess.run(['git', 'ls-files', '--cached', '--others', '--exclude-standard', 'docs'], cwd=ROOT,
+                                capture_output=True, text=True, check=True).stdout.split('\n')
+    docs = [Path(n).relative_to('docs') for n in candidates if n.startswith('docs/')]
+    # GitHub Pages needs .nojekyll, 404.html and sitemap.xml at the site root; social-card.png is the link preview.
+    assert sorted(str(n) for n in docs if len(n.parts) == 1) == [
+        '.nojekyll', '404.html', 'favicon.svg', 'index.html', 'sitemap.xml', 'social-card.png']
     assert {n.parts[0] for n in docs if len(n.parts) > 1} == SECTIONS
     names = [Path(n).name for n in tracked if n.endswith('.html')]
     # One saved upstream page keeps the filename its own saved links use.
@@ -350,7 +388,169 @@ def test_current_guides_link_to_existing_pages_datasets_and_prompts():
         links = (html.fromstring(text).xpath('//a/@href') if path.suffix == '.html'
                  else re.findall(r'\[[^\]]*\]\(([^)]+)\)', text))
         for link in links:
-            url = urlsplit(link)
-            if url.scheme or url.netloc or not url.path.endswith(('.txt', '.jsonl', '.html')):
+            target = repository_target(path, link)
+            if target is None or not target.name.endswith(('.txt', '.jsonl', '.html')):
                 continue
-            assert (path.parent / unquote(url.path)).is_file(), (name, link)
+            assert target.is_file(), (name, link)
+
+
+def served_page(record):
+    return html.fromstring((ROOT / record['canonical']).read_bytes())
+
+
+def test_served_pages_have_unique_titles_descriptions_canonicals_social_tags_and_json_ld():
+    from crest_ais.site import SITE_URL, page_url, published_pages
+    records = published_pages()
+    assert len(records) == 12 and records[0]['canonical'] == 'docs/index.html'
+    titles = []
+    for record in records:
+        name, url = record['canonical'], page_url(record['canonical'])
+        page = served_page(record)
+        head = page.find('head')
+        title = head.findtext('title')
+        titles.append(title)
+        assert title == record['seo_title'] and len(title) <= 60, name
+        assert 50 <= len(record['description']) <= 160, name
+
+        def content(xpath):
+            values = head.xpath(xpath)
+            assert len(values) == 1, (name, xpath, values)
+            return values[0]
+        assert content('meta[@name="description"]/@content') == record['description']
+        assert content('link[@rel="canonical"]/@href') == url
+        assert url == (SITE_URL if name == 'docs/index.html' else SITE_URL + name.removeprefix('docs/'))
+        expected = {'og:type': record['og_type'], 'og:site_name': 'CREST', 'og:title': title,
+                    'og:description': record['description'], 'og:url': url,
+                    'og:image': SITE_URL + 'social-card.png', 'og:image:width': '1280', 'og:image:height': '640'}
+        for prop, value in expected.items():
+            assert content(f'meta[@property="{prop}"]/@content') == value, (name, prop)
+        assert content('meta[@property="og:image:alt"]/@content').strip()
+        assert content('meta[@name="twitter:card"]/@content') == 'summary_large_image'
+        data = json.loads(content('script[@type="application/ld+json"]/text()'))
+        assert data['@context'] == 'https://schema.org' and data['@type'] == record['schema_type'], name
+        assert data['url'] == url and data['description'] == record['description']
+        if data['@type'] == 'WebSite':
+            assert name == 'docs/index.html' and data['name'] == 'CREST'
+        else:
+            # The JSON-LD date is the page-update date the header shows; no author or publication date is claimed.
+            assert data['headline'] == page.xpath('//h1')[0].text_content() == record['label']
+            assert data['dateModified'] == page.xpath('//header//time[@class="crest-page-updated"]/@datetime')[0]
+            assert data['isPartOf'] == {'@type': 'WebSite', 'name': 'CREST', 'url': SITE_URL}
+            assert not {'author', 'datePublished', 'publisher'} & set(data)
+    assert len(set(titles)) == len(titles)
+    assert (ROOT / 'docs/social-card.png').read_bytes()[16:24] == (1280).to_bytes(4, 'big') + (640).to_bytes(4, 'big')
+
+
+def test_committed_pages_match_the_head_and_link_helpers():
+    """Regenerating heads and links (python -m crest_ais.site) would change nothing."""
+    from crest_ais.navigation import not_found_page, refresh_page
+    from crest_ais.site import published_pages, sitemap_xml
+    for record in published_pages():
+        path = ROOT / record['canonical']
+        assert refresh_page(ROOT, path) == path.read_text(encoding='utf-8'), record['canonical']
+    assert (ROOT / 'docs/404.html').read_text(encoding='utf-8') == not_found_page(ROOT)
+    assert (ROOT / 'docs/sitemap.xml').read_text(encoding='utf-8') == sitemap_xml(ROOT)
+
+
+def test_sitemap_lists_exactly_the_served_pages_with_their_dates():
+    from crest_ais.site import published_pages, page_url
+    namespace = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+    sitemap = etree.parse(str(ROOT / 'docs/sitemap.xml'))
+    rows = {u.findtext('s:loc', namespaces=namespace): u.findtext('s:lastmod', namespaces=namespace)
+            for u in sitemap.getroot().findall('s:url', namespace)}
+    assert len(rows) == len(sitemap.getroot()) == 12
+    expected = {page_url(p['canonical']): served_page(p).xpath(
+        '//header//time[@class="crest-page-updated"]/@datetime')[0] for p in published_pages()}
+    assert rows == expected
+    assert 'https://jasonzliang.github.io/crest/' in rows
+    assert not any(url.endswith(('404.html', '/index.html')) for url in rows)
+
+
+def test_pages_site_files_publish_as_is_and_404_page_works_at_any_url():
+    assert (ROOT / 'docs/.nojekyll').is_file()
+    # robots.txt is read only at a domain root, so the project site does not have one.
+    assert not (ROOT / 'docs/robots.txt').exists()
+    page = html.fromstring((ROOT / 'docs/404.html').read_bytes())
+    assert page.xpath('//meta[@name="robots"]/@content') == ['noindex']
+    assert not page.xpath('//link[@rel="canonical"]')
+    assert page.xpath('//header[@class="crest-site-header"]') and page.xpath('//h1/text()') == ['Page Not Found']
+    assert page.xpath('//main//a[@href="/crest/"]')
+    for value in page.xpath('//@href | //@src'):
+        url = urlsplit(value)
+        assert url.scheme == 'https' or value.startswith(('/crest/', '#')), value
+        if value.startswith('/crest/'):
+            target = repository_target(ROOT / 'docs/404.html', value)
+            assert (target / 'index.html' if value.endswith('/') else target).is_file(), value
+
+
+def test_docs_links_stay_in_docs_and_resolve_and_repository_links_name_tracked_files():
+    tracked = set(subprocess.run(['git', 'ls-files', '--cached', '--others', '--exclude-standard'], cwd=ROOT,
+                                 capture_output=True, text=True, check=True).stdout.split('\n'))
+    docs = ROOT / 'docs'
+    checked = 0
+    for path in sorted(docs.rglob('*.html')):
+        page = html.fromstring(path.read_bytes())
+        for element in page.iter(etree.Element):
+            for attribute in ('href', 'src', 'poster', 'data'):
+                value = element.get(attribute)
+                if value is None:
+                    continue
+                url = urlsplit(value)
+                if value.startswith(REPOSITORY_FILES):
+                    assert url.path.removeprefix('/jasonzliang/crest/blob/main/') in {
+                        quote_path for n in tracked for quote_path in (n, quote(n))}, (path, value)
+                    checked += 1
+                elif not (url.scheme or url.netloc) and url.path:
+                    target = repository_target(path, value)
+                    assert target.is_relative_to(docs), (path, value)
+                    assert (target / 'index.html' if value.endswith('/') else target).is_file(), (path, value)
+                    checked += 1
+    assert checked > 345
+
+
+def test_page_head_escapes_registry_text_and_json_ld_cannot_close_its_script(monkeypatch, tmp_path):
+    import crest_ais.site as site
+    from crest_ais.navigation import page_head
+    record = {'old': 'docs/judging/x.html', 'canonical': 'docs/judging/x.html', 'label': 'X',
+              'updated': '2026-11-05', 'seo_title': 'A <b>&</b> "B" · CREST', 'og_type': 'article',
+              'description': 'Quotes " and \' and </script><script>alert(1)</script> & more text to pass fifty.',
+              'schema_type': 'TechArticle'}
+    monkeypatch.setattr(site, 'PAGES', (record,))
+    tags = page_head(tmp_path, tmp_path / 'docs/judging/x.html', title='ignored', updated='2026-11-06')
+    assert '</script><script>' not in tags and tags.count('</script>') == 1
+    head = html.fromstring(f'<html><head>{tags}</head><body></body></html>').find('head')
+    assert head.findtext('title') == record['seo_title']
+    assert head.xpath('meta[@name="description"]/@content') == [record['description']]
+    assert head.xpath('meta[@property="og:title"]/@content') == [record['seo_title']]
+    data = json.loads(head.xpath('script/text()')[0])
+    assert data['description'] == record['description'] and data['dateModified'] == '2026-11-06'
+    # Any other output path keeps the plain title and only an optional fallback description.
+    assert page_head(tmp_path, tmp_path / 'docs/other.html', title='A & B') == '<title>A &amp; B</title>'
+    assert page_head(tmp_path, tmp_path / 'x.html', title='T', description='D "q"') == (
+        '<title>T</title><meta name="description" content="D &quot;q&quot;">')
+
+
+def test_site_href_links_repository_files_on_github_only_from_published_pages(tmp_path):
+    from crest_ais.navigation import site_href
+    (tmp_path / 'crest/prompts').mkdir(parents=True)
+    page = tmp_path / 'docs/deep-research/report.html'
+    assert site_href(tmp_path, page, tmp_path / 'docs/judging/nus-rubric.html') == '../judging/nus-rubric.html'
+    assert site_href(tmp_path, page, tmp_path / 'crest_ais/data/a b.pdf') == (
+        'https://github.com/jasonzliang/crest/blob/main/crest_ais/data/a%20b.pdf')
+    assert site_href(tmp_path, page, tmp_path / 'crest/prompts') == (
+        'https://github.com/jasonzliang/crest/tree/main/crest/prompts')
+    # Local reports outside docs/, and files outside the repository, keep relative links.
+    assert site_href(tmp_path, tmp_path / 'crest_ais/results/r.html', tmp_path / 'crest_ais/data/a.pdf') == '../data/a.pdf'
+    assert site_href(tmp_path, page, tmp_path.parent / 'elsewhere/a.pdf') == '../../../elsewhere/a.pdf'
+
+
+def test_portable_links_keep_fragments_and_refuse_look_alike_text(tmp_path):
+    from crest_ais.navigation import portable_links
+    page = tmp_path / 'docs/judging/page.html'
+    source = ('<p><a href="../../crest/prompts/nus_pairwise_v3.txt#rules">NUS</a>'
+              '<a href="nus-rubric.html#a">Local</a><img src="../../crest/figure.png"></p>')
+    assert portable_links(tmp_path, page, source) == (
+        '<p><a href="https://github.com/jasonzliang/crest/blob/main/crest/prompts/nus_pairwise_v3.txt#rules">NUS</a>'
+        '<a href="nus-rubric.html#a">Local</a><img src="https://github.com/jasonzliang/crest/blob/main/crest/figure.png"></p>')
+    with pytest.raises(ValueError, match='links that leave docs/'):
+        portable_links(tmp_path, page, '<script>const s = \' href="../../x.txt"\';</script>')

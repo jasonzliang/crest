@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "CREST: Creativity of Research Agents"
+abstract: >-
+  CREST (Creativity of Research Agents) is a benchmark that measures the
+  creativity of deep research agents and AI scientist papers. It generates and
+  caches answers to the same research questions from deep research systems
+  (Caesar, OpenAI Responses with hosted web search, Google Deep Research,
+  Anthropic Opus 5.5 with client-side search, and GPT Researcher), compares
+  them with pairwise LLM-as-a-judge judgments guided by New, Useful, Surprising
+  (NUS) rubrics, and produces creativity rankings with saved judgments,
+  configurations, timing, and API costs. A companion pipeline applies the same
+  pairwise judging to papers released by AI scientist systems.
+authors:
+  - family-names: Liang
+    given-names: Jason
+version: "0.2.0"
+license: Apache-2.0
+repository-code: "https://github.com/jasonzliang/crest"
+keywords:
+  - creativity
+  - benchmark
+  - deep research
+  - research agents
+  - AI scientist
+  - LLM-as-a-judge
+  - LLM evaluation
+  - pairwise comparison
+  - large language models
+preferred-citation:
+  type: generic
+  title: "CREST: Creativity of Research Agents"
+  authors:
+    - family-names: Liang
+      given-names: Jason
+  year: 2026
+  url: "https://github.com/jasonzliang/crest"
+  medium: "GitHub repository"

@@ -40,7 +40,7 @@ from .cost_imputation import impute_answer_costs, impute_judgment_costs
 from .costs import cost_for_row, summarize_costs
 from .judging import parse_verdict, validate_verdict
 from .rubrics import AUT_KIND, NUS_KIND, STRICT_REASON_PROTOCOLS, protocol_rubric_kind
-from crest_ais.navigation import CSS as SITE_CSS, site_favicon, site_header
+from crest_ais.navigation import CSS as SITE_CSS, page_head, site_favicon, site_header, site_href
 from crest_ais.site import page_href, page_path, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -1042,6 +1042,7 @@ def _head_to_head(data):
     parts.append('</section>')
     return ''.join(parts)
 
+
 V3_CONFIGURATIONS = frozenset({
     'caesar-20e432af12a9', 'openai-974f65684704', 'anthropic-7e2861dc91b0',
     'gpt_researcher-0837d201f5e0', 'gemini-d2cebf130803'})
@@ -1582,13 +1583,14 @@ RUBRIC_NOTES = {
 EARLIER_TEXT_DIFFERS = ('v1', 'v2')
 
 
-# Links in the rendered text are relative to the folder the comparison pages are published in.
+# Links in the rendered text are written for the folder the comparison pages are published in.
 PAGE = 'Deep Research Comparison v3'
-PROMPTS = Path(os.path.relpath(ROOT / 'crest/prompts', (ROOT / page_path(PAGE)).parent)).as_posix()
 
 
 def _rubric_link(version):
-    return f'<a href="{PROMPTS}/nus_pairwise_{version}.txt">NUS {version}</a>'
+    # The site serves only docs/, so the packaged prompt is linked on GitHub.
+    href = site_href(ROOT, ROOT / page_path(PAGE), ROOT / f'crest/prompts/nus_pairwise_{version}.txt')
+    return f'<a href="{_text(href)}">NUS {version}</a>'
 
 
 def _earlier_note(version, *, name_others=True):
@@ -2649,7 +2651,8 @@ def _render(data, destination, *, updated=None):
     picks, cost, profiles = _judge_picks(data), _cost_summary(data), _profiles(data)
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">',
-             f'<title>{title}</title>', site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
+             page_head(ROOT, destination, title=page_title(destination, "Deep Research Comparison"), updated=updated),
+             site_favicon(ROOT, destination), f'<style>{SITE_CSS}\n{CSS}</style></head><body>',
              '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination, research_report=destination, updated=updated),
              f'<main id="main-content" tabindex="-1"><h1>{title}</h1>',
              f'<p>This comparison runs {_text(_join(_label(a) for a in agents))} '

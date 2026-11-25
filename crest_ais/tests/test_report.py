@@ -185,12 +185,13 @@ def test_complete_scores_and_uncertainty_are_visible_without_javascript(report, 
     assert any(tag == "svg" and attrs.get("role") == "img" for tag, attrs in doc.tags)
 
 
-def test_pdfs_are_relative_sources_preserved_and_concept_links_remain_visible(report, tmp_path):
+def test_pdfs_are_repository_sources_preserved_and_concept_links_remain_visible(report, tmp_path):
     html = render(report, tmp_path)
     doc = Document(html)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
-    assert "../../crest_ais/data/one/first%20paper.pdf" in links
-    assert "../../crest_ais/data/v3/second.pdf" in links
+    # GitHub Pages serves only docs/, so a page published there links repository PDFs on GitHub.
+    assert "https://github.com/jasonzliang/crest/blob/main/crest_ais/data/one/first%20paper.pdf" in links
+    assert "https://github.com/jasonzliang/crest/blob/main/crest_ais/data/v3/second.pdf" in links
     assert "https://example.org/first" in links
     assert not any(str(tmp_path) in link for link in links)
     # The concept bookmark and the primary creativity papers stay linked.
@@ -543,8 +544,8 @@ def test_pair_winner_counts_remap_each_actual_order_before_aggregation(report, t
     assert "In each reason, A and B mean the order that judge saw" in html
     table = html.split('id="judgment-pair-table"', 1)[1].split('</table>', 1)[0]
     links = [attrs["href"] for tag, attrs in Document(table).tags if tag == "a"]
-    assert "../../crest_ais/data/one/first%20paper.pdf" in links
-    assert "../../crest_ais/data/v3/second.pdf" in links
+    assert "https://github.com/jasonzliang/crest/blob/main/crest_ais/data/one/first%20paper.pdf" in links
+    assert "https://github.com/jasonzliang/crest/blob/main/crest_ais/data/v3/second.pdf" in links
     assert "Each judge read every pair twice, once in each order" in html and "4 votes per pair" in html
     assert "3–1 pair counts as 75% for the winner" in html
 
@@ -936,6 +937,27 @@ def test_canonical_scientist_report_title_date_and_unchanged_metadata(report, tm
     assert report['generated_at'] == '2026-10-27T00:00:00Z'
 
 
+def test_published_scientist_report_head_is_what_the_site_refresh_writes(report, tmp_path, monkeypatch):
+    from lxml import html
+    import crest_ais.report as renderer
+    from crest_ais.navigation import refresh_page
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    destination = tmp_path / 'docs/ai-scientists/ai-scientist-comparison-v1.html'
+    renderer.write_report(report, destination, data_root=tmp_path / 'crest_ais', updated='2026-11-06')
+    text = destination.read_text()
+    page = html.fromstring(text)
+    assert page.findtext('.//title') == 'AI Scientist Comparison v1: Paper Creativity · CREST'
+    assert page.xpath('//h1/text()') == ['AI Scientist Comparison v1']
+    assert len(page.xpath('//meta[@name="description"]')) == 1
+    assert page.xpath('//link[@rel="canonical"]/@href') == [
+        'https://jasonzliang.github.io/crest/ai-scientists/ai-scientist-comparison-v1.html']
+    assert refresh_page(tmp_path, destination) == text
+    # A report at any other path keeps the generic description and claims no canonical URL.
+    other = html.fromstring(render(report, tmp_path))
+    assert other.xpath('//meta[@name="description"]/@content') == [renderer.STANDALONE_DESCRIPTION]
+    assert not other.xpath('//link[@rel="canonical"]') and not other.xpath('//meta[@property="og:url"]')
+
+
 @pytest.mark.parametrize('name, message', [('ai-scientist-creativity.html', 'section folder'),
                                            ('ai-scientist-comparison-v1.html', 'docs/ai-scientists/ai-scientist-comparison-v1.html')])
 def test_scientist_generator_refuses_pages_outside_their_section_folder(report, tmp_path, monkeypatch, name, message):
@@ -992,7 +1014,22 @@ def test_publication_syncs_index_date_and_keeps_site_and_pdf_authorities_separat
     assert page.xpath('//header//a[text()="Research Pipeline"]/@href') == ['../deep-research/research-pipeline.html']
     assert page.xpath('//link[@rel="icon"]/@href') == ['../favicon.svg']
     pdf_links = [unquote(href) for href in page.xpath('//a/@href') if href.endswith('.pdf')]
-    assert any((destination.parent / href).resolve() == pdf for href in pdf_links)
+    if layout == "package_data_root":
+        # Repository PDFs are outside the served docs/ folder, so the page links them on GitHub.
+        assert 'https://github.com/jasonzliang/crest/blob/main/crest_ais/data/one/first paper.pdf' in pdf_links
+    else:
+        # A data root outside the repository has no GitHub URL; the link stays relative.
+        assert any((destination.parent / href).resolve() == pdf for href in pdf_links)
+
+
+def test_local_reports_outside_docs_keep_relative_pdf_links(report, tmp_path, monkeypatch):
+    import crest_ais.report as renderer
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    destination = tmp_path / 'crest_ais/results/local-report.html'
+    renderer.write_report(report, destination, data_root=tmp_path / 'crest_ais', updated='2026-11-06')
+    links = [attrs["href"] for tag, attrs in Document(destination.read_text()).tags if tag == "a"]
+    assert "../data/one/first%20paper.pdf" in links
+    assert not any(link.startswith("https://github.com/jasonzliang/crest/blob/") for link in links)
 
 
 @pytest.mark.parametrize("dated_entries", [0, 2])

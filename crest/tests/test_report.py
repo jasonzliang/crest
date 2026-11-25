@@ -1307,8 +1307,11 @@ def test_current_static_document_headers_link_to_latest_research_report():
             continue
         page = html.fromstring(path.read_bytes())
         links = page.xpath('//header[@class="crest-site-header"]//a[starts-with(text(), "Deep Research Comparison")]/@href')
+        # The 404 page is served at any missing URL, so its links start at the site path /crest/.
+        resolve = lambda link: (docs / link.removeprefix('/crest/') if link.startswith('/crest/')
+                                else (path.parent / link).resolve())
         if links:
-            assert [(path.parent / link).resolve() for link in links] == [latest], path.name
+            assert [resolve(link) for link in links] == [latest], path.name
     for name in ('index.html', 'deep-research/research-pipeline.html'):
         page = html.fromstring((docs / name).read_bytes())
         links = [a for a in page.xpath('//a[@href]') if ((docs / name).parent / a.get('href')).resolve() == v1]
@@ -1359,6 +1362,26 @@ def test_research_publication_keeps_index_date_in_sync(run, tmp_path, monkeypatc
     renderer.write_report(run, docs / 'deep-research/deep-research-comparison-v2.html', updated='2026-11-06')
     assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
     assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
+
+
+def test_published_report_head_is_what_the_site_refresh_writes(run, tmp_path, monkeypatch):
+    from lxml import html
+    import shutil
+    import crest.report as renderer
+    from crest_ais.navigation import refresh_page
+    shutil.copytree(renderer.ROOT / 'crest/data', tmp_path / 'crest/data')
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    destination = tmp_path / 'docs/deep-research/deep-research-comparison-v2.html'
+    renderer.write_report(run, destination, updated='2026-11-06')
+    text = destination.read_text()
+    page = html.fromstring(text)
+    assert page.findtext('.//title') == 'Deep Research Comparison v2 (Historical) · CREST'
+    assert page.xpath('//h1/text()') == ['Deep Research Comparison v2']
+    url = 'https://jasonzliang.github.io/crest/deep-research/deep-research-comparison-v2.html'
+    assert page.xpath('//link[@rel="canonical"]/@href') == page.xpath('//meta[@property="og:url"]/@content') == [url]
+    assert json.loads(page.xpath('//script[@type="application/ld+json"]/text()')[0])['dateModified'] == '2026-11-06'
+    # Refreshing committed pages (python -m crest_ais.site) writes exactly the generator's head and links.
+    assert refresh_page(tmp_path, destination) == text
 
 
 @pytest.mark.parametrize('name, message', [('deep-research-creativity.html', 'section folder'),
@@ -1630,7 +1653,7 @@ def test_other_rubrics_sit_in_small_dropdowns_at_the_bottom_in_ascending_order(t
     assert bottom.get('aria-labelledby') == bottom.xpath('./h2')[0].get('id')
     assert len(bottom.xpath('.//h2')) == 1
     v2_box, v3_box = dropdowns[:2]
-    assert '../../crest/prompts/nus_pairwise_v3.txt' in v3_box.xpath('.//a/@href')
+    assert 'https://github.com/jasonzliang/crest/blob/main/crest/prompts/nus_pairwise_v3.txt' in v3_box.xpath('.//a/@href')
     headers = [th.text_content() for th in v3_box.xpath('.//table')[0].xpath('.//thead//th')]
     assert headers == ['System', 'Rank', 'Win rate', '95% interval']
     rows = {tr.xpath('./th')[0].text_content(): [td.text_content() for td in tr.xpath('./td')]
@@ -1662,9 +1685,9 @@ def test_intro_and_method_name_the_rubric_the_ranking_uses(tmp_path):
     v3 = use_packaged_rubric(make_run(tmp_path / 'v3', choose=lambda q, pair, judge, order: order[0]), 'v3')
     body = write_report(main_run, tmp_path / 'page.html', rubric_runs=[v3]).read_text()
     intro = body.split('<main', 1)[1].split('<nav', 1)[0]
-    assert 'under the <a href="../../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric' in intro
+    assert 'under the <a href="https://github.com/jasonzliang/crest/blob/main/crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric' in intro
     method = section(body, 'method')
-    assert 'The ranking uses the <a href="../../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric.' in method
+    assert 'The ranking uses the <a href="https://github.com/jasonzliang/crest/blob/main/crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric.' in method
     # The other rubrics are named only in their section at the bottom of the page.
     above = body.split('id="other-rubrics"', 1)[0]
     assert 'href="#other-rubrics"' not in above
@@ -1678,7 +1701,7 @@ def test_intro_without_other_rubrics_points_nowhere(tmp_path):
     from crest.report import write_report
     main_run = use_packaged_rubric(make_run(tmp_path / 'v3'), 'v3')
     body = write_report(main_run, tmp_path / 'page.html').read_text()
-    assert 'under the <a href="../../crest/prompts/nus_pairwise_v3.txt">NUS v3</a> rubric' in body
+    assert 'under the <a href="https://github.com/jasonzliang/crest/blob/main/crest/prompts/nus_pairwise_v3.txt">NUS v3</a> rubric' in body
     assert 'id="other-rubrics"' not in body and 'href="#other-rubrics"' not in body
     assert 'earlier studies used' not in body
 
@@ -2657,6 +2680,7 @@ def test_load_run_formats_each_answer_once_per_presentation_version(run, monkeyp
     # A second run over the same answers, like a rubric run, reuses the formatted text.
     load_run(run)
     assert len(calls) == len(data['answers'])
+
 
 def test_v3_profiles_render_strengths_and_weaknesses_linked_to_answers(tmp_path):
     from lxml import html as lxml_html

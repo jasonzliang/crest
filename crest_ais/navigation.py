@@ -1,10 +1,15 @@
-"""Shared minimal header for CREST's HTML documentation."""
-from html import escape
+"""Shared header, head metadata and link rules for CREST's HTML documentation."""
+from html import escape, unescape
+from html.parser import HTMLParser
+import json
 import os
 from pathlib import Path
-from urllib.parse import quote
+import re
+from urllib.parse import quote, unquote, urlsplit
 
-from .site import page_path, page_title, page_updated
+from .site import (NO_JEKYLL, NOT_FOUND_PAGE, PAGE_DATE, REPOSITORY_URL, SITE_ALTERNATE_NAME, SITE_NAME,
+                   SITE_URL, SITEMAP, SOCIAL_IMAGE, page_path, page_title, page_updated, page_url,
+                   published_page, published_pages, repository_url, sitemap_xml, write_text_atomic)
 
 DATE_CSS = (
     ".crest-page-updated,.page-link-date{font-size:.75rem;color:#637380;white-space:nowrap;font-variant-numeric:tabular-nums}"
@@ -88,28 +93,229 @@ main :focus-visible{outline:3px solid #b4652b;outline-offset:3px}
 CSS += DATE_CSS + INDEX_CSS
 
 
-def site_favicon(project_root: Path, destination: Path) -> str:
+def _docs_link(root: Path, parent: Path, path: Path, base: str | None) -> str:
+    """Relative link from a page's folder, or base + docs/ path for a page served at any URL."""
+    if base is None:
+        return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
+    relative = Path(path).resolve().relative_to(root / 'docs').as_posix()
+    return escape(base + quote('' if relative == 'index.html' else relative, safe='/'), quote=True)
+
+
+def site_favicon(project_root: Path, destination: Path, *, base: str | None = None) -> str:
     """Use the same local icon in documentation and generated reports."""
-    icon = Path(project_root).resolve() / 'docs/favicon.svg'
-    relative = os.path.relpath(icon, Path(destination).resolve().parent)
-    href = escape(quote(relative, safe='/._-'), quote=True)
+    root = Path(project_root).resolve()
+    href = _docs_link(root, Path(destination).resolve().parent, root / 'docs/favicon.svg', base)
     return f'<link rel="icon" type="image/svg+xml" href="{href}">'
 
 
 def site_header(project_root: Path, destination: Path, *, research_report: Path | None = None,
-                updated: str | None = None) -> str:
+                updated: str | None = None, base: str | None = None) -> str:
+    """Site navigation; pass base (a root-relative site path) for a page served at many URLs."""
     root, parent = Path(project_root).resolve(), Path(destination).resolve().parent
     def link(path):
-        return escape(quote(os.path.relpath(path, parent), safe="/._-"), quote=True)
+        return _docs_link(root, parent, path, base)
     comparison = research_report if research_report is not None else root / page_path('Deep Research Comparison v3')
     label = page_title(comparison, 'Deep Research Comparison')
     current = ' aria-current="page"' if research_report is not None else ''
     stamp = page_updated(updated)
     return ('<header class="crest-site-header"><nav aria-label="Documentation">'
-            '<a class="crest-brand" href="https://github.com/jasonzliang/crest">CREST</a>'
+            f'<a class="crest-brand" href="{REPOSITORY_URL}">{SITE_NAME}</a>'
             f'<a href="{link(root / page_path("Research Pipeline"))}">Research Pipeline</a>'
             f'<a href="{link(comparison)}"{current}>{escape(label)}</a>'
             f'<a href="{link(root / page_path("AI Scientist Comparison v1"))}">AI Scientist Comparison v1</a>'
             f'<a href="{link(root / "docs/index.html")}">All Documents</a>'
             f'<time class="crest-page-updated" datetime="{stamp}">Updated {stamp}</time>'
             '</nav></header>')
+
+
+def site_href(project_root: Path, destination: Path, target: Path) -> str:
+    """URL (percent-encoded, not HTML-escaped) from a page to a repository file.
+
+    GitHub Pages serves only docs/, so a page published there links to other
+    repository files on GitHub. Links within docs/, from pages kept outside docs/
+    (such as local reports) and to files outside the repository stay relative.
+    """
+    root, page, target = (Path(p).resolve() for p in (project_root, destination, target))
+    docs = root / 'docs'
+    if page.is_relative_to(docs) and target.is_relative_to(root) and not target.is_relative_to(docs):
+        if target == root:
+            return REPOSITORY_URL
+        return repository_url(target.relative_to(root).as_posix(), directory=target.is_dir())
+    return quote(os.path.relpath(target, page.parent), safe='/')
+
+
+def _json_ld(data: dict) -> str:
+    """JSON that cannot close its <script> element or start markup inside it."""
+    text = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+    return text.replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+
+
+def page_head(project_root: Path, destination: Path, *, title: str, updated: str | None = None,
+              description: str | None = None) -> str:
+    """<title> and, for a page served from docs/, its search and link-preview tags.
+
+    Every value comes from the page's PAGES record (its seo_title replaces title),
+    so generated reports and refreshed hand-maintained pages carry identical tags.
+    Other output paths get title and, if given, a fallback description.
+    """
+    record = published_page(project_root, destination)
+    if record is None:
+        return f'<title>{escape(title)}</title>' + (
+            f'<meta name="description" content="{escape(description)}">' if description else '')
+    url, image = page_url(record['canonical']), page_url(SOCIAL_IMAGE['path'])
+    seo_title, summary = record['seo_title'], record['description']
+    properties = (('og:type', record['og_type']), ('og:site_name', SITE_NAME), ('og:title', seo_title),
+                  ('og:description', summary), ('og:url', url), ('og:image', image),
+                  ('og:image:width', SOCIAL_IMAGE['width']), ('og:image:height', SOCIAL_IMAGE['height']),
+                  ('og:image:alt', SOCIAL_IMAGE['alt']))
+    if record['schema_type'] == 'WebSite':
+        data = {'@context': 'https://schema.org', '@type': 'WebSite', 'name': SITE_NAME,
+                'alternateName': SITE_ALTERNATE_NAME, 'url': url, 'description': summary, 'inLanguage': 'en'}
+    else:
+        # Only facts the page states: no author or first-publication date is recorded.
+        data = {'@context': 'https://schema.org', '@type': record['schema_type'], 'headline': record['label'],
+                'description': summary, 'url': url, 'image': image, 'dateModified': page_updated(updated),
+                'inLanguage': 'en', 'isPartOf': {'@type': 'WebSite', 'name': SITE_NAME, 'url': SITE_URL}}
+    return (f'<title>{escape(seo_title)}</title><meta name="description" content="{escape(summary)}">'
+            f'<link rel="canonical" href="{escape(url)}">'
+            + ''.join(f'<meta property="{name}" content="{escape(str(value))}">' for name, value in properties)
+            + '<meta name="twitter:card" content="summary_large_image">'
+            f'<script type="application/ld+json">{_json_ld(data)}</script>')
+
+
+LINK_ATTRIBUTE = re.compile(r'(?<=\s)(href|src)=("[^"]*"|\'[^\']*\')', re.I)
+
+
+def _portable_url(root: Path, page: Path, value: str) -> str | None:
+    """GitHub URL for a relative link that leaves docs/, keeping query and fragment; else None."""
+    url = urlsplit(value)
+    if url.scheme or url.netloc or not url.path or url.path.startswith('/'):
+        return None
+    target = (page.parent / unquote(url.path)).resolve()
+    if target.is_relative_to(root / 'docs') or not target.is_relative_to(root):
+        return None
+    return (site_href(root, page, target) + (f'?{url.query}' if url.query else '')
+            + (f'#{url.fragment}' if url.fragment else ''))
+
+
+class _LinkCounter(HTMLParser):
+    """Counts href/src attributes as a browser parses them (script and style text excluded)."""
+
+    def __init__(self, accept):
+        super().__init__(convert_charrefs=True)
+        self.accept, self.count = accept, 0
+
+    def handle_starttag(self, tag, attrs):
+        self.count += sum(1 for name, value in attrs if name in ('href', 'src') and value and self.accept(value))
+
+
+def portable_links(project_root: Path, page: Path, source: str) -> str:
+    """Point a docs/ page's links to repository files outside docs/ at GitHub.
+
+    Only those attribute values change; markup is not reserialized. A parser
+    count guards against rewriting look-alike text in scripts or prose.
+    """
+    root, page = Path(project_root).resolve(), Path(page).resolve()
+    changed = 0
+
+    def replace(match):
+        nonlocal changed
+        new = _portable_url(root, page, unescape(match[2][1:-1]))
+        if new is None:
+            return match[0]
+        changed += 1
+        return f'{match[1]}="{escape(new)}"'
+    revised = LINK_ATTRIBUTE.sub(replace, source)
+    if changed:
+        counter = _LinkCounter(lambda value: _portable_url(root, page, value) is not None)
+        counter.feed(source)
+        counter.close()
+        if counter.count != changed:
+            raise ValueError(f'{page}: rewrote {changed} links that leave docs/, but the page has {counter.count}')
+    return revised
+
+
+_HEAD_TAG = re.compile(r'<meta\b[^>]*>|<link\b[^>]*>|<script\b[^>]*\btype="application/ld\+json"[^>]*>.*?</script>',
+                       re.I | re.S)
+_TAG_ATTRIBUTE = re.compile(r'([^\s=/>]+)\s*=\s*(?:"([^"]*)"|\'([^\']*)\')')
+
+
+def _is_page_metadata(tag: str) -> bool:
+    """Tags page_head() owns: description, canonical, Open Graph, Twitter and JSON-LD."""
+    if tag[:7].lower() == '<script':
+        return True
+    attributes = {m[1].lower(): unescape(m[2] if m[2] is not None else m[3]).strip().lower()
+                  for m in _TAG_ATTRIBUTE.finditer(tag)}
+    if tag[:5].lower() == '<link':
+        return attributes.get('rel') == 'canonical'
+    name, prop = attributes.get('name', ''), attributes.get('property', '')
+    return name == 'description' or name.startswith('twitter:') or prop.startswith('og:')
+
+
+def refresh_page(project_root: Path, path: Path) -> str:
+    """A served page with its title and metadata from page_head() and portable links.
+
+    The tags go where the report generators emit them, in place of <title>;
+    earlier copies are removed. Nothing else in the page changes.
+    """
+    root, path = Path(project_root).resolve(), Path(path).resolve()
+    record = published_page(root, path)
+    if record is None:
+        raise ValueError(f'{path} is not a page served from docs/')
+    source = path.read_text(encoding='utf-8')
+    end = source.lower().find('</head>')
+    if end < 0:
+        raise ValueError(f'{path} has no </head>')
+    head, rest = source[:end], source[end:]
+    pieces, last = [], 0
+    for match in _HEAD_TAG.finditer(head):
+        if _is_page_metadata(match[0]):
+            start, stop = match.span()
+            if head[start - 1:start] == '\n' and head[stop:stop + 1] == '\n':
+                stop += 1  # the tag had its own line
+            pieces.append(head[last:start])
+            last = stop
+    head = ''.join(pieces) + head[last:]
+    titles = list(re.finditer(r'<title>[^<]*</title>', head))
+    stamp = PAGE_DATE.search(rest)
+    if len(titles) != 1 or stamp is None:
+        raise ValueError(f'{path} needs one <title> and a dated site header')
+    tags = page_head(root, path, title=record['label'], updated=stamp[1])
+    return head[:titles[0].start()] + tags + head[titles[0].end():] + portable_links(root, path, rest)
+
+
+def not_found_page(project_root: Path) -> str:
+    """GitHub Pages' 404 page; root-relative links work at whatever URL it is served."""
+    root = Path(project_root).resolve()
+    destination, base = root / NOT_FOUND_PAGE['canonical'], urlsplit(SITE_URL).path
+    label = escape(NOT_FOUND_PAGE['label'])
+    return ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+            '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">'
+            f'<meta name="robots" content="noindex"><title>{label} · {SITE_NAME}</title>'
+            + site_favicon(root, destination, base=base) + f'<style>{CSS}</style></head><body>'
+            '<a class="skip-link" href="#main-content">Skip to content</a>'
+            + site_header(root, destination, updated=NOT_FOUND_PAGE['updated'], base=base)
+            + f'<main id="main-content" tabindex="-1"><h1>{label}</h1>'
+            '<p>There is no page at this address. The link may be mistyped or out of date.</p>'
+            f'<p><a href="{escape(base)}">Browse all CREST documents</a>, or find the code and data in the '
+            f'<a href="{escape(REPOSITORY_URL)}">CREST repository on GitHub</a>.</p></main></body></html>\n')
+
+
+def refresh_site(project_root: Path) -> list[Path]:
+    """Refresh served pages' heads and links, then write the sitemap, 404 page and .nojekyll.
+
+    Works offline from committed files. Returns the files whose content changed.
+    """
+    root = Path(project_root).resolve()
+    changed = []
+
+    def write(path, text):
+        if not path.exists() or path.read_text(encoding='utf-8') != text:
+            write_text_atomic(path, text)
+            changed.append(path)
+    for record in published_pages():
+        write(root / record['canonical'], refresh_page(root, root / record['canonical']))
+    write(root / NOT_FOUND_PAGE['canonical'], not_found_page(root))
+    write(root / SITEMAP, sitemap_xml(root))
+    write(root / NO_JEKYLL, '')
+    return changed

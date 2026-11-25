@@ -7,14 +7,13 @@ those values; it never estimates a missing score or supplies a verdict.
 from collections import defaultdict
 from html import escape
 import math
-import os
 from pathlib import Path
-from urllib.parse import quote, urlsplit
+from urllib.parse import urlsplit
 
 from crest.rubrics import AUT_KIND, NUS_KIND, protocol_rubric_kind
 
 from .analysis import number_word
-from .navigation import CSS as NAVIGATION_CSS, site_favicon, site_header
+from .navigation import CSS as NAVIGATION_CSS, page_head, site_favicon, site_header, site_href
 from .site import page_href, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
 from .protocol import LEGACY_PROTOCOL_VERSION, validate_verdict
 
@@ -204,7 +203,8 @@ def _pdf_link(paper, data_root, destination):
         root = data_root.resolve()
         target = (root / path).resolve()
         if target.is_relative_to(root):
-            return quote(os.path.relpath(target, destination.parent.resolve()), safe="/.")
+            # Relative, except that a page published in docs/ links repository PDFs on GitHub.
+            return site_href(ROOT, destination, target)
     return _web_link(paper.get("pdf_url"))
 
 
@@ -1116,6 +1116,11 @@ JUDGMENT_SCRIPT = """
 """
 
 
+# Reports written outside the site's registered page get this description instead of the registry's.
+STANDALONE_DESCRIPTION = ('An auditable pairwise comparison of released AI scientist papers, with frozen prompts, '
+                          'saved judgments, coverage, and uncertainty.')
+
+
 def write_report(report: dict, destination: Path, *, data_root: Path, updated: str | None = None) -> None:
     """Write a self-contained report; links are relative to its final location."""
     require_canonical_output(destination, ROOT)
@@ -1155,9 +1160,10 @@ def write_report(report: dict, destination: Path, *, data_root: Path, updated: s
                          'contributions, not a standardized AUT administration or a measure of author ability.')
     parts = ['<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width, initial-scale=1">',
-             f'<meta name="color-scheme" content="light"><title>{title}</title>',
+             '<meta name="color-scheme" content="light">',
+             page_head(ROOT, destination, title=page_title(destination, "AI Scientist Comparison"), updated=updated,
+                       description=STANDALONE_DESCRIPTION),
              site_favicon(ROOT, destination),
-             '<meta name="description" content="An auditable pairwise comparison of released AI scientist papers, with frozen prompts, saved judgments, coverage, and uncertainty.">',
              f'<style>{CSS}\n{NAVIGATION_CSS}</style></head><body>',
              '<a class="skip-link" href="#main-content">Skip to report</a>',
              site_header(ROOT, destination, updated=updated),
