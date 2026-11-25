@@ -1097,7 +1097,7 @@ def _judges(data):
                  'A share of 50% for the answer shown first means no lean toward either position. '
                  'A winner can change when the order is swapped because of order effects, ordinary variation '
                  'between calls, or the rule that a judge who sees no real difference picks the answer shown first.</p>')
-    overlap = _judge_overlap(data)
+    overlap = ' '.join(filter(None, (_judge_overlap(data), _judge_authorship(data))))
     if overlap:
         parts.append('<p>' + _text(overlap) + '</p>')
     parts.append('<details><summary>Saved judge settings</summary>' + _judge_settings(data) + '</details>')
@@ -1122,6 +1122,28 @@ def _judge_overlap(data):
              f'{_word(count).capitalize()} judges share a model with systems they judge: ')
             + '; '.join(f'{name} is also the main model of {_join(_label(a) for a in systems)}'
                         for name, systems in shared) + '.')
+
+
+def _question_author_counts(data):
+    authors = [q.get('generated_by') for q in data['questions']]
+    if not authors or not all(isinstance(a, str) and a for a in authors):
+        return []
+    return Counter(authors).most_common()  # Ties keep the order the authors first appear in.
+
+
+def _question_authors(data):
+    """Say which models wrote the questions, when every question records its author."""
+    counts = _question_author_counts(data)
+    return ('The questions were written by AI models: '
+            + _join(f'{n:,} by {JUDGE_LABELS.get(m, m)}' for m, n in counts) + '.') if counts else ''
+
+
+def _judge_authorship(data):
+    """Name judges whose model also wrote some of the questions."""
+    written = dict(_question_author_counts(data))
+    return ' '.join(f'{_judge_label(data, judge)} also wrote {written[model]:,} of the {len(data["questions"])} questions.'
+                    for judge in data['ranking']['judges']
+                    if (model := data['judges'][judge].get('model')) in written)
 
 
 UNREPORTED_MODELS = {'gemini': 'Google'}  # Systems whose maker does not report the models they run.
@@ -2086,8 +2108,8 @@ main table{font-variant-numeric:tabular-nums}main td.num,main th.num{text-align:
 .table-scroll{max-width:100%;overflow:auto;background:linear-gradient(to right,#fff 30%,rgba(255,255,255,0)),linear-gradient(to left,#fff 30%,rgba(255,255,255,0)) 100% 0,radial-gradient(farthest-side at 0 50%,rgba(23,44,62,.22),rgba(23,44,62,0)),radial-gradient(farthest-side at 100% 50%,rgba(23,44,62,.22),rgba(23,44,62,0)) 100% 0;background-repeat:no-repeat;background-size:40px 100%,40px 100%,14px 100%,14px 100%;background-attachment:local,local,scroll,scroll}.answer-text .table-scroll{background:none}.table-scroll table{min-width:630px}.table-scroll .matrix{table-layout:fixed;min-width:700px}.matrix th,.matrix td{vertical-align:middle;padding:.9rem}.matrix th:first-child{width:29%}.matrix thead th,.matrix td{text-align:center}.matrix tbody th{font-weight:650;line-height:1.5}.heat-cell,.diagonal{position:relative;display:flex;align-items:center;justify-content:center;min-height:3rem;padding:.6rem;font-variant-numeric:tabular-nums}.heat-cell{background:rgba(11,89,103,var(--shade))}.diagonal{background:repeating-linear-gradient(135deg,#f7f9fa 0 5px,#e1e8ec 5px 6px);color:#5f6f7b;font-size:.85rem}.matrix thead th:first-child{text-align:left}
 .question{padding:0;border:1px solid #d7e1e6;border-radius:6px;margin:1rem 0}.question>summary{display:grid;grid-template-columns:2rem minmax(0,1fr) auto 1rem;gap:.8rem;align-items:start;padding:1.2rem;font-size:1rem;list-style:none}.question>summary::-webkit-details-marker{display:none}.question>summary::after{grid-column:-2;grid-row:1;content:"+";content:"+" / "";font-size:1.2rem;line-height:1.2;text-align:center}.question[open]>summary::after{content:"−";content:"−" / ""}.question-number{color:#526574;font-weight:400;font-variant-numeric:tabular-nums}.question-title{min-width:0}.question-outcome{max-width:16rem;font-size:.78rem;line-height:1.6;font-weight:500;text-align:right}.question-content{padding:0 1.2rem 1rem}.question .evidence-heading{margin:1rem 0 .5rem}.question .answer{border-top:1px solid #d7e1e6;margin:0;padding:.15rem 0}.question .answer>summary{font-size:1rem;padding:1rem 0}.reason{white-space:pre-wrap;overflow-wrap:anywhere}.answer-text{white-space:normal;overflow-wrap:anywhere;max-height:40rem;overflow:auto;background:#f5f8f9;padding:1.2rem;font-size:.95rem;line-height:1.8}.answer-text>:first-child{margin-top:0}.answer-text>:last-child{margin-bottom:0}.answer-text h5{font-size:1.2rem}.answer-text h6{font-size:1.05rem}.answer-text h6.answer-minor-heading{font-size:.95rem;font-weight:600;color:#3b5060}details.configuration pre{white-space:pre-wrap;overflow-wrap:break-word}.configuration-body{scroll-margin-top:4.5rem}.answer-text pre{white-space:pre;overflow:auto}.answer-text .table-scroll table{min-width:480px}.answer-text .table-scroll th,.answer-text .table-scroll td{padding:.6rem .75rem;border-bottom:1px solid var(--line)}.answer-metadata{margin:1rem 0}.cost-record pre{max-height:32rem;white-space:pre;overflow-wrap:normal}.question .judgments{border-top:1px solid #d7e1e6;margin:1rem 0 0;padding-top:.5rem}.judgment-group{margin:1.5rem 0;padding-top:1rem;border-top:1px solid #d7e1e6}.judgment-group:first-of-type{margin-top:.5rem;padding-top:0;border-top:0}.judgment-group>h4{font-size:1rem;margin:.5rem 0}.question .judgment{margin:.3rem 0;padding:.2rem 0}.judgment .presentation{font-size:.85rem;color:#526574;margin:.2rem 0 1rem}.judgment .reason{margin:.7rem 0 1.5rem}summary{overflow-wrap:anywhere}code{overflow-wrap:anywhere}
 @media(max-width:999px){.table-scroll table:not(.matrix) tbody th{white-space:normal}}
-@media(max-width:650px){.run-stats{grid-template-columns:repeat(6,minmax(0,1fr))}.run-stats>div{grid-column:span 2}.run-stats>div:nth-last-child(-n+2){grid-column:span 3}.matrix th,.matrix td{padding:.5rem .4rem}.matrix th:first-child{width:24%}.matrix thead th{font-size:.8rem}.matrix tbody th,.matrix thead th:first-child{position:sticky;left:0;z-index:1;background:#fff}.table-scroll table{min-width:0}.table-scroll table:not(.matrix) tbody th{white-space:normal;min-width:6rem}main .table-scroll table:not(.matrix) th,main .table-scroll table:not(.matrix) td{padding:.6rem .45rem}.table-scroll table.wide{min-width:560px}.table-scroll .matrix{min-width:620px}.answer-text{max-height:none;overflow:visible}.question-outcome{grid-column:2;grid-row:2;max-width:none;text-align:left}.method-summary{grid-template-columns:1fr;gap:.25rem}.method-summary dd{margin-bottom:1rem}.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
-@media print{.skip-link,main>nav{display:none}.ranking-row{break-inside:avoid}.answer-text{max-height:none;overflow:visible}details>summary{break-after:avoid}}
+@media(max-width:650px){.answer-text .table-scroll table{min-width:100%;width:max-content;max-width:480px}.run-stats{grid-template-columns:repeat(6,minmax(0,1fr))}.run-stats>div{grid-column:span 2}.run-stats>div:nth-last-child(-n+2){grid-column:span 3}.matrix th,.matrix td{padding:.5rem .4rem}.matrix th:first-child{width:24%}.matrix thead th{font-size:.8rem}.matrix tbody th,.matrix thead th:first-child{position:sticky;left:0;z-index:1;background:#fff}.table-scroll table{min-width:0}.table-scroll table:not(.matrix) tbody th{white-space:normal;min-width:6rem}main .table-scroll table:not(.matrix) th,main .table-scroll table:not(.matrix) td{padding:.6rem .45rem}.table-scroll table.wide{min-width:560px}.table-scroll .matrix{min-width:620px}.answer-text{max-height:none;overflow:visible}.question-outcome{grid-column:2;grid-row:2;max-width:none;text-align:left}.method-summary{grid-template-columns:1fr;gap:.25rem}.method-summary dd{margin-bottom:1rem}.ranking-row{grid-template-columns:minmax(0,1fr) 125px;gap:.4rem 1rem}.ranking-row svg{grid-column:1/-1;grid-row:2}.score{grid-column:2;grid-row:1}.rank-label{font-size:.9rem}.run-stats{gap:.7rem}.run-stats strong{font-size:1.4rem}.answer-text{padding:1rem}.question>summary{grid-template-columns:1.6rem minmax(0,1fr) 1rem;gap:.5rem;padding:1rem .9rem}.question-content{padding:0 .9rem .9rem}}
+@media print{.skip-link,main>nav,#main-content>nav[aria-label]{display:none}.ranking-row{break-inside:avoid}.answer-text{max-height:none;overflow:visible}details>summary{break-after:avoid}}
 """
 
 
@@ -2275,7 +2297,7 @@ def _render(data, destination, *, updated=None):
              '<a class="skip-link" href="#main-content">Skip to report</a>', site_header(ROOT, destination, research_report=destination, updated=updated),
              f'<main id="main-content" tabindex="-1"><h1>{title}</h1>',
              f'<p>This comparison runs {_text(_join(_label(a) for a in agents))} '
-             f'on the same 50 questions. {judge_phrase} the {counts["answers"]:,} answers two at a time, in both orders, '
+             f'on the same 50 questions. ' + (_text(_question_authors(data)) + ' ' if _question_authors(data) else '') + f'{judge_phrase} the {counts["answers"]:,} answers two at a time, in both orders, '
              f'and {"picks" if one else "pick"} the more creative one under {rubric} '
              + (f'The ranking uses {counts["ranked"]} of the 50 questions; <a href="#unranked">'
                 f'{"one question is" if 50 - counts["ranked"] == 1 else _word(50 - counts["ranked"]) + " questions are"} not ranked</a>. '

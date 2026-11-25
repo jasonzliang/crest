@@ -2663,3 +2663,29 @@ def test_rubric_dropdowns_list_the_difference_intervals_behind_their_headline():
             c['pair'], c['ci95'] = ['openai', 'anthropic'], [-.2, -.1]
     assert 'Anthropic (Claude + web search) vs OpenAI (Sol + web search) +10.0 to +20.0;' in _cluster_differences(view)
     assert _cluster_differences(_rubric_entry('v1', ['caesar', 'openai'])['common']) == ''
+
+
+def test_page_says_which_models_wrote_the_questions(tmp_path):
+    from crest.report import load_run, write_report, _judges
+    run = make_run(tmp_path / 'run')
+    authors = ['gemini-4-argon'] * 20 + ['gpt-6-astra'] * 20 + ['claude-fable-5-1'] * 10
+    manifest = json.loads((run / 'run.json').read_text())
+    for question, author in zip(manifest['questions'], authors):
+        question['generated_by'] = author
+    dump(run / 'run.json', manifest)
+    questions = json.loads((run / '02-judge-test/questions.json').read_text())
+    for question, author in zip(questions, authors):
+        question['generated_by'] = author
+    dump(run / '02-judge-test/questions.json', questions)
+    body = write_report(run, tmp_path / 'page.html').read_text()
+    intro = body.split('<main', 1)[1].split('<nav', 1)[0]
+    assert ('The questions were written by AI models: 20 by Gemini 4 Argon, 20 by GPT-6 Astra, and 10 by '
+            'Claude Fable 5.1.') in intro
+    # A judge that also wrote questions says so where the judges are described.
+    assert 'Gemini 4 Argon also wrote 20 of the 50 questions.' in _judges(load_run(run))
+
+
+def test_question_authors_are_left_out_when_any_question_lacks_one(tmp_path):
+    from crest.report import load_run, _question_authors
+    data = load_run(make_run(tmp_path / 'run'))
+    assert _question_authors(data) == ''
