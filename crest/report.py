@@ -229,9 +229,30 @@ def _latest_analysis(run, manifest):
     return _stage(run, stages[-1].get('directory'))
 
 
+_PRESENTED = {}  # (SHA-256 of saved text, presentation version) -> text as the judges saw it.
+
+
+def _presented_text(text, version):
+    """An answer as the judges saw it. Formatting is slow, and the rubric runs judge the same
+    answers, so each saved text is formatted once per presentation version per process."""
+    from .presentation import present_research_answer
+    key = (hashlib.sha256(text.encode()).hexdigest(), version)
+    if key not in _PRESENTED:
+        _PRESENTED[key] = present_research_answer(text, version)
+    return _PRESENTED[key]
+
+
+def _presented_hash(cache, key, text, version):
+    """SHA-256 of an answer as the judges saw it, computed once per answer and presentation version."""
+    if (key, version) not in cache:
+        cache[key, version] = hashlib.sha256(_presented_text(text, version).encode()).hexdigest()
+    return cache[key, version]
+
+
 def _validate(data):
     questions, answers, judgments, ranking = (data[k] for k in ('questions', 'answers', 'judgments', 'ranking'))
     failures = data.get('judge_failures', [])
+    presented = {}  # (answer key, presentation version) -> hash of the text the judges saw.
     family = ranking.get('rubric_kind', NUS_KIND)
     if family not in (NUS_KIND, AUT_KIND):
         raise ValueError('Unsupported ranking rubric kind')
@@ -290,11 +311,10 @@ def _validate(data):
                 hashlib.sha256(a['result']['text'].encode()).hexdigest() for a in ordered]:
             raise ValueError('Judgment answer content hashes do not match')
         if strict_reason:
-            from .presentation import ANSWER_PRESENTATION_VERSION, PRESENTATION_VERSION, present_research_answer
+            from .presentation import ANSWER_PRESENTATION_VERSION, PRESENTATION_VERSION
             version = row.get('presentation_version')
             if version not in (PRESENTATION_VERSION, ANSWER_PRESENTATION_VERSION) or row.get('presented_answer_hashes') != [
-                    hashlib.sha256(present_research_answer(a['result']['text'], version).encode()).hexdigest()
-                    for a in ordered]:
+                    _presented_hash(presented, a['key'], a['result']['text'], version) for a in ordered]:
                 raise ValueError('Judgment presentation hashes do not match the saved answers')
     protocols = {j.get('protocol_version') for j in judgments}
     if protocols.intersection(STRICT_REASON_PROTOCOLS) and len(protocols) != 1:
@@ -756,14 +776,14 @@ WORD = re.compile(r"[^\W_]+(?:['’-][^\W_]+)*")
 def _answer_lengths(data):
     """Each system's mean answer length in words, counted on the text the judges saw when every judgment
     used one presentation, else on the saved text without its appended list of uncited sources."""
-    from .presentation import drop_uncited_sources, present_research_answer
+    from .presentation import drop_uncited_sources
     versions = {j.get('presentation_version') for j in data.get('judgments', [])}
     version = next(iter(versions)) if len(versions) == 1 else None
     exact = version in ('citation-neutral-v1', 'citation-neutral-v2')
     words = defaultdict(list)
     for answer in data['answers']:
         text = answer['result']['text']
-        text = present_research_answer(text, version) if exact else drop_uncited_sources(text)
+        text = _presented_text(text, version) if exact else drop_uncited_sources(text)
         words[answer['agent']].append(len(WORD.findall(text)))
     label = 'Mean length (words)' if exact else 'Mean length (words, sources list excluded)'
     return {a: statistics.fmean(n) for a, n in words.items()}, label
@@ -858,10 +878,9 @@ def _refused_shown(data, rows):
     return 'are ' + '; '.join(_stand_in_items(data, rows))
 
 
-def _stand_in_summary(data):
-    """One note, for the judges section, on every judgment a stand-in model made under any rubric on the page."""
-    entries = (data['rubric_variants']['entries'] if data.get('rubric_variants')
-               else [{'version': _main_rubric(data), 'stand_ins': data.get('stand_ins', [])}])
+def _stand_in_summary(data, entries=None):
+    """One note on every judgment a stand-in model made: the headline rubric's by default, or the given entries'."""
+    entries = entries or [{'version': _main_rubric(data), 'stand_ins': data.get('stand_ins', [])}]
     main, numbers = entries[0]['version'], _question_numbers(data)
     groups = defaultdict(lambda: defaultdict(list))
     for entry in entries:
@@ -1077,7 +1096,7 @@ def _judges(data):
     parts.append('<p>Win rate of each system under each judge:</p>'
                  + _table(['Judge', *[_label(a) for a in agents]], rates, 'Win rates by judge',
                           row_headers=True, num_from=1))
-    summary = _stand_in_summary(data) if data.get('stand_ins') or data.get('rubric_variants') else ''
+    summary = _stand_in_summary(data) if data.get('stand_ins') else ''
     if summary:
         parts.append('<p class="small">' + _text(summary) + '</p>')
     parts.append('<p>Answer-order checks:</p>'
@@ -1207,9 +1226,12 @@ def _rubric_link(version):
     return f'<a href="../crest/prompts/nus_pairwise_{version}.txt">NUS {version}</a>'
 
 
-def _earlier_note(version):
+def _earlier_note(version, *, name_others=True):
     if version not in EARLIER_TEXT_DIFFERS:
         return ''
+    if not name_others:
+        return (f'The closing rules and output format in the NUS {version} file differ from those in the file '
+                'earlier studies used.')
     others = sorted((p.stem.rsplit('_', 1)[-1] for p in (ROOT / 'crest/prompts').glob('nus_pairwise_v*.txt')),
                     key=lambda v: int(v.lstrip('v')))
     others = [v for v in others if v != version]
@@ -1232,37 +1254,6 @@ def _rank_changes(agents, views):
     steady = {a: next(iter(ranks[a])) for a in agents if a not in moving}
     shared = {rank for view in views for rank, n in Counter(view[a]['rank'] for a in agents).items() if n > 1}
     return moving, steady, shared
-
-
-def _separate_places(report):
-    """Each system's rank when the paired intervals separate it from every other system, else None."""
-    clustered = {row['agent'] for i, j in _clusters(report) for row in report['ranking'][i:j + 1]}
-    return {row['agent']: None if row['agent'] in clustered else row['rank'] for row in report['ranking']}
-
-
-def _rubric_pointer(agents, entries):
-    """Say how each other rubric's ranking reads under the headline's rule: systems the paired
-    intervals cannot separate get no places of their own. Rubrics that read the same share a sentence."""
-    main, groups = _separate_places(entries[0]['common']), defaultdict(list)
-    for entry in entries[1:]:
-        report = entry['common']
-        places, clauses = _separate_places(report), []
-        for i, j in _clusters(report):
-            members = [row['agent'] for row in report['ranking'][i:j + 1]]
-            who = f'the top {_word(len(members))}' if i == 0 else _join(_label(a) for a in members)
-            clauses.append(f'{who} cannot be fully separated')
-        steady = [a for a in agents if places[a] is not None and places[a] == main[a]]
-        moved = sorted((a for a in agents if places[a] is not None and places[a] != main[a]), key=places.get)
-        clauses += [f'{_label(a)} is {_ordinal(places[a])}' for a in moved]
-        if len(steady) == len(agents):
-            clauses = ['every system keeps its place']  # Places that hold are in the table at the bottom.
-        groups[tuple(clauses)].append(entry['version'])
-    sentences = []
-    for clauses, versions in groups.items():
-        body = ', and '.join(clauses) if len(clauses) == 2 else _join(clauses)
-        sentences.append(f'Under the {_join(f"NUS {v}" for v in versions)} {"rubrics" if len(versions) > 1 else "rubric"}, '
-                         f'{body}.')
-    return ' '.join(sentences)
 
 
 def _rubric_dropdown(data, entry, main, common, every):
@@ -1304,6 +1295,8 @@ def _rubric_dropdown(data, entry, main, common, every):
     parts.append('<p>Win rates by judge:</p>'
                  + _table(['Judge', *[_label(a) for a in _system_order(data)]], rows, f'Win rates by judge under {name}',
                           row_headers=True, num_from=1))
+    if entry['stand_ins']:
+        parts.append('<p class="small">' + _text(_stand_in_summary(data, [entry])) + '</p>')
     parts.append(_rubric_missing(data, [entry]))
     parts.append('</div></details>')
     return ''.join(parts)
@@ -2069,7 +2062,8 @@ def _method(data, previous=''):
     version = _main_rubric(data)
     rubric_used = (f'The ranking uses the {_rubric_link(version)} rubric. ' + _text(RUBRIC_NOTES.get(version, '')) + ' '
                    if version else '')
-    earlier = f'<p>{_text(_earlier_note(version))}</p>' if version and _earlier_note(version) else ''
+    note = _earlier_note(version, name_others=False) if version else ''
+    earlier = f'<p>{_text(note)}</p>' if note else ''
     lengths = _length_sentence(data)
     return ('<section id="method"><h2>Method</h2>'
             f'<p>Each question has {counts["per_question"]:,} judgments, from {_count(counts["pairs"], "answer pair")} '
@@ -2279,17 +2273,13 @@ def _render(data, destination, *, updated=None):
     version = None if aut else _main_rubric(data)
     rubric = ('an AUT-inspired creativity rubric.' if aut else
               f'the {_rubric_link(version) if version else "NUS"} rubric. ' + NUS_DEFINITION)
-    pointer, rubric_note = '', ''
+    pointer = ''
     previous = _previous_version(Path(destination))
     if previous:
         systems = previous.read_text(encoding='utf-8').count('class="ranking-row"')
-        link = (f'<a href="{previous.name}">{_text(page_title(previous, previous.stem))}</a>'
-                ' (its version number is unrelated to the NUS rubric versions)')
+        link = f'<a href="{previous.name}">{_text(page_title(previous, previous.stem))}</a>'
         pointer = (f'An earlier study, {link}, compared {_word(systems)} systems.' if systems > 1
                    else f'An earlier study is {link}.')
-    if data.get('rubric_variants'):
-        rubric_note = (_text(_rubric_pointer(_system_order(data), data['rubric_variants']['entries']))
-                       + ' Those results are at the <a href="#other-rubrics">bottom of the page</a>.')
     picks, cost = _judge_picks(data), _cost_summary(data)
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">',
@@ -2313,8 +2303,7 @@ def _render(data, destination, *, updated=None):
              + ' been checked against human experts, and an answer’s wording or length can reveal or favor the system '
                'that wrote it.</p>'
              + (f'<p>{cost}</p>' if cost else '')
-             + (f'<p>{_text(picks)} <a href="#judges">See how each judge ruled</a>.</p>' if picks else '')
-             + (f'<p class="small">{rubric_note}</p>' if rubric_note else ''),
+             + (f'<p>{_text(picks)} <a href="#judges">See how each judge ruled</a>.</p>' if picks else ''),
              '<nav aria-label="Report contents"><a href="#overall">Creativity ranking</a><a href="#matchups">Head-to-head</a>'
              '<a href="#judges">Judges</a><a href="#resources">Cost and time</a>'
              '<a href="#method">Method</a><a href="#questions">Answers and judgments</a></nav>',

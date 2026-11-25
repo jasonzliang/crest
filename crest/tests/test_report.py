@@ -1658,11 +1658,15 @@ def test_intro_and_method_name_the_rubric_the_ranking_uses(tmp_path):
     body = write_report(main_run, tmp_path / 'page.html', rubric_runs=[v3]).read_text()
     intro = body.split('<main', 1)[1].split('<nav', 1)[0]
     assert 'under the <a href="../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric' in intro
-    assert 'href="#other-rubrics"' in intro
     method = section(body, 'method')
     assert 'The ranking uses the <a href="../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric.' in method
-    assert ('The NUS v1 file shares its closing rules and output format with NUS v2 and NUS v3, so its wording '
-            'differs from the file earlier studies used.') in method
+    # The other rubrics are named only in their section at the bottom of the page.
+    above = body.split('id="other-rubrics"', 1)[0]
+    assert 'href="#other-rubrics"' not in above
+    for version in ('v2', 'v3'):
+        assert f'NUS {version}' not in above and f'nus_pairwise_{version}' not in above
+    assert ('The closing rules and output format in the NUS v1 file differ from those in the file earlier studies '
+            'used.') in method
 
 
 def test_intro_without_other_rubrics_points_nowhere(tmp_path):
@@ -1681,67 +1685,6 @@ def _rubric_entry(version, order, close=(), wins=None):
     contrasts = [{'pair': [a, b], 'ci95': [-.1, .1] if {a, b} in [set(p) for p in close] else [.1, .2]}
                  for i, a in enumerate(order) for b in order[i + 1:]]
     return {'version': version, 'common': {'ranking': rows, 'paired_contrasts': contrasts}}
-
-
-def test_rubric_pointer_follows_the_headline_rule_and_groups_rubrics_that_read_the_same():
-    from crest.report import _rubric_pointer
-    agents = ['caesar', 'openai', 'anthropic', 'gpt_researcher', 'gemini']
-    chain = [('caesar', 'openai'), ('openai', 'anthropic')]
-    entries = [_rubric_entry('v1', agents, chain),
-               _rubric_entry('v2', ['anthropic', 'openai', 'caesar', 'gpt_researcher', 'gemini'],
-                             [('anthropic', 'openai'), ('anthropic', 'caesar'), ('openai', 'caesar')]),
-               _rubric_entry('v3', ['anthropic', 'caesar', 'openai', 'gpt_researcher', 'gemini'],
-                             [('anthropic', 'caesar'), ('caesar', 'openai')])]
-    assert _rubric_pointer(agents, entries) == (
-        'Under the NUS v2 and NUS v3 rubrics, the top three cannot be fully separated.')
-    separate = _rubric_entry('v1', agents)
-    assert _rubric_pointer(agents, [separate, {**separate, 'version': 'v2'}]) == (
-        'Under the NUS v2 rubric, every system keeps its place.')
-    apart = _rubric_entry('v2', ['openai', 'caesar', 'anthropic', 'gpt_researcher', 'gemini'])
-    assert _rubric_pointer(agents, [entries[0], apart]) == (
-        'Under the NUS v2 rubric, OpenAI (Sol + web search) is first, Caesar is second, and Anthropic (Claude + web '
-        'search) is third.')
-
-
-@pytest.mark.parametrize('kind', ['same_rubric', 'unknown_rubric', 'other_questions', 'other_answers', 'other_agents',
-                                  'other_protocol', 'other_judges', 'aut'])
-def test_rubric_comparison_refuses_runs_that_differ_beyond_the_rubric(tmp_path, kind):
-    from crest.report import write_report
-    main_run = use_packaged_rubric(make_run(tmp_path / 'v1'), 'v1')
-    variant = use_packaged_rubric(make_run(tmp_path / 'variant'), 'v1' if kind == 'same_rubric' else 'v2')
-    if kind == 'unknown_rubric':
-        (variant / '02-judge-test/rubric.txt').write_text('Some unpublished rubric.')
-    elif kind == 'other_questions':
-        variant = use_packaged_rubric(make_run(tmp_path / 'variant2'), 'v2')
-        manifest = json.loads((variant / 'run.json').read_text())
-        manifest['questions'][0]['text'] += ' Changed.'
-        dump(variant / 'run.json', manifest)
-        questions = json.loads((variant / '02-judge-test/questions.json').read_text())
-        questions[0]['text'] += ' Changed.'
-        dump(variant / '02-judge-test/questions.json', questions)
-    elif kind == 'other_answers':
-        rows = json.loads(answers_path(variant).read_text())
-        rows[0]['result']['text'] += ' Edited.'
-        dump(answers_path(variant), rows)
-    elif kind == 'other_agents':
-        variant = use_packaged_rubric(make_run(tmp_path / 'variant3', agents=['caesar', 'gemini', 'mystery']), 'v2')
-    elif kind == 'other_protocol':
-        path = variant / '02-judge-test/judgments.jsonl'
-        rows = [json.loads(line) for line in path.read_text().splitlines()]
-        for row in rows:
-            row['protocol_version'] = 'nus-overall-pairwise-v2'
-        path.write_text(''.join(json.dumps(r) + '\n' for r in rows))
-    elif kind == 'other_judges':
-        variant = use_packaged_rubric(make_run(tmp_path / 'variant4', judges=['openai']), 'v2')
-    elif kind == 'aut':
-        make_aut_run(variant)
-    expected = {'same_rubric': 'different rubric', 'unknown_rubric': 'packaged NUS rubric',
-                'other_questions': 'same questions', 'other_answers': 'same saved answers',
-                'other_agents': 'same saved answers', 'other_protocol': 'same judging protocol',
-                'other_judges': 'same judges', 'aut': 'NUS rubric'}[kind]
-    with pytest.raises(ValueError, match=expected):
-        write_report(main_run, tmp_path / 'page.html', rubric_runs=[variant])
-    assert not (tmp_path / 'page.html').exists()
 
 
 def test_rubric_section_groups_missing_judgments_by_rubric_and_question(tmp_path):
@@ -2077,6 +2020,7 @@ def test_rubric_dropdowns_carry_no_edit_history(tmp_path):
     assert 'never used' not in Path(report.__file__).read_text()
     assert ('The NUS v2 file shares its closing rules and output format with NUS v1 and NUS v3, so its wording '
             'differs from the file earlier studies used.') in section(body, 'other-rubrics')
+    assert 'NUS v2' not in body.split('id="other-rubrics"', 1)[0]
 
 
 def test_page_wording_avoids_jargon_and_shows_effort_once(run, tmp_path):
@@ -2231,15 +2175,13 @@ def test_rubric_section_discloses_stand_ins_in_the_other_rubric_runs(tmp_path):
     v2 = use_packaged_rubric(opus_judged_run(tmp_path / 'v2'), 'v2')
     edit_judgments(v2, stand_in, question_index=47, pair=('caesar', 'gemini'))
     body = write_report(main_run, tmp_path / 'page.html', rubric_runs=[v3, v2]).read_text()
-    # Only v2 had stand-ins, so the judges section names v2 and never claims any under v1.
-    assert 'NUS v1' not in section(body, 'judges')
+    # Only v2 had stand-ins, and the judges section describes the headline rubric alone.
+    judges = section(body, 'judges')
+    assert 'NUS v' not in judges and 'refused' not in judges
     bottom = section(body, 'other-rubrics')
-    # The judges section holds the only stand-in note; the dropdowns repeat none of it.
-    assert 'Sonnet' not in bottom and 'refused' not in bottom
-    assert ('Claude Opus 5.5 refused 2 judgments on Question 48 under NUS v2. It refused each of them on all 24 '
-            'tries, and the API labeled every refusal “bio”, its biology-safety category. Claude Sonnet 5.5 made those '
-            '2 judgments instead, and they count toward Claude Opus 5.5’s results.') in section(body, 'judges')
-    assert 'refused judgments are' not in section(body, 'judges')  # NUS v1 had none to list.
+    assert ('Claude Opus 5.5 refused 2 judgments on Question 48. It refused each of them on all 24 tries, and the API '
+            'labeled every refusal “bio”, its biology-safety category. Claude Sonnet 5.5 made those 2 judgments '
+            'instead, and they count toward Claude Opus 5.5’s results.') in bottom
 
 
 @pytest.mark.parametrize('kind', ['silent_swap', 'no_attempts', 'not_refused', 'unmarked_last', 'other_substitute',
@@ -2447,8 +2389,9 @@ def test_previous_study_pointer_counts_its_systems(run, tmp_path):
     (tmp_path / 'deep-research-comparison-v2.html').write_text(
         '<main>' + '<div class="ranking-row"></div>' * 3 + '</main>')
     body = write_report(run, tmp_path / 'deep-research-comparison-v3.html').read_text()
-    assert ('An earlier study, <a href="deep-research-comparison-v2.html">Deep Research Comparison v2</a> (its '
-            'version number is unrelated to the NUS rubric versions), compared three systems.') in section(body, 'method')
+    assert ('An earlier study, <a href="deep-research-comparison-v2.html">Deep Research Comparison v2</a>, compared '
+            'three systems.') in section(body, 'method')
+    assert 'rubric versions' not in body
     assert 'The previous study is' not in body
 
 
@@ -2496,13 +2439,14 @@ def test_stand_ins_across_rubrics_are_described_once_near_the_judges(tmp_path):
     edit_judgments(v3, stand_in, question_index=47, pair=('caesar', 'gemini'), orders=[('caesar', 'gemini')])
     body = write_report(main_run, tmp_path / 'page.html', rubric_runs=[v3, v2]).read_text()
     judges = section(body, 'judges')
-    assert ('Claude Opus 5.5 refused 3 judgments on Question 48: 2 under NUS v1 and 1 under NUS v3. It refused '
-            'each of them on all 24 tries, and the API labeled every refusal “bio”, its biology-safety category. '
-            'Claude Sonnet 5.5 made those 3 judgments instead, and they count toward Claude Opus 5.5’s results.') in judges
-    assert 'Under NUS v1, the 2 refused judgments are Question 48, Caesar vs Google Deep Research, both orders.' in judges
-    bottom = section(body, 'other-rubrics')
-    assert 'biology-safety' not in bottom and 'refused to make' not in bottom
-    assert 'Sonnet' not in bottom
+    assert ('Claude Opus 5.5 refused 2 judgments on Question 48. It refused each of them on all 24 tries, and the API '
+            'labeled every refusal “bio”, its biology-safety category. Claude Sonnet 5.5 made those 2 judgments '
+            'instead, and they count toward Claude Opus 5.5’s results.') in judges
+    assert 'The 2 refused judgments are Question 48, Caesar vs Google Deep Research, both orders.' in judges
+    assert 'NUS v' not in judges
+    # The NUS v3 stand-in is described inside the NUS v3 results at the bottom.
+    v3_box = section(body, 'other-rubrics').split('id="rubric-v3"', 1)[1].split('</details>', 1)[0]
+    assert ('Claude Opus 5.5 refused 1 judgment on Question 48. It refused it on all 24 tries') in v3_box
 
 
 def test_rubric_dropdown_explains_judging_cost_it_cannot_count(tmp_path):
@@ -2689,3 +2633,22 @@ def test_question_authors_are_left_out_when_any_question_lacks_one(tmp_path):
     from crest.report import load_run, _question_authors
     data = load_run(make_run(tmp_path / 'run'))
     assert _question_authors(data) == ''
+
+
+def test_load_run_formats_each_answer_once_per_presentation_version(run, monkeypatch):
+    # Every judgment's presented-answer hashes are still checked, but the formatter
+    # runs once for each saved answer instead of once for each judgment that shows it.
+    import crest.presentation as presentation
+    import crest.report as report
+    from crest.report import load_run
+    mark_nus_judgments(run, 'citation-neutral-v2')
+    monkeypatch.setattr(report, '_PRESENTED', {})
+    calls = []
+    original = presentation.present_research_answer
+    monkeypatch.setattr(presentation, 'present_research_answer',
+                        lambda text, version=presentation.ANSWER_PRESENTATION_VERSION: calls.append(text) or original(text, version))
+    data = load_run(run)
+    assert len(calls) == len(data['answers'])  # Each judgment shows two answers, so this was 4x before.
+    # A second run over the same answers, like a rubric run, reuses the formatted text.
+    load_run(run)
+    assert len(calls) == len(data['answers'])
