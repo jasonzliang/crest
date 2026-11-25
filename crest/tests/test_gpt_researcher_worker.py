@@ -14,16 +14,17 @@ import httpx
 import pytest
 
 # Tests marked @gpt_runtime drive the pinned upstream package, which is installed
-# only in the worker venv. The main interpreter skips them and runs them all at
-# once through test_runtime_tests_pass_under_worker_venv (end of this file).
+# only in the worker venv. The main interpreter does not collect them; it runs them
+# all at once through test_runtime_tests_pass_under_worker_venv (end of this file).
 RUNTIME_AVAILABLE = all(importlib.util.find_spec(name) for name in ('gpt_researcher', 'langchain_openai'))
 RUNTIME_TESTS = []
 
 
 def gpt_runtime(test):
     RUNTIME_TESTS.append(test.__name__)
-    return pytest.mark.skipif(not RUNTIME_AVAILABLE, reason='needs gpt_researcher and langchain_openai '
-                              '(run under the worker venv by the bridge test)')(test)
+    if not RUNTIME_AVAILABLE:
+        test.__test__ = False  # Not collected here, so the main run does not list 77 skips.
+    return test
 
 
 @pytest.fixture(autouse=True)
