@@ -4,7 +4,7 @@ Pairwise judging rubrics. The active one is set by `rubric` in [crest.yaml](../c
 
 - **v3**: [nus_pairwise_v3.txt](nus_pairwise_v3.txt). Default New, Useful, and Surprising (NUS) rubric. Wording about an answer's own research, such as "the supplied material", is neither credited nor penalized.
 - **v2**: [nus_pairwise_v2.txt](nus_pairwise_v2.txt). NUS rubric used for the 2026-11-05 study.
-- **v1**: [nus_pairwise_v1.txt](nus_pairwise_v1.txt). Original NUS rubric, used for the main ranking of the 50-question study in [Deep Research Comparison v3](../../docs/deep-research-comparison-v3.html); its v2 and v3 results appear at the bottom of that page.
+- **v1**: [nus_pairwise_v1.txt](nus_pairwise_v1.txt). Original NUS rubric, used for the main ranking of the 50-question study in [Deep Research Comparison v3](../../docs/deep-research/deep-research-comparison-v3.html); its v2 and v3 results appear at the bottom of that page.
 - **AUT**: [aut_pairwise_v1.txt](aut_pairwise_v1.txt). Alternative rubric based on the Alternate Uses Task: fluency, flexibility, originality.
 
 ## How the rubrics are used

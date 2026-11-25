@@ -11,4 +11,4 @@ Historical code, documents, and source snapshots; not the active runtime.
 Historical reports and run artifacts are immutable; do not rewrite or rename them.
 `research/result/` is ignored local data and may be absent from a fresh clone.
 Current NUS prompts, including v1, live in [../prompts/](../prompts/).
-Use the [current pipeline guide](../../docs/research-pipeline.html) for new work.
+Use the [current pipeline guide](../../docs/deep-research/research-pipeline.html) for new work.

@@ -13,4 +13,4 @@ Generation and judging can make paid calls; review settings before running them.
 Existing runs retain their frozen generation settings.
 Changing judges or rubrics can create new judging stages without regenerating answers.
 Transport settings (concurrency, retries, and the Anthropic judge's `refusal_substitute`) are not part of cache keys and apply when a run resumes.
-See the [pipeline guide](../../docs/research-pipeline.html) for overrides and resuming.
+See the [pipeline guide](../../docs/deep-research/research-pipeline.html) for overrides and resuming.

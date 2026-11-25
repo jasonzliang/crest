@@ -200,8 +200,8 @@ def test_legacy_nus_rendering_matches_explicit_family_and_model_notes_cite_provi
     data['ranking']['rubric_kind'] = 'nus'
     assert _render(data, tmp_path / 'nus.html') == legacy
     assert '<strong>Useful</strong>' in legacy and 'AUT-inspired' not in legacy
-    assert 'href="nus-rubric.html">NUS Rubric</a>' in legacy
-    assert 'href="why-one-overall-judgment.html">Why One Overall Judgment</a>' in legacy
+    assert 'href="../judging/nus-rubric.html">NUS Rubric</a>' in legacy
+    assert 'href="../judging/why-one-overall-judgment.html">Why One Overall Judgment</a>' in legacy
     assert '<link rel="icon" type="image/svg+xml"' in legacy
 
 
@@ -1299,18 +1299,19 @@ def test_current_static_document_headers_link_to_latest_research_report():
     from pathlib import Path
     from lxml import html
     docs = Path(__file__).resolve().parents[2] / 'docs'
+    latest, v1 = docs / 'deep-research/deep-research-comparison-v3.html', docs / 'deep-research/deep-research-comparison-v1.html'
     # Evidence remains frozen; publication wrappers use canonical versioned names.
-    for path in sorted(docs.glob('*.html')):
+    for path in sorted(docs.rglob('*.html')):
         if path.name in {'deep-research-comparison-v1.html', 'deep-research-comparison-v2.html',
                          'deep-research-comparison-v3.html'}:
             continue
         page = html.fromstring(path.read_bytes())
         links = page.xpath('//header[@class="crest-site-header"]//a[starts-with(text(), "Deep Research Comparison")]/@href')
         if links:
-            assert links == ['deep-research-comparison-v3.html'], path.name
-    for name in ('index.html', 'research-pipeline.html'):
+            assert [(path.parent / link).resolve() for link in links] == [latest], path.name
+    for name in ('index.html', 'deep-research/research-pipeline.html'):
         page = html.fromstring((docs / name).read_bytes())
-        links = page.xpath('//a[@href="deep-research-comparison-v1.html"]')
+        links = [a for a in page.xpath('//a[@href]') if ((docs / name).parent / a.get('href')).resolve() == v1]
         assert links, name
         assert any('v1' in a.text_content().lower() or 'previous' in a.text_content().lower() for a in links), name
 
@@ -1318,7 +1319,7 @@ def test_current_static_document_headers_link_to_latest_research_report():
 def test_historical_v1_report_uses_versioned_publication_wrapper():
     from pathlib import Path
     from lxml import html
-    path = Path(__file__).resolve().parents[2] / 'docs/deep-research-comparison-v1.html'
+    path = Path(__file__).resolve().parents[2] / 'docs/deep-research/deep-research-comparison-v1.html'
     source = path.read_bytes()
     page = html.fromstring(source)
     assert page.xpath('//h1/text()') == ['Deep Research Comparison v1']
@@ -1353,20 +1354,24 @@ def test_research_publication_keeps_index_date_in_sync(run, tmp_path, monkeypatc
     monkeypatch.setattr(renderer, 'ROOT', tmp_path)
     docs = tmp_path / 'docs'; docs.mkdir()
     index = docs / 'index.html'
-    index.write_text('<main><li><a href="deep-research-comparison-v2.html">Deep Research Comparison v2</a>'
+    index.write_text('<main><li><a href="deep-research/deep-research-comparison-v2.html">Deep Research Comparison v2</a>'
                      '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li></main>')
-    renderer.write_report(run, docs / 'deep-research-comparison-v2.html', updated='2026-11-06')
+    renderer.write_report(run, docs / 'deep-research/deep-research-comparison-v2.html', updated='2026-11-06')
     assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
     assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
 
 
-def test_research_generator_does_not_overwrite_compatibility_redirect(run, tmp_path):
-    from crest.report import write_report
-    output = tmp_path / 'deep-research-creativity.html'
-    output.write_text('Original compatibility redirect')
-    with pytest.raises(ValueError, match='deep-research-comparison-v1.html'):
-        write_report(run, output)
-    assert output.read_text() == 'Original compatibility redirect'
+@pytest.mark.parametrize('name, message', [('deep-research-creativity.html', 'section folder'),
+                                           ('deep-research-comparison-v1.html', 'docs/deep-research/deep-research-comparison-v1.html')])
+def test_research_generator_refuses_pages_outside_their_section_folder(run, tmp_path, monkeypatch, name, message):
+    import crest.report as renderer
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    output = tmp_path / 'docs' / name
+    output.parent.mkdir()
+    output.write_text('Original page')
+    with pytest.raises(ValueError, match=message):
+        renderer.write_report(run, output)
+    assert output.read_text() == 'Original page'
 
 
 @pytest.mark.parametrize("dated_entries", [0, 2])
@@ -1375,13 +1380,13 @@ def test_research_invalid_index_wrapper_preserves_existing_report(run, tmp_path,
     import crest.report as renderer
     shutil.copytree(renderer.ROOT / 'crest/data', tmp_path / 'crest/data')
     monkeypatch.setattr(renderer, 'ROOT', tmp_path)
-    docs = tmp_path / 'docs'; docs.mkdir()
+    docs = tmp_path / 'docs'; (docs / 'deep-research').mkdir(parents=True)
     index = docs / 'index.html'
-    entry = '<a href="deep-research-comparison-v2.html">Deep Research Comparison v2</a>'
+    entry = '<a href="deep-research/deep-research-comparison-v2.html">Deep Research Comparison v2</a>'
     stamp = '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>'
     original_index = '<main>' + ((entry + stamp) * dated_entries if dated_entries else entry) + '</main>'
     index.write_text(original_index)
-    output = docs / 'deep-research-comparison-v2.html'
+    output = docs / 'deep-research/deep-research-comparison-v2.html'
     output.write_text('Previously published report')
     with pytest.raises(ValueError, match='Expected one dated index entry'):
         renderer.write_report(run, output, updated='2026-11-06')
@@ -1438,9 +1443,9 @@ def test_models_name_the_saved_anthropic_model_and_its_client_web_tools():
 def test_v3_comparison_is_a_catalog_page_linked_from_the_header():
     from pathlib import Path
     from crest_ais.site import PAGES, page_title
-    entry = next(p for p in PAGES if p['canonical'] == 'docs/deep-research-comparison-v3.html')
+    entry = next(p for p in PAGES if p['canonical'] == 'docs/deep-research/deep-research-comparison-v3.html')
     assert entry['label'] == 'Deep Research Comparison v3'
-    assert page_title(Path('docs/deep-research-comparison-v3.html'), 'x') == 'Deep Research Comparison v3'
+    assert page_title(Path('docs/deep-research/deep-research-comparison-v3.html'), 'x') == 'Deep Research Comparison v3'
 
 
 def test_method_says_judges_did_not_see_the_appended_uncited_sources():
@@ -1625,7 +1630,7 @@ def test_other_rubrics_sit_in_small_dropdowns_at_the_bottom_in_ascending_order(t
     assert bottom.get('aria-labelledby') == bottom.xpath('./h2')[0].get('id')
     assert len(bottom.xpath('.//h2')) == 1
     v2_box, v3_box = dropdowns[:2]
-    assert '../crest/prompts/nus_pairwise_v3.txt' in v3_box.xpath('.//a/@href')
+    assert '../../crest/prompts/nus_pairwise_v3.txt' in v3_box.xpath('.//a/@href')
     headers = [th.text_content() for th in v3_box.xpath('.//table')[0].xpath('.//thead//th')]
     assert headers == ['System', 'Rank', 'Win rate', '95% interval']
     rows = {tr.xpath('./th')[0].text_content(): [td.text_content() for td in tr.xpath('./td')]
@@ -1657,9 +1662,9 @@ def test_intro_and_method_name_the_rubric_the_ranking_uses(tmp_path):
     v3 = use_packaged_rubric(make_run(tmp_path / 'v3', choose=lambda q, pair, judge, order: order[0]), 'v3')
     body = write_report(main_run, tmp_path / 'page.html', rubric_runs=[v3]).read_text()
     intro = body.split('<main', 1)[1].split('<nav', 1)[0]
-    assert 'under the <a href="../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric' in intro
+    assert 'under the <a href="../../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric' in intro
     method = section(body, 'method')
-    assert 'The ranking uses the <a href="../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric.' in method
+    assert 'The ranking uses the <a href="../../crest/prompts/nus_pairwise_v1.txt">NUS v1</a> rubric.' in method
     # The other rubrics are named only in their section at the bottom of the page.
     above = body.split('id="other-rubrics"', 1)[0]
     assert 'href="#other-rubrics"' not in above
@@ -1673,7 +1678,7 @@ def test_intro_without_other_rubrics_points_nowhere(tmp_path):
     from crest.report import write_report
     main_run = use_packaged_rubric(make_run(tmp_path / 'v3'), 'v3')
     body = write_report(main_run, tmp_path / 'page.html').read_text()
-    assert 'under the <a href="../crest/prompts/nus_pairwise_v3.txt">NUS v3</a> rubric' in body
+    assert 'under the <a href="../../crest/prompts/nus_pairwise_v3.txt">NUS v3</a> rubric' in body
     assert 'id="other-rubrics"' not in body and 'href="#other-rubrics"' not in body
     assert 'earlier studies used' not in body
 
@@ -2342,8 +2347,8 @@ def test_method_links_rubric_pages_in_a_sentence_and_states_the_rules_where_the_
     body = write_report(make_run(tmp_path / 'run'), tmp_path / 'page.html').read_text()
     method = section(body, 'method')
     rubric, why = (page_title(Path(n), n) for n in ('nus-rubric.html', 'why-one-overall-judgment.html'))
-    assert (f'The <a href="nus-rubric.html">{rubric}</a> page has the full rubric, and '
-            f'<a href="why-one-overall-judgment.html">{why}</a> explains the single pick.') in method
+    assert (f'The <a href="../judging/nus-rubric.html">{rubric}</a> page has the full rubric, and '
+            f'<a href="../judging/why-one-overall-judgment.html">{why}</a> explains the single pick.') in method
     pick = method.split('<dt>Pick a winner</dt>', 1)[1].split('</dd>', 1)[0]
     assert 'Combining familiar ideas can still be original.' in pick
     assert 'guided by the three NUS criteria' in pick

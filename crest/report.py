@@ -1,6 +1,6 @@
 """Offline HTML publication of a complete, frozen CREST research comparison.
 
-Usage: python -m crest.report RUN --output docs/deep-research-comparison-v3.html
+Usage: python -m crest.report RUN --output docs/deep-research/deep-research-comparison-v3.html
 Only 50-question comparisons of every agent in the frozen run manifest, judged by
 every configured judge, can be written. A question may be left unranked only when
 each of its missing judgments matches a recorded failure in the judge stage;
@@ -41,7 +41,7 @@ from .costs import cost_for_row, summarize_costs
 from .judging import parse_verdict, validate_verdict
 from .rubrics import AUT_KIND, NUS_KIND, STRICT_REASON_PROTOCOLS, protocol_rubric_kind
 from crest_ais.navigation import CSS as SITE_CSS, site_favicon, site_header
-from crest_ais.site import page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
+from crest_ais.site import page_href, page_path, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
 
 ROOT = Path(__file__).resolve().parents[1]
 # Agents and judges come from each frozen run; these tables only decorate known identifiers.
@@ -1222,8 +1222,13 @@ RUBRIC_NOTES = {
 EARLIER_TEXT_DIFFERS = ('v1', 'v2')
 
 
+# Links in the rendered text are relative to the folder the comparison pages are published in.
+PAGE = 'Deep Research Comparison v3'
+PROMPTS = Path(os.path.relpath(ROOT / 'crest/prompts', (ROOT / page_path(PAGE)).parent)).as_posix()
+
+
 def _rubric_link(version):
-    return f'<a href="../crest/prompts/nus_pairwise_{version}.txt">NUS {version}</a>'
+    return f'<a href="{PROMPTS}/nus_pairwise_{version}.txt">NUS {version}</a>'
 
 
 def _earlier_note(version, *, name_others=True):
@@ -2020,7 +2025,7 @@ def _method(data, previous=''):
         '<p>This AUT-inspired rubric is a qualitative adaptation for expressed research contributions. '
         'Raw idea counts are not comparable across paper topics. Scores are preferences under this rubric, '
         'not standardized AUT scores or measures of an author’s divergent-thinking ability. '
-        '<a href="aut-inspired-rubric.html">AUT-inspired rubric and limits</a>.</p>' if aut else ''
+        f'<a href="{page_href("AUT-Inspired Rubric", PAGE)}">AUT-inspired rubric and limits</a>.</p>' if aut else ''
     )
     creativity_reference = (
         '<ul><li><a href="https://digitalcommons.unomaha.edu/psychfacpub/259/">'
@@ -2056,8 +2061,8 @@ def _method(data, previous=''):
                       + _join(f'{count} / 50 {_text(_label(agent))} answers' for agent, count in revealed.items()) + '. '
                       'These cues do not establish that provider bias caused the ranking.</p>')
     # Link text follows each page's catalog title, so a retitled page reads the same here.
-    rubric, why = (f'<a href="{name}">{_text(page_title(Path(name), name))}</a>'
-                   for name in ('nus-rubric.html', 'why-one-overall-judgment.html'))
+    rubric, why = (f'<a href="{page_href(label, PAGE)}">{_text(label)}</a>'
+                   for label in ('NUS Rubric', 'Why One Overall Judgment'))
     rubric_links = '' if aut else f'The {rubric} page has the full rubric, and {why} explains the single pick.'
     version = _main_rubric(data)
     rubric_used = (f'The ranking uses the {_rubric_link(version)} rubric. ' + _text(RUBRIC_NOTES.get(version, '')) + ' '
@@ -2322,7 +2327,7 @@ def _render(data, destination, *, updated=None):
 
 def write_report(run_dir, destination, *, audit=None, updated=None, rubric_runs=()):
     """Write a validated final report atomically; errors leave old outputs intact."""
-    require_canonical_output(destination)
+    require_canonical_output(destination, ROOT)
     updated = page_updated(updated)
     data = load_run(run_dir, audit=audit)
     if rubric_runs:

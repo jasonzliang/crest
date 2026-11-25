@@ -17,6 +17,7 @@ PROTECTED_TAGS = frozenset({'table', 'svg', 'pre', 'script', 'meta'})
 PROTECTED_CLASSES = frozenset({'answer-text', 'reason', 'judgment', 'metadata', 'meta',
                                'question', 'paper-record'})
 XML_SPACE = re.compile(r'[ \t\r\n]+')
+SECTIONS = {'judging', 'deep-research', 'ai-scientists'}
 
 
 def protected_elements(page):
@@ -70,6 +71,9 @@ def test_index_names_match_canonical_titles_headings_filenames_and_dates():
     assert len(local) == 46
     for a in local:
         target = (ROOT / 'docs' / a.get('href')).resolve()
+        # Only the index sits at the top of docs/; every other page is in one section folder.
+        if target.parent.parent == ROOT / 'docs':
+            assert target.parent.name in SECTIONS, target
         label = a.text_content()
         slug = re.sub('[^a-z0-9]+', '-', label.lower()).strip('-') + '.html'
         assert target.name in (slug, 'index.html'), (label, target.name)
@@ -149,7 +153,7 @@ REDIRECT_QUERIES = [('', ''), ('?source=old%20link&x=1', '#method'), ('?next=%23
 def test_redirects_have_readable_canonical_fallbacks_and_scripts_preserve_query_and_fragment():
     from crest_ais.site import PAGES
     aliases = [p for p in PAGES if p['old'] != p['canonical']]
-    assert len(aliases) == 26
+    assert len(aliases) == 19
     cases, expected = [], []
     for record in aliases:
         path = ROOT / record['old']
@@ -207,16 +211,34 @@ def test_generated_header_uses_canonical_links_and_reproducible_date(monkeypatch
     monkeypatch.setenv('CREST_PAGE_UPDATED', '2026-11-05')
     fragment = html.fromstring(site_header(tmp_path, tmp_path / 'docs/report.html'))
     assert fragment.xpath('.//a/@href')[1:] == [
-        'research-pipeline.html', 'deep-research-comparison-v3.html',
-        'ai-scientist-comparison-v1.html', 'index.html']
+        'deep-research/research-pipeline.html', 'deep-research/deep-research-comparison-v3.html',
+        'ai-scientists/ai-scientist-comparison-v1.html', 'index.html']
     assert fragment.xpath('.//time/@datetime') == ['2026-11-05']
     assert html.fromstring(site_header(tmp_path, tmp_path / 'docs/report.html', updated='2026-11-06')).xpath('.//time/@datetime') == ['2026-11-06']
 
 
+def test_docs_top_level_holds_only_the_index_and_its_icon():
+    tracked = subprocess.run(['git', 'ls-files'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split('\n')
+    docs = [Path(n).relative_to('docs') for n in tracked if n.startswith('docs/')]
+    assert sorted(str(n) for n in docs if len(n.parts) == 1) == ['favicon.svg', 'index.html']
+    assert {n.parts[0] for n in docs if len(n.parts) > 1} == SECTIONS
+    names = [Path(n).name for n in tracked if n.endswith('.html')]
+    # One saved upstream page keeps the filename its own saved links use.
+    assert [n for n in names if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*\.html', n)] == [
+        'reviewer_release_and_performance.html']
+
+
+def test_page_href_links_across_section_folders():
+    from crest_ais.site import page_href
+    assert page_href('NUS Rubric', 'Deep Research Comparison v3') == '../judging/nus-rubric.html'
+    assert page_href('Deep Research Comparison v2', 'Deep Research Comparison v3') == 'deep-research-comparison-v2.html'
+    assert page_href('AI Scientist Comparison Method', 'AI Scientist Comparison v1') == 'ai-scientist-comparison-method.html'
+
+
 def test_page_path_matches_labels_without_regard_to_case():
     from crest_ais.site import page_path
-    assert page_path('NUS Rubric') == page_path('NUS rubric') == Path('docs/nus-rubric.html')
-    assert page_path('why one overall judgment') == Path('docs/why-one-overall-judgment.html')
+    assert page_path('NUS Rubric') == page_path('NUS rubric') == Path('docs/judging/nus-rubric.html')
+    assert page_path('why one overall judgment') == Path('docs/judging/why-one-overall-judgment.html')
 
 
 def test_date_source_precedence_and_validation(monkeypatch):
@@ -247,7 +269,7 @@ def test_page_and_index_dates_share_small_readable_muted_style():
     assert luminance(color) > luminance('526574')
     for background in ('ffffff', 'f5f8f9'):
         assert (luminance(background) + .05) / (luminance(color) + .05) >= 4.5
-    for name in ('docs/index.html', 'docs/deep-research-comparison-v2.html', 'docs/deep-research-creativity-v2.html'):
+    for name in ('docs/index.html', 'docs/deep-research/deep-research-comparison-v2.html'):
         assert DATE_CSS in (ROOT / name).read_text()
 
 
@@ -256,12 +278,12 @@ def test_index_sync_updates_only_matching_entry_and_index_page_date(tmp_path):
     docs = tmp_path / 'docs'; docs.mkdir()
     index = docs / 'index.html'
     original = ('<header><time class="crest-page-updated" datetime="2026-11-05">Updated 2026-11-05</time></header>'
-                '<main><li><a href="deep-research-comparison-v2.html">Deep Research Comparison v2</a>'
+                '<main><li><a href="deep-research/deep-research-comparison-v2.html">Deep Research Comparison v2</a>'
                 '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li>'
-                '<li><a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
+                '<li><a href="ai-scientists/ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
                 '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time></li></main>')
     index.write_text(original)
-    sync_index_date(tmp_path, docs / 'deep-research-comparison-v2.html', '2026-11-06')
+    sync_index_date(tmp_path, docs / 'deep-research/deep-research-comparison-v2.html', '2026-11-06')
     page = html.fromstring(index.read_bytes())
     assert page.xpath('//time/@datetime') == ['2026-11-06', '2026-11-06', '2026-11-05']
     assert page.xpath('//time/text()') == ['Updated 2026-11-06', 'Updated 2026-11-06', 'Updated 2026-11-05']
@@ -269,7 +291,7 @@ def test_index_sync_updates_only_matching_entry_and_index_page_date(tmp_path):
     sync_index_date(tmp_path, docs / 'unlisted-export.html', '2026-11-07')
     assert index.read_bytes() == revised
     with pytest.raises(ValueError):
-        sync_index_date(tmp_path, docs / 'deep-research-comparison-v2.html', '2026-02-30')
+        sync_index_date(tmp_path, docs / 'deep-research/deep-research-comparison-v2.html', '2026-02-30')
     assert index.read_bytes() == revised
 
 
@@ -319,8 +341,8 @@ def test_index_dates_remain_to_the_right_of_wrapping_titles_in_browser():
             browser.close()
 
 
-def test_current_guides_link_to_existing_packaged_datasets_and_prompts():
-    guides = ['README.md', 'docs/research-pipeline.html', 'docs/ai-scientist-comparison-method.html',
+def test_current_guides_link_to_existing_pages_datasets_and_prompts():
+    guides = ['README.md', 'docs/deep-research/research-pipeline.html', 'docs/ai-scientists/ai-scientist-comparison-method.html',
               'crest/_archive/index.html', 'crest/_archive/reference/nus_pairwise_v1.md']
     for name in guides:
         path = ROOT / name
@@ -329,6 +351,6 @@ def test_current_guides_link_to_existing_packaged_datasets_and_prompts():
                  else re.findall(r'\[[^\]]*\]\(([^)]+)\)', text))
         for link in links:
             url = urlsplit(link)
-            if url.scheme or url.netloc or not url.path.endswith(('.txt', '.jsonl')):
+            if url.scheme or url.netloc or not url.path.endswith(('.txt', '.jsonl', '.html')):
                 continue
             assert (path.parent / unquote(url.path)).is_file(), (name, link)

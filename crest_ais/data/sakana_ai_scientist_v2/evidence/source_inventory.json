@@ -12,7 +12,7 @@
       "sha256": "365456355eb1a0495b4c4862e4789de7599ce003698fa95ae583758e6910f698"
     },
     {
-      "path": "evidence/first_publication_blog.html",
+      "path": "evidence/first-publication-blog.html",
       "bytes": 25699,
       "sha256": "660511f5b355251a642c7c54f1d7f83624e6fb6aad80139208950f2baa071a65",
       "source_url": "https://sakana.ai/ai-scientist-first-publication/"
@@ -33,7 +33,7 @@
       "sha256": "3eaf25e16ba1fc6523a2ea20de74092bd15ac3023097257d65e723f9a1aab728"
     },
     {
-      "path": "evidence/nature_blog.html",
+      "path": "evidence/nature-blog.html",
       "bytes": 14415,
       "sha256": "16490ad43f5fb8173991bdb6a0307b026a5ac0a3bc4d3970392656d0ad807074",
       "source_url": "https://sakana.ai/ai-scientist-nature/"
@@ -55,7 +55,7 @@
       "sha256": "e4b7e34a489f468d40b30374919ee399514886ccdf22d4da85d93d92b97755b7"
     },
     {
-      "path": "evidence/nature_system_article.html",
+      "path": "evidence/nature-system-article.html",
       "bytes": 408785,
       "sha256": "cb496522c75b1b20d0d13a36c73a3d3d97b8e78e77ac93248eab7fbcc8268a14",
       "source_url": "https://www.nature.com/articles/s41586-026-10265-5"
@@ -99,7 +99,7 @@
       "source_url": "https://api.github.com/repos/SakanaAI/AI-Scientist-v2/git/trees/main?recursive=1"
     },
     {
-      "path": "evidence/v2_technical_report.html",
+      "path": "evidence/v2-technical-report.html",
       "bytes": 301164,
       "sha256": "e222468a4b10a9a80dca8bb4f37b2abc24b83b765bf6e906aea844f49fc0d555",
       "source_url": "https://arxiv.org/html/2504.08066v1"
@@ -374,7 +374,7 @@
       "sha256": "9250920e05ea233d9bcb924b803fa4674547a9f86fe4cbc96b74d0a2909dc8d3"
     },
     {
-      "path": "search_audit/system_arxiv.html",
+      "path": "search_audit/system-arxiv.html",
       "bytes": 301164,
       "sha256": "e222468a4b10a9a80dca8bb4f37b2abc24b83b765bf6e906aea844f49fc0d555"
     },
@@ -384,7 +384,7 @@
       "sha256": "53bafd3028e3f8829a3d85220e84dcf0d18934f9b75c092a60de303ff3644bd2"
     },
     {
-      "path": "search_audit/system_arxiv_abs.html",
+      "path": "search_audit/system-arxiv-abs.html",
       "bytes": 44463,
       "sha256": "dfb82cc514527492adc778ed31016ca09c25a9bb8befbe5dfaaad38c053e16c8"
     },

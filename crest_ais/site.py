@@ -8,49 +8,50 @@ import os
 from pathlib import Path
 import re
 
-# Repository-relative paths. Old paths are compatibility redirects, not copies.
-PAGES = ({'old': 'docs/judging-method.html',
-  'canonical': 'docs/nus-rubric.html',
+# Repository-relative paths. Old paths are compatibility redirects, not copies. Pages in docs/
+# live in one folder per index section; only docs/index.html stays at the top.
+PAGES = ({'old': 'docs/judging/nus-rubric.html',
+  'canonical': 'docs/judging/nus-rubric.html',
   'label': 'NUS Rubric',
   'updated': '2026-11-05'},
- {'old': 'docs/aut-inspired-rubric.html',
-  'canonical': 'docs/aut-inspired-rubric.html',
+ {'old': 'docs/judging/aut-inspired-rubric.html',
+  'canonical': 'docs/judging/aut-inspired-rubric.html',
   'label': 'AUT-Inspired Rubric',
   'updated': '2026-11-05'},
- {'old': 'docs/overall-creativity-judgment.html',
-  'canonical': 'docs/why-one-overall-judgment.html',
+ {'old': 'docs/judging/why-one-overall-judgment.html',
+  'canonical': 'docs/judging/why-one-overall-judgment.html',
   'label': 'Why One Overall Judgment',
   'updated': '2026-11-05'},
- {'old': 'docs/judge-models.html',
-  'canonical': 'docs/judge-models.html',
+ {'old': 'docs/judging/judge-models.html',
+  'canonical': 'docs/judging/judge-models.html',
   'label': 'Judge Models',
   'updated': '2026-11-05'},
- {'old': 'docs/crest-guide.html',
-  'canonical': 'docs/research-pipeline.html',
+ {'old': 'docs/deep-research/research-pipeline.html',
+  'canonical': 'docs/deep-research/research-pipeline.html',
   'label': 'Research Pipeline',
   'updated': '2026-11-05'},
- {'old': 'docs/deep-research-comparison-v3.html',
-  'canonical': 'docs/deep-research-comparison-v3.html',
+ {'old': 'docs/deep-research/deep-research-comparison-v3.html',
+  'canonical': 'docs/deep-research/deep-research-comparison-v3.html',
   'label': 'Deep Research Comparison v3',
   'updated': '2026-11-24'},
- {'old': 'docs/deep-research-creativity-v2.html',
-  'canonical': 'docs/deep-research-comparison-v2.html',
+ {'old': 'docs/deep-research/deep-research-comparison-v2.html',
+  'canonical': 'docs/deep-research/deep-research-comparison-v2.html',
   'label': 'Deep Research Comparison v2',
   'updated': '2026-11-05'},
- {'old': 'docs/deep-research-creativity.html',
-  'canonical': 'docs/deep-research-comparison-v1.html',
+ {'old': 'docs/deep-research/deep-research-comparison-v1.html',
+  'canonical': 'docs/deep-research/deep-research-comparison-v1.html',
   'label': 'Deep Research Comparison v1',
   'updated': '2026-11-05'},
- {'old': 'docs/open-source-research-agents.html',
-  'canonical': 'docs/open-source-research-agents.html',
+ {'old': 'docs/deep-research/open-source-research-agents.html',
+  'canonical': 'docs/deep-research/open-source-research-agents.html',
   'label': 'Open-Source Research Agents',
   'updated': '2026-11-05'},
- {'old': 'docs/ai-scientist-method.html',
-  'canonical': 'docs/ai-scientist-comparison-method.html',
+ {'old': 'docs/ai-scientists/ai-scientist-comparison-method.html',
+  'canonical': 'docs/ai-scientists/ai-scientist-comparison-method.html',
   'label': 'AI Scientist Comparison Method',
   'updated': '2026-11-05'},
- {'old': 'docs/ai-scientist-creativity.html',
-  'canonical': 'docs/ai-scientist-comparison-v1.html',
+ {'old': 'docs/ai-scientists/ai-scientist-comparison-v1.html',
+  'canonical': 'docs/ai-scientists/ai-scientist-comparison-v1.html',
   'label': 'AI Scientist Comparison v1',
   'updated': '2026-11-05'},
  {'old': 'crest/_archive/index.html',
@@ -209,6 +210,11 @@ def page_path(label: str) -> Path:
     return Path(next(p['canonical'] for p in PAGES if p['label'].casefold() == key))
 
 
+def page_href(label: str, origin: str) -> str:
+    """Relative URL from the page labelled ``origin`` to the page labelled ``label``."""
+    return Path(os.path.relpath(page_path(label), page_path(origin).parent)).as_posix()
+
+
 def page_title(destination: Path, fallback: str) -> str:
     """Use catalog labels for recognized report filenames, including old URLs."""
     name = Path(destination).name
@@ -233,13 +239,23 @@ def page_updated(updated: str | None = None) -> str:
     return datetime.now(timezone.utc).date().isoformat()
 
 
-def require_canonical_output(destination: Path) -> None:
-    """Do not let a regeneration replace a compatibility URL with a full report."""
+def require_canonical_output(destination: Path, project_root: Path | None = None) -> None:
+    """Do not let a regeneration replace a compatibility URL or publish a page outside its folder."""
     name = Path(destination).name
     alias = next((p for p in PAGES if p['old'] != p['canonical'] and
                   Path(p['old']).name == name), None)
     if alias:
         raise ValueError(f'Use canonical output filename {Path(alias["canonical"]).name}; {name} is a compatibility redirect')
+    if project_root is None:
+        return
+    root, target = Path(project_root).resolve(), Path(destination).resolve()
+    if not target.is_relative_to(root / 'docs') or target == root / 'docs/index.html':
+        return
+    page = next((p for p in PAGES if Path(p['canonical']).name == name), None)
+    if page and target != root / page['canonical']:
+        raise ValueError(f'Use canonical output path {page["canonical"]}; {name} belongs in that folder')
+    if target.parent == root / 'docs':
+        raise ValueError(f'Only index.html stays at the top of docs/; publish {name} in a section folder')
 
 
 def prepare_index_date(project_root: Path, destination: Path, updated: str) -> tuple[Path, str] | None:

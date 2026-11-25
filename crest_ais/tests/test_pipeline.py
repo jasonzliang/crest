@@ -1217,9 +1217,9 @@ def test_cli_default_report_uses_canonical_versioned_output(tmp_path, monkeypatc
         'data_root': root, 'output_dir': root / 'results'})
     monkeypatch.setenv('CREST_PAGE_UPDATED', '2026-11-05')
     assert cli.main(['report', '--run-dir', str(run_dir)]) == 0
-    destination = tmp_path / 'docs/ai-scientist-comparison-v1.html'
+    destination = tmp_path / 'docs/ai-scientists/ai-scientist-comparison-v1.html'
     page = html.fromstring(destination.read_bytes())
     assert page.xpath('//h1/text()') == ['AI Scientist Comparison v1']
     assert page.xpath('//header//time/@datetime') == ['2026-11-05']
-    assert not (tmp_path / 'docs/ai-scientist-creativity.html').exists()
+    assert not list((tmp_path / 'docs').glob('*.html'))
     assert (run_dir / 'plan.json').read_bytes() == frozen

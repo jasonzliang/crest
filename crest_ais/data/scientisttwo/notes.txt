@@ -22,7 +22,7 @@ Individual publication dates are unavailable. Do not substitute PDF creation met
 The repository has an Apache-2.0 root license saved as LICENSE.txt. No distinct per-PDF licenses were identified. Titles were read from PDF first-page text; line wrapping, discretionary hyphenation and detached accents were normalized in manifest titles.
 
 Reproducibility artifacts:
-project_page.html: exact downloaded official gallery HTML.
+project-page.html: exact downloaded official gallery HTML.
 repository_tree.json: GitHub recursive tree response, including recorded commit.
 gallery_entries.json: parsed official gallery list.
 download_results.json: download URLs, byte lengths and SHA256.

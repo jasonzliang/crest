@@ -1,58 +1,58 @@
 {
-  "docs/nus-rubric.html": {
+  "docs/judging/nus-rubric.html": {
     "body": "87ae28d043de570a02e45b5f85a04d23f48d0cc7fd6a55e33e5bdf958efd2d35",
     "protected_count": 3,
     "protected": "52d8877025facd849f91aedc0afa619557d0aa7aee0b6b682e319b9b87159b55"
   },
-  "docs/aut-inspired-rubric.html": {
+  "docs/judging/aut-inspired-rubric.html": {
     "body": "98f04c094fbbe6bef3d54c26037a1c5f45e6d528e6154157d623610213642120",
     "protected_count": 3,
     "protected": "837cabfafe1122225d966031fd9008f734da7a334ea6097f33eeedcea02b0608"
   },
-  "docs/why-one-overall-judgment.html": {
+  "docs/judging/why-one-overall-judgment.html": {
     "body": "7a17d3c8a66b401895f49e6ba2974f36e883cf42173454b7649329c6d95b78d9",
     "protected_count": 3,
     "protected": "bf8b241cfbca442996ccea4af6e2d6cafa53cb86f72dc1e70797167be38614e1"
   },
-  "docs/judge-models.html": {
+  "docs/judging/judge-models.html": {
     "body": "820e4f9bde6dd179681d6dd057c9df88058096fb97587ea88b07714895b39516",
     "protected_count": 4,
     "protected": "3d1a102f99b0aab68ecf2ad03fa213b4603248ff7fd12d4a2c9b15c959062e81"
   },
-  "docs/research-pipeline.html": {
+  "docs/deep-research/research-pipeline.html": {
     "body": "e30aa19dc2bfe3ebbb137fcdba47ccb8a6b6e65c253f31db0e2c6eaec49a877f",
     "protected_count": 16,
     "protected": "7c2bc1ec5c53f104b0c3a804e2a9349bfa1421a904258318403ccb13746b6a81"
   },
-  "docs/deep-research-comparison-v3.html": {
+  "docs/deep-research/deep-research-comparison-v3.html": {
     "body": "c20e9f8941ccdfb45f931cb264031d381e762f323e248c578ce00a7cfac44f2b",
     "protected_count": 7194,
     "protected": "d9ab0e3243575c7f5f5ba7ec1bc09309b243cd02e82624c82ed290022da168ad"
   },
-  "docs/deep-research-comparison-v2.html": {
+  "docs/deep-research/deep-research-comparison-v2.html": {
     "body": "ba08783552b488745bd12ba499f852a640864adf5abc56b5eb16384eee040cf1",
     "protected_count": 1779,
     "protected": "eb67c3e0eec2f79400aa23ac2b67d18b96399d6c1773b38b8e1c50d6eda03e4c"
   },
-  "docs/deep-research-comparison-v1.html": {
+  "docs/deep-research/deep-research-comparison-v1.html": {
     "body": "7075691295d2bf05fe5bf6702334f88231f5b2f79afe505050ac39056cf92213",
     "protected_count": 2041,
     "protected": "c695ec24a9f4324c50f48656a1a4fe5bea24764e0f42ff2b08ed58f7e61af15f"
   },
-  "docs/open-source-research-agents.html": {
+  "docs/deep-research/open-source-research-agents.html": {
     "body": "c39fbc269aa55182df885bb41de148c5f9b0afef8ad08b757aa49bdb1a931da5",
     "protected_count": 13,
     "protected": "a8828b024476f683366727e0b54995b765d12e41cbe18a66d8833825e3baac1e"
   },
-  "docs/ai-scientist-comparison-method.html": {
+  "docs/ai-scientists/ai-scientist-comparison-method.html": {
     "body": "22f7db6224970a09c9cee906c3fa63e6201819956bbe6e2064621b999da59646",
     "protected_count": 7,
     "protected": "1386ea65e540edcaaec3cbdd6a6181fc8f3b5fad2e7e72e257981d26a75fdb63"
   },
-  "docs/ai-scientist-comparison-v1.html": {
+  "docs/ai-scientists/ai-scientist-comparison-v1.html": {
     "body": "af151f5bfd30e39bf8d95314cbdfb99971a6306fc97ad5fdf32dc59ca34b2944",
     "protected_count": 593,
-    "protected": "1e57fae4fab46f33f910f78a827159be0a4562b17070742647308503a5f424ff"
+    "protected": "e3c6786003da7712c62fd24d05faefb04eb31b84990aae8c65c3c913bbf3bfac"
   },
   "crest/_archive/index.html": {
     "body": "355f52db5419166b451c8478a8f8c7ae13e8dc3f02acd19b07d0d2434287aa99",

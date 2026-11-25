@@ -15,11 +15,12 @@ from crest.rubrics import AUT_KIND, NUS_KIND, protocol_rubric_kind
 
 from .analysis import number_word
 from .navigation import CSS as NAVIGATION_CSS, site_favicon, site_header
-from .site import page_path, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
+from .site import page_href, page_title, page_updated, require_canonical_output, prepare_index_date, write_index_date
 from .protocol import LEGACY_PROTOCOL_VERSION, validate_verdict
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PAGE = "AI Scientist Comparison v1"  # In-text links are relative to this page's folder.
 
 COLORS = ("#0b5967", "#b4652b", "#5e628c", "#526b46", "#8a4665")
 SHORT_NAMES = {
@@ -371,7 +372,7 @@ def _concepts(report):
                      '<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4001084/">'
                      'Benedek et al. (2013)</a>, subjective top-scoring and fluency–originality confounds. '
                      'These studies do not validate this adaptation for scientific papers or its judgments '
-                     'against domain experts. <a href="aut-inspired-rubric.html">'
+                     f'against domain experts. <a href="{page_href("AUT-Inspired Rubric", PAGE)}">'
                      'AUT-inspired rubric and limits</a></p></div>')
         return ''.join(parts)
     # Current report metadata does not distinguish the selected NUS prompt text.
@@ -402,9 +403,9 @@ def _concepts(report):
                  'Acar, Burnett, and Cabra (2017), <cite>Ingredients of Creativity: Originality '
                  'and More</cite></a>, examines surprise alongside originality and value. '
                  'These works motivate the three ideas; they do not test CREST’s rubric. More detail: '
-                 + (f'<a href="{page_path("NUS Rubric").name}">the current NUS rubric (v2, not used here)</a>'
-                    if historical else f'<a href="{page_path("NUS Rubric").name}">the NUS rubric</a>')
-                 + f' and <a href="{page_path("Why One Overall Judgment").name}">why we ask for one overall judgment</a>.</p></div>')
+                 + (f'<a href="{page_href("NUS Rubric", PAGE)}">the current NUS rubric (v2, not used here)</a>'
+                    if historical else f'<a href="{page_href("NUS Rubric", PAGE)}">the NUS rubric</a>')
+                 + f' and <a href="{page_href("Why One Overall Judgment", PAGE)}">why we ask for one overall judgment</a>.</p></div>')
     return "".join(parts)
 
 
@@ -694,7 +695,7 @@ def _judge_settings(report):
         items.append(_text(_judge_label(judge)) + (f' ({", ".join(details)})' if details else ''))
     if not items:
         return ""
-    return f'Judges: {_and_list(items)}. See <a href="judge-models.html">judge models</a>.'
+    return f'Judges: {_and_list(items)}. See <a href="{page_href("Judge Models", PAGE)}">judge models</a>.'
 
 
 def _progress(report):
@@ -993,7 +994,7 @@ def _method(report):
              'score is the share of votes its paper won. A matchup averages its pairs, and a scientist’s score '
              f'averages its {plural(opponents, "matchup")}.</p>',
              _sampling_plan(report), saved_rubric, _concepts(report),
-             f'<p class="small">Full method: <a href="{page_path("AI Scientist Comparison Method").name}">AI scientist comparison method</a>.</p>'
+             f'<p class="small">Full method: <a href="{page_href("AI Scientist Comparison Method", PAGE)}">AI scientist comparison method</a>.</p>'
              '</section>']
     return "".join(parts)
 
@@ -1117,7 +1118,7 @@ JUDGMENT_SCRIPT = """
 
 def write_report(report: dict, destination: Path, *, data_root: Path, updated: str | None = None) -> None:
     """Write a self-contained report; links are relative to its final location."""
-    require_canonical_output(destination)
+    require_canonical_output(destination, ROOT)
     updated = page_updated(updated)
     family = report.get('rubric_kind', NUS_KIND)
     if family not in (NUS_KIND, AUT_KIND):

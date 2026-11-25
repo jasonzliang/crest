@@ -57,7 +57,7 @@ def report():
 def render(report, tmp_path):
     import crest_ais.report as renderer
     root = tmp_path / "crest_ais"
-    destination = tmp_path / "docs" / "comparison.html"
+    destination = tmp_path / "docs" / "ai-scientists" / "comparison.html"
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(renderer, "ROOT", tmp_path)
         renderer.write_report(report, destination, data_root=root)
@@ -109,7 +109,7 @@ def test_legacy_nus_report_rendering_matches_explicit_family(report, tmp_path):
     assert 'CREST now defaults to version 2, which was not used here.' in legacy
     assert 'least familiar building block' in legacy and 'counts toward Surprising, not New' in legacy
     # The only rubric link describes v2, so it must say so on the v1 page.
-    assert 'href="nus-rubric.html">the current NUS rubric (v2, not used here)</a>' in legacy
+    assert 'href="../judging/nus-rubric.html">the current NUS rubric (v2, not used here)</a>' in legacy
     report['version'] = 'crest-ais-overall-v3'
     current = render(report, tmp_path)
     assert 'version 1 of the' not in current and 'not used here' not in current
@@ -189,17 +189,17 @@ def test_pdfs_are_relative_sources_preserved_and_concept_links_remain_visible(re
     html = render(report, tmp_path)
     doc = Document(html)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
-    assert "../crest_ais/data/one/first%20paper.pdf" in links
-    assert "../crest_ais/data/v3/second.pdf" in links
+    assert "../../crest_ais/data/one/first%20paper.pdf" in links
+    assert "../../crest_ais/data/v3/second.pdf" in links
     assert "https://example.org/first" in links
     assert not any(str(tmp_path) in link for link in links)
     # The concept bookmark and the primary creativity papers stay linked.
     assert any(attrs.get("id") == "concepts" for _, attrs in doc.tags)
     assert "https://doi.org/10.1080/10400419.2012.650092" in links
     assert "https://doi.org/10.1080/10400419.2017.1302776" in links
-    assert "why-one-overall-judgment.html" in links
-    assert 'href="nus-rubric.html">the NUS rubric</a>' in html
-    assert 'href="why-one-overall-judgment.html">why we ask for one overall judgment</a>' in html
+    assert "../judging/why-one-overall-judgment.html" in links
+    assert 'href="../judging/nus-rubric.html">the NUS rubric</a>' in html
+    assert 'href="../judging/why-one-overall-judgment.html">why we ask for one overall judgment</a>' in html
     method = html.split('<section id="method"', 1)[1].split('</section>', 1)[0]
     assert method.index('id="concepts"') < method.index('ai-scientist-comparison-method.html')
 
@@ -389,11 +389,11 @@ def test_shared_site_navigation_titles_and_results_first_reading_order(report, t
     doc = Document(html)
     assert any(tag == "header" and attrs.get("class") == "crest-site-header" for tag, attrs in doc.tags)
     assert "<h1>AI Scientist Comparison</h1>" in html
-    assert any(tag == "link" and attrs.get("rel") == "icon" and attrs.get("href") == "favicon.svg"
+    assert any(tag == "link" and attrs.get("rel") == "icon" and attrs.get("href") == "../favicon.svg"
                for tag, attrs in doc.tags)
     links = [attrs["href"] for tag, attrs in doc.tags if tag == "a"]
-    assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "research-pipeline.html",
-                         "deep-research-comparison-v3.html", "ai-scientist-comparison-v1.html", "index.html"]
+    assert links[:6] == ["#main-content", "https://github.com/jasonzliang/crest", "../deep-research/research-pipeline.html",
+                         "../deep-research/deep-research-comparison-v3.html", "ai-scientist-comparison-v1.html", "../index.html"]
     # Results and method come before caveats and the audit sections.
     sections = [attrs["id"] for tag, attrs in doc.tags if tag == "section"]
     assert sections == ["overall", "matchups", "method", "judges", "limits", "coverage", "progress", "papers", "reasons"]
@@ -543,8 +543,8 @@ def test_pair_winner_counts_remap_each_actual_order_before_aggregation(report, t
     assert "In each reason, A and B mean the order that judge saw" in html
     table = html.split('id="judgment-pair-table"', 1)[1].split('</table>', 1)[0]
     links = [attrs["href"] for tag, attrs in Document(table).tags if tag == "a"]
-    assert "../crest_ais/data/one/first%20paper.pdf" in links
-    assert "../crest_ais/data/v3/second.pdf" in links
+    assert "../../crest_ais/data/one/first%20paper.pdf" in links
+    assert "../../crest_ais/data/v3/second.pdf" in links
     assert "Each judge read every pair twice, once in each order" in html and "4 votes per pair" in html
     assert "3–1 pair counts as 75% for the winner" in html
 
@@ -926,7 +926,7 @@ def test_canonical_scientist_report_title_date_and_unchanged_metadata(report, tm
     from lxml import html
     from crest_ais.report import write_report
     before = deepcopy(report)
-    output = tmp_path / 'docs/ai-scientist-comparison-v1.html'
+    output = tmp_path / 'docs/ai-scientists/ai-scientist-comparison-v1.html'
     write_report(report, output, data_root=tmp_path / 'crest_ais', updated='2026-11-05')
     page = html.fromstring(output.read_bytes())
     assert page.findtext('.//title') == 'AI Scientist Comparison v1'
@@ -936,13 +936,17 @@ def test_canonical_scientist_report_title_date_and_unchanged_metadata(report, tm
     assert report['generated_at'] == '2026-10-27T00:00:00Z'
 
 
-def test_scientist_generator_does_not_overwrite_compatibility_redirect(report, tmp_path):
-    from crest_ais.report import write_report
-    output = tmp_path / 'ai-scientist-creativity.html'
-    output.write_text('Original compatibility redirect')
-    with pytest.raises(ValueError, match='ai-scientist-comparison-v1.html'):
-        write_report(report, output, data_root=tmp_path / 'crest_ais')
-    assert output.read_text() == 'Original compatibility redirect'
+@pytest.mark.parametrize('name, message', [('ai-scientist-creativity.html', 'section folder'),
+                                           ('ai-scientist-comparison-v1.html', 'docs/ai-scientists/ai-scientist-comparison-v1.html')])
+def test_scientist_generator_refuses_pages_outside_their_section_folder(report, tmp_path, monkeypatch, name, message):
+    import crest_ais.report as renderer
+    monkeypatch.setattr(renderer, 'ROOT', tmp_path)
+    output = tmp_path / 'docs' / name
+    output.parent.mkdir()
+    output.write_text('Original page')
+    with pytest.raises(ValueError, match=message):
+        renderer.write_report(report, output, data_root=tmp_path / 'crest_ais')
+    assert output.read_text() == 'Original page'
 
 
 def test_external_data_root_does_not_authorize_an_unrelated_site_index(report, tmp_path, monkeypatch):
@@ -961,7 +965,7 @@ def test_external_data_root_does_not_authorize_an_unrelated_site_index(report, t
     page = html.fromstring(destination.read_bytes())
     pipeline = page.xpath('//header//a[text()="Research Pipeline"]/@href')[0]
     favicon = page.xpath('//link[@rel="icon"]/@href')[0]
-    assert (destination.parent / pipeline).resolve() == project / 'docs/research-pipeline.html'
+    assert (destination.parent / pipeline).resolve() == project / 'docs/deep-research/research-pipeline.html'
     assert (destination.parent / favicon).resolve() == project / 'docs/favicon.svg'
 
 
@@ -973,20 +977,20 @@ def test_publication_syncs_index_date_and_keeps_site_and_pdf_authorities_separat
     project = tmp_path / 'source-project'; docs = project / 'docs'; docs.mkdir(parents=True)
     monkeypatch.setattr(renderer, 'ROOT', project)
     index = docs / 'index.html'
-    entry = ('<a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
+    entry = ('<a href="ai-scientists/ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
              '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>')
     # The site index lists entries as list items; a bare dated link must sync too.
     index.write_text(f'<main><li>{entry}</li></main>' if layout == "package_data_root" else f'<main>{entry}</main>')
     data_root = project / 'crest_ais' if layout == "package_data_root" else tmp_path / 'relocated' / 'paper-data'
     pdf = data_root / 'data/one/first paper.pdf'; pdf.parent.mkdir(parents=True)
     pdf.write_bytes(b'Local test PDF; report rendering only checks its existence.')
-    destination = docs / 'ai-scientist-comparison-v1.html'
+    destination = docs / 'ai-scientists/ai-scientist-comparison-v1.html'
     renderer.write_report(report, destination, data_root=data_root, updated='2026-11-06')
     assert html.fromstring(index.read_bytes()).xpath('//time/@datetime') == ['2026-11-06']
     assert html.fromstring(index.read_bytes()).xpath('//time/text()') == ['Updated 2026-11-06']
     page = html.fromstring(destination.read_bytes())
-    assert page.xpath('//header//a[text()="Research Pipeline"]/@href') == ['research-pipeline.html']
-    assert page.xpath('//link[@rel="icon"]/@href') == ['favicon.svg']
+    assert page.xpath('//header//a[text()="Research Pipeline"]/@href') == ['../deep-research/research-pipeline.html']
+    assert page.xpath('//link[@rel="icon"]/@href') == ['../favicon.svg']
     pdf_links = [unquote(href) for href in page.xpath('//a/@href') if href.endswith('.pdf')]
     assert any((destination.parent / href).resolve() == pdf for href in pdf_links)
 
@@ -995,13 +999,13 @@ def test_publication_syncs_index_date_and_keeps_site_and_pdf_authorities_separat
 def test_scientist_invalid_index_wrapper_preserves_existing_report(report, tmp_path, monkeypatch, dated_entries):
     import crest_ais.report as renderer
     monkeypatch.setattr(renderer, 'ROOT', tmp_path)
-    docs = tmp_path / 'docs'; docs.mkdir()
+    docs = tmp_path / 'docs'; (docs / 'ai-scientists').mkdir(parents=True)
     index = docs / 'index.html'
-    entry = '<a href="ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
+    entry = '<a href="ai-scientists/ai-scientist-comparison-v1.html">AI Scientist Comparison v1</a>'
     stamp = '<time class="page-link-date" datetime="2026-11-05">Updated 2026-11-05</time>'
     original_index = '<main>' + ((entry + stamp) * dated_entries if dated_entries else entry) + '</main>'
     index.write_text(original_index)
-    output = docs / 'ai-scientist-comparison-v1.html'
+    output = docs / 'ai-scientists/ai-scientist-comparison-v1.html'
     output.write_text('Previously published report')
     with pytest.raises(ValueError, match='Expected one dated index entry'):
         renderer.write_report(report, output, data_root=tmp_path / 'crest_ais', updated='2026-11-06')
